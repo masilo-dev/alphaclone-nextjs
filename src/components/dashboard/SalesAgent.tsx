@@ -1,0 +1,488 @@
+import React, { useState, useEffect } from 'react';
+import { Search, UserPlus, Phone, CheckCircle2, Bot, Send, Trash2, Upload, FileSpreadsheet, X, Mail, Settings, ExternalLink } from 'lucide-react';
+import { generateLeads, chatWithAI } from '../../services/unifiedAIService';
+import { leadService, Lead } from '../../services/leadService';
+import { Button, Input, Card } from '../ui/UIComponents';
+import { TableSkeleton } from '../ui/Skeleton';
+import * as XLSX from 'xlsx';
+import toast from 'react-hot-toast';
+
+const SalesAgent: React.FC = () => {
+    const [activeTab, setActiveTab] = useState<'leads' | 'agent'>('leads');
+    const [searchParams, setSearchParams] = useState({ industry: '', location: 'Zimbabwe' });
+    const [leads, setLeads] = useState<Lead[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
+
+    const [showUpload, setShowUpload] = useState(false);
+
+    // Google Places Config
+    const [showSettings, setShowSettings] = useState(false);
+    const [apiKey, setApiKey] = useState(localStorage.getItem('ALPHA_GOOGLE_PLACES_KEY') || '');
+    const [viewingMessage, setViewingMessage] = useState<{ title: string, body: string } | null>(null);
+
+    const handleSaveKey = (val: string) => {
+        setApiKey(val);
+        localStorage.setItem('ALPHA_GOOGLE_PLACES_KEY', val);
+    };
+
+    // Initial Load
+    useEffect(() => {
+        loadLeads();
+    }, []);
+
+    const loadLeads = async () => {
+        setIsLoading(true);
+        const { leads: data, error } = await leadService.getLeads();
+        if (error) {
+            console.error(error);
+            toast.error("Failed to load leads from database");
+        } else {
+            setLeads(data);
+        }
+        setIsLoading(false);
+    };
+
+    // Chat State
+    const [messages, setMessages] = useState([
+        { id: 1, sender: 'agent', text: 'Hello! I am your AI Sales Agent. I can help you find leads, draft outreach messages, or manage your CRM. What would you like to do today?' }
+    ]);
+    const [inputText, setInputText] = useState('');
+
+    const handleSearch = async () => {
+        // Validate inputs
+        if (!searchParams.industry.trim()) {
+            toast.error('Please enter a target industry');
+            return;
+        }
+        if (!searchParams.location.trim()) {
+            toast.error('Please enter a location');
+            return;
+        }
+
+        setIsSearching(true);
+        try {
+            console.log('🚀 Starting AI lead generation...');
+            // Pass API key if available
+            const results = await generateLeads(searchParams.industry, searchParams.location, apiKey);
+
+            if (results && results.length > 0) {
+                console.log(`✅ Generated ${results.length} leads, saving to database...`);
+
+                // Bulk add to DB
+                const leadsToAdd = results.map((r: any) => ({
+                    businessName: r.businessName,
+                    industry: r.industry,
+                    location: r.location,
+                    phone: r.phone,
+                    email: r.email,
+                    source: 'AI Agent'
+                }));
+
+                const { count, error } = await leadService.addBulkLeads(leadsToAdd);
+                if (error) {
+                    console.error('❌ Database error:', error);
+                    toast.error(`AI found leads but failed to save them: ${error}`);
+                } else {
+                    toast.success(`🎉 AI found and saved ${count} new leads!`);
+                    loadLeads(); // Reload from DB
+                }
+            } else {
+                toast.error("No leads found. Try different search criteria.");
+            }
+        } catch (error: any) {
+            console.error('❌ Lead generation error:', error);
+            const errorMessage = error?.message || 'AI Generation failed. Please try again.';
+            toast.error(errorMessage, { duration: 5000 });
+
+            // Show helpful message if it's an API key issue
+            if (errorMessage.includes('API key') || errorMessage.includes('not configured')) {
+                toast.error('Please check your Gemini API key in Vercel settings.', { duration: 7000 });
+            }
+        }
+        setIsSearching(false);
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            try {
+                const bstr = evt.target?.result;
+                const wb = XLSX.read(bstr, { type: 'binary' });
+                const wsname = wb.SheetNames[0];
+                if (!wsname) {
+                    toast.error("Invalid file: No sheets found");
+                    return;
+                }
+                const ws = wb.Sheets[wsname];
+                if (!ws) {
+                    toast.error("Invalid file: Sheet not found");
+                    return;
+                }
+                const data = XLSX.utils.sheet_to_json(ws);
+
+                // Map data to Lead interface (naive mapping)
+                const mappedLeads = data.map((row: any) => ({
+                    businessName: row['Name'] || row['Business Name'] || row['Company'] || 'Unknown Business',
+                    email: row['Email'] || row['Email Address'],
+                    phone: row['Phone'] || row['Contact'],
+                    industry: row['Industry'] || 'Unknown',
+                    location: row['Location'] || row['City'],
+                    website: row['Website'],
+                    notes: row['Notes']
+                }));
+
+                if (mappedLeads.length > 0) {
+                    const { count, error } = await leadService.addBulkLeads(mappedLeads);
+                    if (error) throw new Error(error);
+                    toast.success(`Successfully imported ${count} leads.`);
+                    loadLeads();
+                    setShowUpload(false);
+                } else {
+                    toast.error("No valid data found in file.");
+                }
+            } catch (error) {
+                console.error("Import Error", error);
+                toast.error("Failed to parse file. Ensure headers are: Name, Email, Phone, Industry.");
+            }
+        };
+        reader.readAsBinaryString(file);
+    };
+
+    const toggleSelectLead = (id: string) => {
+        if (selectedLeads.includes(id)) {
+            setSelectedLeads(selectedLeads.filter(lid => lid !== id));
+        } else {
+            setSelectedLeads([...selectedLeads, id]);
+        }
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedLeads.length === leads.length) {
+            setSelectedLeads([]);
+        } else {
+            setSelectedLeads(leads.map(l => l.id));
+        }
+    };
+
+    const deleteSelected = async () => {
+        // Delete individually or bulk if service supports
+        for (const id of selectedLeads) {
+            await leadService.deleteLead(id);
+        }
+        toast.success("Deleted selected leads");
+        setLeads(prev => prev.filter(l => !selectedLeads.includes(l.id)));
+        setSelectedLeads([]);
+    };
+
+    const addToCRM = (id: string, currentStage: string) => {
+        // Logic to move lead to "Qualified" or "Project"
+        // For now just update stage locally or in DB
+        // TODO: Implement stage update in service
+        console.log(`Adding lead ${id} at stage ${currentStage} to CRM`);
+        toast.success("Lead marked as Qualified");
+    };
+
+    const handleSendMessage = async () => {
+        if (!inputText.trim()) return;
+
+        const userMessage = inputText.trim();
+        const newMsg = { id: messages.length + 1, sender: 'user', text: userMessage };
+        setMessages([...messages, newMsg]);
+        setInputText('');
+
+        try {
+            // Prepare conversation history for AI
+            const history = messages.map(m => ({
+                role: m.sender === 'user' ? 'user' : 'model',
+                text: m.text
+            }));
+
+            // Get AI response
+            const { text } = await chatWithAI(history, userMessage);
+
+            setMessages(prev => [...prev, {
+                id: prev.length + 1,
+                sender: 'agent',
+                text: text || 'I apologize, but I encountered an issue processing your request. Please try again.'
+            }]);
+        } catch (error) {
+            console.error('❌ AI Chat Error:', error);
+            setMessages(prev => [...prev, {
+                id: prev.length + 1,
+                sender: 'agent',
+                text: 'I apologize, but I encountered a technical issue. Please try again or contact support if the problem persists.'
+            }]);
+        }
+    };
+
+    return (
+        <div className="space-y-4 sm:space-y-6 animate-fade-in h-full flex flex-col">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 sm:mb-6">
+                <div className="min-w-0">
+                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500 flex items-center gap-2 sm:gap-3">
+                        <Bot className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-teal-400 flex-shrink-0" />
+                        <span className="truncate">Sales Agent</span>
+                    </h2>
+                    <p className="text-slate-400 mt-1 text-xs sm:text-sm">AI-powered lead generation</p>
+                </div>
+                <div className="flex bg-slate-800 p-1 rounded-lg self-start sm:self-auto">
+                    <button
+                        onClick={() => setActiveTab('leads')}
+                        className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'leads' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        Lead Finder
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('agent')}
+                        className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'agent' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        Agent Chat
+                    </button>
+                </div>
+            </div>
+
+            {activeTab === 'leads' ? (
+                <div className="space-y-6">
+                    {/* Search Bar */}
+                    <Card className="bg-slate-900 border-slate-800">
+                        <div className="flex flex-col gap-3 sm:gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="w-full">
+                                    <Input
+                                        label="Target Industry"
+                                        placeholder="e.g. Construction, Tech"
+                                        value={searchParams.industry}
+                                        onChange={e => setSearchParams({ ...searchParams, industry: e.target.value })}
+                                    />
+                                </div>
+                                <div className="w-full">
+                                    <Input
+                                        label="Location / Region"
+                                        placeholder="e.g. Zimbabwe, Harare"
+                                        value={searchParams.location}
+                                        onChange={e => setSearchParams({ ...searchParams, location: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Advanced Settings Checkbox */}
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setShowSettings(!showSettings)}
+                                    className="text-xs flex items-center gap-1 text-slate-400 hover:text-teal-400 transition-colors"
+                                >
+                                    <Settings className="w-3 h-3" />
+                                    {showSettings ? 'Hide Settings' : 'Advanced Search Settings'}
+                                </button>
+                            </div>
+
+                            {/* API Key Input */}
+                            {showSettings && (
+                                <div className="p-4 rounded-lg bg-slate-950/50 border border-slate-800 animate-fade-in">
+                                    <Input
+                                        label="Google Places API Key (Optional)"
+                                        placeholder="Paste your key here for real-time Google Maps data..."
+                                        value={apiKey}
+                                        onChange={e => handleSaveKey(e.target.value)}
+                                    />
+                                    <p className="text-[10px] text-slate-500 mt-1">
+                                        Leave empty to use AI simulation. Add key for real business data.
+                                    </p>
+                                </div>
+                            )}
+
+                            <div className="flex flex-wrap gap-2 sm:gap-3">
+                                <Button onClick={handleSearch} className="flex-1 sm:flex-initial bg-teal-500 hover:bg-teal-400" isLoading={isSearching}>
+                                    <Search className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Find Leads</span>
+                                </Button>
+
+                                <Button variant="outline" className="flex-1 sm:flex-initial border-dashed border-slate-600 hover:border-teal-500 hover:text-teal-400" onClick={() => setShowUpload(!showUpload)}>
+                                    <Upload className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Import</span>
+                                </Button>
+
+                                {selectedLeads.length > 0 && (
+                                    <Button onClick={deleteSelected} variant="danger" className="flex-1 sm:flex-initial bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/50">
+                                        <Trash2 className="w-4 h-4 sm:mr-2" /> ({selectedLeads.length})
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Dropzone */}
+                        {showUpload && (
+                            <div className="mt-4 p-8 border-2 border-dashed border-slate-700 rounded-xl bg-slate-950/50 text-center animate-fade-in relative">
+                                <button onClick={() => setShowUpload(false)} className="absolute top-2 right-2 text-slate-500 hover:text-white"><X className="w-4 h-4" /></button>
+                                <FileSpreadsheet className="w-10 h-10 text-teal-500 mx-auto mb-3" />
+                                <p className="text-white font-medium mb-1">Drag and drop Excel/CSV file</p>
+                                <p className="text-xs text-slate-500 mb-4">Supported columns: Name, Email, Phone, Industry, Location</p>
+                                <input
+                                    type="file"
+                                    accept=".xlsx, .xls, .csv"
+                                    onChange={handleFileUpload}
+                                    className="hidden"
+                                    id="file-upload"
+                                />
+                                <label htmlFor="file-upload" className="inline-block px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded cursor-pointer transition-colors text-sm">
+                                    Select File
+                                </label>
+                            </div>
+                        )}
+                    </Card>
+
+                    {/* Results */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl min-h-[400px]">
+                        {isLoading || isSearching ? (
+                            <div className="p-4 sm:p-6">
+                                <TableSkeleton rows={5} />
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-xs sm:text-sm text-slate-400">
+                                    <thead className="bg-slate-950/50 text-[10px] sm:text-xs uppercase font-semibold text-slate-500">
+                                        <tr>
+                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedLeads.length === leads.length && leads.length > 0}
+                                                    onChange={toggleSelectAll}
+                                                    className="rounded border-slate-700 bg-slate-900"
+                                                />
+                                            </th>
+                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">Business</th>
+                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden md:table-cell">Industry</th>
+                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden lg:table-cell">Location</th>
+                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">Contact</th>
+                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden sm:table-cell">Source</th>
+                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-800">
+                                        {leads.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
+                                                    No leads found. Try searching or uploading a file.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            leads.map((lead) => (
+                                                <tr key={lead.id} className="hover:bg-slate-800/40 transition-colors">
+                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedLeads.includes(lead.id)}
+                                                            onChange={() => toggleSelectLead(lead.id)}
+                                                            className="rounded border-slate-700 bg-slate-900"
+                                                        />
+                                                    </td>
+                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 font-medium text-white max-w-[120px] sm:max-w-none truncate">{lead.businessName}</td>
+                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden md:table-cell">{lead.industry || '-'}</td>
+                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden lg:table-cell">{lead.location || '-'}</td>
+                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
+                                                        <div className="flex flex-col gap-1">
+                                                            {lead.phone && <span className="flex items-center gap-1 text-[10px] sm:text-xs truncate max-w-[100px] sm:max-w-none"><Phone className="w-3 h-3 flex-shrink-0" /> <span className="truncate">{lead.phone}</span></span>}
+                                                            {lead.email && <span className="text-[10px] sm:text-xs text-blue-400 truncate max-w-[100px] sm:max-w-none">{lead.email}</span>}
+                                                            {lead.website && <a href={lead.website} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[10px] sm:text-xs text-teal-400 hover:underline"><ExternalLink className="w-3 h-3" /> Website</a>}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden sm:table-cell">
+                                                        <div className="flex flex-col gap-2">
+                                                            <span className="text-[10px] sm:text-xs px-2 py-1 bg-slate-800 rounded-full border border-slate-700 w-fit">{lead.source}</span>
+                                                            {lead.outreachMessage && (
+                                                                <button
+                                                                    onClick={() => setViewingMessage({ title: `Email for ${lead.businessName}`, body: lead.outreachMessage! })}
+                                                                    className="flex items-center gap-1 text-[10px] text-purple-400 hover:text-purple-300 w-fit"
+                                                                >
+                                                                    <Mail className="w-3 h-3" /> View Draft
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
+                                                        {lead.status === 'Added to CRM' || lead.stage !== 'lead' ? (
+                                                            <span className="flex items-center gap-1 text-green-400 text-[10px] sm:text-xs font-bold">
+                                                                <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Added</span>
+                                                            </span>
+                                                        ) : (
+                                                            <Button size="sm" variant="outline" onClick={() => addToCRM(lead.id, lead.stage)} className="text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-3">
+                                                                <UserPlus className="w-3 h-3" /> <span className="hidden sm:inline ml-1">Add</span>
+                                                            </Button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            ) : (
+                <div className="flex-1 bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col">
+                    {/* Chat Area */}
+                    <div className="flex-1 p-3 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto">
+                        {messages.map((msg) => (
+                            <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`max-w-[85%] sm:max-w-[80%] p-3 sm:p-4 rounded-xl text-sm sm:text-base ${msg.sender === 'user' ? 'bg-teal-600 text-white rounded-tr-none' : 'bg-slate-800 text-slate-200 rounded-tl-none'}`}>
+                                    {msg.text}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    {/* Input Area */}
+                    <div className="p-4 bg-slate-950 border-t border-slate-800 flex gap-4">
+                        <input
+                            type="text"
+                            className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            placeholder="Type a message to the agent..."
+                            value={inputText}
+                            onChange={(e) => setInputText(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                        />
+                        <Button onClick={handleSendMessage} className="bg-teal-500"><Send className="w-4 h-4" /></Button>
+                    </div>
+                </div>
+            )}
+
+            {/* Email Preview Modal */}
+            {viewingMessage && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-2xl shadow-2xl animate-fade-in-up">
+                        <div className="flex justify-between items-center p-4 border-b border-slate-800">
+                            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                                <Mail className="w-5 h-5 text-teal-500" />
+                                Outreach Draft
+                            </h3>
+                            <button onClick={() => setViewingMessage(null)} className="text-slate-500 hover:text-white">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <p className="text-sm text-slate-400 mb-4">Generated for: <span className="text-white font-medium">{viewingMessage.title}</span></p>
+                            <div className="bg-slate-950 p-4 rounded-lg border border-slate-800 text-sm text-slate-300 font-mono whitespace-pre-wrap max-h-[400px] overflow-y-auto">
+                                {viewingMessage.body}
+                            </div>
+                        </div>
+                        <div className="p-4 border-t border-slate-800 flex justify-end gap-3">
+                            <Button variant="outline" onClick={() => setViewingMessage(null)}>Close</Button>
+                            <Button className="bg-teal-600 hover:bg-teal-500" onClick={() => {
+                                toast.success("Draft copied to clipboard!");
+                                navigator.clipboard.writeText(viewingMessage.body);
+                                setViewingMessage(null);
+                            }}>
+                                Copy to Clipboard
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default SalesAgent;

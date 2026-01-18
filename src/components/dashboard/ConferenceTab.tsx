@@ -1,0 +1,87 @@
+import React, { useState, useCallback } from 'react';
+import CustomVideoRoom from './video/CustomVideoRoom';
+import SimpleVideoMeeting from './SimpleVideoMeeting';
+import ManualMeetingLink from './ManualMeetingLink';
+import { User } from '../../types';
+
+interface Props {
+    user: User;
+    onCallStateChange?: (isInCall: boolean) => void;
+    onToggleSidebar?: () => void;
+    showSidebar?: boolean;
+}
+
+/**
+ * Conference Tab - REBUILT FROM SCRATCH
+ *
+ * Ultra-minimal video meeting system:
+ * - No auto-loading (prevents Error 310)
+ * - Manual user actions only
+ * - Simple state management
+ * - Zero complex dependencies
+ */
+const ConferenceTab: React.FC<Props> = ({ user, onCallStateChange, onToggleSidebar, showSidebar }) => {
+    const [activeRoomUrl, setActiveRoomUrl] = useState<string | null>(null);
+
+    const handleJoin = useCallback((roomUrl: string) => {
+        setActiveRoomUrl(roomUrl);
+        onCallStateChange?.(true);
+    }, [onCallStateChange]);
+
+    const handleLeave = useCallback(() => {
+        setActiveRoomUrl(null);
+        onCallStateChange?.(false);
+    }, [onCallStateChange]);
+
+    // If in a meeting, show video room
+    if (activeRoomUrl) {
+        return (
+            <CustomVideoRoom
+                user={user}
+                roomUrl={activeRoomUrl}
+                onLeave={handleLeave}
+                onToggleSidebar={onToggleSidebar}
+                showSidebar={showSidebar}
+            />
+        );
+    }
+
+    // Main conference tab view
+    return (
+        <div className="space-y-6 sm:space-y-8 animate-fade-in max-w-5xl mx-auto px-4 sm:px-0">
+            <div className="mb-6">
+                <h2 className="text-2xl font-bold text-white mb-2">Video Meetings</h2>
+                <p className="text-slate-400">
+                    {user.role === 'admin'
+                        ? 'Simple, stable video meetings - Create and join with one click'
+                        : 'Join your scheduled meetings'
+                    }
+                </p>
+            </div>
+
+            {/* Admin: Simple Video Meeting System */}
+            {user.role === 'admin' && (
+                <div className="space-y-6">
+                    <SimpleVideoMeeting user={user} onJoinRoom={handleJoin} />
+
+                    {/* Fallback: Manual URL input */}
+                    <div>
+                        <h3 className="text-lg font-bold text-white mb-3">Or Use Existing Room</h3>
+                        <ManualMeetingLink user={user} onJoinRoom={handleJoin} />
+                    </div>
+                </div>
+            )}
+
+            {/* Client: Message */}
+            {user.role === 'client' && (
+                <div className="bg-slate-900/50 rounded-xl p-8 border-2 border-slate-700 text-center">
+                    <p className="text-gray-400">
+                        Your admin will send you meeting links when scheduled.
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default ConferenceTab;

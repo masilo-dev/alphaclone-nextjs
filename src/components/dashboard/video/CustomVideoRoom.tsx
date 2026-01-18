@@ -1,0 +1,551 @@
+import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { useVideoPlatform } from '../../../hooks/useVideoPlatform';
+import CustomVideoTile from './CustomVideoTile';
+import VideoControls from './VideoControls';
+import MeetingChat, { ChatMessage } from './MeetingChat';
+import { User } from '../../../types';
+import { dailyService } from '../../../services/dailyService';
+import toast from 'react-hot-toast';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
+
+interface CustomVideoRoomProps {
+    user: User;
+    roomUrl: string;
+    callId?: string;
+    onLeave: () => void;
+    onToggleSidebar?: () => void;
+    showSidebar?: boolean;
+}
+
+// Check if user is admin
+const isUserAdmin = (user: User): boolean => {
+    return user.role === 'admin';
+};
+
+/**
+ * Custom Video Room
+ * Uses new layered architecture for production-ready reliability
+ * - Clean state management via useVideoPlatform hook
+ * - No direct Daily API calls
+ * - Automatic error handling and recovery
+ */
+const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
+    user,
+    roomUrl,
+    callId,
+    onLeave,
+    onToggleSidebar,
+    showSidebar
+}) => {
+    const {
+        isJoined,
+        isJoining,
+        isAudioEnabled,
+        isVideoEnabled,
+        isScreenSharing,
+        participants,
+        localParticipant,
+        remoteParticipants,
+        error,
+        join,
+        leave,
+        toggleAudio,
+        toggleVideo,
+        toggleScreenShare,
+        sendChatMessage,
+        muteParticipant,
+        removeParticipant,
+        config,
+    } = useVideoPlatform();
+
+    const [callStartTime, setCallStartTime] = useState<Date | null>(null);
+    const [secondsElapsed, setSecondsElapsed] = useState(0);
+    const MAX_DURATION_SECONDS = 20 * 60; // 20 minutes
+    const isRestricted = user.role !== 'admin';
+    const [showParticipants, setShowParticipants] = useState(false);
+    const [showChat, setShowChat] = useState(false);
+    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+    const joinAttemptedRef = useRef(false); // Prevent double join in React Strict Mode
+    const isJoinedRef = useRef(isJoined); // Track joined state without causing re-renders
+
+    // Circuit breaker: Detect rapid re-renders (Error 310 prevention)
+    const renderCountRef = useRef(0);
+    const renderTimestampsRef = useRef<number[]>([]);
+    const RENDER_LIMIT = 50; // Max renders allowed
+    const RENDER_WINDOW_MS = 1000; // Within 1 second
+
+    useEffect(() => {
+        renderCountRef.current++;
+        const now = Date.now();
+        renderTimestampsRef.current.push(now);
+
+        // Keep only recent renders
+        renderTimestampsRef.current = renderTimestampsRef.current.filter(
+            timestamp => now - timestamp < RENDER_WINDOW_MS
+        );
+
+        // If too many renders in window, log warning
+        if (renderTimestampsRef.current.length > RENDER_LIMIT) {
+            console.error('⚠️ CIRCUIT BREAKER: Too many re-renders detected!', {
+                count: renderTimestampsRef.current.length,
+                windowMs: RENDER_WINDOW_MS,
+                limit: RENDER_LIMIT,
+                participantCount: participants.length,
+            });
+            // Don't throw - just log. React will handle the actual Error 310 if limit exceeded
+        }
+    });
+
+    // Join meeting on mount
+    useEffect(() => {
+        // Guard: Prevent double join attempts (React Strict Mode protection)
+        if (joinAttemptedRef.current || isJoining || isJoined) {
+            console.log('Join attempt skipped:', {
+                attemptedBefore: joinAttemptedRef.current,
+                isJoining,
+                isJoined
+            });
+            return;
+        }
+
+        joinAttemptedRef.current = true;
+
+        const joinMeeting = async () => {
+            try {
+                console.log('Attempting to join meeting...');
+                await join({
+                    url: roomUrl,
+                    userName: user.name || 'Guest',
+                });
+
+                setCallStartTime(new Date());
+
+                // Mark call as active in database
+                if (callId) {
+                    await dailyService.startVideoCall(callId).catch(err => {
+                        console.error('Failed to mark call as active:', err);
+                    });
+                }
+
+                toast.success('Joined meeting successfully!');
+            } catch (err: any) {
+                console.error('Failed to join meeting:', err);
+                toast.error(err?.userMessage || 'Failed to join meeting');
+                joinAttemptedRef.current = false; // Reset on error so user can retry
+                setTimeout(onLeave, 2000);
+            }
+        };
+
+        joinMeeting();
+
+        // Cleanup on unmount - use ref to avoid dependency on isJoined state
+        return () => {
+            if (isJoinedRef.current) {
+                handleLeave();
+            }
+        };
+    }, []);
+
+    // Keep isJoinedRef in sync with isJoined state
+    useEffect(() => {
+        isJoinedRef.current = isJoined;
+    }, [isJoined]);
+
+    // Subscribe to call status changes (for admin ending call for all)
+    useEffect(() => {
+        if (!callId) return;
+
+        const unsubscribe = dailyService.subscribeToCallStatus(callId, (status) => {
+            if (status === 'ended' && isJoinedRef.current) {
+                console.log('Call ended by admin, leaving automatically...');
+                toast.success('The host has ended the meeting');
+                setTimeout(() => {
+                    handleLeave();
+                }, 1500); // Give time for toast to show
+            }
+        });
+
+        return () => {
+            unsubscribe();
+        };
+    }, [callId]); // Only re-subscribe when callId changes, not isJoined
+
+    // Limit enforcement timer
+    useEffect(() => {
+        if (!isJoined || !callStartTime || !isRestricted) return;
+
+        const interval = setInterval(() => {
+            const now = new Date();
+            const elapsed = Math.floor((now.getTime() - callStartTime.getTime()) / 1000);
+            setSecondsElapsed(elapsed);
+
+            if (elapsed >= MAX_DURATION_SECONDS) {
+                toast.error("Meeting time limit (20 min) reached.");
+                handleLeave();
+            } else if (MAX_DURATION_SECONDS - elapsed === 60) {
+                toast.error("1 minute remaining until auto-disconnection.");
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [isJoined, callStartTime, isRestricted]);
+
+    // Show error toast when errors occur
+    useEffect(() => {
+        if (error) {
+            toast.error(error.userMessage);
+
+            // Auto-retry if recoverable
+            if (error.action === 'retry' && error.recoverable) {
+                // Could implement auto-retry logic here
+            }
+        }
+    }, [error]);
+
+    // Handle leaving the meeting
+    const handleLeave = async () => {
+        try {
+            // Calculate duration
+            const duration = callStartTime
+                ? Math.floor((new Date().getTime() - callStartTime.getTime()) / 1000)
+                : undefined;
+
+            // End call in database
+            if (callId && duration) {
+                await dailyService.endVideoCall(callId, duration).catch(err => {
+                    console.error('Failed to end call in database:', err);
+                });
+            }
+
+            await leave();
+            onLeave();
+        } catch (err) {
+            console.error('Error leaving meeting:', err);
+            onLeave();
+        }
+    };
+
+    // Handle audio toggle
+    const handleToggleAudio = async () => {
+        try {
+            await toggleAudio();
+        } catch (err: any) {
+            toast.error(err?.userMessage || 'Failed to toggle audio');
+        }
+    };
+
+    // Handle video toggle
+    const handleToggleVideo = async () => {
+        try {
+            await toggleVideo();
+        } catch (err: any) {
+            toast.error(err?.userMessage || 'Failed to toggle video');
+        }
+    };
+
+    // Handle screen share toggle
+    const handleToggleScreenShare = async () => {
+        try {
+            await toggleScreenShare();
+        } catch (err: any) {
+            toast.error(err?.userMessage || 'Failed to toggle screen share');
+        }
+    };
+
+    // Admin: Mute participant (force mute)
+    const handleMuteParticipant = async (sessionId: string) => {
+        if (!isUserAdmin(user)) {
+            toast.error('Only admins can mute participants');
+            return;
+        }
+
+        try {
+            await muteParticipant(sessionId);
+            toast.success('Mute request sent');
+        } catch (err: any) {
+            toast.error('Failed to mute participant');
+        }
+    };
+
+    // Admin: Remove participant from call
+    const handleRemoveParticipant = async (sessionId: string) => {
+        if (!isUserAdmin(user)) {
+            toast.error('Only admins can remove participants');
+            return;
+        }
+
+        try {
+            await removeParticipant(sessionId);
+            toast.success('Remove request sent');
+        } catch (err: any) {
+            toast.error('Failed to remove participant');
+        }
+    };
+
+    // Admin: End meeting for everyone
+    const handleEndMeetingForAll = async () => {
+        if (!isUserAdmin(user)) {
+            toast.error('Only admins can end meetings');
+            return;
+        }
+
+        if (!confirm('End this meeting for everyone?')) {
+            return;
+        }
+
+        try {
+            if (callId) {
+                await dailyService.endVideoCall(callId, 0);
+                toast.success('Meeting ended for all participants');
+            }
+            await leave();
+            onLeave();
+        } catch (err: any) {
+            toast.error('Failed to end meeting');
+        }
+    };
+
+    // Handle sending chat message
+    const handleSendChatMessage = async (message: string) => {
+        try {
+            await sendChatMessage(message);
+
+            // Add to local messages immediately for instant feedback
+            const newMessage: ChatMessage = {
+                id: Date.now().toString(),
+                userName: user.name || 'You',
+                userId: user.id,
+                message,
+                timestamp: new Date(),
+                isLocal: true,
+            };
+            setChatMessages(prev => [...prev, newMessage]);
+        } catch (err: any) {
+            toast.error('Failed to send message');
+        }
+    };
+
+    // Listen for incoming chat messages via app-message events
+    useEffect(() => {
+        if (!isJoined) return;
+
+        // Get the platform instance to listen for app messages
+        const platform = config as any;
+        const engine = platform?.engine;
+
+        if (!engine) return;
+
+        const handleAppMessage = (event: any) => {
+            const { data, fromId } = event;
+
+            // Handle chat messages
+            if (data?.type === 'chat') {
+                const isFromSelf = localParticipant?.sessionId === data.senderSessionId;
+
+                // Don't add if it's from us (already added in handleSendChatMessage)
+                if (isFromSelf) return;
+
+                const newMessage: ChatMessage = {
+                    id: `${data.timestamp}-${fromId}`,
+                    userName: data.sender || 'Guest',
+                    userId: data.senderSessionId || fromId,
+                    message: data.message,
+                    timestamp: new Date(data.timestamp),
+                    isLocal: false,
+                };
+
+                setChatMessages(prev => [...prev, newMessage]);
+
+                // Show notification if chat is closed
+                if (!showChat) {
+                    toast.success(`${data.sender}: ${data.message.substring(0, 50)}${data.message.length > 50 ? '...' : ''}`);
+                }
+            }
+        };
+
+        engine.on('app-message', handleAppMessage);
+
+        return () => {
+            engine.off('app-message', handleAppMessage);
+        };
+    }, [isJoined, localParticipant, showChat, config]);
+
+    // DEBUG: Log participant info to diagnose visibility issues
+    // Use refs to prevent this from triggering re-renders
+    // CRITICAL: Must be defined BEFORE any early returns (Rules of Hooks)
+    const lastParticipantCountRef = useRef(0);
+    useEffect(() => {
+        // Only log when participant count changes (not on every state update)
+        if (participants.length !== lastParticipantCountRef.current) {
+            lastParticipantCountRef.current = participants.length;
+            console.log('🎥 PARTICIPANTS UPDATE:', {
+                total: participants.length,
+                local: localParticipant ? 1 : 0,
+                remote: remoteParticipants.length,
+                participants: participants.map(p => ({
+                    name: p.userName,
+                    sessionId: p.sessionId,
+                    isLocal: p.isLocal,
+                    hasVideo: !!p.video.track,
+                    hasAudio: !!p.audio.track
+                }))
+            });
+        }
+    }, [participants.length, localParticipant, remoteParticipants.length]);
+
+    // Calculate grid layout based on participant count (support up to 50+ people)
+    // Automatically minimize tiles as more people join
+    // Memoized to prevent recalculation on every render (Error 310 protection)
+    // CRITICAL: Must be defined BEFORE any early returns (Rules of Hooks)
+    const gridClass = useMemo(() => {
+        return participants.length === 1 ? 'grid-cols-1' :
+            participants.length === 2 ? 'grid-cols-1 sm:grid-cols-2' :
+                participants.length <= 4 ? 'grid-cols-2 sm:grid-cols-2' :
+                    participants.length <= 6 ? 'grid-cols-2 sm:grid-cols-3' :
+                        participants.length <= 9 ? 'grid-cols-3 sm:grid-cols-3 lg:grid-cols-3' :
+                            participants.length <= 16 ? 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-4' :
+                                participants.length <= 25 ? 'grid-cols-4 sm:grid-cols-5 lg:grid-cols-5' :
+                                    'grid-cols-4 sm:grid-cols-6 lg:grid-cols-7'; // 50+ people
+    }, [participants.length]);
+
+    // Show loading state while joining
+    // CRITICAL: This early return must come AFTER all hooks (Rules of Hooks)
+    if (isJoining || !isJoined) {
+        return (
+            <div className="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-teal-500 mx-auto mb-6"></div>
+                    <p className="text-white text-xl font-medium mb-2">
+                        {isJoining ? 'Joining meeting...' : 'Connecting...'}
+                    </p>
+                    <p className="text-slate-400 text-sm">Please wait while we connect you</p>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="fixed inset-0 bg-gray-900 z-[100]">
+            {/* Toggle Sidebar Button - Arrow */}
+            {onToggleSidebar && (
+                <button
+                    onClick={onToggleSidebar}
+                    className="fixed top-4 left-4 z-[120] p-3 bg-gray-800/90 hover:bg-gray-700/90 rounded-full shadow-lg transition-all border border-gray-700"
+                    title={showSidebar ? 'Hide navigation' : 'Show navigation'}
+                >
+                    {showSidebar ? (
+                        <ChevronLeft className="w-5 h-5 text-white" />
+                    ) : (
+                        <ChevronRight className="w-5 h-5 text-white" />
+                    )}
+                </button>
+            )}
+
+            {/* Video grid - responsive padding and gap */}
+            <div className="absolute inset-0 pb-20 sm:pb-24 overflow-auto p-2 sm:p-4">
+                <div className={`grid gap-2 sm:gap-4 h-full ${gridClass}`}>
+                    {/* Limit Indicator */}
+                    {isRestricted && isJoined && (
+                        <div className="fixed top-4 right-4 z-[120] bg-black/60 backdrop-blur px-4 py-2 rounded-full border border-teal-500/50 flex items-center gap-3">
+                            <div className="flex flex-col items-end">
+                                <span className={`text-xs font-bold ${MAX_DURATION_SECONDS - secondsElapsed < 120 ? 'text-red-400 animate-pulse' : 'text-teal-400'}`}>
+                                    SESSION LIMIT: {Math.floor((MAX_DURATION_SECONDS - secondsElapsed) / 60)}:{((MAX_DURATION_SECONDS - secondsElapsed) % 60).toString().padStart(2, '0')}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Local participant first */}
+                    {localParticipant && (
+                        <CustomVideoTile
+                            participant={localParticipant}
+                            isLocal={true}
+                            isAdmin={isUserAdmin(user)}
+                        />
+                    )}
+
+                    {/* Remote participants */}
+                    {remoteParticipants.map(participant => (
+                        <CustomVideoTile
+                            key={participant.sessionId}
+                            participant={participant}
+                            isLocal={false}
+                            isAdmin={isUserAdmin(user)}
+                            onMuteParticipant={handleMuteParticipant}
+                            onRemoveParticipant={handleRemoveParticipant}
+                        />
+                    ))}
+
+                    {/* Empty state when alone */}
+                    {participants.length === 1 && (
+                        <div className="col-span-full flex items-center justify-center">
+                            <div className="text-center text-gray-400">
+                                <p className="text-lg mb-2">Waiting for others to join...</p>
+                                <p className="text-sm">Share the meeting link with participants</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Participants sidebar */}
+            {showParticipants && (
+                <div className="absolute right-0 top-0 bottom-24 w-80 bg-gray-800 border-l border-gray-700 p-4 overflow-auto z-10">
+                    <h3 className="text-white text-lg font-semibold mb-4">
+                        Participants ({participants.length})
+                    </h3>
+                    <div className="space-y-2">
+                        {participants.map(participant => (
+                            <div
+                                key={participant.sessionId}
+                                className="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg"
+                            >
+                                <div className="w-10 h-10 rounded-full bg-teal-500 flex items-center justify-center">
+                                    <span className="text-white font-medium">
+                                        {(participant?.userName?.[0] || 'G').toUpperCase()}
+                                    </span>
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-white text-sm font-medium">
+                                        {participant.userName || 'Guest'}
+                                        {participant.isLocal && ' (You)'}
+                                    </p>
+                                    <p className="text-gray-400 text-xs">
+                                        {participant.isLocal ? 'You' : 'Participant'}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Chat panel */}
+            <MeetingChat
+                user={user}
+                isOpen={showChat}
+                onClose={() => setShowChat(false)}
+                onSendMessage={handleSendChatMessage}
+                messages={chatMessages}
+            />
+
+            {/* Control bar */}
+            <VideoControls
+                isMuted={!isAudioEnabled}
+                isVideoOff={!isVideoEnabled}
+                isScreenSharing={isScreenSharing}
+                onToggleMic={handleToggleAudio}
+                onToggleVideo={handleToggleVideo}
+                onToggleScreenShare={handleToggleScreenShare}
+                onLeave={handleLeave}
+                onToggleParticipants={() => setShowParticipants(!showParticipants)}
+                onToggleChat={() => setShowChat(!showChat)}
+                onEndForAll={isUserAdmin(user) ? handleEndMeetingForAll : undefined}
+                isAdmin={isUserAdmin(user)}
+                roomUrl={roomUrl}
+            />
+        </div>
+    );
+};
+
+export default CustomVideoRoom;

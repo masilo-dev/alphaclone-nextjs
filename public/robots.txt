@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Allow: /blog/
+
+# Sitemap location
+Sitemap: https://alphaclone.tech/sitemap.xml
+
+# Disallow admin and dashboard areas
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /api/
+
+# Crawl delay (optional, helps prevent server overload)
+Crawl-delay: 1
