@@ -8,9 +8,9 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { googlePlacesService } from './googlePlacesService';
 
 // API Keys
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const ANTHROPIC_API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || '';
+const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
+const ANTHROPIC_API_KEY = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY || process.env.VITE_ANTHROPIC_API_KEY || '';
+const OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || '';
 
 // Initialize providers
 const geminiAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;

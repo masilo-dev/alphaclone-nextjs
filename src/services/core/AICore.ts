@@ -7,7 +7,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { supabase } from '../../lib/supabase';
 import { tenantService } from '../tenancy/TenantService';
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 interface AIContext {
@@ -222,7 +222,7 @@ Keep each reply under 100 words. Format as array of strings.
       }
 
       // Fallback: split by numbered list
-      const lines = response.split('\n').filter(l => l.trim());
+      const lines = response.split('\n').filter((l: string) => l.trim());
       return lines.slice(0, 3);
     } catch (error) {
       console.error('AI reply suggestion failed:', error);

@@ -22,8 +22,8 @@ interface GenerationResult {
 }
 
 class AIGenerationService {
-    private readonly OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
-    private readonly ANTHROPIC_API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
+    private readonly OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || '';
+    private readonly ANTHROPIC_API_KEY = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY || process.env.VITE_ANTHROPIC_API_KEY || '';
 
     /**
      * Generate logo using DALL-E 3
@@ -259,9 +259,6 @@ class AIGenerationService {
     async getGenerationHistory(userId: string, limit: number = 20) {
         try {
             const { data, error } = await supabase
-                .from('generated_assets')
-                .select('*')
-                .eq('user_id', userId)
                 .from('generated_assets')
                 .select('*')
                 .eq('user_id', userId)

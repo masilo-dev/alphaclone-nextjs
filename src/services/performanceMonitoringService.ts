@@ -135,12 +135,12 @@ export const performanceMonitoringService = {
         localStorage.setItem('performance_metrics', JSON.stringify(metrics));
 
         // Log to console in development
-        if (import.meta.env.DEV) {
+        if (process.env.NODE_ENV !== 'production') {
             console.log(`[Performance] ${metric.name}: ${metric.value}${metric.unit}`);
         }
 
         // Send to analytics service (Sentry, etc.)
-        if (import.meta.env.PROD) {
+        if (process.env.NODE_ENV === 'production') {
             // Would send to monitoring service
         }
     },

@@ -6,8 +6,8 @@ import { BrowserTracing } from '@sentry/tracing';
  * Only initializes in production or when VITE_SENTRY_DSN is provided
  */
 export const initErrorTracking = () => {
-  const dsn = import.meta.env.VITE_SENTRY_DSN;
-  const environment = import.meta.env.MODE;
+  const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.VITE_SENTRY_DSN;
+  const environment = process.env.NODE_ENV || 'development';
   const isProduction = environment === 'production';
 
   // Only initialize if DSN is provided
@@ -46,7 +46,7 @@ export const initErrorTracking = () => {
       replaysOnErrorSampleRate: 1.0,
 
       // Release tracking
-      release: import.meta.env.VITE_APP_VERSION || '1.0.0',
+      release: process.env.NEXT_PUBLIC_APP_VERSION || process.env.VITE_APP_VERSION || '1.0.0',
 
       // Filter sensitive data
       beforeSend(event, hint) {

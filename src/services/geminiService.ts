@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
 
 // Validate API key on import
 if (!API_KEY || API_KEY.trim() === '') {

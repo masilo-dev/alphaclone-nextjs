@@ -4,7 +4,7 @@ import { tenantService } from './tenancy/TenantService';
 import { activityService } from './activityService';
 import { auditLoggingService } from './auditLoggingService';
 
-const STRIPE_PUBLIC_KEY = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+const STRIPE_PUBLIC_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || process.env.VITE_STRIPE_PUBLIC_KEY;
 export const stripePromise = loadStripe(STRIPE_PUBLIC_KEY || '');
 
 export interface Invoice {
