@@ -149,7 +149,7 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
                                         {m.started_at && (
                                             <span className="flex items-center gap-1">
                                                 <Clock className="w-3 h-3" />
-                                                <span className="whitespace-nowrap">Started {new Date(m.started_at).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</span>
+                                                <span className="whitespace-nowrap">Started {new Date(m.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                             </span>
                                         )}
                                     </div>
@@ -225,7 +225,7 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
                                         <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-slate-400 flex-wrap">
                                             <span className="flex items-center gap-1">
                                                 <Clock className="w-3 h-3" />
-                                                <span className="whitespace-nowrap">{m.created_at && new Date(m.created_at).toLocaleString([], {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'})}</span>
+                                                <span className="whitespace-nowrap">{m.created_at && new Date(m.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                                             </span>
                                             <span className="flex items-center gap-1">
                                                 <Users className="w-3 h-3" />
@@ -252,7 +252,7 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
                                             {(isAdmin || (isHost && m.allow_client_cancellation)) && (
                                                 <Button
                                                     size="sm"
-                                                    variant="destructive"
+                                                    variant="danger"
                                                     onClick={() => handleCancelMeeting(m)}
                                                     disabled={cancellingId === m.id || (!isAdmin && !canCancel)}
                                                     title={message}

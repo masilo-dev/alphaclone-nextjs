@@ -167,6 +167,35 @@ export const leadService = {
     },
 
     /**
+     * Update a lead
+     */
+    async updateLead(id: string, updates: Partial<Lead>): Promise<{ error: string | null }> {
+        const tenantId = this.getTenantId();
+
+        const dbPayload: any = {};
+        if (updates.businessName) dbPayload.business_name = updates.businessName;
+        if (updates.industry !== undefined) dbPayload.industry = updates.industry;
+        if (updates.location !== undefined) dbPayload.location = updates.location;
+        if (updates.phone !== undefined) dbPayload.phone = updates.phone;
+        if (updates.email !== undefined) dbPayload.email = updates.email;
+        if (updates.website !== undefined) dbPayload.website = updates.website;
+        if (updates.source !== undefined) dbPayload.source = updates.source;
+        if (updates.stage !== undefined) dbPayload.stage = updates.stage;
+        if (updates.value !== undefined) dbPayload.value = updates.value;
+        if (updates.notes !== undefined) dbPayload.notes = updates.notes;
+        if (updates.outreachMessage !== undefined) dbPayload.outreach_message = updates.outreachMessage;
+        if (updates.outreachStatus !== undefined) dbPayload.outreach_status = updates.outreachStatus;
+
+        const { error } = await supabase
+            .from('leads')
+            .update(dbPayload)
+            .eq('id', id)
+            .eq('tenant_id', tenantId);
+
+        return { error: error ? error.message : null };
+    },
+
+    /**
      * Delete a lead
      */
     async deleteLead(id: string): Promise<{ error: string | null }> {

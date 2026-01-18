@@ -36,7 +36,7 @@ export function VirtualList<T>({
     return (
         <div className={className} style={{ height: '100%', width: '100%' }}>
             <AutoSizer>
-                {({ height, width }) => (
+                {({ height, width }: { height: number; width: number }) => (
                     <List
                         height={height}
                         itemCount={items.length}
@@ -90,7 +90,7 @@ export function VirtualGrid<T>({
     return (
         <div className={className} style={{ height: '100%', width: '100%' }}>
             <AutoSizer>
-                {({ height, width }) => (
+                {({ height, width }: { height: number; width: number }) => (
                     <List
                         height={height}
                         itemCount={rows}

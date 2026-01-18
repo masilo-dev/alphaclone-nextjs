@@ -1,6 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
-import * as Sentry from '@sentry/react';
+// import * as Sentry from '@sentry/react';
 
 interface Props {
     children: ReactNode;
@@ -42,16 +42,16 @@ export class ErrorBoundary extends Component<Props, State> {
         });
 
         // Send to Sentry error tracking
-        Sentry.captureException(error, {
-            contexts: {
-                react: {
-                    componentStack: errorInfo.componentStack,
-                },
-            },
-            tags: {
-                errorBoundary: true,
-            },
-        });
+        // Sentry.captureException(error, {
+        //     contexts: {
+        //         react: {
+        //             componentStack: errorInfo.componentStack,
+        //         },
+        //     },
+        //     tags: {
+        //         errorBoundary: true,
+        //     },
+        // });
     }
 
     handleReset = () => {
@@ -88,7 +88,7 @@ export class ErrorBoundary extends Component<Props, State> {
                                 <p className="text-sm font-mono text-red-300 mb-2">
                                     {this.state.error.message}
                                 </p>
-                                {import.meta.env.DEV && this.state.errorInfo && (
+                                {process.env.NODE_ENV !== 'production' && this.state.errorInfo && (
                                     <details className="mt-2">
                                         <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-400">
                                             Stack trace

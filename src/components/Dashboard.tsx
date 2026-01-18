@@ -807,7 +807,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       case '/dashboard/security':
         return (
           <React.Suspense fallback={<div>Loading Security Center...</div>}>
-            <SecurityDashboard />
+            <SecurityDashboard user={user} />
           </React.Suspense>
         );
 
@@ -914,7 +914,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       case '/dashboard/allocation':
         return (
           <WidgetErrorBoundary title="Resource Allocation">
-            <ResourceAllocationView />
+            <ResourceAllocationView user={user} />
           </WidgetErrorBoundary>
         );
 

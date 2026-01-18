@@ -185,7 +185,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     {pipelineStats.slice(0, 4).map((stat) => (
                         <div key={stat.stage} className="glass-panel p-4 rounded-xl border border-white/5">
-                            <div className="text-slate-400 text-xs uppercase mb-1">{stageLabels[stat.stage]}</div>
+                            <div className="text-slate-400 text-xs uppercase mb-1">{stageLabels[stat.stage as DealStage]}</div>
                             <div className="text-2xl font-bold text-white">{stat.dealCount}</div>
                             <div className="text-teal-400 text-sm">{formatCurrency(stat.totalValue)}</div>
                         </div>

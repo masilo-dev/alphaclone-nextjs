@@ -12,7 +12,8 @@ import {
     Mic,
     Menu
 } from 'lucide-react';
-import { User } from '../../types';
+import { User } from '../../../types';
+import BusinessHome from './BusinessHome';
 
 interface BusinessDashboardProps {
     user: User;

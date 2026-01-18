@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { tenantService } from '../services/tenancy/TenantService';
-import type { Tenant } from '../services/tenancy/types';
+import type { Tenant, SubscriptionPlan } from '../services/tenancy/types';
 import { authService } from '../services/authService';
 import { User } from '../types';
 
@@ -18,7 +18,7 @@ interface TenantContextType {
 interface CreateTenantData {
   name: string;
   slug: string;
-  plan?: string;
+  plan?: SubscriptionPlan;
 }
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);

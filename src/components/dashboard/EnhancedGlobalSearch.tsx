@@ -61,7 +61,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
     };
 
     const loadSuggestions = async () => {
-        const role = user.role === 'visitor' ? 'client' : user.role;
+        const role = user.role === 'admin' ? 'admin' : 'client';
         const suggs = await searchService.getSuggestions(query, user.id, role);
         setSuggestions(suggs);
     };
@@ -73,7 +73,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
         }
 
         setIsSearching(true);
-        const role = user.role === 'visitor' ? 'client' : user.role;
+        const role = user.role === 'admin' ? 'admin' : 'client';
         const { results: searchResults, error } = await searchService.search(
             query,
             user.id,
@@ -188,9 +188,8 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                         )}
                         <button
                             onClick={() => setShowFilters(!showFilters)}
-                            className={`p-2 rounded-lg transition-colors ${
-                                showFilters ? 'bg-teal-500/20 text-teal-400' : 'text-slate-400 hover:text-white'
-                            }`}
+                            className={`p-2 rounded-lg transition-colors ${showFilters ? 'bg-teal-500/20 text-teal-400' : 'text-slate-400 hover:text-white'
+                                }`}
                         >
                             <Filter className="w-5 h-5" />
                         </button>
@@ -307,11 +306,10 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                             <button
                                 key={`${result.type}-${result.id}`}
                                 onClick={() => handleSelect(result)}
-                                className={`w-full flex items-start gap-3 p-4 text-left transition-colors ${
-                                    index === selectedIndex
+                                className={`w-full flex items-start gap-3 p-4 text-left transition-colors ${index === selectedIndex
                                         ? 'bg-slate-800'
                                         : 'hover:bg-slate-800/50'
-                                }`}
+                                    }`}
                             >
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${getColor(result.type)}`}>
                                     {getIcon(result.type)}

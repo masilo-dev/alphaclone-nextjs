@@ -126,7 +126,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                 );
             } else {
                 await toast.promise(
-                    leadService.createLead(leadData),
+                    leadService.addLead(leadData),
                     {
                         loading: 'Creating lead...',
                         success: 'Lead created successfully!',

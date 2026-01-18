@@ -47,15 +47,18 @@ export const Button: React.FC<ButtonProps> = ({
 };
 
 // --- Card ---
-interface CardProps {
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
   hoverEffect?: boolean;
 }
 
-export const Card: React.FC<CardProps> = ({ children, className = '', hoverEffect = false }) => {
+export const Card: React.FC<CardProps> = ({ children, className = '', hoverEffect = false, ...props }) => {
   return (
-    <div className={`bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 ${hoverEffect ? 'hover:bg-slate-800/80 transition-all duration-300 hover:border-teal-500/30 hover:shadow-lg hover:shadow-teal-900/10' : ''} ${className}`}>
+    <div
+      className={`bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 ${hoverEffect ? 'hover:bg-slate-800/80 transition-all duration-300 hover:border-teal-500/30 hover:shadow-lg hover:shadow-teal-900/10' : ''} ${className}`}
+      {...props}
+    >
       {children}
     </div>
   );
