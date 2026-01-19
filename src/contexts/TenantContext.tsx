@@ -85,8 +85,14 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         setCurrentTenant(null);
         tenantService.clearCurrentTenant();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load user tenants:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint
+      });
     } finally {
       setIsLoading(false);
     }

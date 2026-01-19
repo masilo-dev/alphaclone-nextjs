@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, UserPlus, Phone, CheckCircle2, Bot, Send, Trash2, Upload, FileSpreadsheet, X, Mail, Settings, ExternalLink } from 'lucide-react';
-import { generateLeads, chatWithAI } from '../../services/unifiedAIService';
+import { generateLeads, chatWithAI, isAnyAIConfigured } from '../../services/unifiedAIService';
 import { leadService, Lead } from '../../services/leadService';
 import { Button, Input, Card } from '../ui/UIComponents';
 import { TableSkeleton } from '../ui/Skeleton';
@@ -8,6 +8,7 @@ import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 
 const SalesAgent: React.FC = () => {
+    const aiConfigured = isAnyAIConfigured();
     const [activeTab, setActiveTab] = useState<'leads' | 'agent'>('leads');
     const [searchParams, setSearchParams] = useState({ industry: '', location: 'Zimbabwe' });
     const [leads, setLeads] = useState<Lead[]>([]);
@@ -297,8 +298,8 @@ const SalesAgent: React.FC = () => {
                             )}
 
                             <div className="flex flex-wrap gap-2 sm:gap-3">
-                                <Button onClick={handleSearch} className="flex-1 sm:flex-initial bg-teal-500 hover:bg-teal-400" isLoading={isSearching}>
-                                    <Search className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Find Leads</span>
+                                <Button onClick={handleSearch} className="flex-1 sm:flex-initial bg-teal-500 hover:bg-teal-400" isLoading={isSearching} disabled={!aiConfigured}>
+                                    <Search className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">{aiConfigured ? 'Find Leads' : 'Setup Required'}</span>
                                 </Button>
 
                                 <Button variant="outline" className="flex-1 sm:flex-initial border-dashed border-slate-600 hover:border-teal-500 hover:text-teal-400" onClick={() => setShowUpload(!showUpload)}>
@@ -438,13 +439,14 @@ const SalesAgent: React.FC = () => {
                     <div className="p-4 bg-slate-950 border-t border-slate-800 flex gap-4">
                         <input
                             type="text"
-                            className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
-                            placeholder="Type a message to the agent..."
+                            className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-50"
+                            placeholder={aiConfigured ? "Type a message to the agent..." : "AI core offline..."}
+                            disabled={!aiConfigured}
                             value={inputText}
                             onChange={(e) => setInputText(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                         />
-                        <Button onClick={handleSendMessage} className="bg-teal-500"><Send className="w-4 h-4" /></Button>
+                        <Button onClick={handleSendMessage} className="bg-teal-500" disabled={!aiConfigured}><Send className="w-4 h-4" /></Button>
                     </div>
                 </div>
             )}

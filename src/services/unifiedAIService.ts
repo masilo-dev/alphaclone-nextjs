@@ -1,14 +1,9 @@
-/**
- * Unified AI Service
- * Supports multiple AI providers: Claude (Anthropic), Gemini (Google), OpenAI
- * Automatically uses whichever API key is configured
- */
-
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { googlePlacesService } from './googlePlacesService';
+import { ENV } from '@/config/env';
 
 // API Keys
-const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
+const GEMINI_API_KEY = ENV.VITE_GEMINI_API_KEY || '';
 const ANTHROPIC_API_KEY = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY || process.env.VITE_ANTHROPIC_API_KEY || '';
 const OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || '';
 

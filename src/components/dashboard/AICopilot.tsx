@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, X, Send, Minus, Maximize2, Sparkles, Loader2, MessageSquare } from 'lucide-react';
-import { chatWithAI } from '@/services/unifiedAIService';
+import { Bot, X, Send, Minus, Maximize2, Sparkles, Loader2 } from 'lucide-react';
+import { chatWithAI, isAnyAIConfigured } from '@/services/unifiedAIService';
 import { Button, Card } from '@/components/ui/UIComponents';
 import toast from 'react-hot-toast';
 
@@ -13,14 +13,22 @@ interface Message {
 }
 
 export const AICopilot: React.FC = () => {
+    const aiConfigured = isAnyAIConfigured();
     const [isOpen, setIsOpen] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
-        { id: '1', role: 'model', text: 'Hello! I am your AlphaClone AI Copilot. How can I help you manage your business today?' }
+        {
+            id: '1',
+            role: 'model',
+            text: aiConfigured
+                ? 'Hello! I am your AlphaClone AI Copilot. How can I help you manage your business today?'
+                : 'Hi! It looks like my AI core is not configured yet. Please ask your administrator to set up the GEMINI_API_KEY to enable my full capabilities.'
+        }
     ]);
     const [inputText, setInputText] = useState('');
     const [isThinking, setIsThinking] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messageIdCounter = useRef(2);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -35,8 +43,13 @@ export const AICopilot: React.FC = () => {
     const handleSendMessage = async () => {
         if (!inputText.trim() || isThinking) return;
 
+        if (!aiConfigured) {
+            toast.error('AI features are not configured');
+            return;
+        }
+
         const userMessage = inputText.trim();
-        const newMsg: Message = { id: Date.now().toString(), role: 'user', text: userMessage };
+        const newMsg: Message = { id: String(messageIdCounter.current++), role: 'user', text: userMessage };
 
         setMessages(prev => [...prev, newMsg]);
         setInputText('');
@@ -51,7 +64,7 @@ export const AICopilot: React.FC = () => {
             const { text } = await chatWithAI(history, userMessage);
 
             setMessages(prev => [...prev, {
-                id: (Date.now() + 1).toString(),
+                id: String(messageIdCounter.current++),
                 role: 'model',
                 text: text || 'I encountered an issue. Please try again.'
             }]);
@@ -140,7 +153,8 @@ export const AICopilot: React.FC = () => {
                             <div className="relative">
                                 <input
                                     type="text"
-                                    placeholder="Ask me anything..."
+                                    placeholder={aiConfigured ? "Ask me anything..." : "AI core offline..."}
+                                    disabled={!aiConfigured || isThinking}
                                     value={inputText}
                                     onChange={(e) => setInputText(e.target.value)}
                                     onKeyDown={(e) => {
@@ -153,7 +167,7 @@ export const AICopilot: React.FC = () => {
                                 />
                                 <button
                                     onClick={handleSendMessage}
-                                    disabled={!inputText.trim() || isThinking}
+                                    disabled={!inputText.trim() || !aiConfigured || isThinking}
                                     className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 disabled:bg-slate-700 text-white rounded-lg transition-all"
                                 >
                                     <Send className="w-4 h-4" />

@@ -582,50 +582,77 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               <p className="text-slate-400">We'll be in touch with you shortly to discuss your project.</p>
                            </div>
                         ) : (
-                           <form onSubmit={handleContactSubmit} className="space-y-6">
+                           <div className="space-y-6">
                               <h3 className="text-xl font-bold text-white mb-6">Book a Consultation</h3>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                 <Input
-                                    label="Name"
-                                    placeholder="John Doe"
-                                    required
-                                    value={contactForm.name}
-                                    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                                 />
-                                 <Input
-                                    label="Email"
-                                    type="email"
-                                    placeholder="john@company.com"
-                                    required
-                                    value={contactForm.email}
-                                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                                 />
+
+                              <div className="p-4 bg-teal-500/10 border border-teal-500/30 rounded-xl mb-6">
+                                 <div className="flex items-center justify-between flex-wrap gap-4">
+                                    <div>
+                                       <h4 className="text-teal-400 font-bold mb-1">Schedule Directly</h4>
+                                       <p className="text-sm text-slate-400">Pick a time that works for you via Calendly.</p>
+                                    </div>
+                                    <Button
+                                       onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')}
+                                       className="bg-teal-600 hover:bg-teal-500 text-white"
+                                    >
+                                       Book Meeting
+                                    </Button>
+                                 </div>
                               </div>
-                              <Input
-                                 label="Project Type"
-                                 placeholder="Web Dev, AI, Mobile App..."
-                                 required
-                                 value={contactForm.subject}
-                                 onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
-                              />
-                              <div>
-                                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Message</label>
-                                 <textarea
-                                    className="w-full bg-slate-950/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50 min-h-[120px]"
-                                    placeholder="Tell us about your requirements..."
-                                    required
-                                    value={contactForm.message}
-                                    onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                                 />
+
+                              <div className="relative mb-6">
+                                 <div className="absolute inset-0 flex items-center">
+                                    <div className="w-full border-t border-slate-700"></div>
+                                 </div>
+                                 <div className="relative flex justify-center text-sm">
+                                    <span className="px-2 bg-slate-900 text-slate-500">Or send us a message</span>
+                                 </div>
                               </div>
-                              <Button
-                                 type="submit"
-                                 className="w-full h-12 bg-teal-600 hover:bg-teal-500 text-lg font-semibold"
-                                 isLoading={formStatus === 'sending'}
-                              >
-                                 Send Message
-                              </Button>
-                           </form>
+
+                              <form onSubmit={handleContactSubmit} className="space-y-6">
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <Input
+                                       label="Name"
+                                       placeholder="John Doe"
+                                       required
+                                       value={contactForm.name}
+                                       onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                                    />
+                                    <Input
+                                       label="Email"
+                                       type="email"
+                                       placeholder="john@company.com"
+                                       required
+                                       value={contactForm.email}
+                                       onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                                    />
+                                 </div>
+                                 <Input
+                                    label="Project Type"
+                                    placeholder="Web Dev, AI, Mobile App..."
+                                    required
+                                    value={contactForm.subject}
+                                    onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
+                                 />
+                                 <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Message</label>
+                                    <textarea
+                                       className="w-full bg-slate-950/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50 min-h-[120px]"
+                                       placeholder="Tell us about your requirements..."
+                                       required
+                                       value={contactForm.message}
+                                       onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                                    />
+                                 </div>
+                                 <Button
+                                    type="submit"
+                                    className="w-full h-12 bg-slate-800 hover:bg-slate-700 text-lg font-semibold border border-slate-700"
+                                    isLoading={formStatus === 'sending'}
+                                 >
+                                    Send Message
+                                 </Button>
+                              </form>
+                           </div>
                         )}
                      </div>
                   </div>
@@ -679,7 +706,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      <div className="flex gap-6">
                         <span className="text-slate-600">Secure & Compliant</span>
                      </div>
-                     <p>&copy; {new Date().getFullYear()} AlphaClone Systems. All rights reserved.</p>
+                     <p suppressHydrationWarning>&copy; {new Date().getFullYear()} AlphaClone Systems. All rights reserved.</p>
                   </div>
                </div>
             </footer>

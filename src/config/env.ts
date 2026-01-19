@@ -16,7 +16,10 @@ const envSchema = z.object({
     VITE_DAILY_DOMAIN: z.string().optional(),
 
     // Stripe (optional - for payments)
-    VITE_STRIPE_PUBLIC_KEY: z.string().startsWith('pk_', 'Invalid Stripe public key').optional(),
+    VITE_STRIPE_PUBLIC_KEY: z.string()
+        .startsWith('pk_', 'Invalid Stripe public key')
+        .optional()
+        .or(z.literal('')), // Allow empty string but it won't be used by the service
 
     // Optional
     VITE_SENTRY_DSN: z.string().url().optional(),
@@ -27,17 +30,27 @@ const envSchema = z.object({
  * Throws error if validation fails
  */
 function validateEnv() {
+    const getVal = (nextKey: string, viteKey: string) => {
+        const val = process.env[nextKey] || process.env[viteKey];
+        return (val === '' || val === undefined) ? undefined : val;
+    };
+
     const env = {
-        VITE_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL,
-        VITE_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY,
-        VITE_GEMINI_API_KEY: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY,
-        VITE_DAILY_DOMAIN: process.env.NEXT_PUBLIC_DAILY_DOMAIN || process.env.VITE_DAILY_DOMAIN,
-        VITE_STRIPE_PUBLIC_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || process.env.VITE_STRIPE_PUBLIC_KEY,
-        VITE_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.VITE_SENTRY_DSN,
+        VITE_SUPABASE_URL: getVal('NEXT_PUBLIC_SUPABASE_URL', 'VITE_SUPABASE_URL'),
+        VITE_SUPABASE_ANON_KEY: getVal('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY'),
+        VITE_GEMINI_API_KEY: getVal('NEXT_PUBLIC_GEMINI_API_KEY', 'VITE_GEMINI_API_KEY'),
+        VITE_DAILY_DOMAIN: getVal('NEXT_PUBLIC_DAILY_DOMAIN', 'VITE_DAILY_DOMAIN'),
+        VITE_STRIPE_PUBLIC_KEY: getVal('NEXT_PUBLIC_STRIPE_PUBLIC_KEY', 'VITE_STRIPE_PUBLIC_KEY'),
+        VITE_SENTRY_DSN: getVal('NEXT_PUBLIC_SENTRY_DSN', 'VITE_SENTRY_DSN'),
     };
 
     try {
-        return envSchema.parse(env);
+        const parsed = envSchema.parse(env);
+        // Special case: if Stripe key is empty string, make it undefined for consistency
+        if (parsed.VITE_STRIPE_PUBLIC_KEY === '') {
+            parsed.VITE_STRIPE_PUBLIC_KEY = undefined;
+        }
+        return parsed;
     } catch (error) {
         if (error instanceof z.ZodError) {
             const missingVars = error.issues.map(err => `  • ${err.path.join('.')}: ${err.message}`).join('\n');

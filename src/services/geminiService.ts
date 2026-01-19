@@ -1,24 +1,19 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { ENV } from '@/config/env';
 
-const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
-
-// Validate API key on import
-if (!API_KEY || API_KEY.trim() === '') {
-    console.error('❌ VITE_GEMINI_API_KEY is not set! AI features will not work.');
-    console.error('Please set VITE_GEMINI_API_KEY in your Vercel environment variables.');
-}
-
-const genAI = new GoogleGenerativeAI(API_KEY);
+const API_KEY = ENV.VITE_GEMINI_API_KEY || '';
 
 // Helper to check if API is configured
 export const isGeminiConfigured = () => {
     return API_KEY && API_KEY.trim() !== '';
 };
 
+const genAI = isGeminiConfigured() && API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
+
 // Helper to get model safely
 const getModel = (modelName: string) => {
-    if (!isGeminiConfigured()) {
-        throw new Error('Gemini API key is not configured. Please set VITE_GEMINI_API_KEY environment variable.');
+    if (!genAI || !isGeminiConfigured()) {
+        throw new Error('Gemini API key is not configured. Please set NEXT_PUBLIC_GEMINI_API_KEY environment variable.');
     }
     return genAI.getGenerativeModel({ model: modelName });
 };

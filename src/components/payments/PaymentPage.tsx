@@ -6,12 +6,15 @@ import { Card, Button, Badge } from '../ui/UIComponents';
 import { CreditCard, History, FileText, Check, X, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { User } from '../../types';
+import { ENV } from '@/config/env';
+import toast from 'react-hot-toast';
 
 interface PaymentPageProps {
     user: User;
 }
 
 const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
+    const isStripeConfigured = !!ENV.VITE_STRIPE_PUBLIC_KEY;
     const [activeTab, setActiveTab] = useState<'invoices' | 'history'>('invoices');
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [payments, setPayments] = useState<Payment[]>([]);
@@ -37,6 +40,10 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
     };
 
     const handlePayClick = async (invoice: Invoice) => {
+        if (!isStripeConfigured) {
+            toast.error('Payment system is not configured');
+            return;
+        }
         setSelectedInvoice(invoice);
 
         // Create PaymentIntent
@@ -47,7 +54,6 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
             setShowCheckout(true);
         } else {
             console.error('Failed to init payment:', error);
-            // Show error notification here
         }
     };
 
@@ -58,12 +64,10 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
             setClientSecret(null);
             setSelectedInvoice(null);
             loadData(); // Refresh list
-            // Show success notification here
         }
     };
 
     const startCreateInvoice = () => {
-        // For demo purposes - create a dummy invoice
         const dummyInvoice = {
             user_id: user.id,
             amount: 499.00,
@@ -92,7 +96,6 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
                 </h2>
 
                 <div className="flex gap-2">
-                    {/* Admin only button in real app */}
                     {user.role === 'admin' && (
                         <Button variant="outline" onClick={startCreateInvoice}>
                             + Create Test Invoice
@@ -146,21 +149,21 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
                                         <div className="text-xl font-bold text-white">
                                             {new Intl.NumberFormat('en-US', { style: 'currency', currency: invoice.currency.toUpperCase() }).format(invoice.amount)}
                                         </div>
-                                        <div>
+                                        <div className="flex flex-wrap gap-2 justify-end mt-1">
                                             {invoice.status === 'paid' && <Badge className="bg-green-500/20 text-green-400">PAID</Badge>}
                                             {invoice.status === 'sent' && <Badge className="bg-blue-500/20 text-blue-400">SENT</Badge>}
                                             {invoice.status === 'draft' && <Badge className="bg-slate-500/20 text-slate-400">DRAFT</Badge>}
+                                            {!isStripeConfigured && <Badge className="bg-amber-500/20 text-amber-500">Setup Required</Badge>}
                                         </div>
                                     </div>
 
                                     {invoice.status !== 'paid' && invoice.status !== 'draft' && (
-                                        <Button onClick={() => handlePayClick(invoice)}>
+                                        <Button onClick={() => handlePayClick(invoice)} disabled={!isStripeConfigured}>
                                             Pay Now
                                         </Button>
                                     )}
-                                    {/* Allow paying drafts for testing */}
                                     {invoice.status === 'draft' && (
-                                        <Button variant="outline" onClick={() => handlePayClick(invoice)}>
+                                        <Button variant="outline" onClick={() => handlePayClick(invoice)} disabled={!isStripeConfigured}>
                                             Pay Draft (Test)
                                         </Button>
                                     )}
@@ -203,7 +206,6 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
                 </div>
             )}
 
-            {/* Checkout Modal */}
             {showCheckout && clientSecret && selectedInvoice && (
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
                     <Card className="w-full max-w-lg relative animate-fade-in-up max-h-[90vh] overflow-y-auto">

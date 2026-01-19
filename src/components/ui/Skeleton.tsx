@@ -65,25 +65,30 @@ export const StatsCardSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) =
 );
 
 // Chart Skeleton
-export const ChartSkeleton: React.FC<{ height?: string }> = ({ height = 'h-64' }) => (
-    <div className={`bg-slate-900 border border-slate-800 rounded-xl p-6 ${height}`}>
-        <div className="space-y-4 h-full">
-            <div className="flex items-center justify-between">
-                <Skeleton className="h-6 w-32" />
-                <Skeleton className="h-8 w-24 rounded-lg" />
-            </div>
-            <div className="flex items-end justify-between gap-2 h-full pb-4">
-                {[...Array(7)].map((_, i) => (
-                    <Skeleton
-                        key={i}
-                        className="flex-1"
-                        style={{ height: `${Math.random() * 60 + 40}%` }}
-                    />
-                ))}
+export const ChartSkeleton: React.FC<{ height?: string }> = ({ height = 'h-64' }) => {
+    // Fixed heights to prevent hydration mismatch (no Math.random())
+    const barHeights = ['65%', '85%', '55%', '95%', '75%', '60%', '80%'];
+
+    return (
+        <div className={`bg-slate-900 border border-slate-800 rounded-xl p-6 ${height}`}>
+            <div className="space-y-4 h-full">
+                <div className="flex items-center justify-between">
+                    <Skeleton className="h-6 w-32" />
+                    <Skeleton className="h-8 w-24 rounded-lg" />
+                </div>
+                <div className="flex items-end justify-between gap-2 h-full pb-4">
+                    {barHeights.map((barHeight, i) => (
+                        <Skeleton
+                            key={i}
+                            className="flex-1"
+                            style={{ height: barHeight }}
+                        />
+                    ))}
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 // List Item Skeleton
 export const ListItemSkeleton: React.FC<{ count?: number }> = ({ count = 5 }) => (

@@ -1,11 +1,12 @@
 import { supabase } from '../lib/supabase';
 import { loadStripe } from '@stripe/stripe-js';
+import { ENV } from '@/config/env';
 import { tenantService } from './tenancy/TenantService';
 import { activityService } from './activityService';
 import { auditLoggingService } from './auditLoggingService';
 
-const STRIPE_PUBLIC_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || process.env.VITE_STRIPE_PUBLIC_KEY;
-export const stripePromise = loadStripe(STRIPE_PUBLIC_KEY || '');
+const STRIPE_PUBLIC_KEY = ENV.VITE_STRIPE_PUBLIC_KEY;
+export const stripePromise = STRIPE_PUBLIC_KEY ? loadStripe(STRIPE_PUBLIC_KEY) : Promise.resolve(null);
 
 export interface Invoice {
     id: string;
