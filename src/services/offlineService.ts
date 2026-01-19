@@ -177,7 +177,7 @@ class OfflineService {
     async requestSync(tag: string): Promise<void> {
         if ('serviceWorker' in navigator && 'sync' in ServiceWorkerRegistration.prototype) {
             const registration = await navigator.serviceWorker.ready;
-            await registration.sync.register(tag);
+            await (registration as any).sync.register(tag);
         }
     }
 

@@ -248,6 +248,11 @@ export const paymentService = {
                 paid_at: new Date().toISOString(),
                 metadata: { stripe_payment_intent: paymentIntentId }
             })
+            .eq('id', invoiceId)
+            .eq('tenant_id', tenantService.getCurrentTenantId())
+            .select()
+            .single();
+
         if (!error && data) {
             activityService.logActivity(data.user_id, 'Invoice Paid', {
                 invoiceId: data.id,

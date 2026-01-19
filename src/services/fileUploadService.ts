@@ -226,9 +226,6 @@ class FileUploadService {
                 .from('file_uploads')
                 .select('*')
                 .eq('id', fileId)
-                .from('file_uploads')
-                .select('*')
-                .eq('id', fileId)
                 .eq('tenant_id', tenantService.getCurrentTenantId())
                 .single();
 
@@ -247,8 +244,6 @@ class FileUploadService {
 
             // Delete from database
             const { error: dbError } = await supabase
-                .from('file_uploads')
-                .delete()
                 .from('file_uploads')
                 .delete()
                 .eq('id', fileId)
@@ -282,9 +277,6 @@ class FileUploadService {
             .from('file_uploads')
             .select('*')
             .eq('id', fileId)
-            .from('file_uploads')
-            .select('*')
-            .eq('id', fileId)
             .eq('tenant_id', tenantService.getCurrentTenantId())
             .single();
 
@@ -296,9 +288,6 @@ class FileUploadService {
      */
     async getUserFiles(userId: string, limit: number = 50) {
         const { data, error } = await supabase
-            .from('file_uploads')
-            .select('*')
-            .eq('user_id', userId)
             .from('file_uploads')
             .select('*')
             .eq('user_id', userId)
@@ -315,8 +304,6 @@ class FileUploadService {
     async getEntityFiles(entityType: string, entityId: string) {
         const { data, error } = await supabase
             .from('file_uploads')
-            .select('*')
-            .eq('entity_type', entityType)
             .select('*')
             .eq('entity_type', entityType)
             .eq('entity_id', entityId)

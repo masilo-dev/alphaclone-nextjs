@@ -107,7 +107,7 @@ class PresenceService {
         try {
             if (useBeacon && status === 'offline') {
                 // Use sendBeacon for offline status (works even if page is closing)
-                const url = `${supabase.supabaseUrl}/rest/v1/rpc/update_user_presence`;
+                const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL}/rest/v1/rpc/update_user_presence`;
                 const data = JSON.stringify({
                     p_user_id: userId,
                     p_status: status,

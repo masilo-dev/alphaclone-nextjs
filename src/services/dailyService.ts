@@ -264,7 +264,7 @@ class DailyService {
             }
 
             if (!data) {
-                return { canCancel: false, reason: 'Meeting not found or cancellation not allowed' };
+                return { canCancel: false, reason: 'Meeting not found or cancellation not allowed', error: null };
             }
 
             return { canCancel: true, error: null };
