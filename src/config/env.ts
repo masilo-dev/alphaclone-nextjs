@@ -30,19 +30,22 @@ const envSchema = z.object({
  * Throws error if validation fails
  */
 function validateEnv() {
-    const getVal = (nextKey: string, viteKey: string) => {
-        const val = process.env[nextKey] || process.env[viteKey];
-        return (val === '' || val === undefined) ? undefined : val;
+    const env = {
+        // Explicitly check NEXT_PUBLIC_* first for Next.js, then VITE_* for legacy/Vite
+        VITE_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL,
+        VITE_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY,
+        VITE_GEMINI_API_KEY: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY,
+        VITE_DAILY_DOMAIN: process.env.NEXT_PUBLIC_DAILY_DOMAIN || process.env.VITE_DAILY_DOMAIN,
+        VITE_STRIPE_PUBLIC_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || process.env.VITE_STRIPE_PUBLIC_KEY,
+        VITE_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.VITE_SENTRY_DSN,
     };
 
-    const env = {
-        VITE_SUPABASE_URL: getVal('NEXT_PUBLIC_SUPABASE_URL', 'VITE_SUPABASE_URL'),
-        VITE_SUPABASE_ANON_KEY: getVal('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY'),
-        VITE_GEMINI_API_KEY: getVal('NEXT_PUBLIC_GEMINI_API_KEY', 'VITE_GEMINI_API_KEY'),
-        VITE_DAILY_DOMAIN: getVal('NEXT_PUBLIC_DAILY_DOMAIN', 'VITE_DAILY_DOMAIN'),
-        VITE_STRIPE_PUBLIC_KEY: getVal('NEXT_PUBLIC_STRIPE_PUBLIC_KEY', 'VITE_STRIPE_PUBLIC_KEY'),
-        VITE_SENTRY_DSN: getVal('NEXT_PUBLIC_SENTRY_DSN', 'VITE_SENTRY_DSN'),
-    };
+    // Helper to treat empty strings as undefined
+    Object.keys(env).forEach(key => {
+        if (env[key as keyof typeof env] === '') {
+            (env as any)[key] = undefined;
+        }
+    });
 
     try {
         const parsed = envSchema.parse(env);
