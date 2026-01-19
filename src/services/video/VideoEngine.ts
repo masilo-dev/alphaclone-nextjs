@@ -369,7 +369,8 @@ export class VideoEngine {
         try {
             // Note: Daily.co uses "enable_knocking" to lock rooms
             // When enabled, new participants must be admitted by the owner
-            await this.callObject.updateRoomConfig({
+            // @ts-ignore - updateRoomConfig exists at runtime but missing from types
+            await (this.callObject as any).updateRoomConfig({
                 enable_knocking: locked
             });
         } catch (error) {

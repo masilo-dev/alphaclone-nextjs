@@ -93,7 +93,7 @@ export class VideoPlatform {
             console.log('VideoPlatform: Currently leaving, waiting...');
             // Wait a bit for leave to complete
             await new Promise(resolve => setTimeout(resolve, 500));
-            if (this.state !== 'idle') {
+            if ((this.state as VideoPlatformState) !== 'idle') {
                 throw new Error('Failed to leave previous call');
             }
         }
