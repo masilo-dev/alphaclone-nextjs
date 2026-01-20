@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
 import { addMinutes } from 'date-fns';
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 export interface CalendarEvent {
     id: string;
@@ -214,7 +215,7 @@ export const calendarService = {
                     table: 'calendar_events',
                     filter: `user_id=eq.${userId} AND tenant_id=eq.${tenantService.getCurrentTenantId()}`,
                 },
-                (payload) => {
+                (payload: RealtimePostgresChangesPayload<CalendarEvent>) => {
                     callback(payload.new as CalendarEvent);
                 }
             )
@@ -317,7 +318,7 @@ export const calendarService = {
 
         // Find gaps between events
         let currentTime = dayStart.getTime();
-        const eventTimes = (events || []).map((e) => ({
+        const eventTimes = (events || []).map((e: any) => ({
             start: new Date(e.start_time).getTime(),
             end: new Date(e.end_time).getTime(),
         }));
@@ -370,7 +371,7 @@ export const calendarService = {
                     dayEnd.setHours(workingHours.end, 0, 0, 0);
 
                     // Find events for this day
-                    const dayEvents = (events || []).filter((e) => {
+                    const dayEvents = (events || []).filter((e: any) => {
                         const eventStart = new Date(e.start_time);
                         return eventStart.toDateString() === currentDate.toDateString();
                     });
