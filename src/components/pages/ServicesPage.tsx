@@ -101,14 +101,23 @@ const ServicesPage: React.FC = () => {
                             </div>
                             <h3 className="text-2xl font-bold mb-3">{service.title}</h3>
                             <p className="text-slate-400 mb-6">{service.description}</p>
-                            <ul className="space-y-2">
-                                {service.features.map((feature, fIdx) => (
-                                    <li key={fIdx} className="flex items-center text-sm text-slate-300">
-                                        <span className="w-1.5 h-1.5 bg-teal-400 rounded-full mr-2" />
-                                        {feature}
-                                    </li>
-                                ))}
-                            </ul>
+                            <div className="mt-8 flex flex-col gap-3">
+                                <Button
+                                    size="sm"
+                                    className="bg-teal-600 hover:bg-teal-500 w-full"
+                                    onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')}
+                                >
+                                    Book Meeting
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-slate-700 w-full"
+                                    onClick={() => window.open('https://wa.me/48517809674', '_blank')}
+                                >
+                                    WhatsApp
+                                </Button>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -118,11 +127,23 @@ const ServicesPage: React.FC = () => {
                     <p className="text-slate-400 mb-8 max-w-2xl mx-auto">
                         Let's discuss your project requirements and create a custom solution for your business
                     </p>
-                    <Link href="/contact">
-                        <Button size="lg" className="text-lg px-8 py-4">
-                            Contact Us
+                    <div className="flex flex-col sm:flex-row justify-center gap-4">
+                        <Button
+                            size="lg"
+                            className="text-lg px-8 py-4 bg-teal-600 hover:bg-teal-500"
+                            onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')}
+                        >
+                            Schedule Consultation
                         </Button>
-                    </Link>
+                        <Button
+                            size="lg"
+                            variant="outline"
+                            className="text-lg px-8 py-4 border-slate-700"
+                            onClick={() => window.open('https://wa.me/48517809674', '_blank')}
+                        >
+                            Chat via WhatsApp
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>

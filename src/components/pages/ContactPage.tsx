@@ -75,10 +75,24 @@ const ContactPage: React.FC = () => {
                     </Link>
 
                     <div className="text-center mb-16">
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6">Contact Us</h1>
-                        <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-3xl mx-auto">
-                            Get in touch to discuss your project or learn more about our services
+                        <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-3xl mx-auto mb-10">
+                            Get in touch to discuss your project. For the fastest response, use WhatsApp or book a meeting directly.
                         </p>
+                        <div className="flex flex-col sm:flex-row justify-center gap-4">
+                            <Button
+                                onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')}
+                                className="bg-teal-600 hover:bg-teal-500 text-white font-bold h-12 px-8"
+                            >
+                                Book a Consultation
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => window.open('https://wa.me/48517809674', '_blank')}
+                                className="border-teal-500/50 hover:bg-teal-500/10 text-teal-400 font-bold h-12 px-8"
+                            >
+                                Chat on WhatsApp
+                            </Button>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">

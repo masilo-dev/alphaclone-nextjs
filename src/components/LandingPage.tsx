@@ -229,11 +229,20 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      Includes <b>CRM</b>, <b>Project Management</b>, <b>Video Meetings</b>, <b>AI Sales Agents</b>, and <b>Security Monitoring</b>.
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up px-4 sm:px-0" style={{ animationDelay: '0.2s' }}>
-                     <Button onClick={() => setIsLoginOpen(true)} size="lg" className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-8 h-12 w-full sm:w-auto">
-                        Get Your Free Account
+                     <Button
+                        onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')}
+                        size="lg"
+                        className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-8 h-12 w-full sm:w-auto"
+                     >
+                        Book a Consultation
                      </Button>
-                     <Button size="lg" variant="outline" onClick={() => scrollToSection('services')} className="border-slate-700 bg-slate-900/50 backdrop-blur hover:bg-slate-800 text-white px-8 h-12 w-full sm:w-auto">
-                        Explore Features
+                     <Button
+                        size="lg"
+                        variant="outline"
+                        onClick={() => window.open('https://wa.me/48517809674', '_blank')}
+                        className="border-slate-700 bg-slate-900/50 backdrop-blur hover:bg-slate-800 text-white px-8 h-12 w-full sm:w-auto"
+                     >
+                        Chat on WhatsApp
                      </Button>
                   </div>
                </div>
@@ -317,8 +326,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               </li>
                            ))}
                         </ul>
-                        <div className="flex gap-4">
-                           <Button onClick={() => setIsLoginOpen(true)} className="flex-1 bg-green-600 hover:bg-green-500 text-white">Start Free Trial</Button>
+                        <div className="flex flex-col gap-3">
+                           <Button onClick={() => window.open('https://wa.me/48517809674', '_blank')} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-semibold">
+                              Chat on WhatsApp
+                           </Button>
                         </div>
                      </div>
 
@@ -339,8 +350,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               </li>
                            ))}
                         </ul>
-                        <div className="flex gap-4">
-                           <Button onClick={() => setIsLoginOpen(true)} className="flex-1 bg-orange-600 hover:bg-orange-500 text-white">Start Free Trial</Button>
+                        <div className="flex flex-col gap-3">
+                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-semibold">
+                              Book Consultation
+                           </Button>
                         </div>
                      </div>
 
@@ -361,8 +374,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               </li>
                            ))}
                         </ul>
-                        <div className="flex gap-4">
-                           <Button onClick={() => setIsLoginOpen(true)} className="flex-1 bg-red-600 hover:bg-red-500 text-white">Audit My Site ($1)</Button>
+                        <div className="flex flex-col gap-3">
+                           <Button onClick={() => window.open('https://wa.me/48517809674', '_blank')} className="flex-1 bg-red-600 hover:bg-red-500 text-white font-semibold">
+                              Get Security Audit
+                           </Button>
                         </div>
                      </div>
 
@@ -383,8 +398,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               </li>
                            ))}
                         </ul>
-                        <div className="flex gap-4">
-                           <Button onClick={() => setIsLoginOpen(true)} className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white">Start Meeting</Button>
+                        <div className="flex flex-col gap-3">
+                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">
+                              Schedule Meeting
+                           </Button>
                         </div>
                      </div>
 
@@ -405,8 +422,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               </li>
                            ))}
                         </ul>
-                        <div className="flex gap-4">
-                           <Button onClick={() => setIsLoginOpen(true)} className="flex-1 bg-pink-600 hover:bg-pink-500 text-white">Download App</Button>
+                        <div className="flex flex-col gap-3">
+                           <Button onClick={() => window.open('https://wa.me/48517809674', '_blank')} className="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-semibold">
+                              Inquire About Mobile
+                           </Button>
                         </div>
                      </div>
 
@@ -427,8 +446,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               </li>
                            ))}
                         </ul>
-                        <div className="flex gap-4">
-                           <Button onClick={() => setIsLoginOpen(true)} className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white">View Demo</Button>
+                        <div className="flex flex-col gap-3">
+                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold">
+                              Book Demo
+                           </Button>
                         </div>
                      </div>
                   </div>
