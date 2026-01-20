@@ -218,12 +218,16 @@ export const authService = {
             const { data: { session }, error } = await supabase.auth.getSession();
 
             if (error) {
+                console.error("AuthService: getSession error", error);
                 return { user: null, error: error.message };
             }
 
             if (!session?.user) {
+                console.log("AuthService: No active session found");
                 return { user: null, error: null };
             }
+
+            console.log("AuthService: Session found for user", session.user.id);
 
             // OPTIMIZED: Use metadata first to avoid database query
             let user: User;
@@ -247,8 +251,11 @@ export const authService = {
                     .single();
 
                 if (profileError || !profile) {
+                    console.error("AuthService: Profile check failed", profileError || "No profile found");
                     return { user: null, error: 'Failed to fetch user profile' };
                 }
+
+                console.log("AuthService: Profile retrieved successfully", profile.role);
 
                 user = {
                     id: profile.id,

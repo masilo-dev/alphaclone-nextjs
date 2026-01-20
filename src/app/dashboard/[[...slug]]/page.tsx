@@ -42,16 +42,43 @@ export default function DashboardPage() {
     React.useEffect(() => {
         // Check auth
         const checkAuth = async () => {
-            // Dynamic import to avoid SSR issues if any
-            const { authService } = await import('@/services/authService');
-            const { user } = await authService.getCurrentUser();
-            if (user) {
-                setUser(user);
-            } else {
-                // Redirect to login if needed, or stick on landing
+            try {
+                // 1. Check for Ghost User logic first (Manual override)
+                const ghostUserStr = localStorage.getItem('alphaclone_ghost_user');
+                if (ghostUserStr) {
+                    try {
+                        const ghostUser = JSON.parse(ghostUserStr);
+                        setUser(ghostUser);
+                        setLoading(false);
+                        return;
+                    } catch (e) {
+                        localStorage.removeItem('alphaclone_ghost_user');
+                    }
+                }
+
+                // 2. Real Auth check
+                const { authService } = await import('@/services/authService');
+
+                // Add a timeout fallback for auth check to prevent permanent "Loading OS"
+                const authPromise = authService.getCurrentUser();
+                const timeoutPromise = new Promise<{ user: any, error: any }>((resolve) =>
+                    setTimeout(() => resolve({ user: null, error: 'Auth timeout' }), 8000)
+                );
+
+                const { user: currentUser, error } = await Promise.race([authPromise, timeoutPromise]);
+
+                if (currentUser) {
+                    setUser(currentUser);
+                } else {
+                    console.warn('Dashboard Auth Check: No user or timeout. Redirecting to landing.', error);
+                    router.push('/');
+                }
+            } catch (err) {
+                console.error('Dashboard Auth Check Error:', err);
                 router.push('/');
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
         checkAuth();
     }, [router]);

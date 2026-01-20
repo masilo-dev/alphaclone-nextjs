@@ -29,6 +29,7 @@ import {
 import { Button, Card, Input, Modal } from './ui/UIComponents';
 import { CLIENT_NAV_ITEMS, ADMIN_NAV_ITEMS, TENANT_ADMIN_NAV_ITEMS, LOGO_URL } from '../constants';
 import { User, Project, ChatMessage, DashboardStat, GalleryItem, Invoice, ProjectStage } from '../types';
+import BusinessDashboard from './dashboard/business/BusinessDashboard';
 
 import AIStudio from './dashboard/AIStudio';
 import NotificationCenter from './dashboard/NotificationCenter';
@@ -764,6 +765,11 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // -- RENDER CONTENT --
   const renderContent = () => {
+    // INTERCEPT: If user is simulated tenant admin, show the specific Business Dashboard
+    if (user.role === 'tenant_admin') {
+      return <BusinessDashboard user={user} onLogout={onLogout} />;
+    }
+
     switch (activeTab) {
       case '/dashboard/conference':
       case '/dashboard/meetings':

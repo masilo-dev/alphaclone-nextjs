@@ -18,17 +18,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         // Initial session check
-        authService.getCurrentUser()
-            .then(({ user }) => {
-                setUser(user);
+        const initAuth = async () => {
+            try {
+                // Check for ghost user simulation first
+                const ghostUserStr = localStorage.getItem('alphaclone_ghost_user');
+                if (ghostUserStr) {
+                    try {
+                        const ghostUser = JSON.parse(ghostUserStr);
+                        setUser(ghostUser);
+                        setLoading(false);
+                        console.log('Ghost Mode Active in AuthContext');
+                        return; // Ghost mode overrides real session for UI
+                    } catch (e) {
+                        console.error('Failed to parse ghost user:', e);
+                        localStorage.removeItem('alphaclone_ghost_user');
+                    }
+                }
+
+                const { user: currentUser } = await authService.getCurrentUser();
+                setUser(currentUser);
+            } catch (err) {
+                console.error('Auth initialization error:', err);
+            } finally {
                 setLoading(false);
-            })
-            .catch(() => setLoading(false));
+            }
+        };
+
+        initAuth();
 
         // Subscribe to auth changes
         const { data: { subscription } } = authService.onAuthStateChange((u) => {
-            setUser(u);
-            setLoading(false);
+            // Only update if not in ghost mode (ghost mode is manual exit)
+            if (!localStorage.getItem('alphaclone_ghost_user')) {
+                setUser(u);
+                setLoading(false);
+            }
         });
 
         return () => {
