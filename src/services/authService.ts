@@ -229,7 +229,6 @@ export const authService = {
             const startTime = Date.now();
             console.log(`AuthService: Fetching profile for ${session.user.id}...`);
 
-            // OPTIMIZED: Use metadata first to avoid database query
             let user: User;
 
             const metadata = session.user.user_metadata;
@@ -243,16 +242,32 @@ export const authService = {
                     avatar: metadata.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
                 };
             } else {
-                // Slow path: Fetch from database and update metadata
-                const { data: profile, error: profileError } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
+                // Slow path: Fetch from database with retries (important for OAuth/Trigger race conditions)
+                let profile = null;
+                let lastError = null;
+                const maxRetries = 5;
+                const retryDelay = 500; // ms
 
-                if (profileError || !profile) {
-                    console.error("AuthService: Profile check failed", profileError || "No profile found");
-                    return { user: null, error: 'Failed to fetch user profile' };
+                for (let i = 0; i < maxRetries; i++) {
+                    const { data: p, error: profileError } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', session.user.id)
+                        .single();
+
+                    if (!profileError && p) {
+                        profile = p;
+                        break;
+                    }
+
+                    lastError = profileError;
+                    console.log(`AuthService: Profile not found, retry ${i + 1}/${maxRetries} in ${retryDelay}ms... (Error: ${profileError?.message || 'Not Found'})`);
+                    await new Promise(resolve => setTimeout(resolve, retryDelay));
+                }
+
+                if (!profile) {
+                    console.error("AuthService: Profile check failed after retries", lastError || "No profile found");
+                    return { user: null, error: 'Failed to fetch user profile after retries' };
                 }
 
                 console.log("AuthService: Profile retrieved successfully", profile.role);
