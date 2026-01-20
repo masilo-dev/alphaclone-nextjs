@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import Daily, { DailyCall } from '@daily-co/daily-js';
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 /**
  * Daily.co Video Service
@@ -424,7 +425,7 @@ class DailyService {
                     table: 'video_calls',
                     filter: `id=eq.${callId}`,
                 },
-                (payload) => {
+                (payload: RealtimePostgresChangesPayload<any>) => {
                     if (payload.new && 'status' in payload.new) {
                         onStatusChange(payload.new.status as string);
                     }
