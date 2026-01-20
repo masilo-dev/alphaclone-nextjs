@@ -155,16 +155,16 @@ class DealProbabilityService {
                 return this.getEmptyForecast();
             }
 
-            const totalPipelineValue = deals.reduce((sum, deal) => sum + deal.value, 0);
-            const weightedPipelineValue = deals.reduce(
-                (sum, deal) => sum + deal.value * (deal.probability / 100),
+            const totalPipelineValue = (deals as any[]).reduce((sum: number, deal: any) => sum + deal.value, 0);
+            const weightedPipelineValue = (deals as any[]).reduce(
+                (sum: number, deal: any) => sum + deal.value * (deal.probability / 100),
                 0
             );
 
             // Group by stage
             const byStage: Record<string, { count: number; value: number; probability: number }> = {};
 
-            deals.forEach(deal => {
+            (deals as any[]).forEach((deal: any) => {
                 if (!byStage[deal.stage]) {
                     byStage[deal.stage] = { count: 0, value: 0, probability: 0 };
                 }
@@ -274,7 +274,7 @@ class DealProbabilityService {
                 return 0;
             }
 
-            const wonDeals = deals.filter(d => d.stage === 'closed_won').length;
+            const wonDeals = (deals as any[]).filter((d: any) => d.stage === 'closed_won').length;
             return (wonDeals / deals.length) * 100;
         } catch (error) {
             console.error('Error calculating win rate:', error);
@@ -297,7 +297,7 @@ class DealProbabilityService {
                 return 0;
             }
 
-            const totalDays = deals.reduce((sum, deal) => {
+            const totalDays = (deals as any[]).reduce((sum: number, deal: any) => {
                 const created = new Date(deal.created_at);
                 const closed = new Date(deal.updated_at);
                 const days = (closed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);

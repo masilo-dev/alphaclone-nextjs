@@ -127,7 +127,7 @@ export const dealService = {
 
             if (error) throw error;
 
-            const deals: Deal[] = (data || []).map((d) => ({
+            const deals: Deal[] = (data || []).map((d: any) => ({
                 id: d.id,
                 name: d.name,
                 contactId: d.contact_id,
@@ -482,7 +482,7 @@ export const dealService = {
 
             if (error) throw error;
 
-            const products: DealProduct[] = (data || []).map((p) => ({
+            const products: DealProduct[] = (data || []).map((p: any) => ({
                 id: p.id,
                 dealId: p.deal_id,
                 productName: p.product_name,
@@ -639,7 +639,7 @@ export const dealService = {
 
             if (error) throw error;
 
-            const weightedValue = (data || []).reduce((sum, deal) => {
+            const weightedValue = (data || []).reduce((sum: number, deal: any) => {
                 return sum + ((deal.value || 0) * (deal.probability || 0)) / 100;
             }, 0);
 
@@ -680,8 +680,8 @@ export const dealService = {
 
             if (error) throw error;
 
-            const totalWon = (data || []).filter((d) => d.stage === 'closed_won').length;
-            const totalLost = (data || []).filter((d) => d.stage === 'closed_lost').length;
+            const totalWon = (data || []).filter((d: any) => d.stage === 'closed_won').length;
+            const totalLost = (data || []).filter((d: any) => d.stage === 'closed_lost').length;
             const total = totalWon + totalLost;
 
             const winRate = total > 0 ? (totalWon / total) * 100 : 0;

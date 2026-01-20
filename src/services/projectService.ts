@@ -40,7 +40,7 @@ export const projectService = {
                 return { projects: [], error: error.message };
             }
 
-            const projects: Project[] = (data || []).map((p) => ({
+            const projects: Project[] = (data || []).map((p: any) => ({
                 id: p.id,
                 ownerId: p.owner_id,
                 ownerName: p.owner_name,
@@ -88,7 +88,7 @@ export const projectService = {
                 return { projects: [], error: error.message };
             }
 
-            const projects: Project[] = (data || []).map((p) => ({
+            const projects: Project[] = (data || []).map((p: any) => ({
                 id: p.id,
                 ownerId: p.owner_id,
                 ownerName: p.owner_name,
@@ -277,7 +277,7 @@ export const projectService = {
                     table: 'projects',
                     filter: `tenant_id=eq.${tenantId}` // ← FILTER BY TENANT
                 },
-                (payload) => {
+                (payload: any) => {
                     if (payload.eventType === 'DELETE') {
                         return;
                     }

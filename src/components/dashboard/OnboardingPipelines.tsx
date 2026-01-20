@@ -200,12 +200,12 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
     ];
 
     const totalValue = leads
-        .filter(l => l.stage !== 'lost')
-        .reduce((sum, lead) => sum + (lead.value || 0), 0);
+        .filter((l: Lead) => l.stage !== 'lost')
+        .reduce((sum: number, lead: Lead) => sum + (lead.value || 0), 0);
 
     const wonValue = leads
-        .filter(l => l.stage === 'won')
-        .reduce((sum, lead) => sum + (lead.value || 0), 0);
+        .filter((l: Lead) => l.stage === 'won')
+        .reduce((sum: number, lead: Lead) => sum + (lead.value || 0), 0);
 
     return (
         <div className="space-y-6 animate-fade-in">

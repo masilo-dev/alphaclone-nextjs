@@ -133,7 +133,7 @@ class QuoteVersionService {
 
             if (!versions) return [];
 
-            return versions.map(v => ({
+            return versions.map((v: any) => ({
                 version: v.version,
                 quote: v.data,
                 changes: v.changes || [],
@@ -287,22 +287,22 @@ class QuoteVersionService {
                 };
             }
 
-            const acceptedQuotes = quotes.filter(q => q.status === 'accepted');
+            const acceptedQuotes = (quotes as any[]).filter((q: any) => q.status === 'accepted');
             const acceptanceRate = (acceptedQuotes.length / quotes.length) * 100;
 
-            const totalRevisions = quotes.reduce((sum, q) => sum + (q.version || 1), 0);
+            const totalRevisions = (quotes as any[]).reduce((sum: number, q: any) => sum + (q.version || 1), 0);
             const averageRevisions = totalRevisions / quotes.length;
 
             const acceptanceTimes = acceptedQuotes
-                .filter(q => q.accepted_at && q.created_at)
-                .map(q => {
+                .filter((q: any) => q.accepted_at && q.created_at)
+                .map((q: any) => {
                     const created = new Date(q.created_at);
                     const accepted = new Date(q.accepted_at);
                     return (accepted.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
                 });
 
             const averageTimeToAcceptance = acceptanceTimes.length > 0
-                ? acceptanceTimes.reduce((sum, time) => sum + time, 0) / acceptanceTimes.length
+                ? acceptanceTimes.reduce((sum: number, time: number) => sum + time, 0) / acceptanceTimes.length
                 : 0;
 
             return {

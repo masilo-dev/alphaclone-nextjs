@@ -209,7 +209,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user })
     // Calculate team stats
     const totalMembers = members.length;
     const availableMembers = members.filter(m => m.status === 'Available').length;
-    const totalCapacity = members.reduce((sum, m) => sum + m.capacity, 0);
+    const totalCapacity = members.reduce((sum: number, m: TeamMember) => sum + m.capacity, 0);
     const avgCapacity = totalMembers > 0 ? Math.round(totalCapacity / totalMembers) : 0;
 
     return (
@@ -282,11 +282,10 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user })
                                 </div>
                                 <button
                                     onClick={() => handleQuickStatusToggle(member)}
-                                    className={`px-2 py-0.5 text-xs rounded-full transition-colors ${
-                                        member.status === 'Available'
+                                    className={`px-2 py-0.5 text-xs rounded-full transition-colors ${member.status === 'Available'
                                             ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
                                             : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
-                                    }`}
+                                        }`}
                                 >
                                     {member.status}
                                 </button>
@@ -298,20 +297,19 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user })
                                     <span className="text-slate-400">Workload</span>
                                     <span className={
                                         member.capacity > 80 ? 'text-orange-400' :
-                                        member.capacity > 50 ? 'text-yellow-400' :
-                                        'text-teal-400'
+                                            member.capacity > 50 ? 'text-yellow-400' :
+                                                'text-teal-400'
                                     }>
                                         {member.capacity}%
                                     </span>
                                 </div>
                                 <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
                                     <div
-                                        className={`h-full rounded-full transition-all ${
-                                            member.capacity > 90 ? 'bg-red-500' :
-                                            member.capacity > 75 ? 'bg-orange-500' :
-                                            member.capacity > 50 ? 'bg-yellow-500' :
-                                            'bg-teal-500'
-                                        }`}
+                                        className={`h-full rounded-full transition-all ${member.capacity > 90 ? 'bg-red-500' :
+                                                member.capacity > 75 ? 'bg-orange-500' :
+                                                    member.capacity > 50 ? 'bg-yellow-500' :
+                                                        'bg-teal-500'
+                                            }`}
                                         style={{ width: `${member.capacity}%` }}
                                     />
                                 </div>
@@ -401,11 +399,10 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user })
                                         <button
                                             key={project.id}
                                             onClick={() => handleToggleProject(project.id)}
-                                            className={`w-full p-3 rounded-lg border transition-all text-left ${
-                                                isAssigned
+                                            className={`w-full p-3 rounded-lg border transition-all text-left ${isAssigned
                                                     ? 'border-teal-500 bg-teal-500/10'
                                                     : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
-                                            }`}
+                                                }`}
                                         >
                                             <div className="flex items-start justify-between">
                                                 <div className="flex-1">
@@ -436,11 +433,10 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user })
                         <div className="pt-4 border-t border-slate-800">
                             <div className="flex items-center justify-between mb-4">
                                 <span className="text-sm text-slate-400">Estimated Workload:</span>
-                                <span className={`text-sm font-semibold ${
-                                    selectedProjects.length * 20 > 100 ? 'text-red-400' :
-                                    selectedProjects.length * 20 > 80 ? 'text-orange-400' :
-                                    'text-teal-400'
-                                }`}>
+                                <span className={`text-sm font-semibold ${selectedProjects.length * 20 > 100 ? 'text-red-400' :
+                                        selectedProjects.length * 20 > 80 ? 'text-orange-400' :
+                                            'text-teal-400'
+                                    }`}>
                                     {Math.min(selectedProjects.length * 20, 100)}%
                                 </span>
                             </div>

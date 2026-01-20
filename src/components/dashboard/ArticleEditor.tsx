@@ -301,7 +301,7 @@ const ArticleEditor: React.FC = () => {
                 </div>
                 <div className="bg-slate-800 rounded-lg p-4">
                     <div className="text-2xl font-bold text-violet-400">
-                        {articles.reduce((sum, a) => sum + (a.views || 0), 0)}
+                        {articles.reduce((sum: number, a: Article) => sum + (a.views || 0), 0)}
                     </div>
                     <div className="text-sm text-slate-400">Total Views</div>
                 </div>

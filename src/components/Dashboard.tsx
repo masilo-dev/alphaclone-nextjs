@@ -189,12 +189,12 @@ const Dashboard: React.FC<DashboardProps> = ({
   const currentStats: DashboardStat[] = user.role === 'admin' ? [
     { label: 'Total Clients', value: projects.length.toString(), icon: Users, color: 'bg-indigo-600' }, // Approximation if projects matches clients, or just count projects
     { label: 'Active Projects', value: projects.filter(p => p.status === 'Active').length.toString(), icon: Briefcase, color: 'bg-teal-600' },
-    { label: 'Total Revenue', value: `$${invoices.filter(i => i.status === 'Paid').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()}`, icon: DollarSign, color: 'bg-green-600' },
+    { label: 'Total Revenue', value: `$${invoices.filter(i => i.status === 'Paid').reduce((acc: number, curr: Invoice) => acc + curr.amount, 0).toLocaleString()}`, icon: DollarSign, color: 'bg-green-600' },
     { label: 'System Health', value: 'Online', icon: Activity, color: 'bg-rose-600' },
   ] : [
     { label: 'My Projects', value: filteredProjects.length.toString(), icon: Briefcase, color: 'bg-teal-600' },
     { label: 'Messages', value: filteredMessages.length.toString(), icon: UserIcon, color: 'bg-blue-600' },
-    { label: 'Due Invoices', value: `$${filteredInvoices.filter(i => i.status === 'Unpaid').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()}`, icon: DollarSign, color: 'bg-yellow-600' },
+    { label: 'Due Invoices', value: `$${filteredInvoices.filter(i => i.status === 'Unpaid').reduce((acc: number, curr: Invoice) => acc + curr.amount, 0).toLocaleString()}`, icon: DollarSign, color: 'bg-yellow-600' },
     { label: 'Project Days', value: '0', icon: Clock, color: 'bg-purple-600' }
   ];
 
@@ -312,7 +312,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             return [...prev, newMessage];
           } else if (eventType === 'UPDATE') {
             // Update existing message (for read receipts, delivered status, etc.)
-            return prev.map(m => m.id === newMessage.id ? newMessage : m);
+            return prev.map((m: ChatMessage) => m.id === newMessage.id ? newMessage : m);
           }
           return prev;
         });
@@ -345,7 +345,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       setProjects(prev => {
         const exists = prev.find(p => p.id === updatedProject.id);
         if (exists) {
-          return prev.map(p => p.id === updatedProject.id ? updatedProject : p);
+          return prev.map((p: Project) => p.id === updatedProject.id ? updatedProject : p);
         } else {
           return [updatedProject, ...prev];
         }

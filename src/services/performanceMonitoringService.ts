@@ -174,7 +174,7 @@ export const performanceMonitoringService = {
             const relevant = metrics.filter((m) => m.name === name && m.page === window.location.pathname);
             if (relevant.length > 0) {
                 summary[name.toLowerCase()] =
-                    relevant.reduce((sum, m) => sum + m.value, 0) / relevant.length;
+                    relevant.reduce((sum: number, m: PerformanceMetric) => sum + m.value, 0) / relevant.length;
             }
         });
 

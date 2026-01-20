@@ -59,7 +59,7 @@ class MonitoringService {
     window.addEventListener('load', () => {
       setTimeout(() => {
         const perfData = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-        
+
         if (perfData) {
           this.logPerformance('page-load', perfData.loadEventEnd - perfData.fetchStart, window.location.pathname);
           this.logPerformance('dom-content-loaded', perfData.domContentLoadedEventEnd - perfData.fetchStart, window.location.pathname);
@@ -71,7 +71,7 @@ class MonitoringService {
 
   logError(error: ErrorLog) {
     this.errorLogs.push(error);
-    
+
     // Keep only recent logs
     if (this.errorLogs.length > this.maxLogs) {
       this.errorLogs.shift();
@@ -152,8 +152,8 @@ class MonitoringService {
   getAveragePerformance(metric: string): number {
     const logs = this.performanceLogs.filter((log) => log.metric === metric);
     if (logs.length === 0) return 0;
-    
-    const sum = logs.reduce((acc, log) => acc + log.value, 0);
+
+    const sum = logs.reduce((acc: number, log: PerformanceLog) => acc + log.value, 0);
     return sum / logs.length;
   }
 
@@ -201,7 +201,7 @@ export function setupGlobalMonitoring() {
   if (typeof window !== 'undefined') {
     // Expose monitoring service for debugging
     (window as any).__monitoring = monitoringService;
-    
+
     console.log('[Monitoring] Service initialized. Access via window.__monitoring');
   }
 }

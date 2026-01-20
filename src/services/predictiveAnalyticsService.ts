@@ -54,14 +54,14 @@ export const predictiveAnalyticsService = {
 
             // Calculate average completion time for similar projects
             const durations = historicalProjects
-                .filter(p => p.created_at && p.updated_at)
-                .map(p => {
+                .filter((p: any) => p.created_at && p.updated_at)
+                .map((p: any) => {
                     const start = new Date(p.created_at);
                     const end = new Date(p.updated_at);
                     return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
                 });
 
-            const avgDuration = durations.reduce((sum, d) => sum + d, 0) / durations.length;
+            const avgDuration = durations.reduce((sum: number, d: number) => sum + d, 0) / durations.length;
             const currentProgress = project.progress || 0;
             const remainingProgress = 100 - currentProgress;
             const estimatedDays = (avgDuration * remainingProgress) / 100;
@@ -126,8 +126,8 @@ export const predictiveAnalyticsService = {
             // Calculate trend
             const n = values.length;
             const sumX = (n * (n + 1)) / 2;
-            const sumY = values.reduce((sum, v) => (sum ?? 0) + (v ?? 0), 0) ?? 0;
-            const sumXY = values.reduce((sum, v, i) => (sum ?? 0) + (v ?? 0) * (i + 1), 0) ?? 0;
+            const sumY = values.reduce((sum: number, v: number) => (sum ?? 0) + (v ?? 0), 0) ?? 0;
+            const sumXY = values.reduce((sum: number, v: number, i: number) => (sum ?? 0) + (v ?? 0) * (i + 1), 0) ?? 0;
             const sumX2 = (n * (n + 1) * (2 * n + 1)) / 6;
 
             const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
@@ -139,7 +139,7 @@ export const predictiveAnalyticsService = {
             if (!lastMonthStr) return { forecast: [], error: 'No data' };
             const lastMonth = new Date(lastMonthStr + '-01');
             const avgValue = sumY / n;
-            const variance = values.reduce((sum, v) => (sum ?? 0) + Math.pow((v ?? 0) - avgValue, 2), 0) ?? 0 / n;
+            const variance = values.reduce((sum: number, v: number) => (sum ?? 0) + Math.pow((v ?? 0) - avgValue, 2), 0) ?? 0 / n;
             const stdDev = Math.sqrt(variance);
 
             for (let i = 1; i <= forecastMonths; i++) {
@@ -225,13 +225,13 @@ export const predictiveAnalyticsService = {
                 factors.push('No activity for 30+ days');
             }
 
-            const activeProjects = projects.filter(p => p.status === 'Active').length;
+            const activeProjects = (projects as any[]).filter((p: any) => p.status === 'Active').length;
             if (activeProjects === 0) {
                 churnRisk += 0.3;
                 factors.push('No active projects');
             }
 
-            const completedProjects = projects.filter(p => p.status === 'Completed').length;
+            const completedProjects = (projects as any[]).filter((q: any) => q.status === 'Completed').length;
             if (completedProjects === 0) {
                 churnRisk += 0.1;
                 factors.push('No completed projects');
@@ -321,7 +321,7 @@ export const predictiveAnalyticsService = {
                 .select('amount, status')
                 .eq('project_id', projectId);
 
-            const totalSpent = (invoices || []).reduce((sum, inv) => sum + (inv.amount || 0), 0);
+            const totalSpent = (invoices || []).reduce((sum: number, inv: any) => sum + (inv.amount || 0), 0);
             const budget = project.budget || 0;
             const variance = budget > 0 ? ((totalSpent - budget) / budget) * 100 : 0;
 

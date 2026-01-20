@@ -129,7 +129,7 @@ class LeadAutoAssignmentService {
                 .eq('role', 'sales')
                 .eq('active', true);
 
-            return reps?.map(r => r.id) || [];
+            return reps?.map((r: any) => r.id) || [];
         } catch (error) {
             console.error('Error fetching sales reps:', error);
             return [];
@@ -151,7 +151,7 @@ class LeadAutoAssignmentService {
     private async assignLoadBalanced(salesReps: string[]): Promise<string> {
         try {
             const leadCounts = await Promise.all(
-                salesReps.map(async (repId) => {
+                salesReps.map(async (repId: string) => {
                     const { count } = await supabase
                         .from('leads')
                         .select('id', { count: 'exact' })
@@ -355,7 +355,7 @@ class LeadAutoAssignmentService {
 
             let averageAssignmentTime = 0;
             if (assignedLeads && assignedLeads.length > 0) {
-                const totalTime = assignedLeads.reduce((sum, lead) => {
+                const totalTime = (assignedLeads as any[]).reduce((sum: number, lead: any) => {
                     const created = new Date(lead.created_at);
                     const assigned = new Date(lead.assigned_at);
                     return sum + (assigned.getTime() - created.getTime()) / (1000 * 60);

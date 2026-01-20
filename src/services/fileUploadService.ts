@@ -69,7 +69,7 @@ class FileUploadService {
      */
     private validateFiles(files: File[]): { valid: boolean; error?: string } {
         // Check total size
-        const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+        const totalSize = files.reduce((sum: number, file: File) => sum + file.size, 0);
         if (totalSize > MAX_TOTAL_SIZE) {
             return {
                 valid: false,

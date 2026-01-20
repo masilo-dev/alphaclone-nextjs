@@ -250,12 +250,12 @@ class AIUsageLimitService {
                 };
             }
 
-            const totalTokens = usage.reduce((sum, u) => sum + u.tokens_used, 0);
-            const totalCost = usage.reduce((sum, u) => sum + u.cost, 0);
+            const totalTokens = (usage as AIUsage[]).reduce((sum: number, u: AIUsage) => sum + u.tokens_used, 0);
+            const totalCost = (usage as AIUsage[]).reduce((sum: number, u: AIUsage) => sum + u.cost, 0);
 
             // Group by service
             const byService: Record<string, { tokens: number; cost: number }> = {};
-            usage.forEach(u => {
+            usage.forEach((u: AIUsage) => {
                 if (!byService[u.service]) {
                     byService[u.service] = { tokens: 0, cost: 0 };
                 }
@@ -265,7 +265,7 @@ class AIUsageLimitService {
 
             // Group by operation
             const byOperation: Record<string, { tokens: number; cost: number }> = {};
-            usage.forEach(u => {
+            usage.forEach((u: AIUsage) => {
                 if (!byOperation[u.operation]) {
                     byOperation[u.operation] = { tokens: 0, cost: 0 };
                 }
@@ -275,7 +275,7 @@ class AIUsageLimitService {
 
             // Daily usage
             const dailyMap = new Map<string, { tokens: number; cost: number }>();
-            usage.forEach(u => {
+            usage.forEach((u: AIUsage) => {
                 const date = new Date(u.created_at).toISOString().split('T')[0];
                 if (!dailyMap.has(date)) {
                     dailyMap.set(date, { tokens: 0, cost: 0 });

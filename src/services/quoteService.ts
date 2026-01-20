@@ -102,7 +102,7 @@ export const quoteService = {
 
             if (error) throw error;
 
-            const templates: QuoteTemplate[] = (data || []).map((t) => ({
+            const templates: QuoteTemplate[] = (data || []).map((t: any) => ({
                 id: t.id,
                 name: t.name,
                 description: t.description,
@@ -209,7 +209,7 @@ export const quoteService = {
 
             if (error) throw error;
 
-            const quotes: Quote[] = (data || []).map((q) => ({
+            const quotes: Quote[] = (data || []).map((q: any) => ({
                 id: q.id,
                 quoteNumber: q.quote_number,
                 name: q.name,
@@ -479,7 +479,7 @@ export const quoteService = {
 
             if (error) throw error;
 
-            const items: QuoteItem[] = (data || []).map((i) => ({
+            const items: QuoteItem[] = (data || []).map((i: any) => ({
                 id: i.id,
                 quoteId: i.quote_id,
                 itemOrder: i.item_order,
@@ -671,7 +671,7 @@ export const quoteService = {
 
             if (error) throw error;
 
-            const views: QuoteView[] = (data || []).map((v) => ({
+            const views: QuoteView[] = (data || []).map((v: any) => ({
                 id: v.id,
                 quoteId: v.quote_id,
                 viewedByEmail: v.viewed_by_email,

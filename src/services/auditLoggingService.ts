@@ -26,7 +26,7 @@ class AuditLoggingService {
   ): Promise<{ success: boolean; error?: string }> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       const logEntry: AuditLogEntry = {
         user_id: user?.id,
         action,
@@ -190,7 +190,7 @@ class AuditLoggingService {
   }
 
   private groupBy(array: any[], key: string): Record<string, number> {
-    return array.reduce((acc, item) => {
+    return array.reduce((acc: Record<string, number>, item: any) => {
       const value = item[key];
       acc[value] = (acc[value] || 0) + 1;
       return acc;
