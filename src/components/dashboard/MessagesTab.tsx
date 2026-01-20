@@ -165,7 +165,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                     return next;
                 });
             })
-            .subscribe(async (status) => {
+            .subscribe(async (status: string) => {
                 if (status === 'SUBSCRIBED') {
                     await channel.track({ user_id: user.id, online_at: new Date().toISOString() });
                 }

@@ -64,7 +64,7 @@ export function useRealTimeMessages(userId: string, role: 'admin' | 'client') {
               table: 'messages',
               filter: `tenant_id=eq.${tenantId}`
             },
-            (payload) => {
+            (payload: any) => {
               const newMessage = payload.new as Message;
 
               // Only add message if user should see it
@@ -92,7 +92,7 @@ export function useRealTimeMessages(userId: string, role: 'admin' | 'client') {
               table: 'messages',
               filter: `tenant_id=eq.${tenantId}`
             },
-            (payload) => {
+            (payload: any) => {
               const updatedMessage = payload.new as Message;
 
               if (mounted) {
@@ -112,7 +112,7 @@ export function useRealTimeMessages(userId: string, role: 'admin' | 'client') {
               table: 'messages',
               filter: `tenant_id=eq.${tenantId}`
             },
-            (payload) => {
+            (payload: any) => {
               const deletedId = payload.old.id;
 
               if (mounted) {
@@ -120,7 +120,7 @@ export function useRealTimeMessages(userId: string, role: 'admin' | 'client') {
               }
             }
           )
-          .subscribe((status) => {
+          .subscribe((status: string) => {
             if (status === 'SUBSCRIBED') {
               console.log('✅ Real-time messages connected');
             } else if (status === 'CLOSED') {
@@ -198,7 +198,7 @@ export function useRealTimeProjects(userId: string, role: 'admin' | 'client') {
               table: 'projects',
               filter: `tenant_id=eq.${tenantId}`
             },
-            (payload) => {
+            (payload: any) => {
               if (!mounted) return;
 
               if (payload.eventType === 'INSERT') {
@@ -274,7 +274,7 @@ export function useRealTimeTasks(userId: string, role: 'admin' | 'client') {
               table: 'tasks',
               filter: `tenant_id=eq.${tenantId}`
             },
-            (payload) => {
+            (payload: any) => {
               if (!mounted) return;
 
               if (payload.eventType === 'INSERT') {
@@ -333,7 +333,7 @@ export function useRealTimeNotifications(userId: string) {
 
         if (mounted) {
           setNotifications(data || []);
-          setUnreadCount(data?.filter(n => !n.read).length || 0);
+          setUnreadCount(data?.filter((n: any) => !n.read).length || 0);
         }
 
         // Real-time subscription
@@ -347,7 +347,7 @@ export function useRealTimeNotifications(userId: string) {
               table: 'notifications',
               filter: `user_id=eq.${userId}`
             },
-            (payload) => {
+            (payload: any) => {
               if (!mounted) return;
 
               if (payload.eventType === 'INSERT') {
@@ -359,7 +359,7 @@ export function useRealTimeNotifications(userId: string) {
                 );
                 // Recalculate unread count
                 setNotifications((current) => {
-                  const newUnread = current.filter(n => !n.read).length;
+                  const newUnread = current.filter((n: any) => !n.read).length;
                   setUnreadCount(newUnread);
                   return current;
                 });

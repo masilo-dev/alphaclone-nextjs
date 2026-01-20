@@ -65,9 +65,17 @@ function validateEnv() {
             // Return a fallback object that satisfies the schema via casting, 
             // allowing the build to proceed even if keys are missing.
             // Runtime usage will still fail if critical keys are truly missing.
+            const supabaseUrl = env.VITE_SUPABASE_URL && env.VITE_SUPABASE_URL !== 'undefined'
+                ? env.VITE_SUPABASE_URL
+                : 'https://placeholder-project.supabase.co';
+
+            const supabaseKey = env.VITE_SUPABASE_ANON_KEY && env.VITE_SUPABASE_ANON_KEY !== 'undefined'
+                ? env.VITE_SUPABASE_ANON_KEY
+                : 'placeholder-key';
+
             return {
-                VITE_SUPABASE_URL: env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co',
-                VITE_SUPABASE_ANON_KEY: env.VITE_SUPABASE_ANON_KEY || 'placeholder-key',
+                VITE_SUPABASE_URL: supabaseUrl,
+                VITE_SUPABASE_ANON_KEY: supabaseKey,
                 VITE_GEMINI_API_KEY: env.VITE_GEMINI_API_KEY,
                 VITE_DAILY_DOMAIN: env.VITE_DAILY_DOMAIN,
                 VITE_STRIPE_PUBLIC_KEY: env.VITE_STRIPE_PUBLIC_KEY,
