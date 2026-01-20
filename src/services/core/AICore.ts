@@ -299,11 +299,11 @@ Return JSON array with: title, description, priority, estimatedHours
 Analyze this business data:
 
 Projects: ${projectsData.data?.length || 0} total
-- Active: ${projectsData.data?.filter(p => p.status === 'Active').length || 0}
-- Completed: ${projectsData.data?.filter(p => p.status === 'Completed').length || 0}
+- Active: ${projectsData.data?.filter((p: any) => p.status === 'Active').length || 0}
+- Completed: ${projectsData.data?.filter((p: any) => p.status === 'Completed').length || 0}
 
 Tasks: ${tasksData.data?.length || 0} total
-- Completed: ${tasksData.data?.filter(t => t.status === 'completed').length || 0}
+- Completed: ${tasksData.data?.filter((t: any) => t.status === 'completed').length || 0}
 
 Deals: ${dealsData.data?.length || 0} total
 
