@@ -98,7 +98,7 @@ class ClientActivityService {
             .order('created_at', { ascending: false })
             .limit(50);
 
-        return (data || []).map(msg => ({
+        return (data || []).map((msg: any) => ({
             id: msg.id,
             client_id: clientId,
             activity_type: 'message' as const,
@@ -126,7 +126,7 @@ class ClientActivityService {
             .order('start_time', { ascending: false })
             .limit(20);
 
-        return (data || []).map(event => ({
+        return (data || []).map((event: any) => ({
             id: event.id,
             client_id: clientId,
             activity_type: 'meeting' as const,
@@ -153,7 +153,7 @@ class ClientActivityService {
             .eq('client_id', clientId)
             .order('created_at', { ascending: false });
 
-        return (data || []).map(contract => ({
+        return (data || []).map((contract: any) => ({
             id: contract.id,
             client_id: clientId,
             activity_type: 'contract' as const,
@@ -180,7 +180,7 @@ class ClientActivityService {
             .eq('status', 'paid')
             .order('paid_at', { ascending: false });
 
-        return (data || []).map(invoice => ({
+        return (data || []).map((invoice: any) => ({
             id: invoice.id,
             client_id: clientId,
             activity_type: 'payment' as const,
@@ -205,7 +205,7 @@ class ClientActivityService {
             .eq('owner_id', clientId)
             .order('created_at', { ascending: false });
 
-        return (data || []).map(project => ({
+        return (data || []).map((project: any) => ({
             id: project.id,
             client_id: clientId,
             activity_type: 'project_update' as const,
@@ -232,7 +232,7 @@ class ClientActivityService {
             .order('created_at', { ascending: false })
             .limit(20);
 
-        return (data || []).map(file => ({
+        return (data || []).map((file: any) => ({
             id: file.id,
             client_id: clientId,
             activity_type: 'file_upload' as const,
