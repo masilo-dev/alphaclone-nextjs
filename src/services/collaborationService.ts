@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 export interface CollaborationDocument {
     id: string;
@@ -135,7 +136,7 @@ export const collaborationService = {
                     table: 'collaboration_documents',
                     filter: `id=eq.${documentId}`,
                 },
-                (payload) => {
+                (payload: RealtimePostgresChangesPayload<any>) => {
                     const doc = payload.new as any;
                     onUpdate({
                         id: doc.id,
@@ -151,7 +152,7 @@ export const collaborationService = {
                     });
                 }
             )
-            .on('broadcast', { event: 'cursor' }, (payload) => {
+            .on('broadcast', { event: 'cursor' }, (payload: any) => {
                 onCursor(payload.payload.cursors || []);
             })
             .subscribe();
