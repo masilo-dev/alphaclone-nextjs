@@ -271,7 +271,7 @@ class MeetingAdapterService {
                     table: 'video_calls',
                     filter: `id=eq.${meetingId}`,
                 },
-                (payload) => {
+                (payload: any) => {
                     if (payload.new && 'status' in payload.new) {
                         const newStatus = payload.new.status as 'active' | 'ended' | 'cancelled';
                         const reason = payload.new.ended_reason as string | undefined;

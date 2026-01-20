@@ -29,7 +29,7 @@ export const notificationService = {
                 return { notifications: [], error: error.message };
             }
 
-            const notifications: Notification[] = (data || []).map((n) => ({
+            const notifications: Notification[] = (data || []).map((n: any) => ({
                 id: n.id,
                 userId: n.user_id,
                 type: n.type,
@@ -94,7 +94,7 @@ export const notificationService = {
                     table: 'notifications',
                     filter: `user_id=eq.${userId} AND tenant_id=eq.${tenantService.getCurrentTenantId()}`,
                 },
-                (payload) => {
+                (payload: any) => {
                     const n = payload.new;
                     const notification: Notification = {
                         id: n.id,

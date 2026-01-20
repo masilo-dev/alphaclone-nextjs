@@ -164,7 +164,7 @@ class RateLimitService {
             }
 
             const stats = { logo: 0, image: 0, content: 0 };
-            data?.forEach(item => {
+            data?.forEach((item: any) => {
                 if (item.generation_type in stats) {
                     stats[item.generation_type as keyof typeof stats] = item.count;
                 }

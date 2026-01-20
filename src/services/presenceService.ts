@@ -200,7 +200,7 @@ class PresenceService {
                     schema: 'public',
                     table: 'user_presence',
                 },
-                (payload) => {
+                (payload: any) => {
                     if (payload.new) {
                         onPresenceChange(payload.new as UserPresence);
                     }
@@ -230,7 +230,7 @@ class PresenceService {
                     table: 'user_presence',
                     filter: `user_id=eq.${userId}`,
                 },
-                (payload) => {
+                (payload: any) => {
                     if (payload.new) {
                         onPresenceChange(payload.new as UserPresence);
                     }

@@ -78,7 +78,7 @@ export const workflowServiceEnterprise = {
 
             if (error) throw error;
 
-            const workflows: WorkflowEnterprise[] = (data || []).map((w) => ({
+            const workflows: WorkflowEnterprise[] = (data || []).map((w: any) => ({
                 id: w.id,
                 name: w.name,
                 description: w.description,
@@ -252,7 +252,7 @@ export const workflowServiceEnterprise = {
 
             if (error) throw error;
 
-            const actions: WorkflowActionEnterprise[] = (data || []).map((a) => ({
+            const actions: WorkflowActionEnterprise[] = (data || []).map((a: any) => ({
                 id: a.id,
                 workflowId: a.workflow_id,
                 actionType: a.action_type,
@@ -386,7 +386,7 @@ export const workflowServiceEnterprise = {
 
             if (error) throw error;
 
-            const executions: WorkflowExecutionEnterprise[] = (data || []).map((e) => ({
+            const executions: WorkflowExecutionEnterprise[] = (data || []).map((e: any) => ({
                 id: e.id,
                 workflowId: e.workflow_id,
                 triggeredByEntityType: e.triggered_by_entity_type,
@@ -466,7 +466,7 @@ export const workflowServiceEnterprise = {
 
             if (error) throw error;
 
-            const workflows: WorkflowEnterprise[] = (data || []).map((w) => ({
+            const workflows: WorkflowEnterprise[] = (data || []).map((w: any) => ({
                 id: w.id,
                 name: w.name,
                 description: w.description,

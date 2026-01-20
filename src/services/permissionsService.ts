@@ -45,7 +45,7 @@ export const permissionsService = {
                 return false;
             }
 
-            const roleIds = userRoles.map(ur => ur.role_id);
+            const roleIds = userRoles.map((ur: any) => ur.role_id);
 
             // Get permissions for these roles
             const { data: roles } = await supabase
@@ -59,7 +59,7 @@ export const permissionsService = {
 
             // Flatten permissions
             const allPermissionIds = new Set<string>();
-            roles.forEach(role => {
+            roles.forEach((role: any) => {
                 (role.permissions || []).forEach((permId: string) => allPermissionIds.add(permId));
             });
 

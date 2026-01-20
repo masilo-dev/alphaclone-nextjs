@@ -21,7 +21,7 @@ export const userService = {
 
                 if (tenantError) return { users: [], error: tenantError.message };
 
-                const userIds = tenantUsers.map(tu => tu.user_id);
+                const userIds = tenantUsers.map((tu: any) => tu.user_id);
                 if (userIds.length === 0) return { users: [], error: null };
 
                 query = query.in('id', userIds);
@@ -33,7 +33,7 @@ export const userService = {
                 return { users: [], error: error.message };
             }
 
-            const users: User[] = (data || []).map(p => ({
+            const users: User[] = (data || []).map((p: any) => ({
                 id: p.id,
                 email: p.email,
                 name: p.name,

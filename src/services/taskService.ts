@@ -107,7 +107,7 @@ export const taskService = {
 
             if (error) throw error;
 
-            const tasks: Task[] = (data || []).map((t) => ({
+            const tasks: Task[] = (data || []).map((t: any) => ({
                 id: t.id,
                 title: t.title,
                 description: t.description,
@@ -447,7 +447,7 @@ export const taskService = {
 
             if (error) throw error;
 
-            const tasks: Task[] = (data || []).map((t) => ({
+            const tasks: Task[] = (data || []).map((t: any) => ({
                 id: t.id,
                 title: t.title,
                 description: t.description,
@@ -503,7 +503,7 @@ export const taskService = {
 
             if (error) throw error;
 
-            const tasks: Task[] = (data || []).map((t) => ({
+            const tasks: Task[] = (data || []).map((t: any) => ({
                 id: t.id,
                 title: t.title,
                 description: t.description,

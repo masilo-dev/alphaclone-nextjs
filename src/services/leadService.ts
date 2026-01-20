@@ -46,7 +46,7 @@ export const leadService = {
 
             if (error) throw error;
 
-            const leads: Lead[] = (data || []).map(l => ({
+            const leads: Lead[] = (data || []).map((l: any) => ({
                 id: l.id,
                 owner_id: l.owner_id,
                 businessName: l.business_name,

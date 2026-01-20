@@ -238,7 +238,7 @@ class MissedCallsService {
                     table: 'missed_calls',
                     filter: `callee_id=eq.${userId}`,
                 },
-                (payload) => {
+                (payload: any) => {
                     if (payload.new) {
                         onNewMissedCall(payload.new as MissedCall);
                     }

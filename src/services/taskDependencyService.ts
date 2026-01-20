@@ -236,10 +236,10 @@ class TaskDependencyService {
 
             // Build dependency graph
             const graph = new Map<string, Task>();
-            tasks.forEach(task => graph.set(task.id, task));
+            tasks.forEach((task: any) => graph.set(task.id, task));
 
             // Find tasks with no dependencies (start tasks)
-            const startTasks = tasks.filter(t => !t.dependencies || t.dependencies.length === 0);
+            const startTasks = tasks.filter((t: any) => !t.dependencies || t.dependencies.length === 0);
 
             // Calculate longest path (critical path)
             let longestPath: Task[] = [];
@@ -363,7 +363,7 @@ class TaskDependencyService {
 
             if (!tasks) return { nodes: [], edges: [] };
 
-            const nodes = tasks.map(task => ({
+            const nodes = tasks.map((task: any) => ({
                 id: task.id,
                 label: task.title,
                 status: task.status,
@@ -371,7 +371,7 @@ class TaskDependencyService {
             }));
 
             const edges: any[] = [];
-            tasks.forEach(task => {
+            tasks.forEach((task: any) => {
                 if (task.dependencies) {
                     task.dependencies.forEach((depId: string) => {
                         edges.push({
