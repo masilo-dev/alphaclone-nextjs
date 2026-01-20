@@ -1,3 +1,4 @@
+import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { User } from '../types';
 import { signInSchema, signUpSchema } from '../schemas/validation';
@@ -307,7 +308,7 @@ export const authService = {
      * Listen to auth state changes
      */
     onAuthStateChange(callback: (user: User | null) => void) {
-        return supabase.auth.onAuthStateChange(async (_event, session) => {
+        return supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
             if (session?.user) {
                 const { user } = await this.getCurrentUser();
                 callback(user);
