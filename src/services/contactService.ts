@@ -73,7 +73,7 @@ export const contactService = {
                 return { submissions: [], error: error.message };
             }
 
-            const submissions: ContactSubmission[] = (data || []).map((s) => ({
+            const submissions: ContactSubmission[] = (data || []).map((s: any) => ({
                 id: s.id,
                 name: s.name,
                 email: s.email,
