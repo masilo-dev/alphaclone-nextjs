@@ -47,11 +47,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         initAuth();
 
         // Subscribe to auth changes
-        const { data: { subscription } } = authService.onAuthStateChange((u) => {
+        const { data: { subscription } } = authService.onAuthStateChange((u, event) => {
             // Only update if not in ghost mode (ghost mode is manual exit)
             if (!localStorage.getItem('alphaclone_ghost_user')) {
-                setUser(u);
-                setLoading(false);
+                console.log(`AuthContext: Handling ${event} event, User: ${u?.email}`);
+
+                // If we just signed in, we might be about to redirect. 
+                // Ensure we are in a loading state while the profile is fetched.
+                if (event === 'SIGNED_IN' && !u) {
+                    setLoading(true);
+                } else {
+                    setUser(u);
+                    setLoading(false);
+                }
             }
         });
 

@@ -1,6 +1,6 @@
 import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { User } from '../types';
+import { User, UserRole } from '../types';
 import { signInSchema, signUpSchema } from '../schemas/validation';
 
 export const authService = {
@@ -110,7 +110,7 @@ export const authService = {
     /**
      * Sign up new user
      */
-    async signUp(email: string, password: string, name: string): Promise<{ user: User | null; error: string | null }> {
+    async signUp(email: string, password: string, name: string, role: UserRole = 'client'): Promise<{ user: User | null; error: string | null }> {
         try {
             // Validate input
             const validated = signUpSchema.parse({ email: email.toLowerCase(), password, name });
@@ -121,7 +121,7 @@ export const authService = {
                 options: {
                     data: {
                         name: validated.name,
-                        role: 'client',
+                        role: role,
                     },
                 },
             });
@@ -135,12 +135,11 @@ export const authService = {
                 return { user: null, error: 'No user data returned' };
             }
 
-            // Profile is created automatically by trigger
             const user: User = {
                 id: data.user.id,
                 email: validated.email,
                 name: validated.name,
-                role: 'client',
+                role: role,
                 avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${validated.email}`,
             };
 
@@ -227,7 +226,8 @@ export const authService = {
                 return { user: null, error: null };
             }
 
-            console.log("AuthService: Session found for user", session.user.id);
+            const startTime = Date.now();
+            console.log(`AuthService: Fetching profile for ${session.user.id}...`);
 
             // OPTIMIZED: Use metadata first to avoid database query
             let user: User;
@@ -275,6 +275,7 @@ export const authService = {
                 }).catch(() => { }); // Silent fail
             }
 
+            console.log(`AuthService: Profile fetched in ${Date.now() - startTime}ms. Role: ${user.role}`);
             return { user, error: null };
         } catch (err) {
             return { user: null, error: err instanceof Error ? err.message : 'Unknown error' };
@@ -314,13 +315,15 @@ export const authService = {
     /**
      * Listen to auth state changes
      */
-    onAuthStateChange(callback: (user: User | null) => void) {
-        return supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
+    onAuthStateChange(callback: (user: User | null, event?: AuthChangeEvent) => void) {
+        return supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+            console.log(`AuthService: State changed - Event: ${event}, UserID: ${session?.user?.id}`);
+
             if (session?.user) {
                 const { user } = await this.getCurrentUser();
-                callback(user);
+                callback(user, event);
             } else {
-                callback(null);
+                callback(null, event);
             }
         });
     },
