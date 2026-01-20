@@ -83,7 +83,7 @@ export const emailCampaignService = {
 
             if (error) throw error;
 
-            const templates: EmailTemplate[] = (data || []).map((t) => ({
+            const templates: EmailTemplate[] = (data || []).map((t: any) => ({
                 id: t.id,
                 name: t.name,
                 subject: t.subject,
@@ -238,7 +238,7 @@ export const emailCampaignService = {
 
             if (error) throw error;
 
-            const campaigns: EmailCampaign[] = (data || []).map((c) => ({
+            const campaigns: EmailCampaign[] = (data || []).map((c: any) => ({
                 id: c.id,
                 name: c.name,
                 subject: c.subject,
@@ -429,7 +429,7 @@ export const emailCampaignService = {
 
             if (error) throw error;
 
-            const recipients: CampaignRecipient[] = (data || []).map((r) => ({
+            const recipients: CampaignRecipient[] = (data || []).map((r: any) => ({
                 id: r.id,
                 campaignId: r.campaign_id,
                 contactId: r.contact_id,
