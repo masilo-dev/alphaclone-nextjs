@@ -82,7 +82,7 @@ export const forecastingService = {
 
             if (error) throw error;
 
-            const forecasts: SalesForecast[] = (data || []).map((f) => ({
+            const forecasts: SalesForecast[] = (data || []).map((f: any) => ({
                 id: f.id,
                 forecastPeriod: f.forecast_period,
                 startDate: f.start_date,
@@ -252,7 +252,7 @@ export const forecastingService = {
             if (error) throw error;
 
             const summary: ForecastSummary = (data || []).reduce(
-                (acc, f) => ({
+                (acc: ForecastSummary, f: any) => ({
                     totalForecastedRevenue: acc.totalForecastedRevenue + (f.forecasted_revenue || 0),
                     totalWeightedPipeline: acc.totalWeightedPipeline + (f.weighted_pipeline_value || 0),
                     totalActualRevenue: acc.totalActualRevenue + (f.actual_revenue || 0),
@@ -326,7 +326,7 @@ export const forecastingService = {
 
             if (error) throw error;
 
-            const metrics: PerformanceMetric[] = (data || []).map((m) => ({
+            const metrics: PerformanceMetric[] = (data || []).map((m: any) => ({
                 id: m.id,
                 metricName: m.metric_name,
                 metricValue: m.metric_value,
@@ -421,7 +421,7 @@ export const forecastingService = {
 
             if (error) throw error;
 
-            const goals: SalesGoal[] = (data || []).map((g) => ({
+            const goals: SalesGoal[] = (data || []).map((g: any) => ({
                 id: g.id,
                 name: g.name,
                 userId: g.user_id,
