@@ -234,7 +234,7 @@ class DailyService {
                 return { calls: [], error: error.message };
             }
 
-            const calls: VideoCall[] = (data || []).map(d => ({
+            const calls: VideoCall[] = (data || []).map((d: any) => ({
                 ...d,
                 created_at: new Date(d.created_at),
                 updated_at: new Date(d.updated_at),
