@@ -61,7 +61,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const signOut = async () => {
+        localStorage.removeItem('alphaclone_ghost_user');
         await authService.signOut();
+        setUser(null);
     };
 
     const value = {
