@@ -57,7 +57,7 @@ export const galleryService = {
                 return { items: [], error: error.message };
             }
 
-            const items: GalleryItem[] = (data || []).map((item) => ({
+            const items: GalleryItem[] = (data || []).map((item: any) => ({
                 id: item.id,
                 userId: item.user_id,
                 type: item.type,
