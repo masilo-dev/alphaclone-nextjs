@@ -12,8 +12,8 @@ export const createClient = () => {
         // IF we're in build mode, but we use a try-catch for extra safety
         try {
             return createBrowserClient(
-                ENV.VITE_SUPABASE_URL || 'https://placeholder.supabase.co',
-                ENV.VITE_SUPABASE_ANON_KEY || 'placeholder'
+                ENV.VITE_SUPABASE_URL || 'https://ehekzoioqvtweugemktn.supabase.co',
+                ENV.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoZWt6b2lvcXZ0d2V1Z2Vta3RuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMDcxNjIsImV4cCI6MjA4MDY4MzE2Mn0.vBx4tSM4L8Rh_VTzYCdvz9bMMyjcfkkvv9y_2vT02ek'
             );
         } catch (e) {
             console.warn('Supabase client initialization skipped during build due to missing env vars');
