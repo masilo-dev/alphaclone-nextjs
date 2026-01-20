@@ -11,6 +11,7 @@ import type {
     PublishEventOptions,
     EventStatus
 } from './types';
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 class EventBusService {
     private handlers: Map<string, EventHandlerFunction[]> = new Map();
@@ -88,7 +89,7 @@ class EventBusService {
                 event: 'INSERT',
                 schema: 'public',
                 table: 'events'
-            }, async (payload) => {
+            }, async (payload: RealtimePostgresChangesPayload<Event>) => {
                 const event = payload.new as Event;
                 await this.processEvent(event);
             })
@@ -269,7 +270,7 @@ class EventBusService {
             failed: 0
         };
 
-        data?.forEach(event => {
+        data?.forEach((event: any) => {
             if (event.status === 'pending') stats.pending++;
             else if (event.status === 'completed') stats.completed++;
             else if (event.status === 'failed') stats.failed++;
