@@ -50,7 +50,7 @@ export const CallButton: React.FC<CallButtonProps> = ({
             await callSignalingService.initiateCall(
                 recipientId,
                 user.id,
-                user.user_metadata?.full_name || user.email || 'Unknown'
+                user.name || user.email || 'Unknown'
             );
 
             // 3. Open Room for Caller
