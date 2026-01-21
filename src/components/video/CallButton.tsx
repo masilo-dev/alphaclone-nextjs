@@ -47,18 +47,11 @@ export const CallButton: React.FC<CallButtonProps> = ({
             if (callError || !call) throw new Error(callError || 'Failed to create call');
 
             // 2. Signal Recipient
-            const { error: signalError } = await callSignalingService.sendSignal({
-                type: 'incoming',
-                senderId: user.id,
-                recipientId: recipientId,
-                payload: {
-                    roomId: call.room_id,
-                    url: call.daily_room_url,
-                    callerName: user.user_metadata?.full_name || user.email
-                }
-            });
-
-            if (signalError) throw new Error(signalError);
+            await callSignalingService.initiateCall(
+                recipientId,
+                user.id,
+                user.user_metadata?.full_name || user.email || 'Unknown'
+            );
 
             // 3. Open Room for Caller
             if (call.daily_room_url) {
