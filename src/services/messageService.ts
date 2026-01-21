@@ -246,11 +246,18 @@ export const messageService = {
                     event: 'INSERT',
                     schema: 'public',
                     table: 'messages',
-                    // ✅ CRITICAL FIX: Filter realtime subscription by tenant
-                    filter: `tenant_id=eq.${tenantId}${!isAdmin ? ` AND (sender_id.eq.${userId} OR recipient_id.eq.${userId})` : ''}`
+                    // ✅ FIXED: Simplified filter - Supabase Realtime doesn't support complex AND/OR
+                    // We filter by tenant_id only, then filter in callback
+                    filter: `tenant_id=eq.${tenantId}`
                 },
                 (payload: any) => {
                     const m = payload.new;
+
+                    // ✅ Client-side filter: Only show messages involving this user
+                    if (!isAdmin && m.sender_id !== userId && m.recipient_id !== userId) {
+                        return; // Skip this message
+                    }
+
                     const message: ChatMessage = {
                         id: m.id,
                         role: m.sender_role as 'user' | 'model' | 'system',
@@ -274,11 +281,17 @@ export const messageService = {
                     event: 'UPDATE',
                     schema: 'public',
                     table: 'messages',
-                    // ✅ Also subscribe to updates for read receipts (tenant filtered)
-                    filter: `tenant_id=eq.${tenantId}${!isAdmin ? ` AND (sender_id.eq.${userId} OR recipient_id.eq.${userId})` : ''}`
+                    // ✅ FIXED: Simplified filter for updates too
+                    filter: `tenant_id=eq.${tenantId}`
                 },
                 (payload: any) => {
                     const m = payload.new;
+
+                    // ✅ Client-side filter: Only show messages involving this user
+                    if (!isAdmin && m.sender_id !== userId && m.recipient_id !== userId) {
+                        return; // Skip this message
+                    }
+
                     const message: ChatMessage = {
                         id: m.id,
                         role: m.sender_role as 'user' | 'model' | 'system',
@@ -392,14 +405,16 @@ export const messageService = {
     async getConversationList(
         userId: string,
         isAdmin: boolean
-    ): Promise<{ conversations: Array<{
-        userId: string;
-        userName: string;
-        lastMessage: string;
-        lastMessageAt: Date;
-        hasUnread: boolean;
-        unreadCount: number;
-    }>; error: string | null }> {
+    ): Promise<{
+        conversations: Array<{
+            userId: string;
+            userName: string;
+            lastMessage: string;
+            lastMessageAt: Date;
+            hasUnread: boolean;
+            unreadCount: number;
+        }>; error: string | null
+    }> {
         try {
             const tenantId = this.getTenantId();
 
@@ -466,4 +481,23 @@ export const messageService = {
         if (!channel) return;
         channel.track({ user_id: userId, is_typing: isTyping });
     },
+
+    /**
+     * AI Auto-Reply: Drafts a reply when admin is unavailable
+     */
+    async draftAutoReply(
+        messageId: string,
+        incomingText: string,
+        senderName: string
+    ): Promise<{ reply: string | null; error: string | null }> {
+        try {
+            // Import dynamically to avoid circular dependencies if any
+            const { generateAutoReply } = await import('./geminiService');
+
+            const reply = await generateAutoReply(incomingText, senderName);
+            return { reply, error: null };
+        } catch (err) {
+            return { reply: null, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    }
 };

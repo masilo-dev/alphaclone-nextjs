@@ -271,3 +271,15 @@ Example format:
         throw new Error(e.message || 'Failed to generate leads. Please try again.');
     }
 };
+
+export const generateAutoReply = async (incomingMessage: string, senderName: string, businessContext: string = "a professional digital agency") => {
+    const prompt = `You are an AI assistant for ${businessContext}.
+    A client named ${senderName} sent this message: "${incomingMessage}".
+    Draft a polite, professional, and concise reply.
+    If the message is a greeting, reply warmly.
+    If it's a specific question, acknowledge it and say the team will review it.
+    Keep it under 3 sentences.`;
+
+    const res = await geminiService.generateContent(prompt);
+    return res.text || "Thank you for your message. Our team will review it shortly.";
+};

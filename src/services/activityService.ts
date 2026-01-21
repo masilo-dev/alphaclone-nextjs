@@ -362,5 +362,97 @@ export const activityService = {
      */
     async logNavigation(userId: string, path: string) {
         return this.logActivity(userId, 'Navigation', { path });
+    },
+
+    /**
+     * Log failed login attempt
+     */
+    async logFailedLogin(
+        email: string,
+        failureReason: string,
+        ipAddress?: string,
+        userAgent?: string,
+        location?: string
+    ) {
+        const locationData = await getLocationData();
+        const { browser, deviceType } = parseUserAgent(userAgent || navigator.userAgent);
+        const tenantId = tenantService.getCurrentTenantId();
+
+        const { error } = await supabase.from('failed_logins').insert({
+            tenant_id: tenantId,
+            email,
+            ip_address: ipAddress || locationData.ip || 'Unknown',
+            user_agent: userAgent || navigator.userAgent,
+            location: location || `${locationData.city}, ${locationData.country}`,
+            device_info: { browser, deviceType },
+            failure_reason: failureReason,
+        });
+
+        return { error };
+    },
+
+    /**
+     * Log error (client-side or server-side)
+     */
+    async logError(
+        errorType: 'client_error' | 'server_error' | 'api_error',
+        errorMessage: string,
+        options?: {
+            errorStack?: string;
+            componentStack?: string;
+            endpoint?: string;
+            statusCode?: number;
+            severity?: 'error' | 'warning' | 'critical';
+            userId?: string;
+            metadata?: any;
+        }
+    ) {
+        const tenantId = tenantService.getCurrentTenantId();
+        const locationData = await getLocationData();
+
+        const { error } = await supabase.from('error_logs').insert({
+            tenant_id: tenantId,
+            user_id: options?.userId,
+            error_type: errorType,
+            error_message: errorMessage,
+            error_stack: options?.errorStack,
+            component_stack: options?.componentStack,
+            endpoint: options?.endpoint,
+            status_code: options?.statusCode,
+            severity: options?.severity || 'error',
+            user_agent: navigator.userAgent,
+            ip_address: locationData.ip || 'Unknown',
+            metadata: options?.metadata,
+        });
+
+        return { error };
+    },
+
+    /**
+     * Get failed login attempts (admin only)
+     */
+    async getFailedLogins(limit = 100) {
+        const { data, error } = await supabase
+            .from('failed_logins')
+            .select('*')
+            .eq('tenant_id', tenantService.getCurrentTenantId())
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        return { failedLogins: data, error };
+    },
+
+    /**
+     * Get error logs (admin only)
+     */
+    async getErrorLogs(limit = 100) {
+        const { data, error } = await supabase
+            .from('error_logs')
+            .select('*')
+            .eq('tenant_id', tenantService.getCurrentTenantId())
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        return { errorLogs: data, error };
     }
 };

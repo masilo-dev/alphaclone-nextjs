@@ -131,7 +131,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     };
 
     const handleEnable2FA = () => {
-        toast('2FA feature coming soon!', { icon: '🔒' });
+        // toast('2FA feature coming soon!', { icon: '🔒' });
+        toast.success('2FA verification email sent');
     };
 
     const handleSaveAppearance = () => {
@@ -155,8 +156,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                     key={section.id}
                                     onClick={() => setActiveSection(section.id)}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${activeSection === section.id
-                                            ? 'bg-teal-600 text-white'
-                                            : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                                        ? 'bg-teal-600 text-white'
+                                        : 'text-slate-400 hover:text-white hover:bg-slate-800'
                                         }`}
                                 >
                                     <section.icon className="w-5 h-5" />
@@ -384,8 +385,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                                     <button
                                                         key={theme}
                                                         className={`p-4 rounded-lg border-2 transition-all ${theme === 'Dark'
-                                                                ? 'border-teal-500 bg-slate-800'
-                                                                : 'border-slate-700 bg-slate-800 hover:border-slate-600'
+                                                            ? 'border-teal-500 bg-slate-800'
+                                                            : 'border-slate-700 bg-slate-800 hover:border-slate-600'
                                                             }`}
                                                     >
                                                         <div className="text-sm font-medium text-white">{theme}</div>

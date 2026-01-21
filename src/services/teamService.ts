@@ -41,6 +41,18 @@ export const teamService = {
             console.error('Error fetching team members:', err);
             return { team: [], error: err instanceof Error ? err.message : 'Unknown error' };
         }
+    },
+    async updateMemberStatus(memberId: string, status: string): Promise<{ error: string | null }> {
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({ status })
+                .eq('id', memberId);
+
+            return { error: error?.message || null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Unknown error' };
+        }
     }
 };
 
@@ -49,8 +61,8 @@ const transformProfileToMember = (profile: any) => ({
     id: profile.id,
     name: profile.name,
     role: profile.role === 'admin' ? 'Administrator' : 'Team Member',
-    skills: ['General Access'], // Since we don't have a skills table yet, we default this or add a column later
-    status: 'Available', // Default status
+    skills: profile.skills && profile.skills.length > 0 ? profile.skills : ['General Access'],
+    status: profile.status || 'Available',
     avatar: profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&background=random`,
-    capacity: Math.floor(Math.random() * 100) // Placeholder until we have a real capacity/workload table
+    capacity: 0 // Calculated dynamically in the UI based on assignments
 });

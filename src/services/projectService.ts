@@ -6,11 +6,13 @@ import { tenantService } from './tenancy/TenantService';
 export const projectService = {
     /**
      * Get current tenant ID (helper method)
+     * Returns null if no tenant is set (for backward compatibility)
      */
-    getTenantId(): string {
+    getTenantId(): string | null {
         const tenantId = tenantService.getCurrentTenantId();
         if (!tenantId) {
-            throw new Error('No active tenant. Please select or create an organization.');
+            console.warn('No active tenant found. Creating project without tenant assignment.');
+            return null;
         }
         return tenantId;
     },
@@ -24,8 +26,12 @@ export const projectService = {
 
             let query = supabase
                 .from('projects')
-                .select('*')
-                .eq('tenant_id', tenantId); // ← TENANT FILTER
+                .select('*');
+
+            // Only filter by tenant if tenant ID exists
+            if (tenantId) {
+                query = query.eq('tenant_id', tenantId);
+            }
 
             // Clients only see their own projects, admins see all within tenant
             if (role !== 'admin') {
@@ -84,7 +90,7 @@ export const projectService = {
                 .limit(20);
 
             if (error) {
-                console.error("Error fetching public projects:", error);
+                console.warn("Error fetching public projects (non-critical):", error);
                 return { projects: [], error: error.message };
             }
 
@@ -115,6 +121,43 @@ export const projectService = {
     },
 
     /**
+     * Get a specific public project's status by ID (no auth required)
+     * Used for the shared external link
+     */
+    async getPublicProjectStatus(projectId: string): Promise<{ project: Partial<Project> | null; error: string | null }> {
+        try {
+            const { data, error } = await supabase
+                .from('projects')
+                .select('*')
+                .eq('id', projectId)
+                .eq('is_public', true) // CRITICAL: Only allow if explicitly public
+                .single();
+
+            if (error) {
+                return { project: null, error: error.message };
+            }
+
+            // Return limited fields/readonly view
+            const project: Partial<Project> = {
+                id: data.id,
+                name: data.name,
+                category: data.category,
+                status: data.status,
+                currentStage: data.current_stage,
+                progress: data.progress,
+                dueDate: data.due_date,
+                ownerName: data.owner_name,
+                image: data.image,
+                description: data.description,
+            };
+
+            return { project, error: null };
+        } catch (err) {
+            return { project: null, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
      * Create a new project (with tenant assignment)
      */
     async createProject(project: Omit<Project, 'id'>): Promise<{ project: Project | null; error: string | null }> {
@@ -124,7 +167,7 @@ export const projectService = {
             const { data, error } = await supabase
                 .from('projects')
                 .insert({
-                    tenant_id: tenantId, // ← ASSIGN TO TENANT
+                    tenant_id: tenantId || null, // ← ASSIGN TO TENANT (null if no tenant)
                     owner_id: project.ownerId,
                     owner_name: project.ownerName,
                     name: project.name,
@@ -209,11 +252,18 @@ export const projectService = {
             if (updates.isPublic !== undefined) updateData.is_public = updates.isPublic;
             if (updates.showInPortfolio !== undefined) updateData.show_in_portfolio = updates.showInPortfolio;
 
-            const { error, data } = await supabase
+            // Build update query
+            let updateQuery = supabase
                 .from('projects')
                 .update(updateData)
-                .eq('id', projectId)
-                .eq('tenant_id', tenantId) // ← VERIFY TENANT OWNERSHIP
+                .eq('id', projectId);
+
+            // Only verify tenant ownership if tenant exists
+            if (tenantId) {
+                updateQuery = updateQuery.eq('tenant_id', tenantId);
+            }
+
+            const { error, data } = await updateQuery
                 .select('owner_id, name')
                 .single();
 
@@ -249,11 +299,17 @@ export const projectService = {
         try {
             const tenantId = this.getTenantId();
 
-            const { error } = await supabase
+            let deleteQuery = supabase
                 .from('projects')
                 .delete()
-                .eq('id', projectId)
-                .eq('tenant_id', tenantId); // ← VERIFY TENANT OWNERSHIP
+                .eq('id', projectId);
+
+            // Only verify tenant ownership if tenant exists
+            if (tenantId) {
+                deleteQuery = deleteQuery.eq('tenant_id', tenantId);
+            }
+
+            const { error } = await deleteQuery;
 
             return { error: error ? error.message : null };
         } catch (err) {
@@ -267,16 +323,23 @@ export const projectService = {
     subscribeToProjects(callback: (project: Project) => void) {
         const tenantId = this.getTenantId();
 
+        // Build subscription config
+        const subscriptionConfig: any = {
+            event: '*',
+            schema: 'public',
+            table: 'projects'
+        };
+
+        // Only filter by tenant if tenant exists
+        if (tenantId) {
+            subscriptionConfig.filter = `tenant_id=eq.${tenantId}`;
+        }
+
         const channel = supabase
             .channel('projects_channel')
             .on(
                 'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'projects',
-                    filter: `tenant_id=eq.${tenantId}` // ← FILTER BY TENANT
-                },
+                subscriptionConfig,
                 (payload: any) => {
                     if (payload.eventType === 'DELETE') {
                         return;

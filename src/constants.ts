@@ -32,6 +32,8 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
   { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
   { label: 'My Projects', href: '/dashboard/projects', icon: Briefcase },
   { label: 'Project Calendar', href: '/dashboard/calendar', icon: Calendar },
+  { label: 'Finance & Payments', href: '/dashboard/finance', icon: DollarSign },
+  { label: 'Security Center', href: '/dashboard/security', icon: ShieldCheck },
   { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
   { label: 'AI Studio', href: '/dashboard/ai-studio', icon: Palette },
   { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
@@ -92,55 +94,18 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Security (SIEM)', href: '/dashboard/security', icon: ShieldCheck },
 ];
 
-// --- TENANT ADMIN NAVIGATION ---
+// --- TENANT ADMIN NAVIGATION (Business Dashboard) ---
 export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
-  { label: 'Command Center', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Live Operations', href: '/dashboard/analytics', icon: Activity },
-  {
-    label: 'Client Management',
-    href: '#',
-    icon: Users,
-    subItems: [
-      { label: 'CRM / All Clients', href: '/dashboard/clients' },
-      { label: 'Sales Agent / Leads', href: '/dashboard/sales-agent' },
-      { label: 'Active Projects', href: '/dashboard/projects' },
-      { label: 'Onboarding Pipelines', href: '/dashboard/onboarding' },
-    ]
-  },
-  {
-    label: 'Communication',
-    href: '#',
-    icon: MessageSquare,
-    subItems: [
-      { label: 'Inbox', href: '/dashboard/messages' },
-      { label: 'Meetings', href: '/dashboard/meetings' },
-      { label: 'Calendar', href: '/dashboard/calendar' },
-    ]
-  },
-  {
-    label: 'Studio Mgmt',
-    href: '#',
-    icon: Layers,
-    subItems: [
-      { label: 'SEO Articles', href: '/dashboard/articles' },
-      { label: 'Portfolio Editor', href: '/dashboard/portfolio-manager' },
-      { label: 'Resource Allocation', href: '/dashboard/allocation' },
-    ]
-  },
-  {
-    label: 'Enterprise CRM',
-    href: '#',
-    icon: TrendingUp,
-    subItems: [
-      { label: 'Tasks', href: '/dashboard/tasks' },
-      { label: 'Deals Pipeline', href: '/dashboard/deals' },
-      { label: 'Quotes & Proposals', href: '/dashboard/quotes' },
-      { label: 'Sales Forecast', href: '/dashboard/forecast' },
-    ]
-  },
-  { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
-  { label: 'Financials', href: '/dashboard/finance', icon: DollarSign },
-  { label: 'Security (SIEM)', href: '/dashboard/security', icon: ShieldCheck },
+  { label: 'Business Home', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'My Clients', href: '/dashboard/business/clients', icon: Users },
+  { label: 'Projects', href: '/dashboard/business/projects', icon: Briefcase },
+  { label: 'Team', href: '/dashboard/business/team', icon: Users },
+  { label: 'Messages', href: '/dashboard/business/messages', icon: MessageSquare },
+  { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
+  { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
+  { label: 'Invoices & Billing', href: '/dashboard/business/billing', icon: DollarSign },
+  { label: 'Reports', href: '/dashboard/business/reports', icon: BarChart3 },
+  { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },
 ];
 
 export const ADMIN_STATS: DashboardStat[] = [

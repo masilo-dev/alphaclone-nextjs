@@ -81,9 +81,40 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           tenantService.setCurrentTenant(firstTenant.id);
         }
       } else {
-        // User has no tenants - they need to create one or be invited
-        setCurrentTenant(null);
-        tenantService.clearCurrentTenant();
+        // User has no tenants - auto-create a default one
+        console.log('No tenants found for user, creating default tenant...');
+
+        try {
+          // Generate a unique tenant name and slug
+          const userName = user.name || user.email?.split('@')[0] || 'User';
+          const tenantName = `${userName}'s Organization`;
+          const tenantSlug = `org-${user.id.substring(0, 8)}`;
+
+          const newTenant = await tenantService.createTenant({
+            name: tenantName,
+            slug: tenantSlug,
+            adminUserId: user.id,
+            plan: 'free'
+          });
+
+          console.log('Default tenant created:', newTenant.id);
+
+          // Set as current tenant
+          setCurrentTenant(newTenant);
+          setUserTenants([{ ...newTenant, role: 'admin' }]);
+          tenantService.setCurrentTenant(newTenant.id);
+        } catch (error: any) {
+          console.error('Failed to auto-create default tenant:', error);
+
+          // Fallback: set to null and show error to user
+          setCurrentTenant(null);
+          tenantService.clearCurrentTenant();
+
+          // Show user-friendly error message
+          if (typeof window !== 'undefined') {
+            alert('Unable to create your organization. Please contact support or try again later.');
+          }
+        }
       }
     } catch (error: any) {
       console.error('Failed to load user tenants:', error);

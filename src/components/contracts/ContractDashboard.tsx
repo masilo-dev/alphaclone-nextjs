@@ -33,7 +33,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
 
     const loadContracts = async () => {
         setLoading(true);
-        const { contracts: data } = await contractService.getUserContracts(user.id);
+        const { contracts: data } = await contractService.getUserContracts(user.id, user.role);
         if (data) setContracts(data);
         setLoading(false);
     };

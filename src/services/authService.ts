@@ -20,19 +20,22 @@ export const authService = {
             if (error) {
                 console.error("SignIn Error:", error);
 
-                // Track failed attempts
+                // ✅ Track failed attempts in database
                 const currentAttempts = parseInt(localStorage.getItem('failed_login_attempts') || '0') + 1;
                 localStorage.setItem('failed_login_attempts', currentAttempts.toString());
 
-                // Import dynamically to avoid circle
-                // const { activityService } = await import('./activityService'); 
+                // Log failed login to database (non-blocking)
+                import('./activityService').then(({ activityService }) => {
+                    activityService.logFailedLogin(
+                        validated.email,
+                        error.message,
+                        undefined, // IP will be fetched automatically
+                        navigator.userAgent
+                    ).catch(err => console.error('Failed to log failed login:', err));
+                });
 
                 if (currentAttempts >= 3) {
-                    // Log Critical Alert (if possible/public)
-                    // Note: This might fail if RLS requires auth, but we try anyway or rely on Client-side blocking
                     console.warn(`SECURITY ALERT: ${currentAttempts} failed login attempts for ${email}`);
-                    // We can't insert into secure table without user_id usually, so we just log to console or handle in UI
-                    // Ideally this calls a secure Edge Function.
                 }
 
                 return { user: null, error: error.message };

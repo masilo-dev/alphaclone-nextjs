@@ -24,7 +24,8 @@ export const ipTrackingService = {
                 org: data.org
             };
         } catch (error) {
-            console.error('Failed to fetch IP location:', error);
+            // detailed error for debugging but warn to avoid overlay
+            console.warn('Unable to fetch IP location (non-critical):', error instanceof Error ? error.message : error);
             return null;
         }
     },

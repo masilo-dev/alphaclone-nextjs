@@ -66,7 +66,7 @@ class DailyService {
             // Generate a unique room name
             const roomName = `room-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
-            // Build properties object, excluding undefined values
+            // Build properties object
             const properties: Record<string, any> = {
                 enable_screenshare: options.enableScreenshare !== false,
                 enable_chat: options.enableChat !== false,
@@ -86,18 +86,15 @@ class DailyService {
             // Only include exp if both duration and startTime are provided
             if (options.duration && options.startTime) {
                 properties.exp = Math.floor((options.startTime.getTime() + options.duration * 60000) / 1000);
+            } else if (options.duration) {
+                // Set exp relative to now if start time not fixed
+                properties.exp = Math.floor((Date.now() + options.duration * 60000) / 1000);
             }
 
-            // Call backend API to create room securely
             const response = await fetch('/api/daily/create-room', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    name: roomName,
-                    properties
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: roomName, properties })
             });
 
             if (!response.ok) {
@@ -106,10 +103,32 @@ class DailyService {
             }
 
             const room = await response.json();
-
             return { room, error: null };
         } catch (err) {
             return { room: null, error: err instanceof Error ? err.message : 'Failed to create room' };
+        }
+    }
+
+    /**
+     * Get a meeting token for a room
+     */
+    async getMeetingToken(roomName: string, userName: string, isOwner: boolean = false): Promise<{ token: string | null; error: string | null }> {
+        try {
+            const response = await fetch('/api/daily/token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ roomName, userName, isOwner })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                return { token: null, error: errorData.error || 'Failed to create token' };
+            }
+
+            const data = await response.json();
+            return { token: data.token, error: null };
+        } catch (err) {
+            return { token: null, error: err instanceof Error ? err.message : 'Failed to get token' };
         }
     }
 
@@ -127,8 +146,22 @@ class DailyService {
         chatEnabled?: boolean;
         cancellationPolicyHours?: number;
         allowClientCancellation?: boolean;
+        duration?: number;
     }): Promise<{ call: VideoCall | null; error: string | null }> {
         try {
+            // Determine duration limit based on role
+            // Default: 30 minutes for Tenants, Unlimited (24h) for Admins
+            // We'll need to fetch the user's role properly here or pass it in. 
+            // For now, let's assume if it's not explicitly 'admin', we default to 30m.
+            // Ideally, we check `userService.getUserRole(hostId)`.
+
+            // NOTE: Current implementation assumes 'options' passed to this function could carry role info if needed,
+            // or we enforce it at the caller level.
+            // Let's set a default policy: 
+            const isEnterpriseOrAdmin = false; // TODO: Fetch from user service or context
+            const roleLimit = isEnterpriseOrAdmin ? 60 * 24 : 30; // 24 hours vs 30 mins
+            const durationLimit = data.duration || roleLimit;
+
             // Create Daily room
             const { room, error: roomError } = await this.createRoom({
                 title: data.title,
@@ -136,6 +169,7 @@ class DailyService {
                 enableScreenshare: data.screenShareEnabled,
                 enableChat: data.chatEnabled,
                 enableRecording: data.recordingEnabled,
+                duration: durationLimit
             });
 
             if (roomError || !room) {
@@ -382,12 +416,14 @@ class DailyService {
     async joinRoom(
         callObject: DailyCall,
         roomUrl: string,
-        userName: string
+        userName: string,
+        token?: string
     ): Promise<{ error: string | null }> {
         try {
             await callObject.join({
                 url: roomUrl,
                 userName: userName,
+                token: token
             });
             return { error: null };
         } catch (err) {

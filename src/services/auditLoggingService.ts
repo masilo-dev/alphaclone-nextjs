@@ -9,6 +9,8 @@ export interface AuditLogEntry {
   old_value?: any;
   new_value?: any;
   ip_address?: string;
+  city?: string;
+  country?: string;
   user_agent?: string;
   created_at?: string;
 }
@@ -27,6 +29,17 @@ class AuditLoggingService {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
+      let ipBox = { ip: 'Unknown', city: 'Unknown', country: 'Unknown' };
+      try {
+        const res = await fetch('https://ipapi.co/json/');
+        if (res.ok) {
+          const data = await res.json();
+          ipBox = { ip: data.ip, city: data.city, country: data.country_name };
+        }
+      } catch (e) {
+        // Fallback or silent fail
+      }
+
       const logEntry: AuditLogEntry = {
         user_id: user?.id,
         action,
@@ -35,6 +48,9 @@ class AuditLoggingService {
         old_value: oldValue,
         new_value: newValue,
         user_agent: navigator.userAgent,
+        ip_address: ipBox.ip,
+        city: ipBox.city,
+        country: ipBox.country
       };
 
       const { error } = await supabase

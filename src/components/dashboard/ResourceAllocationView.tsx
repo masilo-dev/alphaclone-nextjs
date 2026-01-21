@@ -19,6 +19,7 @@ interface TeamMember {
 
 interface ResourceAllocationViewProps {
     user: User;
+    initialProjects?: Project[];
 }
 
 /**
@@ -28,9 +29,9 @@ interface ResourceAllocationViewProps {
  * - Quick status toggle
  * - Auto-calculated capacity based on workload
  */
-const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user }) => {
+const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, initialProjects }) => {
     const [members, setMembers] = useState<TeamMember[]>([]);
-    const [projects, setProjects] = useState<Project[]>([]);
+    const [projects, setProjects] = useState<Project[]>(initialProjects || []);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -40,22 +41,33 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user })
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [initialProjects]);
 
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const [teamResult, projectsResult] = await Promise.all([
-                teamService.getTeamMembers(),
-                projectService.getProjects(user.id, user.role)
-            ]);
+            // Always fetch team members
+            const teamResult = await teamService.getTeamMembers();
+
+            let activeProjects = initialProjects || [];
+
+            // Fetch projects only if not provided
+            if (!initialProjects) {
+                const projectsResult = await projectService.getProjects(user.id, user.role);
+                if (projectsResult.error) {
+                    console.error('Failed to load projects:', projectsResult.error);
+                } else {
+                    activeProjects = projectsResult.projects || [];
+                }
+            }
 
             if (teamResult.error) {
                 setError(teamResult.error);
             } else {
                 // Calculate capacity based on actual project assignments
                 const membersWithCapacity = teamResult.team.map(member => {
-                    const assignedProjects = (projectsResult.projects || []).filter(p =>
+                    // Use activeProjects for calculation
+                    const assignedProjects = activeProjects.filter(p =>
                         p.team && p.team.includes(member.id)
                     );
                     // Each project = ~20% capacity, capped at 100%
@@ -68,12 +80,8 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user })
                 setMembers(membersWithCapacity);
             }
 
-            if (projectsResult.error) {
-                console.error('Failed to load projects:', projectsResult.error);
-            } else {
-                // Only show active projects
-                setProjects((projectsResult.projects || []).filter(p => p.status === 'Active'));
-            }
+            // Filter for active projects only for the state
+            setProjects(activeProjects.filter(p => p.status === 'Active'));
         } catch (err) {
             setError('Failed to load team data');
         } finally {
@@ -155,8 +163,15 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user })
             m.id === member.id ? { ...m, status: newStatus } : m
         ));
 
+        // Persist to database
+        teamService.updateMemberStatus(member.id, newStatus).then(({ error }) => {
+            if (error) {
+                toast.error('Failed to update status');
+                // Revert implementation if needed
+            }
+        });
+
         toast.success(`${member.name} marked as ${newStatus}`);
-        // In a real app, you'd persist this to the database via a team service method
     };
 
     if (isLoading) {
@@ -283,8 +298,8 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user })
                                 <button
                                     onClick={() => handleQuickStatusToggle(member)}
                                     className={`px-2 py-0.5 text-xs rounded-full transition-colors ${member.status === 'Available'
-                                            ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
-                                            : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
+                                        ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
+                                        : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
                                         }`}
                                 >
                                     {member.status}
@@ -306,9 +321,9 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user })
                                 <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
                                     <div
                                         className={`h-full rounded-full transition-all ${member.capacity > 90 ? 'bg-red-500' :
-                                                member.capacity > 75 ? 'bg-orange-500' :
-                                                    member.capacity > 50 ? 'bg-yellow-500' :
-                                                        'bg-teal-500'
+                                            member.capacity > 75 ? 'bg-orange-500' :
+                                                member.capacity > 50 ? 'bg-yellow-500' :
+                                                    'bg-teal-500'
                                             }`}
                                         style={{ width: `${member.capacity}%` }}
                                     />
@@ -400,8 +415,8 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user })
                                             key={project.id}
                                             onClick={() => handleToggleProject(project.id)}
                                             className={`w-full p-3 rounded-lg border transition-all text-left ${isAssigned
-                                                    ? 'border-teal-500 bg-teal-500/10'
-                                                    : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                                                ? 'border-teal-500 bg-teal-500/10'
+                                                : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
                                                 }`}
                                         >
                                             <div className="flex items-start justify-between">
@@ -434,8 +449,8 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user })
                             <div className="flex items-center justify-between mb-4">
                                 <span className="text-sm text-slate-400">Estimated Workload:</span>
                                 <span className={`text-sm font-semibold ${selectedProjects.length * 20 > 100 ? 'text-red-400' :
-                                        selectedProjects.length * 20 > 80 ? 'text-orange-400' :
-                                            'text-teal-400'
+                                    selectedProjects.length * 20 > 80 ? 'text-orange-400' :
+                                        'text-teal-400'
                                     }`}>
                                     {Math.min(selectedProjects.length * 20, 100)}%
                                 </span>

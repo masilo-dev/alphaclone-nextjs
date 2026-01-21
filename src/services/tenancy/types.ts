@@ -42,6 +42,21 @@ export interface TenantSettings {
         sms?: boolean;
         push?: boolean;
     };
+    booking?: {
+        enabled: boolean;
+        slug: string;
+        availability: {
+            days: number[]; // 0=Sunday, 1=Monday, etc.
+            hours: { start: string; end: string }; // "09:00", "17:00"
+        };
+        meetingTypes: {
+            id: string;
+            name: string; // "15 Min Intro", "Consultation"
+            duration: number; // minutes
+            price: number; // 0 for free
+            description?: string;
+        }[];
+    };
 }
 
 // Subscription Plans

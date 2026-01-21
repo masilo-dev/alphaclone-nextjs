@@ -84,15 +84,20 @@ export const contractService = {
     /**
      * Get user contracts (admin or client)
      */
-    async getUserContracts(userId: string) {
+    async getUserContracts(userId: string, userRole?: string) {
         const tenantId = this.getTenantId();
 
-        const { data, error } = await supabase
+        let query = supabase
             .from('contracts')
             .select(`*, project:projects(name)`)
-            .eq('tenant_id', tenantId) // ← TENANT FILTER
-            .or(`owner_id.eq.${userId},client_id.eq.${userId}`)
-            .order('created_at', { ascending: false });
+            .eq('tenant_id', tenantId); // ← TENANT FILTER
+
+        // ✅ FIX: Admin sees ALL contracts, others see only their own
+        if (userRole !== 'admin' && userRole !== 'tenant_admin') {
+            query = query.or(`owner_id.eq.${userId},client_id.eq.${userId}`);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
 
         return { contracts: data, error };
     },

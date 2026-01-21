@@ -765,9 +765,14 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // -- RENDER CONTENT --
   const renderContent = () => {
-    // INTERCEPT: If user is simulated tenant admin, show the specific Business Dashboard
+    // INTERCEPT: If user is tenant admin, show the independent Business Dashboard
     if (user.role === 'tenant_admin') {
-      return <BusinessDashboard user={user} onLogout={onLogout} />;
+      return <BusinessDashboard
+        user={user}
+        onLogout={onLogout}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />;
     }
 
     switch (activeTab) {
@@ -920,7 +925,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       case '/dashboard/allocation':
         return (
           <WidgetErrorBoundary title="Resource Allocation">
-            <ResourceAllocationView user={user} />
+            <ResourceAllocationView user={user} initialProjects={projects} />
           </WidgetErrorBoundary>
         );
 

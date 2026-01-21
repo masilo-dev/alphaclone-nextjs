@@ -7,9 +7,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/components/Toast';
 import { GlobalErrorBoundary } from '@/components/GlobalErrorBoundary';
 
-import { AICopilot } from '@/components/dashboard/AICopilot';
 
-import { usePathname } from 'next/navigation';
 
 export function Providers({ children }: { children: React.ReactNode }) {
     // Create QueryClient inside component to avoid server/client hydration mismatch
@@ -22,8 +20,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         },
     }));
 
-    const pathname = usePathname();
-    const showCopilot = pathname?.startsWith('/dashboard');
+
 
     return (
         <GlobalErrorBoundary>
@@ -32,7 +29,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     <AuthProvider>
                         <TenantProvider>
                             {children}
-                            {showCopilot && <AICopilot />}
                         </TenantProvider>
                     </AuthProvider>
                 </ToastProvider>

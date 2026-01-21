@@ -41,17 +41,18 @@ export class ErrorBoundary extends Component<Props, State> {
             errorInfo,
         });
 
-        // Send to Sentry error tracking
-        // Sentry.captureException(error, {
-        //     contexts: {
-        //         react: {
-        //             componentStack: errorInfo.componentStack,
-        //         },
-        //     },
-        //     tags: {
-        //         errorBoundary: true,
-        //     },
-        // });
+        // ✅ Log to SIEM (non-blocking)
+        import('../services/activityService').then(({ activityService }) => {
+            activityService.logError('client_error', error.message, {
+                errorStack: error.stack,
+                componentStack: errorInfo.componentStack,
+                severity: 'error',
+                metadata: {
+                    errorName: error.name,
+                    componentStack: errorInfo.componentStack?.slice(0, 500), // Limit size
+                },
+            }).catch(err => console.error('Failed to log error to SIEM:', err));
+        });
     }
 
     handleReset = () => {

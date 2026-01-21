@@ -27,49 +27,93 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
     const [blockedCountries, setBlockedCountries] = useState<any[]>([]);
     const [stats, setStats] = useState<any>({});
     const [isLoading, setIsLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'logs' | 'sessions' | 'alerts' | 'blocked'>('logs');
+    const [activeTab, setActiveTab] = useState<'logs' | 'sessions' | 'alerts' | 'blocked' | 'failed_logins' | 'errors'>('logs');
+    const [failedLogins, setFailedLogins] = useState<any[]>([]);
+    const [errorLogs, setErrorLogs] = useState<any[]>([]);
 
     useEffect(() => {
-        loadSecurityData();
+        fetchStats();
+        // Load initial tab data
+        fetchTabContent(activeTab);
     }, [user.id, user.role]);
 
-    const loadSecurityData = async () => {
-        setIsLoading(true);
+    useEffect(() => {
+        fetchTabContent(activeTab);
+    }, [activeTab]);
 
+    const fetchStats = async () => {
         if (user.role === 'admin') {
-            // Admin sees all data
-            const [logsRes, sessionsRes, alertsRes, countriesRes, statsRes] = await Promise.all([
-                activityService.getAllActivityLogs(100),
-                activityService.getAllLoginSessions(50),
-                activityService.getSecurityAlerts(undefined, 50),
-                activityService.getBlockedCountries(),
-                activityService.getActivityStats(),
-            ]);
-
-            setActivityLogs(logsRes.logs || []);
-            setLoginSessions(sessionsRes.sessions || []);
-            setSecurityAlerts(alertsRes.alerts || []);
-            setBlockedCountries(countriesRes.countries || []);
-            setStats(statsRes.stats || {});
-        } else {
-            // Clients see only their own data
-            const [logsRes, sessionsRes, alertsRes] = await Promise.all([
-                activityService.getActivityLogs(user.id, 50),
-                activityService.getLoginSessions(user.id, 20),
-                activityService.getSecurityAlerts(user.id, 20),
-            ]);
-
-            setActivityLogs(logsRes.logs || []);
-            setLoginSessions(sessionsRes.sessions || []);
-            setSecurityAlerts(alertsRes.alerts || []);
+            const { stats } = await activityService.getActivityStats();
+            setStats(stats || {});
         }
+    };
 
-        setIsLoading(false);
+    const fetchTabContent = async (tab: string) => {
+        setIsLoading(true);
+        try {
+            if (user.role === 'admin') {
+                if (tab === 'logs' && activityLogs.length === 0) {
+                    const { logs } = await activityService.getAllActivityLogs(100);
+                    setActivityLogs(logs || []);
+                } else if (tab === 'sessions' && loginSessions.length === 0) {
+                    const { sessions } = await activityService.getAllLoginSessions(50);
+                    setLoginSessions(sessions || []);
+                } else if (tab === 'alerts' && securityAlerts.length === 0) {
+                    const { alerts } = await activityService.getSecurityAlerts(undefined, 50);
+                    setSecurityAlerts(alerts || []);
+                } else if (tab === 'blocked' && blockedCountries.length === 0) {
+                    const { countries } = await activityService.getBlockedCountries();
+                    setBlockedCountries(countries || []);
+                } else if (tab === 'failed_logins' && failedLogins.length === 0) {
+                    const { failedLogins } = await activityService.getFailedLogins(50);
+                    setFailedLogins(failedLogins || []);
+                } else if (tab === 'errors' && errorLogs.length === 0) {
+                    const { errorLogs } = await activityService.getErrorLogs(50);
+                    setErrorLogs(errorLogs || []);
+                }
+            } else {
+                // Client Logic
+                if (tab === 'logs' && activityLogs.length === 0) {
+                    const { logs } = await activityService.getActivityLogs(user.id, 50);
+                    setActivityLogs(logs || []);
+                } else if (tab === 'sessions' && loginSessions.length === 0) {
+                    const { sessions } = await activityService.getLoginSessions(user.id, 20);
+                    setLoginSessions(sessions || []);
+                } else if (tab === 'alerts' && securityAlerts.length === 0) {
+                    const { alerts } = await activityService.getSecurityAlerts(user.id, 20);
+                    setSecurityAlerts(alerts || []);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching tab content:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const loadSecurityData = () => {
+        // Force refresh all
+        setActivityLogs([]);
+        setLoginSessions([]);
+        setSecurityAlerts([]);
+        setBlockedCountries([]);
+        setFailedLogins([]);
+        setErrorLogs([]);
+        fetchStats();
+        fetchTabContent(activeTab);
     };
 
     const handleResolveAlert = async (alertId: string) => {
         await activityService.resolveAlert(alertId);
         loadSecurityData();
+    };
+
+    const parseUserAgent = (ua: string) => {
+        if (/Chrome/i.test(ua)) return { browser: 'Chrome' };
+        if (/Firefox/i.test(ua)) return { browser: 'Firefox' };
+        if (/Safari/i.test(ua)) return { browser: 'Safari' };
+        if (/Edg/i.test(ua)) return { browser: 'Edge' };
+        return { browser: 'Unknown' };
     };
 
     const getDeviceIcon = (deviceType: string) => {
@@ -160,12 +204,12 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
             )}
 
             {/* Tabs */}
-            <div className="flex gap-2 border-b border-slate-800">
-                {['logs', 'sessions', 'alerts', user.role === 'admin' && 'blocked'].filter(Boolean).map((tab) => (
+            <div className="flex gap-2 border-b border-slate-800 overflow-x-auto pb-1">
+                {['logs', 'sessions', 'alerts', 'failed_logins', 'errors', user.role === 'admin' && 'blocked'].filter(Boolean).map((tab) => (
                     <button
                         key={String(tab)}
                         onClick={() => setActiveTab(tab as any)}
-                        className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === tab
+                        className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab
                             ? 'text-teal-400 border-b-2 border-teal-400'
                             : 'text-slate-400 hover:text-white'
                             }`}
@@ -173,6 +217,8 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                         {tab === 'logs' && 'Activity Logs'}
                         {tab === 'sessions' && 'Login Sessions'}
                         {tab === 'alerts' && 'Security Alerts'}
+                        {tab === 'failed_logins' && 'Failed Logins'}
+                        {tab === 'errors' && 'System Errors'}
                         {tab === 'blocked' && 'Blocked Countries'}
                     </button>
                 ))}
@@ -311,6 +357,87 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                         ))}
                         {securityAlerts.length === 0 && (
                             <div className="text-center text-slate-500 py-8">No security alerts</div>
+                        )}
+                    </div>
+                </Card>
+            )}
+
+            {/* Failed Logins Tab */}
+            {activeTab === 'failed_logins' && (
+                <Card>
+                    <h3 className="font-bold text-white mb-4">Failed Login Attempts</h3>
+                    <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
+                        {failedLogins.map((login) => (
+                            <div
+                                key={login.id}
+                                className="flex items-center justify-between p-3 rounded-lg bg-red-500/5 border border-red-500/20"
+                            >
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-white font-medium">{login.email}</span>
+                                        <Badge variant="error" className="text-[10px]">{login.failure_reason}</Badge>
+                                    </div>
+                                    <div className="flex items-center gap-4 text-xs text-slate-400">
+                                        <div className="flex items-center gap-1">
+                                            <span className="font-mono">{login.ip_address}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <MapPin className="w-3 h-3" />
+                                            <span>{login.location}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <Monitor className="w-3 h-3" />
+                                            <span>{login.user_agent ? parseUserAgent(login.user_agent).browser : 'Unknown'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="text-xs text-slate-500 text-right">
+                                    {new Date(login.created_at).toLocaleString()}
+                                </div>
+                            </div>
+                        ))}
+                        {failedLogins.length === 0 && (
+                            <div className="text-center text-slate-500 py-8">No failed login attempts</div>
+                        )}
+                    </div>
+                </Card>
+            )}
+
+            {/* System Errors Tab */}
+            {activeTab === 'errors' && (
+                <Card>
+                    <h3 className="font-bold text-white mb-4">System Errors</h3>
+                    <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
+                        {errorLogs.map((error) => (
+                            <div
+                                key={error.id}
+                                className="p-3 rounded-lg bg-slate-800/50 border border-slate-700"
+                            >
+                                <div className="flex items-start justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <Badge className="bg-slate-700 text-slate-300">{error.error_type}</Badge>
+                                        <Badge variant="error">{error.severity}</Badge>
+                                    </div>
+                                    <span className="text-xs text-slate-500">{new Date(error.created_at).toLocaleString()}</span>
+                                </div>
+
+                                <p className="text-red-400 text-sm font-mono break-all mb-2">{error.error_message}</p>
+
+                                <div className="grid grid-cols-2 gap-4 text-xs text-slate-500">
+                                    {error.endpoint && (
+                                        <div>Endpoint: <span className="text-slate-400">{error.endpoint}</span></div>
+                                    )}
+                                    {error.status_code && (
+                                        <div>Status: <span className="text-slate-400">{error.status_code}</span></div>
+                                    )}
+                                    {error.user_id && (
+                                        <div className="col-span-2">User ID: {error.user_id}</div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                        {errorLogs.length === 0 && (
+                            <div className="text-center text-slate-500 py-8">No errors logged</div>
                         )}
                     </div>
                 </Card>

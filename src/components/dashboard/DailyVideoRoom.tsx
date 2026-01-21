@@ -34,7 +34,17 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
             if (!containerRef.current) return;
 
             try {
-                // Create Daily call object with fullscreen iframe style
+                // 1. Get Meeting Token if possible (for admin privileges)
+                let token: string | undefined = undefined;
+                // Extract room name from URL if not passed explicitly
+                const roomName = roomUrl.split('/').pop();
+
+                if (roomName) {
+                    const { token: fetchedToken } = await dailyService.getMeetingToken(roomName, user.name, user.role === 'admin' || user.role === 'tenant_admin');
+                    if (fetchedToken) token = fetchedToken;
+                }
+
+                // 2. Create Daily call object with Branding
                 const callObject = Daily.createFrame(containerRef.current, {
                     showLeaveButton: true,
                     showFullscreenButton: true,
@@ -45,6 +55,18 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                         width: '100%',
                         height: '100%',
                         border: '0',
+                    },
+                    theme: {
+                        colors: {
+                            accent: '#14b8a6', // Teal-500
+                            accentText: '#ffffff',
+                            background: '#020617', // Slate-950
+                            backgroundAccent: '#0f172a', // Slate-900
+                            baseText: '#f8fafc', // Slate-50
+                            border: '#1e293b', // Slate-800
+                            mainAreaBg: '#020617',
+                            mainAreaBgAccent: '#0f172a',
+                        }
                     }
                 });
 
@@ -57,14 +79,11 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                             setIsJoining(false);
                             setCallStartTime(new Date());
 
-                            // Mark call as active in database
                             if (callId) {
-                                dailyService.startVideoCall(callId).catch(err => {
-                                    console.error('Failed to mark call as active:', err);
-                                });
+                                dailyService.startVideoCall(callId).catch(console.error);
                             }
 
-                            toast.success('Joined meeting successfully!');
+                            toast.success('Connected Securely.');
                         }
                     })
                     .on('left-meeting', async () => {
@@ -74,31 +93,30 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                     })
                     .on('error', (error) => {
                         console.error('Daily error:', error);
-                        toast.error(`Call error: ${error?.errorMsg || 'Unknown error'}`);
+                        toast.error(`Connection Error: ${error?.errorMsg || 'Unknown error'}`);
                         if (mounted) {
                             setIsJoining(false);
                         }
                     });
 
-                // Join the room
+                // 3. Join with Token
                 const { error } = await dailyService.joinRoom(
                     callObject,
                     roomUrl,
-                    user.name
+                    user.name,
+                    token
                 );
 
                 if (error) {
                     toast.error(`Failed to join: ${error}`);
-                    console.error('Failed to join room:', error);
                     if (mounted) {
                         setIsJoining(false);
-                        // Auto-leave on error
                         setTimeout(onLeave, 2000);
                     }
                 }
             } catch (err) {
                 console.error('Failed to initialize call:', err);
-                toast.error('Failed to initialize video call');
+                toast.error('Failed to initialize video uplink');
                 if (mounted) {
                     setIsJoining(false);
                     setTimeout(onLeave, 2000);
@@ -132,7 +150,7 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                 callObjectRef.current = null;
             }
         };
-    }, [roomUrl, user.name, callId, callStartTime, onLeave]);
+    }, [roomUrl, user.name, user.role, callId, callStartTime, onLeave]);
 
     return (
         <div className="fixed inset-0 z-50 bg-gray-900">

@@ -13,81 +13,89 @@ import {
     Menu
 } from 'lucide-react';
 import { User } from '../../../types';
+import { useTenant } from '../../../contexts/TenantContext';
 import BusinessHome from './BusinessHome';
+import ClientsPage from './ClientsPage';
+import ProjectsPage from './ProjectsPage';
+import TeamPage from './TeamPage';
+import MessagesPage from './MessagesPage';
+import CalendarPage from './CalendarPage';
+import BillingPage from './BillingPage';
+import ReportsPage from './ReportsPage';
+import SettingsPage from './SettingsPage';
+import MeetingsPage from './MeetingsPage';
 
 interface BusinessDashboardProps {
     user: User;
     onLogout: () => void;
+    activeTab: string;
+    setActiveTab: (tab: string) => void;
 }
 
-const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout }) => {
-    const [activeTab, setActiveTab] = useState('home');
+const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, activeTab, setActiveTab }) => {
+    const { currentTenant } = useTenant();
     const [isVoiceActive, setIsVoiceActive] = useState(false);
 
-    const navItems = [
-        { id: 'home', label: 'Command Center', icon: LayoutDashboard },
-        { id: 'crm', label: 'CRM & Sales', icon: Users },
-        { id: 'projects', label: 'Projects', icon: Briefcase },
-        { id: 'finance', label: 'Finance', icon: CreditCard },
-        { id: 'contracts', label: 'Contracts', icon: FileText },
-        { id: 'settings', label: 'Settings', icon: Settings },
-    ];
+    // Map routes to display content
+    const renderBusinessContent = () => {
+        switch (activeTab) {
+            case '/dashboard':
+                return <BusinessHome user={user} />;
+
+            case '/dashboard/business/clients':
+                return <ClientsPage user={user} />;
+
+            case '/dashboard/business/projects':
+                return <ProjectsPage user={user} />;
+
+            case '/dashboard/business/team':
+                return <TeamPage user={user} />;
+
+            case '/dashboard/business/messages':
+                return <MessagesPage user={user} />;
+
+            case '/dashboard/business/calendar':
+                return <CalendarPage user={user} />;
+
+            case '/dashboard/business/billing':
+                return <BillingPage user={user} />;
+
+            case '/dashboard/business/reports':
+                return <ReportsPage user={user} />;
+
+            case '/dashboard/business/settings':
+                return <SettingsPage user={user} />;
+
+            case '/dashboard/business/meetings':
+                return <MeetingsPage user={user} />;
+
+            default:
+                return <BusinessHome user={user} />;
+        }
+    };
+
+    // Get current page title
+    const getPageTitle = () => {
+        switch (activeTab) {
+            case '/dashboard': return 'Business Home';
+            case '/dashboard/business/clients': return 'My Clients';
+            case '/dashboard/business/projects': return 'Projects';
+            case '/dashboard/business/team': return 'Team';
+            case '/dashboard/business/messages': return 'Messages';
+            case '/dashboard/business/calendar': return 'Calendar';
+            case '/dashboard/business/billing': return 'Invoices & Billing';
+            case '/dashboard/business/reports': return 'Reports';
+            case '/dashboard/business/settings': return 'Settings';
+            default: return 'Business Home';
+        }
+    };
 
     return (
         <div className="flex h-screen bg-slate-950 text-white overflow-hidden font-sans">
-            {/* Sidebar */}
-            <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col">
-                <div className="p-6">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-lg">
-                            {user.name.charAt(0)}
-                        </div>
-                        <div>
-                            <h1 className="font-bold text-lg leading-tight">{user.name}</h1>
-                            <span className="text-xs text-teal-400 uppercase tracking-wider font-semibold">Business</span>
-                        </div>
-                    </div>
-                    {/* GHOST MODE INDICATOR */}
-                    {localStorage.getItem('alphaclone_ghost_user') && (
-                        <button
-                            onClick={() => {
-                                localStorage.removeItem('alphaclone_ghost_user');
-                                window.location.reload();
-                            }}
-                            className="mt-3 w-full bg-red-500/20 border border-red-500/50 text-red-400 text-xs py-1.5 rounded-lg flex items-center justify-center gap-2 hover:bg-red-500/30 transition-colors animate-pulse"
-                        >
-                            <LogOut className="w-3 h-3" />
-                            Exit Ghost Mode
-                        </button>
-                    )}
-                </div>
-
-                <nav className="flex-1 px-4 space-y-2 mt-4">
-                    {navItems.map((item) => (
-                        <button
-                            key={item.id}
-                            onClick={() => setActiveTab(item.id)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === item.id
-                                ? 'bg-teal-500/10 text-teal-400 shadow-[0_0_20px_rgba(45,212,191,0.1)]'
-                                : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                                }`}
-                        >
-                            <item.icon className="w-5 h-5" />
-                            <span className="font-medium">{item.label}</span>
-                        </button>
-                    ))}
-                </nav>
-
-                <div className="p-4 border-t border-slate-800">
-                    <button
-                        onClick={onLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                    >
-                        <LogOut className="w-5 h-5" />
-                        <span className="font-medium">Sign Out</span>
-                    </button>
-                </div>
-            </aside>
+            {/* Sidebar - Navigation is now handled by parent Dashboard component */}
+            <div className="hidden">
+                {/* Sidebar removed - using parent navigation */}
+            </div>
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col min-w-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-slate-950">
@@ -96,7 +104,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout })
                 <header className="h-16 border-b border-slate-800/50 flex items-center justify-between px-8 backdrop-blur-md bg-slate-950/50 sticky top-0 z-10">
                     <div className="flex items-center gap-4 flex-1">
                         <h2 className="text-xl font-semibold text-white">
-                            {navItems.find(i => i.id === activeTab)?.label}
+                            {getPageTitle()}
                         </h2>
                     </div>
 
@@ -121,36 +129,18 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout })
                         </button>
 
                         <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 overflow-hidden">
-                            <img src={user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=random`} alt="Profile" />
+                            <img
+                                src={currentTenant?.logoUrl || user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
+                                alt="Profile"
+                                className="w-full h-full object-cover"
+                            />
                         </div>
                     </div>
                 </header>
 
                 {/* Dynamic Content Area */}
                 <div className="flex-1 overflow-y-auto p-8">
-                    {activeTab === 'home' && (
-                        <>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                                {/* Metrics Cards */}
-                                <MetricCard label="Total Revenue" value="$45,231" trend="+12%" icon={DollarSign} color="text-teal-400" />
-                                <MetricCard label="Active Deals" value="12" trend="+3" icon={Briefcase} color="text-violet-400" />
-                                <MetricCard label="Pending Tasks" value="8" trend="-2" icon={FileText} color="text-orange-400" />
-                                <MetricCard label="System Status" value="Healthy" icon={Users} color="text-green-400" />
-                            </div>
-                            <BusinessHome />
-                        </>
-                    )}
-
-                    {/* Placeholder for other tabs */}
-                    {activeTab !== 'home' && (
-                        <div className="flex flex-col items-center justify-center h-full text-slate-500">
-                            <div className="w-16 h-16 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center mb-4">
-                                <Briefcase className="w-8 h-8 opacity-50" />
-                            </div>
-                            <h3 className="text-xl font-medium text-slate-300">Section Under Construction</h3>
-                            <p className="mt-2">The {navItems.find(i => i.id === activeTab)?.label} module is being initialized.</p>
-                        </div>
-                    )}
+                    {renderBusinessContent()}
                 </div>
             </main>
         </div>
