@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { projectService } from '@/services/projectService';
 import { Project } from '@/types';
-import { Card } from '@/components/ui/Card';
+import { Card } from '@/components/ui/UIComponents';
 
 export default function PublicProjectPage() {
     const params = useParams();

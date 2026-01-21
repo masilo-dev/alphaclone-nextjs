@@ -20,21 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Initial session check
         const initAuth = async () => {
             try {
-                // Check for ghost user simulation first
-                const ghostUserStr = localStorage.getItem('alphaclone_ghost_user');
-                if (ghostUserStr) {
-                    try {
-                        const ghostUser = JSON.parse(ghostUserStr);
-                        setUser(ghostUser);
-                        setLoading(false);
-                        console.log('Ghost Mode Active in AuthContext');
-                        return; // Ghost mode overrides real session for UI
-                    } catch (e) {
-                        console.error('Failed to parse ghost user:', e);
-                        localStorage.removeItem('alphaclone_ghost_user');
-                    }
-                }
-
+                // Check for session
                 const { user: currentUser } = await authService.getCurrentUser();
                 setUser(currentUser);
             } catch (err) {
@@ -48,8 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Subscribe to auth changes
         const { data: { subscription } } = authService.onAuthStateChange((u, event) => {
-            // Only update if not in ghost mode (ghost mode is manual exit)
-            if (!localStorage.getItem('alphaclone_ghost_user')) {
+            if (true) {
                 console.log(`AuthContext: Handling ${event} event, User: ${u?.email}`);
 
                 // If we just signed in, we might be about to redirect. 
@@ -69,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const signOut = async () => {
-        localStorage.removeItem('alphaclone_ghost_user');
+
         await authService.signOut();
         setUser(null);
     };
