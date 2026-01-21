@@ -36,14 +36,15 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
     const loadConversations = async () => {
         setLoading(true);
         // Load conversations from messageService
-        const { messages: allMessages } = await messageService.getMessages(user.id, user.role);
+        const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
+        const { messages: allMessages } = await messageService.getMessages(user.id, isAdmin);
 
         // Group by conversation (simplified)
         const convos = allMessages.slice(0, 5).map((msg, idx) => ({
             id: `conv-${idx}`,
             name: msg.senderName || 'Unknown',
-            lastMessage: msg.content,
-            unread: msg.status === 'unread',
+            lastMessage: msg.text,
+            unread: !msg.readAt,
             timestamp: msg.timestamp
         }));
 
@@ -56,20 +57,21 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
 
     const loadMessages = async (conversationId: string) => {
         // Load messages for conversation
-        const { messages: msgs } = await messageService.getMessages(user.id, user.role);
+        const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
+        const { messages: msgs } = await messageService.getMessages(user.id, isAdmin);
         setMessages(msgs.slice(0, 10));
     };
 
     const handleSendMessage = async () => {
         if (!newMessage.trim()) return;
 
-        await messageService.sendMessage({
-            senderId: user.id,
-            senderName: user.name,
-            receiverId: 'recipient-id', // In production, get from conversation
-            content: newMessage,
-            type: 'text'
-        });
+        await messageService.sendMessage(
+            user.id,
+            user.name,
+            user.role === 'admin' || user.role === 'tenant_admin' ? 'model' : 'user',
+            newMessage,
+            'recipient-id' // In production, get from conversation
+        );
 
         setNewMessage('');
         loadMessages(selectedConversation.id);
@@ -100,8 +102,8 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
                             key={conv.id}
                             onClick={() => setSelectedConversation(conv)}
                             className={`p-4 border-b border-slate-800 cursor-pointer transition-colors ${selectedConversation?.id === conv.id
-                                    ? 'bg-teal-500/10 border-l-4 border-l-teal-500'
-                                    : 'hover:bg-slate-800/50'
+                                ? 'bg-teal-500/10 border-l-4 border-l-teal-500'
+                                : 'hover:bg-slate-800/50'
                                 }`}
                         >
                             <div className="flex items-start gap-3">
@@ -152,11 +154,11 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
                                 >
                                     <div
                                         className={`max-w-md px-4 py-2 rounded-lg ${msg.senderId === user.id
-                                                ? 'bg-teal-500 text-white'
-                                                : 'bg-slate-800 text-slate-100'
+                                            ? 'bg-teal-500 text-white'
+                                            : 'bg-slate-800 text-slate-100'
                                             }`}
                                     >
-                                        <p className="text-sm">{msg.content}</p>
+                                        <p className="text-sm">{msg.text}</p>
                                         <p className="text-xs opacity-70 mt-1">
                                             {new Date(msg.timestamp).toLocaleTimeString()}
                                         </p>
