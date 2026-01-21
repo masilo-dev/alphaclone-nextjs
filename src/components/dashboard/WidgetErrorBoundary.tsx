@@ -36,7 +36,7 @@ export class WidgetErrorBoundary extends Component<Props, State> {
             error,
             message: error.message,
             stack: error.stack,
-            componentStack: errorInfo.componentStack,
+            componentStack: errorInfo.componentStack ?? undefined,
             isError310: error.message?.includes('310') || error.message?.includes('re-render'),
         });
 

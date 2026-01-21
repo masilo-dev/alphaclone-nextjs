@@ -45,7 +45,7 @@ export class ErrorBoundary extends Component<Props, State> {
         import('../services/activityService').then(({ activityService }) => {
             activityService.logError('client_error', error.message, {
                 errorStack: error.stack,
-                componentStack: errorInfo.componentStack,
+                componentStack: errorInfo.componentStack ?? undefined,
                 severity: 'error',
                 metadata: {
                     errorName: error.name,

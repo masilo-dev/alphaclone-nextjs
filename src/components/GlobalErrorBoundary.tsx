@@ -55,7 +55,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
         if (typeof window !== 'undefined' && (window as any).errorTracker) {
             (window as any).errorTracker.captureException(error, {
                 extra: {
-                    componentStack: errorInfo.componentStack,
+                    componentStack: errorInfo.componentStack ?? undefined,
                 },
             });
         }
