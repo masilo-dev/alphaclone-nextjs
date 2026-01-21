@@ -38,7 +38,7 @@ export const businessInvoiceService = {
 
             if (error) throw error;
 
-            const invoices = (data || []).map(inv => ({
+            const invoices = (data || []).map((inv: any) => ({
                 id: inv.id,
                 tenantId: inv.tenant_id,
                 clientId: inv.client_id,
