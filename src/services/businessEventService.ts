@@ -27,7 +27,7 @@ export const businessEventService = {
 
             if (error) throw error;
 
-            const events = (data || []).map(e => ({
+            const events = (data || []).map((e: any) => ({
                 id: e.id,
                 tenantId: e.tenant_id,
                 title: e.title,

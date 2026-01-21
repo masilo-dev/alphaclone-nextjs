@@ -152,7 +152,7 @@ CRITICAL INSTRUCTIONS:
             const chatHistory = [
                 systemPrompt,
                 modelResponse,
-                ...history.map(h => ({
+                ...history.map((h: any) => ({
                     role: h.role === 'model' ? 'model' : 'user',
                     parts: [{ text: h.text }]
                 }))
@@ -286,7 +286,7 @@ export const generateLeads = async (industry: string, location: string, googleAp
             console.warn("⚠️ Google Places failed, falling back to AI:", error);
             // Fallback to AI if Google fails
         } else if (places.length > 0) {
-            leads = places.map(p => ({
+            leads = places.map((p: any) => ({
                 id: crypto.randomUUID(), // Temp ID for UI
                 ...p,
                 status: 'New'

@@ -136,7 +136,7 @@ export const leadService = {
             const { data: userData } = await supabase.auth.getUser();
             const ownerId = userData.user?.id;
 
-            const dbPayloads = leads.map(l => ({
+            const dbPayloads = leads.map((l: any) => ({
                 tenant_id: tenantId, // ← ASSIGN TO TENANT
                 owner_id: ownerId,
                 business_name: l.businessName,

@@ -152,7 +152,7 @@ export const businessClientService = {
      */
     async importClients(tenantId: string, clients: Partial<BusinessClient>[]): Promise<{ count: number; error: string | null }> {
         try {
-            const insertData = clients.map(c => ({
+            const insertData = clients.map((c: any) => ({
                 tenant_id: tenantId,
                 name: c.name,
                 email: c.email,

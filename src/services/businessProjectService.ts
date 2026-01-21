@@ -28,7 +28,7 @@ export const businessProjectService = {
 
             if (error) throw error;
 
-            const projects = (data || []).map(p => ({
+            const projects = (data || []).map((p: any) => ({
                 id: p.id,
                 tenantId: p.tenant_id,
                 name: p.name,
@@ -156,7 +156,7 @@ export const businessProjectService = {
 
             if (error) throw error;
 
-            const projects = (data || []).map(p => ({
+            const projects = (data || []).map((p: any) => ({
                 id: p.id,
                 tenantId: p.tenant_id,
                 name: p.name,

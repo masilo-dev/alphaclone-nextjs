@@ -78,7 +78,7 @@ CRITICAL INSTRUCTIONS:
         const chatHistory = [
             systemPrompt,
             modelResponse,
-            ...history.map(h => ({
+            ...history.map((h: any) => ({
                 role: h.role === 'model' ? 'model' : 'user',
                 parts: [{ text: h.text }]
             }))
