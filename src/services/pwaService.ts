@@ -2,13 +2,34 @@
  * PWA Service - Handles Progressive Web App features
  */
 
+import { supabase } from '../lib/supabase';
+import { ENV } from '../config/env';
+
+/**
+ * Helper to convert VAPID key
+ */
+function urlBase64ToUint8Array(base64String: string) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
 export const pwaService = {
     /**
      * Check if app is installable
      */
     isInstallable(): boolean {
         if (typeof window === 'undefined') return false;
-        
+
         // Check if already installed
         if (window.matchMedia('(display-mode: standalone)').matches) {
             return false;
@@ -127,8 +148,8 @@ export const pwaService = {
      */
     isRunningAsPWA(): boolean {
         if (typeof window === 'undefined') return false;
-        return window.matchMedia('(display-mode: standalone)').matches || 
-               (window.navigator as any).standalone === true;
+        return window.matchMedia('(display-mode: standalone)').matches ||
+            (window.navigator as any).standalone === true;
     },
 
     /**
@@ -233,5 +254,55 @@ export const pwaService = {
             };
         }
     },
+
+
+    /**
+     * Subscribe to Push Notifications
+     */
+    async subscribeToPush(userId: string): Promise<{ success: boolean; error: string | null }> {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            return { success: false, error: 'Push messaging not supported' };
+        }
+
+        try {
+            const registration = await navigator.serviceWorker.ready;
+
+            // Get public key from ENV
+            const vapidPublicKey = ENV.VITE_VAPID_PUBLIC_KEY;
+
+            if (!vapidPublicKey) {
+                console.error('VAPID Public Key not found');
+                return { success: false, error: 'Configuration missing' };
+            }
+
+            const subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+            });
+
+            // Send subscription to server
+            const { error } = await supabase
+                .from('push_subscriptions')
+                .upsert({
+                    user_id: userId,
+                    endpoint: subscription.endpoint,
+                    keys: subscription.toJSON().keys
+                }, { onConflict: 'endpoint' });
+
+            if (error) {
+                console.error('Failed to save subscription:', error);
+                throw new Error('Database save failed');
+            }
+
+            return { success: true, error: null };
+
+        } catch (error) {
+            console.error('Push subscription failed:', error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Subscription failed',
+            };
+        }
+    }
 };
 

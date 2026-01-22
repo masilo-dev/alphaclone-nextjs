@@ -23,6 +23,7 @@ const envSchema = z.object({
 
     // Optional
     VITE_SENTRY_DSN: z.string().url().optional(),
+    VITE_VAPID_PUBLIC_KEY: z.string().optional(),
 });
 
 /**
