@@ -423,7 +423,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     if (!finalRecipientId && user.role === 'client') {
       try {
         const { userService } = await import('../services/userService');
-        const { adminId, error } = await userService.userService.getSystemAdmin();
+        const { adminId, error } = await userService.getSystemAdmin();
 
         if (adminId) {
           finalRecipientId = adminId;
