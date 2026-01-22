@@ -51,40 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         });
 
-        // SAFETY NET: Check for OAuth code in URL and manually exchange it if session is missing
-        // This fixes the issue where Google redirect happens but session isn't established automatically
-        const handleAuthCallback = async () => {
-            if (typeof window !== 'undefined') {
-                const searchParams = new URLSearchParams(window.location.search);
-                const code = searchParams.get('code');
-
-                if (code && !user) {
-                    console.log('AuthContext: Found OAuth code in URL, attempting manual exchange...');
-                    setLoading(true);
-
-                    try {
-                        const { supabase } = await import('../lib/supabase');
-                        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-
-                        if (error) {
-                            console.error('AuthContext: Manual code exchange failed:', error);
-                            setLoading(false);
-                        } else if (data.session) {
-                            console.log('AuthContext: Manual code exchange SUCCESS! Session established.');
-                            // The onAuthStateChange listener will pick this up and set the user
-                            // Clean up URL
-                            const newUrl = window.location.pathname;
-                            window.history.replaceState({}, document.title, newUrl);
-                        }
-                    } catch (err) {
-                        console.error('AuthContext: Unexpected error during code exchange:', err);
-                        setLoading(false);
-                    }
-                }
-            }
-        };
-
-        handleAuthCallback();
+        // Session is now handled server-side by /auth/callback route
+        // Client only needs to listen for the session change
+        // const handleAuthCallback = ... (removed to prevent race conditions)
 
         return () => {
             subscription.unsubscribe();
