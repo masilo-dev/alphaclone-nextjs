@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Send, MessageSquare, Search, Smile, User as UserIcon, Menu, X, Paperclip, Loader2, Flag, Bot } from 'lucide-react';
+import { Send, MessageSquare, Search, Smile, User as UserIcon, Menu, X, Paperclip, Loader2, Flag, Bot, ArrowLeft } from 'lucide-react';
 import { User, ChatMessage } from '../../types';
 import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
 import { userService } from '../../services/userService';
@@ -7,6 +7,7 @@ import { messageService } from '../../services/messageService';
 import { chatWithAI } from '../../services/unifiedAIService';
 import { MessageBubble } from './MessageBubble';
 import { supabase } from '../../lib/supabase';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 
 interface MessagesTabProps {
     user: User;
@@ -28,12 +29,20 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
     const [adminUser, setAdminUser] = useState<User | null>(null); // For client view - store admin
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [sidebarOpen, setSidebarOpen] = useState(() => {
-        if (typeof window !== 'undefined') {
-            return window.innerWidth >= 768; // md breakpoint
-        }
-        return true;
-    });
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // Mobile Detection
+    const isMobile = useMediaQuery('(max-width: 768px)');
+
+    // Sidebar visibility logic - simplified
+    // On desktop: controlled by manual toggle (default open)
+    // On mobile: controlled strictly by view state (List vs Chat)
+    const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
+
+    // Derived state for rendering
+    const showSidebar = !isMobile || (isMobile && !selectedClient);
+    const showChat = !isMobile || (isMobile && !!selectedClient);
 
     // New State for Premium Features
     const [isDragging, setIsDragging] = useState(false);
@@ -388,11 +397,10 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
 
     return (
         <div
-            className="h-[calc(100dvh-140px)] flex glass-panel rounded-2xl overflow-hidden shadow-2xl animate-fade-in relative backdrop-blur-xl border border-white/5"
+            className="h-[100dvh] md:h-[calc(100dvh-140px)] flex glass-panel rounded-none md:rounded-2xl overflow-hidden shadow-none md:shadow-2xl animate-fade-in relative backdrop-blur-xl border-0 md:border border-white/5"
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
             onDrop={onDrop}
-            style={{ maxHeight: 'calc(100dvh - 140px)' }}
         >
             {/* Ambient Background Glow */}
             <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none -mt-20 -mr-20"></div>
@@ -408,27 +416,18 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                 </div>
             )}
 
-            {/* Mobile Overlay */}
-            {sidebarOpen && isAdmin && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-20 md:hidden backdrop-blur-sm"
-                    onClick={() => setSidebarOpen(false)}
-                />
-            )}
-
             {/* --- ADMIN SIDEBAR --- */}
-            {isAdmin && (
-                <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-                    } ${sidebarOpen || window.innerWidth >= 768 ? 'w-80' : 'w-0'
-                    } border-r border-white/5 bg-slate-900/50 flex flex-col z-30 fixed md:relative h-full transition-all duration-300 md:flex`}>
+            {isAdmin && showSidebar && (
+                <div className={`${isMobile ? 'w-full' : desktopSidebarOpen ? 'w-80' : 'w-0'
+                    } border-r border-white/5 bg-slate-900/50 flex flex-col z-30 relative h-full transition-all duration-300`}>
                     <div className="p-4 border-b border-white/5">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-white font-bold flex items-center gap-2">
                                 <MessageSquare className="w-5 h-5 text-teal-400" /> Messaging Center
                             </h3>
                             <button
-                                onClick={() => setSidebarOpen(false)}
-                                className="md:hidden p-1 text-slate-400 hover:text-white transition-colors"
+                                onClick={() => setDesktopSidebarOpen(false)}
+                                className="hidden md:block p-1 text-slate-400 hover:text-white transition-colors"
                                 aria-label="Close sidebar"
                             >
                                 <X className="w-5 h-5" />
@@ -478,226 +477,239 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
             )}
 
             {/* --- CHAT AREA --- */}
-            <div className="flex-1 flex flex-col z-10 bg-slate-900/20 min-w-0 overflow-hidden">
-                {/* Chat Header */}
-                <div className="p-3 sm:p-5 border-b border-white/5 flex justify-between items-center bg-white/5 backdrop-blur-md flex-shrink-0">
-                    <div className="flex items-center gap-3">
-                        {isAdmin && (
+            {showChat && (
+                <div className="flex-1 flex flex-col z-10 bg-slate-900/20 min-w-0 overflow-hidden h-full">
+                    {/* Chat Header */}
+                    <div className="p-3 sm:p-5 border-b border-white/5 flex justify-between items-center bg-white/5 backdrop-blur-md flex-shrink-0 h-[60px] md:h-auto">
+                        <div className="flex items-center gap-3">
+                            {/* Mobile Back Button */}
+                            {isMobile && isAdmin && selectedClient && (
+                                <button
+                                    onClick={() => setSelectedClient(null)}
+                                    className="p-2 -ml-2 text-slate-300 hover:text-white"
+                                >
+                                    <ArrowLeft className="w-5 h-5" />
+                                </button>
+                            )}
+
+                            {/* Desktop Toggle */}
+                            {isAdmin && !isMobile && !desktopSidebarOpen && (
+                                <button
+                                    onClick={() => setDesktopSidebarOpen(true)}
+                                    className="p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800"
+                                >
+                                    <Menu className="w-5 h-5" />
+                                </button>
+                            )}
+
+                            <h3 className="font-bold text-white flex items-center gap-3 text-lg overflow-hidden">
+                                {isAdmin ? (
+                                    selectedClient ? (
+                                        <>
+                                            <img src={selectedClient.avatar} className="w-8 h-8 rounded-full flex-shrink-0" />
+                                            <div className="flex flex-col min-w-0">
+                                                <span className="truncate">{selectedClient.name}</span>
+                                                {isRecipientTyping && (
+                                                    <span className="text-xs text-teal-400 font-normal animate-pulse">typing...</span>
+                                                )}
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <span className="text-slate-400">Select a client</span>
+                                    )
+                                ) : (
+                                    <>
+                                        <div className="p-2 rounded-lg bg-teal-500/10 border border-teal-500/20">
+                                            <UserIcon className="w-5 h-5 text-teal-400" />
+                                        </div>
+                                        <span className="truncate">Admin Support</span>
+                                    </>
+                                )}
+                            </h3>
+                        </div>
+
+                        {/* Admin Auto-Pilot Toggle */}
+                        {isAdmin && !isMobile && (
                             <button
-                                onClick={() => setSidebarOpen(!sidebarOpen)}
-                                className="md:hidden p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800"
-                                aria-label="Toggle client list"
+                                onClick={() => setAutoReplyEnabled(!autoReplyEnabled)}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${autoReplyEnabled
+                                    ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/30'
+                                    : 'bg-slate-800 text-slate-400 hover:text-white border border-white/10'
+                                    }`}
                             >
-                                <Menu className="w-5 h-5" />
+                                <Bot size={14} className={autoReplyEnabled ? 'animate-pulse' : ''} />
+                                {autoReplyEnabled ? 'AUTO-PILOT ON' : 'ENABLE AI AGENT'}
                             </button>
                         )}
-                        <h3 className="font-bold text-white flex items-center gap-3 text-lg">
-                            {isAdmin ? (
-                                selectedClient ? (
-                                    <>
-                                        <img src={selectedClient.avatar} className="w-8 h-8 rounded-full" />
-                                        <div className="flex flex-col">
-                                            <span>{selectedClient.name}</span>
-                                            {isRecipientTyping && (
-                                                <span className="text-xs text-teal-400 font-normal animate-pulse">typing...</span>
-                                            )}
-                                        </div>
-                                    </>
-                                ) : (
-                                    <span className="text-slate-400">Select a client to start messaging</span>
-                                )
-                            ) : (
-                                <>
-                                    <div className="p-2 rounded-lg bg-teal-500/10 border border-teal-500/20">
-                                        <UserIcon className="w-5 h-5 text-teal-400" />
-                                    </div>
-                                    Admin Support
-                                </>
-                            )}
-                        </h3>
                     </div>
 
-                    {/* Admin Auto-Pilot Toggle */}
-                    {isAdmin && (
-                        <button
-                            onClick={() => setAutoReplyEnabled(!autoReplyEnabled)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${autoReplyEnabled
-                                ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/30'
-                                : 'bg-slate-800 text-slate-400 hover:text-white border border-white/10'
-                                }`}
-                        >
-                            <Bot size={14} className={autoReplyEnabled ? 'animate-pulse' : ''} />
-                            {autoReplyEnabled ? 'AUTO-PILOT ON' : 'ENABLE AI AGENT'}
-                        </button>
-                    )}
-                </div>
-
-                {/* Messages List */}
-                <div className="flex-1 overflow-y-auto p-3 sm:p-6 relative custom-scrollbar" style={{ minHeight: 0 }}>
-                    {isAdmin && !selectedClient ? (
-                        <div className="flex flex-col items-center justify-center h-full text-slate-500">
-                            <MessageSquare className="w-16 h-16 opacity-20 mb-4" />
-                            <p>Select a client from the sidebar to view conversation</p>
-                        </div>
-                    ) : (
-                        <>
-                            {visibleMessages.length === 0 && (
-                                <div className="text-center text-slate-500 mt-10">No messages yet. Start the conversation!</div>
-                            )}
-
-                            <div className="space-y-1">
-                                {visibleMessages.map((msg, index) => {
-                                    const isOwn = msg.senderId === user.id;
-                                    const prevMsg = visibleMessages[index - 1];
-                                    const isSequence = prevMsg && prevMsg.senderId === msg.senderId && (new Date(msg.timestamp).getTime() - new Date(prevMsg.timestamp).getTime() < 60000);
-
-                                    // Logic for showing avatar/name
-                                    // Show avatar if it's NOT a sequence (first message of a group)
-                                    // OR if the previous message was a long time ago
-                                    const showAvatar = !isSequence;
-                                    const showSenderName = !isSequence && !isOwn; // Only show name for others, once per group
-
-                                    return (
-                                        <MessageBubble
-                                            key={msg.id}
-                                            message={msg}
-                                            isOwn={isOwn}
-                                            showAvatar={showAvatar}
-                                            showSenderName={showSenderName}
-                                        />
-                                    );
-                                })}
+                    {/* Messages List */}
+                    <div className="flex-1 overflow-y-auto p-3 sm:p-6 relative custom-scrollbar" style={{ minHeight: 0 }}>
+                        {isAdmin && !selectedClient ? (
+                            <div className="flex flex-col items-center justify-center h-full text-slate-500">
+                                <MessageSquare className="w-16 h-16 opacity-20 mb-4" />
+                                <p>Select a client from the sidebar to view conversation</p>
                             </div>
+                        ) : (
+                            <>
+                                {visibleMessages.length === 0 && (
+                                    <div className="text-center text-slate-500 mt-10">No messages yet. Start the conversation!</div>
+                                )}
 
-                            {/* Typing Indicator for Recipient in Chat Area */}
-                            {isRecipientTyping && (
-                                <div className="flex items-center gap-2 mt-2 ml-4 text-slate-500 text-xs">
-                                    <div className="flex gap-1 bg-slate-800 p-2 rounded-xl rounded-tl-none">
-                                        <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                                        <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                                        <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce"></span>
+                                <div className="space-y-1">
+                                    {visibleMessages.map((msg, index) => {
+                                        const isOwn = msg.senderId === user.id;
+                                        const prevMsg = visibleMessages[index - 1];
+                                        const isSequence = prevMsg && prevMsg.senderId === msg.senderId && (new Date(msg.timestamp).getTime() - new Date(prevMsg.timestamp).getTime() < 60000);
+
+                                        // Logic for showing avatar/name
+                                        // Show avatar if it's NOT a sequence (first message of a group)
+                                        // OR if the previous message was a long time ago
+                                        const showAvatar = !isSequence;
+                                        const showSenderName = !isSequence && !isOwn; // Only show name for others, once per group
+
+                                        return (
+                                            <MessageBubble
+                                                key={msg.id}
+                                                message={msg}
+                                                isOwn={isOwn}
+                                                showAvatar={showAvatar}
+                                                showSenderName={showSenderName}
+                                            />
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Typing Indicator for Recipient in Chat Area */}
+                                {isRecipientTyping && (
+                                    <div className="flex items-center gap-2 mt-2 ml-4 text-slate-500 text-xs">
+                                        <div className="flex gap-1 bg-slate-800 p-2 rounded-xl rounded-tl-none">
+                                            <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                            <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                            <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce"></span>
+                                        </div>
                                     </div>
+                                )}
+                                <div ref={messagesEndRef} />
+                            </>
+                        )}
+                    </div>
+
+                    {/* Input Area */}
+                    {(!isAdmin || selectedClient) && (
+                        <div className="p-3 sm:p-5 border-t border-white/5 relative bg-black/20 backdrop-blur-md flex-shrink-0">
+                            {/* Pending Attachments Preview */}
+                            {pendingAttachments.length > 0 && (
+                                <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
+                                    {pendingAttachments.map((att, idx) => (
+                                        <div key={idx} className="relative group/preview">
+                                            <div className="w-16 h-16 rounded-lg border border-white/10 overflow-hidden bg-slate-800 flex items-center justify-center">
+                                                {att.type === 'image' ? (
+                                                    <img src={att.url} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <Paperclip className="w-6 h-6 text-slate-400" />
+                                                )}
+                                            </div>
+                                            <button
+                                                onClick={() => setPendingAttachments(prev => prev.filter((_, i) => i !== idx))}
+                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover/preview:opacity-100 transition-opacity"
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {isUploading && (
+                                        <div className="w-16 h-16 rounded-lg border border-white/10 flex items-center justify-center bg-slate-800">
+                                            <Loader2 className="animate-spin text-teal-500" />
+                                        </div>
+                                    )}
                                 </div>
                             )}
-                            <div ref={messagesEndRef} />
-                        </>
-                    )}
-                </div>
 
-                {/* Input Area */}
-                {(!isAdmin || selectedClient) && (
-                    <div className="p-3 sm:p-5 border-t border-white/5 relative bg-black/20 backdrop-blur-md flex-shrink-0">
-                        {/* Pending Attachments Preview */}
-                        {pendingAttachments.length > 0 && (
-                            <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
-                                {pendingAttachments.map((att, idx) => (
-                                    <div key={idx} className="relative group/preview">
-                                        <div className="w-16 h-16 rounded-lg border border-white/10 overflow-hidden bg-slate-800 flex items-center justify-center">
-                                            {att.type === 'image' ? (
-                                                <img src={att.url} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <Paperclip className="w-6 h-6 text-slate-400" />
-                                            )}
+                            <div className="flex gap-2 sm:gap-3 relative items-end w-full">
+                                <div className="relative flex items-end gap-1 sm:gap-2 flex-shrink-0">
+                                    <button
+                                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                        className="p-2 sm:p-3 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-teal-400 rounded-xl transition-colors border border-white/10 flex-shrink-0"
+                                        aria-label="Add emoji"
+                                    >
+                                        <Smile className="w-4 h-4 sm:w-5 sm:h-5" />
+                                    </button>
+
+                                    <button
+                                        onClick={() => setPriority(prev => prev === 'normal' ? 'high' : prev === 'high' ? 'urgent' : 'normal')}
+                                        className={`p-2 sm:p-3 rounded-xl transition-all border border-white/10 flex items-center justify-center flex-shrink-0 ${priority === 'urgent' ? 'bg-red-500/20 text-red-400 border-red-500/50' :
+                                            priority === 'high' ? 'bg-orange-500/20 text-orange-400 border-orange-500/50' :
+                                                'bg-white/5 text-slate-400 hover:text-teal-400 hover:bg-white/10'
+                                            }`}
+                                        title={`Priority: ${priority.toUpperCase()}`}
+                                        aria-label={`Set priority (current: ${priority})`}
+                                    >
+                                        <Flag className={`w-4 h-4 sm:w-5 sm:h-5 ${priority !== 'normal' ? 'fill-current' : ''}`} />
+                                    </button>
+
+                                    <input
+                                        type="file"
+                                        multiple
+                                        className="hidden"
+                                        ref={fileInputRef}
+                                        onChange={handleFileSelect}
+                                    />
+                                    <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="p-2 sm:p-3 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-teal-400 rounded-xl transition-colors border border-white/10 flex-shrink-0"
+                                        aria-label="Attach file"
+                                    >
+                                        <Paperclip className="w-4 h-4 sm:w-5 sm:h-5" />
+                                    </button>
+
+                                    {showEmojiPicker && (
+                                        <div className="absolute bottom-16 left-0 z-50 animate-fade-in shadow-2xl">
+                                            <EmojiPicker onEmojiClick={handleEmojiClick} theme={Theme.DARK} width={300} height={400} />
                                         </div>
-                                        <button
-                                            onClick={() => setPendingAttachments(prev => prev.filter((_, i) => i !== idx))}
-                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover/preview:opacity-100 transition-opacity"
-                                        >
-                                            <X size={12} />
-                                        </button>
-                                    </div>
-                                ))}
-                                {isUploading && (
-                                    <div className="w-16 h-16 rounded-lg border border-white/10 flex items-center justify-center bg-slate-800">
-                                        <Loader2 className="animate-spin text-teal-500" />
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                                    )}
+                                </div>
 
-                        <div className="flex gap-2 sm:gap-3 relative items-end w-full">
-                            <div className="relative flex items-end gap-1 sm:gap-2 flex-shrink-0">
-                                <button
-                                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                    className="p-2 sm:p-3 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-teal-400 rounded-xl transition-colors border border-white/10 flex-shrink-0"
-                                    aria-label="Add emoji"
-                                >
-                                    <Smile className="w-4 h-4 sm:w-5 sm:h-5" />
-                                </button>
-
-                                <button
-                                    onClick={() => setPriority(prev => prev === 'normal' ? 'high' : prev === 'high' ? 'urgent' : 'normal')}
-                                    className={`p-2 sm:p-3 rounded-xl transition-all border border-white/10 flex items-center justify-center flex-shrink-0 ${priority === 'urgent' ? 'bg-red-500/20 text-red-400 border-red-500/50' :
-                                        priority === 'high' ? 'bg-orange-500/20 text-orange-400 border-orange-500/50' :
-                                            'bg-white/5 text-slate-400 hover:text-teal-400 hover:bg-white/10'
-                                        }`}
-                                    title={`Priority: ${priority.toUpperCase()}`}
-                                    aria-label={`Set priority (current: ${priority})`}
-                                >
-                                    <Flag className={`w-4 h-4 sm:w-5 sm:h-5 ${priority !== 'normal' ? 'fill-current' : ''}`} />
-                                </button>
-
-                                <input
-                                    type="file"
-                                    multiple
-                                    className="hidden"
-                                    ref={fileInputRef}
-                                    onChange={handleFileSelect}
+                                <textarea
+                                    className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-teal-500/50 focus:bg-white/10 transition-all hover:bg-white/10 resize-none h-[44px] sm:h-[50px] min-h-[44px] sm:min-h-[50px] max-h-[120px] sm:max-h-[150px]"
+                                    placeholder="Type your message..."
+                                    rows={1}
+                                    value={newMessage}
+                                    onChange={handleTyping}
+                                    onFocus={(e) => {
+                                        // Mobile: Scroll into view when keyboard opens
+                                        setTimeout(() => {
+                                            e.target.scrollIntoView({
+                                                behavior: 'smooth',
+                                                block: 'center',
+                                                inline: 'nearest'
+                                            });
+                                        }, 300); // Wait for keyboard animation
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleSend();
+                                        }
+                                    }}
+                                    autoComplete="off"
+                                    autoCorrect="on"
+                                    autoCapitalize="sentences"
+                                    spellCheck="true"
                                 />
                                 <button
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="p-2 sm:p-3 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-teal-400 rounded-xl transition-colors border border-white/10 flex-shrink-0"
-                                    aria-label="Attach file"
+                                    onClick={handleSend}
+                                    disabled={(!newMessage.trim() && pendingAttachments.length === 0) || isUploading}
+                                    className="p-2 sm:p-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-xl shadow-lg shadow-teal-500/20 hover:shadow-teal-500/40 hover:scale-105 disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all duration-300 h-[44px] sm:h-[50px] w-[44px] sm:w-[50px] flex items-center justify-center flex-shrink-0"
+                                    aria-label="Send message"
                                 >
-                                    <Paperclip className="w-4 h-4 sm:w-5 sm:h-5" />
+                                    <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                                 </button>
-
-                                {showEmojiPicker && (
-                                    <div className="absolute bottom-16 left-0 z-50 animate-fade-in shadow-2xl">
-                                        <EmojiPicker onEmojiClick={handleEmojiClick} theme={Theme.DARK} width={300} height={400} />
-                                    </div>
-                                )}
                             </div>
-
-                            <textarea
-                                className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-teal-500/50 focus:bg-white/10 transition-all hover:bg-white/10 resize-none h-[44px] sm:h-[50px] min-h-[44px] sm:min-h-[50px] max-h-[120px] sm:max-h-[150px]"
-                                placeholder="Type your message..."
-                                rows={1}
-                                value={newMessage}
-                                onChange={handleTyping}
-                                onFocus={(e) => {
-                                    // Mobile: Scroll into view when keyboard opens
-                                    setTimeout(() => {
-                                        e.target.scrollIntoView({
-                                            behavior: 'smooth',
-                                            block: 'center',
-                                            inline: 'nearest'
-                                        });
-                                    }, 300); // Wait for keyboard animation
-                                }}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        handleSend();
-                                    }
-                                }}
-                                autoComplete="off"
-                                autoCorrect="on"
-                                autoCapitalize="sentences"
-                                spellCheck="true"
-                            />
-                            <button
-                                onClick={handleSend}
-                                disabled={(!newMessage.trim() && pendingAttachments.length === 0) || isUploading}
-                                className="p-2 sm:p-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-xl shadow-lg shadow-teal-500/20 hover:shadow-teal-500/40 hover:scale-105 disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all duration-300 h-[44px] sm:h-[50px] w-[44px] sm:w-[50px] flex items-center justify-center flex-shrink-0"
-                                aria-label="Send message"
-                            >
-                                <Send className="w-4 h-4 sm:w-5 sm:h-5" />
-                            </button>
                         </div>
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };
