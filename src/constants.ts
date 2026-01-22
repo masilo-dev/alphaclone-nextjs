@@ -33,7 +33,6 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
   { label: 'My Projects', href: '/dashboard/projects', icon: Briefcase },
   { label: 'Project Calendar', href: '/dashboard/calendar', icon: Calendar },
   { label: 'Finance & Payments', href: '/dashboard/finance', icon: DollarSign },
-  { label: 'Security Center', href: '/dashboard/security', icon: ShieldCheck },
   { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
   { label: 'AI Studio', href: '/dashboard/ai-studio', icon: Palette },
   { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },

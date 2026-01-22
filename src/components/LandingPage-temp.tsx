@@ -221,11 +221,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      AlphaClone Business OS v2.0
                   </div>
                   <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white mb-6 md:mb-8 leading-tight animate-slide-up">
-                     The All-In-One<br />
-                     <span className="text-teal-400">Business Operating System</span>
+                     <span className="text-teal-400">Built for teams replacing</span><br />
+                     5 tools with one system
                   </h1>
-                  <p className="text-base sm:text-lg md:text-xl text-slate-400 mb-8 md:mb-10 leading-relaxed max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: '0.1s' }}>
-                     Run your entire business from one intelligent dashboard. Includes CRM, Project Management, Video Meetings, AI Sales Agents, and Security Monitoring.
+                  <p className="text-base sm:text-lg md:text-xl text-slate-400 mb-4 leading-relaxed max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                     Stop paying for Salesforce, Zoom, Asana, Intercom, and security tools separately.
+                  </p>
+                  <p className="text-base sm:text-lg md:text-xl text-white font-semibold mb-8 md:mb-10 leading-relaxed max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: '0.15s' }}>
+                     One platform. One login. <span className="text-teal-400">80% cost reduction.</span>
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up px-4 sm:px-0" style={{ animationDelay: '0.2s' }}>
                      <Button
@@ -238,231 +241,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      <Button
                         size="lg"
                         variant="outline"
-                        onClick={() => window.location.href = '/who-we-serve'}
+                        onClick={() => scrollToSection('who-we-serve')}
                         className="border-slate-700 bg-slate-900/50 backdrop-blur hover:bg-slate-800 text-white px-8 h-12 w-full sm:w-auto"
                      >
                         See Who This Is For
-                     </Button>
-                  </div>
-               </div>
-            </section>
-            {/* Who We Serve Section */}
-            <section id="who-we-serve" className="py-24 bg-slate-950/80 backdrop-blur-sm border-y border-slate-800/50">
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="text-center mb-16">
-                     <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Who We Serve</h2>
-                     <p className="text-slate-400 max-w-2xl mx-auto text-lg">
-                        AlphaClone is built for teams who are tired of juggling multiple tools and want a unified system that just works.
-                     </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                     {/* Growing Agencies */}
-                     <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 hover:border-teal-500/50 transition-all group backdrop-blur-md">
-                        <div className="flex items-center gap-3 mb-6">
-                           <div className="w-12 h-12 bg-teal-500/10 rounded-xl flex items-center justify-center">
-                              <Target className="w-6 h-6 text-teal-400" />
-                           </div>
-                           <h3 className="text-xl font-bold text-white">Growing Agencies</h3>
-                        </div>
-                        <div className="space-y-4">
-                           <div>
-                              <p className="text-sm font-semibold text-slate-300 mb-2">Your Challenge:</p>
-                              <p className="text-sm text-slate-400">Managing multiple clients across different tools, losing time switching contexts, and struggling with expensive per-seat pricing.</p>
-                           </div>
-                           <div>
-                              <p className="text-sm font-semibold text-teal-400 mb-2">How We Help:</p>
-                              <ul className="text-sm text-slate-400 space-y-1">
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                                    <span>Multi-tenant architecture for unlimited clients</span>
-                                 </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                                    <span>Unified dashboard for all client projects</span>
-                                 </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                                    <span>White-label client portals</span>
-                                 </li>
-                              </ul>
-                           </div>
-                        </div>
-                     </div>
-
-                     {/* SaaS Startups */}
-                     <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 hover:border-blue-500/50 transition-all group backdrop-blur-md">
-                        <div className="flex items-center gap-3 mb-6">
-                           <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center">
-                              <Zap className="w-6 h-6 text-blue-400" />
-                           </div>
-                           <h3 className="text-xl font-bold text-white">SaaS Startups</h3>
-                        </div>
-                        <div className="space-y-4">
-                           <div>
-                              <p className="text-sm font-semibold text-slate-300 mb-2">Your Challenge:</p>
-                              <p className="text-sm text-slate-400">Burning cash on 10+ SaaS subscriptions while trying to reach profitability. Need enterprise features without enterprise costs.</p>
-                           </div>
-                           <div>
-                              <p className="text-sm font-semibold text-blue-400 mb-2">How We Help:</p>
-                              <ul className="text-sm text-slate-400 space-y-1">
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                                    <span>Replace $2,000+/mo in subscriptions</span>
-                                 </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                                    <span>Built-in CRM, video calls, and AI agents</span>
-                                 </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                                    <span>Self-hostable for data control</span>
-                                 </li>
-                              </ul>
-                           </div>
-                        </div>
-                     </div>
-
-                     {/* Consulting Firms */}
-                     <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 hover:border-purple-500/50 transition-all group backdrop-blur-md">
-                        <div className="flex items-center gap-3 mb-6">
-                           <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center">
-                              <Award className="w-6 h-6 text-purple-400" />
-                           </div>
-                           <h3 className="text-xl font-bold text-white">Consulting Firms</h3>
-                        </div>
-                        <div className="space-y-4">
-                           <div>
-                              <p className="text-sm font-semibold text-slate-300 mb-2">Your Challenge:</p>
-                              <p className="text-sm text-slate-400">Need professional client management, secure video meetings, and project tracking without the complexity of enterprise software.</p>
-                           </div>
-                           <div>
-                              <p className="text-sm font-semibold text-purple-400 mb-2">How We Help:</p>
-                              <ul className="text-sm text-slate-400 space-y-1">
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
-                                    <span>Professional client portals</span>
-                                 </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
-                                    <span>Integrated video conferencing</span>
-                                 </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
-                                    <span>Time tracking & invoicing</span>
-                                 </li>
-                              </ul>
-                           </div>
-                        </div>
-                     </div>
-
-                     {/* Emerging Market Founders */}
-                     <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 hover:border-orange-500/50 transition-all group backdrop-blur-md">
-                        <div className="flex items-center gap-3 mb-6">
-                           <div className="w-12 h-12 bg-orange-500/10 rounded-xl flex items-center justify-center">
-                              <TrendingUp className="w-6 h-6 text-orange-400" />
-                           </div>
-                           <h3 className="text-xl font-bold text-white">Emerging Market Founders</h3>
-                        </div>
-                        <div className="space-y-4">
-                           <div>
-                              <p className="text-sm font-semibold text-slate-300 mb-2">Your Challenge:</p>
-                              <p className="text-sm text-slate-400">Enterprise tools price you out. Need world-class features at prices that make sense for your market.</p>
-                           </div>
-                           <div>
-                              <p className="text-sm font-semibold text-orange-400 mb-2">How We Help:</p>
-                              <ul className="text-sm text-slate-400 space-y-1">
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
-                                    <span>Affordable all-in-one pricing</span>
-                                 </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
-                                    <span>No hidden fees or per-seat charges</span>
-                                 </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
-                                    <span>Full feature access from day one</span>
-                                 </li>
-                              </ul>
-                           </div>
-                        </div>
-                     </div>
-
-                     {/* Privacy-First Teams */}
-                     <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 hover:border-green-500/50 transition-all group backdrop-blur-md">
-                        <div className="flex items-center gap-3 mb-6">
-                           <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center">
-                              <ShieldCheck className="w-6 h-6 text-green-400" />
-                           </div>
-                           <h3 className="text-xl font-bold text-white">Privacy-First Teams</h3>
-                        </div>
-                        <div className="space-y-4">
-                           <div>
-                              <p className="text-sm font-semibold text-slate-300 mb-2">Your Challenge:</p>
-                              <p className="text-sm text-slate-400">Can't trust third-party SaaS with sensitive data. Need full control over where your data lives.</p>
-                           </div>
-                           <div>
-                              <p className="text-sm font-semibold text-green-400 mb-2">How We Help:</p>
-                              <ul className="text-sm text-slate-400 space-y-1">
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                                    <span>Self-hostable on your infrastructure</span>
-                                 </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                                    <span>Open-source transparency</span>
-                                 </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                                    <span>Complete data ownership</span>
-                                 </li>
-                              </ul>
-                           </div>
-                        </div>
-                     </div>
-
-                     {/* Remote Teams */}
-                     <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 hover:border-cyan-500/50 transition-all group backdrop-blur-md">
-                        <div className="flex items-center gap-3 mb-6">
-                           <div className="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center">
-                              <Video className="w-6 h-6 text-cyan-400" />
-                           </div>
-                           <h3 className="text-xl font-bold text-white">Remote Teams</h3>
-                        </div>
-                        <div className="space-y-4">
-                           <div>
-                              <p className="text-sm font-semibold text-slate-300 mb-2">Your Challenge:</p>
-                              <p className="text-sm text-slate-400">Scattered across Slack, Zoom, Trello, and email. Need everything in one place to stay aligned.</p>
-                           </div>
-                           <div>
-                              <p className="text-sm font-semibold text-cyan-400 mb-2">How We Help:</p>
-                              <ul className="text-sm text-slate-400 space-y-1">
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
-                                    <span>Built-in video conferencing</span>
-                                 </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
-                                    <span>Real-time collaboration tools</span>
-                                 </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
-                                    <span>Unified communication hub</span>
-                                 </li>
-                              </ul>
-                           </div>
-                        </div>
-                     </div>
-                  </div>
-
-                  <div className="mt-16 text-center">
-                     <p className="text-slate-400 mb-6">Don't see yourself here? We work with all types of businesses.</p>
-                     <Button
-                        onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')}
-                        className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-8"
-                     >
-                        Book a Free Consultation
                      </Button>
                   </div>
                </div>
@@ -547,8 +329,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            ))}
                         </ul>
                         <div className="flex flex-col gap-3">
-                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-semibold">
-                              Book Consultation
+                           <Button onClick={() => window.open('https://wa.me/48517809674', '_blank')} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-semibold">
+                              Chat on WhatsApp
                            </Button>
                         </div>
                      </div>
@@ -595,8 +377,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            ))}
                         </ul>
                         <div className="flex flex-col gap-3">
-                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-red-600 hover:bg-red-500 text-white font-semibold">
-                              Book Consultation
+                           <Button onClick={() => window.open('https://wa.me/48517809674', '_blank')} className="flex-1 bg-red-600 hover:bg-red-500 text-white font-semibold">
+                              Get Security Audit
                            </Button>
                         </div>
                      </div>
@@ -643,8 +425,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            ))}
                         </ul>
                         <div className="flex flex-col gap-3">
-                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-semibold">
-                              Book Consultation
+                           <Button onClick={() => window.open('https://wa.me/48517809674', '_blank')} className="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-semibold">
+                              Inquire About Mobile
                            </Button>
                         </div>
                      </div>
@@ -792,9 +574,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                                  <Phone className="w-6 h-6 text-teal-500" />
                               </div>
                               <div>
-                                 <h4 className="text-white font-bold mb-1">Phone</h4>
+                                 <h4 className="text-white font-bold mb-1">Phone & WhatsApp</h4>
                                  <a href="tel:+48517809674" className="text-teal-400 hover:text-teal-300 block">
                                     +48 517 809 674
+                                 </a>
+                                 <a href="https://wa.me/48517809674" target="_blank" rel="noopener noreferrer" className="text-sm text-slate-400 hover:text-teal-400">
+                                    Send WhatsApp message
                                  </a>
                               </div>
                            </div>
@@ -954,3 +739,4 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
 };
 
 export default LandingPage;
+

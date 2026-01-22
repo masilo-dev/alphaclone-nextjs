@@ -112,10 +112,10 @@ const ServicesPage: React.FC = () => {
                                 <Button
                                     size="sm"
                                     variant="outline"
-                                    className="border-slate-700 w-full"
-                                    onClick={() => window.open('https://wa.me/48517809674', '_blank')}
+                                    className="border-slate-700 w-full hover:bg-slate-800"
+                                    onClick={() => setIsLoginOpen(true)}
                                 >
-                                    WhatsApp
+                                    Start for Free
                                 </Button>
                             </div>
                         </div>
@@ -138,10 +138,10 @@ const ServicesPage: React.FC = () => {
                         <Button
                             size="lg"
                             variant="outline"
-                            className="text-lg px-8 py-4 border-slate-700"
-                            onClick={() => window.open('https://wa.me/48517809674', '_blank')}
+                            className="text-lg px-8 py-4 border-slate-700 hover:bg-slate-800"
+                            onClick={() => setIsLoginOpen(true)}
                         >
-                            Chat via WhatsApp
+                            Start for Free
                         </Button>
                     </div>
                 </div>

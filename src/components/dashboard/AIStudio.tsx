@@ -120,7 +120,23 @@ const AIStudio: React.FC<AIStudioProps> = ({ user, galleryItems, setGalleryItems
    );
 
    return (
-      <div className="space-y-8 animate-fade-in max-w-7xl mx-auto">
+      <div className="space-y-8 animate-fade-in max-w-7xl mx-auto relative">
+         {/* Coming Soon Overlay */}
+         <div className="absolute inset-0 z-50 bg-slate-950/95 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+            <div className="text-center max-w-md px-6">
+               <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Sparkles className="w-10 h-10 text-teal-400" />
+               </div>
+               <h2 className="text-3xl font-bold text-white mb-4">Coming Soon</h2>
+               <p className="text-slate-400 text-lg mb-2">
+                  AI Studio is currently under development.
+               </p>
+               <p className="text-slate-500 text-sm">
+                  Check back soon for powerful AI-powered image and video generation capabilities!
+               </p>
+            </div>
+         </div>
+
          {/* Clean Header */}
          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 pb-4 border-b border-slate-800">
             <div>

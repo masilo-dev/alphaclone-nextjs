@@ -229,7 +229,6 @@ const Dashboard: React.FC<DashboardProps> = ({
     return [
       ...CLIENT_NAV_ITEMS.slice(0, 3), // Insert Finance after calendar
       { label: 'Finance & Payments', href: '/dashboard/finance', icon: CreditCard },
-      { label: 'Security Center', href: '/dashboard/security', icon: ShieldCheck },
       ...CLIENT_NAV_ITEMS.slice(3)
     ];
   }, [user.role]);
