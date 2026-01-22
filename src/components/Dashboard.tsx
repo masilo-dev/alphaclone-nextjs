@@ -370,7 +370,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         status: 'Pending' as const,
         currentStage: 'Discovery' as const,
         progress: 0,
-        dueDate: 'Pending Approval',
+        dueDate: undefined,
         team: [],
         image: newProject.image || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=1470&auto=format&fit=crop',
         description: newProject.description
