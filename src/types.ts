@@ -107,3 +107,19 @@ export interface GalleryItem {
   prompt: string;
   createdAt: Date;
 }
+
+export interface Improvement {
+  id: string;
+  message: string;
+  severity: 'low' | 'medium' | 'high';
+  source: string;
+  channel: string;
+  page_url: string;
+  user_type: 'visitor' | 'client' | 'tenant_admin' | 'admin';
+  user_id?: string;
+  is_pwa: boolean;
+  status: 'new' | 'reviewed' | 'in_progress' | 'resolved';
+  admin_notes?: string;
+  created_at: Date;
+  updated_at: Date;
+}

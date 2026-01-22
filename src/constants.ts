@@ -75,6 +75,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'SEO Articles', href: '/dashboard/articles' },
       { label: 'Portfolio Editor', href: '/dashboard/portfolio-manager' },
       { label: 'Resource Allocation', href: '/dashboard/allocation' },
+      { label: 'Improvements', href: '/dashboard/admin/improvements' },
     ]
   },
   {

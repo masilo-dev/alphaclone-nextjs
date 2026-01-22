@@ -1,9 +1,18 @@
 'use client';
 
 import React from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import ExitIntentModal from '@/components/ExitIntentModal';
 
 export default function MarketingShell({ children }: { children: React.ReactNode }) {
+    const { user } = useAuth();
+
     // Pass-through shell for standard web users.
-    // Any global marketing headers/footers that live outside of specific pages could go here.
-    return <>{children}</>;
+    // Exit-intent modal only shows on web (not PWA)
+    return (
+        <>
+            {children}
+            <ExitIntentModal user={user} />
+        </>
+    );
 }

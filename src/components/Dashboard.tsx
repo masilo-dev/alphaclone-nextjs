@@ -82,6 +82,7 @@ const FinanceTab = React.lazy(() => import('./dashboard/FinanceTab'));
 const ArticleEditor = React.lazy(() => import('./dashboard/ArticleEditor'));
 const CalendarComponent = React.lazy(() => import('./dashboard/CalendarComponent'));
 const SuperAdminTenantsTab = React.lazy(() => import('./dashboard/admin/SuperAdminTenantsTab'));
+const ImprovementsPage = React.lazy(() => import('./dashboard/admin/ImprovementsPage'));
 const ContactSubmissionsTab = React.lazy(() => import('./dashboard/ContactSubmissionsTab'));
 const TasksTab = React.lazy(() => import('./dashboard/TasksTab'));
 const DealsTab = React.lazy(() => import('./dashboard/DealsTab'));
@@ -824,6 +825,13 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         );
 
+      case '/dashboard/admin/improvements':
+        return (
+          <React.Suspense fallback={<div>Loading Improvements...</div>}>
+            <ImprovementsPage />
+          </React.Suspense>
+        );
+
       case '/dashboard/security':
         return (
           <React.Suspense fallback={<div>Loading Security Center...</div>}>
@@ -1438,8 +1446,10 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Sidebar - Hidden during video calls unless manually toggled */}
       {(!isInCall || showSidebarDuringCall) && (
-        <aside className={`${sidebarOpen ? 'w-72 translate-x-0' : 'w-72 -translate-x-full md:w-20 md:translate-x-0'
-          } bg-slate-900 border-r border-slate-800 flex flex-col fixed md:relative ${isInCall ? 'z-[110]' : 'z-50'} h-full transition-all duration-300 shadow-2xl`}>
+        <aside className={`${sidebarOpen
+          ? 'w-72 translate-x-0'
+          : 'w-0 -translate-x-full md:w-16 md:translate-x-0'
+          } bg-slate-900 border-r border-slate-800 flex flex-col fixed md:relative ${isInCall ? 'z-[110]' : 'z-50'} h-full transition-all duration-300 shadow-2xl overflow-hidden`}>
           <div className="h-20 flex items-center px-6 border-b border-slate-800 bg-slate-900">
             <div className="flex items-center gap-3 overflow-hidden">
               <img
@@ -1466,7 +1476,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                       }
                     }
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden
+                  title={!sidebarOpen ? item.label : undefined}
+                  className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-2'} py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden
                    ${activeTab === item.href
                       ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/20'
                       : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -1526,16 +1537,28 @@ const Dashboard: React.FC<DashboardProps> = ({
           <header className={`bg-slate-900 border-b border-slate-800 sticky top-0 ${isInCall ? 'z-[110]' : 'z-30'} backdrop-blur-sm bg-slate-900/95 pt-safe`}>
             <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4">
               <div className="flex items-center gap-3 sm:gap-4">
+                {/* Mobile Menu Toggle */}
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="p-3 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800 md:hidden -ml-1"
+                  className="p-2 sm:p-3 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800 md:hidden -ml-1"
                   aria-label="Toggle navigation menu"
                 >
                   <Menu className="w-5 h-5" />
                 </button>
+
+                {/* Desktop Sidebar Toggle */}
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="hidden md:flex p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800"
+                  aria-label="Toggle sidebar"
+                  title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+                >
+                  <Menu className="w-5 h-5" />
+                </button>
+
                 <div className="flex items-center gap-2 sm:gap-3 md:hidden">
                   <img src={LOGO_URL} alt="Logo" className="w-8 h-8 rounded-lg flex-shrink-0" />
-                  <h1 className="text-lg sm:text-xl font-bold text-white whitespace-nowrap">AlphaClone Systems</h1>
+                  <h1 className="text-base sm:text-lg font-bold text-white whitespace-nowrap truncate max-w-[150px] sm:max-w-none">AlphaClone Systems</h1>
                 </div>
               </div>
 
