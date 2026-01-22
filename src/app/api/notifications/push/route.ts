@@ -50,7 +50,7 @@ export async function POST(request: Request) {
 
         // Send to all user devices
         const results = await Promise.allSettled(
-            subscriptions.map(sub =>
+            subscriptions.map((sub: any) =>
                 webPush.sendNotification(
                     {
                         endpoint: sub.endpoint,
