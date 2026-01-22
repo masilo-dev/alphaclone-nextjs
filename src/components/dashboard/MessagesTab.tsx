@@ -29,8 +29,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
     const [adminUser, setAdminUser] = useState<User | null>(null); // For client view - store admin
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
+
 
     // Mobile Detection
     const isMobile = useMediaQuery('(max-width: 768px)');
