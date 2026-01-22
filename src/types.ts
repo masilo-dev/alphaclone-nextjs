@@ -57,7 +57,7 @@ export interface Project {
   status: 'Active' | 'Pending' | 'Completed' | 'Declined';
   currentStage: ProjectStage; // Detailed stage
   progress: number;
-  dueDate: string;
+  dueDate?: string;
   team: string[];
   image?: string;
   description?: string;
