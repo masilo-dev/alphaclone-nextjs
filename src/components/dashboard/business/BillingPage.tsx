@@ -3,6 +3,7 @@ import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { businessInvoiceService, BusinessInvoice } from '../../../services/businessInvoiceService';
 import { businessClientService } from '../../../services/businessClientService';
+import { businessProjectService } from '../../../services/businessProjectService';
 import {
     Plus,
     Download,
@@ -22,6 +23,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
     const { currentTenant } = useTenant();
     const [invoices, setInvoices] = useState<BusinessInvoice[]>([]);
     const [clients, setClients] = useState<any[]>([]);
+    const [projects, setProjects] = useState<any[]>([]);
     const [filter, setFilter] = useState<string>('all');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -38,9 +40,11 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
         setLoading(true);
         const { invoices: invData } = await businessInvoiceService.getInvoices(currentTenant.id);
         const { clients: clientData } = await businessClientService.getClients(currentTenant.id);
+        const { projects: projectData } = await businessProjectService.getProjects(currentTenant.id);
 
         setInvoices(invData);
         setClients(clientData);
+        setProjects(projectData);
         setLoading(false);
     };
 
@@ -138,8 +142,8 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
                         key={status}
                         onClick={() => setFilter(status)}
                         className={`px-4 py-2 rounded-lg transition-colors ${filter === status
-                                ? 'bg-teal-500 text-white'
-                                : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+                            ? 'bg-teal-500 text-white'
+                            : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
                             }`}
                     >
                         {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -170,6 +174,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
             {showCreateModal && (
                 <CreateInvoiceModal
                     clients={clients}
+                    projects={projects}
                     onClose={() => setShowCreateModal(false)}
                     onCreate={handleCreateInvoice}
                 />
@@ -233,9 +238,10 @@ const InvoiceCard = ({ invoice, clients, onDownload, onDelete }: any) => {
     );
 };
 
-const CreateInvoiceModal = ({ clients, onClose, onCreate }: any) => {
+const CreateInvoiceModal = ({ clients, projects, onClose, onCreate }: any) => {
     const [formData, setFormData] = useState({
         clientId: '',
+        projectId: '',
         issueDate: new Date().toISOString().split('T')[0],
         dueDate: '',
         lineItems: [{ description: '', quantity: 1, rate: 0, amount: 0 }],
@@ -311,6 +317,21 @@ const CreateInvoiceModal = ({ clients, onClose, onCreate }: any) => {
                         </div>
                     </div>
 
+
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Project (Optional)</label>
+                        <select
+                            value={formData.projectId}
+                            onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                        >
+                            <option value="">Select project</option>
+                            {projects.map((project: any) => (
+                                <option key={project.id} value={project.id}>{project.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
                     <div>
                         <div className="flex items-center justify-between mb-2">
                             <label className="block text-sm font-medium">Line Items</label>
@@ -379,8 +400,8 @@ const CreateInvoiceModal = ({ clients, onClose, onCreate }: any) => {
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 

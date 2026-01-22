@@ -6,8 +6,10 @@ import { Input, Button } from '@/components/ui/UIComponents';
 import { LOGO_URL } from '@/constants';
 import { AlertCircle, LogIn, UserPlus } from 'lucide-react';
 import Link from 'next/link';
+import { usePWA } from '@/contexts/PWAContext';
 
 export default function LoginPage() {
+    const { isPWA } = usePWA();
     const router = useRouter();
     const [isRegistering, setIsRegistering] = useState(false);
     const [email, setEmail] = useState('');
@@ -95,13 +97,23 @@ export default function LoginPage() {
 
             <div className="max-w-md w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl relative z-10">
                 <div className="mb-8 text-center">
-                    <Link href="/" className="mx-auto mb-6 flex justify-center inline-block">
-                        <img
-                            src={LOGO_URL}
-                            alt="AlphaClone Logo"
-                            className="w-20 h-20 object-contain hover:scale-105 transition-transform"
-                        />
-                    </Link>
+                    {isPWA ? (
+                        <div className="mx-auto mb-6 flex justify-center inline-block">
+                            <img
+                                src={LOGO_URL}
+                                alt="AlphaClone Logo"
+                                className="w-20 h-20 object-contain"
+                            />
+                        </div>
+                    ) : (
+                        <Link href="/" className="mx-auto mb-6 flex justify-center inline-block">
+                            <img
+                                src={LOGO_URL}
+                                alt="AlphaClone Logo"
+                                className="w-20 h-20 object-contain hover:scale-105 transition-transform"
+                            />
+                        </Link>
+                    )}
                     <h1 className="text-2xl font-bold text-white mb-2">AlphaClone Systems</h1>
                     <p className="text-slate-400">
                         {isRegistering ? 'Create your professional account' : 'Sign in to your dashboard'}

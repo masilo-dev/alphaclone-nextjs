@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { ConnectionStatus } from './ConnectionStatus';
 import {
@@ -117,8 +117,21 @@ const Dashboard: React.FC<DashboardProps> = ({
   galleryItems,
   setGalleryItems
 }) => {
-  const location = usePathname(); // In Next.js, pathname is the location string
+  const location = usePathname();
   const router = useRouter();
+
+  // -- CRITICAL FIX: ISOLATED TENANT DASHBOARD --
+  // Return early for Tenant Admins to avoid double-shell layout collisions
+  if (user.role === 'tenant_admin') {
+    return (
+      <BusinessDashboard
+        user={user}
+        onLogout={onLogout}
+        activeTab={location || '/dashboard'}
+        setActiveTab={(tab) => router.push(tab)}
+      />
+    );
+  }
 
   // Detect if mobile on initial load
   const [sidebarOpen, setSidebarOpen] = useState(() => {
@@ -409,14 +422,15 @@ const Dashboard: React.FC<DashboardProps> = ({
     let finalRecipientId = recipientId;
     if (!finalRecipientId && user.role === 'client') {
       try {
-        const { users } = await import('../services/userService').then(m => m.userService.getUsers());
-        const admin = users.find(u => u.role === 'admin');
-        if (admin) {
-          finalRecipientId = admin.id;
+        const { userService } = await import('../services/userService');
+        const { adminId, error } = await userService.userService.getSystemAdmin();
+
+        if (adminId) {
+          finalRecipientId = adminId;
         } else {
-          console.error('No admin found in users list');
+          console.error('No admin found:', error);
           import('react-hot-toast').then(({ toast }) => {
-            toast.error('Unable to find admin. Please contact support.');
+            toast.error('Unable to find support admin. Please contact support.');
           });
           return;
         }
@@ -771,16 +785,6 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // -- RENDER CONTENT --
   const renderContent = () => {
-    // INTERCEPT: If user is tenant admin, show the independent Business Dashboard
-    if (user.role === 'tenant_admin') {
-      return <BusinessDashboard
-        user={user}
-        onLogout={onLogout}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-      />;
-    }
-
     switch (activeTab) {
       case '/dashboard/conference':
       case '/dashboard/meetings':

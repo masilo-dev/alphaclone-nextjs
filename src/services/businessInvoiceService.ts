@@ -4,6 +4,7 @@ export interface BusinessInvoice {
     id: string;
     tenantId: string;
     clientId?: string;
+    projectId?: string;
     invoiceNumber: string;
     issueDate: string;
     dueDate: string;
@@ -42,6 +43,7 @@ export const businessInvoiceService = {
                 id: inv.id,
                 tenantId: inv.tenant_id,
                 clientId: inv.client_id,
+                projectId: inv.project_id,
                 invoiceNumber: inv.invoice_number,
                 issueDate: inv.issue_date,
                 dueDate: inv.due_date,
@@ -75,6 +77,7 @@ export const businessInvoiceService = {
                 .insert({
                     tenant_id: tenantId,
                     client_id: invoice.clientId,
+                    project_id: invoice.projectId,
                     invoice_number: invoiceNumber,
                     issue_date: invoice.issueDate || new Date().toISOString().split('T')[0],
                     due_date: invoice.dueDate,
@@ -94,6 +97,7 @@ export const businessInvoiceService = {
                 id: data.id,
                 tenantId: data.tenant_id,
                 clientId: data.client_id,
+                projectId: data.project_id,
                 invoiceNumber: data.invoice_number,
                 issueDate: data.issue_date,
                 dueDate: data.due_date,
@@ -122,6 +126,7 @@ export const businessInvoiceService = {
             const updateData: Record<string, any> = {};
 
             if (updates.clientId !== undefined) updateData.client_id = updates.clientId;
+            if (updates.projectId !== undefined) updateData.project_id = updates.projectId;
             if (updates.issueDate !== undefined) updateData.issue_date = updates.issueDate;
             if (updates.dueDate !== undefined) updateData.due_date = updates.dueDate;
             if (updates.status !== undefined) updateData.status = updates.status;

@@ -92,10 +92,54 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
 
     return (
         <div className="flex h-screen bg-slate-950 text-white overflow-hidden font-sans">
-            {/* Sidebar - Navigation is now handled by parent Dashboard component */}
-            <div className="hidden">
-                {/* Sidebar removed - using parent navigation */}
-            </div>
+            {/* Sidebar - Tenant Specific */}
+            <aside className={`w-72 bg-slate-900 border-r border-slate-800 flex flex-col fixed md:relative z-50 h-full transition-all duration-300 shadow-2xl`}>
+                <div className="h-16 flex items-center px-6 border-b border-slate-800 bg-slate-900">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="w-8 h-8 bg-teal-500/20 rounded-lg flex items-center justify-center">
+                            <Briefcase className="w-5 h-5 text-teal-400" />
+                        </div>
+                        <span className="font-bold text-white text-lg tracking-tight">
+                            Business OS
+                        </span>
+                    </div>
+                </div>
+
+                <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1.5 custom-scrollbar">
+                    {/* Hardcoded for now if imports missing, or import TENANT_NAV */}
+                    {[
+                        { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
+                        { label: 'Clients', href: '/dashboard/business/clients', icon: Users },
+                        { label: 'Projects', href: '/dashboard/business/projects', icon: FileText },
+                        { label: 'Team', href: '/dashboard/business/team', icon: Users },
+                        { label: 'Messages', href: '/dashboard/business/messages', icon: Bell },
+                        { label: 'Calendar', href: '/dashboard/business/calendar', icon: Briefcase },
+                        { label: 'Billing', href: '/dashboard/business/billing', icon: CreditCard },
+                        { label: 'Reports', href: '/dashboard/business/reports', icon: FileText },
+                        { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },
+                    ].map((item, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => setActiveTab(item.href)}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden
+                         ${activeTab === item.href
+                                    ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/20'
+                                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                                }`}
+                        >
+                            <item.icon className={`w-5 h-5 flex-shrink-0 ${activeTab === item.href ? 'text-white' : 'group-hover:text-teal-400 transition-colors'}`} />
+                            <span className="flex-1 text-left whitespace-nowrap">{item.label}</span>
+                        </button>
+                    ))}
+                </nav>
+
+                <div className="p-4 border-t border-slate-800 bg-slate-900">
+                    <button onClick={onLogout} className="flex items-center gap-3 text-slate-400 hover:text-red-400 w-full px-4 py-3 rounded-xl hover:bg-red-500/10 transition-colors group">
+                        <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                        <span>Log Out</span>
+                    </button>
+                </div>
+            </aside>
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col min-w-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-slate-950">

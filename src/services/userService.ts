@@ -166,5 +166,21 @@ export const userService = {
 
         const { user: profile } = await this.getUser(user.id);
         return profile;
+    },
+    async getSystemAdmin(): Promise<{ adminId: string | null; error: string | null }> {
+        try {
+            // Optimization: Use Supabase single select with limit instead of fetching all users
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('role', 'admin')
+                .limit(1)
+                .single();
+
+            if (error) return { adminId: null, error: error.message };
+            return { adminId: data.id, error: null };
+        } catch (err) {
+            return { adminId: null, error: 'Failed to fetch admin' };
+        }
     }
 };

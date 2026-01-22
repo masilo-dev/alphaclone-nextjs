@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
+import { PWAProvider } from "@/contexts/PWAContext";
+import ShellSwitcher from "@/components/shells/ShellSwitcher";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,7 +31,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          {children}
+          <PWAProvider>
+            <ShellSwitcher>
+              {children}
+            </ShellSwitcher>
+          </PWAProvider>
         </Providers>
       </body>
     </html>
