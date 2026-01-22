@@ -285,6 +285,12 @@ const Dashboard: React.FC<DashboardProps> = ({
     loadAllData();
   }, [user.id, user.role]);
 
+  // Use ref for activeTab to avoid breaking message subscription on tab change
+  const activeTabRef = useRef(activeTab);
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
+
   // Subscribe to real-time messages with filtering for performance
   useEffect(() => {
     const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
@@ -299,7 +305,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             if (prev.some(m => m.id === newMessage.id)) return prev;
 
             // Notification Logic
-            if (newMessage.senderId !== user.id && activeTab !== '/dashboard/messages') {
+            if (newMessage.senderId !== user.id && activeTabRef.current !== '/dashboard/messages') {
               import('react-hot-toast').then(({ toast }) => {
                 toast.success(`New message from ${newMessage.senderName}`, {
                   duration: 4000,
@@ -320,7 +326,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       }
     );
     return () => unsubscribe();
-  }, [user.id, user.role, activeTab]);
+  }, [user.id, user.role]);
 
   // Log Navigation - DEFERRED: Don't block dashboard render
   useEffect(() => {
