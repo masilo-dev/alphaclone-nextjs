@@ -169,7 +169,7 @@ class DataExportService {
 
             // Rows
             records.forEach(record => {
-                const row = headers.map(header => {
+                const row = headers.map((header: any) => {
                     const value = record[header];
                     // Escape commas and quotes
                     if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {

@@ -26,7 +26,7 @@ export const tenantManagementService = {
 
             if (error) throw error;
 
-            const tenants = (data || []).map(tenant => ({
+            const tenants = (data || []).map((tenant: any) => ({
                 id: tenant.id,
                 name: tenant.name,
                 status: tenant.status || 'active',

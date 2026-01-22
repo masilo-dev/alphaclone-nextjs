@@ -69,7 +69,7 @@ export const securityLogService = {
 
             if (error) throw error;
 
-            const logs = (data || []).map(log => ({
+            const logs = (data || []).map((log: any) => ({
                 id: log.id,
                 tenantId: log.tenant_id,
                 userId: log.user_id,
@@ -106,7 +106,7 @@ export const securityLogService = {
 
             if (error) throw error;
 
-            const logs = (data || []).map(log => ({
+            const logs = (data || []).map((log: any) => ({
                 id: log.id,
                 tenantId: log.tenant_id,
                 userId: log.user_id,

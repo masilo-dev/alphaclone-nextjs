@@ -259,7 +259,7 @@ export class MediaStateManager {
         console.log('🔄 SYNCING PARTICIPANTS:', {
             localSessionId,
             engineParticipantCount: Object.keys(engineParticipants).length,
-            engineParticipants: Object.keys(engineParticipants).map(key => ({
+            engineParticipants: Object.keys(engineParticipants).map((key: any) => ({
                 key,
                 sessionId: engineParticipants[key].session_id,
                 userName: engineParticipants[key].user_name,
@@ -322,7 +322,7 @@ export class MediaStateManager {
      */
     private calculateParticipantHash(participants: Record<string, DailyParticipant>): string {
         const keys = Object.keys(participants).sort();
-        const hashParts = keys.map(key => {
+        const hashParts = keys.map((key: any) => {
             const p = participants[key];
             if (!p) return '';
             return `${p.session_id}:${p.user_name}:${p.audio}:${p.video}:${p.screen}:${!!p.tracks?.audio}:${!!p.tracks?.video}`;

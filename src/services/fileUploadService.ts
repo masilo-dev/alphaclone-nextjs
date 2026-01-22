@@ -209,7 +209,7 @@ class FileUploadService {
         }
 
         // Upload files in parallel
-        const uploadPromises = files.map(file =>
+        const uploadPromises = files.map((file: any) =>
             this.uploadFile(file, entityType, entityId)
         );
 

@@ -201,7 +201,7 @@ CRITICAL INSTRUCTIONS:
 
             // Build messages array from history + new message
             const messages = [
-                ...history.map(h => ({
+                ...history.map((h: any) => ({
                     role: h.role === 'model' ? 'assistant' : 'user',
                     content: h.text
                 })),

@@ -57,7 +57,7 @@ class ContractExpirationService {
             const contracts = await this.getExpiringContracts(90);
             const today = new Date();
 
-            return contracts.map(contract => {
+            return contracts.map((contract: any) => {
                 const endDate = new Date(contract.end_date);
                 const daysUntilExpiration = Math.ceil(
                     (endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)

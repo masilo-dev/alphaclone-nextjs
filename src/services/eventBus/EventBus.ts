@@ -120,7 +120,7 @@ class EventBusService {
 
             // Execute all handlers
             const results = await Promise.allSettled(
-                handlers.map(handler => handler(event))
+                handlers.map((handler: any) => handler(event))
             );
 
             // Check for failures
