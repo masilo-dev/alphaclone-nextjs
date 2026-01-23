@@ -19,7 +19,8 @@ import {
   TrendingUp,
   Mail,
   Zap,
-  BarChart3
+  BarChart3,
+  MapPin
 } from 'lucide-react';
 import { NavItem, DashboardStat } from './types';
 
@@ -44,6 +45,7 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
 // --- ADMIN NAVIGATION ---
 export const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Platform Command', href: '/dashboard/admin/tenants', icon: Users },
+  { label: 'User Locations', href: '/dashboard/admin/users', icon: MapPin },
   { label: 'Command Center', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Live Operations', href: '/dashboard/analytics', icon: Activity },
   {

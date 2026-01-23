@@ -134,3 +134,56 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }
     </div>
   );
 };
+
+// --- Card Subcomponents ---
+export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className = '', ...props }) => (
+  <div className={`p-6 pb-2 ${className}`} {...props} />
+);
+
+export const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({ className = '', ...props }) => (
+  <h3 className={`font-semibold leading-none tracking-tight text-white ${className}`} {...props} />
+);
+
+export const CardContent: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className = '', ...props }) => (
+  <div className={`p-6 pt-0 ${className}`} {...props} />
+);
+
+// --- Avatar ---
+export const Avatar: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className = '', ...props }) => (
+  <div className={`relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full ${className}`} {...props} />
+);
+
+export const AvatarImage: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = ({ className = '', ...props }) => (
+  <img className={`aspect-square h-full w-full object-cover ${className}`} {...props} />
+);
+
+export const AvatarFallback: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className = '', ...props }) => (
+  <div className={`flex h-full w-full items-center justify-center rounded-full bg-slate-800 text-slate-400 ${className}`} {...props} />
+);
+
+// --- Table ---
+export const Table: React.FC<React.HTMLAttributes<HTMLTableElement>> = ({ className = '', ...props }) => (
+  <div className="relative w-full overflow-auto">
+    <table className={`w-full caption-bottom text-sm text-left ${className}`} {...props} />
+  </div>
+);
+
+export const TableHeader: React.FC<React.HTMLAttributes<HTMLTableSectionElement>> = ({ className = '', ...props }) => (
+  <thead className={`[&_tr]:border-b [&_tr]:border-slate-800 ${className}`} {...props} />
+);
+
+export const TableBody: React.FC<React.HTMLAttributes<HTMLTableSectionElement>> = ({ className = '', ...props }) => (
+  <tbody className={`[&_tr:last-child]:border-0 ${className}`} {...props} />
+);
+
+export const TableRow: React.FC<React.HTMLAttributes<HTMLTableRowElement>> = ({ className = '', ...props }) => (
+  <tr className={`border-b border-slate-800 transition-colors hover:bg-slate-800/50 data-[state=selected]:bg-slate-800 ${className}`} {...props} />
+);
+
+export const TableHead: React.FC<React.ThHTMLAttributes<HTMLTableCellElement>> = ({ className = '', ...props }) => (
+  <th className={`h-12 px-4 text-left align-middle font-medium text-slate-400 [&:has([role=checkbox])]:pr-0 ${className}`} {...props} />
+);
+
+export const TableCell: React.FC<React.TdHTMLAttributes<HTMLTableCellElement>> = ({ className = '', ...props }) => (
+  <td className={`p-4 align-middle [&:has([role=checkbox])]:pr-0 ${className}`} {...props} />
+);

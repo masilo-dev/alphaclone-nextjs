@@ -118,6 +118,18 @@ export const authService = {
             // Validate input
             const validated = signUpSchema.parse({ email: email.toLowerCase(), password, name });
 
+            // Fetch location for registration
+            let registrationCountry = 'Unknown';
+            try {
+                const { ipTrackingService } = await import('./ipTrackingService');
+                const loc = await ipTrackingService.getClientIP();
+                if (loc?.country_name) {
+                    registrationCountry = loc.country_name;
+                }
+            } catch (e) {
+                console.warn('Failed to fetch location for registration', e);
+            }
+
             const { data, error } = await supabase.auth.signUp({
                 email: validated.email,
                 password: validated.password,
@@ -125,6 +137,7 @@ export const authService = {
                     data: {
                         name: validated.name,
                         role: role,
+                        registration_country: registrationCountry,
                     },
                 },
             });

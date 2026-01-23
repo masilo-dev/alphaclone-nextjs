@@ -34,17 +34,28 @@ const parseUserAgent = (ua: string) => {
     return { browser, deviceType };
 };
 
-// Get IP and location data - Disabled to avoid CORS errors
-// Service worker will block external API calls anyway
+import { ipTrackingService } from './ipTrackingService';
+
+// Get IP and location data
 const getLocationData = async () => {
-    // Return default values immediately - no external API call
-    // Location tracking is optional and not critical for the app
-    return {
-        ip: null,
-        country: 'Unknown',
-        city: 'Unknown',
-        countryCode: 'XX',
-    };
+    try {
+        const data = await ipTrackingService.getClientIP();
+        if (!data) throw new Error('No location data');
+
+        return {
+            ip: data.ip,
+            country: data.country_name,
+            city: data.city,
+            countryCode: data.country,
+        };
+    } catch (e) {
+        return {
+            ip: null,
+            country: 'Unknown',
+            city: 'Unknown',
+            countryCode: 'XX',
+        };
+    }
 };
 
 export const activityService = {

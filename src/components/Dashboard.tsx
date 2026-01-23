@@ -90,6 +90,7 @@ const TasksTab = React.lazy(() => import('./dashboard/TasksTab'));
 const DealsTab = React.lazy(() => import('./dashboard/DealsTab'));
 const QuotesTab = React.lazy(() => import('./dashboard/QuotesTab'));
 const SalesForecastTab = React.lazy(() => import('./dashboard/SalesForecastTab'));
+const UserLocationTable = React.lazy(() => import('./dashboard/admin/UserLocationTable'));
 
 // Import UI components
 import { TableSkeleton } from './ui/Skeleton';
@@ -799,6 +800,20 @@ const Dashboard: React.FC<DashboardProps> = ({
                 onToggleSidebar={() => setShowSidebarDuringCall(prev => !prev)}
                 showSidebar={showSidebarDuringCall}
               />
+            </WidgetErrorBoundary>
+          </React.Suspense>
+        );
+      case '/dashboard/admin/users':
+        return (
+          <React.Suspense fallback={<div className="p-8 text-slate-500">Loading User Locations...</div>}>
+            <WidgetErrorBoundary title="User Locations">
+              <div className="p-6 space-y-6">
+                <div>
+                  <h1 className="text-3xl font-bold text-slate-900">User Locations</h1>
+                  <p className="text-slate-500">Track registration origin and login locations</p>
+                </div>
+                <UserLocationTable />
+              </div>
             </WidgetErrorBoundary>
           </React.Suspense>
         );
