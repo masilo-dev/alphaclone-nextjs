@@ -85,9 +85,8 @@ export default function SuperAdminDashboard() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-3 font-medium whitespace-nowrap transition-colors relative ${
-                activeTab === tab.id ? 'text-teal-400' : 'text-slate-400 hover:text-slate-300'
-              }`}
+              className={`flex items-center gap-2 px-6 py-3 font-medium whitespace-nowrap transition-colors relative ${activeTab === tab.id ? 'text-teal-400' : 'text-slate-400 hover:text-slate-300'
+                }`}
             >
               <tab.icon className="w-5 h-5" />
               {tab.label}
@@ -296,15 +295,14 @@ function TenantsTab() {
                     </code>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      tenant.subscription_plan === 'enterprise'
-                        ? 'bg-purple-500/20 text-purple-300'
-                        : tenant.subscription_plan === 'professional'
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${tenant.subscription_plan === 'enterprise'
+                      ? 'bg-purple-500/20 text-purple-300'
+                      : tenant.subscription_plan === 'professional'
                         ? 'bg-blue-500/20 text-blue-300'
                         : tenant.subscription_plan === 'starter'
-                        ? 'bg-green-500/20 text-green-300'
-                        : 'bg-slate-600 text-slate-300'
-                    }`}>
+                          ? 'bg-green-500/20 text-green-300'
+                          : 'bg-slate-600 text-slate-300'
+                      }`}>
                       {tenant.subscription_plan}
                     </span>
                   </td>
@@ -312,11 +310,10 @@ function TenantsTab() {
                     {tenant.tenant_users?.[0]?.count || 0}
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      tenant.subscription_status === 'active'
-                        ? 'bg-green-500/20 text-green-300'
-                        : 'bg-red-500/20 text-red-300'
-                    }`}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${tenant.subscription_status === 'active'
+                      ? 'bg-green-500/20 text-green-300'
+                      : 'bg-red-500/20 text-red-300'
+                      }`}>
                       {tenant.subscription_status}
                     </span>
                   </td>
@@ -341,6 +338,10 @@ function TenantsTab() {
 function UsersTab() {
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importPreview, setImportPreview] = useState<any[]>([]);
 
   useEffect(() => {
     loadUsers();
@@ -362,9 +363,91 @@ function UsersTab() {
     }
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImportFile(file);
+
+    // Preview the data
+    try {
+      const { fileImportService } = await import('../../services/fileImportService');
+      const { contacts, error } = await fileImportService.importFromExcel(file);
+
+      if (error) {
+        alert('Error reading file: ' + error);
+        return;
+      }
+
+      setImportPreview(contacts.slice(0, 5)); // Show first 5 for preview
+    } catch (err) {
+      console.error('Preview error:', err);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importFile) return;
+
+    setIsImporting(true);
+    try {
+      const { fileImportService } = await import('../../services/fileImportService');
+      const { contacts, error } = await fileImportService.importFromExcel(importFile);
+
+      if (error) {
+        alert('Import failed: ' + error);
+        return;
+      }
+
+      // Import users to database
+      let successCount = 0;
+      for (const contact of contacts) {
+        try {
+          // Create user profile (simplified - in production you'd use proper auth)
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              name: contact.name,
+              email: contact.email,
+              phone: contact.phone,
+              industry: contact.industry || contact.company || '', // Use industry field or fallback to company
+              location: contact.location || '',
+              role: 'client',
+              created_at: new Date().toISOString()
+            });
+
+          if (!insertError) successCount++;
+        } catch (err) {
+          console.error('Failed to import user:', contact.email, err);
+        }
+      }
+
+      alert(`Successfully imported ${successCount} out of ${contacts.length} users`);
+      setShowImportModal(false);
+      setImportFile(null);
+      setImportPreview([]);
+      loadUsers(); // Reload the list
+    } catch (err) {
+      console.error('Import error:', err);
+      alert('Import failed');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">All Users ({users.length})</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-white">All Users ({users.length})</h2>
+        <button
+          onClick={() => setShowImportModal(true)}
+          className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors flex items-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+          Import CSV/XLS
+        </button>
+      </div>
 
       <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
         <div className="space-y-3">
@@ -380,11 +463,10 @@ function UsersTab() {
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  user.role === 'admin'
-                    ? 'bg-purple-500/20 text-purple-300'
-                    : 'bg-blue-500/20 text-blue-300'
-                }`}>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${user.role === 'admin'
+                  ? 'bg-purple-500/20 text-purple-300'
+                  : 'bg-blue-500/20 text-blue-300'
+                  }`}>
                   {user.role}
                 </span>
                 <button className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded transition-colors">
@@ -395,6 +477,101 @@ function UsersTab() {
           ))}
         </div>
       </div>
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 rounded-xl border border-slate-700 p-6 max-w-2xl w-full">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white">Import Users from CSV/XLS</h3>
+              <button
+                onClick={() => {
+                  setShowImportModal(false);
+                  setImportFile(null);
+                  setImportPreview([]);
+                }}
+                className="text-slate-400 hover:text-white"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                <h4 className="text-blue-400 font-bold text-sm mb-2">Supported Columns</h4>
+                <p className="text-slate-300 text-sm">
+                  <strong>Required:</strong> Name, Email<br />
+                  <strong>Optional:</strong> Phone, Industry, Location, Value (number)
+                </p>
+              </div>
+
+              <div className="border-2 border-dashed border-slate-700 rounded-lg p-8 text-center">
+                <input
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  id="file-upload"
+                />
+                <label
+                  htmlFor="file-upload"
+                  className="cursor-pointer flex flex-col items-center gap-3"
+                >
+                  <svg className="w-12 h-12 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  <div>
+                    <p className="text-white font-medium">
+                      {importFile ? importFile.name : 'Click to upload or drag and drop'}
+                    </p>
+                    <p className="text-slate-400 text-sm">CSV, XLS, or XLSX</p>
+                  </div>
+                </label>
+              </div>
+
+              {importPreview.length > 0 && (
+                <div className="bg-slate-800/50 rounded-lg p-4">
+                  <h4 className="text-white font-bold mb-3">Preview (first 5 rows)</h4>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {importPreview.map((contact, idx) => (
+                      <div key={idx} className="bg-slate-900 p-3 rounded text-sm">
+                        <div className="text-white font-medium">{contact.name}</div>
+                        <div className="text-slate-400">{contact.email}</div>
+                        {contact.phone && <div className="text-slate-500 text-xs">Phone: {contact.phone}</div>}
+                        {contact.industry && <div className="text-slate-500 text-xs">Industry: {contact.industry}</div>}
+                        {contact.location && <div className="text-slate-500 text-xs">Location: {contact.location}</div>}
+                        {contact.value > 0 && <div className="text-green-400 text-xs">Value: ${contact.value}</div>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => {
+                    setShowImportModal(false);
+                    setImportFile(null);
+                    setImportPreview([]);
+                  }}
+                  className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleImport}
+                  disabled={!importFile || isImporting}
+                  className="flex-1 px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isImporting ? 'Importing...' : `Import ${importPreview.length > 0 ? importPreview.length : ''} Users`}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

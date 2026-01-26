@@ -5,6 +5,8 @@ export interface ParsedContact {
     email?: string;
     phone?: string;
     company?: string;
+    industry?: string;
+    location?: string;
     notes?: string;
     value?: number;
 }
@@ -35,6 +37,8 @@ export const fileImportService = {
                     email: row.email || row.Email || row.EMAIL || row['Email Address'] || '',
                     phone: row.phone || row.Phone || row.PHONE || row['Phone Number'] || '',
                     company: row.company || row.Company || row.COMPANY || row.Organization || '',
+                    industry: row.industry || row.Industry || row.INDUSTRY || row.Sector || '',
+                    location: row.location || row.Location || row.LOCATION || row.City || row.Address || '',
                     notes: row.notes || row.Notes || row.NOTES || '',
                     value: parseValue(rawValue)
                 };
