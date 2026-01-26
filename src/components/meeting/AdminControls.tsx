@@ -36,7 +36,7 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
             // Note: Daily.co doesn't have a direct "lock meeting" API in the client SDK
             // This would typically be done via the REST API on the backend
             // For now, we'll show a toast indicating this needs backend implementation
-            toast.info('Meeting lock requires backend API integration');
+            toast.success('Meeting lock requires backend API integration');
             console.log('Lock meeting - requires Daily.co REST API call from backend');
 
             // Alternative: You could use setUserData to track lock state
