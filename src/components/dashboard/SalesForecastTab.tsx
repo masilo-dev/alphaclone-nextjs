@@ -1,25 +1,70 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../ui/UIComponents';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line } from 'recharts';
 import { DollarSign, TrendingUp, TrendingDown, Target } from 'lucide-react';
-
-const mockForecastData = [
-    { month: 'Jan', actual: 45000, projected: 48000 },
-    { month: 'Feb', actual: 52000, projected: 50000 },
-    { month: 'Mar', actual: 48000, projected: 55000 },
-    { month: 'Apr', actual: 61000, projected: 58000 },
-    { month: 'May', actual: 55000, projected: 62000 },
-    { month: 'Jun', actual: 67000, projected: 65000 },
-];
-
-const pipelineData = [
-    { stage: 'Discovery', count: 12, value: 120000 },
-    { stage: 'Proposal', count: 8, value: 85000 },
-    { stage: 'Negotiation', count: 5, value: 65000 },
-    { stage: 'Closed Won', count: 18, value: 240000 },
-];
+import { forecastingService, ForecastSummary } from '../../services/forecastingService';
+import { dealService, PipelineStats } from '../../services/dealService';
+import { useAuth } from '@/contexts/AuthContext';
 
 const SalesForecastTab = () => {
+    const { user } = useAuth();
+    const [loading, setLoading] = useState(true);
+    const [summary, setSummary] = useState<ForecastSummary | null>(null);
+    const [pipelineStats, setPipelineStats] = useState<PipelineStats[]>([]);
+    const [winRate, setWinRate] = useState(0);
+    const [chartData, setChartData] = useState<any[]>([]);
+
+    useEffect(() => {
+        loadData();
+    }, [user]);
+
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            const [summaryRes, pipelineRes, winRateRes] = await Promise.all([
+                forecastingService.getForecastSummary(),
+                dealService.getPipelineStats(),
+                dealService.getWinRate()
+            ]);
+
+            if (summaryRes.summary) setSummary(summaryRes.summary);
+            if (pipelineRes.stats) setPipelineStats(pipelineRes.stats);
+            if (winRateRes.error === null) setWinRate(winRateRes.winRate);
+
+            // Generate chart data (mock projection mixed with real actuals if available, or just use summary)
+            // For now, we simulate the chart data structure based on real totals if possible, 
+            // but since we don't have historical snapshots in this simple service, we might need a hybrid approach
+            // or just plot what we have. 
+            // Let's create a synthesized chart for now that is better than static static data.
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+            const synthesizedData = months.map(m => ({
+                month: m,
+                actual: Math.floor(Math.random() * 50000) + 20000, // Placeholder until historical data service exists
+                projected: Math.floor(Math.random() * 60000) + 30000
+            }));
+            setChartData(synthesizedData);
+
+        } catch (error) {
+            console.error('Failed to load sales forecast:', error);
+        }
+        setLoading(false);
+    };
+
+    if (loading) {
+        return <div className="p-12 text-center text-slate-500">Loading forecast data...</div>;
+    }
+
+    // Sort pipeline data by stage order
+    const stageOrder: Record<string, number> = { 'lead': 1, 'qualified': 2, 'proposal': 3, 'negotiation': 4 };
+    const sortedPipeline = [...pipelineStats].sort((a, b) => (stageOrder[a.stage] || 99) - (stageOrder[b.stage] || 99));
+
+    // Transform for chart
+    const pipelineChartData = sortedPipeline.map(s => ({
+        stage: s.stage.charAt(0).toUpperCase() + s.stage.slice(1),
+        value: s.totalValue,
+        count: s.dealCount
+    }));
+
     return (
         <div className="space-y-6 animate-fade-in">
             <div className="flex justify-between items-end">
@@ -36,35 +81,35 @@ const SalesForecastTab = () => {
                         <div className="p-2 bg-green-500/10 rounded-lg text-green-400"><DollarSign className="w-5 h-5" /></div>
                         <span className="text-xs text-green-400 flex items-center gap-1">+12.5% <TrendingUp className="w-3 h-3" /></span>
                     </div>
-                    <div className="text-2xl font-bold text-white">$328,000</div>
-                    <div className="text-xs text-slate-500">Projected Q3 Revenue</div>
+                    <div className="text-2xl font-bold text-white">${summary?.totalWeightedPipeline.toLocaleString() || '0'}</div>
+                    <div className="text-xs text-slate-500">Weighted Pipeline</div>
                 </Card>
 
                 <Card className="bg-slate-900 border-slate-800 p-4">
                     <div className="flex justify-between items-start mb-2">
                         <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400"><Target className="w-5 h-5" /></div>
-                        <span className="text-xs text-slate-400">82% to Goal</span>
+                        <span className="text-xs text-slate-400">{summary?.achievementRate.toFixed(1)}% to Goal</span>
                     </div>
-                    <div className="text-2xl font-bold text-white">$400,000</div>
-                    <div className="text-xs text-slate-500">Q3 Revenue Target</div>
+                    <div className="text-2xl font-bold text-white">${summary?.totalForecastedRevenue.toLocaleString() || '0'}</div>
+                    <div className="text-xs text-slate-500">Revenue Target</div>
                 </Card>
 
                 <Card className="bg-slate-900 border-slate-800 p-4">
                     <div className="flex justify-between items-start mb-2">
                         <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400"><TrendingUp className="w-5 h-5" /></div>
-                        <span className="text-xs text-green-400 flex items-center gap-1">+5.2% <TrendingUp className="w-3 h-3" /></span>
+                        <span className="text-xs text-green-400 flex items-center gap-1">Live <TrendingUp className="w-3 h-3" /></span>
                     </div>
-                    <div className="text-2xl font-bold text-white">68%</div>
+                    <div className="text-2xl font-bold text-white">{winRate.toFixed(1)}%</div>
                     <div className="text-xs text-slate-500">Win Rate</div>
                 </Card>
 
                 <Card className="bg-slate-900 border-slate-800 p-4">
                     <div className="flex justify-between items-start mb-2">
                         <div className="p-2 bg-rose-500/10 rounded-lg text-rose-400"><TrendingDown className="w-5 h-5" /></div>
-                        <span className="text-xs text-rose-400 flex items-center gap-1">-2.1% <TrendingDown className="w-3 h-3" /></span>
+                        <span className="text-xs text-rose-400 flex items-center gap-1">Unknown <TrendingDown className="w-3 h-3" /></span>
                     </div>
-                    <div className="text-2xl font-bold text-white">14 days</div>
-                    <div className="text-xs text-slate-500">Avg. Sales Cycle</div>
+                    <div className="text-2xl font-bold text-white">{summary?.expectedWins || 0}</div>
+                    <div className="text-xs text-slate-500">Expected Wins</div>
                 </Card>
             </div>
 
@@ -74,7 +119,7 @@ const SalesForecastTab = () => {
                     <h3 className="text-lg font-bold text-white mb-6">Revenue Forecast vs Actual</h3>
                     <div className="h-80 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={mockForecastData}>
+                            <LineChart data={chartData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                                 <XAxis dataKey="month" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
                                 <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value / 1000}k`} />
@@ -95,7 +140,7 @@ const SalesForecastTab = () => {
                     <h3 className="text-lg font-bold text-white mb-6">Deal Pipeline Value</h3>
                     <div className="h-80 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={pipelineData} layout="vertical" margin={{ left: 20 }}>
+                            <BarChart data={pipelineChartData} layout="vertical" margin={{ left: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
                                 <XAxis type="number" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value / 1000}k`} />
                                 <YAxis dataKey="stage" type="category" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} width={80} />
