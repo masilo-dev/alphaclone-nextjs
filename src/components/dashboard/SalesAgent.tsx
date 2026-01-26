@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, UserPlus, Phone, CheckCircle2, Bot, Send, Trash2, Upload, FileSpreadsheet, X, Mail, Settings, ExternalLink } from 'lucide-react';
+import { Search, UserPlus, Phone, CheckCircle2, Bot, Send, Trash2, Upload, FileSpreadsheet, X, Mail, Settings, ExternalLink, FileText } from 'lucide-react';
 import { generateLeads, chatWithAI, isAnyAIConfigured } from '../../services/unifiedAIService';
 import { leadService, Lead } from '../../services/leadService';
 import { Button, Input, Card } from '../ui/UIComponents';
@@ -404,14 +404,65 @@ const SalesAgent: React.FC = () => {
                                                         </div>
                                                     </td>
                                                     <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
-                                                        {lead.status === 'Added to CRM' || lead.stage !== 'lead' ? (
+                                                        {lead.status === 'Added to CRM' || lead.stage === 'qualified' || lead.stage === 'converted' ? (
                                                             <span className="flex items-center gap-1 text-green-400 text-[10px] sm:text-xs font-bold">
-                                                                <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Added</span>
+                                                                <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Qualified</span>
                                                             </span>
                                                         ) : (
-                                                            <Button size="sm" variant="outline" onClick={() => addToCRM(lead.id, lead.stage)} className="text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-3">
-                                                                <UserPlus className="w-3 h-3" /> <span className="hidden sm:inline ml-1">Add</span>
-                                                            </Button>
+                                                            <div className="relative group">
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    onClick={() => addToCRM(lead.id, lead.stage)}
+                                                                    className="text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-3"
+                                                                >
+                                                                    <UserPlus className="w-3 h-3" /> <span className="hidden sm:inline ml-1">Add to CRM</span>
+                                                                </Button>
+
+                                                                {/* Dropdown Menu on Hover */}
+                                                                <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-50 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl overflow-hidden">
+                                                                    <div className="p-2 space-y-1">
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                addToCRM(lead.id, 'qualified');
+                                                                                toast.success('Lead qualified!');
+                                                                            }}
+                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
+                                                                        >
+                                                                            <CheckCircle2 className="w-3 h-3 text-green-400" />
+                                                                            Qualify Lead
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                // Navigate to deals with lead pre-selected
+                                                                                window.location.href = `/dashboard/deals?leadId=${lead.id}`;
+                                                                            }}
+                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
+                                                                        >
+                                                                            <UserPlus className="w-3 h-3 text-blue-400" />
+                                                                            Create Deal
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                toast.info('Task creation coming soon!');
+                                                                            }}
+                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
+                                                                        >
+                                                                            <CheckCircle2 className="w-3 h-3 text-purple-400" />
+                                                                            Create Task
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                toast.info('Quote creation coming soon!');
+                                                                            }}
+                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
+                                                                        >
+                                                                            <FileText className="w-3 h-3 text-yellow-400" />
+                                                                            Create Quote
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
                                                         )}
                                                     </td>
                                                 </tr>

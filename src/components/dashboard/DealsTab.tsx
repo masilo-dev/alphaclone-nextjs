@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { TrendingUp, Plus, DollarSign, Calendar, User, Target } from 'lucide-react';
+import { TrendingUp, Plus, DollarSign, Calendar, User, Target, UserPlus } from 'lucide-react';
 import { dealService, Deal, DealStage } from '../../services/dealService';
+import { leadService, Lead } from '../../services/leadService';
 import { Button, Modal, Input } from '../ui/UIComponents';
 import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
+import LeadSelector from '../common/LeadSelector';
 import toast from 'react-hot-toast';
 
 interface DealsTabProps {
@@ -17,7 +19,9 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
     const [pipelineStats, setPipelineStats] = useState<any[]>([]);
     const [weightedValue, setWeightedValue] = useState(0);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showCreateFromLeadModal, setShowCreateFromLeadModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
     // Create deal form state
     const [dealForm, setDealForm] = useState({
@@ -134,6 +138,71 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
         }
     };
 
+    const handleLeadSelected = (lead: Lead) => {
+        setSelectedLead(lead);
+        // Pre-fill form with lead data
+        setDealForm({
+            name: `${lead.businessName} - ${lead.industry || 'Deal'}`,
+            value: '',
+            probability: '50',
+            expectedCloseDate: '',
+            description: `Lead from ${lead.source}. Contact: ${lead.email || lead.phone || 'N/A'}`
+        });
+    };
+
+    const handleCreateDealFromLead = async () => {
+        if (!selectedLead) {
+            toast.error('Please select a lead');
+            return;
+        }
+
+        if (!dealForm.name.trim()) {
+            toast.error('Deal name is required');
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        try {
+            // Create deal with lead information pre-filled
+            const { error } = await dealService.createDeal(userId, {
+                name: dealForm.name,
+                value: dealForm.value ? parseFloat(dealForm.value) : undefined,
+                probability: parseInt(dealForm.probability) || 50,
+                expectedCloseDate: dealForm.expectedCloseDate || undefined,
+                description: dealForm.description || undefined
+            });
+
+            if (error) {
+                toast.error(`Failed to create deal: ${error}`);
+            } else {
+                // Mark lead as converted
+                await leadService.updateLead(selectedLead.id, {
+                    stage: 'qualified',
+                    status: 'Converted to Deal'
+                });
+
+                toast.success('Deal created from lead successfully!');
+                setShowCreateFromLeadModal(false);
+                setSelectedLead(null);
+                // Reset form
+                setDealForm({
+                    name: '',
+                    value: '',
+                    probability: '50',
+                    expectedCloseDate: '',
+                    description: ''
+                });
+                loadDeals();
+                loadPipelineStats();
+            }
+        } catch (err) {
+            toast.error('Failed to create deal from lead');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const getDealsByStage = (stage: DealStage) => {
         return deals.filter((d) => d.stage === stage);
     };
@@ -174,9 +243,18 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                     </p>
                 </div>
                 {userRole === 'admin' && (
-                    <Button onClick={() => setShowCreateModal(true)}>
-                        <Plus className="w-5 h-5 mr-2" /> Create Deal
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowCreateFromLeadModal(true)}
+                            className="border-teal-500/50 text-teal-400 hover:bg-teal-500/10"
+                        >
+                            <UserPlus className="w-5 h-5 mr-2" /> From Lead
+                        </Button>
+                        <Button onClick={() => setShowCreateModal(true)}>
+                            <Plus className="w-5 h-5 mr-2" /> Create Deal
+                        </Button>
+                    </div>
                 )}
             </div>
 
@@ -319,6 +397,96 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                         <div className="pt-4 flex justify-end gap-3">
                             <Button variant="outline" onClick={() => setShowCreateModal(false)}>Cancel</Button>
                             <Button onClick={handleCreateDeal} disabled={isSubmitting}>
+                                {isSubmitting ? 'Creating...' : 'Create Deal'}
+                            </Button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
+
+            {/* Create Deal from Lead Modal */}
+            {showCreateFromLeadModal && (
+                <Modal isOpen={showCreateFromLeadModal} onClose={() => {
+                    setShowCreateFromLeadModal(false);
+                    setSelectedLead(null);
+                }} title="Create Deal from Lead">
+                    <div className="space-y-4">
+                        {/* Lead Selector */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                                Select Lead *
+                            </label>
+                            <LeadSelector
+                                onSelect={handleLeadSelected}
+                                filter="all"
+                                placeholder="Choose a lead to convert..."
+                            />
+                            {selectedLead && (
+                                <div className="mt-2 p-3 bg-teal-500/10 border border-teal-500/20 rounded-lg">
+                                    <p className="text-xs text-teal-400">
+                                        ✓ Selected: {selectedLead.businessName}
+                                    </p>
+                                    {selectedLead.email && (
+                                        <p className="text-xs text-slate-400 mt-1">
+                                            {selectedLead.email}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        <Input
+                            label="Deal Name *"
+                            value={dealForm.name}
+                            onChange={(e) => setDealForm({ ...dealForm, name: e.target.value })}
+                            placeholder="Enter deal name"
+                            required
+                        />
+
+                        <Input
+                            label="Deal Value (USD)"
+                            type="number"
+                            value={dealForm.value}
+                            onChange={(e) => setDealForm({ ...dealForm, value: e.target.value })}
+                            placeholder="0.00"
+                            step="0.01"
+                            min="0"
+                        />
+
+                        <Input
+                            label="Probability (%)"
+                            type="number"
+                            value={dealForm.probability}
+                            onChange={(e) => setDealForm({ ...dealForm, probability: e.target.value })}
+                            placeholder="50"
+                            min="0"
+                            max="100"
+                        />
+
+                        <Input
+                            label="Expected Close Date"
+                            type="date"
+                            value={dealForm.expectedCloseDate}
+                            onChange={(e) => setDealForm({ ...dealForm, expectedCloseDate: e.target.value })}
+                        />
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Description</label>
+                            <textarea
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all"
+                                rows={3}
+                                value={dealForm.description}
+                                onChange={(e) => setDealForm({ ...dealForm, description: e.target.value })}
+                                placeholder="Deal description (optional)"
+                            />
+                        </div>
+
+                        <div className="pt-4 flex justify-end gap-3">
+                            <Button variant="outline" onClick={() => {
+                                setShowCreateFromLeadModal(false);
+                                setSelectedLead(null);
+                            }}>Cancel</Button>
+                            <Button onClick={handleCreateDealFromLead} disabled={isSubmitting || !selectedLead}>
                                 {isSubmitting ? 'Creating...' : 'Create Deal'}
                             </Button>
                         </div>
