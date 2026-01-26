@@ -48,9 +48,50 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
         return true;
     });
 
+    // Check for Due Tasks on Load
+    React.useEffect(() => {
+        const checkTasks = async () => {
+            // Import services dynamically if needed or assume user context
+            if (!user?.id || !currentTenant) return;
+
+            try {
+                // Dynamically import task service to avoid circular deps if any
+                const { taskService } = await import('../../../services/taskService');
+                const { tasks } = await taskService.getUpcomingTasks(user.id);
+
+                // Filter for tasks due today or overdue
+                const today = new Date();
+                const dueTasks = tasks.filter(t => {
+                    if (!t.dueDate) return false;
+                    const due = new Date(t.dueDate);
+                    // Check if due date is today or earlier (and not completed)
+                    return due.setHours(0, 0, 0, 0) <= today.setHours(0, 0, 0, 0) && t.status !== 'completed';
+                });
+
+                if (dueTasks.length > 0) {
+                    // Small delay to let UI settle
+                    setTimeout(() => {
+                        // Simple alert or toast - for now we use a custom toast if available, or just console
+                        // In a real app we'd use a toast library. Let's assume we can trigger a browser notification or a UI banner.
+                        // Since we don't have a global toast context visible here, I'll add a local state for a notification banner.
+                        setNotification(`You have ${dueTasks.length} tasks due today!`);
+                    }, 1000);
+                }
+            } catch (err) {
+                console.error('Failed to checked tasks', err);
+            }
+        };
+
+        checkTasks();
+    }, [user, currentTenant]);
+
+    const [notification, setNotification] = useState<string | null>(null);
+
     // Trial Logic
     const isTrialExpired = React.useMemo(() => {
+        // Safe check: If trialEndsAt is null/undefined, return false (Existing Tenants are SAFE)
         if (!currentTenant?.trialEndsAt) return false;
+
         const now = new Date();
         const trialEnd = new Date(currentTenant.trialEndsAt);
         return now > trialEnd && currentTenant.subscriptionStatus === 'trial';
@@ -216,6 +257,25 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                             onClick={() => setActiveTab('/dashboard/business/billing')}
                         >
                             Upgrade Now
+                        </button>
+                    </div>
+                )}
+
+                {/* Task Notification Banner (Ephemeral) */}
+                {notification && !isTrialExpired && (
+                    <div className="bg-teal-600/10 border-b border-teal-500/20 px-4 py-2 flex items-center justify-between backdrop-blur-sm sticky top-0 z-20">
+                        <div className="flex items-center gap-2 text-teal-100 text-sm font-medium">
+                            <CheckSquare className="w-4 h-4 text-teal-400" />
+                            <span>{notification}</span>
+                        </div>
+                        <button
+                            className="text-teal-400 hover:text-white text-xs font-bold"
+                            onClick={() => {
+                                setNotification(null);
+                                setActiveTab('/dashboard/tasks');
+                            }}
+                        >
+                            View Tasks
                         </button>
                     </div>
                 )}

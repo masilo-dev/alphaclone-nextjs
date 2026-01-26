@@ -23,10 +23,25 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const plans: { id: SubscriptionPlan, name: string, price: string }[] = [
-        { id: 'starter', name: 'Starter', price: '$29/mo' },
-        { id: 'professional', name: 'Professional', price: '$99/mo' },
-        { id: 'enterprise', name: 'Enterprise', price: '$299/mo' }
+    const plans: { id: SubscriptionPlan, name: string, price: string, features: string[] }[] = [
+        {
+            id: 'starter',
+            name: 'Starter',
+            price: '$29/mo',
+            features: ['3 Users', 'Basic CRM', '5GB Storage', 'Email Support']
+        },
+        {
+            id: 'professional',
+            name: 'Professional',
+            price: '$99/mo',
+            features: ['10 Users', 'Advanced CRM', 'AI Sales Agent', 'Priority Support']
+        },
+        {
+            id: 'enterprise',
+            name: 'Enterprise',
+            price: '$299/mo',
+            features: ['Unlimited Users', 'Custom Workflows', 'Dedicated Manager', 'API Access']
+        }
     ];
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -131,7 +146,7 @@ export default function LoginPage() {
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-5" />
             </div>
 
-            <div className="max-w-md w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl relative z-10 my-8">
+            <div className={`w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl relative z-10 my-8 transition-all duration-500 ${isRegistering && isBusiness ? 'max-w-4xl' : 'max-w-md'}`}>
                 <div className="mb-8 text-center">
                     {isPWA ? (
                         <div className="mx-auto mb-6 flex justify-center inline-block">
@@ -159,7 +174,7 @@ export default function LoginPage() {
                 <form onSubmit={handleSubmit} className="space-y-5">
                     {isRegistering && (
                         <div className="animate-slide-up space-y-4">
-                            <div className="flex p-1 bg-slate-800/50 rounded-lg border border-slate-700/50 mb-4">
+                            <div className="flex p-1 bg-slate-800/50 rounded-lg border border-slate-700/50 mb-4 max-w-md mx-auto">
                                 <button
                                     type="button"
                                     onClick={() => setIsBusiness(false)}
@@ -176,49 +191,69 @@ export default function LoginPage() {
                                 </button>
                             </div>
 
-                            <Input
-                                label="Full Name"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder="John Doe"
-                                required={isRegistering}
-                            />
+                            <div className="max-w-md mx-auto w-full">
+                                <Input
+                                    label="Full Name"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    placeholder="John Doe"
+                                    required={isRegistering}
+                                />
+                            </div>
 
                             {isBusiness && (
-                                <div className="animate-slide-up space-y-4">
-                                    <Input
-                                        label="Business Name"
-                                        value={businessName}
-                                        onChange={(e) => setBusinessName(e.target.value)}
-                                        placeholder="AlphaCorp Industries"
-                                        required={isBusiness}
-                                    />
+                                <div className="animate-slide-up space-y-6">
+                                    <div className="max-w-md mx-auto w-full">
+                                        <Input
+                                            label="Business Name"
+                                            value={businessName}
+                                            onChange={(e) => setBusinessName(e.target.value)}
+                                            placeholder="AlphaCorp Industries"
+                                            required={isBusiness}
+                                        />
+                                    </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-2">Select Plan</label>
-                                        <div className="grid grid-cols-3 gap-2">
+                                        <label className="block text-sm font-medium text-slate-300 mb-3 text-center">Select Your Plan</label>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                             {plans.map((plan) => (
                                                 <button
                                                     key={plan.id}
                                                     type="button"
                                                     onClick={() => setSelectedPlan(plan.id)}
-                                                    className={`p-2 rounded-lg border text-center transition-all ${selectedPlan === plan.id
-                                                            ? 'bg-teal-500/10 border-teal-500 text-teal-400'
-                                                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'
+                                                    className={`p-4 rounded-xl border text-left transition-all relative group overflow-hidden ${selectedPlan === plan.id
+                                                            ? 'bg-teal-900/20 border-teal-500 ring-1 ring-teal-500'
+                                                            : 'bg-slate-800/50 border-slate-700 hover:border-slate-500 hover:bg-slate-800'
                                                         }`}
                                                 >
-                                                    <div className="font-bold text-xs sm:text-sm">{plan.name}</div>
-                                                    <div className="text-[10px] sm:text-xs opacity-80">{plan.price}</div>
+                                                    {selectedPlan === plan.id && (
+                                                        <div className="absolute top-0 right-0 p-2">
+                                                            <CheckCircle2 className="w-5 h-5 text-teal-400" />
+                                                        </div>
+                                                    )}
+                                                    <div className="font-bold text-lg text-white mb-1">{plan.name}</div>
+                                                    <div className="text-xl font-bold text-teal-400 mb-3">{plan.price}</div>
+
+                                                    <ul className="space-y-2">
+                                                        {plan.features.map((feature, idx) => (
+                                                            <li key={idx} className="flex items-center gap-2 text-xs text-slate-300">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-teal-500/50" />
+                                                                {feature}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
                                                 </button>
                                             ))}
                                         </div>
-                                        <p className="text-[10px] text-teal-400 mt-2 text-center">
-                                            ✨ Includes 3-Day Free Trial (No Card Required)
+                                        <p className="text-xs text-teal-400 mt-3 text-center flex items-center justify-center gap-2">
+                                            <span>✨ Includes 3-Day Free Trial</span>
+                                            <span className="w-1 h-1 rounded-full bg-teal-500" />
+                                            <span>No Card Required</span>
                                         </p>
                                     </div>
 
                                     {/* Legal Disclaimer */}
-                                    <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-700 space-y-2">
+                                    <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-700 space-y-2 max-w-md mx-auto w-full">
                                         <label className="flex items-start gap-3 cursor-pointer group">
                                             <div className="relative flex items-center mt-0.5">
                                                 <input
@@ -243,36 +278,38 @@ export default function LoginPage() {
                         </div>
                     )}
 
-                    <Input
-                        label="Email Address"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="name@company.com"
-                        required
-                        autoComplete="email"
-                    />
+                    <div className="max-w-md mx-auto w-full space-y-5">
+                        <Input
+                            label="Email Address"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="name@company.com"
+                            required
+                            autoComplete="email"
+                        />
 
-                    <Input
-                        label="Password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        required
-                        autoComplete={isRegistering ? "new-password" : "current-password"}
-                    />
+                        <Input
+                            label="Password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                            required
+                            autoComplete={isRegistering ? "new-password" : "current-password"}
+                        />
 
-                    {error && (
-                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm flex items-start gap-2 animate-fade-in">
-                            <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>{error}</span>
-                        </div>
-                    )}
+                        {error && (
+                            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm flex items-start gap-2 animate-fade-in">
+                                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <span>{error}</span>
+                            </div>
+                        )}
 
-                    <Button type="submit" className="w-full h-12 text-base font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 shadow-lg shadow-teal-500/20" isLoading={isLoading}>
-                        {isRegistering ? 'Create Account' : 'Sign In'}
-                    </Button>
+                        <Button type="submit" className="w-full h-12 text-base font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 shadow-lg shadow-teal-500/20" isLoading={isLoading}>
+                            {isRegistering ? 'Create Account' : 'Sign In'}
+                        </Button>
+                    </div>
 
                     <div className="relative my-6">
                         <div className="absolute inset-0 flex items-center">
