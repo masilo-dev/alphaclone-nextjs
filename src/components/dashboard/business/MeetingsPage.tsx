@@ -10,9 +10,10 @@ import { Button, Card, Badge } from '@/components/ui/UIComponents';
 
 interface MeetingsPageProps {
     user: User;
+    onJoinRoom?: (url: string) => void;
 }
 
-const MeetingsPage: React.FC<MeetingsPageProps> = ({ user }) => {
+const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
     const { currentTenant, refreshTenants } = useTenant();
     const [meetings, setMeetings] = useState<VideoCall[]>([]);
     const [loading, setLoading] = useState(true);
@@ -179,12 +180,20 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user }) => {
 
                                 <div className="flex items-center gap-2">
                                     {meeting.status === 'scheduled' || meeting.status === 'active' ? (
-                                        <a
-                                            href={`/call/${meeting.id}`}
-                                            className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors text-white font-medium"
+                                        <Button
+                                            onClick={() => {
+                                                const url = (meeting as any).room_url || `/call/${meeting.id}`; // Fallback if no URL
+                                                if (onJoinRoom && (meeting as any).room_url) {
+                                                    onJoinRoom((meeting as any).room_url);
+                                                } else {
+                                                    // Fallback to legacy page load if no callback prop
+                                                    window.location.href = `/call/${meeting.id}`;
+                                                }
+                                            }}
+                                            className="gap-2 bg-teal-500 hover:bg-teal-600 text-white font-medium"
                                         >
-                                            <Video className="w-4 h-4" /> Join
-                                        </a>
+                                            <Video className="w-4 h-4 animate-pulse" /> Join
+                                        </Button>
                                     ) : (
                                         <span className="text-sm text-slate-500 italic">Ended</span>
                                     )}

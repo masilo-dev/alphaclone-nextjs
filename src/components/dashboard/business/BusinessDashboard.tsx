@@ -103,14 +103,17 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
 
     const [notification, setNotification] = useState<string | null>(null);
 
-    // Trial Logic
+    // Trial Logic - DISABLED as per user request for full access
     const isTrialExpired = React.useMemo(() => {
+        return false; // Force enable full access
+        /*
         // Safe check: If trialEndsAt is null/undefined, return false (Existing Tenants are SAFE)
         if (!currentTenant?.trialEndsAt) return false;
 
         const now = new Date();
         const trialEnd = new Date(currentTenant.trialEndsAt);
         return now > trialEnd && currentTenant.subscriptionStatus === 'trial';
+        */
     }, [currentTenant]);
 
     // Map routes to display content
@@ -137,7 +140,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             case '/dashboard/business/settings':
                 return <SettingsPage user={user} />;
             case '/dashboard/business/meetings':
-                return <MeetingsPage user={user} />;
+                return <MeetingsPage user={user} onJoinRoom={handleJoinCall} />;
 
             // New Routes
             case '/dashboard/crm':
