@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import CustomVideoRoom from './video/CustomVideoRoom';
+// import CustomVideoRoom from './video/CustomVideoRoom';
 import SimpleVideoMeeting from './SimpleVideoMeeting';
 import ManualMeetingLink from './ManualMeetingLink';
 import { User } from '../../types';
@@ -10,42 +10,20 @@ interface Props {
     onCallStateChange?: (isInCall: boolean) => void;
     onToggleSidebar?: () => void;
     showSidebar?: boolean;
+    onJoinRoom?: (url: string) => void;
 }
 
 /**
- * Conference Tab - REBUILT FROM SCRATCH
- *
- * Ultra-minimal video meeting system:
- * - No auto-loading (prevents Error 310)
- * - Manual user actions only
- * - Simple state management
- * - Zero complex dependencies
+ * Conference Tab - REBUILT
+ * Delegates video rendering to parent Dashboard for persistence
  */
-const ConferenceTab: React.FC<Props> = ({ user, onCallStateChange, onToggleSidebar, showSidebar }) => {
-    const [activeRoomUrl, setActiveRoomUrl] = useState<string | null>(null);
+const ConferenceTab: React.FC<Props> = ({ user, onCallStateChange, onToggleSidebar, showSidebar, onJoinRoom }) => {
 
     const handleJoin = useCallback((roomUrl: string) => {
-        setActiveRoomUrl(roomUrl);
-        onCallStateChange?.(true);
-    }, [onCallStateChange]);
-
-    const handleLeave = useCallback(() => {
-        setActiveRoomUrl(null);
-        onCallStateChange?.(false);
-    }, [onCallStateChange]);
-
-    // If in a meeting, show video room
-    if (activeRoomUrl) {
-        return (
-            <CustomVideoRoom
-                user={user}
-                roomUrl={activeRoomUrl}
-                onLeave={handleLeave}
-                onToggleSidebar={onToggleSidebar}
-                showSidebar={showSidebar}
-            />
-        );
-    }
+        if (onJoinRoom) {
+            onJoinRoom(roomUrl);
+        }
+    }, [onJoinRoom]);
 
     // Main conference tab view
     return (
@@ -75,7 +53,7 @@ const ConferenceTab: React.FC<Props> = ({ user, onCallStateChange, onToggleSideb
 
             {/* Client: Message */}
             {user.role === 'client' && (
-                <ClientMeetingsView />
+                <ClientMeetingsView onJoinRoom={handleJoin} />
             )}
         </div>
     );

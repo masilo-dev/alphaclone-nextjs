@@ -48,6 +48,22 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
         return true;
     });
 
+    // -- PERSISTENT VIDEO CALL STATE --
+    const [activeCallUrl, setActiveCallUrl] = useState<string | null>(null);
+    const [isCallMinimized, setIsCallMinimized] = useState(false);
+
+    // Explicitly typed handlers
+    const handleJoinCall = (url: string) => {
+        if (!url) return;
+        setActiveCallUrl(url);
+        setIsCallMinimized(false);
+    };
+
+    const handleLeaveCall = () => {
+        setActiveCallUrl(null);
+        setIsCallMinimized(false);
+    };
+
     // Check for Due Tasks on Load
     React.useEffect(() => {
         const checkTasks = async () => {
@@ -130,7 +146,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                     projects={[]}
                     declineProject={() => { }}
                     openContractGenerator={() => { }}
-                    openVideoCall={() => { }}
+                    openVideoCall={handleJoinCall}
                 />;
             case '/dashboard/tasks':
                 return <TasksTab userId={user.id} userRole={user.role} />;
@@ -316,6 +332,30 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                     {renderBusinessContent()}
                 </div>
             </main>
+
+            {/* Persistent Video Room Overlay */}
+            {activeCallUrl && (
+                <div className={isCallMinimized ? 'pointer-events-none fixed inset-0 z-[200]' : 'fixed inset-0 z-[100]'}>
+                    <div className={isCallMinimized ? 'pointer-events-auto' : 'h-full w-full'}>
+                        <React.Suspense fallback={null}>
+                            {(() => {
+                                // Dynamic import
+                                const CustomVideoRoom = React.lazy(() => import('../video/CustomVideoRoom'));
+                                return (
+                                    <CustomVideoRoom
+                                        user={user}
+                                        roomUrl={activeCallUrl}
+                                        onLeave={handleLeaveCall}
+                                        // Business Dashboard has simpler sidebar, but we can pass dummy toggles if needed or implement sidebar toggle
+                                        isMinimized={isCallMinimized}
+                                        onToggleMinimize={() => setIsCallMinimized(!isCallMinimized)}
+                                    />
+                                );
+                            })()}
+                        </React.Suspense>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

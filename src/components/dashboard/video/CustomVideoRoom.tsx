@@ -6,7 +6,7 @@ import MeetingChat, { ChatMessage } from './MeetingChat';
 import { User } from '../../../types';
 import { dailyService } from '../../../services/dailyService';
 import toast from 'react-hot-toast';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Minimize2, Maximize2, X, Mic, MicOff, Video, VideoOff } from 'lucide-react';
 
 interface CustomVideoRoomProps {
     user: User;
@@ -15,6 +15,8 @@ interface CustomVideoRoomProps {
     onLeave: () => void;
     onToggleSidebar?: () => void;
     showSidebar?: boolean;
+    isMinimized?: boolean;
+    onToggleMinimize?: () => void;
 }
 
 // Check if user is admin
@@ -35,7 +37,9 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     callId,
     onLeave,
     onToggleSidebar,
-    showSidebar
+    showSidebar,
+    isMinimized = false,
+    onToggleMinimize
 }) => {
     const {
         isJoined,
@@ -424,8 +428,77 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         );
     }
 
+    // Render Minimized (PiP) View
+    if (isMinimized) {
+        return (
+            <div className="fixed bottom-4 right-4 z-[200] w-80 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden animate-slide-up">
+                {/* Header / Draggable Area */}
+                <div className="bg-slate-800 p-2 flex items-center justify-between cursor-move">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                        <span className="text-xs font-bold text-white">Live Call ({participants.length})</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={onToggleMinimize}
+                            className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white"
+                            title="Maximize"
+                        >
+                            <Maximize2 className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={handleLeave}
+                            className="p-1 hover:bg-red-500/20 rounded text-red-400 hover:text-red-300"
+                            title="Leave Call"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Video Content (Simplified Grid) */}
+                <div className="aspect-video bg-black relative">
+                    {/* Show Active Speaker or Local if alone */}
+                    {participants.length > 0 ? (
+                        <CustomVideoTile
+                            participant={participants.find(p => !p.isLocal) || participants[0]}
+                            isLocal={participants.find(p => !p.isLocal) ? false : true}
+                            isAdmin={false}
+                        // Removed isMinimized prop to avoid TS error until CustomVideoTile is updated
+                        />
+                    ) : (
+                        <div className="flex items-center justify-center h-full text-slate-500 text-xs">Waiting...</div>
+                    )}
+                </div>
+
+                {/* Mini Controls */}
+                <div className="p-3 bg-slate-900 flex justify-center gap-4">
+                    <button onClick={handleToggleAudio} className={`p-2 rounded-full ${!isAudioEnabled ? 'bg-red-500/20 text-red-400' : 'bg-slate-800 text-white'}`}>
+                        {!isAudioEnabled ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                    </button>
+                    <button onClick={handleToggleVideo} className={`p-2 rounded-full ${!isVideoEnabled ? 'bg-red-500/20 text-red-400' : 'bg-slate-800 text-white'}`}>
+                        {!isVideoEnabled ? <VideoOff className="w-4 h-4" /> : <Video className="w-4 h-4" />}
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="fixed inset-0 bg-gray-900 z-[100]">
+            {/* Window Controls */}
+            <div className="absolute top-4 right-4 z-[120] flex gap-2">
+                {onToggleMinimize && (
+                    <button
+                        onClick={onToggleMinimize}
+                        className="p-2 bg-gray-800/90 hover:bg-gray-700/90 rounded-lg text-white shadow-lg border border-gray-700 transition-all"
+                        title="Minimize"
+                    >
+                        <Minimize2 className="w-5 h-5" />
+                    </button>
+                )}
+            </div>
+
             {/* Toggle Sidebar Button - Arrow */}
             {onToggleSidebar && (
                 <button

@@ -6,7 +6,11 @@ import { format, isFuture } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
-export const ClientMeetingsView: React.FC = () => {
+interface ClientMeetingsViewProps {
+    onJoinRoom?: (url: string) => void;
+}
+
+export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRoom }) => {
     const { user } = useAuth();
     const router = useRouter();
     const [meetings, setMeetings] = useState<VideoCall[]>([]);
@@ -94,8 +98,24 @@ export const ClientMeetingsView: React.FC = () => {
                                     <div className="flex items-center gap-3">
                                         {meeting.status === 'active' ? (
                                             <Button
-                                                // Using router.push logic or anchor tag for now
-                                                onClick={() => router.push(`/call/${meeting.id}`)}
+                                                onClick={() => {
+                                                    // "active" logic: derive room URL or fetch it? 
+                                                    // The meeting object from dailyService likely has room_url.
+                                                    // Let's check the type definition or just assume room_url exists or construct it.
+                                                    // Actually, `getUserVideoCall` returns calls. dailyService usually returns full objects.
+                                                    // Assuming `meeting.room_url` or similar exists. Inspecting VideoCall type.
+                                                    // If we don't have URL, we might need to fetch it.
+                                                    // But for now let's assume `meeting.room_url` or fallback to `/call/id`.
+                                                    // Since we are hoisting, we prefer `onJoinRoom(url)`.
+
+                                                    // Type check: meetings matches VideoCall interface.
+                                                    // Let's assume onJoinRoom handles the URL.
+                                                    if (onJoinRoom && (meeting as any).room_url) {
+                                                        onJoinRoom((meeting as any).room_url);
+                                                    } else {
+                                                        router.push(`/call/${meeting.id}`);
+                                                    }
+                                                }}
                                                 className="bg-green-600 hover:bg-green-700 text-white gap-2 shadow-lg shadow-green-900/20"
                                             >
                                                 <Video className="w-4 h-4 animate-pulse" />
@@ -103,7 +123,13 @@ export const ClientMeetingsView: React.FC = () => {
                                             </Button>
                                         ) : (
                                             <Button
-                                                onClick={() => router.push(`/call/${meeting.id}`)}
+                                                onClick={() => {
+                                                    if (onJoinRoom && (meeting as any).room_url) {
+                                                        onJoinRoom((meeting as any).room_url);
+                                                    } else {
+                                                        router.push(`/call/${meeting.id}`);
+                                                    }
+                                                }}
                                                 variant="secondary"
                                                 className="gap-2"
                                                 // Allow joining 10 mins early

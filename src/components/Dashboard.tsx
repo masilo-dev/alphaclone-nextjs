@@ -145,8 +145,24 @@ const Dashboard: React.FC<DashboardProps> = ({
     return true;
   });
   const [activeTab, setActiveTab] = useState(location || '/dashboard');
-  const [isInCall, setIsInCall] = useState(false);
+
+  // -- PERSISTENT VIDEO CALL STATE --
+  const [activeCallUrl, setActiveCallUrl] = useState<string | null>(null);
+  const [isCallMinimized, setIsCallMinimized] = useState(false);
+  const [isInCall, setIsInCall] = useState(false); // Kept for backward compatibility if needed, or synced
   const [showSidebarDuringCall, setShowSidebarDuringCall] = useState(false);
+
+  const handleJoinCall = (url: string) => {
+    setActiveCallUrl(url);
+    setIsCallMinimized(false); // Default to full screen
+    setIsInCall(true);
+  };
+
+  const handleLeaveCall = () => {
+    setActiveCallUrl(null);
+    setIsCallMinimized(false);
+    setIsInCall(false);
+  };
 
   // Sync activeTab with URL changes
   useEffect(() => {
@@ -793,6 +809,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 onCallStateChange={setIsInCall}
                 onToggleSidebar={() => setShowSidebarDuringCall(prev => !prev)}
                 showSidebar={showSidebarDuringCall}
+                onJoinRoom={handleJoinCall}
               />
             </WidgetErrorBoundary>
           </React.Suspense>
@@ -1519,6 +1536,30 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </main>
       </div>
+
+      {/* Persistent Video Room Overlay */}
+      {activeCallUrl && (
+        <div className={isCallMinimized ? 'pointer-events-none fixed inset-0 z-[200]' : 'fixed inset-0 z-[100]'}>
+          <div className={isCallMinimized ? 'pointer-events-auto' : 'h-full w-full'}>
+            <React.Suspense fallback={null}>
+              {(() => {
+                const CustomVideoRoom = React.lazy(() => import('./dashboard/video/CustomVideoRoom'));
+                return (
+                  <CustomVideoRoom
+                    user={user}
+                    roomUrl={activeCallUrl}
+                    onLeave={handleLeaveCall}
+                    onToggleSidebar={() => setShowSidebarDuringCall(!showSidebarDuringCall)}
+                    showSidebar={showSidebarDuringCall}
+                    isMinimized={isCallMinimized}
+                    onToggleMinimize={() => setIsCallMinimized(!isCallMinimized)}
+                  />
+                );
+              })()}
+            </React.Suspense>
+          </div>
+        </div>
+      )}
     </div >
   );
 };

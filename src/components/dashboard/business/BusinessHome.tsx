@@ -125,19 +125,6 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
 
     return (
         <div className="space-y-6">
-            {/* Read-Only Mode Banner */}
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex items-start gap-3">
-                <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <AlertCircle className="w-5 h-5 text-blue-400" />
-                </div>
-                <div className="flex-1">
-                    <h4 className="text-blue-400 font-semibold text-sm mb-1">Dashboard in View-Only Mode</h4>
-                    <p className="text-slate-400 text-xs leading-relaxed">
-                        Your dashboard is currently in read-only mode during setup. You can view all data, but adding or editing functionality is temporarily disabled. This will be enabled once your account setup is complete.
-                    </p>
-                </div>
-            </div>
-
             {/* Metrics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <MetricCard
@@ -223,20 +210,20 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
                     <QuickActionButton
                         label="Add New Client"
                         icon={Users}
-                        onClick={() => {/* Disabled in read-only mode */ }}
-                        disabled={true}
+                        onClick={() => window.location.href = '/dashboard/business/clients'}
+                        disabled={false}
                     />
                     <QuickActionButton
                         label="Create Project"
                         icon={Briefcase}
-                        onClick={() => {/* Disabled in read-only mode */ }}
-                        disabled={true}
+                        onClick={() => window.location.href = '/dashboard/business/projects'}
+                        disabled={false}
                     />
                     <QuickActionButton
                         label="Send Invoice"
                         icon={DollarSign}
-                        onClick={() => {/* Disabled in read-only mode */ }}
-                        disabled={true}
+                        onClick={() => window.location.href = '/dashboard/business/billing'}
+                        disabled={false}
                     />
                 </div>
             </div>
