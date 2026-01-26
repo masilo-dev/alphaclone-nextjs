@@ -228,13 +228,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const NAV_ITEMS = React.useMemo(() => {
     if (user.role === 'admin') return ADMIN_NAV_ITEMS;
     if (user.role === 'tenant_admin') return TENANT_ADMIN_NAV_ITEMS;
-
-    // Default Client Nav
-    return [
-      ...CLIENT_NAV_ITEMS.slice(0, 3), // Insert Finance after calendar
-      { label: 'Finance & Payments', href: '/dashboard/finance', icon: CreditCard },
-      ...CLIENT_NAV_ITEMS.slice(3)
-    ];
+    return CLIENT_NAV_ITEMS; // Finance is already in CLIENT_NAV_ITEMS
   }, [user.role]);
 
   // Calculate unread message count
