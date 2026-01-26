@@ -3,6 +3,10 @@ import Daily, { DailyCall } from '@daily-co/daily-js';
 import { dailyService } from '../../services/dailyService';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
+import { MeetingChat } from '../meeting/MeetingChat';
+import { AdminControls } from '../meeting/AdminControls';
+import { HostControls } from '../meeting/HostControls';
+import { MessageSquare, X } from 'lucide-react';
 
 interface DailyVideoRoomProps {
     user: User;
@@ -12,9 +16,11 @@ interface DailyVideoRoomProps {
 }
 
 /**
- * Daily Prebuilt Video Room
- * Uses Daily.co's built-in UI with all controls included
- * NO custom UI overlay - pure Daily experience
+ * Daily Prebuilt Video Room with Chat and Controls
+ * Features:
+ * - Real-time chat sidebar
+ * - Admin controls (for admins)
+ * - Host controls (for tenant admins)
  */
 const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
     user,
@@ -26,6 +32,7 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
     const callObjectRef = useRef<DailyCall | null>(null);
     const [isJoining, setIsJoining] = useState(true);
     const [callStartTime, setCallStartTime] = useState<Date | null>(null);
+    const [showChat, setShowChat] = useState(false);
 
     useEffect(() => {
         let mounted = true;
@@ -49,7 +56,7 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                     showLeaveButton: true,
                     showFullscreenButton: true,
                     iframeStyle: {
-                        position: 'fixed',
+                        position: 'absolute',
                         top: '0',
                         left: '0',
                         width: '100%',
@@ -153,10 +160,10 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
     }, [roomUrl, user.name, user.role, callId, callStartTime, onLeave]);
 
     return (
-        <div className="fixed inset-0 z-50 bg-gray-900">
+        <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col">
             {/* Loading overlay */}
             {isJoining && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-50">
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-900 z-50">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-teal-500 mx-auto mb-6"></div>
                         <p className="text-white text-xl font-medium mb-2">Joining meeting...</p>
@@ -165,11 +172,49 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                 </div>
             )}
 
-            {/* Daily Prebuilt iframe container - NO custom controls */}
-            <div
-                ref={containerRef}
-                className="w-full h-full"
-            />
+            {/* Main Content */}
+            <div className="flex-1 flex overflow-hidden">
+                {/* Video Container */}
+                <div className="flex-1 relative">
+                    <div ref={containerRef} className="w-full h-full" />
+
+                    {/* Chat Toggle Button */}
+                    <button
+                        onClick={() => setShowChat(!showChat)}
+                        className="absolute top-4 right-4 p-3 bg-slate-900/80 hover:bg-slate-800 rounded-full transition-colors z-10"
+                        title={showChat ? 'Close chat' : 'Open chat'}
+                    >
+                        {showChat ? <X className="w-5 h-5 text-white" /> : <MessageSquare className="w-5 h-5 text-white" />}
+                    </button>
+                </div>
+
+                {/* Chat Sidebar */}
+                {showChat && (
+                    <div className="w-80 h-full">
+                        <MeetingChat
+                            callObject={callObjectRef.current}
+                            currentUser={{ id: user.id, name: user.name }}
+                        />
+                    </div>
+                )}
+            </div>
+
+            {/* Admin/Host Controls */}
+            {user.role === 'admin' && (
+                <AdminControls
+                    callObject={callObjectRef.current}
+                    isAdmin={true}
+                    onEndMeeting={onLeave}
+                />
+            )}
+
+            {user.role === 'tenant_admin' && (
+                <HostControls
+                    callObject={callObjectRef.current}
+                    isHost={true}
+                    onEndMeeting={onLeave}
+                />
+            )}
         </div>
     );
 };
