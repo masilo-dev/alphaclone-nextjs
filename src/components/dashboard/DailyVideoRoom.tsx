@@ -194,6 +194,7 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                         <MeetingChat
                             callObject={callObjectRef.current}
                             currentUser={{ id: user.id, name: user.name }}
+                            callId={callId}
                         />
                     </div>
                 )}

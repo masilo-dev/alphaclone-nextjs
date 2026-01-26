@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { dailyService, VideoCall } from '../../../services/dailyService';
-import { Settings, Video, Link as LinkIcon, Calendar, Clock, User as UserIcon, Copy, ExternalLink } from 'lucide-react';
+import { Settings, Video, Link as LinkIcon, Calendar, Clock, User as UserIcon, Copy, ExternalLink, Plus } from 'lucide-react';
 import { BookingSettings } from './BookingSettings';
+import { CreateMeetingModal } from '../../modals/CreateMeetingModal';
 import { format, isFuture, isPast } from 'date-fns';
 import { Button, Card, Badge } from '@/components/ui/UIComponents';
 
@@ -16,6 +17,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user }) => {
     const [meetings, setMeetings] = useState<VideoCall[]>([]);
     const [loading, setLoading] = useState(true);
     const [showSettings, setShowSettings] = useState(false);
+    const [showCreateModal, setShowCreateModal] = useState(false);
     const [filter, setFilter] = useState<'upcoming' | 'past'>('upcoming');
 
     useEffect(() => {
@@ -57,6 +59,10 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user }) => {
                     <p className="text-slate-400">Manage your video calls and booking availability.</p>
                 </div>
                 <div className="flex gap-3">
+                    <Button onClick={() => setShowCreateModal(true)} className="gap-2 bg-teal-600 hover:bg-teal-700 text-white border-teal-600">
+                        <Plus className="w-4 h-4" />
+                        New Meeting
+                    </Button>
                     {currentTenant?.settings.booking?.enabled && (
                         <Button variant="outline" onClick={copyBookingLink} className="gap-2">
                             <Copy className="w-4 h-4" />
@@ -132,6 +138,12 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user }) => {
                                     ? "You don't have any scheduled calls."
                                     : "You haven't completed any calls yet."}
                             </p>
+                            <button
+                                onClick={() => setShowCreateModal(true)}
+                                className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm text-white transition-colors border border-slate-700"
+                            >
+                                Schedule your first meeting
+                            </button>
                         </div>
                     ) : (
                         displayMeetings.map((meeting) => (
@@ -139,10 +151,10 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user }) => {
                                 <div className="flex items-start gap-4">
                                     <div className="flex flex-col items-center justify-center w-14 h-14 bg-slate-800 rounded-xl border border-slate-700">
                                         <span className="text-xs uppercase font-bold text-slate-400">
-                                            {format(new Date(meeting.created_at), 'MMM')}
+                                            {format(new Date(meeting.scheduled_at), 'MMM')}
                                         </span>
                                         <span className="text-xl font-bold text-white">
-                                            {format(new Date(meeting.created_at), 'd')}
+                                            {format(new Date(meeting.scheduled_at), 'd')}
                                         </span>
                                     </div>
                                     <div>
@@ -155,11 +167,11 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user }) => {
                                         <div className="flex items-center gap-4 text-sm text-slate-400 mt-1">
                                             <span className="flex items-center gap-1">
                                                 <Clock className="w-3 h-3" />
-                                                {format(new Date(meeting.created_at), 'h:mm a')}
+                                                {format(new Date(meeting.scheduled_at), 'h:mm a')}
                                             </span>
                                             <span className="flex items-center gap-1">
                                                 <UserIcon className="w-3 h-3" />
-                                                {meeting.participants.length} Participants
+                                                {meeting.description ? 'Has Agenda' : 'No Agenda'}
                                             </span>
                                         </div>
                                     </div>
@@ -169,9 +181,9 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user }) => {
                                     {meeting.status === 'scheduled' || meeting.status === 'active' ? (
                                         <a
                                             href={`/call/${meeting.id}`}
-                                            className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors"
+                                            className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors text-white font-medium"
                                         >
-                                            <Video className="w-4 h-4" /> Join Meeting
+                                            <Video className="w-4 h-4" /> Join
                                         </a>
                                     ) : (
                                         <span className="text-sm text-slate-500 italic">Ended</span>
@@ -189,6 +201,14 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user }) => {
                     tenant={currentTenant}
                     onUpdate={refreshTenants}
                     onClose={() => setShowSettings(false)}
+                />
+            )}
+
+            {/* Create Meeting Modal */}
+            {showCreateModal && (
+                <CreateMeetingModal
+                    onClose={() => setShowCreateModal(false)}
+                    onSuccess={loadMeetings}
                 />
             )}
         </div>

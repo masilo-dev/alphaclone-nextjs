@@ -1,67 +1,109 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Smile } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { DailyCall } from '@daily-co/daily-js';
+import { supabase } from '../../lib/supabase';
+import toast from 'react-hot-toast';
 
 interface Message {
     id: string;
-    sender: string;
-    senderName: string;
+    sender_id?: string;
+    sender_name: string;
     message: string;
-    timestamp: number;
+    created_at: string;
 }
 
 interface MeetingChatProps {
     callObject: DailyCall | null;
     currentUser: { id: string; name: string };
+    callId?: string; // Database ID for persistence
 }
 
-export const MeetingChat: React.FC<MeetingChatProps> = ({ callObject, currentUser }) => {
+export const MeetingChat: React.FC<MeetingChatProps> = ({ callObject, currentUser, callId }) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputMessage, setInputMessage] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [loading, setLoading] = useState(false);
 
+    // 1. Fetch initial history and subscribe to changes
     useEffect(() => {
-        if (!callObject) return;
+        if (!callId) return;
 
-        const handleAppMessage = (event: any) => {
-            const newMessage: Message = {
-                id: Date.now().toString() + Math.random(),
-                sender: event.fromId,
-                senderName: event.data.senderName,
-                message: event.data.message,
-                timestamp: Date.now()
-            };
-            setMessages(prev => [...prev, newMessage]);
+        setLoading(true);
+
+        // Fetch existing messages
+        const fetchHistory = async () => {
+            const { data, error } = await supabase
+                .from('meeting_chat_messages')
+                .select('*')
+                .eq('video_call_id', callId)
+                .order('created_at', { ascending: true });
+
+            if (!error && data) {
+                setMessages(data);
+            }
+            setLoading(false);
         };
 
-        callObject.on('app-message', handleAppMessage);
+        fetchHistory();
+
+        // Subscribe to new messages
+        const channel = supabase
+            .channel(`chat:${callId}`)
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'meeting_chat_messages',
+                filter: `video_call_id=eq.${callId}`
+            }, (payload) => {
+                const newMessage = payload.new as Message;
+
+                // Avoid duplicate if we were the sender (local optimistic update might exist)
+                // We'll rely on state update from subscription + optimistc filtering
+                setMessages(prev => {
+                    if (prev.some(m => m.id === newMessage.id)) return prev;
+                    return [...prev, newMessage];
+                });
+            })
+            .subscribe();
 
         return () => {
-            callObject.off('app-message', handleAppMessage);
+            supabase.removeChannel(channel);
         };
-    }, [callObject]);
+    }, [callId]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    const sendMessage = () => {
-        if (!inputMessage.trim() || !callObject) return;
+    const sendMessage = async () => {
+        if (!inputMessage.trim()) return;
 
-        callObject.sendAppMessage({
-            message: inputMessage,
-            senderName: currentUser.name
-        }, '*');
-
-        // Add own message to list
-        const newMessage: Message = {
-            id: Date.now().toString() + Math.random(),
-            sender: currentUser.id,
-            senderName: currentUser.name,
-            message: inputMessage,
-            timestamp: Date.now()
+        // Prepare payload
+        const newMessagePayload = {
+            video_call_id: callId,
+            sender_id: currentUser.id,
+            sender_name: currentUser.name,
+            message: inputMessage.trim(),
         };
-        setMessages(prev => [...prev, newMessage]);
+
+        if (!callId) {
+            toast.error('Chat unavailable (No Call ID)');
+            return;
+        }
+
+        // Send to Supabase
+        const { error } = await supabase
+            .from('meeting_chat_messages')
+            .insert(newMessagePayload);
+
+        if (error) {
+            console.error('Failed to send message:', error);
+            toast.error('Failed to send message');
+            return;
+        }
+
+        // We clear input immediately. 
+        // The subscription will add the message to the list.
         setInputMessage('');
     };
 
@@ -88,25 +130,28 @@ export const MeetingChat: React.FC<MeetingChatProps> = ({ callObject, currentUse
                         <p className="text-xs mt-1">Start the conversation!</p>
                     </div>
                 ) : (
-                    messages.map(msg => (
-                        <div
-                            key={msg.id}
-                            className={`flex flex-col ${msg.sender === currentUser.id ? 'items-end' : 'items-start'}`}
-                        >
-                            <div className="text-xs text-slate-400 mb-1">{msg.senderName}</div>
+                    messages.map(msg => {
+                        const isMe = msg.sender_id === currentUser.id;
+                        return (
                             <div
-                                className={`px-3 py-2 rounded-lg max-w-[80%] break-words ${msg.sender === currentUser.id
-                                    ? 'bg-teal-600 text-white'
-                                    : 'bg-slate-800 text-slate-200'
-                                    }`}
+                                key={msg.id}
+                                className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
                             >
-                                {msg.message}
+                                <div className="text-xs text-slate-400 mb-1">{msg.sender_name}</div>
+                                <div
+                                    className={`px-3 py-2 rounded-lg max-w-[80%] break-words ${isMe
+                                            ? 'bg-teal-600 text-white'
+                                            : 'bg-slate-800 text-slate-200'
+                                        }`}
+                                >
+                                    {msg.message}
+                                </div>
+                                <div className="text-xs text-slate-500 mt-1">
+                                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </div>
                             </div>
-                            <div className="text-xs text-slate-500 mt-1">
-                                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                        </div>
-                    ))
+                        );
+                    })
                 )}
                 <div ref={messagesEndRef} />
             </div>
@@ -119,12 +164,13 @@ export const MeetingChat: React.FC<MeetingChatProps> = ({ callObject, currentUse
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
                         onKeyPress={handleKeyPress}
-                        placeholder="Type a message..."
-                        className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500"
+                        placeholder={callId ? "Type a message..." : "Chat unavailable"}
+                        disabled={!callId || loading}
+                        className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 disabled:opacity-50"
                     />
                     <button
                         onClick={sendMessage}
-                        disabled={!inputMessage.trim()}
+                        disabled={!inputMessage.trim() || !callId || loading}
                         className="px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:bg-slate-700 disabled:cursor-not-allowed rounded-lg transition-colors"
                     >
                         <Send className="w-5 h-5 text-white" />
