@@ -1,9 +1,9 @@
 import React from 'react';
 import { AdminControls } from './AdminControls';
-import DailyIframe from '@daily-co/daily-js';
+import { DailyCall } from '@daily-co/daily-js';
 
 interface HostControlsProps {
-    callObject: DailyIframe | null;
+    callObject: DailyCall | null;
     isHost: boolean;
     onEndMeeting: () => void;
 }

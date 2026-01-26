@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Mic, MicOff, UserX, Lock, Unlock, StopCircle, Circle, Monitor, Users } from 'lucide-react';
-import DailyIframe from '@daily-co/daily-js';
+import { DailyCall } from '@daily-co/daily-js';
 import toast from 'react-hot-toast';
 
 interface AdminControlsProps {
-    callObject: DailyIframe | null;
+    callObject: DailyCall | null;
     isAdmin: boolean;
     onEndMeeting: () => void;
 }
@@ -33,12 +33,15 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
     const lockMeeting = async () => {
         if (!callObject) return;
         try {
-            // Daily.co uses access levels: 'full', 'lobby', or 'none'
-            await callObject.updateMeetingState({
-                access: { level: isMeetingLocked ? 'full' : 'lobby' }
-            });
-            setIsMeetingLocked(!isMeetingLocked);
-            toast.success(isMeetingLocked ? 'Meeting unlocked' : 'Meeting locked');
+            // Note: Daily.co doesn't have a direct "lock meeting" API in the client SDK
+            // This would typically be done via the REST API on the backend
+            // For now, we'll show a toast indicating this needs backend implementation
+            toast.info('Meeting lock requires backend API integration');
+            console.log('Lock meeting - requires Daily.co REST API call from backend');
+
+            // Alternative: You could use setUserData to track lock state
+            // await callObject.setUserData({ meetingLocked: !isMeetingLocked });
+            // setIsMeetingLocked(!isMeetingLocked);
         } catch (error) {
             console.error('Lock meeting error:', error);
             toast.error('Failed to lock meeting');
@@ -97,8 +100,8 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
                 <button
                     onClick={lockMeeting}
                     className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm text-white ${isMeetingLocked
-                            ? 'bg-yellow-600 hover:bg-yellow-700'
-                            : 'bg-slate-800 hover:bg-slate-700'
+                        ? 'bg-yellow-600 hover:bg-yellow-700'
+                        : 'bg-slate-800 hover:bg-slate-700'
                         }`}
                     title={isMeetingLocked ? 'Unlock meeting' : 'Lock meeting'}
                 >
@@ -109,8 +112,8 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
                 <button
                     onClick={toggleRecording}
                     className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm text-white ${isRecording
-                            ? 'bg-red-600 hover:bg-red-700'
-                            : 'bg-slate-800 hover:bg-slate-700'
+                        ? 'bg-red-600 hover:bg-red-700'
+                        : 'bg-slate-800 hover:bg-slate-700'
                         }`}
                     title={isRecording ? 'Stop recording' : 'Start recording'}
                 >

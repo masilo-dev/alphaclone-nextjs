@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Smile } from 'lucide-react';
-import DailyIframe from '@daily-co/daily-js';
+import { DailyCall } from '@daily-co/daily-js';
 
 interface Message {
     id: string;
@@ -11,7 +11,7 @@ interface Message {
 }
 
 interface MeetingChatProps {
-    callObject: DailyIframe | null;
+    callObject: DailyCall | null;
     currentUser: { id: string; name: string };
 }
 
@@ -96,8 +96,8 @@ export const MeetingChat: React.FC<MeetingChatProps> = ({ callObject, currentUse
                             <div className="text-xs text-slate-400 mb-1">{msg.senderName}</div>
                             <div
                                 className={`px-3 py-2 rounded-lg max-w-[80%] break-words ${msg.sender === currentUser.id
-                                        ? 'bg-teal-600 text-white'
-                                        : 'bg-slate-800 text-slate-200'
+                                    ? 'bg-teal-600 text-white'
+                                    : 'bg-slate-800 text-slate-200'
                                     }`}
                             >
                                 {msg.message}
