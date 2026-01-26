@@ -273,8 +273,21 @@ class ProjectStageService {
 
             await supabase.from('messages').insert(message);
 
-            // In production, also send email notification
-            // await emailService.sendStageChangeNotification(project, oldStage, newStage);
+            // Send email notification for deployment
+            if (newStage === 'Deployment') {
+                const { userService } = await import('./userService');
+                const { user: profile } = await userService.getUser(project.owner_id);
+                if (profile?.email) {
+                    const { emailCampaignService } = await import('./emailCampaignService');
+                    emailCampaignService.sendTransactionalEmail(profile.email, 'Deployment Confirmation', {
+                        name: profile.name,
+                        projectName: project.name,
+                        deploymentUrl: project.deployment_url || 'https://alphaclone.tech'
+                    }).catch(err => console.error('Failed to trigger deployment email:', err));
+                }
+            } else if (newStage === 'Completed') {
+                // Potential for another template here if needed
+            }
         } catch (error) {
             console.error('Error notifying client:', error);
         }

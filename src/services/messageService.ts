@@ -3,6 +3,7 @@ import { ChatMessage } from '../types';
 import { messageSchema } from '../schemas/validation';
 import { activityService } from './activityService';
 import { tenantService } from './tenancy/TenantService';
+import { linkValidator } from '../utils/linkValidator';
 
 export const messageService = {
     /**
@@ -184,6 +185,15 @@ export const messageService = {
 
             // Validate input
             const validated = messageSchema.parse({ text, recipientId });
+
+            // CRITICAL: Link Validation Integration
+            const linkValidation = linkValidator.validateTextUrls(validated.text);
+            if (!linkValidation.allValid) {
+                return {
+                    message: null,
+                    error: `UNAUTHORIZED_LINKS: ${linkValidation.warnings.join(' ')}`
+                };
+            }
 
             const { data, error } = await supabase
                 .from('messages')

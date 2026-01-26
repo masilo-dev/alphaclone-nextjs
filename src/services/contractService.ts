@@ -39,9 +39,12 @@ export const contractService = {
         const { data, error } = await supabase
             .from('contracts')
             .insert({
-                tenant_id: tenantId, // ← ASSIGN TO TENANT
-                ...contract,
-                owner_id: userData.user?.id,
+                tenant_id: tenantId,
+                title: contract.title,
+                content: contract.content,
+                project_id: contract.project_id,
+                client_id: contract.client_id, // Link to Client profile
+                owner_id: userData.user?.id,   // Link to Admin user
                 status: 'draft',
             })
             .select()
@@ -74,8 +77,12 @@ export const contractService = {
         Client Name: ${clientName}
         Project Details: ${projectDetails}
 
-        Include standard clauses for Confidentiality, Payment Terms, and Termination.
-        Format as clear text suitable for a contract editor.`;
+        CRITICAL INSTRUCTIONS:
+        - DO NOT use placeholders like "__________", "****", or "[INSERT HERE]".
+        - Use professional, realistic text for all clauses.
+        - Ensure all currency values are explicitly formatted (e.g., $5,000 USD).
+        - Format as clear text suitable for a contract editor.
+        - Include standard clauses for Confidentiality, Payment Terms, and Termination.`;
 
         // Use unified AI service (supports Claude, Gemini, OpenAI)
         return await generateText(prompt, 3000);
@@ -116,7 +123,8 @@ export const contractService = {
         } else {
             updates.admin_signature = signatureDataUrl;
             updates.admin_signed_at = now;
-            updates.status = 'fully_signed'; // Admin sign usually finalizes
+            // Admin signing either initiates or finalizes
+            updates.status = 'fully_signed';
         }
 
         const { data, error } = await supabase

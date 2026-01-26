@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Bell, Lock, Palette, Globe, Loader2 } from 'lucide-react';
+import { User as UserIcon, Bell, Lock, Palette, Globe, Loader2 } from 'lucide-react';
 import { Button, Card, Input } from '../ui/UIComponents';
 import { User as UserType } from '../../types';
 import { userService } from '../../services/userService';
@@ -10,7 +10,7 @@ interface SettingsPageProps {
 }
 
 const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
-    const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'security' | 'appearance'>('profile');
+    const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'security' | 'appearance' | 'billing'>('profile');
     const [isSaving, setIsSaving] = useState(false);
 
     const [profileData, setProfileData] = useState({
@@ -34,11 +34,17 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         confirmPassword: ''
     });
 
+    // SVG components for internal use
+    const CreditCardIcon = (props: any) => (
+        <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-credit-card"><rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" /></svg>
+    );
+
     const sections = [
-        { id: 'profile' as const, label: 'Profile', icon: User },
+        { id: 'profile' as const, label: 'Profile', icon: UserIcon },
         { id: 'notifications' as const, label: 'Notifications', icon: Bell },
         { id: 'security' as const, label: 'Security', icon: Lock },
         { id: 'appearance' as const, label: 'Appearance', icon: Palette },
+        { id: 'billing' as const, label: 'Plans & Billing', icon: CreditCardIcon }
     ];
 
     const handleSaveProfile = async () => {
@@ -373,6 +379,81 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             </div>
                         )}
 
+                        {activeSection === 'billing' && (
+                            <div className="space-y-6">
+                                <div>
+                                    <h3 className="text-lg font-bold text-white mb-4">Subscription Plan</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {[
+                                            {
+                                                name: 'Starter',
+                                                price: '$49',
+                                                features: ['Up to 5 Projects', 'Basic CRM', 'Email Support'],
+                                                current: user.role === 'client'
+                                            },
+                                            {
+                                                name: 'Professional',
+                                                price: '$149',
+                                                features: ['Unlimited Projects', 'Enterprise CRM', 'Priority Support', 'AI Sales Agent'],
+                                                current: user.role === 'tenant_admin'
+                                            },
+                                            {
+                                                name: 'Enterprise',
+                                                price: 'Custom',
+                                                features: ['Dedicated Instance', '24/7 Support', 'Full AI Suite', 'Custom Integrations'],
+                                                current: user.role === 'admin'
+                                            }
+                                        ].map((plan) => (
+                                            <div
+                                                key={plan.name}
+                                                className={`p-5 rounded-xl border-2 transition-all ${plan.current
+                                                    ? 'border-teal-500 bg-teal-500/5'
+                                                    : 'border-slate-800 bg-slate-900/50 hover:border-slate-700'
+                                                    }`}
+                                            >
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <div>
+                                                        <h4 className="text-white font-bold">{plan.name}</h4>
+                                                        <p className="text-2xl font-bold text-white mt-1">{plan.price}<span className="text-sm font-normal text-slate-400">/mo</span></p>
+                                                    </div>
+                                                    {plan.current && (
+                                                        <span className="bg-teal-500 text-white text-[10px] uppercase font-black px-2 py-0.5 rounded">Active</span>
+                                                    )}
+                                                </div>
+                                                <ul className="space-y-2 mb-6">
+                                                    {plan.features.map(f => (
+                                                        <li key={f} className="text-xs text-slate-400 flex items-center gap-2">
+                                                            <div className="w-1 h-1 bg-teal-500 rounded-full" /> {f}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                                <Button
+                                                    variant={plan.current ? 'outline' : 'primary'}
+                                                    className={`w-full text-xs py-2 ${!plan.current && 'bg-teal-600 hover:bg-teal-500'}`}
+                                                    onClick={() => !plan.current && toast.success(`Redirecting to ${plan.name} checkout...`)}
+                                                >
+                                                    {plan.current ? 'Current Plan' : 'Upgrade Now'}
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="pt-6 border-t border-slate-800">
+                                    <h3 className="text-lg font-bold text-white mb-4">Payment Methods</h3>
+                                    <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-8 bg-slate-800 rounded flex items-center justify-center font-bold text-[10px] text-slate-500 border border-slate-700">VISA</div>
+                                            <div>
+                                                <p className="text-white text-sm font-medium">•••• •••• •••• 4242</p>
+                                                <p className="text-xs text-slate-500">Expires 12/26</p>
+                                            </div>
+                                        </div>
+                                        <Button variant="ghost" size="sm" className="text-teal-400 hover:text-teal-300">Edit</Button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         {activeSection === 'appearance' && (
                             <div className="space-y-6">
                                 <div>

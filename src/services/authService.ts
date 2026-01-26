@@ -159,6 +159,14 @@ export const authService = {
                 avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${validated.email}`,
             };
 
+            // Trigger Welcome Email (Non-blocking)
+            import('./emailCampaignService').then(({ emailCampaignService }) => {
+                emailCampaignService.sendTransactionalEmail(validated.email, 'Welcome Email', {
+                    name: validated.name,
+                    email: validated.email
+                }).catch(err => console.error('Failed to trigger welcome email:', err));
+            });
+
             return { user, error: null };
         } catch (err) {
             return { user: null, error: err instanceof Error ? err.message : 'Unknown error' };

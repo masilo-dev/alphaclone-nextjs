@@ -270,6 +270,21 @@ export const paymentService = {
                 oldInvoice,
                 data
             ).catch(err => console.error('Failed to log audit:', err));
+
+            // Trigger Payment Confirmation Email (Fetch profile for email if not in data)
+            const { userService } = await import('./userService');
+            const { user: profile } = await userService.getUser(data.user_id);
+            if (profile?.email) {
+                import('./emailCampaignService').then(({ emailCampaignService }) => {
+                    emailCampaignService.sendTransactionalEmail(profile.email, 'Payment Confirmation', {
+                        name: profile.name,
+                        amount: data.amount,
+                        currency: data.currency,
+                        projectName: data.project?.name || 'Project',
+                        invoiceId: data.id
+                    }).catch(err => console.error('Failed to trigger payment email:', err));
+                });
+            }
         }
 
         return { invoice: data, error };

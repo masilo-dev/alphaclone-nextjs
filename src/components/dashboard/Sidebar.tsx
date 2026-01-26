@@ -123,7 +123,7 @@ const Sidebar = React.memo<SidebarProps>(({
                     ))}
                 </nav>
 
-                <div className="p-4 border-t border-slate-800 bg-slate-900">
+                <div className="p-4 border-t border-slate-800 bg-slate-900 mt-auto">
                     <button
                         onClick={onLogout}
                         className="flex items-center gap-3 text-slate-400 hover:text-red-400 w-full px-4 py-3 rounded-xl hover:bg-red-500/10 transition-colors group active:scale-95 touch-manipulation"

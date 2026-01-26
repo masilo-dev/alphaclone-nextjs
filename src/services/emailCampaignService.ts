@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
+import { emailProviderService } from './EmailProviderService';
 
 export type CampaignStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled';
 export type RecipientStatus = 'pending' | 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced' | 'unsubscribed' | 'failed';
@@ -495,4 +496,151 @@ export const emailCampaignService = {
             };
         }
     },
+
+    /**
+     * Send email campaign
+     */
+    async sendCampaign(campaignId: string): Promise<{ success: boolean; error: string | null }> {
+        try {
+            // 1. Get campaign and recipients
+            const { data: campaign, error: cError } = await supabase
+                .from('email_campaigns')
+                .select('*')
+                .eq('id', campaignId)
+                .single();
+
+            if (cError) throw cError;
+
+            const { data: recipients, error: rError } = await supabase
+                .from('campaign_recipients')
+                .select('*')
+                .eq('campaign_id', campaignId)
+                .eq('status', 'pending');
+
+            if (rError) throw rError;
+
+            if (!recipients || recipients.length === 0) {
+                return { success: true, error: 'No pending recipients' };
+            }
+
+            // 2. Update status to sending
+            await supabase.from('email_campaigns').update({ status: 'sending', sent_at: new Date().toISOString() }).eq('id', campaignId);
+
+            // 3. Send emails
+            let sentCount = 0;
+            let failCount = 0;
+
+            for (const recipient of recipients) {
+                const result = await emailProviderService.sendEmail({
+                    to: recipient.email,
+                    subject: campaign.subject,
+                    html: campaign.metadata?.bodyHtml || campaign.body_html || 'Empty email body',
+                    fromName: campaign.from_name,
+                    from: campaign.from_email,
+                    replyTo: campaign.reply_to
+                });
+
+                if (result.success) {
+                    sentCount++;
+                    await supabase.from('campaign_recipients')
+                        .update({ status: 'sent', sent_at: new Date().toISOString() })
+                        .eq('id', recipient.id);
+                } else {
+                    failCount++;
+                    await supabase.from('campaign_recipients')
+                        .update({ status: 'failed', error_message: result.error || 'Unknown error' })
+                        .eq('id', recipient.id);
+                }
+            }
+
+            // 4. Update metrics
+            await supabase.from('email_campaigns').update({
+                status: 'sent',
+                total_sent: sentCount,
+                completed_at: new Date().toISOString()
+            }).eq('id', campaignId);
+
+            return { success: true, error: null };
+        } catch (err) {
+            console.error('Campaign sending failed:', err);
+            return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * Send a single transactional email using a template
+     */
+    async sendTransactionalEmail(
+        to: string,
+        templateName: string,
+        variables: Record<string, string | number>
+    ): Promise<{ success: boolean; error: string | null }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+
+            // 1. Check daily limit (100 per day)
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const { count, error: countError } = await supabase
+                .from('email_logs')
+                .select('*', { count: 'exact', head: true })
+                .eq('tenant_id', tenantId)
+                .gte('sent_at', today.toISOString());
+
+            if (countError) console.error('Error checking email limit:', countError);
+
+            if (count !== null && count >= 100) {
+                console.warn(`Daily email limit reached for tenant ${tenantId}. Skipping transactional email: ${templateName}`);
+                return { success: false, error: 'Daily email limit reached' };
+            }
+
+            // 2. Fetch template
+            const { data: template, error: tError } = await supabase
+                .from('email_templates')
+                .select('*')
+                .eq('name', templateName)
+                .single();
+
+            if (tError || !template) {
+                throw new Error(`Template not found: ${templateName}`);
+            }
+
+            // 3. Replace variables in subject and body
+            let subject = template.subject;
+            let html = template.body_html;
+            let text = template.body_text || '';
+
+            Object.entries(variables).forEach(([key, value]) => {
+                const regex = new RegExp(`{{${key}}}`, 'g');
+                subject = subject.replace(regex, String(value));
+                html = html.replace(regex, String(value));
+                text = text.replace(regex, String(value));
+            });
+
+            // 4. Send email via provider
+            const result = await emailProviderService.sendEmail({
+                to,
+                subject,
+                html,
+                text: text || undefined,
+                fromName: 'AlphaClone Systems',
+                from: 'notifications@alphaclone.tech'
+            });
+
+            // 5. Log the email
+            if (result.success) {
+                await supabase.from('email_logs').insert({
+                    recipient: to,
+                    template_name: templateName,
+                    tenant_id: tenantId
+                });
+            }
+
+            return result;
+        } catch (err) {
+            console.error(`Transactional email failed (${templateName}):`, err);
+            return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    }
 };

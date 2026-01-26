@@ -508,7 +508,11 @@ const Dashboard: React.FC<DashboardProps> = ({
         // Rollback if error
         setMessages(prev => prev.filter(m => m.id !== tempId));
         import('react-hot-toast').then(({ toast }) => {
-          toast.error(`Failed to send: ${error}`);
+          if (error.startsWith('UNAUTHORIZED_LINKS:')) {
+            toast.error(error.replace('UNAUTHORIZED_LINKS:', '').trim(), { duration: 6000 });
+          } else {
+            toast.error(`Failed to send: ${error}`);
+          }
         });
       } else if (message) {
         console.log('Message sent successfully:', message.id);

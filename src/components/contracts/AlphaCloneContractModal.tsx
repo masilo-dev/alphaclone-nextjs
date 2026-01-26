@@ -37,6 +37,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
     const [comments, setComments] = useState<Comment[]>([]);
     const [newComment, setNewComment] = useState('');
     const [showComments, setShowComments] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Contract variables with defaults
     const [variables, setVariables] = useState<ContractVariables>({
@@ -97,25 +98,32 @@ const AlphaCloneContractModal: React.FC<Props> = ({
         toast.success('Comment added - admin will review');
     };
 
+    const [signature, setSignature] = useState<string | null>(null);
+
     const handleSignContract = async (signatureDataUrl: string) => {
+        setSignature(signatureDataUrl);
+    };
+
+    const handleSendToClient = async () => {
+        if (!signature) {
+            toast.error('Please provide a signature first');
+            return;
+        }
+
         try {
+            setIsSubmitting(true);
             if (existingContractId) {
-                // Sign existing contract
                 await contractService.signContract(
                     existingContractId,
                     user.role === 'admin' ? 'admin' : 'client',
-                    signatureDataUrl
+                    signature
                 );
-                toast.success('Contract signed successfully!');
             } else {
-                // Create and sign new contract
                 const { contract, error } = await contractService.createContract({
                     project_id: project.id,
-                    client_id: project.ownerId, // Link to Client
+                    client_id: project.ownerId,
                     title: `Service Agreement - ${project.name}`,
-                    type: 'service_agreement',
                     content: contractText,
-                    status: 'sent' // Auto-set to SENT so client sees it
                 });
 
                 if (error) throw new Error(error);
@@ -124,26 +132,25 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                     await contractService.signContract(
                         contract.id,
                         user.role === 'admin' ? 'admin' : 'client',
-                        signatureDataUrl
+                        signature
                     );
 
-                    // Also update Project status
                     if (user.role === 'admin') {
-                        // Import dynamically to avoid circular deps if needed, or use service directly
                         const { projectService } = await import('../../services/projectService');
                         await projectService.updateProject(project.id, {
                             contractStatus: 'Sent',
                             contractText: contractText
                         });
                     }
-
-                    toast.success('Contract signed and sent to client!');
                 }
             }
-            setStep('success'); // Move to success step instead of closing
+            setStep('success');
+            toast.success('Contract signed and sent successfully!');
         } catch (error) {
             console.error(error);
-            toast.error('Failed to sign contract');
+            toast.error('Failed to finalize contract');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -398,12 +405,28 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                     {user.role === 'admin' ? 'Sign as Bonnie (AlphaClone Agent)' : `Sign as ${user.name}`}
                                 </label>
                                 <div className="border-2 border-slate-700 rounded-xl overflow-hidden bg-white">
-                                    <SignaturePad onSave={handleSignContract} onClear={() => { }} />
+                                    <SignaturePad
+                                        onSave={(sig) => {
+                                            // Pre-save signature but allow confirmation
+                                            handleSignContract(sig);
+                                        }}
+                                        onClear={() => { }}
+                                    />
                                 </div>
                             </div>
 
-                            <div className="flex justify-end gap-3">
+                            <div className="flex justify-between items-center gap-3">
                                 <Button variant="outline" onClick={() => setStep('preview')}>Back</Button>
+                                {signature && (
+                                    <Button
+                                        onClick={handleSendToClient}
+                                        disabled={isSubmitting}
+                                        className="bg-teal-600 hover:bg-teal-500"
+                                    >
+                                        <Send className="w-4 h-4 mr-2" />
+                                        {isSubmitting ? 'Sending...' : 'Sign & Send Contract'}
+                                    </Button>
+                                )}
                             </div>
                         </div>
                     )}

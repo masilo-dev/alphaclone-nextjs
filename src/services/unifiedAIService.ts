@@ -6,6 +6,7 @@ import { ENV } from '@/config/env';
 const GEMINI_API_KEY = ENV.VITE_GEMINI_API_KEY || '';
 const ANTHROPIC_API_KEY = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY || process.env.VITE_ANTHROPIC_API_KEY || '';
 const OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || '';
+const MANUS_API_KEY = process.env.NEXT_PUBLIC_MANUS_API_KEY || '';
 
 // Initialize providers
 const geminiAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
@@ -15,13 +16,14 @@ export const getAvailableProviders = () => {
     return {
         gemini: !!GEMINI_API_KEY,
         claude: !!ANTHROPIC_API_KEY,
-        openai: !!OPENAI_API_KEY
+        openai: !!OPENAI_API_KEY,
+        manus: !!MANUS_API_KEY
     };
 };
 
 export const isAnyAIConfigured = () => {
     const providers = getAvailableProviders();
-    return providers.gemini || providers.claude || providers.openai;
+    return providers.gemini || providers.claude || providers.openai || providers.manus;
 };
 
 /**
@@ -263,9 +265,68 @@ export const generateOutreachMessage = async (lead: any) => {
 };
 
 /**
- * Generate leads using AI or Google Places
+ * Generate leads using Manus AI (premium lead enrichment)
  */
-export const generateLeads = async (industry: string, location: string, googleApiKey?: string) => {
+export const generateLeadsWithManus = async (industry: string, location: string) => {
+    if (!MANUS_API_KEY) {
+        throw new Error('Manus AI API key is not configured');
+    }
+
+    console.log('🟡 Using Manus AI for lead generation...');
+
+    try {
+        // Manus AI API call for lead enrichment
+        const response = await fetch('https://api.manus.ai/v1/leads/search', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${MANUS_API_KEY}`
+            },
+            body: JSON.stringify({
+                industry: industry,
+                location: location,
+                limit: 10,
+                enrichment: true // Request full business data enrichment
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Manus AI API error:', response.status, errorText);
+            throw new Error(`Manus AI API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Transform Manus response to our lead format
+        const leads = (data.leads || data.results || []).map((lead: any) => ({
+            id: lead.id || crypto.randomUUID(),
+            businessName: lead.business_name || lead.name || lead.company,
+            industry: lead.industry || industry,
+            location: lead.location || lead.city || location,
+            phone: lead.phone || lead.phone_number || '',
+            email: lead.email || lead.contact_email || '',
+            fb: lead.facebook || lead.social?.facebook || '',
+            status: 'New',
+            source: 'Manus AI'
+        }));
+
+        console.log(`✅ Manus AI returned ${leads.length} leads`);
+        return leads;
+    } catch (error: any) {
+        console.error('❌ Manus AI failed:', error);
+        throw error;
+    }
+};
+
+/**
+ * Generate leads using AI or Google Places
+ * @param industry - Target industry
+ * @param location - Target location
+ * @param googleApiKey - Optional Google Places API key
+ * @param mode - 'admin' or 'tenant'. Admin uses Manus AI (premium), Tenant uses Gemini AI.
+ */
+export const generateLeads = async (industry: string, location: string, googleApiKey?: string, mode: 'admin' | 'tenant' = 'tenant') => {
     if (!isAnyAIConfigured()) {
         throw new Error('AI API key is not configured. Please contact administrator.');
     }
@@ -274,29 +335,42 @@ export const generateLeads = async (industry: string, location: string, googleAp
         throw new Error('Industry and location are required to generate leads.');
     }
 
-    console.log(`🔍 Generating leads for: ${industry} in ${location}`);
+    console.log(`🔍 Generating leads for: ${industry} in ${location} (Mode: ${mode})`);
     let leads: any[] = [];
+    let leadSource = 'Unknown';
 
-    // 1. Try Google Places if Key Provided
-    if (googleApiKey) {
+    // 1. Try Manus AI First (ONLY FOR ADMIN)
+    if (mode === 'admin' && MANUS_API_KEY) {
+        try {
+            leads = await generateLeadsWithManus(industry, location);
+            leadSource = 'Manus AI';
+        } catch (error) {
+            console.warn('⚠️ Manus AI failed, falling back to other providers:', error);
+            // Continue to fallback options
+        }
+    }
+
+    // 2. Try Google Places if Key Provided (Fallback for Admin or Primary for Tenant if key exists)
+    if (leads.length === 0 && googleApiKey) {
         console.log("🗺️ Using Google Places API for real data...");
         const { places, error } = await googlePlacesService.searchPlaces(`${industry} in ${location}`, googleApiKey);
 
         if (error) {
             console.warn("⚠️ Google Places failed, falling back to AI:", error);
-            // Fallback to AI if Google fails
         } else if (places.length > 0) {
             leads = places.map((p: any) => ({
-                id: crypto.randomUUID(), // Temp ID for UI
+                id: crypto.randomUUID(),
                 ...p,
-                status: 'New'
+                status: 'New',
+                source: 'Google Places'
             }));
+            leadSource = 'Google Places';
         }
     }
 
-    // 2. AI Generation (Fallback or Default)
+    // 3. AI Generation (Gemini - Primary for Tenant or Fallback for Admin)
     if (leads.length === 0) {
-        console.log("🤖 Using Generative AI for synthetic data...");
+        console.log(`🤖 Using Gemini AI for ${mode} data...`);
         const prompt = `Generate EXACTLY 5 realistic and professional business leads for the "${industry}" industry in "${location}".
 
 CRITICAL REQUIREMENTS:
@@ -332,7 +406,11 @@ Example format:
             const parsed = JSON.parse(cleanedText);
 
             if (Array.isArray(parsed)) {
-                leads = parsed;
+                leads = parsed.map((lead: any) => ({
+                    ...lead,
+                    source: 'Gemini AI'
+                }));
+                leadSource = 'Gemini AI';
             }
         } catch (e: any) {
             console.error("❌ Failed to parse leads:", e);
@@ -340,24 +418,29 @@ Example format:
         }
     }
 
-    // 3. Auto-Generate Outreach Messages for ALL leads
+    // 4. Auto-Generate Outreach Messages for ALL leads (using Gemini)
     console.log("📧 Generating auto-outreach messages...");
 
-    // We do this in parallel but limit concurrency if needed (for now, Promise.all is fine for 5-10 items)
     const enrichedLeads = await Promise.all(leads.map(async (lead) => {
         try {
             const message = await generateOutreachMessage(lead);
             return {
                 ...lead,
                 outreachMessage: message,
-                outreachStatus: 'pending'
+                outreachStatus: 'pending',
+                leadSource: lead.source || leadSource
             };
         } catch (e) {
-            return { ...lead, outreachMessage: "Failed to generate.", outreachStatus: 'error' };
+            return {
+                ...lead,
+                outreachMessage: "Failed to generate.",
+                outreachStatus: 'error',
+                leadSource: lead.source || leadSource
+            };
         }
     }));
 
-    console.log(`✅ Ready: ${enrichedLeads.length} leads with messages.`);
+    console.log(`✅ Ready: ${enrichedLeads.length} leads with messages (Source: ${leadSource})`);
     return enrichedLeads;
 };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, UserPlus, Phone, CheckCircle2, Bot, Send, Trash2, Upload, FileSpreadsheet, X, Mail, Settings, ExternalLink, FileText } from 'lucide-react';
+import { Search, UserPlus, Phone, CheckCircle2, Bot, Send, Trash2, Upload, FileSpreadsheet, X, Mail, Settings, ExternalLink, FileText, Zap } from 'lucide-react';
 import { generateLeads, chatWithAI, isAnyAIConfigured } from '../../services/unifiedAIService';
 import { leadService, Lead } from '../../services/leadService';
 import { fileImportService } from '../../services/fileImportService';
@@ -47,13 +47,11 @@ const SalesAgent: React.FC = () => {
             phone: manualLead.phone,
             industry: manualLead.industry,
             location: manualLead.location,
-            source: 'Manual Entry',
-            // value: manualLead.value ? parseFloat(manualLead.value) : undefined // You would need to add value to DB schema or Lead type if not present, for now storing in notes or just ignoring if not supported by backend yet. It seems Lead type needs update if we want to store value.
-            // Assuming Lead type has value or we just pass it and it might be ignored if strict.
-            // Let's check Lead type. Assuming we passed value in CSV import logic too.
+            value: manualLead.value ? parseFloat(manualLead.value) : 0,
+            source: 'Manual Entry'
         };
 
-        const { count, error } = await leadService.addBulkLeads([newLead]);
+        const { lead, error } = await leadService.addLead(newLead);
         if (error) {
             toast.error(`Failed to add: ${error}`);
         } else {
@@ -107,7 +105,7 @@ const SalesAgent: React.FC = () => {
         try {
             console.log('🚀 Starting AI lead generation...');
             // Pass API key if available
-            const results = await generateLeads(searchParams.industry, searchParams.location, apiKey);
+            const results = await generateLeads(searchParams.industry, searchParams.location, apiKey, 'tenant');
 
             if (results && results.length > 0) {
                 console.log(`✅ Generated ${results.length} leads, saving to database...`);
@@ -119,7 +117,8 @@ const SalesAgent: React.FC = () => {
                     location: r.location,
                     phone: r.phone,
                     email: r.email,
-                    source: 'AI Agent'
+                    value: r.value,
+                    source: r.leadSource || 'AI Agent'
                 }));
 
                 const { count, error } = await leadService.addBulkLeads(leadsToAdd);
@@ -127,7 +126,7 @@ const SalesAgent: React.FC = () => {
                     console.error('❌ Database error:', error);
                     toast.error(`AI found leads but failed to save them: ${error}`);
                 } else {
-                    toast.success(`🎉 AI found and saved ${count} new leads!`);
+                    toast.success(`🎉 AI discovered and saved ${count} new leads!`);
                     loadLeads(); // Reload from DB
                 }
             } else {
@@ -263,9 +262,12 @@ const SalesAgent: React.FC = () => {
                 <div className="min-w-0">
                     <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500 flex items-center gap-2 sm:gap-3">
                         <Bot className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-teal-400 flex-shrink-0" />
-                        <span className="truncate">Sales Agent</span>
+                        <span className="truncate">AlphaClone Growth Agent</span>
                     </h2>
-                    <p className="text-slate-400 mt-1 text-xs sm:text-sm">AI-powered lead generation</p>
+                    <p className="text-slate-400 mt-1 text-xs sm:text-sm flex items-center gap-2">
+                        <span>Lead Generation Powered by Gemini AI</span>
+                        <Zap className="w-3 h-3 text-teal-400 animate-pulse" />
+                    </p>
                 </div>
                 <div className="flex bg-slate-800 p-1 rounded-lg self-start sm:self-auto">
                     <button
@@ -432,7 +434,12 @@ const SalesAgent: React.FC = () => {
                                                     </td>
                                                     <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden sm:table-cell">
                                                         <div className="flex flex-col gap-2">
-                                                            <span className="text-[10px] sm:text-xs px-2 py-1 bg-slate-800 rounded-full border border-slate-700 w-fit">{lead.source}</span>
+                                                            <span className={`text-[10px] sm:text-xs px-2 py-1 rounded-full border w-fit font-bold uppercase tracking-wider ${lead.source === 'Manus AI' ? 'bg-teal-500/20 text-teal-400 border-teal-500/30' :
+                                                                lead.source === 'Google Places' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                                                                    'bg-slate-800 text-slate-400 border-slate-700'
+                                                                }`}>
+                                                                {lead.source === 'Manus AI' ? 'Premium' : lead.source}
+                                                            </span>
                                                             {lead.outreachMessage && (
                                                                 <button
                                                                     onClick={() => setViewingMessage({ title: `Email for ${lead.businessName}`, body: lead.outreachMessage! })}

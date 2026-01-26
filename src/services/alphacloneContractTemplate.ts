@@ -217,18 +217,18 @@ By signing below, both parties agree to the terms of this Professional Services 
 
 **AlphaClone Systems:**
 
-Signature: _______________________
-Name: ___________________________
-Title: ___________________________
-Date: ___________________________
+Signature: (Digital Signature)
+Name: (Print Name)
+Title: (Authorized Agent)
+Date: ${variables.contractDate}
 
 
 **Client (${variables.clientName}):**
 
-Signature: _______________________
-Name: ___________________________
-Title: ___________________________
-Date: ___________________________
+Signature: (Digital Signature)
+Name: (Print Name)
+Title: (Authorized Agent)
+Date: ${variables.contractDate}
 
 ---
 
@@ -454,18 +454,18 @@ By signing below, both parties agree to the terms of this Professional Services 
 
 **AlphaClone Systems:**
 
-Signature: _______________________
-Name: ___________________________
-Title: ___________________________
-Date: ___________________________
+Signature: (Digital Signature)
+Name: (Print Name)
+Title: (Authorized Agent)
+Date: (Date of Signing)
 
 
 **Client (${clientName}):**
 
-Signature: _______________________
-Name: ___________________________
-Title: ___________________________
-Date: ___________________________
+Signature: (Digital Signature)
+Name: (Print Name)
+Title: (Authorized Agent)
+Date: (Date of Signing)
 
 ---
 

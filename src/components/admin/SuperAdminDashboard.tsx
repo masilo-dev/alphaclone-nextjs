@@ -17,7 +17,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 
-type Tab = 'overview' | 'tenants' | 'users' | 'analytics' | 'security' | 'system';
+type Tab = 'overview' | 'tenants' | 'users' | 'analytics' | 'security' | 'system' | 'growth';
 
 export default function SuperAdminDashboard() {
   const { currentTenant } = useTenant();
@@ -64,7 +64,8 @@ export default function SuperAdminDashboard() {
     { id: 'users' as Tab, label: 'Users', icon: Users },
     { id: 'analytics' as Tab, label: 'Analytics', icon: TrendingUp },
     { id: 'security' as Tab, label: 'Security', icon: Shield },
-    { id: 'system' as Tab, label: 'System', icon: Database }
+    { id: 'system' as Tab, label: 'System', icon: Database },
+    { id: 'growth' as Tab, label: 'Growth & Leads', icon: TrendingUp }
   ];
 
   return (
@@ -104,6 +105,145 @@ export default function SuperAdminDashboard() {
         {activeTab === 'analytics' && <AnalyticsTab />}
         {activeTab === 'security' && <SecurityTab />}
         {activeTab === 'system' && <SystemTab />}
+        {activeTab === 'growth' && <GrowthTab />}
+      </div>
+    </div>
+  );
+}
+
+function GrowthTab() {
+  const [industry, setIndustry] = useState('');
+  const [location, setLocation] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [leads, setLeads] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleGenerateLeads = async () => {
+    if (!industry || !location) {
+      setError('Please enter both industry and location');
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+    try {
+      const { generateLeads } = await import('../../services/unifiedAIService');
+      // Pass empty string for Google API key if not managed here
+      const results = await generateLeads(industry, location, undefined, 'admin');
+      setLeads(results);
+    } catch (err: any) {
+      setError(err.message || 'Failed to generate leads');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-white">Lead Generation & Growth</h2>
+        <div className="flex items-center gap-2 px-3 py-1 bg-teal-500/10 border border-teal-500/20 rounded-full">
+          <Zap className="w-4 h-4 text-teal-400" />
+          <span className="text-xs font-medium text-teal-400">AlphaClone AI Engine</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Search Panel */}
+        <div className="lg:col-span-1 space-y-4">
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Find New Targets</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">Industry</label>
+                <input
+                  type="text"
+                  value={industry}
+                  onChange={(e) => setIndustry(e.target.value)}
+                  placeholder="e.g. Solar Energy, Law Firms"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-teal-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">Location</label>
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="e.g. New York, London, Remote"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-teal-500 outline-none"
+                />
+              </div>
+              <button
+                onClick={handleGenerateLeads}
+                disabled={isGenerating}
+                className="w-full py-3 bg-teal-500 hover:bg-teal-600 disabled:opacity-50 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Finding Leads...
+                  </>
+                ) : (
+                  <>
+                    <TrendingUp className="w-5 h-5" />
+                    Find Leads
+                  </>
+                )}
+              </button>
+              {error && <p className="text-red-400 text-sm">{error}</p>}
+            </div>
+          </div>
+
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-6">
+            <h4 className="text-blue-400 font-bold text-sm mb-2 flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              Premium Data Search
+            </h4>
+            <p className="text-slate-300 text-xs">
+              Our AI engine provides real, enriched business data including contact details and social links
+              for high-precision targeting.
+            </p>
+          </div>
+        </div>
+
+        {/* Results Panel */}
+        <div className="lg:col-span-2">
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 h-full min-h-[400px]">
+            <h3 className="text-lg font-semibold text-white mb-6">Generated Leads ({leads.length})</h3>
+
+            {leads.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-[300px] text-center">
+                <TrendingUp className="w-12 h-12 text-slate-700 mb-4" />
+                <p className="text-slate-500">Run a search to find new business opportunities.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {leads.map((lead, idx) => (
+                  <div key={idx} className="bg-slate-900/50 border border-slate-700 p-4 rounded-lg hover:border-teal-500/30 transition-all">
+                    <div className="flex justify-between items-start mb-3">
+                      <h4 className="text-white font-bold truncate pr-2">{lead.businessName}</h4>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${lead.leadSource === 'Manus AI' ? 'bg-teal-500/20 text-teal-400' : 'bg-blue-500/20 text-blue-400'
+                        }`}>
+                        {lead.leadSource === 'Manus AI' ? 'AlphaClone Premium' : lead.leadSource}
+                      </span>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex items-center gap-2 text-slate-400 truncate">
+                        <Map className="w-3 h-3 flex-shrink-0" />
+                        {lead.location}
+                      </div>
+                      <div className="flex items-center gap-2 text-slate-400 truncate">
+                        <MessageSquare className="w-3 h-3 flex-shrink-0" />
+                        {lead.email || 'No email found'}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

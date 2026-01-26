@@ -26,6 +26,9 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
     const [showAddNote, setShowAddNote] = useState(false);
     const [noteTitle, setNoteTitle] = useState('');
     const [noteDescription, setNoteDescription] = useState('');
+    const [showAddClient, setShowAddClient] = useState(false);
+    const [newClient, setNewClient] = useState({ name: '', email: '', company: '' });
+    const [isCreatingClient, setIsCreatingClient] = useState(false);
 
     useEffect(() => {
         const loadClients = async () => {
@@ -49,6 +52,30 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
         const { timeline } = await clientActivityService.getClientTimeline(clientId);
         setClientTimeline(timeline);
         setLoadingTimeline(false);
+    };
+
+    const handleAddClient = async () => {
+        if (!newClient.name || !newClient.email) {
+            import('react-hot-toast').then(({ toast }) => toast.error('Name and Email are required'));
+            return;
+        }
+
+        setIsCreatingClient(true);
+        try {
+            const { client, error } = await userService.createClient(newClient);
+            if (error) throw new Error(error);
+
+            if (client) {
+                setClients(prev => [client, ...prev]);
+                setShowAddClient(false);
+                setNewClient({ name: '', email: '', company: '' });
+                import('react-hot-toast').then(({ toast }) => toast.success('Client added successfully!'));
+            }
+        } catch (err: any) {
+            import('react-hot-toast').then(({ toast }) => toast.error(`Failed to add client: ${err.message}`));
+        } finally {
+            setIsCreatingClient(false);
+        }
     };
 
     const handleAddNote = async () => {
@@ -134,6 +161,12 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
                     </h2>
                     <p className="text-slate-400 mt-1 text-xs sm:text-sm">Manage {clients.length} registered clients</p>
                 </div>
+                <button
+                    onClick={() => setShowAddClient(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg font-medium transition-all active:scale-95 shadow-lg shadow-teal-900/20"
+                >
+                    <Plus className="w-4 h-4" /> Add Client
+                </button>
             </div>
 
             {loading ? (
@@ -331,6 +364,66 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
                                 </p>
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+            {/* Add Client Modal */}
+            {showAddClient && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-slate-800 flex justify-between items-center">
+                            <h3 className="text-xl font-bold text-white">Add New Client</h3>
+                            <button onClick={() => setShowAddClient(false)} className="text-slate-400 hover:text-white transition-colors">
+                                <XCircle className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Full Name</label>
+                                <input
+                                    type="text"
+                                    value={newClient.name}
+                                    onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500 transition-all"
+                                    placeholder="John Doe"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Email Address</label>
+                                <input
+                                    type="email"
+                                    value={newClient.email}
+                                    onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500 transition-all"
+                                    placeholder="john@example.com"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Company (Optional)</label>
+                                <input
+                                    type="text"
+                                    value={newClient.company}
+                                    onChange={(e) => setNewClient({ ...newClient, company: e.target.value })}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500 transition-all"
+                                    placeholder="Company Name"
+                                />
+                            </div>
+                        </div>
+                        <div className="p-6 border-t border-slate-800 flex gap-3">
+                            <button
+                                onClick={() => setShowAddClient(false)}
+                                className="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-medium transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleAddClient}
+                                disabled={isCreatingClient}
+                                className="flex-2 px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-teal-900/20"
+                            >
+                                {isCreatingClient ? 'Adding...' : 'Add Client'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

@@ -182,5 +182,56 @@ export const userService = {
         } catch (err) {
             return { adminId: null, error: 'Failed to fetch admin' };
         }
+    },
+
+    /**
+     * Create client user (insert into profiles and tenant_users)
+     */
+    async createClient(clientData: {
+        name: string;
+        email: string;
+        phone?: string;
+        company?: string;
+    }): Promise<{ client: User | null; error: string | null }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+
+            // 1. Create Profile (Note: In a real app we'd also create an auth user)
+            const { data: profile, error: pError } = await supabase
+                .from('profiles')
+                .insert({
+                    name: clientData.name,
+                    email: clientData.email,
+                    role: 'client',
+                    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(clientData.name)}&background=random`
+                })
+                .select()
+                .single();
+
+            if (pError) throw pError;
+
+            // 2. Link to Tenant
+            if (tenantId) {
+                const { error: tError } = await supabase
+                    .from('tenant_users')
+                    .insert({
+                        user_id: profile.id,
+                        tenant_id: tenantId
+                    });
+                if (tError) console.error('Failed to link client to tenant:', tError);
+            }
+
+            const client: User = {
+                id: profile.id,
+                name: profile.name,
+                email: profile.email,
+                role: profile.role,
+                avatar: profile.avatar
+            };
+
+            return { client, error: null };
+        } catch (err) {
+            return { client: null, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
     }
 };
