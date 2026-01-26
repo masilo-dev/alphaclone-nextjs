@@ -3,6 +3,7 @@ import CustomVideoRoom from './video/CustomVideoRoom';
 import SimpleVideoMeeting from './SimpleVideoMeeting';
 import ManualMeetingLink from './ManualMeetingLink';
 import { User } from '../../types';
+import { ClientMeetingsView } from './client/ClientMeetingsView';
 
 interface Props {
     user: User;
@@ -74,11 +75,7 @@ const ConferenceTab: React.FC<Props> = ({ user, onCallStateChange, onToggleSideb
 
             {/* Client: Message */}
             {user.role === 'client' && (
-                <div className="bg-slate-900/50 rounded-xl p-8 border-2 border-slate-700 text-center">
-                    <p className="text-gray-400">
-                        Your admin will send you meeting links when scheduled.
-                    </p>
-                </div>
+                <ClientMeetingsView />
             )}
         </div>
     );

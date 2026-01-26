@@ -47,6 +47,8 @@ export interface VideoCall {
     cancellation_reason?: string;
     created_at: Date;
     updated_at: Date;
+    scheduled_at: Date;
+    description?: string;
 }
 
 class DailyService {
@@ -206,6 +208,7 @@ class DailyService {
                 ...dbData,
                 created_at: new Date(dbData.created_at),
                 updated_at: new Date(dbData.updated_at),
+                scheduled_at: new Date(dbData.scheduled_at),
                 started_at: dbData.started_at ? new Date(dbData.started_at) : undefined,
                 ended_at: dbData.ended_at ? new Date(dbData.ended_at) : undefined,
                 cancelled_at: dbData.cancelled_at ? new Date(dbData.cancelled_at) : undefined,
@@ -236,6 +239,7 @@ class DailyService {
                 ...data,
                 created_at: new Date(data.created_at),
                 updated_at: new Date(data.updated_at),
+                scheduled_at: new Date(data.scheduled_at),
                 started_at: data.started_at ? new Date(data.started_at) : undefined,
                 ended_at: data.ended_at ? new Date(data.ended_at) : undefined,
                 cancelled_at: data.cancelled_at ? new Date(data.cancelled_at) : undefined,
@@ -273,6 +277,7 @@ class DailyService {
                 ...d,
                 created_at: new Date(d.created_at),
                 updated_at: new Date(d.updated_at),
+                scheduled_at: new Date(d.scheduled_at),
                 started_at: d.started_at ? new Date(d.started_at) : undefined,
                 ended_at: d.ended_at ? new Date(d.ended_at) : undefined,
                 cancelled_at: d.cancelled_at ? new Date(d.cancelled_at) : undefined,
