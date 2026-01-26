@@ -1,8 +1,8 @@
 // AlphaClone Systems - Improved Service Worker
-// Version: 1.1.0 - Added Push Support
+// Version: 1.2.0 - Cache Update + Touch Improvements
 
-const CACHE_NAME = 'alphaclone-v1.0.0';
-const RUNTIME_CACHE = 'alphaclone-runtime';
+const CACHE_NAME = 'alphaclone-v1.2.0';
+const RUNTIME_CACHE = 'alphaclone-runtime-v1.2.0';
 
 // Assets to cache on install
 const STATIC_ASSETS = [

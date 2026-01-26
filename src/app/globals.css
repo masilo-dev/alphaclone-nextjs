@@ -132,3 +132,71 @@ html {
 .animate-slide-up {
   animation: slide-up 0.5s ease-out forwards;
 }
+
+/* PWA Touch Improvements */
+* {
+  /* Remove tap highlight on mobile */
+  -webkit-tap-highlight-color: transparent;
+  /* Prevent text selection on buttons/interactive elements */
+  -webkit-touch-callout: none;
+}
+
+/* Touch-friendly button sizes */
+button, a[role="button"], [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+}
+
+/* Active state for touch feedback */
+button:active, a:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+/* Smooth scrolling with momentum on iOS */
+.overflow-auto, .overflow-y-auto, .overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent double-tap zoom on buttons */
+button, input, select, textarea, a {
+  touch-action: manipulation;
+}
+
+/* Custom scrollbar for touch devices */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 10px;
+}
+
+/* Prevent overscroll bounce on iOS */
+html, body {
+  overscroll-behavior-y: none;
+}
+
+/* Fix for iOS input zoom */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="number"],
+textarea,
+select {
+  font-size: 16px !important;
+}
