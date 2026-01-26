@@ -149,9 +149,9 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
                     description="Clients will appear here once they register and create projects."
                 />
             ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                     {/* Client Cards - Left Side */}
-                    <div className="lg:col-span-1 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto custom-scrollbar">
+                    <div className="xl:col-span-1 space-y-4 max-h-[calc(100vh-250px)] overflow-y-auto custom-scrollbar">
                         {clientCards.map((client) => (
                             <div
                                 key={client.id}
@@ -206,7 +206,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
                     </div>
 
                     {/* Activity Timeline - Right Side */}
-                    <div className="lg:col-span-2">
+                    <div className="xl:col-span-2">
                         {selectedClient && clientTimeline ? (
                             <div className="glass-panel p-6 rounded-2xl border border-white/5">
                                 <div className="flex justify-between items-start mb-6">

@@ -444,7 +444,7 @@ const SalesAgent: React.FC = () => {
                                                                         </button>
                                                                         <button
                                                                             onClick={() => {
-                                                                                toast.info('Task creation coming soon!');
+                                                                                toast('Task creation coming soon!', { icon: 'ℹ️' });
                                                                             }}
                                                                             className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
                                                                         >
@@ -453,7 +453,7 @@ const SalesAgent: React.FC = () => {
                                                                         </button>
                                                                         <button
                                                                             onClick={() => {
-                                                                                toast.info('Quote creation coming soon!');
+                                                                                toast('Quote creation coming soon!', { icon: 'ℹ️' });
                                                                             }}
                                                                             className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
                                                                         >
