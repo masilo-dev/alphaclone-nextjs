@@ -4,9 +4,10 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input, Button } from '@/components/ui/UIComponents';
 import { LOGO_URL } from '@/constants';
-import { AlertCircle, LogIn, UserPlus } from 'lucide-react';
+import { AlertCircle, LogIn, UserPlus, FileText, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { usePWA } from '@/contexts/PWAContext';
+import { SubscriptionPlan } from '@/services/tenancy/types';
 
 export default function LoginPage() {
     const { isPWA } = usePWA();
@@ -17,8 +18,16 @@ export default function LoginPage() {
     const [name, setName] = useState('');
     const [businessName, setBusinessName] = useState('');
     const [isBusiness, setIsBusiness] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>('starter');
+    const [legalAccepted, setLegalAccepted] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    const plans: { id: SubscriptionPlan, name: string, price: string }[] = [
+        { id: 'starter', name: 'Starter', price: '$29/mo' },
+        { id: 'professional', name: 'Professional', price: '$99/mo' },
+        { id: 'enterprise', name: 'Enterprise', price: '$299/mo' }
+    ];
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -32,6 +41,19 @@ export default function LoginPage() {
                     setError('All fields are required to create an account.');
                     setIsLoading(false);
                     return;
+                }
+
+                if (isBusiness) {
+                    if (!businessName) {
+                        setError('Business Name is required.');
+                        setIsLoading(false);
+                        return;
+                    }
+                    if (!legalAccepted) {
+                        setError('You must accept the Legal Disclaimer to continue.');
+                        setIsLoading(false);
+                        return;
+                    }
                 }
 
                 const { authService } = await import('@/services/authService');
@@ -50,13 +72,27 @@ export default function LoginPage() {
                         try {
                             const { tenantService } = await import('@/services/tenancy/TenantService');
                             const slug = businessName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-                            await tenantService.createTenant({
+
+                            // Create Tenant
+                            const newTenant = await tenantService.createTenant({
                                 name: businessName,
                                 slug: slug,
                                 adminUserId: user.id
                             });
+
+                            // Set Trial and Plan
+                            const trialEndDate = new Date();
+                            trialEndDate.setDate(trialEndDate.getDate() + 3); // 3 Days Trial
+
+                            await tenantService.updateTenant(newTenant.id, {
+                                trialEndsAt: trialEndDate,
+                                subscriptionStatus: 'trial',
+                                subscriptionPlan: selectedPlan
+                            });
+
                         } catch (tenantErr) {
                             console.error("Tenant Creation Error:", tenantErr);
+                            // Proceed anyway, user is created
                         }
                     }
                     // Redirect to dashboard
@@ -95,7 +131,7 @@ export default function LoginPage() {
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-5" />
             </div>
 
-            <div className="max-w-md w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl relative z-10">
+            <div className="max-w-md w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl relative z-10 my-8">
                 <div className="mb-8 text-center">
                     {isPWA ? (
                         <div className="mx-auto mb-6 flex justify-center inline-block">
@@ -149,7 +185,7 @@ export default function LoginPage() {
                             />
 
                             {isBusiness && (
-                                <div className="animate-slide-up">
+                                <div className="animate-slide-up space-y-4">
                                     <Input
                                         label="Business Name"
                                         value={businessName}
@@ -157,6 +193,51 @@ export default function LoginPage() {
                                         placeholder="AlphaCorp Industries"
                                         required={isBusiness}
                                     />
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Select Plan</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {plans.map((plan) => (
+                                                <button
+                                                    key={plan.id}
+                                                    type="button"
+                                                    onClick={() => setSelectedPlan(plan.id)}
+                                                    className={`p-2 rounded-lg border text-center transition-all ${selectedPlan === plan.id
+                                                            ? 'bg-teal-500/10 border-teal-500 text-teal-400'
+                                                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'
+                                                        }`}
+                                                >
+                                                    <div className="font-bold text-xs sm:text-sm">{plan.name}</div>
+                                                    <div className="text-[10px] sm:text-xs opacity-80">{plan.price}</div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <p className="text-[10px] text-teal-400 mt-2 text-center">
+                                            ✨ Includes 3-Day Free Trial (No Card Required)
+                                        </p>
+                                    </div>
+
+                                    {/* Legal Disclaimer */}
+                                    <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-700 space-y-2">
+                                        <label className="flex items-start gap-3 cursor-pointer group">
+                                            <div className="relative flex items-center mt-0.5">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={legalAccepted}
+                                                    onChange={(e) => setLegalAccepted(e.target.checked)}
+                                                    className="peer sr-only"
+                                                />
+                                                <div className="w-5 h-5 border-2 border-slate-500 rounded peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all"></div>
+                                                <CheckCircle2 className="w-3.5 h-3.5 text-white absolute top-1 left-1 opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <span className="text-xs text-slate-300 font-medium">Legal Disclaimer Agreement</span>
+                                                <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
+                                                    I acknowledge that AlphaClone is a technology platform only. AlphaClone is <span className="text-red-400 font-bold">NOT responsible</span> for any financial, tax, or legal disputes between me and my clients. I assume full responsibility for all transactions.
+                                                </p>
+                                            </div>
+                                        </label>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -189,11 +270,10 @@ export default function LoginPage() {
                         </div>
                     )}
 
-                    <Button type="submit" className="w-full h-12 text-base font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400" isLoading={isLoading}>
+                    <Button type="submit" className="w-full h-12 text-base font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 shadow-lg shadow-teal-500/20" isLoading={isLoading}>
                         {isRegistering ? 'Create Account' : 'Sign In'}
                     </Button>
 
-                    {/* Divider */}
                     <div className="relative my-6">
                         <div className="absolute inset-0 flex items-center">
                             <div className="w-full border-t border-slate-800"></div>
@@ -203,7 +283,6 @@ export default function LoginPage() {
                         </div>
                     </div>
 
-                    {/* Google Sign In Button */}
                     <button
                         type="button"
                         onClick={async () => {
@@ -264,7 +343,6 @@ export default function LoginPage() {
                             </>
                         )}
                     </button>
-
                     <p className="text-[10px] text-slate-600 uppercase tracking-wider">
                         Secured by AlphaClone 256-bit Encryption
                     </p>
