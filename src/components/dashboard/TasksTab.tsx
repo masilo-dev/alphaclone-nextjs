@@ -169,7 +169,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                         <option value="my_tasks">My Tasks</option>
                         <option value="overdue">Overdue</option>
                     </select>
-                    {userRole === 'admin' && (
+                    {(userRole === 'admin' || userRole === 'tenant_admin') && (
                         <Button onClick={() => setShowCreateModal(true)}>
                             <Plus className="w-5 h-5 mr-2" /> Create Task
                         </Button>
@@ -194,9 +194,8 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                     {tasks.map((task) => (
                         <div
                             key={task.id}
-                            className={`glass-panel p-5 rounded-2xl border hover:border-teal-500/30 transition-all flex flex-col group ${
-                                isOverdue(task) ? 'border-red-500/30' : 'border-white/5'
-                            }`}
+                            className={`glass-panel p-5 rounded-2xl border hover:border-teal-500/30 transition-all flex flex-col group ${isOverdue(task) ? 'border-red-500/30' : 'border-white/5'
+                                }`}
                         >
                             <div className="flex items-start justify-between mb-3">
                                 <h3 className="font-bold text-white text-lg flex-1">{task.title}</h3>
@@ -233,7 +232,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                 </div>
                             )}
 
-                            {userRole === 'admin' && (
+                            {(userRole === 'admin' || userRole === 'tenant_admin') && (
                                 <div className="mt-auto pt-4 border-t border-white/5">
                                     <select
                                         value={task.status}

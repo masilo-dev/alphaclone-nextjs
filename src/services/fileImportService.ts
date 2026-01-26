@@ -6,6 +6,7 @@ export interface ParsedContact {
     phone?: string;
     company?: string;
     notes?: string;
+    value?: number;
 }
 
 export const fileImportService = {
@@ -20,13 +21,24 @@ export const fileImportService = {
             const sheet = workbook.Sheets[sheetName];
             const data = XLSX.utils.sheet_to_json(sheet);
 
-            const contacts: ParsedContact[] = data.map((row: any) => ({
-                name: row.name || row.Name || row.NAME || row['Full Name'] || '',
-                email: row.email || row.Email || row.EMAIL || row['Email Address'] || '',
-                phone: row.phone || row.Phone || row.PHONE || row['Phone Number'] || '',
-                company: row.company || row.Company || row.COMPANY || row.Organization || '',
-                notes: row.notes || row.Notes || row.NOTES || ''
-            })).filter(c => c.name || c.email); // Filter out empty rows
+            const contacts: ParsedContact[] = data.map((row: any) => {
+                // Parse value (remove likely currency symbols)
+                const rawValue = row.value || row.Value || row.VALUE || row['Potential Value'] || row.amount || row.Amount || row.revenue || row.Revenue || 0;
+                const parseValue = (val: any) => {
+                    if (typeof val === 'number') return val;
+                    if (typeof val === 'string') return parseFloat(val.replace(/[^0-9.-]+/g, '')) || 0;
+                    return 0;
+                };
+
+                return {
+                    name: row.name || row.Name || row.NAME || row['Full Name'] || '',
+                    email: row.email || row.Email || row.EMAIL || row['Email Address'] || '',
+                    phone: row.phone || row.Phone || row.PHONE || row['Phone Number'] || '',
+                    company: row.company || row.Company || row.COMPANY || row.Organization || '',
+                    notes: row.notes || row.Notes || row.NOTES || '',
+                    value: parseValue(rawValue)
+                };
+            }).filter(c => c.name || c.email); // Filter out empty rows
 
             return { contacts, error: null };
         } catch (err: any) {

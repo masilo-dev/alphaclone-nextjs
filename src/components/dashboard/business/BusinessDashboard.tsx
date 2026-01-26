@@ -31,6 +31,7 @@ import CRMTab from '../CRMTab';
 import TasksTab from '../TasksTab';
 import SalesAgent from '../SalesAgent';
 import DealsTab from '../DealsTab';
+import AlphaCloneContractModal from '../../contracts/AlphaCloneContractModal';
 
 interface BusinessDashboardProps {
     user: User;
@@ -62,6 +63,22 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
     const handleLeaveCall = () => {
         setActiveCallUrl(null);
         setIsCallMinimized(false);
+    };
+
+    // Contract Modal State
+    const [showContractModal, setShowContractModal] = useState(false);
+    const [selectedProjectForContract, setSelectedProjectForContract] = useState<any>(null);
+
+    const handleOpenContract = (project?: any) => {
+        // If no project passed, create dummy one for standalone contract
+        setSelectedProjectForContract(project || {
+            id: 'new',
+            name: 'New Project',
+            ownerId: user.id, // Self as owner proxy if direct
+            ownerName: 'Client Name',
+            budget: 0
+        });
+        setShowContractModal(true);
     };
 
     // Check for Due Tasks on Load
@@ -148,7 +165,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                 return <CRMTab
                     projects={[]}
                     declineProject={() => { }}
-                    openContractGenerator={() => { }}
+                    openContractGenerator={handleOpenContract}
                     openVideoCall={handleJoinCall}
                 />;
             case '/dashboard/tasks':
@@ -358,6 +375,15 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                         </React.Suspense>
                     </div>
                 </div>
+            )}
+            {/* Contract Modal */}
+            {showContractModal && selectedProjectForContract && (
+                <AlphaCloneContractModal
+                    isOpen={showContractModal}
+                    onClose={() => setShowContractModal(false)}
+                    project={selectedProjectForContract}
+                    user={user}
+                />
             )}
         </div>
     );

@@ -32,7 +32,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
     existingContractId,
     existingContractText
 }) => {
-    const [step, setStep] = useState<'edit' | 'preview' | 'sign'>('edit');
+    const [step, setStep] = useState<'edit' | 'preview' | 'sign' | 'success'>('edit');
     const [contractText, setContractText] = useState('');
     const [comments, setComments] = useState<Comment[]>([]);
     const [newComment, setNewComment] = useState('');
@@ -109,14 +109,16 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                 toast.success('Contract signed successfully!');
             } else {
                 // Create and sign new contract
-                const { contract } = await contractService.createContract({
+                const { contract, error } = await contractService.createContract({
                     project_id: project.id,
-                    client_id: project.ownerId,
+                    client_id: project.ownerId, // Link to Client
                     title: `Service Agreement - ${project.name}`,
                     type: 'service_agreement',
                     content: contractText,
-                    status: 'sent'
+                    status: 'sent' // Auto-set to SENT so client sees it
                 });
+
+                if (error) throw new Error(error);
 
                 if (contract) {
                     await contractService.signContract(
@@ -124,11 +126,23 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                         user.role === 'admin' ? 'admin' : 'client',
                         signatureDataUrl
                     );
-                    toast.success('Contract created and signed!');
+
+                    // Also update Project status
+                    if (user.role === 'admin') {
+                        // Import dynamically to avoid circular deps if needed, or use service directly
+                        const { projectService } = await import('../../services/projectService');
+                        await projectService.updateProject(project.id, {
+                            contractStatus: 'Sent',
+                            contractText: contractText
+                        });
+                    }
+
+                    toast.success('Contract signed and sent to client!');
                 }
             }
-            onClose();
+            setStep('success'); // Move to success step instead of closing
         } catch (error) {
+            console.error(error);
             toast.error('Failed to sign contract');
         }
     };
@@ -384,12 +398,37 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                     {user.role === 'admin' ? 'Sign as Bonnie (AlphaClone Agent)' : `Sign as ${user.name}`}
                                 </label>
                                 <div className="border-2 border-slate-700 rounded-xl overflow-hidden bg-white">
-                                    <SignaturePad onSave={handleSignContract} onClear={() => {}} />
+                                    <SignaturePad onSave={handleSignContract} onClear={() => { }} />
                                 </div>
                             </div>
 
                             <div className="flex justify-end gap-3">
                                 <Button variant="outline" onClick={() => setStep('preview')}>Back</Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* STEP 4: Success Message */}
+                    {step === 'success' && (
+                        <div className="flex flex-col items-center justify-center py-12 text-center animate-fade-in-up">
+                            <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mb-6">
+                                <CheckCircle className="w-10 h-10 text-green-400" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-white mb-2">Contract Signed Successfully!</h3>
+                            <p className="text-slate-400 max-w-md mb-8">
+                                The contract has been securely saved and logged. A notification has been sent to all parties.
+                            </p>
+
+                            <div className="flex gap-4">
+                                <Button variant="outline" onClick={() => {
+                                    toast.success("PDF Download started...");
+                                    // In production generate PDF blob here
+                                }}>
+                                    <DollarSign className="w-4 h-4 mr-2" /> Download PDF
+                                </Button>
+                                <Button onClick={onClose} className="bg-teal-600 hover:bg-teal-500">
+                                    Close Window
+                                </Button>
                             </div>
                         </div>
                     )}

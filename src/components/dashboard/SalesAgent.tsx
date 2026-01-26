@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Search, UserPlus, Phone, CheckCircle2, Bot, Send, Trash2, Upload, FileSpreadsheet, X, Mail, Settings, ExternalLink, FileText } from 'lucide-react';
 import { generateLeads, chatWithAI, isAnyAIConfigured } from '../../services/unifiedAIService';
 import { leadService, Lead } from '../../services/leadService';
-import { Button, Input, Card } from '../ui/UIComponents';
+import { fileImportService } from '../../services/fileImportService';
+import { Button, Input, Card, Modal } from '../ui/UIComponents';
 import { TableSkeleton } from '../ui/Skeleton';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
@@ -22,6 +23,46 @@ const SalesAgent: React.FC = () => {
     const [showSettings, setShowSettings] = useState(false);
     const [apiKey, setApiKey] = useState(localStorage.getItem('ALPHA_GOOGLE_PLACES_KEY') || '');
     const [viewingMessage, setViewingMessage] = useState<{ title: string, body: string } | null>(null);
+
+    // Manual Entry State
+    const [showManualModal, setShowManualModal] = useState(false);
+    const [manualLead, setManualLead] = useState({
+        businessName: '',
+        email: '',
+        phone: '',
+        industry: '',
+        location: '',
+        value: ''
+    });
+
+    const handleManualAddLead = async () => {
+        if (!manualLead.businessName) {
+            toast.error('Business Name is required');
+            return;
+        }
+
+        const newLead = {
+            businessName: manualLead.businessName,
+            email: manualLead.email,
+            phone: manualLead.phone,
+            industry: manualLead.industry,
+            location: manualLead.location,
+            source: 'Manual Entry',
+            // value: manualLead.value ? parseFloat(manualLead.value) : undefined // You would need to add value to DB schema or Lead type if not present, for now storing in notes or just ignoring if not supported by backend yet. It seems Lead type needs update if we want to store value.
+            // Assuming Lead type has value or we just pass it and it might be ignored if strict.
+            // Let's check Lead type. Assuming we passed value in CSV import logic too.
+        };
+
+        const { count, error } = await leadService.addBulkLeads([newLead]);
+        if (error) {
+            toast.error(`Failed to add: ${error}`);
+        } else {
+            toast.success('Lead added successfully');
+            setShowManualModal(false);
+            setManualLead({ businessName: '', email: '', phone: '', industry: '', location: '', value: '' });
+            loadLeads();
+        }
+    };
 
     const handleSaveKey = (val: string) => {
         setApiKey(val);
@@ -109,49 +150,44 @@ const SalesAgent: React.FC = () => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = async (evt) => {
-            try {
-                const bstr = evt.target?.result;
-                const wb = XLSX.read(bstr, { type: 'binary' });
-                const wsname = wb.SheetNames[0];
-                if (!wsname) {
-                    toast.error("Invalid file: No sheets found");
-                    return;
-                }
-                const ws = wb.Sheets[wsname];
-                if (!ws) {
-                    toast.error("Invalid file: Sheet not found");
-                    return;
-                }
-                const data = XLSX.utils.sheet_to_json(ws);
+        try {
+            const { contacts, error } = await fileImportService.importFromExcel(file);
 
-                // Map data to Lead interface (naive mapping)
-                const mappedLeads = data.map((row: any) => ({
-                    businessName: row['Name'] || row['Business Name'] || row['Company'] || 'Unknown Business',
-                    email: row['Email'] || row['Email Address'],
-                    phone: row['Phone'] || row['Contact'],
-                    industry: row['Industry'] || 'Unknown',
-                    location: row['Location'] || row['City'],
-                    website: row['Website'],
-                    notes: row['Notes']
-                }));
-
-                if (mappedLeads.length > 0) {
-                    const { count, error } = await leadService.addBulkLeads(mappedLeads);
-                    if (error) throw new Error(error);
-                    toast.success(`Successfully imported ${count} leads.`);
-                    loadLeads();
-                    setShowUpload(false);
-                } else {
-                    toast.error("No valid data found in file.");
-                }
-            } catch (error) {
-                console.error("Import Error", error);
-                toast.error("Failed to parse file. Ensure headers are: Name, Email, Phone, Industry.");
+            if (error) {
+                toast.error(`Import failed: ${error}`);
+                return;
             }
-        };
-        reader.readAsBinaryString(file);
+
+            if (contacts.length === 0) {
+                toast.error("No valid contacts found in file.");
+                return;
+            }
+
+            // Map ParsedContact to Lead
+            const leadsToAdd = contacts.map(c => ({
+                businessName: c.name || c.company || 'Unknown Business',
+                email: c.email,
+                phone: c.phone,
+                industry: 'Imported',
+                location: 'Unknown',
+                notes: c.notes,
+                source: 'CSV Import'
+                // value: c.value // Pending DB support for value
+            }));
+
+            const { count, error: dbError } = await leadService.addBulkLeads(leadsToAdd);
+
+            if (dbError) {
+                toast.error(`Database error: ${dbError}`);
+            } else {
+                toast.success(`Successfully imported ${count} leads.`);
+                loadLeads();
+                setShowUpload(false);
+            }
+        } catch (err: any) {
+            console.error("Import Error", err);
+            toast.error("Failed to process file.");
+        }
     };
 
     const toggleSelectLead = (id: string) => {
@@ -300,6 +336,10 @@ const SalesAgent: React.FC = () => {
                             <div className="flex flex-wrap gap-2 sm:gap-3">
                                 <Button onClick={handleSearch} className="flex-1 sm:flex-initial bg-teal-500 hover:bg-teal-400" isLoading={isSearching} disabled={!aiConfigured}>
                                     <Search className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">{aiConfigured ? 'Find Leads' : 'Setup Required'}</span>
+                                </Button>
+
+                                <Button onClick={() => setShowManualModal(true)} variant="outline" className="flex-1 sm:flex-initial border-dashed border-slate-600 hover:border-teal-500 hover:text-teal-400">
+                                    <UserPlus className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Add Lead</span>
                                 </Button>
 
                                 <Button variant="outline" className="flex-1 sm:flex-initial border-dashed border-slate-600 hover:border-teal-500 hover:text-teal-400" onClick={() => setShowUpload(!showUpload)}>
@@ -534,6 +574,52 @@ const SalesAgent: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Manual Entry Modal */}
+            <Modal isOpen={showManualModal} onClose={() => setShowManualModal(false)} title="Add Lead Manually">
+                <div className="space-y-4">
+                    <Input
+                        label="Business / Contact Name *"
+                        placeholder="e.g. John Doe / Alpha Corp"
+                        value={manualLead.businessName}
+                        onChange={e => setManualLead({ ...manualLead, businessName: e.target.value })}
+                        required
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input
+                            label="Email Address"
+                            type="email"
+                            placeholder="email@example.com"
+                            value={manualLead.email}
+                            onChange={e => setManualLead({ ...manualLead, email: e.target.value })}
+                        />
+                        <Input
+                            label="Phone Number"
+                            placeholder="+1 555 0000"
+                            value={manualLead.phone}
+                            onChange={e => setManualLead({ ...manualLead, phone: e.target.value })}
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input
+                            label="Industry"
+                            placeholder="e.g. Technology"
+                            value={manualLead.industry}
+                            onChange={e => setManualLead({ ...manualLead, industry: e.target.value })}
+                        />
+                        <Input
+                            label="Location"
+                            placeholder="e.g. New York"
+                            value={manualLead.location}
+                            onChange={e => setManualLead({ ...manualLead, location: e.target.value })}
+                        />
+                    </div>
+                    <div className="pt-4 flex justify-end gap-3">
+                        <Button variant="outline" onClick={() => setShowManualModal(false)}>Cancel</Button>
+                        <Button onClick={handleManualAddLead}>Save Lead</Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 };

@@ -883,7 +883,10 @@ const Dashboard: React.FC<DashboardProps> = ({
               projects={projects}
               declineProject={declineProject}
               openContractGenerator={openContractGenerator}
-              openVideoCall={() => setActiveTab('/dashboard/conference')}
+              openVideoCall={() => {
+                const roomUrl = `https://demo.daily.co/alphaclone-${Math.random().toString(36).substring(7)}`;
+                handleJoinCall(roomUrl);
+              }}
               onNavigateToMessages={(clientId: string) => {
                 router.push(`/dashboard/messages?selectedClientId=${clientId}`);
               }}
