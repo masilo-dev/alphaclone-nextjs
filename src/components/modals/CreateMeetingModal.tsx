@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { X, Calendar, Clock, User, Mail, Video, Loader2 } from 'lucide-react';
-import { meetingService, CreateMeetingData } from '../../../services/meetingService';
-import { useAuth } from '../../../contexts/AuthContext';
+import { meetingService, CreateMeetingData } from '../../services/meetingService';
+import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
-import { dailyService } from '../../../services/dailyService';
+import { dailyService } from '../../services/dailyService';
 
 interface CreateMeetingModalProps {
     onClose: () => void;
@@ -32,7 +32,11 @@ export const CreateMeetingModal: React.FC<CreateMeetingModalProps> = ({ onClose,
         try {
             // 1. Create Daily.co room
             const startTime = new Date(`${formData.date}T${formData.time}`);
-            const { room, error: roomError } = await dailyService.createRoom(startTime.getTime() / 1000 + 3600); // Expires in 1 hour after start? Or logic inside service
+            const { room, error: roomError } = await dailyService.createRoom({
+                title: formData.title,
+                startTime: startTime,
+                duration: formData.duration
+            });
 
             if (roomError || !room) {
                 throw new Error('Failed to create video room');

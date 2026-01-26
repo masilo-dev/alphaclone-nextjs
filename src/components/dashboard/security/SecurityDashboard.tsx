@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Shield, Lock, AlertTriangle, CheckCircle, Globe, Download } from 'lucide-react';
 import { securityScannerService, ScanResult } from '../../../services/securityScannerService';
 import { Button, Card } from '../../ui/UIComponents';
@@ -6,6 +6,7 @@ import { useCurrentTenantId } from '../../../contexts/TenantContext';
 import { paymentService } from '../../../services/paymentService';
 import { userService } from '../../../services/userService';
 import toast from 'react-hot-toast';
+import { supabase } from '../../../lib/supabase';
 
 const SecurityDashboard: React.FC = () => {
     const tenantId = useCurrentTenantId();
@@ -13,6 +14,34 @@ const SecurityDashboard: React.FC = () => {
     const [isScanning, setIsScanning] = useState(false);
     const [result, setResult] = useState<ScanResult | null>(null);
     const [isPremium, setIsPremium] = useState(false);
+
+    useEffect(() => {
+        if (tenantId) {
+            loadLastScan();
+        }
+    }, [tenantId]);
+
+    const loadLastScan = async () => {
+        if (!tenantId) return;
+        const { data, error } = await supabase
+            .from('security_scans')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (data) {
+            setResult({
+                url: data.url,
+                timestamp: new Date(data.created_at),
+                score: data.score,
+                grade: data.grade,
+                checks: data.details.checks,
+                issues: data.details.issues
+            });
+        }
+    };
 
     const handlePurchase = async (type: 'one-time' | 'subscription') => {
         setIsScanning(true);

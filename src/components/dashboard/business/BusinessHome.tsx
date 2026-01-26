@@ -87,11 +87,32 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
     };
 
     const generateMonthlyRevenue = (invoices: any[]) => {
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-        return months.map((month, index) => ({
-            month,
-            revenue: Math.random() * 10000 + 5000 // Placeholder - calculate from actual data
-        }));
+        const last6Months = [];
+        for (let i = 5; i >= 0; i--) {
+            const date = new Date();
+            date.setMonth(date.getMonth() - i);
+            last6Months.push(date);
+        }
+
+        return last6Months.map(date => {
+            const monthName = date.toLocaleString('default', { month: 'short' });
+            const monthYear = date.getFullYear();
+            const monthIndex = date.getMonth();
+
+            const monthRevenue = invoices
+                .filter(inv => {
+                    const invDate = new Date(inv.createdAt); // or issueDate
+                    return invDate.getMonth() === monthIndex &&
+                        invDate.getFullYear() === monthYear &&
+                        inv.status === 'paid';
+                })
+                .reduce((sum, inv) => sum + inv.total, 0);
+
+            return {
+                month: monthName,
+                revenue: monthRevenue
+            };
+        });
     };
 
     if (loading) {
@@ -248,8 +269,8 @@ const QuickActionButton = ({ label, icon: Icon, onClick, disabled = false }: any
         onClick={disabled ? undefined : onClick}
         disabled={disabled}
         className={`flex items-center justify-between p-4 border rounded-xl transition-all group ${disabled
-                ? 'bg-slate-800/30 border-slate-700/50 cursor-not-allowed opacity-50'
-                : 'bg-slate-800/50 hover:bg-slate-800 border-slate-700 hover:border-teal-500/50'
+            ? 'bg-slate-800/30 border-slate-700/50 cursor-not-allowed opacity-50'
+            : 'bg-slate-800/50 hover:bg-slate-800 border-slate-700 hover:border-teal-500/50'
             }`}
     >
         <div className="flex items-center gap-3">

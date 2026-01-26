@@ -1,90 +1,57 @@
 import { supabase } from '../lib/supabase';
-import { tenantService } from './tenancy/TenantService';
 
 export interface Notification {
     id: string;
     userId: string;
-    type: 'contact' | 'project' | 'message' | 'system';
+    type: 'message' | 'project' | 'payment' | 'system' | 'alert';
     title: string;
-    message: string;
+    message?: string;
     read: boolean;
-    createdAt: Date;
+    link?: string;
+    created_at: string;
 }
 
 export const notificationService = {
-    /**
-     * Get user notifications
-     */
-    async getNotifications(userId: string): Promise<{ notifications: Notification[]; error: string | null }> {
-        try {
-            const { data, error } = await supabase
-                .from('notifications')
-                .select('*')
-                .eq('user_id', userId)
-                .eq('tenant_id', tenantService.getCurrentTenantId())
-                .order('created_at', { ascending: false })
-                .limit(50);
+    async getNotifications(userId: string) {
+        const { data, error } = await supabase
+            .from('notifications')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
 
-            if (error) {
-                return { notifications: [], error: error.message };
-            }
-
-            const notifications: Notification[] = (data || []).map((n: any) => ({
-                id: n.id,
-                userId: n.user_id,
-                type: n.type,
-                title: n.title,
-                message: n.message,
-                read: n.read,
-                createdAt: new Date(n.created_at),
-            }));
-
-            return { notifications, error: null };
-        } catch (err) {
-            return { notifications: [], error: err instanceof Error ? err.message : 'Unknown error' };
-        }
+        return { notifications: data as Notification[] || [], error: error?.message };
     },
 
-    /**
-     * Mark notification as read
-     */
-    async markAsRead(notificationId: string): Promise<{ error: string | null }> {
-        try {
-            const { error } = await supabase
-                .from('notifications')
-                .update({ read: true })
-                .eq('id', notificationId)
-                .eq('tenant_id', tenantService.getCurrentTenantId());
+    async markAsRead(notificationId: string) {
+        const { error } = await supabase
+            .from('notifications')
+            .update({ read: true })
+            .eq('id', notificationId);
 
-            return { error: error ? error.message : null };
-        } catch (err) {
-            return { error: err instanceof Error ? err.message : 'Unknown error' };
-        }
+        return { error: error?.message };
     },
 
-    /**
-     * Mark all notifications as read
-     */
-    async markAllAsRead(userId: string): Promise<{ error: string | null }> {
-        try {
-            const { error } = await supabase
-                .from('notifications')
-                .update({ read: true })
-                .eq('user_id', userId)
-                .eq('tenant_id', tenantService.getCurrentTenantId())
-                .eq('read', false);
+    async markAllAsRead(userId: string) {
+        const { error } = await supabase
+            .from('notifications')
+            .update({ read: true })
+            .eq('user_id', userId);
 
-            return { error: error ? error.message : null };
-        } catch (err) {
-            return { error: err instanceof Error ? err.message : 'Unknown error' };
-        }
+        return { error: error?.message };
     },
 
-    /**
-     * Subscribe to real-time notifications
-     */
-    subscribeToNotifications(userId: string, callback: (notification: Notification) => void) {
-        const channel = supabase
+    async deleteNotification(notificationId: string) {
+        const { error } = await supabase
+            .from('notifications')
+            .delete()
+            .eq('id', notificationId);
+
+        return { error: error?.message };
+    },
+
+    // Subscribe to realtime notifications
+    subscribe(userId: string, callback: (notification: Notification) => void) {
+        return supabase
             .channel(`notifications:${userId}`)
             .on(
                 'postgres_changes',
@@ -92,43 +59,12 @@ export const notificationService = {
                     event: 'INSERT',
                     schema: 'public',
                     table: 'notifications',
-                    filter: `user_id=eq.${userId} AND tenant_id=eq.${tenantService.getCurrentTenantId()}`,
+                    filter: `user_id=eq.${userId}`
                 },
                 (payload: any) => {
-                    const n = payload.new;
-                    const notification: Notification = {
-                        id: n.id,
-                        userId: n.user_id,
-                        type: n.type,
-                        title: n.title,
-                        message: n.message,
-                        read: n.read,
-                        createdAt: new Date(n.created_at),
-                    };
-                    callback(notification);
+                    callback(payload.new as Notification);
                 }
             )
             .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    },
-
-    /**
-     * Delete notification
-     */
-    async deleteNotification(notificationId: string): Promise<{ error: string | null }> {
-        try {
-            const { error } = await supabase
-                .from('notifications')
-                .delete()
-                .eq('id', notificationId)
-                .eq('tenant_id', tenantService.getCurrentTenantId());
-
-            return { error: error ? error.message : null };
-        } catch (err) {
-            return { error: err instanceof Error ? err.message : 'Unknown error' };
-        }
-    },
+    }
 };

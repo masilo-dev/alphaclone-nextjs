@@ -54,7 +54,7 @@ export const MeetingChat: React.FC<MeetingChatProps> = ({ callObject, currentUse
                 schema: 'public',
                 table: 'meeting_chat_messages',
                 filter: `video_call_id=eq.${callId}`
-            }, (payload) => {
+            }, (payload: any) => {
                 const newMessage = payload.new as Message;
 
                 // Avoid duplicate if we were the sender (local optimistic update might exist)
@@ -140,8 +140,8 @@ export const MeetingChat: React.FC<MeetingChatProps> = ({ callObject, currentUse
                                 <div className="text-xs text-slate-400 mb-1">{msg.sender_name}</div>
                                 <div
                                     className={`px-3 py-2 rounded-lg max-w-[80%] break-words ${isMe
-                                            ? 'bg-teal-600 text-white'
-                                            : 'bg-slate-800 text-slate-200'
+                                        ? 'bg-teal-600 text-white'
+                                        : 'bg-slate-800 text-slate-200'
                                         }`}
                                 >
                                     {msg.message}

@@ -7,15 +7,7 @@ interface NotificationCenterProps {
 }
 
 // Inline type definition
-interface Notification {
-    id: string;
-    type: string;
-    title: string;
-    message?: string;
-    read: boolean;
-    link?: string;
-    created_at: string;
-}
+import { notificationService, Notification } from '../../services/notificationService';
 
 const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -24,29 +16,53 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
     useEffect(() => {
+        if (!userId) return;
+
         loadNotifications();
+
+        // Realtime subscription
+        const channel = notificationService.subscribe(userId, (newNotification) => {
+            setNotifications(prev => [newNotification, ...prev]);
+            setUnreadCount(prev => prev + 1);
+        });
+
+        return () => {
+            channel.unsubscribe();
+        };
     }, [userId]);
 
+    useEffect(() => {
+        setUnreadCount(notifications.filter(n => !n.read).length);
+    }, [notifications]);
+
     const loadNotifications = async () => {
-        // Mock data for now - replace with actual service call
-        const mockNotifications: Notification[] = [];
-        setNotifications(mockNotifications);
+        const { notifications: loaded, error } = await notificationService.getNotifications(userId);
+        if (loaded) {
+            setNotifications(loaded);
+        }
     };
 
     const handleMarkAsRead = async (notificationId: string) => {
+        // Optimistic update
         setNotifications(prev =>
             prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
         );
-        setUnreadCount(prev => Math.max(0, prev - 1));
+
+        await notificationService.markAsRead(notificationId);
     };
 
     const handleMarkAllAsRead = async () => {
+        // Optimistic update
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-        setUnreadCount(0);
+
+        await notificationService.markAllAsRead(userId);
     };
 
     const handleDelete = async (notificationId: string) => {
+        // Optimistic update
         setNotifications(prev => prev.filter(n => n.id !== notificationId));
+
+        await notificationService.deleteNotification(notificationId);
     };
 
     const getNotificationIcon = (type: string) => {
@@ -116,8 +132,8 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
                             <button
                                 onClick={() => setFilter('all')}
                                 className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${filter === 'all'
-                                        ? 'text-teal-400 border-b-2 border-teal-400'
-                                        : 'text-slate-400 hover:text-white'
+                                    ? 'text-teal-400 border-b-2 border-teal-400'
+                                    : 'text-slate-400 hover:text-white'
                                     }`}
                             >
                                 All
@@ -125,8 +141,8 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
                             <button
                                 onClick={() => setFilter('unread')}
                                 className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${filter === 'unread'
-                                        ? 'text-teal-400 border-b-2 border-teal-400'
-                                        : 'text-slate-400 hover:text-white'
+                                    ? 'text-teal-400 border-b-2 border-teal-400'
+                                    : 'text-slate-400 hover:text-white'
                                     }`}
                             >
                                 Unread ({unreadCount})

@@ -11,6 +11,7 @@ import {
     X,
     UserPlus
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface TeamPageProps {
     user: User;
@@ -57,9 +58,26 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
     };
 
     const handleInviteMember = async (email: string, role: string) => {
-        // In production, send invitation email
-        alert(`Invitation sent to ${email} with role: ${role}`);
-        setShowInviteModal(false);
+        if (!currentTenant) return;
+
+        try {
+            const { error } = await supabase
+                .from('tenant_invitations')
+                .insert({
+                    tenant_id: currentTenant.id,
+                    email,
+                    role,
+                    invited_by: user.id
+                });
+
+            if (error) throw error;
+
+            toast.success(`Invitation sent to ${email}`);
+            setShowInviteModal(false);
+        } catch (error: any) {
+            console.error('Invite failed:', error);
+            toast.error(error.message || 'Failed to send invitation');
+        }
     };
 
     const handleRemoveMember = async (userId: string) => {
