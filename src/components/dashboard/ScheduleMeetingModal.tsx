@@ -17,7 +17,8 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
     const [date, setDate] = useState('');
     const [time, setTime] = useState('');
     const [attendees, setAttendees] = useState<string[]>([]);
-    const [maxParticipants, setMaxParticipants] = useState(10);
+    const isAdmin = user.role === 'admin';
+    const [maxParticipants, setMaxParticipants] = useState(isAdmin ? 10 : 3);
     const [recordingEnabled, setRecordingEnabled] = useState(false);
     const [cancellationPolicyHours, setCancellationPolicyHours] = useState(3);
     const [allowClientCancellation, setAllowClientCancellation] = useState(true);
@@ -25,7 +26,6 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
     const [loading, setLoading] = useState(false);
     const [showAdvanced, setShowAdvanced] = useState(false);
 
-    const isAdmin = user.role === 'admin';
 
     useEffect(() => {
         if (isOpen) {
@@ -34,7 +34,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
             setDate('');
             setTime('');
             setAttendees([]);
-            setMaxParticipants(10);
+            setMaxParticipants(isAdmin ? 10 : 3);
             setRecordingEnabled(false);
             setCancellationPolicyHours(3);
             setAllowClientCancellation(true);

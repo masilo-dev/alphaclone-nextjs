@@ -106,6 +106,29 @@ export class VideoEngine {
     }
 
     /**
+     * Start local camera/mic without joining
+     */
+    async startCamera(): Promise<void> {
+        // Ensure initialized
+        if (!this.callObject) {
+            await this.initialize();
+        }
+
+        if (!this.callObject) {
+            throw new Error('VideoEngine not initialized');
+        }
+
+        try {
+            await this.callObject.startCamera({
+                startVideoOff: false,
+                startAudioOff: false
+            });
+        } catch (error) {
+            throw this.normalizeError(error);
+        }
+    }
+
+    /**
      * Join a video call
      */
     async join(config: VideoEngineConfig): Promise<void> {

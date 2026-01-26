@@ -59,6 +59,18 @@ export class VideoPlatform {
     }
 
     /**
+     * Start camera immediately (pre-join)
+     */
+    async startCamera(): Promise<void> {
+        try {
+            await this.engine.startCamera();
+        } catch (error) {
+            const normalized = this.errorHandler.handle(error, { action: 'startCamera' });
+            throw normalized;
+        }
+    }
+
+    /**
      * Join a video call
      */
     async join(config: VideoPlatformConfig): Promise<void> {

@@ -43,6 +43,7 @@ export interface UseVideoPlatformResult {
     sendChatMessage: (message: string) => Promise<void>;
     muteParticipant: (sessionId: string) => Promise<void>;
     removeParticipant: (sessionId: string) => Promise<void>;
+    startCamera: () => Promise<void>;
 
     // Config
     config: VideoConfiguration;
@@ -283,6 +284,21 @@ export function useVideoPlatform(): UseVideoPlatformResult {
         return participants.filter(p => !p.isLocal);
     }, [participants]);
 
+    /**
+     * Start camera immediately
+     */
+    const startCamera = useCallback(async () => {
+        const platform = platformRef.current;
+        if (!platform) return;
+
+        try {
+            setError(null);
+            await platform.startCamera();
+        } catch (err: any) {
+            setError(err);
+        }
+    }, []);
+
     return {
         // State
         isJoined,
@@ -298,6 +314,7 @@ export function useVideoPlatform(): UseVideoPlatformResult {
         // Actions
         join,
         leave,
+        startCamera,
         toggleAudio,
         toggleVideo,
         toggleScreenShare,

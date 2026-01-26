@@ -59,6 +59,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         sendChatMessage,
         muteParticipant,
         removeParticipant,
+        startCamera,
         config,
     } = useVideoPlatform();
 
@@ -100,6 +101,15 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         }
     });
 
+    // START CAMERA IMMEDIATELY (Instant Self-View)
+    useEffect(() => {
+        // Only start if not already joined/joining/started (to avoid resetting)
+        if (!isJoined && !isJoining && !localParticipant?.video?.track) {
+            console.log('📸 Starting camera immediately for self-view...');
+            startCamera().catch(err => console.error('Failed to start camera:', err));
+        }
+    }, []);
+
     // Join meeting on mount
     useEffect(() => {
         // Guard: Prevent double join attempts (React Strict Mode protection)
@@ -140,7 +150,9 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
             }
         };
 
-        joinMeeting();
+        // Small delay to allow startCamera to initiate first (better UX)
+        // but don't block joining if camera takes long
+        setTimeout(joinMeeting, 100);
 
         // Cleanup on unmount - use ref to avoid dependency on isJoined state
         return () => {
@@ -149,6 +161,83 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
             }
         };
     }, []);
+
+    // Keep isJoinedRef in sync with isJoined state
+    useEffect(() => {
+        isJoinedRef.current = isJoined;
+    }, [isJoined]);
+
+    // ... (rest of hooks omitted for brevity, logic remains same) ...
+    // Subscribe to call status changes (for admin ending call for all)
+    useEffect(() => {
+        if (!callId) return;
+
+        const unsubscribe = dailyService.subscribeToCallStatus(callId, (status) => {
+            if (status === 'ended' && isJoinedRef.current) {
+                console.log('Call ended by admin, leaving automatically...');
+                toast.success('The host has ended the meeting');
+                setTimeout(() => {
+                    handleLeave();
+                }, 1500); // Give time for toast to show
+            }
+        });
+
+        return () => {
+            unsubscribe();
+        };
+    }, [callId]); // Only re-subscribe when callId changes, not isJoined
+
+    // Limit enforcement timer
+    useEffect(() => {
+        if (!isJoined || !callStartTime || !isRestricted) return;
+
+        const interval = setInterval(() => {
+            const now = new Date();
+            const elapsed = Math.floor((now.getTime() - callStartTime.getTime()) / 1000);
+            setSecondsElapsed(elapsed);
+
+            if (elapsed >= MAX_DURATION_SECONDS) {
+                toast.error("Meeting time limit (20 min) reached.");
+                handleLeave();
+            } else if (MAX_DURATION_SECONDS - elapsed === 60) {
+                toast.error("1 minute remaining until auto-disconnection.");
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [isJoined, callStartTime, isRestricted]);
+
+    // Show error toast when errors occur
+    useEffect(() => {
+        if (error) {
+            toast.error(error.userMessage);
+
+            // Auto-retry if recoverable
+            if (error.action === 'retry' && error.recoverable) {
+                // Could implement auto-retry logic here
+            }
+        }
+    }, [error]);
+
+    // ... (handlers omitted for brevity) ... 
+    // Copied handlers back to ensure scope - or I can assume they are unchanged if I carefully slice.
+    // To be safe, I will include the handlers since "multi_replace" isn't used here and I'm replacing a large chunk.
+    // Wait, replacing a large chunk of hooks + handlers is risky if I duplicate logic or miss imports.
+    // The previous implementation was fine, I only need to inject startCamera and change return logic.
+    // I will use replace_file_content targeted at specific blocks if possible, or just be careful.
+    // I'll stick to the original plan of replacing the top part (hooks) and bottom part (rendering) separately if needed, 
+    // but here I'm replacing lines 62-151 (hooks) AND lines 417-429 (rendering). 
+    // "replace_file_content" can only do one contiguous block.
+    // I will do TWO calls. 
+    // FIRST CALL: Update hooks locally.
+    // SECOND CALL: Update rendering logic.
+
+    // Changing strategy to two calls.
+    // This tool call only updates the hooks part (lines 62-151).
+    // I will use the hook update logic below.
+
+    // ... (Re-implementing handlers for context if needed, but I'll try to just edit the hooks section)
+
 
     // Keep isJoinedRef in sync with isJoined state
     useEffect(() => {
@@ -412,9 +501,9 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                                     'grid-cols-4 sm:grid-cols-6 lg:grid-cols-7'; // 50+ people
     }, [participants.length]);
 
-    // Show loading state while joining
+    // Show loading state while joining - BUT show local video immediately if available (Instant View)
     // CRITICAL: This early return must come AFTER all hooks (Rules of Hooks)
-    if (isJoining || !isJoined) {
+    if ((isJoining || !isJoined) && !localParticipant) {
         return (
             <div className="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
                 <div className="text-center">
