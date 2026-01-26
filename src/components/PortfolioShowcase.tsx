@@ -106,12 +106,19 @@ const PortfolioShowcase: React.FC = () => {
 
                             {/* Image */}
                             <div className="relative h-48 overflow-hidden bg-gradient-to-br from-teal-500/20 to-violet-500/20">
-                                <img
-                                    src={project.image}
-                                    alt={project.title}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-60"></div>
+                                <a
+                                    href={project.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block w-full h-full"
+                                >
+                                    <img
+                                        src={project.image}
+                                        alt={project.title}
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-60"></div>
+                                </a>
                             </div>
 
                             {/* Content */}

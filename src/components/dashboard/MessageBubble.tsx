@@ -68,7 +68,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                                                 <a
                                                     href={att.url}
                                                     target="_blank"
-                                                    rel="noreferrer"
+                                                    rel="noopener noreferrer"
                                                     className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center text-white"
                                                 >
                                                     <Download size={20} />
@@ -78,7 +78,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                                             <a
                                                 href={att.url}
                                                 target="_blank"
-                                                rel="noreferrer"
+                                                rel="noopener noreferrer"
                                                 className={`flex items-center gap-3 p-3 rounded-lg border ${isOwn ? 'bg-blue-700/50 border-blue-500/30' : 'bg-white/5 border-white/10'} hover:bg-black/20 transition-colors`}
                                             >
                                                 <div className="p-2 bg-white/10 rounded-lg">

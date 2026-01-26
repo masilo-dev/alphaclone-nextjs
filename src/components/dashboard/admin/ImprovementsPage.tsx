@@ -313,6 +313,19 @@ const ImprovementsPage: React.FC = () => {
                                 >
                                     {selectedImprovement.page_url}
                                 </a>
+                                {selectedImprovement.screenshot_url && (
+                                    <>
+                                        <h3 className="text-sm font-semibold text-slate-400 mb-1 mt-4">Screenshot</h3>
+                                        <a
+                                            href={selectedImprovement.screenshot_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-teal-400 hover:underline text-sm"
+                                        >
+                                            View Screenshot
+                                        </a>
+                                    </>
+                                )}
                             </div>
                         </div>
 

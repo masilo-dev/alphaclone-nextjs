@@ -168,13 +168,12 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user }) => {
                                 <div className="flex items-center gap-2">
                                     {meeting.status === 'scheduled' || meeting.status === 'active' ? (
                                         <a
-                                            href={`/call/${meeting.id}`} // We will build this page
+                                            href={meeting.daily_room_url}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold rounded-lg text-sm flex items-center gap-2 transition-colors"
+                                            className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors"
                                         >
-                                            <Video className="w-4 h-4" />
-                                            Join Call
+                                            <Video className="w-4 h-4" /> Join Meeting
                                         </a>
                                     ) : (
                                         <span className="text-sm text-slate-500 italic">Ended</span>

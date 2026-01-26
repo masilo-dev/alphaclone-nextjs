@@ -55,7 +55,7 @@ const ManualMeetingLink: React.FC<ManualMeetingLinkProps> = ({ user, onJoinRoom 
                         Use Daily.co Room URL
                     </h3>
                     <p className="text-sm text-gray-300">
-                        Create a room at <a href="https://dashboard.daily.co/rooms" target="_blank" className="text-blue-400 underline">Daily.co Dashboard</a> and paste the URL here
+                        Create a room at <a href="https://dashboard.daily.co/rooms" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">Daily.co Dashboard</a> and paste the URL here
                     </p>
                 </div>
             </div>
@@ -110,7 +110,7 @@ const ManualMeetingLink: React.FC<ManualMeetingLinkProps> = ({ user, onJoinRoom 
                 <p className="text-xs text-gray-300">
                     <strong className="text-white">How to create a room:</strong>
                     <br />
-                    1. Go to <a href="https://dashboard.daily.co/rooms" target="_blank" className="text-blue-400 underline">Daily.co Dashboard</a>
+                    1. Go to <a href="https://dashboard.daily.co/rooms" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">Daily.co Dashboard</a>
                     <br />
                     2. Click "Create Room"
                     <br />
