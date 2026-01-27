@@ -52,7 +52,8 @@ export const bookingService = {
             }
 
             const { availability } = tenant.settings.booking;
-            const targetDate = new Date(dateStr);
+            // Fix: Use parse to get local date from YYYY-MM-DD string to avoid UTC shift issues
+            const targetDate = parse(dateStr, 'yyyy-MM-dd', new Date());
 
             // Check if day is allowed
             if (!availability.days.includes(targetDate.getDay())) {

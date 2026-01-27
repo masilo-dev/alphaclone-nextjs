@@ -33,6 +33,7 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
     const [isJoining, setIsJoining] = useState(true);
     const [callStartTime, setCallStartTime] = useState<Date | null>(null);
     const [showChat, setShowChat] = useState(false);
+    const [participantCount, setParticipantCount] = useState(1);
 
     useEffect(() => {
         let mounted = true;
@@ -79,9 +80,12 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
 
                 callObjectRef.current = callObject;
 
-                // Set up event listeners
+                // Set up event listeners BEFORE joining
                 callObject
-                    .on('joined-meeting', () => {
+                    .on('joined-meeting', (e) => {
+                        // Force Grid View immediately
+                        callObject.setActiveSpeakerMode(false);
+
                         if (mounted) {
                             setIsJoining(false);
                             setCallStartTime(new Date());
@@ -89,8 +93,20 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                             if (callId) {
                                 dailyService.startVideoCall(callId).catch(console.error);
                             }
-
+                            // Update count
+                            const participants = callObject.participants();
+                            setParticipantCount(Object.keys(participants).length);
                             toast.success('Connected Securely.');
+                        }
+                    })
+                    .on('participant-joined', () => {
+                        if (mounted && callObject) {
+                            setParticipantCount(Object.keys(callObject.participants()).length);
+                        }
+                    })
+                    .on('participant-left', () => {
+                        if (mounted && callObject) {
+                            setParticipantCount(Object.keys(callObject.participants()).length);
                         }
                     })
                     .on('left-meeting', async () => {
@@ -107,20 +123,17 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                     });
 
                 // 3. Join with Token
-                const { error } = await dailyService.joinRoom(
-                    callObject,
-                    roomUrl,
-                    user.name,
-                    token
-                );
+                // 3. Join with Token
+                // Force video/audio ON
+                await callObject.join({
+                    url: roomUrl,
+                    token,
+                    userName: user.name,
+                    startVideoOff: false,
+                    startAudioOff: false
+                });
 
-                if (error) {
-                    toast.error(`Failed to join: ${error}`);
-                    if (mounted) {
-                        setIsJoining(false);
-                        setTimeout(onLeave, 2000);
-                    }
-                }
+                // (Error handled by try/catch)
             } catch (err) {
                 console.error('Failed to initialize call:', err);
                 toast.error('Failed to initialize video uplink');
@@ -177,6 +190,16 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                 {/* Video Container */}
                 <div className="flex-1 relative">
                     <div ref={containerRef} className="w-full h-full" />
+
+                    {/* Waiting State Overlay */}
+                    {!isJoining && participantCount === 1 && (
+                        <div className="absolute top-4 left-4 z-10 bg-slate-900/80 backdrop-blur px-4 py-2 rounded-lg border border-teal-500/30 flex items-center gap-2 animate-pulse">
+                            <div className="w-2 h-2 bg-teal-500 rounded-full" />
+                            <span className="text-sm font-medium text-teal-100">Waiting for others to join...</span>
+                        </div>
+                    )}
+
+                    {/* Chat Toggle Button */}
 
                     {/* Chat Toggle Button */}
                     <button

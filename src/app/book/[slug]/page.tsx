@@ -59,7 +59,7 @@ export default function BookingLandingPage() {
     const { booking, branding } = tenant.settings;
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white p-6 md:p-12">
+        <div className="min-h-screen bg-slate-950 text-white p-4 md:p-12">
             <div className="max-w-3xl mx-auto space-y-12">
                 {/* Header */}
                 <div className="text-center space-y-4">
@@ -70,7 +70,7 @@ export default function BookingLandingPage() {
                             className="w-20 h-20 mx-auto rounded-full object-cover border-2 border-slate-800"
                         />
                     )}
-                    <h1 className="text-4xl font-bold">{tenant.name}</h1>
+                    <h1 className="text-2xl md:text-4xl font-bold">{tenant.name}</h1>
                     <p className="text-slate-400">Select a meeting type to schedule</p>
                 </div>
 
@@ -79,7 +79,7 @@ export default function BookingLandingPage() {
                     {booking.meetingTypes.map((type) => (
                         <Card
                             key={type.id}
-                            className="p-6 hover:border-teal-500/50 transition-all cursor-pointer group bg-slate-900/50 backdrop-blur-sm"
+                            className="p-4 md:p-6 hover:border-teal-500/50 transition-all cursor-pointer group bg-slate-900/50 backdrop-blur-sm"
                             onClick={() => router.push(`/book/${slug}/${type.id}`)}
                         >
                             <div className="flex justify-between items-center">

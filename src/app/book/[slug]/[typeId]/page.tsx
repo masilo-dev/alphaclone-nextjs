@@ -121,7 +121,7 @@ export default function BookingSlotPage() {
     const nextDays = Array.from({ length: 7 }).map((_, i) => addDays(startOfToday(), i));
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white p-6 md:p-12">
+        <div className="min-h-screen bg-slate-950 text-white p-4 md:p-12">
             <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
 
                 {/* Sidebar Info */}
@@ -131,7 +131,7 @@ export default function BookingSlotPage() {
                     </button>
                     <div>
                         <h2 className="text-slate-400 text-sm uppercase tracking-wider mb-2">Scheduling</h2>
-                        <h1 className="text-3xl font-bold mb-2">{meetingType.name}</h1>
+                        <h1 className="text-2xl md:text-3xl font-bold mb-2">{meetingType.name}</h1>
                         <div className="flex items-center gap-2 text-slate-400">
                             <span>⏱ {meetingType.duration} min</span>
                             <span>•</span>
@@ -152,7 +152,7 @@ export default function BookingSlotPage() {
                 </div>
 
                 {/* Main Content */}
-                <Card className="md:col-span-2 p-6 md:p-8 bg-slate-900 border-slate-800">
+                <Card className="md:col-span-2 p-4 md:p-8 bg-slate-900 border-slate-800">
                     <div className="space-y-8">
 
                         {/* 1. Date Picker (Horizontal) */}
