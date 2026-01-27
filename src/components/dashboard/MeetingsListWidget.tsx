@@ -92,25 +92,29 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
     };
 
     const handleJoinMeeting = (meeting: VideoCall) => {
-        if (meeting.daily_room_url) {
-            onJoin(meeting.daily_room_url, meeting.id);
-        } else {
-            toast.error('Room URL not available');
-        }
+        // Navigate to our secure, branded wrapper page
+        // window.location.href = `/meet/${meeting.id}`; // Force reload to ensure clean state
+        // OR use onJoin callback if it handles router push
+        // Let's assume onJoin does something else or allows custom nav. 
+        // Actually, to enforce "masking", we should probably navigate right here or ask parent to nav to /meet/[id]
+        // But the previous code used onJoin(url, id).
+        // If we want to mask, we must NOT use the raw URL in the browser bar.
+        // So we should navigate to `/meet/${meeting.id}`.
+        window.location.href = `/meet/${meeting.id}`;
     };
 
     const handleCopyLink = async (meeting: VideoCall) => {
-        if (!meeting.daily_room_name) {
+        if (!meeting.id) {
             toast.error('Meeting link not available');
             return;
         }
 
         try {
-            // Generate shareable link using the room name
-            const shareLink = `${window.location.origin}/meet/${meeting.daily_room_name}`;
+            // Generate shareable link using the INTERNAL ID (UUID), never the Daily room name
+            const shareLink = `${window.location.origin}/meet/${meeting.id}`;
             await navigator.clipboard.writeText(shareLink);
             setCopiedId(meeting.id);
-            toast.success('Meeting link copied!');
+            toast.success('Secure meeting link copied!');
             setTimeout(() => setCopiedId(null), 2000);
         } catch (err) {
             toast.error('Failed to copy link');
@@ -216,7 +220,7 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
                                                     <ExternalLink className="w-3 h-3 text-teal-400 shrink-0" />
                                                     <span className="text-xs text-gray-400 shrink-0">Link:</span>
                                                     <span className="text-[10px] sm:text-xs text-teal-400 font-mono truncate select-all">
-                                                        {window.location.origin}/meet/{m.daily_room_name}
+                                                        {window.location.origin}/meet/{m.id}
                                                     </span>
                                                 </div>
                                             </div>
