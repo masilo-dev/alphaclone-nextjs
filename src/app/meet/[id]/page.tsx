@@ -126,8 +126,7 @@ export default function MeetPage() {
                         name: 'Guest',
                         email: '',
                         role: 'client',
-                        created_at: '',
-                        updated_at: ''
+                        avatar: ''
                     }} // Fallback guest user if public
                     roomUrl={roomUrl}
                     callId={callId!}
