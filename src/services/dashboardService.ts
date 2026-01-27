@@ -220,7 +220,7 @@ export const preferencesService = {
     async updatePreferences(userId: string, preferences: Partial<UserPreferences>) {
         const { data, error } = await supabase
             .from('user_preferences')
-            .upsert({ user_id: userId, ...preferences })
+            .upsert({ user_id: userId, ...preferences }, { onConflict: 'user_id' })
             .select()
             .single();
 

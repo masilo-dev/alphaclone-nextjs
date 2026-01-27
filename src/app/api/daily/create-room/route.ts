@@ -7,10 +7,12 @@ export async function POST(req: Request) {
     console.debug('POST /api/daily/create-room called');
 
     if (!DAILY_API_KEY) {
-        console.error('DAILY_API_KEY is missing from environment variables');
+        console.error('❌ CRITICAL ERROR: DAILY_API_KEY is missing from environment variables');
+        // This log is essential for debugging in Vercel
+        console.log('Current Env Vars available:', Object.keys(process.env));
         return NextResponse.json({
             error: 'Daily API key not configured',
-            details: 'The DAILY_API_KEY environment variable is not set on the server.'
+            details: 'The DAILY_API_KEY environment variable is not set on the server. Please check Vercel project settings.'
         }, { status: 500 });
     } else {
         console.debug(`DAILY_API_KEY found. Length: ${DAILY_API_KEY.length}. Starts with: ${DAILY_API_KEY.substring(0, 4)}...Ends with: ${DAILY_API_KEY.substring(DAILY_API_KEY.length - 4)}`);
