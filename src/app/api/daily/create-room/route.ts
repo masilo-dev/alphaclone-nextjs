@@ -12,6 +12,8 @@ export async function POST(req: Request) {
             error: 'Daily API key not configured',
             details: 'The DAILY_API_KEY environment variable is not set on the server.'
         }, { status: 500 });
+    } else {
+        console.debug(`DAILY_API_KEY found. Length: ${DAILY_API_KEY.length}. Starts with: ${DAILY_API_KEY.substring(0, 4)}...Ends with: ${DAILY_API_KEY.substring(DAILY_API_KEY.length - 4)}`);
     }
 
     try {
