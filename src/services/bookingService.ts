@@ -84,10 +84,14 @@ export const bookingService = {
             const adminUser = users.find(u => u.role === 'owner' || u.role === 'admin');
 
             if (!adminUser) {
-                return { slots: [], error: 'No host available' };
+                console.warn(`[getAvailableSlots] No admin/owner found for tenant ${tenantId}`);
+                return { slots: [], error: 'No host available (Admin not found)' };
             }
 
+            console.log(`[getAvailableSlots] Host found: ${adminUser.userId}`);
+
             const { events } = await calendarService.getEvents(adminUser.userId, workStart, workEnd);
+            console.log(`[getAvailableSlots] Found ${events?.length || 0} existing events for host`);
 
             // Generate all possible slots
             const slots: BookingSlot[] = [];
@@ -111,12 +115,22 @@ export const bookingService = {
                         end: slotEnd.toISOString(),
                         available: true
                     });
+                } else {
+                    // create a debug log (optional, maybe too verbose for prod, but good for now)
+                    // console.log(`Slot ${currentSlot.toISOString()} blocked by event`);
                 }
 
                 // Interval: 30 mins defaults, or equal to duration? 
                 // Usually booking slots are every 15, 30, or 60 mins.
                 // Let's hardcode 30 min intervals for now for flexibility.
                 currentSlot = addMinutes(currentSlot, 30);
+            }
+
+            console.log(`[getAvailableSlots] Generated ${slots.length} available slots for date ${dateStr}`);
+
+            if (slots.length === 0) {
+                // Return a more descriptive error if no slots found to help debugging
+                return { slots: [], error: 'No slots available (Fully booked or constrained)' };
             }
 
             return { slots, error: null };

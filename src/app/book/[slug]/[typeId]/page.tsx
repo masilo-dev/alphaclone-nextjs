@@ -56,7 +56,14 @@ export default function BookingSlotPage() {
             meetingType.duration
         );
 
-        if (error) console.error(error); // Don't show critical error for no slots, just empty
+        if (error) {
+            console.error('[BookingSlotPage] Error loading slots:', error);
+            // Optionally set error state to show meaningful message if it's not just "no slots"
+            // For now, we rely on the specific "slots.length === 0" check in render
+        } else {
+            console.log('[BookingSlotPage] Slots loaded:', slots?.length);
+        }
+
         setSlots(slots || []);
         setLoadingSlots(false);
         setSelectedSlot(null); // Reset selection
@@ -138,7 +145,7 @@ export default function BookingSlotPage() {
                             <span>🎥 Video Call</span>
                         </div>
                     </div>
-                    <p className="text-slate-500 text-sm leading-relaxed">
+                    <p className="text-slate-500 text-sm leading-relaxed break-words">
                         {meetingType.description}
                     </p>
                     {tenant.settings.branding?.logo && (
@@ -166,7 +173,7 @@ export default function BookingSlotPage() {
                                             key={date.toISOString()}
                                             onClick={() => setSelectedDate(date)}
                                             className={`
-                                                flex flex-col items-center justify-center min-w-[4.5rem] p-3 rounded-xl border transition-all
+                                                flex flex-col items-center justify-center min-w-[3.5rem] p-3 rounded-xl border transition-all
                                                 ${isSelected
                                                     ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-900/20'
                                                     : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600 hover:bg-slate-800'}
@@ -190,7 +197,7 @@ export default function BookingSlotPage() {
                                     No slots available on this date.
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-3">
                                     {slots.map((slot, i) => (
                                         <button
                                             key={i}

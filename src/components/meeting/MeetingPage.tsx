@@ -4,7 +4,10 @@ import Daily, { DailyCall } from '@daily-co/daily-js';
 import { meetingAdapterService } from '../../services/meetingAdapterService';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
-import { Clock, AlertTriangle, Loader2, Video, LogOut } from 'lucide-react';
+import { Clock, AlertTriangle, Loader2 } from 'lucide-react';
+import { VideoLayout } from './VideoLayout';
+import { VideoControls } from './VideoControls';
+import { MeetingChat } from './MeetingChat';
 
 interface MeetingPageProps {
     user: User;
@@ -34,6 +37,12 @@ const MeetingPage: React.FC<MeetingPageProps> = ({ user }) => {
     const [timeRemaining, setTimeRemaining] = useState<number>(40 * 60); // 40 minutes in seconds
     const [isInMeeting, setIsInMeeting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // State for local media
+    const [muted, setMuted] = useState(false);
+    const [cameraOff, setCameraOff] = useState(false);
+    const [chatOpen, setChatOpen] = useState(false);
+    const [participantsOpen, setParticipantsOpen] = useState(false);
 
     // Refs
     const callObjectRef = useRef<DailyCall | null>(null);
@@ -105,35 +114,23 @@ const MeetingPage: React.FC<MeetingPageProps> = ({ user }) => {
 
             setMeetingId(result.meetingId!);
 
-            // Step 3: Initialize Daily.co iframe
-            if (!containerRef.current) {
-                setError('Failed to initialize video container');
-                return;
-            }
-
-            const callObject = Daily.createFrame(containerRef.current, {
-                showLeaveButton: true,
-                showFullscreenButton: true,
-                iframeStyle: {
-                    position: 'fixed',
-                    top: '0',
-                    left: '0',
-                    width: '100%',
-                    height: '100%',
-                    border: '0',
-                    zIndex: '40'
-                }
+            // Step 3: Initialize Daily.co (Custom Object Mode)
+            // Note: We use createCallObject instead of createFrame for custom UI
+            const callObject = Daily.createCallObject({
+                url: result.dailyUrl!,
+                // We don't pass containerRef because we aren't using iframe
             });
 
             callObjectRef.current = callObject;
 
             // Set up event listeners
             callObject
-                .on('joined-meeting', () => {
+                .on('joined-meeting', (e) => {
                     setIsJoining(false);
                     setIsInMeeting(true);
                     startTimeRef.current = new Date();
                     toast.success('Joined meeting successfully!');
+                    updateParticipants();
 
                     // Start 40-minute countdown
                     if (result.autoEndAt) {
@@ -143,6 +140,11 @@ const MeetingPage: React.FC<MeetingPageProps> = ({ user }) => {
                 .on('left-meeting', async () => {
                     await handleLeave();
                 })
+                .on('participant-joined', updateParticipants)
+                .on('participant-updated', updateParticipants)
+                .on('participant-left', updateParticipants)
+                .on('track-started', updateParticipants)
+                .on('track-stopped', updateParticipants)
                 .on('error', (error) => {
                     console.error('Daily error:', error);
                     toast.error(`Call error: ${error?.errorMsg || 'Unknown error'}`);
@@ -184,6 +186,23 @@ const MeetingPage: React.FC<MeetingPageProps> = ({ user }) => {
             toast.error('Failed to join meeting');
             router.push('/dashboard');
         }
+    };
+
+    // Helper to sync Daily participants to React state
+    const [participants, setParticipants] = useState<Record<string, any>>({});
+    const [localParticipant, setLocalParticipant] = useState<any>(null);
+
+    const updateParticipants = () => {
+        if (!callObjectRef.current) return;
+
+        const p = callObjectRef.current.participants();
+        setLocalParticipant(p.local);
+
+        const remote: Record<string, any> = {};
+        Object.keys(p).forEach(id => {
+            if (id !== 'local') remote[id] = p[id];
+        });
+        setParticipants(remote);
     };
 
     const startTimer = (autoEndAt: string) => {
@@ -346,58 +365,90 @@ const MeetingPage: React.FC<MeetingPageProps> = ({ user }) => {
         );
     }
 
+    // Initial media state sync
+    useEffect(() => {
+        if (localParticipant) {
+            setMuted(!localParticipant.audio);
+            setCameraOff(!localParticipant.video);
+        }
+    }, [localParticipant]);
+
     // Meeting in progress
+
     return (
-        <div className="fixed inset-0 bg-gray-900">
+        <div className="fixed inset-0 bg-gray-900 flex flex-col">
             {/* 40-Minute Timer Overlay */}
             {isInMeeting && (
-                <div className="absolute top-4 right-4 z-50 bg-black/80 backdrop-blur-md px-4 py-3 rounded-lg border border-white/10 shadow-2xl">
-                    <div className="flex items-center gap-3">
-                        <Clock className="w-5 h-5 text-slate-400" />
-                        <div>
-                            <p className="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Time Remaining</p>
-                            <div className={`font-mono text-xl font-bold ${getTimerColor()} ${timeRemaining < 300 ? 'animate-pulse' : ''}`}>
-                                {formatTime(timeRemaining)}
-                            </div>
-                        </div>
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-lg flex items-center gap-3">
+                    <Clock className="w-4 h-4 text-slate-400" />
+                    <div className={`font-mono text-sm font-bold ${getTimerColor()} ${timeRemaining < 300 ? 'animate-pulse' : ''}`}>
+                        {formatTime(timeRemaining)}
                     </div>
-                    {timeRemaining < 300 && (
-                        <p className="text-xs text-red-400 mt-2 animate-pulse">
-                            Meeting ending soon!
-                        </p>
-                    )}
                 </div>
             )}
 
-            {/* AlphaClone Branding Overlay */}
-            <div className="absolute top-4 left-4 z-50 bg-black/80 backdrop-blur-md px-4 py-3 rounded-lg border border-white/10 shadow-2xl">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-teal-500/20 rounded-lg">
-                        <Video className="w-5 h-5 text-teal-400" />
+            {/* Video Layout Area */}
+            <div className="flex-1 relative flex">
+                <VideoLayout
+                    callObject={callObjectRef.current}
+                    participants={participants}
+                    localParticipant={localParticipant}
+                />
+
+                {/* Chat Sidepanel */}
+                {chatOpen && (
+                    <div className="w-80 bg-slate-900 border-l border-slate-800 z-40 hidden md:block">
+                        <MeetingChat
+                            callObject={callObjectRef.current}
+                            currentUser={{ id: user.id, name: user.name }}
+                            callId={meetingId || undefined}
+                        />
                     </div>
-                    <div>
-                        <h2 className="text-white font-bold text-sm">{meetingInfo?.title || 'Meeting'}</h2>
-                        <p className="text-slate-400 text-xs">AlphaClone Systems</p>
-                    </div>
-                </div>
+                )}
             </div>
 
-            {/* Manual Leave Button */}
-            <button
-                onClick={handleLeave}
-                className="absolute bottom-6 right-6 z-50 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 shadow-2xl"
-                title="Leave Meeting"
-            >
-                <LogOut className="w-4 h-4" />
-                Leave Meeting
-            </button>
+            {/* Bottom Controls */}
+            {isInMeeting && (
+                <VideoControls
+                    callObject={callObjectRef.current}
+                    muted={muted}
+                    cameraOff={cameraOff}
+                    chatOpen={chatOpen}
+                    participantsOpen={participantsOpen}
+                    onToggleMute={() => {
+                        const newState = !muted;
+                        setMuted(newState);
+                        callObjectRef.current?.setLocalAudio(!newState);
+                    }}
+                    onToggleCamera={() => {
+                        const newState = !cameraOff;
+                        setCameraOff(newState);
+                        callObjectRef.current?.setLocalVideo(!newState);
+                    }}
+                    onToggleChat={() => setChatOpen(!chatOpen)}
+                    onToggleParticipants={() => setParticipantsOpen(!participantsOpen)}
+                    onLeave={handleLeave}
+                />
+            )}
 
-            {/* Daily.co iframe container - Embedded invisibly */}
-            <div
-                ref={containerRef}
-                className="w-full h-full"
-                style={{ zIndex: 40 }}
-            />
+            {/* Mobile Chat Drawer (if needed, or simple toggle) */}
+            {chatOpen && (
+                <div className="fixed inset-0 bg-black/50 z-50 md:hidden">
+                    <div className="absolute right-0 top-0 bottom-20 w-80 bg-slate-900">
+                        <MeetingChat
+                            callObject={callObjectRef.current}
+                            currentUser={{ id: user.id, name: user.name }}
+                            callId={meetingId || undefined}
+                        />
+                        <button
+                            onClick={() => setChatOpen(false)}
+                            className="absolute top-2 right-2 text-slate-400 p-2"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
