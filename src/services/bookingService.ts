@@ -51,7 +51,15 @@ export const bookingService = {
                 return { slots: [], error: 'Booking configuration invalid' };
             }
 
-            const { availability } = tenant.settings.booking;
+            let { availability } = tenant.settings.booking;
+
+            // Smart Default: If availability is not configured, default to Mon-Fri, 9am-5pm
+            if (!availability || !availability.days || availability.days.length === 0) {
+                availability = {
+                    days: [1, 2, 3, 4, 5], // Mon-Fri
+                    hours: { start: '09:00', end: '17:00' }
+                };
+            }
             // Fix: Use parse to get local date from YYYY-MM-DD string to avoid UTC shift issues
             const targetDate = parse(dateStr, 'yyyy-MM-dd', new Date());
 
@@ -109,7 +117,11 @@ export const bookingService = {
                     return (currentSlot < eventEnd && slotEnd > eventStart);
                 });
 
-                if (!isBlocked) {
+                // Smart Availability: Enforce 2-hour minimum lead time
+                // The user cannot book a slot sooner than 2 hours from RIGHT NOW.
+                const leadTimeCutoff = addMinutes(new Date(), 120);
+
+                if (!isBlocked && currentSlot > leadTimeCutoff) {
                     slots.push({
                         start: currentSlot.toISOString(),
                         end: slotEnd.toISOString(),
@@ -147,7 +159,7 @@ export const bookingService = {
         tenantId: string,
         meetingTypeId: string,
         startTime: string, // ISO
-        clientDetails: { name: string; email: string; notes?: string }
+        clientDetails: { name: string; email: string; phone?: string; topic?: string; notes?: string }
     ): Promise<{ bookingId: string | null; error: string | null }> {
         try {
             const tenant = await tenantService.getTenant(tenantId);
@@ -178,7 +190,12 @@ export const bookingService = {
             const { event, error: calError } = await calendarService.createEvent({
                 user_id: host.userId,
                 title: `${meetingType.name} - ${clientDetails.name}`,
-                description: `Client: ${clientDetails.name} (${clientDetails.email})\nNotes: ${clientDetails.notes || 'None'}\n\nVideo Link: ${call.daily_room_url}`,
+                description: `Client: ${clientDetails.name} (${clientDetails.email})
+Phone: ${clientDetails.phone || 'N/A'}
+Topic: ${clientDetails.topic || 'General Discussion'}
+Notes: ${clientDetails.notes || 'None'}
+
+Video Link: ${call.daily_room_url}`,
                 start_time: start.toISOString(),
                 end_time: addMinutes(start, meetingType.duration).toISOString(),
                 type: 'meeting',

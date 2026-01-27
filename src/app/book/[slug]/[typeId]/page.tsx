@@ -22,6 +22,8 @@ export default function BookingSlotPage() {
     // Form State
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
+    const [topic, setTopic] = useState('');
     const [notes, setNotes] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -79,7 +81,7 @@ export default function BookingSlotPage() {
                 tenant.id,
                 typeId,
                 selectedSlot.start,
-                { name, email, notes }
+                { name, email, phone, topic, notes }
             );
 
             if (error) throw new Error(error);
@@ -173,7 +175,7 @@ export default function BookingSlotPage() {
                                             key={date.toISOString()}
                                             onClick={() => setSelectedDate(date)}
                                             className={`
-                                                flex flex-col items-center justify-center min-w-[3.5rem] p-3 rounded-xl border transition-all
+                                                flex flex-col items-center justify-center min-w-[3rem] p-2 rounded-xl border transition-all
                                                 ${isSelected
                                                     ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-900/20'
                                                     : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600 hover:bg-slate-800'}
@@ -240,6 +242,31 @@ export default function BookingSlotPage() {
                                                 className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
                                                 value={email}
                                                 onChange={e => setEmail(e.target.value)}
+                                            />
+
+                                        </div>
+                                    </div>
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs text-slate-400">Phone Number</label>
+                                            <input
+                                                required
+                                                type="tel"
+                                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+                                                placeholder="+1 (555) 000-0000"
+                                                value={phone}
+                                                onChange={e => setPhone(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs text-slate-400">Topic of Discussion</label>
+                                            <input
+                                                required
+                                                type="text"
+                                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+                                                placeholder="What should we discuss?"
+                                                value={topic}
+                                                onChange={e => setTopic(e.target.value)}
                                             />
                                         </div>
                                     </div>
