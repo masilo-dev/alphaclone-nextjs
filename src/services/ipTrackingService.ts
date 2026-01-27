@@ -12,25 +12,12 @@ export interface IPLocation {
 export const ipTrackingService = {
     async getClientIP(): Promise<IPLocation | null> {
         try {
-            // Try primary service
-            const response = await fetch('https://ipapi.co/json/');
+            // Call our internal proxy to avoid CORS issues
+            const response = await fetch('/api/ip-location');
 
             if (!response.ok) {
-                // Fallback service (simplified)
-                try {
-                    const fallback = await fetch('https://api.ipify.org?format=json');
-                    const data = await fallback.json();
-                    return {
-                        ip: data.ip,
-                        city: 'Unknown',
-                        region: 'Unknown',
-                        country: 'Unknown',
-                        country_name: 'Unknown',
-                        org: 'Unknown'
-                    };
-                } catch (e) {
-                    return null;
-                }
+                console.warn('Unable to fetch IP location from internal proxy');
+                return null;
             }
 
             const data = await response.json();
@@ -38,7 +25,7 @@ export const ipTrackingService = {
                 ip: data.ip,
                 city: data.city,
                 region: data.region,
-                country: data.country_code, // ISO code
+                country: data.country_code || data.country, // Handle both formats
                 country_name: data.country_name,
                 org: data.org
             };

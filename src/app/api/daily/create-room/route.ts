@@ -5,6 +5,7 @@ const DAILY_API_URL = 'https://api.daily.co/v1';
 
 export async function POST(req: Request) {
     if (!DAILY_API_KEY) {
+        console.error('DAILY_API_KEY is missing from environment variables');
         return NextResponse.json({ error: 'Daily API key not configured' }, { status: 500 });
     }
 
