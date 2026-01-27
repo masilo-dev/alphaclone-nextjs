@@ -24,8 +24,12 @@ import {
   Copy,
   Clock,
   MessageSquare,
-  Video
+  Video,
+  ListChecks,
+  Share2
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import MilestoneManager from './dashboard/projects/MilestoneManager';
 import { Button, Card, Input, Modal } from './ui/UIComponents';
 import { CLIENT_NAV_ITEMS, ADMIN_NAV_ITEMS, TENANT_ADMIN_NAV_ITEMS, LOGO_URL } from '../constants';
 import { User, Project, ChatMessage, DashboardStat, GalleryItem, Invoice, ProjectStage } from '../types';
@@ -202,6 +206,10 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [architectData, setArchitectData] = useState<ArchitectData | null>(null);
   const [isArchitecting, setIsArchitecting] = useState(false);
   const [selectedProjectForTool, setSelectedProjectForTool] = useState<Project | null>(null);
+
+  // Milestone Management
+  const [milestoneModalOpen, setMilestoneModalOpen] = useState(false);
+  const [selectedProjectForMilestones, setSelectedProjectForMilestones] = useState<Project | null>(null);
 
   // -- ISOLATION LOGIC --
   const filteredProjects = user.role === 'admin'
@@ -801,6 +809,12 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [user.id, activeTab]);
 
   // -- RENDER CONTENT --
+  const handleShareProject = (projectId: string) => {
+    const url = `${window.location.origin}/p/${projectId}`;
+    navigator.clipboard.writeText(url);
+    toast.success('Public link copied to clipboard');
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case '/dashboard/conference':
@@ -1099,16 +1113,43 @@ const Dashboard: React.FC<DashboardProps> = ({
                           Call
                         </button>
                       </div>
-                      {user.role === 'admin' && p.status === 'Active' && (
-                        <button
-                          onClick={() => openContractGenerator(p)}
-                          className="w-full px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-xs rounded-lg border border-purple-500/20 transition-colors flex items-center justify-center gap-1 mb-3"
-                          title="Generate or edit contract"
-                        >
-                          <FileCheck className="w-3 h-3" />
-                          {p.contractStatus === 'Sent' || p.contractStatus === 'Signed' ? 'View Contract' : 'Generate Contract'}
-                        </button>
+                      {user.role === 'admin' && (
+                        <div className="space-y-3 mb-3">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                setSelectedProjectForMilestones(p);
+                                setMilestoneModalOpen(true);
+                              }}
+                              className="flex-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-700 transition-colors flex items-center justify-center gap-1"
+                              title="Manage Project Phases"
+                            >
+                              <ListChecks className="w-3 h-3" />
+                              Phases
+                            </button>
+                            <button
+                              onClick={() => handleShareProject(p.id)}
+                              className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs rounded-lg border border-blue-500/20 transition-colors flex items-center justify-center gap-1"
+                              title="Copy Public Link"
+                            >
+                              <Share2 className="w-3 h-3" />
+                            </button>
+                          </div>
+
+                          {p.status === 'Active' && (
+                            <button
+                              onClick={() => openContractGenerator(p)}
+                              className="w-full px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-xs rounded-lg border border-purple-500/20 transition-colors flex items-center justify-center gap-1"
+                              title="Generate or edit contract"
+                            >
+                              <FileCheck className="w-3 h-3" />
+                              {p.contractStatus === 'Sent' || p.contractStatus === 'Signed' ? 'View Contract' : 'Generate Contract'}
+                            </button>
+                          )}
+                        </div>
                       )}
+
+                      {/* Kept for reference but hidden/removed if above block covers it, but line 1102 was the start of the condition */}
                       {user.role === 'admin' ? (
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
@@ -1409,6 +1450,22 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
         ) : null}
+      </Modal>
+
+      {/* Milestone Manager Modal */}
+      <Modal
+        isOpen={milestoneModalOpen}
+        onClose={() => setMilestoneModalOpen(false)}
+        title={`Manage Phases: ${selectedProjectForMilestones?.name || 'Project'}`}
+      >
+        {selectedProjectForMilestones && (
+          <div className="max-h-[70vh] overflow-y-auto custom-scrollbar px-1">
+            <MilestoneManager
+              projectId={selectedProjectForMilestones.id}
+              onClose={() => setMilestoneModalOpen(false)}
+            />
+          </div>
+        )}
       </Modal>
 
       {/* Edit Project Modal */}

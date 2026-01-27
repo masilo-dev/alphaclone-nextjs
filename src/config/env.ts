@@ -37,7 +37,7 @@ function validateEnv() {
         VITE_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.superbase_anon_public_key || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoZWt6b2lvcXZ0d2V1Z2Vta3RuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMDcxNjIsImV4cCI6MjA4MDY4MzE2Mn0.vBx4tSM4L8Rh_VTzYCdvz9bMMyjcfkkvv9y_2vT02ek',
         VITE_GEMINI_API_KEY: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY,
         VITE_DAILY_DOMAIN: process.env.NEXT_PUBLIC_DAILY_DOMAIN || process.env.VITE_DAILY_DOMAIN,
-        VITE_STRIPE_PUBLIC_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || process.env.VITE_STRIPE_PUBLIC_KEY,
+        VITE_STRIPE_PUBLIC_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || process.env.VITE_STRIPE_PUBLIC_KEY || 'pk_live_51SboaICCIq5cPz4HCcYqts3FeOmMY8MlSPyO7UX9e7uINLUJB9keI1IxlPodQyWDgelusx6ZR6VnLiN18SojUwvg00T10A2mod',
         VITE_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.VITE_SENTRY_DSN,
     };
 

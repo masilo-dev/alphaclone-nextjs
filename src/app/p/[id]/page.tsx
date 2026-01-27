@@ -3,32 +3,39 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { projectService } from '@/services/projectService';
+import { milestoneService, Milestone } from '@/services/milestoneService';
 import { Project } from '@/types';
 import { Card } from '@/components/ui/UIComponents';
+import { CheckCircle2, Clock, Calendar } from 'lucide-react';
 
 export default function PublicProjectPage() {
     const params = useParams();
     const projectId = params?.id as string;
     const [project, setProject] = useState<Partial<Project> | null>(null);
+    const [milestones, setMilestones] = useState<Milestone[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (projectId) {
-            loadProject();
+            loadData();
         }
     }, [projectId]);
 
-    const loadProject = async () => {
+    const loadData = async () => {
         try {
-            const { project, error } = await projectService.getPublicProjectStatus(projectId);
-            if (error) {
-                setError(error);
-            } else {
-                setProject(project);
+            // Load Project
+            const { project, error: projectError } = await projectService.getPublicProjectStatus(projectId);
+            if (projectError) throw new Error(projectError);
+            setProject(project);
+
+            // Load Milestones
+            const { milestones, error: milestonesError } = await milestoneService.getMilestones(projectId);
+            if (!milestonesError) {
+                setMilestones(milestones);
             }
         } catch (err) {
-            setError('Failed to load project');
+            setError('Failed to load project details');
         } finally {
             setLoading(false);
         }
@@ -92,9 +99,9 @@ export default function PublicProjectPage() {
                         {/* Current Stage */}
                         <div className="grid md:grid-cols-2 gap-8 items-center">
                             <div className="space-y-4">
-                                <h3 className="text-lg font-semibold text-slate-300">Phase</h3>
+                                <h3 className="text-lg font-semibold text-slate-300">Current Phase</h3>
                                 <div className="text-3xl font-bold text-teal-400">
-                                    {project.currentStage}
+                                    {project.currentStage || 'In Progress'}
                                 </div>
                                 <div className="inline-flex items-center px-3 py-1 rounded bg-slate-800 text-slate-300 text-sm">
                                     Status: <span className="ml-2 text-white capitalize">{project.status}</span>
@@ -116,6 +123,65 @@ export default function PublicProjectPage() {
                         </div>
                     </div>
                 </Card>
+
+                {/* Milestones List */}
+                {milestones.length > 0 && (
+                    <div className="space-y-6">
+                        <h3 className="text-center text-xl font-bold text-white">Project Timeline</h3>
+                        <div className="grid gap-4">
+                            {milestones.map((m, index) => (
+                                <div
+                                    key={m.id}
+                                    className={`relative p-6 rounded-xl border transition-all ${m.status === 'completed'
+                                            ? 'bg-teal-500/5 border-teal-500/20'
+                                            : m.status === 'in_progress'
+                                                ? 'bg-blue-500/5 border-blue-500/20'
+                                                : 'bg-slate-900/50 border-slate-800'
+                                        }`}
+                                >
+                                    <div className="flex items-start gap-4">
+                                        <div className={`mt-1 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${m.status === 'completed'
+                                                ? 'bg-teal-500 text-white'
+                                                : m.status === 'in_progress'
+                                                    ? 'bg-blue-500 text-white animate-pulse'
+                                                    : 'bg-slate-800 text-slate-500'
+                                            }`}>
+                                            {m.status === 'completed' ? <CheckCircle2 className="w-5 h-5" /> : index + 1}
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2">
+                                                <h4 className={`text-lg font-semibold ${m.status === 'completed' ? 'text-teal-400' : 'text-white'
+                                                    }`}>
+                                                    {m.name}
+                                                </h4>
+                                                {m.dueDate && (
+                                                    <div className="flex items-center gap-1.5 text-xs font-mono text-slate-500 bg-slate-900/50 px-2.5 py-1 rounded-full w-fit">
+                                                        <Calendar className="w-3 h-3" />
+                                                        {new Date(m.dueDate).toLocaleDateString()}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {m.description && (
+                                                <p className="text-slate-400 text-sm leading-relaxed">
+                                                    {m.description}
+                                                </p>
+                                            )}
+
+                                            {m.completedAt && (
+                                                <div className="mt-3 text-xs text-teal-500/80 flex items-center gap-1">
+                                                    <CheckCircle2 className="w-3 h-3" />
+                                                    Completed on {new Date(m.completedAt).toLocaleDateString()}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Footer */}
                 <div className="text-center pt-8 border-t border-slate-800/50">
