@@ -45,10 +45,11 @@ export interface VideoCall {
     cancelled_by?: string;
     cancelled_at?: Date;
     cancellation_reason?: string;
+    description?: string;
+    is_public: boolean;
+    scheduled_at: Date;
     created_at: Date;
     updated_at: Date;
-    scheduled_at: Date;
-    description?: string;
 }
 
 class DailyService {
@@ -149,20 +150,11 @@ class DailyService {
         cancellationPolicyHours?: number;
         allowClientCancellation?: boolean;
         duration?: number;
+        isPublic?: boolean;
     }): Promise<{ call: VideoCall | null; error: string | null }> {
         try {
-            // Determine duration limit based on role
-            // Default: 30 minutes for Tenants, Unlimited (24h) for Admins
-            // We'll need to fetch the user's role properly here or pass it in. 
-            // For now, let's assume if it's not explicitly 'admin', we default to 30m.
-            // Ideally, we check `userService.getUserRole(hostId)`.
-
-            // NOTE: Current implementation assumes 'options' passed to this function could carry role info if needed,
-            // or we enforce it at the caller level.
-            // Let's set a default policy: 
-            const isEnterpriseOrAdmin = false; // TODO: Fetch from user service or context
-            const roleLimit = isEnterpriseOrAdmin ? 60 * 24 : 30; // 24 hours vs 30 mins
-            const durationLimit = data.duration || roleLimit;
+            // NOTE: Ideally we check user service for role
+            const durationLimit = data.duration || 1440; // Default to 24h if not specified
 
             // Create Daily room
             const { room, error: roomError } = await this.createRoom({
@@ -196,6 +188,7 @@ class DailyService {
                     chat_enabled: data.chatEnabled !== false,
                     cancellation_policy_hours: data.cancellationPolicyHours || 3,
                     allow_client_cancellation: data.allowClientCancellation !== false,
+                    is_public: data.isPublic || false,
                 })
                 .select()
                 .single();
@@ -212,6 +205,7 @@ class DailyService {
                 started_at: dbData.started_at ? new Date(dbData.started_at) : undefined,
                 ended_at: dbData.ended_at ? new Date(dbData.ended_at) : undefined,
                 cancelled_at: dbData.cancelled_at ? new Date(dbData.cancelled_at) : undefined,
+                is_public: dbData.is_public || false,
             };
 
             return { call, error: null };
@@ -243,6 +237,7 @@ class DailyService {
                 started_at: data.started_at ? new Date(data.started_at) : undefined,
                 ended_at: data.ended_at ? new Date(data.ended_at) : undefined,
                 cancelled_at: data.cancelled_at ? new Date(data.cancelled_at) : undefined,
+                is_public: data.is_public || false,
             };
 
             return { call, error: null };
@@ -281,6 +276,7 @@ class DailyService {
                 started_at: d.started_at ? new Date(d.started_at) : undefined,
                 ended_at: d.ended_at ? new Date(d.ended_at) : undefined,
                 cancelled_at: d.cancelled_at ? new Date(d.cancelled_at) : undefined,
+                is_public: d.is_public || false,
             }));
 
             return { calls, error: null };

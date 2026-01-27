@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { dailyService, VideoCall } from '../../../services/dailyService';
-import { Settings, Video, Link as LinkIcon, Calendar, Clock, User as UserIcon, Copy, ExternalLink, Plus } from 'lucide-react';
+import { Settings, Video, Link as LinkIcon, Calendar, Clock, User as UserIcon, Copy, ExternalLink, Plus, Share2 } from 'lucide-react';
 import { BookingSettings } from './BookingSettings';
 import { CreateMeetingModal } from '../../modals/CreateMeetingModal';
 import { format, isFuture, isPast } from 'date-fns';
@@ -179,6 +179,17 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                                 </div>
 
                                 <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => {
+                                            const url = `${window.location.origin}/call/${meeting.id}`;
+                                            navigator.clipboard.writeText(url);
+                                            alert('Join link copied to clipboard!');
+                                        }}
+                                        className={`p-2 rounded-lg transition-all ${meeting.is_public ? 'bg-teal-500/10 text-teal-400 hover:bg-teal-500/20' : 'bg-slate-800 text-slate-500'}`}
+                                        title={meeting.is_public ? 'Copy Public Join Link' : 'Meeting is Private'}
+                                    >
+                                        <Share2 className="w-5 h-5" />
+                                    </button>
                                     {meeting.status === 'scheduled' || meeting.status === 'active' ? (
                                         <Button
                                             onClick={() => {

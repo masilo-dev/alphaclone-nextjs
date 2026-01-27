@@ -10,6 +10,7 @@ export interface BusinessProject {
     dueDate?: string;
     progress: number;
     clientId?: string;
+    isPublic: boolean;
     createdAt: string;
     updatedAt: string;
 }
@@ -64,7 +65,8 @@ export const businessProjectService = {
                     assigned_to: project.assignedTo || [],
                     due_date: project.dueDate,
                     progress: project.progress || 0,
-                    client_id: project.clientId
+                    client_id: project.clientId,
+                    is_public: project.isPublic || false
                 })
                 .select()
                 .single();
@@ -81,6 +83,7 @@ export const businessProjectService = {
                 dueDate: data.due_date,
                 progress: data.progress || 0,
                 clientId: data.client_id,
+                isPublic: data.is_public || false,
                 createdAt: data.created_at,
                 updatedAt: data.updated_at
             };
@@ -106,6 +109,7 @@ export const businessProjectService = {
             if (updates.dueDate !== undefined) updateData.due_date = updates.dueDate;
             if (updates.progress !== undefined) updateData.progress = updates.progress;
             if (updates.clientId !== undefined) updateData.client_id = updates.clientId;
+            if (updates.isPublic !== undefined) updateData.is_public = updates.isPublic;
 
             updateData.updated_at = new Date().toISOString();
 
@@ -174,6 +178,42 @@ export const businessProjectService = {
         } catch (err: any) {
             console.error('Error fetching projects by status:', err);
             return { projects: [], error: err.message };
+        }
+    },
+
+    /**
+     * Get a public project by ID (no auth required)
+     */
+    async getPublicProject(projectId: string): Promise<{ project: BusinessProject | null; error: string | null }> {
+        try {
+            const { data, error } = await supabase
+                .from('business_projects')
+                .select('*')
+                .eq('id', projectId)
+                .eq('is_public', true)
+                .single();
+
+            if (error) throw error;
+
+            const project: BusinessProject = {
+                id: data.id,
+                tenantId: data.tenant_id,
+                name: data.name,
+                description: data.description,
+                status: data.status,
+                assignedTo: data.assigned_to || [],
+                dueDate: data.due_date,
+                progress: data.progress || 0,
+                clientId: data.client_id,
+                isPublic: data.is_public || false,
+                createdAt: data.created_at,
+                updatedAt: data.updated_at
+            };
+
+            return { project, error: null };
+        } catch (err: any) {
+            console.error('Error fetching public project:', err);
+            return { project: null, error: err.message };
         }
     }
 };

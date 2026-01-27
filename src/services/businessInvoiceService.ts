@@ -14,6 +14,7 @@ export interface BusinessInvoice {
     total: number;
     lineItems: InvoiceLineItem[];
     notes?: string;
+    isPublic: boolean;
     createdAt: string;
     updatedAt: string;
 }
@@ -53,6 +54,7 @@ export const businessInvoiceService = {
                 total: parseFloat(inv.total || 0),
                 lineItems: inv.line_items || [],
                 notes: inv.notes,
+                isPublic: inv.is_public || false,
                 createdAt: inv.created_at,
                 updatedAt: inv.updated_at
             }));
@@ -86,7 +88,8 @@ export const businessInvoiceService = {
                     tax: invoice.tax || 0,
                     total: invoice.total || 0,
                     line_items: invoice.lineItems || [],
-                    notes: invoice.notes
+                    notes: invoice.notes,
+                    is_public: invoice.isPublic || false
                 })
                 .select()
                 .single();
@@ -107,6 +110,7 @@ export const businessInvoiceService = {
                 total: parseFloat(data.total || 0),
                 lineItems: data.line_items || [],
                 notes: data.notes,
+                isPublic: data.is_public || false,
                 createdAt: data.created_at,
                 updatedAt: data.updated_at
             };
@@ -135,6 +139,7 @@ export const businessInvoiceService = {
             if (updates.total !== undefined) updateData.total = updates.total;
             if (updates.lineItems !== undefined) updateData.line_items = updates.lineItems;
             if (updates.notes !== undefined) updateData.notes = updates.notes;
+            if (updates.isPublic !== undefined) updateData.is_public = updates.isPublic;
 
             updateData.updated_at = new Date().toISOString();
 
@@ -212,5 +217,45 @@ export const businessInvoiceService = {
             tax: Math.round(tax * 100) / 100,
             total: Math.round(total * 100) / 100
         };
+    },
+
+    /**
+     * Get a public invoice by ID (no auth required)
+     */
+    async getPublicInvoice(invoiceId: string): Promise<{ invoice: BusinessInvoice | null; error: string | null }> {
+        try {
+            const { data, error } = await supabase
+                .from('business_invoices')
+                .select('*')
+                .eq('id', invoiceId)
+                .eq('is_public', true)
+                .single();
+
+            if (error) throw error;
+
+            const invoice: BusinessInvoice = {
+                id: data.id,
+                tenantId: data.tenant_id,
+                clientId: data.client_id,
+                projectId: data.project_id,
+                invoiceNumber: data.invoice_number,
+                issueDate: data.issue_date,
+                dueDate: data.due_date,
+                status: data.status,
+                subtotal: parseFloat(data.subtotal || 0),
+                tax: parseFloat(data.tax || 0),
+                total: parseFloat(data.total || 0),
+                lineItems: data.line_items || [],
+                notes: data.notes,
+                isPublic: data.is_public || false,
+                createdAt: data.created_at,
+                updatedAt: data.updated_at
+            };
+
+            return { invoice, error: null };
+        } catch (err: any) {
+            console.error('Error fetching public invoice:', err);
+            return { invoice: null, error: err.message };
+        }
     }
 };

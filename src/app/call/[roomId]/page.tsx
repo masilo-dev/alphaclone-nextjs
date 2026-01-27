@@ -21,17 +21,6 @@ export default function CallPage() {
         if (authLoading) return;
 
         const fetchCallDetails = async () => {
-            if (!user) {
-                // If public, we might allow joining without user (guest), 
-                // but for now let's assume system users or redirect to guest join if implemented.
-                // The implementation plan implies booking clients (guests) join too.
-                // For guests, we might not have 'user' context. 
-                // We'll handle logged-in users here. Guests might need a separate guest flow or auth prompt.
-                // Assuming logged-in for Admin requirement.
-                router.push(`/login?redirect=/call/${callId}`);
-                return;
-            }
-
             try {
                 // Check if it's a UUID (our DB ID) or a full URL
                 // We assume it's our DB ID from the route /call/[id]
@@ -43,9 +32,13 @@ export default function CallPage() {
                     return;
                 }
 
+                if (!user && !call.is_public) {
+                    // Redirect to login ONLY if not logged in AND call is private
+                    router.push(`/login?redirect=/call/${callId}`);
+                    return;
+                }
+
                 // If user is the host (admin), we might need a special token?
-                // dailyService.joinRoom handles token generation if needed if we extended it.
-                // For now, we just pass the URL.
                 setRoomUrl(call.daily_room_url || null);
                 setLoading(false);
 
@@ -88,12 +81,12 @@ export default function CallPage() {
 
     return (
         <div className="h-screen w-screen bg-slate-950 overflow-hidden">
-            {user && roomUrl && (
+            {roomUrl && (
                 <DailyVideoRoom
-                    user={user}
+                    user={user as any}
                     roomUrl={roomUrl}
                     callId={callId}
-                    onLeave={() => router.push('/dashboard/business/meetings')}
+                    onLeave={() => router.push(user ? '/dashboard/business/meetings' : '/')}
                 />
             )}
         </div>

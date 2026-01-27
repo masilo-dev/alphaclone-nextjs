@@ -11,7 +11,8 @@ import {
     Menu,
     CheckSquare,
     Bot,
-    TrendingUp
+    TrendingUp,
+    Video
 } from 'lucide-react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -206,6 +207,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
         { label: 'Leads', href: '/dashboard/leads', icon: TrendingUp },
         { label: 'Sales Agent', href: '/dashboard/sales-agent', icon: Bot },
         { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
+        { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
         { label: 'Projects', href: '/dashboard/business/projects', icon: FileText },
         { label: 'Calendar', href: '/dashboard/business/calendar', icon: Briefcase },
         { label: 'Messages', href: '/dashboard/business/messages', icon: Bell }, // Kept Bell icon as Messages

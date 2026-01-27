@@ -9,7 +9,10 @@ import {
     Calendar,
     Users as UsersIcon,
     MoreVertical,
-    Trash2
+    Trash2,
+    Share2,
+    Globe,
+    Lock
 } from 'lucide-react';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -193,6 +196,7 @@ const KanbanColumn = ({ column, projects, onDelete }: any) => {
                             key={project.id}
                             project={project}
                             onDelete={onDelete}
+                            onUpdate={() => window.location.reload()}
                         />
                     ))}
                     {projects.length === 0 && (
@@ -206,7 +210,20 @@ const KanbanColumn = ({ column, projects, onDelete }: any) => {
     );
 };
 
-const ProjectCard = ({ project, isDragging, onDelete }: any) => {
+const ProjectCard = ({ project, isDragging, onDelete, onUpdate }: any) => {
+    const copyShareLink = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const url = `${window.location.origin}/bp/${project.id}`;
+        navigator.clipboard.writeText(url);
+        alert('Public sharing link copied to clipboard!');
+    };
+
+    const togglePublic = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        await businessProjectService.updateProject(project.id, { isPublic: !project.isPublic });
+        if (onUpdate) onUpdate();
+    };
+
     return (
         <div
             className={`bg-slate-800 border border-slate-700 rounded-lg p-4 cursor-move hover:border-teal-500/50 transition-all ${isDragging ? 'opacity-50 rotate-2' : ''
@@ -214,15 +231,33 @@ const ProjectCard = ({ project, isDragging, onDelete }: any) => {
         >
             <div className="flex items-start justify-between mb-3">
                 <h4 className="font-medium text-sm">{project.name}</h4>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(project.id);
-                    }}
-                    className="p-1 hover:bg-red-500/10 rounded transition-all"
-                >
-                    <Trash2 className="w-3 h-3 text-red-400" />
-                </button>
+                <div className="flex gap-1">
+                    <button
+                        onClick={togglePublic}
+                        className={`p-1 rounded transition-all ${project.isPublic ? 'text-teal-400 hover:bg-teal-400/10' : 'text-slate-500 hover:bg-slate-500/10'}`}
+                        title={project.isPublic ? 'Publicly Shared' : 'Private'}
+                    >
+                        {project.isPublic ? <Globe className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                    </button>
+                    {project.isPublic && (
+                        <button
+                            onClick={copyShareLink}
+                            className="p-1 hover:bg-teal-500/10 rounded transition-all"
+                            title="Copy Public Link"
+                        >
+                            <Share2 className="w-3.5 h-3.5 text-teal-400" />
+                        </button>
+                    )}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(project.id);
+                        }}
+                        className="p-1 hover:bg-red-500/10 rounded transition-all"
+                    >
+                        <Trash2 className="w-3 h-3 text-red-400" />
+                    </button>
+                </div>
             </div>
 
             {project.description && (
@@ -269,7 +304,8 @@ const AddProjectModal = ({ clients, onClose, onAdd }: any) => {
         status: 'backlog' as any,
         dueDate: '',
         progress: 0,
-        clientId: ''
+        clientId: '',
+        isPublic: false
     });
 
     const handleSubmit = (e: React.FormEvent) => {

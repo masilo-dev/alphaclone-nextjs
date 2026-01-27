@@ -11,7 +11,10 @@ import {
     DollarSign,
     FileText,
     X,
-    Trash2
+    Trash2,
+    Share2,
+    Globe,
+    Lock
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 
@@ -218,6 +221,17 @@ const InvoiceCard = ({ invoice, clients, onDownload, onDelete }: any) => {
 
                     <div className="flex gap-2">
                         <button
+                            onClick={() => {
+                                const url = `${window.location.origin}/invoice/${invoice.id}`;
+                                navigator.clipboard.writeText(url);
+                                alert('Payment link copied to clipboard!');
+                            }}
+                            className={`p-2 rounded-lg transition-colors ${invoice.isPublic ? 'bg-teal-500/10 hover:bg-teal-500/20 text-teal-400' : 'bg-slate-800 text-slate-500'}`}
+                            title={invoice.isPublic ? 'Copy Payment Link' : 'Invoice is Private'}
+                        >
+                            <Share2 className="w-4 h-4" />
+                        </button>
+                        <button
                             onClick={() => onDownload(invoice)}
                             className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
                             title="Download PDF"
@@ -245,7 +259,8 @@ const CreateInvoiceModal = ({ clients, projects, onClose, onCreate }: any) => {
         issueDate: new Date().toISOString().split('T')[0],
         dueDate: '',
         lineItems: [{ description: '', quantity: 1, rate: 0, amount: 0 }],
-        notes: ''
+        notes: '',
+        isPublic: true
     });
 
     const addLineItem = () => {
@@ -382,6 +397,20 @@ const CreateInvoiceModal = ({ clients, projects, onClose, onCreate }: any) => {
                             rows={3}
                             className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
                         />
+                    </div>
+
+                    <div className="flex items-center gap-3 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                        <input
+                            type="checkbox"
+                            id="isPublicInv"
+                            checked={formData.isPublic}
+                            onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
+                            className="w-4 h-4 text-teal-500 bg-slate-950 border-slate-700 rounded focus:ring-teal-500"
+                        />
+                        <label htmlFor="isPublicInv" className="text-sm font-medium cursor-pointer">
+                            Enable Online Payment Link
+                            <p className="text-xs text-slate-500 font-normal">Clients can view and pay via this link without logging in</p>
+                        </label>
                     </div>
 
                     <div className="flex gap-3 pt-4">
