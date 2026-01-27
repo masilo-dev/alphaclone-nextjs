@@ -13,7 +13,7 @@ const SecurityDashboard: React.FC = () => {
     const [url, setUrl] = useState('');
     const [isScanning, setIsScanning] = useState(false);
     const [result, setResult] = useState<ScanResult | null>(null);
-    const [isPremium, setIsPremium] = useState(false);
+    const [scanHistory, setScanHistory] = useState<any[]>([]);
 
     useEffect(() => {
         if (tenantId) {
@@ -23,72 +23,24 @@ const SecurityDashboard: React.FC = () => {
 
     const loadLastScan = async () => {
         if (!tenantId) return;
-        const { data, error } = await supabase
-            .from('security_scans')
-            .select('*')
-            .eq('tenant_id', tenantId)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
-
-        if (data) {
-            setResult({
-                url: data.url,
-                timestamp: new Date(data.created_at),
-                score: data.score,
-                grade: data.grade,
-                checks: data.details.checks,
-                issues: data.details.issues
-            });
-        }
+        await loadScanHistory();
     };
 
-    const handlePurchase = async (type: 'one-time' | 'subscription') => {
-        setIsScanning(true);
-        try {
-            const user = await userService.getCurrentUser();
-            if (!user) {
-                toast.error('Please login to purchase a report');
-                return;
-            }
+    const loadScanHistory = async () => {
+        if (!tenantId) return;
+        const { scans } = await securityScannerService.getScanHistory(tenantId);
+        setScanHistory(scans);
 
-            const amount = type === 'one-time' ? 1.00 : 5.00;
-            const description = type === 'one-time'
-                ? `Security Audit Report for ${url}`
-                : `Monthly Security Monitoring for ${url}`;
-
-            // 1. Create Invoice
-            const { invoice, error: invError } = await paymentService.createInvoice({
-                user_id: user.id,
-                amount: amount,
-                currency: 'usd',
-                description: description,
-                items: [{
-                    description: description,
-                    quantity: 1,
-                    unit_price: amount,
-                    amount: amount
-                }],
-                due_date: new Date(Date.now() + 86400000).toISOString() // Tomorrow
+        if (scans.length > 0 && !result) {
+            const last = scans[0];
+            setResult({
+                url: last.url,
+                timestamp: new Date(last.created_at),
+                score: last.score,
+                grade: last.grade,
+                checks: last.details.checks,
+                issues: last.details.issues
             });
-
-            if (invError || !invoice) throw new Error(invError?.message || 'Failed to create invoice');
-
-            // 2. In production, we would trigger Stripe here
-            // Since this is a dev/test environment, we simulate success
-            toast.success('Processing payment...');
-
-            setTimeout(async () => {
-                await paymentService.markInvoicePaid(invoice.id, 'mock_stripe_id');
-                setIsPremium(true);
-                setIsScanning(false);
-                toast.success('Payment Successful! Report Unlocked.');
-            }, 2000);
-
-        } catch (error: any) {
-            console.error('Purchase failed:', error);
-            toast.error(error.message || 'Payment failed');
-            setIsScanning(false);
         }
     };
 
@@ -104,6 +56,7 @@ const SecurityDashboard: React.FC = () => {
             setResult(scanResult);
             if (tenantId) {
                 await securityScannerService.saveScanResult(tenantId, scanResult);
+                await loadScanHistory();
             }
         } catch (error) {
             console.error(error);
@@ -181,39 +134,10 @@ const SecurityDashboard: React.FC = () => {
                         <p className="text-slate-500 text-sm">Valid as of {result.timestamp.toLocaleTimeString()}</p>
                     </Card>
 
-                    {/* Detailed Checks - Locked Behind Paywall */}
+                    {/* Detailed Checks */}
                     <div className="lg:col-span-2 relative">
-                        {/* Blur Overlay if not Premium */}
-                        {!isPremium && (
-                            <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-10 rounded-xl flex flex-col items-center justify-center text-center p-8 border border-slate-700/50">
-                                <Lock className="w-12 h-12 text-teal-500 mb-4" />
-                                <h3 className="text-2xl font-bold text-white mb-2">Unlock Full Security Report</h3>
-                                <p className="text-slate-400 max-w-md mb-8">
-                                    Get detailed vulnerability insights, SSL validation, and actionable remediation steps.
-                                </p>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-lg">
-                                    <button
-                                        onClick={() => handlePurchase('one-time')}
-                                        className="group relative p-6 bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 hover:border-teal-500 rounded-xl transition-all text-left"
-                                    >
-                                        <div className="absolute top-0 right-0 bg-teal-500 text-slate-900 text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-lg">
-                                            BEST VALUE
-                                        </div>
-                                        <h4 className="font-bold text-white text-lg mb-1">$1.00 <span className="text-sm text-slate-400 font-normal">/ Report</span></h4>
-                                        <p className="text-sm text-slate-400">One-time full audit + PDF download</p>
-                                    </button>
-                                    <button
-                                        onClick={() => handlePurchase('subscription')}
-                                        className="p-6 bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 hover:border-teal-500 rounded-xl transition-all text-left"
-                                    >
-                                        <h4 className="font-bold text-white text-lg mb-1">$5.00 <span className="text-sm text-slate-400 font-normal">/ Monthly</span></h4>
-                                        <p className="text-sm text-slate-400">Daily auto-scans & monitoring</p>
-                                    </button>
-                                </div>
-                            </div>
-                        )}
 
-                        <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${!isPremium ? 'opacity-20 pointer-events-none select-none' : ''}`}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <CheckCard
                                 title="SSL/TLS Encryption"
                                 status={result.checks.ssl.status}
@@ -241,8 +165,8 @@ const SecurityDashboard: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Issues List - Only show if Premium */}
-                    {isPremium && result.issues.length > 0 && (
+                    {/* Issues List */}
+                    {result.issues.length > 0 && (
                         <Card className="lg:col-span-3 p-6 border-red-500/20 bg-red-500/5 animate-fade-in">
                             <h3 className="text-xl font-bold text-white mb-4 flex items-center">
                                 <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
@@ -258,6 +182,52 @@ const SecurityDashboard: React.FC = () => {
                             </ul>
                         </Card>
                     )}
+
+                    {/* Scan History */}
+                    <Card className="lg:col-span-3 p-6 border-slate-700 bg-slate-800/50">
+                        <h3 className="text-xl font-bold text-white mb-4">Scan History</h3>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="text-slate-500 text-sm border-b border-slate-700">
+                                        <th className="pb-3 pr-4">URL</th>
+                                        <th className="pb-3 px-4">Score</th>
+                                        <th className="pb-3 px-4">Grade</th>
+                                        <th className="pb-3 pl-4">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="text-sm text-slate-300">
+                                    {scanHistory.map((scan) => (
+                                        <tr key={scan.id} className="border-b border-slate-800/50 hover:bg-slate-700/20 cursor-pointer" onClick={() => {
+                                            setResult({
+                                                url: scan.url,
+                                                timestamp: new Date(scan.created_at),
+                                                score: scan.score,
+                                                grade: scan.grade,
+                                                checks: scan.details.checks,
+                                                issues: scan.details.issues
+                                            });
+                                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                                        }}>
+                                            <td className="py-4 pr-4 font-medium">{scan.url}</td>
+                                            <td className="py-4 px-4">{scan.score}</td>
+                                            <td className="py-4 px-4">
+                                                <span className={`font-bold ${getGradeColor(scan.grade)}`}>{scan.grade}</span>
+                                            </td>
+                                            <td className="py-4 pl-4 text-slate-500">
+                                                {new Date(scan.created_at).toLocaleDateString()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {scanHistory.length === 0 && (
+                                        <tr>
+                                            <td colSpan={4} className="py-8 text-center text-slate-500 italic">No previous scans found</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
                 </div>
             )}
 

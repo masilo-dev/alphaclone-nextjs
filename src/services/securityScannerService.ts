@@ -31,11 +31,12 @@ class SecurityScannerService {
         // Simulate network delay for realism
         await new Promise(resolve => setTimeout(resolve, 2500));
 
-        // Mock Logic based on URL (for demo purposes)
-        // In real app: fetch(PROXY_URL + url)
-
+        // Deterministic score based on URL length and protocol for demo consistency
         const isSecure = url.startsWith('https');
-        const score = isSecure ? Math.floor(Math.random() * (100 - 85) + 85) : Math.floor(Math.random() * (60 - 40) + 40);
+        const urlHash = url.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const score = isSecure
+            ? Math.floor(90 + (urlHash % 11)) // 90-100
+            : Math.floor(40 + (urlHash % 21)); // 40-60
 
         const result: ScanResult = {
             url,
@@ -64,8 +65,8 @@ class SecurityScannerService {
         };
 
         if (!isSecure) result.issues.push('Missing SSL Certificate');
-        if (score < 90) result.issues.push('Content-Security-Policy header missing');
-        if (score < 80) result.issues.push('Missing Strict-Transport-Security');
+        if (score < 95) result.issues.push('Content-Security-Policy header missing');
+        if (score < 85) result.issues.push('Missing Strict-Transport-Security');
 
         return result;
     }
@@ -80,7 +81,7 @@ class SecurityScannerService {
 
     async saveScanResult(tenantId: string, result: ScanResult) {
         const { error } = await supabase
-            .from('security_scans') // We would need to create this table, but for now we'll just log or store in local state/simulated
+            .from('security_scans')
             .insert({
                 tenant_id: tenantId,
                 url: result.url,
@@ -89,10 +90,19 @@ class SecurityScannerService {
                 details: result
             });
 
-        // Since the table might not exist in the user's DB yet, we silently handle error or just mock success
         if (error) {
-            console.warn('Could not save scan to DB (Table might be missing)', error);
+            console.error('Could not save scan to DB', error);
         }
+    }
+
+    async getScanHistory(tenantId: string): Promise<{ scans: any[]; error: any }> {
+        const { data, error } = await supabase
+            .from('security_scans')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .order('created_at', { ascending: false });
+
+        return { scans: data || [], error };
     }
 }
 

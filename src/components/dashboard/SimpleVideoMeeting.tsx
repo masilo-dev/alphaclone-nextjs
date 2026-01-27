@@ -3,6 +3,7 @@ import { Button } from '../ui/UIComponents';
 import { Video, Copy, Check, ExternalLink, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { User } from '../../types';
+import { dailyService } from '../../services/dailyService';
 
 interface SimpleVideoMeetingProps {
     user: User;
@@ -88,8 +89,21 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
         }
     };
 
-    const handleJoin = () => {
-        if (room) {
+    const handleJoin = async () => {
+        if (!room) return;
+
+        try {
+            // For the host (admin), we get an owner token
+            const { token } = await dailyService.getMeetingToken(room.name, user.name, true);
+
+            // Trigger the join room callback which Dashboard.tsx listens to
+            // This will open the CustomVideoRoom overlay
+            onJoinRoom(room.url);
+
+            toast.success('Joining secure meet...');
+        } catch (err) {
+            console.error('Failed to get token for join:', err);
+            // Still try to join even without token as fallback
             onJoinRoom(room.url);
         }
     };
@@ -102,24 +116,24 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
     // State 1: No meeting created yet
     if (!room) {
         return (
-            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-8 border-2 border-slate-700">
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-4 sm:p-8 border-2 border-slate-700">
                 <div className="text-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Video className="w-8 h-8 text-white" />
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-teal-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Video className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                     </div>
 
-                    <h3 className="text-2xl font-bold text-white mb-2">
+                    <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
                         Create Instant Meeting
                     </h3>
 
-                    <p className="text-gray-400 mb-6 max-w-md mx-auto">
-                        Click below to create a new meeting room. You'll get a shareable link that works for up to 10 participants.
+                    <p className="text-sm text-gray-400 mb-6 max-w-md mx-auto">
+                        Click below to create a new meeting room. You&apos;ll get a shareable link that works for up to 10 participants.
                     </p>
 
                     <Button
                         onClick={handleCreateMeeting}
                         disabled={creating}
-                        className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-500 hover:to-blue-500 text-lg px-8 py-3"
+                        className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-500 hover:to-blue-500 text-base sm:text-lg px-6 sm:px-8 py-2.5 sm:py-3 w-full sm:w-auto"
                     >
                         {creating ? (
                             <>

@@ -59,20 +59,23 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                     <h1 className="text-2xl font-bold">Meetings & Calls</h1>
                     <p className="text-slate-400">Manage your video calls and booking availability.</p>
                 </div>
-                <div className="flex gap-3">
-                    <Button onClick={() => setShowCreateModal(true)} className="gap-2 bg-teal-600 hover:bg-teal-700 text-white border-teal-600">
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                    <Button onClick={() => setShowCreateModal(true)} className="flex-1 sm:flex-none gap-2 bg-teal-600 hover:bg-teal-700 text-white border-teal-600 text-sm py-2">
                         <Plus className="w-4 h-4" />
-                        New Meeting
+                        <span className="hidden xs:inline">New Meeting</span>
+                        <span className="xs:hidden">New</span>
                     </Button>
                     {currentTenant?.settings.booking?.enabled && (
-                        <Button variant="outline" onClick={copyBookingLink} className="gap-2">
+                        <Button variant="outline" onClick={copyBookingLink} className="flex-1 sm:flex-none gap-2 text-sm py-2">
                             <Copy className="w-4 h-4" />
-                            Copy Booking Link
+                            <span className="hidden xs:inline">Copy Link</span>
+                            <span className="xs:hidden">Link</span>
                         </Button>
                     )}
-                    <Button onClick={() => setShowSettings(true)} className="gap-2">
+                    <Button onClick={() => setShowSettings(true)} variant="outline" className="flex-1 sm:flex-none gap-2 text-sm py-2">
                         <Settings className="w-4 h-4" />
-                        Configuration
+                        <span className="hidden xs:inline">Settings</span>
+                        <span className="xs:hidden">Config</span>
                     </Button>
                 </div>
             </div>

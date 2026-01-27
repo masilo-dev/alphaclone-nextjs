@@ -4,7 +4,7 @@ import { useTenant } from '../../contexts/TenantContext';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 
-type SubscriptionPlan = 'free' | 'starter' | 'professional' | 'enterprise';
+import { SubscriptionPlan } from '../../services/tenancy/types';
 
 interface PlanOption {
   id: SubscriptionPlan;
@@ -278,8 +278,8 @@ export default function CreateBusinessOnboarding() {
                     key={plan.id}
                     onClick={() => setSelectedPlan(plan.id)}
                     className={`relative p-6 rounded-xl border-2 transition-all text-left ${selectedPlan === plan.id
-                        ? 'border-teal-500 bg-teal-500/10 scale-105'
-                        : 'border-slate-700 bg-slate-900/50 hover:border-slate-600'
+                      ? 'border-teal-500 bg-teal-500/10 scale-105'
+                      : 'border-slate-700 bg-slate-900/50 hover:border-slate-600'
                       }`}
                   >
                     {plan.popular && (
@@ -363,10 +363,10 @@ function StepIndicator({ number, label, active, completed }: { number: number; l
   return (
     <div className="flex flex-col items-center gap-2">
       <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${completed
+        ? 'bg-teal-500 text-white'
+        : active
           ? 'bg-teal-500 text-white'
-          : active
-            ? 'bg-teal-500 text-white'
-            : 'bg-slate-700 text-slate-400'
+          : 'bg-slate-700 text-slate-400'
         }`}>
         {completed ? <Check className="w-5 h-5" /> : number}
       </div>

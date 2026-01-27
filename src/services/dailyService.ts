@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import Daily, { DailyCall } from '@daily-co/daily-js';
+import { tenantService } from './tenancy/TenantService';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 /**
@@ -115,7 +116,7 @@ class DailyService {
     /**
      * Get a meeting token for a room
      */
-    async getMeetingToken(roomName: string, userName: string, isOwner: boolean = false): Promise<{ token: string | null; error: string | null }> {
+    async getMeetingToken(roomName: string, userName: string, isOwner: boolean = false): Promise<{ token: string | null; roomUrl?: string | null; error: string | null }> {
         try {
             const response = await fetch('/api/daily/token', {
                 method: 'POST',
@@ -129,9 +130,9 @@ class DailyService {
             }
 
             const data = await response.json();
-            return { token: data.token, error: null };
+            return { token: data.token, roomUrl: data.roomUrl, error: null };
         } catch (err) {
-            return { token: null, error: err instanceof Error ? err.message : 'Failed to get token' };
+            return { token: null, roomUrl: null, error: err instanceof Error ? err.message : 'Failed to get token' };
         }
     }
 
@@ -153,8 +154,30 @@ class DailyService {
         isPublic?: boolean;
     }): Promise<{ call: VideoCall | null; error: string | null }> {
         try {
-            // NOTE: Ideally we check user service for role
-            const durationLimit = data.duration || 1440; // Default to 24h if not specified
+            // ENFORCE TRIAL LIMITS
+            const tenantId = tenantService.getCurrentTenantId();
+            const { data: tenantData } = await supabase
+                .from('tenants')
+                .select('subscription_status')
+                .eq('id', tenantId)
+                .single();
+
+            const isTrial = tenantData?.subscription_status === 'trial';
+
+            if (isTrial) {
+                const { count } = await supabase
+                    .from('video_calls')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('host_id', data.hostId);
+
+                const { TRIAL_LIMITS } = await import('./tenancy/types');
+
+                if (count && count >= TRIAL_LIMITS.MAX_MEETINGS) {
+                    return { call: null, error: `Trial limit reached: You can only host ${TRIAL_LIMITS.MAX_MEETINGS} meetings during your trial. Please upgrade to unlock unlimited meetings.` };
+                }
+            }
+
+            const durationLimit = isTrial ? 50 : (data.duration || 1440);
 
             // Create Daily room
             const { room, error: roomError } = await this.createRoom({

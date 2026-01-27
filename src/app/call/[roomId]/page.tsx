@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import DailyVideoRoom from '@/components/dashboard/DailyVideoRoom';
+import CustomVideoRoom from '@/components/dashboard/video/CustomVideoRoom';
 import { dailyService } from '@/services/dailyService';
 import { Loader2, AlertCircle } from 'lucide-react';
 
@@ -23,7 +23,6 @@ export default function CallPage() {
         const fetchCallDetails = async () => {
             try {
                 // Check if it's a UUID (our DB ID) or a full URL
-                // We assume it's our DB ID from the route /call/[id]
                 const { call, error: fetchError } = await dailyService.getVideoCall(callId);
 
                 if (fetchError || !call) {
@@ -33,12 +32,10 @@ export default function CallPage() {
                 }
 
                 if (!user && !call.is_public) {
-                    // Redirect to login ONLY if not logged in AND call is private
                     router.push(`/login?redirect=/call/${callId}`);
                     return;
                 }
 
-                // If user is the host (admin), we might need a special token?
                 setRoomUrl(call.daily_room_url || null);
                 setLoading(false);
 
@@ -81,12 +78,13 @@ export default function CallPage() {
 
     return (
         <div className="h-screen w-screen bg-slate-950 overflow-hidden">
-            {roomUrl && (
-                <DailyVideoRoom
-                    user={user as any}
+            {roomUrl && user && (
+                <CustomVideoRoom
+                    user={user}
                     roomUrl={roomUrl}
                     callId={callId}
-                    onLeave={() => router.push(user ? '/dashboard/business/meetings' : '/')}
+                    onLeave={() => router.push(user ? '/dashboard' : '/')}
+                    showSidebar={false}
                 />
             )}
         </div>

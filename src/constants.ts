@@ -107,7 +107,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
   { label: 'Invoices & Billing', href: '/dashboard/business/billing', icon: DollarSign },
   { label: 'Reports', href: '/dashboard/business/reports', icon: BarChart3 },
-  { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },
+  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
 export const ADMIN_STATS: DashboardStat[] = [

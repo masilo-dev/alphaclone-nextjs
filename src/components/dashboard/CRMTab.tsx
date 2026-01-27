@@ -112,7 +112,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
             avatar: client.avatar,
             project: clientProject,
             status: clientProject ? clientProject.status : 'No Active Project',
-            value: clientProject ? '$12,500' : '$0' // Mock value or calculate from invoices
+            value: clientProject ? `$${(clientProject.budget || 0).toLocaleString()}` : '$0'
         };
     });
 

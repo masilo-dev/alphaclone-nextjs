@@ -78,6 +78,44 @@ export const leadService = {
     async addLead(lead: Partial<Lead>): Promise<{ lead: Lead | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
+
+            // ENFORCE TRIAL LIMITS
+            const { data: tenantData } = await supabase
+                .from('tenants')
+                .select('subscription_status')
+                .eq('id', tenantId)
+                .single();
+
+            const isTrial = tenantData?.subscription_status === 'trial';
+
+            if (isTrial) {
+                const { TRIAL_LIMITS } = await import('./tenancy/types');
+
+                // Check total limit
+                const { count: totalCount } = await supabase
+                    .from('leads')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('tenant_id', tenantId);
+
+                if (totalCount && totalCount >= TRIAL_LIMITS.MAX_TOTAL_LEADS) {
+                    return { lead: null, error: `Trial limit reached: You can only have a total of ${TRIAL_LIMITS.MAX_TOTAL_LEADS} leads during your trial. Please upgrade to unlock more.` };
+                }
+
+                // Check daily limit
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                const { count: dailyCount } = await supabase
+                    .from('leads')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('tenant_id', tenantId)
+                    .gte('created_at', today.toISOString());
+
+                if (dailyCount && dailyCount >= TRIAL_LIMITS.MAX_LEADS_PER_DAY) {
+                    return { lead: null, error: `Daily trial limit reached: You can only add ${TRIAL_LIMITS.MAX_LEADS_PER_DAY} leads per day during your trial. Please upgrade for unlimited daily leads.` };
+                }
+            }
+
             const { data: userData } = await supabase.auth.getUser();
 
             const dbPayload = {
@@ -133,6 +171,52 @@ export const leadService = {
     async addBulkLeads(leads: Partial<Lead>[]): Promise<{ count: number; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
+
+            // ENFORCE TRIAL LIMITS
+            const { data: tenantData } = await supabase
+                .from('tenants')
+                .select('subscription_status')
+                .eq('id', tenantId)
+                .single();
+
+            const isTrial = tenantData?.subscription_status === 'trial';
+
+            if (isTrial) {
+                const { TRIAL_LIMITS } = await import('./tenancy/types');
+
+                // Check total limit
+                const { count: totalCount } = await supabase
+                    .from('leads')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('tenant_id', tenantId);
+
+                const remainingTotal = TRIAL_LIMITS.MAX_TOTAL_LEADS - (totalCount || 0);
+                if (remainingTotal <= 0) {
+                    return { count: 0, error: `Trial limit reached: You can only have a total of ${TRIAL_LIMITS.MAX_TOTAL_LEADS} leads during your trial.` };
+                }
+
+                // Check daily limit
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                const { count: dailyCount } = await supabase
+                    .from('leads')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('tenant_id', tenantId)
+                    .gte('created_at', today.toISOString());
+
+                const remainingDaily = TRIAL_LIMITS.MAX_LEADS_PER_DAY - (dailyCount || 0);
+                if (remainingDaily <= 0) {
+                    return { count: 0, error: `Daily trial limit reached: You can only add ${TRIAL_LIMITS.MAX_LEADS_PER_DAY} leads per day during your trial.` };
+                }
+
+                // Cap the bulk import if it exceeds remaining trial limits
+                const allowedLeadsCount = Math.min(remainingTotal, remainingDaily);
+                if (leads.length > allowedLeadsCount) {
+                    leads = leads.slice(0, allowedLeadsCount);
+                }
+            }
+
             const { data: userData } = await supabase.auth.getUser();
             const ownerId = userData.user?.id;
 

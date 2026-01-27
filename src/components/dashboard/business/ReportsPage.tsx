@@ -63,13 +63,27 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
             });
 
             // Generate revenue data (last 6 months)
-            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-            const revenue = months.map((month, index) => ({
-                month,
-                revenue: Math.random() * 15000 + 5000,
-                expenses: Math.random() * 8000 + 2000
-            }));
-            setRevenueData(revenue);
+            const last6Months = Array.from({ length: 6 }, (_, i) => {
+                const d = new Date();
+                d.setMonth(d.getMonth() - (5 - i));
+                return {
+                    month: d.toLocaleString('default', { month: 'short' }),
+                    year: d.getFullYear(),
+                    monthIndex: d.getMonth(),
+                    revenue: 0,
+                    expenses: 0 // No expenses table yet, showing 0
+                };
+            });
+
+            invoices.filter(inv => inv.status === 'paid').forEach(inv => {
+                const invDate = new Date(inv.issueDate);
+                const monthEntry = last6Months.find(m => m.monthIndex === invDate.getMonth() && m.year === invDate.getFullYear());
+                if (monthEntry) {
+                    monthEntry.revenue += inv.total;
+                }
+            });
+
+            setRevenueData(last6Months);
 
             // Client stage distribution
             const stages = ['lead', 'prospect', 'customer', 'lost'];

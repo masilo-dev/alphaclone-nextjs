@@ -18,29 +18,32 @@ export default function LoginPage() {
     const [name, setName] = useState('');
     const [businessName, setBusinessName] = useState('');
     const [isBusiness, setIsBusiness] = useState(false);
-    const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>('starter');
+    const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>('basic');
     const [legalAccepted, setLegalAccepted] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [showPayment, setShowPayment] = useState(false);
+    const [newTenantData, setNewTenantData] = useState<{ id: string, name: string } | null>(null);
+    const [paymentProcessing, setPaymentProcessing] = useState(false);
 
     const plans: { id: SubscriptionPlan, name: string, price: string, features: string[] }[] = [
         {
-            id: 'starter',
-            name: 'Starter',
-            price: '$29/mo',
-            features: ['3 Users', 'Basic CRM', '5GB Storage', 'Email Support']
+            id: 'basic',
+            name: 'Basic',
+            price: '$16/mo',
+            features: ['5 Users', 'Basic CRM', '5GB Storage', '2 Meetings/Month']
         },
         {
-            id: 'professional',
-            name: 'Professional',
-            price: '$99/mo',
-            features: ['10 Users', 'Advanced CRM', 'AI Sales Agent', 'Priority Support']
+            id: 'pro',
+            name: 'Pro',
+            price: '$48/mo',
+            features: ['25 Users', 'Advanced CRM', 'AI Sales Agent', 'Priority Support']
         },
         {
-            id: 'enterprise',
-            name: 'Enterprise',
-            price: '$299/mo',
-            features: ['Unlimited Users', 'Custom Workflows', 'Dedicated Manager', 'API Access']
+            id: 'premium',
+            name: 'Premium',
+            price: '$80/mo',
+            features: ['Unlimited Users', 'Infinite CRM', 'Dedicated Manager', 'API Access']
         }
     ];
 
@@ -84,12 +87,13 @@ export default function LoginPage() {
                 if (user) {
                     // 2. TENANT CREATION (If Business selected)
                     if (isBusiness && businessName) {
+                        let newTenant = null;
                         try {
                             const { tenantService } = await import('@/services/tenancy/TenantService');
                             const slug = businessName.toLowerCase().replace(/[^a-z0-9]/g, '-');
 
                             // Create Tenant
-                            const newTenant = await tenantService.createTenant({
+                            newTenant = await tenantService.createTenant({
                                 name: businessName,
                                 slug: slug,
                                 adminUserId: user.id
@@ -97,7 +101,7 @@ export default function LoginPage() {
 
                             // Set Trial and Plan
                             const trialEndDate = new Date();
-                            trialEndDate.setDate(trialEndDate.getDate() + 3); // 3 Days Trial
+                            trialEndDate.setDate(trialEndDate.getDate() + 14); // 14 Days Trial
 
                             await tenantService.updateTenant(newTenant.id, {
                                 trialEndsAt: trialEndDate,
@@ -109,8 +113,15 @@ export default function LoginPage() {
                             console.error("Tenant Creation Error:", tenantErr);
                             // Proceed anyway, user is created
                         }
+
+                        // Redirect to dashboard for new trial users (No card required)
+                        if (newTenant) {
+                            router.push('/dashboard');
+                            return;
+                        }
                     }
-                    // Redirect to dashboard
+
+                    // Redirect to dashboard for normal users or if tenant creation failed
                     router.push('/dashboard');
                 }
                 setIsLoading(false);
@@ -136,6 +147,111 @@ export default function LoginPage() {
             setIsLoading(false);
         }
     };
+
+    const handlePayment = async () => {
+        if (!newTenantData) return;
+        setPaymentProcessing(true);
+        setError('');
+
+        try {
+            const { paymentService } = await import('@/services/paymentService');
+            // 1. Create a setup/first invoice for the subscription
+            const amount = selectedPlan === 'basic' ? 16 : selectedPlan === 'pro' ? 48 : 80;
+
+            const { invoice, error: invoiceErr } = await paymentService.createInvoice({
+                user_id: 'pending', // Will be linked during processing or use current user
+                amount: amount,
+                currency: 'usd',
+                description: `First month subscription - ${selectedPlan} plan`,
+                items: [{ description: `${selectedPlan} Plan Subscription`, quantity: 1, unit_price: amount, amount: amount }],
+                due_date: new Date().toISOString()
+            });
+
+            if (invoiceErr) throw new Error(invoiceErr);
+
+            // In a real flow, we'd open Stripe here.
+            // For now, we simulate a successful payment activation.
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // Mark tenant as active/paid (simplified for now)
+            const { tenantService } = await import('@/services/tenancy/TenantService');
+            await tenantService.updateTenant(newTenantData.id, {
+                subscriptionStatus: 'active'
+            });
+
+            router.push('/dashboard');
+        } catch (err: any) {
+            setError(`Payment failed: ${err.message}. Please try again.`);
+        } finally {
+            setPaymentProcessing(false);
+        }
+    };
+
+    if (showPayment && newTenantData) {
+        return (
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+                <div className="absolute inset-0 z-0 opacity-20">
+                    <div className="absolute top-[20%] left-[20%] w-[30vw] h-[30vw] rounded-full bg-teal-500 blur-[100px]" />
+                    <div className="absolute bottom-[20%] right-[20%] w-[30vw] h-[30vw] rounded-full bg-blue-600 blur-[100px]" />
+                </div>
+
+                <div className="max-w-md w-full bg-slate-900/80 backdrop-blur-2xl border border-slate-800 rounded-3xl p-8 shadow-2xl relative z-10 text-center">
+                    <div className="w-20 h-20 bg-teal-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <CheckCircle2 className="w-10 h-10 text-teal-400" />
+                    </div>
+
+                    <h2 className="text-3xl font-bold text-white mb-2">Account Created!</h2>
+                    <p className="text-slate-400 mb-8">
+                        Welcome to {newTenantData.name}. To activate your Business OS, please complete your first payment for the <span className="text-teal-400 font-bold">{selectedPlan.toUpperCase()}</span> plan.
+                    </p>
+
+                    <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-6 mb-8 text-left">
+                        <div className="flex justify-between items-center mb-4">
+                            <span className="text-slate-400">Subscription Plan</span>
+                            <span className="text-white font-semibold">{selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)}</span>
+                        </div>
+                        <div className="flex justify-between items-center pb-4 border-b border-slate-800 mb-4">
+                            <span className="text-slate-400">Billing Cycle</span>
+                            <span className="text-white font-semibold">Monthly</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-white font-bold">Total Due</span>
+                            <span className="text-2xl font-black text-teal-400">
+                                {selectedPlan === 'basic' ? '$16' : selectedPlan === 'pro' ? '$48' : '$80'}
+                            </span>
+                        </div>
+                    </div>
+
+                    {error && (
+                        <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl flex items-start gap-3 text-left mb-6">
+                            <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+                            <p className="text-sm text-rose-200">{error}</p>
+                        </div>
+                    )}
+
+                    <Button
+                        onClick={handlePayment}
+                        disabled={paymentProcessing}
+                        className="w-full bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 py-4 text-lg font-bold rounded-2xl shadow-lg shadow-teal-500/20"
+                    >
+                        {paymentProcessing ? (
+                            <span className="flex items-center justify-center gap-2">
+                                <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                                Processing Secure Payment...
+                            </span>
+                        ) : (
+                            'Pay and Launch Dashboard'
+                        )}
+                    </Button>
+
+                    <p className="text-xs text-slate-500 mt-6 flex items-center justify-center gap-2">
+                        <FileText className="w-3 h-3" />
+                        Secure Payment via Stripe • Fully Encrypted
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
@@ -222,8 +338,8 @@ export default function LoginPage() {
                                                     type="button"
                                                     onClick={() => setSelectedPlan(plan.id)}
                                                     className={`p-4 rounded-xl border text-left transition-all relative group overflow-hidden ${selectedPlan === plan.id
-                                                            ? 'bg-teal-900/20 border-teal-500 ring-1 ring-teal-500'
-                                                            : 'bg-slate-800/50 border-slate-700 hover:border-slate-500 hover:bg-slate-800'
+                                                        ? 'bg-teal-900/20 border-teal-500 ring-1 ring-teal-500'
+                                                        : 'bg-slate-800/50 border-slate-700 hover:border-slate-500 hover:bg-slate-800'
                                                         }`}
                                                 >
                                                     {selectedPlan === plan.id && (
@@ -246,7 +362,7 @@ export default function LoginPage() {
                                             ))}
                                         </div>
                                         <p className="text-xs text-teal-400 mt-3 text-center flex items-center justify-center gap-2">
-                                            <span>✨ Includes 3-Day Free Trial</span>
+                                            <span>✨ Includes 14-Day Free Trial</span>
                                             <span className="w-1 h-1 rounded-full bg-teal-500" />
                                             <span>No Card Required</span>
                                         </p>

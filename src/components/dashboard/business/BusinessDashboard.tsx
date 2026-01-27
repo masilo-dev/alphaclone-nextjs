@@ -217,7 +217,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
     ];
 
     return (
-        <div className="flex h-screen bg-slate-950 text-white overflow-hidden font-sans selection:bg-teal-500/30">
+        <div className="flex h-screen bg-slate-950 text-white overflow-hidden font-sans selection:bg-teal-500/30 w-full max-w-full">
             {/* Mobile Overlay */}
             {sidebarOpen && (
                 <div
@@ -329,7 +329,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                             <Menu className="w-6 h-6" />
                         </button>
 
-                        <h2 className="text-lg md:text-xl font-semibold text-white truncate">
+                        <h2 className="text-base sm:text-lg md:text-xl font-semibold text-white truncate max-w-[150px] sm:max-w-none">
                             {getPageTitle()}
                         </h2>
                     </div>

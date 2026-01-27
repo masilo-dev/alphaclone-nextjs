@@ -101,7 +101,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
 
             const monthRevenue = invoices
                 .filter(inv => {
-                    const invDate = new Date(inv.createdAt); // or issueDate
+                    const invDate = new Date(inv.issueDate || inv.createdAt);
                     return invDate.getMonth() === monthIndex &&
                         invDate.getFullYear() === monthYear &&
                         inv.status === 'paid';
@@ -130,14 +130,12 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
                 <MetricCard
                     label="Total Revenue"
                     value={`$${metrics.totalRevenue.toLocaleString()}`}
-                    trend="+12%"
                     icon={DollarSign}
                     color="text-teal-400"
                 />
                 <MetricCard
                     label="Total Clients"
                     value={metrics.totalClients.toString()}
-                    trend="+5"
                     icon={Users}
                     color="text-violet-400"
                 />

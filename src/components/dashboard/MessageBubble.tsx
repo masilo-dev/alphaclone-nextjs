@@ -36,7 +36,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     {/* Sender Name */}
                     {!isOwn && showSenderName && (
                         <span className="text-xs text-slate-400 ml-1 mb-1 flex items-center gap-2">
-                            {message.senderName}
+                            {message.role === 'system' || message.senderName === 'Admin' || (message.senderId && message.senderId.includes('admin')) ? 'Admin' : message.senderName}
                             {isUrgent && <span className="text-red-400 flex items-center text-[10px] font-bold"><Flag size={10} className="mr-0.5 fill-red-400" /> URGENT</span>}
                             {isHigh && <span className="text-orange-400 flex items-center text-[10px] font-bold"><Flag size={10} className="mr-0.5 fill-orange-400" /> HIGH PRIORITY</span>}
                         </span>

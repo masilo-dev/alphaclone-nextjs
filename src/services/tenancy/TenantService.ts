@@ -285,7 +285,8 @@ class TenantService {
 
         // Try to load from localStorage
         if (typeof window !== 'undefined') {
-            return localStorage.getItem('currentTenantId');
+            const stored = localStorage.getItem('currentTenantId');
+            if (stored && stored.trim() !== '') return stored;
         }
 
         return null;

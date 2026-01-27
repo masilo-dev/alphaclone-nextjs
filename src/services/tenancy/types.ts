@@ -60,7 +60,8 @@ export interface TenantSettings {
 }
 
 // Subscription Plans
-export type SubscriptionPlan = 'free' | 'starter' | 'professional' | 'enterprise';
+// Subscription Plans
+export type SubscriptionPlan = 'free' | 'basic' | 'starter' | 'pro' | 'professional' | 'premium' | 'enterprise';
 
 export type SubscriptionStatus = 'active' | 'cancelled' | 'suspended' | 'trial';
 
@@ -145,10 +146,25 @@ export const PLAN_PRICING: Record<SubscriptionPlan, { monthly: number; yearly: n
         monthly: 0,
         yearly: 0,
         features: {
-            maxUsers: 3,
-            maxProjects: 5,
+            maxUsers: 1,
+            maxProjects: 3,
             maxStorage: 1,
             workflows: false,
+            aiAssistant: false,
+            videoConferencing: false,
+            customDomain: false,
+            prioritySupport: false,
+            apiAccess: false
+        }
+    },
+    basic: { // Alias for Starter in some contexts
+        monthly: 16,
+        yearly: 160,
+        features: {
+            maxUsers: 5,
+            maxProjects: 10,
+            maxStorage: 5,
+            workflows: true,
             aiAssistant: false,
             videoConferencing: true,
             customDomain: false,
@@ -157,27 +173,57 @@ export const PLAN_PRICING: Record<SubscriptionPlan, { monthly: number; yearly: n
         }
     },
     starter: {
-        monthly: 29,
-        yearly: 290,
+        monthly: 16,
+        yearly: 160,
         features: {
-            maxUsers: 10,
-            maxProjects: 25,
-            maxStorage: 10,
+            maxUsers: 5,
+            maxProjects: 10,
+            maxStorage: 5,
             workflows: true,
             aiAssistant: false,
             videoConferencing: true,
             customDomain: false,
             prioritySupport: false,
+            apiAccess: false
+        }
+    },
+    pro: { // Alias for Professional
+        monthly: 48,
+        yearly: 480,
+        features: {
+            maxUsers: 25,
+            maxProjects: 50,
+            maxStorage: 25,
+            workflows: true,
+            aiAssistant: true,
+            videoConferencing: true,
+            customDomain: true,
+            prioritySupport: true,
             apiAccess: true
         }
     },
     professional: {
-        monthly: 99,
-        yearly: 990,
+        monthly: 48,
+        yearly: 480,
         features: {
-            maxUsers: 50,
-            maxProjects: 100,
-            maxStorage: 100,
+            maxUsers: 25,
+            maxProjects: 50,
+            maxStorage: 25,
+            workflows: true,
+            aiAssistant: true,
+            videoConferencing: true,
+            customDomain: true,
+            prioritySupport: true,
+            apiAccess: true
+        }
+    },
+    premium: {
+        monthly: 80,
+        yearly: 800,
+        features: {
+            maxUsers: -1, // unlimited
+            maxProjects: -1, // unlimited
+            maxStorage: -1, // unlimited
             workflows: true,
             aiAssistant: true,
             videoConferencing: true,
@@ -190,9 +236,9 @@ export const PLAN_PRICING: Record<SubscriptionPlan, { monthly: number; yearly: n
         monthly: 299,
         yearly: 2990,
         features: {
-            maxUsers: -1, // unlimited
-            maxProjects: -1, // unlimited
-            maxStorage: -1, // unlimited
+            maxUsers: -1,
+            maxProjects: -1,
+            maxStorage: -1,
             workflows: true,
             aiAssistant: true,
             videoConferencing: true,
@@ -201,4 +247,12 @@ export const PLAN_PRICING: Record<SubscriptionPlan, { monthly: number; yearly: n
             apiAccess: true
         }
     }
+};
+
+export const TRIAL_LIMITS = {
+    MAX_MEETINGS: 2,
+    MAX_MEETING_DURATION_MINS: 50,
+    MAX_LEADS_PER_DAY: 20,
+    MAX_TOTAL_LEADS: 100,
+    TRIAL_DAYS: 14
 };

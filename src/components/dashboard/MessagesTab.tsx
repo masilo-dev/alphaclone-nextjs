@@ -8,6 +8,8 @@ import { chatWithAI } from '../../services/unifiedAIService';
 import { MessageBubble } from './MessageBubble';
 import { supabase } from '../../lib/supabase';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { presenceService, PresenceStatus } from '../../services/presenceService';
+import OnlineStatusBadge from './OnlineStatusBadge';
 
 interface MessagesTabProps {
     user: User;
@@ -124,6 +126,28 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
 
     // Track online users properly
     const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+    const [adminPresence, setAdminPresence] = useState<PresenceStatus>('offline');
+
+    // Subscribe to admin presence specifically for client view
+    useEffect(() => {
+        if (isAdmin || !adminUser) return;
+
+        // Initial check
+        const fetchAdminPresence = async () => {
+            const { presence } = await presenceService.getUserPresence(adminUser.id);
+            if (presence) {
+                setAdminPresence(presence.status);
+            }
+        };
+        fetchAdminPresence();
+
+        // Subscribe
+        const unsubscribe = presenceService.subscribeToUserPresence(adminUser.id, (p) => {
+            setAdminPresence(p.status);
+        });
+
+        return () => unsubscribe();
+    }, [isAdmin, adminUser]);
 
     // Presence & Typing Subscription
     useEffect(() => {
@@ -459,10 +483,10 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                                 <span className="w-1 h-1 bg-teal-400 rounded-full animate-bounce"></span>
                                             </div>
                                         </div>
-                                    ) : onlineUsers.has(client.id) ? (
-                                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-slate-900 rounded-full"></div>
                                     ) : (
-                                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-slate-600 border-2 border-slate-900 rounded-full"></div>
+                                        <div className="absolute -bottom-1 -right-1">
+                                            <OnlineStatusBadge status={onlineUsers.has(client.id) ? 'online' : 'offline'} size="sm" />
+                                        </div>
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -505,7 +529,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                 {isAdmin ? (
                                     selectedClient ? (
                                         <>
-                                            <img src={selectedClient.avatar} className="w-8 h-8 rounded-full flex-shrink-0" />
+                                            <img src={selectedClient.avatar} alt={selectedClient.name} className="w-8 h-8 rounded-full flex-shrink-0" />
                                             <div className="flex flex-col min-w-0">
                                                 <span className="truncate">{selectedClient.name}</span>
                                                 {isRecipientTyping && (
@@ -518,10 +542,18 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                     )
                                 ) : (
                                     <>
-                                        <div className="p-2 rounded-lg bg-teal-500/10 border border-teal-500/20">
+                                        <div className="p-2 rounded-lg bg-teal-500/10 border border-teal-500/20 relative">
                                             <UserIcon className="w-5 h-5 text-teal-400" />
+                                            <div className="absolute -bottom-1 -right-1">
+                                                <OnlineStatusBadge status={adminPresence} size="sm" />
+                                            </div>
                                         </div>
-                                        <span className="truncate">Admin Support</span>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="truncate">AlphaClone Admin</span>
+                                            <span className="text-[10px] text-slate-400 font-medium">
+                                                {adminPresence === 'online' ? 'Typically replies in minutes' : 'Back soon'}
+                                            </span>
+                                        </div>
                                     </>
                                 )}
                             </h3>

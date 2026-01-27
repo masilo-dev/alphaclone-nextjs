@@ -242,7 +242,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                         {deals.length} deals | Weighted Value: {formatCurrency(weightedValue)}
                     </p>
                 </div>
-                {userRole === 'admin' && (
+                {(userRole === 'admin' || userRole === 'tenant_admin') && (
                     <div className="flex gap-2">
                         <Button
                             variant="outline"
