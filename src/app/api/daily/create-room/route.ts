@@ -4,15 +4,22 @@ const DAILY_API_KEY = process.env.DAILY_API_KEY;
 const DAILY_API_URL = 'https://api.daily.co/v1';
 
 export async function POST(req: Request) {
+    console.debug('POST /api/daily/create-room called');
+
     if (!DAILY_API_KEY) {
         console.error('DAILY_API_KEY is missing from environment variables');
-        return NextResponse.json({ error: 'Daily API key not configured' }, { status: 500 });
+        return NextResponse.json({
+            error: 'Daily API key not configured',
+            details: 'The DAILY_API_KEY environment variable is not set on the server.'
+        }, { status: 500 });
     }
 
     try {
         const body = await req.json();
+        console.debug('Request body:', body);
         const { name, properties } = body;
 
+        console.debug('Fetching Daily.co API...');
         const response = await fetch(`${DAILY_API_URL}/rooms`, {
             method: 'POST',
             headers: {
@@ -23,8 +30,7 @@ export async function POST(req: Request) {
                 name,
                 properties: {
                     ...properties,
-                    // Enforce some defaults if needed
-                    enable_chat: true, // We might disable this if doing custom chat, but enabling for now as fallback
+                    enable_chat: true,
                     start_video_off: false,
                     start_audio_off: false
                 }
@@ -33,14 +39,22 @@ export async function POST(req: Request) {
 
         if (!response.ok) {
             const error = await response.json();
-            return NextResponse.json({ error: error.info || 'Failed to create room' }, { status: response.status });
+            console.error('Daily.co API error:', error);
+            return NextResponse.json({
+                error: error.info || 'Failed to create room',
+                details: error
+            }, { status: response.status });
         }
 
         const room = await response.json();
+        console.debug('Daily.co room created:', room);
         return NextResponse.json(room);
 
     } catch (error) {
-        console.error('Error creating Daily room:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        console.error('Unhandled error in Daily room creation:', error);
+        return NextResponse.json({
+            error: 'Internal server error',
+            details: error instanceof Error ? error.message : String(error)
+        }, { status: 500 });
     }
 }
