@@ -18,13 +18,18 @@ import {
     Trash2
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
-
+import { supabase } from '../../../lib/supabase';
+import { dailyService } from '../../../services/dailyService';
+import { callSignalingService } from '../../../services/video/CallSignalingService';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 interface ClientsPageProps {
     user: User;
 }
 
 const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const { currentTenant } = useTenant();
+    const router = useRouter();
     const [clients, setClients] = useState<BusinessClient[]>([]);
     const [filteredClients, setFilteredClients] = useState<BusinessClient[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -102,6 +107,62 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         }
     };
 
+    const handleCallClient = async (client: BusinessClient) => {
+        if (!client.email) {
+            toast.error('Client has no email address. Cannot initiate call.');
+            return;
+        }
+
+        const toastId = toast.loading('Initiating secure call...');
+
+        try {
+            // 1. Find User ID by Email (to signal them)
+            const { data: users, error: userError } = await supabase
+                .from('users')
+                .select('id')
+                .eq('email', client.email)
+                .single();
+
+            if (userError || !users) {
+                console.warn('User lookup failed:', userError);
+                toast.error('Client is not a registered user on the platform.', { id: toastId });
+                return;
+            }
+
+            const recipientId = users.id;
+
+            // 2. Create Video Room
+            const { call, error: roomError } = await dailyService.createVideoCall({
+                hostId: user.id,
+                title: `Call with ${client.name}`,
+                isPublic: false
+            });
+
+            if (roomError || !call || !call.daily_room_url) {
+                // Throw the specific error message from the service, or a default
+                throw new Error(roomError || 'Failed to create room: No URL returned');
+            }
+
+            // 3. Send Signal to Client
+            await callSignalingService.sendCallSignal(recipientId, {
+                callerId: user.id,
+                callerName: user.name,
+                roomUrl: call.daily_room_url,
+                roomId: call.id
+            });
+
+            toast.success('Calling client...', { id: toastId });
+
+            // 4. Redirect Admin to Room
+            router.push(`/call/${call.id}`);
+
+        } catch (error) {
+            console.error('Call failed:', error);
+            // Show the actual error message to the user
+            toast.error(error instanceof Error ? error.message : 'Failed to start call.', { id: toastId, duration: 5000 });
+        }
+    };
+
     if (loading) {
         return <div className="flex items-center justify-center h-full"><div className="text-slate-400">Loading clients...</div></div>;
     }
@@ -164,6 +225,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         key={client.id}
                         client={client}
                         onDelete={handleDeleteClient}
+                        onCall={handleCallClient}
                     />
                 ))}
             </div>
@@ -193,7 +255,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     );
 };
 
-const ClientCard = ({ client, onDelete }: { client: BusinessClient; onDelete: (id: string) => void }) => {
+const ClientCard = ({ client, onDelete, onCall }: { client: BusinessClient; onDelete: (id: string) => void; onCall: (c: BusinessClient) => void }) => {
     const stageColors = {
         lead: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
         prospect: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
@@ -202,7 +264,16 @@ const ClientCard = ({ client, onDelete }: { client: BusinessClient; onDelete: (i
     };
 
     return (
-        <div className="bg-slate-900/50 border border-slate-800 hover:border-slate-700 rounded-xl p-4 transition-all group">
+        <div className="bg-slate-900/50 border border-slate-800 hover:border-slate-700 rounded-xl p-4 transition-all group relative">
+            {/* Call Button (Mobile/Direct Action) */}
+            <button
+                onClick={() => onCall(client)}
+                className="absolute top-4 right-12 p-2 hover:bg-teal-500/10 rounded-full transition-colors group/call"
+                title="Video Call"
+            >
+                <Phone className="w-5 h-5 text-slate-400 group-hover/call:text-teal-400" />
+            </button>
+
             <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold">
@@ -426,8 +497,8 @@ const ImportClientsModal = ({ onClose, onImport }: any) => {
                     <div
                         {...getRootProps()}
                         className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors ${isDragActive
-                                ? 'border-teal-500 bg-teal-500/10'
-                                : 'border-slate-700 hover:border-slate-600'
+                            ? 'border-teal-500 bg-teal-500/10'
+                            : 'border-slate-700 hover:border-slate-600'
                             }`}
                     >
                         <input {...getInputProps()} />

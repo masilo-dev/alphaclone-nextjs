@@ -41,6 +41,7 @@ import ThemeToggle from './ThemeToggle';
 import EnhancedGlobalSearch from './dashboard/EnhancedGlobalSearch';
 import Sidebar from './dashboard/Sidebar';
 import ExitIntentModal from './ExitIntentModal';
+import IncomingCallModal from './dashboard/video/IncomingCallModal';
 // import { generateContract, generateArchitectSpecs } from '../services/geminiService';
 // TODO: Implement real contract and architect services
 interface ArchitectData {
@@ -1532,6 +1533,9 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Exit Intent Modal */}
       <ExitIntentModal user={user} />
+
+      {/* Incoming Call Modal (Global Listener) */}
+      <IncomingCallModal userId={user.id} userName={user.name} />
 
       {/* Sidebar - Extracted & Memoized */}
       <Sidebar

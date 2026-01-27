@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '../ui/UIComponents';
-import { Video, Copy, Check, ExternalLink, Loader } from 'lucide-react';
+import { Video, Copy, Check, ExternalLink, Loader, AlertTriangle, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { User } from '../../types';
 import { dailyService } from '../../services/dailyService';
@@ -17,28 +17,43 @@ interface MeetingRoom {
 }
 
 /**
- * Simple Video Meeting Component
+ * Simple Video Meeting Component - Enhanced
  *
- * Ultra-minimal approach:
- * - No auto-loading (prevents Error 310)
- * - User clicks to create
- * - Manual join only
- * - Zero complex state
+ * Auto-initializes on load.
+ * Checks for API configuration.
+ * Timeouts after 5 seconds if no response.
  */
 const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoom }) => {
     const [room, setRoom] = useState<MeetingRoom | null>(null);
-    const [creating, setCreating] = useState(false);
+    const [status, setStatus] = useState<'idle' | 'initializing' | 'ready' | 'error'>('initializing'); // Start initializing
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
 
-    const handleCreateMeeting = async () => {
-        setCreating(true);
+    // Use ref to prevent double-firing strict mode
+    const initRef = useRef(false);
+
+    useEffect(() => {
+        if (initRef.current) return;
+        initRef.current = true;
+
+        initializeVideoService();
+    }, []);
+
+    const initializeVideoService = async () => {
+        setStatus('initializing');
+        setErrorMsg(null);
+
+        // 5 Second Timeout Race
+        const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('TIMEOUT')), 5000)
+        );
 
         try {
-            // Generate unique room name
+            // Attempt to auto-create a room or check health
+            // Ideally we'd have a health check, but create-room is a good proxy for "Is Configured?"
             const roomName = `meeting-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
-            // Call API to create room
-            const response = await fetch('/api/daily/create-room', {
+            const createPromise = fetch('/api/daily/create-room', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -52,9 +67,12 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                 })
             });
 
+            // Race against timeout
+            const response = await Promise.race([createPromise, timeoutPromise]) as Response;
+
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to create meeting');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to initialize video service');
             }
 
             const data = await response.json();
@@ -65,20 +83,21 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                 url: data.url,
                 shareLink: shareLink
             });
+            setStatus('ready');
 
-            toast.success('Meeting created! Copy the link to share.');
-
-        } catch (err) {
-            console.error('Failed to create meeting:', err);
-            toast.error(err instanceof Error ? err.message : 'Failed to create meeting');
-        } finally {
-            setCreating(false);
+        } catch (err: any) {
+            console.error('Video Initialization Error:', err);
+            setStatus('error');
+            if (err.message === 'TIMEOUT') {
+                setErrorMsg('Connection timed out. Video API may not be configured.');
+            } else {
+                setErrorMsg('Video service not configured or unavailable.');
+            }
         }
     };
 
     const handleCopyLink = async () => {
         if (!room) return;
-
         try {
             await navigator.clipboard.writeText(room.shareLink);
             setCopied(true);
@@ -91,158 +110,129 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
 
     const handleJoin = async () => {
         if (!room) return;
-
         try {
-            // For the host (admin), we get an owner token
             const { token } = await dailyService.getMeetingToken(room.name, user.name, true);
-
-            // Trigger the join room callback which Dashboard.tsx listens to
-            // This will open the CustomVideoRoom overlay
             onJoinRoom(room.url);
-
             toast.success('Joining secure meet...');
         } catch (err) {
             console.error('Failed to get token for join:', err);
-            // Still try to join even without token as fallback
             onJoinRoom(room.url);
         }
     };
 
-    const handleReset = () => {
-        setRoom(null);
-        setCopied(false);
+    const handleCreateNew = () => {
+        // Reset and re-init
+        initializeVideoService();
     };
 
-    // State 1: No meeting created yet
-    if (!room) {
+    // --- RENDER STATES ---
+
+    if (status === 'initializing') {
         return (
-            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-4 sm:p-8 border-2 border-slate-700">
-                <div className="text-center">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-teal-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Video className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-8 border-2 border-slate-700/50 flex flex-col items-center justify-center text-center h-[300px]">
+                <div className="relative">
+                    <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                        <Video className="w-8 h-8 text-teal-500 animate-pulse" />
                     </div>
+                    <div className="absolute inset-0 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin"></div>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Initializing Video Service</h3>
+                <p className="text-sm text-slate-400">Connecting to secure video infrastructure...</p>
+            </div>
+        );
+    }
 
-                    <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
-                        Create Instant Meeting
-                    </h3>
+    if (status === 'error') {
+        return (
+            <div className="bg-red-900/10 rounded-xl p-8 border-2 border-red-500/30 flex flex-col items-center justify-center text-center h-[300px]">
+                <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+                    <AlertTriangle className="w-8 h-8 text-red-500" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Service Unavailable</h3>
+                <p className="text-sm text-red-300 max-w-xs mx-auto mb-6">
+                    {errorMsg || 'The video service is currently not configured or reachable.'}
+                </p>
+                <Button onClick={initializeVideoService} variant="outline" className="gap-2 border-red-500/30 hover:bg-red-500/10 text-red-400">
+                    <RefreshCw className="w-4 h-4" />
+                    Retry Connection
+                </Button>
+            </div>
+        );
+    }
 
-                    <p className="text-sm text-gray-400 mb-6 max-w-md mx-auto">
-                        Click below to create a new meeting room. You&apos;ll get a shareable link that works for up to 10 participants.
-                    </p>
+    // READY STATE
+    if (room) {
+        return (
+            <div className="bg-gradient-to-br from-teal-900/30 to-blue-900/30 rounded-xl p-6 border-2 border-teal-500/30">
+                <div className="flex items-start gap-4 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-blue-500 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-teal-900/20">
+                        <Video className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="text-xl font-bold text-white mb-1">
+                            Ready to Meet
+                        </h3>
+                        <p className="text-sm text-gray-300">
+                            Your secure room is ready.
+                        </p>
+                    </div>
+                </div>
 
+                {/* Meeting Link Display */}
+                <div className="bg-gray-900/50 border-2 border-teal-500/50 rounded-lg p-4 mb-4 backdrop-blur-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                        <ExternalLink className="w-4 h-4 text-teal-400" />
+                        <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">
+                            Shareable Link
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <p className="flex-1 text-teal-400 font-mono text-sm break-all select-all bg-black/30 p-2 rounded min-w-0">
+                            {room.shareLink}
+                        </p>
+                        <Button
+                            onClick={handleCopyLink}
+                            className={`shrink-0 transition-all ${copied ? 'bg-green-600' : 'bg-teal-600 hover:bg-teal-500'}`}
+                            size="sm"
+                        >
+                            {copied ? (
+                                <>
+                                    <Check className="w-4 h-4 mr-1" />
+                                    Copied
+                                </>
+                            ) : (
+                                <>
+                                    <Copy className="w-4 h-4 mr-1" />
+                                    Copy
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 flex-wrap">
                     <Button
-                        onClick={handleCreateMeeting}
-                        disabled={creating}
-                        className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-500 hover:to-blue-500 text-base sm:text-lg px-6 sm:px-8 py-2.5 sm:py-3 w-full sm:w-auto"
+                        onClick={handleJoin}
+                        className="flex-1 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-500 hover:to-blue-500 min-w-[150px] shadow-lg shadow-teal-900/20"
                     >
-                        {creating ? (
-                            <>
-                                <Loader className="w-5 h-5 mr-2 animate-spin" />
-                                Creating Meeting...
-                            </>
-                        ) : (
-                            <>
-                                <Video className="w-5 h-5 mr-2" />
-                                Create Meeting Room
-                            </>
-                        )}
+                        <Video className="w-4 h-4 mr-2" />
+                        Start Meeting Now
                     </Button>
 
-                    <p className="text-xs text-gray-500 mt-4">
-                        ✓ No automatic loading • ✓ Simple and stable • ✓ Manual control
-                    </p>
+                    <Button
+                        onClick={handleCreateNew}
+                        variant="outline"
+                        className="border-gray-500/50 hover:bg-gray-500/10 text-slate-300"
+                    >
+                        New Room
+                    </Button>
                 </div>
             </div>
         );
     }
 
-    // State 2: Meeting created - show link and actions
-    return (
-        <div className="bg-gradient-to-br from-teal-900/30 to-blue-900/30 rounded-xl p-6 border-2 border-teal-500/30">
-            <div className="flex items-start gap-4 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-blue-500 rounded-xl flex items-center justify-center shrink-0">
-                    <Video className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex-1">
-                    <h3 className="text-xl font-bold text-white mb-1">
-                        Meeting Room Ready!
-                    </h3>
-                    <p className="text-sm text-gray-300">
-                        Share this link with up to 10 participants
-                    </p>
-                </div>
-            </div>
-
-            {/* Meeting Link Display */}
-            <div className="bg-gray-900/50 border-2 border-teal-500/50 rounded-lg p-4 mb-4">
-                <div className="flex items-center gap-2 mb-2">
-                    <ExternalLink className="w-4 h-4 text-teal-400" />
-                    <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">
-                        Meeting Link
-                    </span>
-                </div>
-                <div className="flex items-center gap-3 flex-wrap">
-                    <p className="flex-1 text-teal-400 font-mono text-sm break-all select-all bg-black/30 p-2 rounded min-w-0">
-                        {room.shareLink}
-                    </p>
-                    <Button
-                        onClick={handleCopyLink}
-                        className="bg-teal-600 hover:bg-teal-500 shrink-0"
-                        size="sm"
-                    >
-                        {copied ? (
-                            <>
-                                <Check className="w-4 h-4 mr-1" />
-                                Copied!
-                            </>
-                        ) : (
-                            <>
-                                <Copy className="w-4 h-4 mr-1" />
-                                Copy
-                            </>
-                        )}
-                    </Button>
-                </div>
-            </div>
-
-            {/* Room Info */}
-            <div className="bg-teal-500/10 border border-teal-500/30 rounded-lg p-3 mb-4">
-                <div className="text-xs text-gray-300 space-y-1">
-                    <p><strong className="text-white">Room ID:</strong> {room.name}</p>
-                    <p><strong className="text-white">Max Participants:</strong> 10 people</p>
-                    <p><strong className="text-white">Features:</strong> Screen share, Chat enabled</p>
-                </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 flex-wrap">
-                <Button
-                    onClick={handleJoin}
-                    className="flex-1 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-500 hover:to-blue-500 min-w-[150px]"
-                >
-                    <Video className="w-4 h-4 mr-2" />
-                    Join Meeting
-                </Button>
-
-                <Button
-                    onClick={handleCopyLink}
-                    variant="outline"
-                    className="border-teal-500/50 hover:bg-teal-500/10"
-                >
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copy Link
-                </Button>
-
-                <Button
-                    onClick={handleReset}
-                    variant="outline"
-                    className="border-gray-500/50 hover:bg-gray-500/10"
-                >
-                    Create New
-                </Button>
-            </div>
-        </div>
-    );
+    return null; // Should not reach here
 };
 
 export default SimpleVideoMeeting;

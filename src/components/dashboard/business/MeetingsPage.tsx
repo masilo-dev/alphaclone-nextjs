@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { dailyService, VideoCall } from '../../../services/dailyService';
-import { Settings, Video, Link as LinkIcon, Calendar, Clock, User as UserIcon, Copy, ExternalLink, Plus, Share2 } from 'lucide-react';
+import { Settings, Video, Calendar, Clock, User as UserIcon, Link, Copy } from 'lucide-react';
 import { BookingSettings } from './BookingSettings';
-import { CreateMeetingModal } from '../../modals/CreateMeetingModal';
-import { format, isFuture, isPast } from 'date-fns';
+import SimpleVideoMeeting from '../SimpleVideoMeeting';
+import { format, isFuture } from 'date-fns';
 import { Button, Card, Badge } from '@/components/ui/UIComponents';
 
 interface MeetingsPageProps {
@@ -18,8 +18,6 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
     const [meetings, setMeetings] = useState<VideoCall[]>([]);
     const [loading, setLoading] = useState(true);
     const [showSettings, setShowSettings] = useState(false);
-    const [showCreateModal, setShowCreateModal] = useState(false);
-    const [filter, setFilter] = useState<'upcoming' | 'past'>('upcoming');
 
     useEffect(() => {
         if (currentTenant) {
@@ -38,183 +36,142 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
         setLoading(false);
     };
 
-    const upcomingMeetings = meetings.filter(m => m.status === 'scheduled' || m.status === 'active');
-    const pastMeetings = meetings.filter(m => m.status === 'ended' || m.status === 'cancelled');
+    const upcomingMeetings = meetings.filter(m =>
+        (m.status === 'scheduled' || m.status === 'active') &&
+        (m.status === 'active' || isFuture(new Date(m.scheduled_at || m.created_at)))
+    ).sort((a, b) => new Date(a.scheduled_at || a.created_at).getTime() - new Date(b.scheduled_at || b.created_at).getTime());
 
-    const displayMeetings = filter === 'upcoming' ? upcomingMeetings : pastMeetings;
+    // Get the very next meeting
+    const nextMeeting = upcomingMeetings[0];
 
     const copyBookingLink = () => {
         if (currentTenant?.settings.booking?.slug) {
             const url = `${window.location.origin}/book/${currentTenant.settings.booking.slug}`;
             navigator.clipboard.writeText(url);
-            alert('Booking link copied!');
+            import('react-hot-toast').then(({ toast }) => toast.success('Booking link copied!'));
         }
     };
 
     return (
-        <div className="space-y-8">
-            {/* Header / Actions */}
+        <div className="space-y-8 max-w-5xl mx-auto">
+            {/* Header */}
             <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
                 <div>
-                    <h1 className="text-2xl font-bold">Meetings & Calls</h1>
-                    <p className="text-slate-400">Manage your video calls and booking availability.</p>
+                    <h1 className="text-2xl font-bold text-white">Video Meetings</h1>
+                    <p className="text-slate-400">Stable video meetings & bookings management</p>
                 </div>
-                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                    <Button onClick={() => setShowCreateModal(true)} className="flex-1 sm:flex-none gap-2 bg-teal-600 hover:bg-teal-700 text-white border-teal-600 text-sm py-2">
-                        <Plus className="w-4 h-4" />
-                        <span className="hidden xs:inline">New Meeting</span>
-                        <span className="xs:hidden">New</span>
-                    </Button>
+                <div className="flex gap-2">
                     {currentTenant?.settings.booking?.enabled && (
-                        <Button variant="outline" onClick={copyBookingLink} className="flex-1 sm:flex-none gap-2 text-sm py-2">
-                            <Copy className="w-4 h-4" />
-                            <span className="hidden xs:inline">Copy Link</span>
-                            <span className="xs:hidden">Link</span>
+                        <Button variant="outline" onClick={copyBookingLink} className="gap-2 border-slate-700 hover:bg-slate-800">
+                            <Link className="w-4 h-4" />
+                            Booking Link
                         </Button>
                     )}
-                    <Button onClick={() => setShowSettings(true)} variant="outline" className="flex-1 sm:flex-none gap-2 text-sm py-2">
+                    <Button onClick={() => setShowSettings(true)} variant="outline" className="gap-2 border-slate-700 hover:bg-slate-800">
                         <Settings className="w-4 h-4" />
-                        <span className="hidden xs:inline">Settings</span>
-                        <span className="xs:hidden">Config</span>
+                        Settings
                     </Button>
                 </div>
             </div>
 
-            {/* Stats / Quick Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="flex items-center gap-4">
-                    <div className="p-3 bg-teal-500/10 rounded-xl text-teal-400">
-                        <Calendar className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <div className="text-2xl font-bold">{upcomingMeetings.length}</div>
-                        <div className="text-sm text-slate-400">Upcoming Meetings</div>
-                    </div>
-                </Card>
-                <Card className="flex items-center gap-4">
-                    <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400">
-                        <Clock className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <div className="text-2xl font-bold">{Math.round(pastMeetings.reduce((acc, m) => acc + (m.duration_seconds || 0), 0) / 60)}</div>
-                        <div className="text-sm text-slate-400">Total Minutes (All Time)</div>
-                    </div>
-                </Card>
-                <Card className="flex items-center gap-4">
-                    <div className="p-3 bg-purple-500/10 rounded-xl text-purple-400">
-                        <Video className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <div className="text-2xl font-bold">{meetings.length}</div>
-                        <div className="text-sm text-slate-400">Total Calls</div>
-                    </div>
-                </Card>
-            </div>
+            {/* Next Meeting Hero (if within 24 hours) */}
+            {nextMeeting && (
+                <div className="bg-gradient-to-r from-teal-900/50 to-blue-900/50 border border-teal-500/30 rounded-2xl p-6 relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-teal-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
 
-            {/* Meeting List */}
-            <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
-                <div className="flex border-b border-slate-800">
-                    <button
-                        onClick={() => setFilter('upcoming')}
-                        className={`px-6 py-3 text-sm font-medium transition-colors ${filter === 'upcoming' ? 'text-teal-400 border-b-2 border-teal-500' : 'text-slate-400 hover:text-white'}`}
-                    >
-                        Upcoming
-                    </button>
-                    <button
-                        onClick={() => setFilter('past')}
-                        className={`px-6 py-3 text-sm font-medium transition-colors ${filter === 'past' ? 'text-teal-400 border-b-2 border-teal-500' : 'text-slate-400 hover:text-white'}`}
-                    >
-                        Past / History
-                    </button>
+                    <div className="relative z-10 flex flex-col md:flex-row gap-6 justify-between items-center">
+                        <div className="flex items-start gap-5">
+                            <div className="w-16 h-16 bg-teal-500/20 rounded-2xl flex items-center justify-center border border-teal-500/30">
+                                <Video className="w-8 h-8 text-teal-400 animate-pulse" />
+                            </div>
+                            <div>
+                                <Badge variant="success" className="mb-2">Up Next</Badge>
+                                <h3 className="text-xl font-bold text-white">{nextMeeting.title}</h3>
+                                <div className="flex items-center gap-4 text-slate-300 mt-2">
+                                    <span className="flex items-center gap-1.5">
+                                        <Clock className="w-4 h-4 text-teal-400" />
+                                        {format(new Date(nextMeeting.scheduled_at || nextMeeting.created_at), 'h:mm a')}
+                                    </span>
+                                    <span className="flex items-center gap-1.5">
+                                        <Calendar className="w-4 h-4 text-teal-400" />
+                                        {format(new Date(nextMeeting.scheduled_at || nextMeeting.created_at), 'MMM d, yyyy')}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <Button
+                            onClick={() => onJoinRoom?.((nextMeeting as any).room_url || `/call/${nextMeeting.id}`)}
+                            className="w-full md:w-auto px-8 py-4 text-lg bg-teal-500 hover:bg-teal-400 text-white shadow-lg shadow-teal-900/40 rounded-xl transition-all hover:scale-105"
+                        >
+                            Join Meeting Now
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Left Col: Instant Meeting */}
+                <div className="space-y-6">
+                    <div>
+                        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                            <Video className="w-5 h-5 text-teal-400" />
+                            Instant Meeting
+                        </h2>
+                        {/* Re-using the admin component for consistency */}
+                        <SimpleVideoMeeting user={user} onJoinRoom={onJoinRoom || (() => { })} />
+                    </div>
                 </div>
 
-                <div className="divide-y divide-slate-800">
-                    {loading ? (
-                        <div className="p-8 text-center text-slate-500">Loading meetings...</div>
-                    ) : displayMeetings.length === 0 ? (
-                        <div className="p-12 text-center">
-                            <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-500">
-                                <Calendar className="w-8 h-8" />
-                            </div>
-                            <h3 className="text-lg font-medium text-white mb-1">No {filter} meetings</h3>
-                            <p className="text-slate-400">
-                                {filter === 'upcoming'
-                                    ? "You don't have any scheduled calls."
-                                    : "You haven't completed any calls yet."}
-                            </p>
-                            <button
-                                onClick={() => setShowCreateModal(true)}
-                                className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm text-white transition-colors border border-slate-700"
-                            >
-                                Schedule your first meeting
-                            </button>
-                        </div>
-                    ) : (
-                        displayMeetings.map((meeting) => (
-                            <div key={meeting.id} className="p-4 hover:bg-slate-800/30 transition-colors flex flex-col md:flex-row justify-between md:items-center gap-4">
-                                <div className="flex items-start gap-4">
-                                    <div className="flex flex-col items-center justify-center w-14 h-14 bg-slate-800 rounded-xl border border-slate-700">
-                                        <span className="text-xs uppercase font-bold text-slate-400">
-                                            {format(new Date(meeting.scheduled_at), 'MMM')}
-                                        </span>
-                                        <span className="text-xl font-bold text-white">
-                                            {format(new Date(meeting.scheduled_at), 'd')}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold text-white flex items-center gap-2">
-                                            {meeting.title}
-                                            <Badge variant={meeting.status === 'active' ? 'success' : meeting.status === 'cancelled' ? 'error' : 'neutral'}>
-                                                {meeting.status}
-                                            </Badge>
-                                        </h3>
-                                        <div className="flex items-center gap-4 text-sm text-slate-400 mt-1">
-                                            <span className="flex items-center gap-1">
-                                                <Clock className="w-3 h-3" />
-                                                {format(new Date(meeting.scheduled_at), 'h:mm a')}
-                                            </span>
-                                            <span className="flex items-center gap-1">
-                                                <UserIcon className="w-3 h-3" />
-                                                {meeting.description ? 'Has Agenda' : 'No Agenda'}
-                                            </span>
+                {/* Right Col: Upcoming List */}
+                <div className="space-y-6">
+                    <div>
+                        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                            <Calendar className="w-5 h-5 text-blue-400" />
+                            Upcoming Bookings
+                        </h2>
+
+                        <div className="space-y-3">
+                            {loading ? (
+                                <div className="p-8 text-center text-slate-500 bg-slate-900/30 rounded-xl border border-slate-800">
+                                    Loading...
+                                </div>
+                            ) : upcomingMeetings.length === 0 ? (
+                                <div className="p-8 text-center bg-slate-900/30 rounded-xl border border-slate-800 border-dashed">
+                                    <p className="text-slate-400">No upcoming bookings scheduled.</p>
+                                </div>
+                            ) : (
+                                upcomingMeetings.map(meeting => (
+                                    <div key={meeting.id} className="bg-slate-900/40 border border-slate-800 hover:border-slate-700 rounded-xl p-4 transition-all hover:bg-slate-900/60 group">
+                                        <div className="flex justify-between items-center">
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex flex-col items-center justify-center w-12 h-12 bg-slate-800 rounded-lg text-slate-400 group-hover:text-white transition-colors">
+                                                    <span className="text-xs font-bold uppercase">{format(new Date(meeting.scheduled_at || meeting.created_at), 'MMM')}</span>
+                                                    <span className="text-lg font-bold">{format(new Date(meeting.scheduled_at || meeting.created_at), 'd')}</span>
+                                                </div>
+                                                <div>
+                                                    <div className="font-medium text-white">{meeting.title}</div>
+                                                    <div className="text-sm text-slate-400 flex items-center gap-2">
+                                                        <Clock className="w-3 h-3" />
+                                                        {format(new Date(meeting.scheduled_at || meeting.created_at), 'h:mm a')}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <Button
+                                                size="sm"
+                                                variant="secondary"
+                                                onClick={() => onJoinRoom?.((meeting as any).room_url || `/call/${meeting.id}`)}
+                                                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                Join
+                                            </Button>
                                         </div>
                                     </div>
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => {
-                                            const url = `${window.location.origin}/call/${meeting.id}`;
-                                            navigator.clipboard.writeText(url);
-                                            alert('Join link copied to clipboard!');
-                                        }}
-                                        className={`p-2 rounded-lg transition-all ${meeting.is_public ? 'bg-teal-500/10 text-teal-400 hover:bg-teal-500/20' : 'bg-slate-800 text-slate-500'}`}
-                                        title={meeting.is_public ? 'Copy Public Join Link' : 'Meeting is Private'}
-                                    >
-                                        <Share2 className="w-5 h-5" />
-                                    </button>
-                                    {meeting.status === 'scheduled' || meeting.status === 'active' ? (
-                                        <Button
-                                            onClick={() => {
-                                                const url = (meeting as any).room_url || `/call/${meeting.id}`; // Fallback if no URL
-                                                if (onJoinRoom && (meeting as any).room_url) {
-                                                    onJoinRoom((meeting as any).room_url);
-                                                } else {
-                                                    // Fallback to legacy page load if no callback prop
-                                                    window.location.href = `/call/${meeting.id}`;
-                                                }
-                                            }}
-                                            className="gap-2 bg-teal-500 hover:bg-teal-600 text-white font-medium"
-                                        >
-                                            <Video className="w-4 h-4 animate-pulse" /> Join
-                                        </Button>
-                                    ) : (
-                                        <span className="text-sm text-slate-500 italic">Ended</span>
-                                    )}
-                                </div>
-                            </div>
-                        ))
-                    )}
+                                ))
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -224,14 +181,6 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                     tenant={currentTenant}
                     onUpdate={refreshTenants}
                     onClose={() => setShowSettings(false)}
-                />
-            )}
-
-            {/* Create Meeting Modal */}
-            {showCreateModal && (
-                <CreateMeetingModal
-                    onClose={() => setShowCreateModal(false)}
-                    onSuccess={loadMeetings}
                 />
             )}
         </div>

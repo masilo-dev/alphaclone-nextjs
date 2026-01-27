@@ -54,6 +54,9 @@ export async function POST(req: Request) {
 
     } catch (error) {
         console.error('Unhandled error in Daily room creation:', error);
+        // Explicitly log this so the user can see it in terminal
+        console.error('Error details:', error instanceof Error ? error.stack : String(error));
+
         return NextResponse.json({
             error: 'Internal server error',
             details: error instanceof Error ? error.message : String(error)

@@ -71,7 +71,7 @@ const CustomVideoTile: React.FC<CustomVideoTileProps> = ({
     const isAudioOff = !participant.audio.enabled || !participant.audio.track;
 
     return (
-        <div className="relative bg-gray-800 rounded-lg overflow-hidden aspect-video group">
+        <div className="relative bg-slate-900 rounded-2xl overflow-hidden aspect-video group border border-slate-800 shadow-2xl transition-all hover:border-teal-500/30">
             {/* Admin controls overlay */}
             <AdminParticipantControls
                 participant={participant}
@@ -91,12 +91,25 @@ const CustomVideoTile: React.FC<CustomVideoTileProps> = ({
                 />
             ) : (
                 /* Placeholder when video is off */
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
-                    <div className="text-center">
-                        <div className="w-20 h-20 rounded-full bg-teal-500/20 flex items-center justify-center mx-auto mb-3">
-                            <User className="w-10 h-10 text-teal-400" />
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-black relative">
+                    <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10" />
+
+                    <div className="text-center relative z-10">
+                        <div className="relative">
+                            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-teal-500/20">
+                                <span className="text-3xl font-bold text-white">
+                                    {(displayName?.[0] || 'G').toUpperCase()}
+                                </span>
+                            </div>
+                            {/* Speaking Indicator */}
+                            {participant.audio.enabled && (
+                                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-teal-500 rounded-full border-4 border-slate-950 flex items-center justify-center animate-pulse">
+                                    <Mic className="w-3 h-3 text-white" />
+                                </div>
+                            )}
                         </div>
-                        <p className="text-white font-medium">{displayName}</p>
+                        <p className="text-white font-semibold text-lg">{displayName}</p>
+                        <p className="text-slate-500 text-sm mt-1">Camera is off</p>
                     </div>
                 </div>
             )}
@@ -105,23 +118,24 @@ const CustomVideoTile: React.FC<CustomVideoTileProps> = ({
             {!isLocal && <audio ref={audioRef} autoPlay />}
 
             {/* Participant info overlay */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 transition-opacity duration-300">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                        <span className="text-white text-sm font-medium truncate">
+                        <div className={`w-2 h-2 rounded-full ${!isAudioOff ? 'bg-teal-500 animate-pulse' : 'bg-red-500'}`} />
+                        <span className="text-white text-sm font-semibold tracking-wide shadow-black drop-shadow-md">
                             {displayName} {isLocal && '(You)'}
                         </span>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 bg-black/40 backdrop-blur-sm rounded-lg px-2 py-1">
                         {isAudioOff ? (
-                            <MicOff className="w-4 h-4 text-red-400" />
+                            <MicOff className="w-3.5 h-3.5 text-red-400" />
                         ) : (
-                            <Mic className="w-4 h-4 text-teal-400" />
+                            <Mic className="w-3.5 h-3.5 text-teal-400" />
                         )}
                         {isVideoOff ? (
-                            <VideoOff className="w-4 h-4 text-red-400" />
+                            <VideoOff className="w-3.5 h-3.5 text-red-400" />
                         ) : (
-                            <VideoIcon className="w-4 h-4 text-teal-400" />
+                            <VideoIcon className="w-3.5 h-3.5 text-teal-400" />
                         )}
                     </div>
                 </div>
@@ -129,8 +143,8 @@ const CustomVideoTile: React.FC<CustomVideoTileProps> = ({
 
             {/* Local indicator */}
             {isLocal && (
-                <div className="absolute top-3 left-3 bg-teal-500/90 backdrop-blur-sm px-2 py-1 rounded-full">
-                    <span className="text-white text-xs font-medium">You</span>
+                <div className="absolute top-4 left-4 bg-teal-500/90 backdrop-blur-md px-3 py-1 rounded-lg shadow-lg shadow-teal-900/20 border border-teal-400/20">
+                    <span className="text-white text-xs font-bold tracking-wider uppercase">You</span>
                 </div>
             )}
         </div>

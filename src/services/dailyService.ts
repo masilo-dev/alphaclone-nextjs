@@ -233,6 +233,7 @@ class DailyService {
 
             return { call, error: null };
         } catch (err) {
+            console.error('Error in createVideoCall:', err);
             return { call: null, error: err instanceof Error ? err.message : 'Failed to create video call' };
         }
     }
