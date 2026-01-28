@@ -4,6 +4,7 @@ import { Video, Copy, Check, ExternalLink, Loader, AlertTriangle, RefreshCw } fr
 import toast from 'react-hot-toast';
 import { User } from '../../types';
 import { dailyService } from '../../services/dailyService';
+import { useRouter } from 'next/navigation';
 
 interface SimpleVideoMeetingProps {
     user: User;
@@ -24,6 +25,7 @@ interface MeetingRoom {
  * Timeouts after 5 seconds if no response.
  */
 const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoom }) => {
+    const router = useRouter();
     const [room, setRoom] = useState<MeetingRoom | null>(null);
     const [status, setStatus] = useState<'idle' | 'initializing' | 'ready' | 'error'>('initializing'); // Start initializing
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -43,44 +45,26 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
         setStatus('initializing');
         setErrorMsg(null);
 
-        // 5 Second Timeout Race
-        const timeoutPromise = new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('TIMEOUT')), 5000)
-        );
-
         try {
-            // Attempt to auto-create a room or check health
-            // Ideally we'd have a health check, but create-room is a good proxy for "Is Configured?"
-            const roomName = `meeting-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-
-            const createPromise = fetch('/api/daily/create-room', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: roomName,
-                    properties: {
-                        enable_screenshare: true,
-                        enable_chat: true,
-                        max_participants: 10,
-                        enable_prejoin_ui: true,
-                    }
-                })
+            // Use dailyService to create a database-backed video call
+            const { call, error } = await dailyService.createVideoCall({
+                hostId: user.id || 'system',
+                title: `${user.name || 'Admin'}'s Instant Meeting`,
+                isPublic: true, // Allow guests to join
+                maxParticipants: 10,
+                screenShareEnabled: true,
+                chatEnabled: true
             });
 
-            // Race against timeout
-            const response = await Promise.race([createPromise, timeoutPromise]) as Response;
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || 'Failed to initialize video service');
+            if (error || !call) {
+                throw new Error(error || 'Failed to initialize video service');
             }
 
-            const data = await response.json();
-            const shareLink = `${window.location.origin}/room/${data.name}`;
+            const shareLink = `${window.location.origin}/meet/${call.id}`;
 
             setRoom({
-                name: data.name,
-                url: data.url,
+                name: call.daily_room_name || `room-${call.id}`,
+                url: call.daily_room_url || '',
                 shareLink: shareLink
             });
             setStatus('ready');
@@ -88,11 +72,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
         } catch (err: any) {
             console.error('Video Initialization Error:', err);
             setStatus('error');
-            if (err.message === 'TIMEOUT') {
-                setErrorMsg('Connection timed out. Video API may not be configured.');
-            } else {
-                setErrorMsg('Video service not configured or unavailable.');
-            }
+            setErrorMsg(err.message || 'Video service not configured or unavailable.');
         }
     };
 
@@ -111,11 +91,12 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
     const handleJoin = async () => {
         if (!room) return;
         try {
-            const { token } = await dailyService.getMeetingToken(room.name, user.name, true);
-            onJoinRoom(room.url);
+            // Resolve the ID from the share link (last part of URL)
+            const meetingId = room.shareLink.split('/').pop();
+            router.push(`/meet/${meetingId}`);
             toast.success('Joining secure meet...');
         } catch (err) {
-            console.error('Failed to get token for join:', err);
+            console.error('Failed to join:', err);
             onJoinRoom(room.url);
         }
     };

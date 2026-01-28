@@ -101,7 +101,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                         </div>
 
                         <Button
-                            onClick={() => onJoinRoom?.((nextMeeting as any).room_url || `/call/${nextMeeting.id}`)}
+                            onClick={() => onJoinRoom?.(`/meet/${nextMeeting.id}`)}
                             className="w-full md:w-auto px-8 py-4 text-lg bg-teal-500 hover:bg-teal-400 text-white shadow-lg shadow-teal-900/40 rounded-xl transition-all hover:scale-105"
                         >
                             Join Meeting Now
@@ -161,7 +161,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                                             <Button
                                                 size="sm"
                                                 variant="secondary"
-                                                onClick={() => onJoinRoom?.((meeting as any).room_url || `/call/${meeting.id}`)}
+                                                onClick={() => onJoinRoom?.(`/meet/${meeting.id}`)}
                                                 className="opacity-0 group-hover:opacity-100 transition-opacity"
                                             >
                                                 Join
