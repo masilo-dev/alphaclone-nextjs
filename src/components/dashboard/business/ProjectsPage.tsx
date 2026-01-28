@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { businessProjectService, BusinessProject } from '../../../services/businessProjectService';
@@ -12,14 +12,23 @@ import {
     Trash2,
     Share2,
     Globe,
-    Lock
+    Lock,
+    Trello,
+    BarChart3,
+    Briefcase,
+    Target,
+    CheckCircle2,
+    Clock
 } from 'lucide-react';
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface ProjectsPageProps {
     user: User;
 }
+
+type ViewMode = 'kanban' | 'timeline';
 
 const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const { currentTenant } = useTenant();
@@ -28,13 +37,16 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [viewMode, setViewMode] = useState<ViewMode>('kanban');
+
+    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
     const columns = [
-        { id: 'backlog', title: 'Backlog', color: 'slate' },
-        { id: 'todo', title: 'To Do', color: 'blue' },
-        { id: 'in_progress', title: 'In Progress', color: 'violet' },
-        { id: 'review', title: 'Review', color: 'orange' },
-        { id: 'done', title: 'Done', color: 'teal' }
+        { id: 'backlog', title: 'Ideation', color: 'border-slate-500', bg: 'bg-slate-500/10' },
+        { id: 'todo', title: 'In Planning', color: 'border-blue-500', bg: 'bg-blue-500/10' },
+        { id: 'in_progress', title: 'Development', color: 'border-violet-500', bg: 'bg-violet-500/10' },
+        { id: 'review', title: 'Quality Assurance', color: 'border-orange-500', bg: 'bg-orange-500/10' },
+        { id: 'done', title: 'Completed', color: 'border-teal-500', bg: 'bg-teal-500/10' }
     ];
 
     useEffect(() => {
@@ -45,13 +57,11 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
     const loadData = async () => {
         if (!currentTenant) return;
-
         setLoading(true);
         const { projects: projectData } = await businessProjectService.getProjects(currentTenant.id);
         const { clients: clientData } = await businessClientService.getClients(currentTenant.id);
-
-        setProjects(projectData);
-        setClients(clientData);
+        setProjects(projectData || []);
+        setClients(clientData || []);
         setLoading(false);
     };
 
@@ -61,26 +71,20 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
-
         if (!over) return;
-
         const projectId = active.id as string;
         const newStatus = over.id as string;
 
-        // Update project status
-        await businessProjectService.updateProject(projectId, { status: newStatus as any });
-
-        // Update local state
-        setProjects(projects.map(p =>
-            p.id === projectId ? { ...p, status: newStatus as any } : p
-        ));
-
+        const activeProject = projects.find(p => p.id === projectId);
+        if (activeProject && activeProject.status !== newStatus) {
+            await businessProjectService.updateProject(projectId, { status: newStatus as any });
+            setProjects(projects.map(p => p.id === projectId ? { ...p, status: newStatus as any } : p));
+        }
         setActiveId(null);
     };
 
     const handleAddProject = async (projectData: Partial<BusinessProject>) => {
         if (!currentTenant) return;
-
         const { project, error } = await businessProjectService.createProject(currentTenant.id, projectData);
         if (!error && project) {
             setProjects([project, ...projects]);
@@ -89,208 +93,237 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     };
 
     const handleDeleteProject = async (projectId: string) => {
-        if (!confirm('Are you sure you want to delete this project?')) return;
-
+        if (!confirm('Destroy this project initiative? This action is irreversible.')) return;
         const { error } = await businessProjectService.deleteProject(projectId);
         if (!error) {
             setProjects(projects.filter(p => p.id !== projectId));
         }
     };
 
-    const getProjectsByStatus = (status: string) => {
-        return projects.filter(p => p.status === status);
-    };
+    const getProjectsByStatus = (status: string) => projects.filter(p => p.status === status);
 
-    if (loading) {
-        return <div className="flex items-center justify-center h-full"><div className="text-slate-400">Loading projects...</div></div>;
-    }
+    const ProjectTimeline = () => {
+        const sorted = [...projects].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        const timelineStart = new Date();
+        timelineStart.setMonth(timelineStart.getMonth() - 1);
+        const months = Array.from({ length: 6 }).map((_, i) => {
+            const d = new Date(timelineStart);
+            d.setMonth(d.getMonth() + i);
+            return d;
+        });
 
-    return (
-        <div className="h-full flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-                <div>
-                    <h2 className="text-2xl font-bold">Projects</h2>
-                    <p className="text-slate-400 mt-1">{projects.length} total projects</p>
-                </div>
-                <button
-                    onClick={() => setShowAddModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors"
-                >
-                    <Plus className="w-4 h-4" />
-                    New Project
-                </button>
-            </div>
-
-            {/* Kanban Board */}
-            <DndContext
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-                collisionDetection={closestCorners}
-            >
-                <div className="flex-1 overflow-x-auto">
-                    <div className="flex gap-4 h-full min-w-max pb-4">
-                        {columns.map(column => (
-                            <KanbanColumn
-                                key={column.id}
-                                column={column}
-                                projects={getProjectsByStatus(column.id)}
-                                onDelete={handleDeleteProject}
-                            />
+        return (
+            <div className="glass-panel overflow-hidden rounded-3xl border border-white/5 flex flex-col h-full min-h-[500px] backdrop-blur-xl bg-slate-900/40">
+                <div className="flex border-b border-white/10 divide-x divide-white/5 bg-slate-950/60 sticky top-0 z-20">
+                    <div className="w-80 min-w-80 p-5 font-black text-slate-400 text-[10px] uppercase tracking-[0.2em]">Strategic Initiatives</div>
+                    <div className="flex-1 overflow-x-auto flex divide-x divide-white/5 scrollbar-hide">
+                        {months.map((m, i) => (
+                            <div key={i} className="min-w-[200px] p-4 text-center">
+                                <span className="text-xs font-black text-slate-300 uppercase tracking-widest">{m.toLocaleDateString('default', { month: 'long', year: 'numeric' })}</span>
+                            </div>
                         ))}
                     </div>
                 </div>
+                <div className="flex-1 overflow-y-auto divide-y divide-white/5">
+                    {sorted.map(proj => {
+                        const start = proj.startDate ? new Date(proj.startDate) : new Date(proj.createdAt);
+                        const end = proj.dueDate ? new Date(proj.dueDate) : new Date(start);
+                        if (end < start) end.setMonth(start.getMonth() + 1);
 
-                <DragOverlay>
-                    {activeId ? (
-                        <ProjectCard
-                            project={projects.find(p => p.id === activeId)!}
-                            isDragging
-                            onDelete={() => { }}
-                        />
-                    ) : null}
-                </DragOverlay>
-            </DndContext>
+                        const totalDays = (months[5].getTime() - months[0].getTime()) / (1000 * 60 * 60 * 24);
+                        const startPos = ((start.getTime() - months[0].getTime()) / (1000 * 60 * 60 * 24) / totalDays) * 100;
+                        const duration = ((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24) / totalDays) * 100;
 
-            {/* Add Project Modal */}
-            {showAddModal && (
-                <AddProjectModal
-                    clients={clients}
-                    onClose={() => setShowAddModal(false)}
-                    onAdd={handleAddProject}
-                />
+                        return (
+                            <div key={proj.id} className="flex divide-x divide-white/5 hover:bg-white/5 group transition-all duration-300">
+                                <div className="w-80 min-w-80 p-5 flex flex-col gap-1 sticky left-0 z-10 bg-slate-900/90 backdrop-blur-xl border-r border-white/5">
+                                    <h4 className="text-sm font-bold text-slate-100 group-hover:text-teal-400 transition-colors uppercase tracking-tight">{proj.name}</h4>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-1">
+                                            <Target className="w-3 h-3" /> {proj.status.replace('_', ' ')}
+                                        </span>
+                                        <span className="text-[10px] font-black text-teal-500 flex items-center gap-1">
+                                            <CheckCircle2 className="w-3 h-3" /> {proj.progress}%
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="flex-1 relative h-16 flex items-center min-w-[1200px]">
+                                    <div
+                                        className="absolute h-8 rounded-2xl bg-gradient-to-r from-teal-500/20 to-violet-500/20 border border-white/10 group-hover:border-teal-500/30 group-hover:shadow-[0_0_20px_rgba(45,212,191,0.1)] transition-all flex items-center px-4 overflow-hidden"
+                                        style={{ left: `${Math.max(0, startPos)}%`, width: `${Math.max(1, duration)}%` }}
+                                    >
+                                        <div className="absolute inset-0 bg-gradient-to-r from-teal-500/40 to-violet-500/40 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                        <span className="text-[10px] font-black text-white uppercase tracking-tighter truncate z-10">{proj.name}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    };
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full gap-4">
+                <div className="w-12 h-12 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin"></div>
+                <div className="text-slate-500 font-black text-xs uppercase tracking-widest animate-pulse">Syncing Projects...</div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="h-full flex flex-col space-y-6 bg-slate-950/20 p-4 lg:p-6 rounded-[2.5rem] border border-white/5 backdrop-blur-sm">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                <div>
+                    <div className="flex items-center gap-3 mb-1">
+                        <div className="p-3 bg-gradient-to-br from-teal-500 to-violet-600 rounded-2xl shadow-xl shadow-teal-500/20">
+                            <Briefcase className="w-6 h-6 text-white" />
+                        </div>
+                        <h2 className="text-3xl lg:text-4xl font-black text-white tracking-tighter">
+                            Strategic <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-violet-400">Hub</span>
+                        </h2>
+                    </div>
+                    <p className="text-slate-500 font-bold text-xs uppercase tracking-[0.2em] ml-1">{projects.length} Active Deployments</p>
+                </div>
+
+                <div className="flex items-center gap-4 w-full lg:w-auto">
+                    <div className="flex p-1 bg-slate-900 shadow-inner rounded-2xl border border-white/5">
+                        <button
+                            onClick={() => setViewMode('kanban')}
+                            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${viewMode === 'kanban' ? 'bg-gradient-to-r from-teal-500 to-teal-400 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                        >
+                            <Trello className="w-4 h-4" />
+                            <span className="text-xs font-black uppercase tracking-wider">Kanban</span>
+                        </button>
+                        <button
+                            onClick={() => setViewMode('timeline')}
+                            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${viewMode === 'timeline' ? 'bg-gradient-to-r from-teal-500 to-teal-400 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                        >
+                            <BarChart3 className="w-4 h-4" />
+                            <span className="text-xs font-black uppercase tracking-wider">Timeline</span>
+                        </button>
+                    </div>
+
+                    <button
+                        onClick={() => setShowAddModal(true)}
+                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white text-slate-900 hover:bg-teal-50 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl hover:shadow-white/10 active:scale-95"
+                    >
+                        <Plus className="w-4 h-4" />
+                        New Initiative
+                    </button>
+                </div>
+            </div>
+
+            {viewMode === 'kanban' ? (
+                <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={closestCorners} sensors={sensors}>
+                    <div className="flex-1 overflow-x-auto scrollbar-hide">
+                        <div className="flex gap-6 h-full min-w-max pb-4">
+                            {columns.map(column => (
+                                <KanbanColumn
+                                    key={column.id}
+                                    column={column}
+                                    projects={getProjectsByStatus(column.id)}
+                                    onDelete={handleDeleteProject}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                    <DragOverlay>
+                        {activeId ? <ProjectCard project={projects.find(p => p.id === activeId)!} isDragging onDelete={() => { }} /> : null}
+                    </DragOverlay>
+                </DndContext>
+            ) : (
+                <div className="flex-1">
+                    <ProjectTimeline />
+                </div>
             )}
+
+            {showAddModal && <AddProjectModal clients={clients} onClose={() => setShowAddModal(false)} onAdd={handleAddProject} />}
         </div>
     );
 };
 
 const KanbanColumn = ({ column, projects, onDelete }: any) => {
-    const colorClasses = {
-        slate: 'border-slate-600',
-        blue: 'border-blue-600',
-        violet: 'border-violet-600',
-        orange: 'border-orange-600',
-        teal: 'border-teal-600'
-    };
-
     return (
-        <SortableContext
-            id={column.id}
-            items={projects.map((p: any) => p.id)}
-            strategy={verticalListSortingStrategy}
-        >
-            <div className="flex-shrink-0 w-80 flex flex-col">
-                <div className={`border-t-4 ${colorClasses[column.color as keyof typeof colorClasses]} bg-slate-900/50 border border-slate-800 rounded-t-xl px-4 py-3`}>
-                    <div className="flex items-center justify-between">
-                        <h3 className="font-semibold">{column.title}</h3>
-                        <span className="text-sm text-slate-400">{projects.length}</span>
-                    </div>
-                </div>
-
-                <div
-                    className="flex-1 bg-slate-900/30 border-x border-b border-slate-800 rounded-b-xl p-4 space-y-3 overflow-y-auto min-h-[500px]"
-                    data-column-id={column.id}
-                >
+        <div className="flex flex-col w-80 group/col">
+            <div className={`border-t-4 ${column.color} ${column.bg} border-x border-white/5 rounded-t-3xl px-5 py-4 flex items-center justify-between backdrop-blur-md`}>
+                <h3 className="font-black text-white text-xs uppercase tracking-[0.1em]">{column.title}</h3>
+                <span className="text-[10px] font-black text-slate-500 bg-white/5 px-2.5 py-1 rounded-full">{projects.length}</span>
+            </div>
+            <SortableContext id={column.id} items={projects.map((p: any) => p.id)} strategy={verticalListSortingStrategy}>
+                <div className="flex-1 bg-slate-900/20 border-x border-b border-white/5 rounded-b-3xl p-4 space-y-4 overflow-y-auto min-h-[500px] scrollbar-hide">
                     {projects.map((project: BusinessProject) => (
-                        <ProjectCard
-                            key={project.id}
-                            project={project}
-                            onDelete={onDelete}
-                            onUpdate={() => window.location.reload()}
-                        />
+                        <ProjectCard key={project.id} project={project} onDelete={onDelete} />
                     ))}
                     {projects.length === 0 && (
-                        <div className="text-center text-slate-500 text-sm py-8">
-                            No projects
+                        <div className="flex flex-col items-center justify-center py-12 opacity-20">
+                            <Plus className="w-8 h-8 text-slate-500 mb-2" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Empty Sector</span>
                         </div>
                     )}
                 </div>
-            </div>
-        </SortableContext>
+            </SortableContext>
+        </div>
     );
 };
 
-const ProjectCard = ({ project, isDragging, onDelete, onUpdate }: any) => {
-    const copyShareLink = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        const url = `${window.location.origin}/bp/${project.id}`;
-        navigator.clipboard.writeText(url);
-        alert('Public sharing link copied to clipboard!');
-    };
-
-    const togglePublic = async (e: React.MouseEvent) => {
-        e.stopPropagation();
-        await businessProjectService.updateProject(project.id, { isPublic: !project.isPublic });
-        if (onUpdate) onUpdate();
-    };
+const ProjectCard = ({ project, isDragging, onDelete }: any) => {
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: project.id });
+    const style = { transform: CSS.Translate.toString(transform), transition };
 
     return (
         <div
-            className={`bg-slate-800 border border-slate-700 rounded-lg p-4 cursor-move hover:border-teal-500/50 transition-all ${isDragging ? 'opacity-50 rotate-2' : ''
+            ref={setNodeRef}
+            style={style}
+            {...attributes}
+            {...listeners}
+            className={`glass-panel p-5 rounded-2xl border transition-all cursor-grab active:cursor-grabbing group/card ${isDragging ? 'opacity-50 scale-105 z-50 border-teal-500 shadow-2xl shadow-teal-500/20' : 'border-white/5 bg-slate-900/60 hover:border-white/20'
                 }`}
         >
-            <div className="flex items-start justify-between mb-3">
-                <h4 className="font-medium text-sm">{project.name}</h4>
-                <div className="flex gap-1">
-                    <button
-                        onClick={togglePublic}
-                        className={`p-1 rounded transition-all ${project.isPublic ? 'text-teal-400 hover:bg-teal-400/10' : 'text-slate-500 hover:bg-slate-500/10'}`}
-                        title={project.isPublic ? 'Publicly Shared' : 'Private'}
-                    >
-                        {project.isPublic ? <Globe className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-                    </button>
-                    {project.isPublic && (
-                        <button
-                            onClick={copyShareLink}
-                            className="p-1 hover:bg-teal-500/10 rounded transition-all"
-                            title="Copy Public Link"
-                        >
-                            <Share2 className="w-3.5 h-3.5 text-teal-400" />
-                        </button>
-                    )}
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onDelete(project.id);
-                        }}
-                        className="p-1 hover:bg-red-500/10 rounded transition-all"
-                    >
-                        <Trash2 className="w-3 h-3 text-red-400" />
-                    </button>
-                </div>
+            <div className="flex items-start justify-between mb-4">
+                <h4 className="font-black text-white text-sm uppercase tracking-tight leading-tight group-hover/card:text-teal-400 transition-colors">{project.name}</h4>
+                <button
+                    onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
+                    className="p-1.5 opacity-0 group-hover/card:opacity-100 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-lg transition-all"
+                >
+                    <Trash2 className="w-3.5 h-3.5" />
+                </button>
             </div>
 
             {project.description && (
-                <p className="text-xs text-slate-400 mb-3 line-clamp-2">
-                    {project.description}
-                </p>
+                <p className="text-xs text-slate-400 mb-5 line-clamp-2 leading-relaxed italic">"{project.description}"</p>
             )}
 
-            {project.dueDate && (
-                <div className="flex items-center gap-2 text-xs text-slate-400 mb-2">
-                    <Calendar className="w-3 h-3" />
-                    <span>{new Date(project.dueDate).toLocaleDateString()}</span>
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        {project.dueDate && (
+                            <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase">
+                                <Calendar className="w-3 h-3" />
+                                {new Date(project.dueDate).toLocaleDateString()}
+                            </div>
+                        )}
+                        <div className="w-px h-3 bg-white/5"></div>
+                        <div className="flex -space-x-1.5">
+                            {[1, 2].map(i => (
+                                <div key={i} className="w-5 h-5 rounded-full bg-slate-800 border border-slate-900 flex items-center justify-center">
+                                    <UsersIcon className="w-2.5 h-2.5 text-slate-500" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
-            )}
 
-            {project.assignedTo && project.assignedTo.length > 0 && (
-                <div className="flex items-center gap-2 text-xs text-slate-400 mb-3">
-                    <UsersIcon className="w-3 h-3" />
-                    <span>{project.assignedTo.length} assigned</span>
-                </div>
-            )}
-
-            {/* Progress Bar */}
-            <div className="mt-3">
-                <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
-                    <span>Progress</span>
-                    <span>{project.progress}%</span>
-                </div>
-                <div className="w-full bg-slate-700 rounded-full h-1.5">
-                    <div
-                        className="bg-teal-500 h-1.5 rounded-full transition-all"
-                        style={{ width: `${project.progress}%` }}
-                    />
+                <div className="space-y-2 pt-4 border-t border-white/5">
+                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+                        <span className="text-slate-500">Execution Velocity</span>
+                        <span className="text-teal-400">{project.progress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden border border-white/5 shadow-inner">
+                        <div className="bg-gradient-to-r from-teal-500 to-violet-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(45,212,191,0.3)]" style={{ width: `${project.progress}%` }} />
+                    </div>
                 </div>
             </div>
         </div>
@@ -298,106 +331,48 @@ const ProjectCard = ({ project, isDragging, onDelete, onUpdate }: any) => {
 };
 
 const AddProjectModal = ({ clients, onClose, onAdd }: any) => {
-    const [formData, setFormData] = useState({
-        name: '',
-        description: '',
-        status: 'backlog' as any,
-        dueDate: '',
-        progress: 0,
-        clientId: '',
-        isPublic: false
-    });
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        onAdd(formData);
-    };
-
+    const [formData, setFormData] = useState({ name: '', description: '', status: 'backlog', startDate: new Date().toISOString().split('T')[0], dueDate: '', progress: 0, clientId: '' });
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full">
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold">Create New Project</h3>
-                    <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded">
-                        <X className="w-5 h-5" />
-                    </button>
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+            <div className="bg-slate-900 border border-white/10 rounded-[2rem] p-8 max-w-md w-full shadow-2xl shadow-teal-500/5 animate-in zoom-in-95 duration-200">
+                <div className="flex items-center justify-between mb-8">
+                    <h3 className="text-2xl font-black text-white tracking-tighter">Initialize Initiative</h3>
+                    <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl transition-colors"><X className="w-5 h-5 text-slate-400" /></button>
                 </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Project Name *</label>
-                        <input
-                            type="text"
-                            required
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        />
+                <form onSubmit={(e) => { e.preventDefault(); onAdd(formData); }} className="space-y-5">
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Initiative Name *</label>
+                        <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-bold focus:border-teal-400 outline-none transition-all shadow-inner" placeholder="Project Alpha..." />
                     </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Description</label>
-                        <textarea
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            rows={3}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        />
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Strategic Intel</label>
+                        <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3}
+                            className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-medium focus:border-teal-400 outline-none transition-all resize-none shadow-inner" placeholder="Mission details..." />
                     </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Client</label>
-                        <select
-                            value={formData.clientId}
-                            onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        >
-                            <option value="">No client</option>
-                            {clients.map((client: any) => (
-                                <option key={client.id} value={client.id}>{client.name}</option>
-                            ))}
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Client Node</label>
+                        <select value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-bold focus:border-teal-400 outline-none appearance-none">
+                            <option value="">Internal</option>
+                            {clients.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                     </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Due Date</label>
-                        <input
-                            type="date"
-                            value={formData.dueDate}
-                            onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Launch date</label>
+                            <input type="date" value={formData.startDate} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-bold focus:border-teal-400 outline-none" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Target Date</label>
+                            <input type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-bold focus:border-teal-400 outline-none" />
+                        </div>
                     </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Status</label>
-                        <select
-                            value={formData.status}
-                            onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        >
-                            <option value="backlog">Backlog</option>
-                            <option value="todo">To Do</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="review">Review</option>
-                            <option value="done">Done</option>
-                        </select>
-                    </div>
-
-                    <div className="flex gap-3 pt-4">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="flex-1 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors"
-                        >
-                            Create Project
-                        </button>
+                    <div className="flex gap-4 pt-6">
+                        <button type="button" onClick={onClose} className="flex-1 px-6 py-4 bg-slate-800 hover:bg-slate-700 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-300 transition-all">Abort</button>
+                        <button type="submit" className="flex-1 px-6 py-4 bg-gradient-to-r from-teal-500 to-teal-400 hover:from-teal-400 hover:to-teal-300 text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-teal-500/20 active:scale-95">Confirm</button>
                     </div>
                 </form>
             </div>

@@ -153,25 +153,23 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                {/* Sidebar */}
+                {/* Sidebar - Horizontal scroll on mobile, vertical list on desktop */}
                 <div className="lg:col-span-1">
-                    <Card className="p-2">
-                        <nav className="space-y-1">
-                            {sections.map((section) => (
-                                <button
-                                    key={section.id}
-                                    onClick={() => setActiveSection(section.id)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${activeSection === section.id
-                                        ? 'bg-teal-600 text-white'
-                                        : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                                        }`}
-                                >
-                                    <section.icon className="w-5 h-5" />
-                                    <span>{section.label}</span>
-                                </button>
-                            ))}
-                        </nav>
-                    </Card>
+                    <div className="flex lg:flex-col overflow-x-auto lg:overflow-x-visible gap-2 pb-4 lg:pb-0 scrollbar-hide">
+                        {sections.map((section) => (
+                            <button
+                                key={section.id}
+                                onClick={() => setActiveSection(section.id)}
+                                className={`flex-shrink-0 lg:w-full flex items-center justify-center lg:justify-start gap-3 px-4 py-3 rounded-2xl text-[10px] lg:text-xs font-black uppercase tracking-widest transition-all duration-300 border ${activeSection === section.id
+                                    ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-600/20'
+                                    : 'bg-white/5 border-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                                    }`}
+                            >
+                                <section.icon className="w-4 h-4" />
+                                <span className="whitespace-nowrap">{section.label}</span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Content */}
@@ -226,21 +224,21 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                     </div>
                                 </div>
 
-                                <div className="pt-4 border-t border-slate-800">
-                                    <Button
+                                <div className="pt-6 border-t border-white/5">
+                                    <button
                                         onClick={handleSaveProfile}
                                         disabled={isSaving}
-                                        className="bg-teal-600 hover:bg-teal-500"
+                                        className="w-full lg:w-auto px-8 py-4 bg-teal-600 hover:bg-teal-500 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-teal-600/20 transition-all active:scale-95 disabled:opacity-50"
                                     >
                                         {isSaving ? (
-                                            <>
-                                                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                                                Saving...
-                                            </>
+                                            <div className="flex items-center gap-2">
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                <span>SYNCING...</span>
+                                            </div>
                                         ) : (
-                                            'Save Changes'
+                                            'CONFIRM CHANGES'
                                         )}
-                                    </Button>
+                                    </button>
                                 </div>
                             </div>
                         )}
@@ -406,34 +404,35 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                         ].map((plan) => (
                                             <div
                                                 key={plan.name}
-                                                className={`p-5 rounded-xl border-2 transition-all ${plan.current
+                                                className={`p-6 rounded-3xl border-2 transition-all duration-500 relative overflow-hidden group ${plan.current
                                                     ? 'border-teal-500 bg-teal-500/5'
-                                                    : 'border-slate-800 bg-slate-900/50 hover:border-slate-700'
+                                                    : 'border-white/5 bg-slate-900/40 hover:border-white/10'
                                                     }`}
                                             >
-                                                <div className="flex justify-between items-start mb-4">
-                                                    <div>
-                                                        <h4 className="text-white font-bold">{plan.name}</h4>
-                                                        <p className="text-2xl font-bold text-white mt-1">{plan.price}<span className="text-sm font-normal text-slate-400">/mo</span></p>
+                                                {plan.current && (
+                                                    <div className="absolute top-0 right-0 px-3 py-1 bg-teal-500 text-slate-900 text-[8px] font-black uppercase tracking-widest rounded-bl-xl">
+                                                        ACTIVE
                                                     </div>
-                                                    {plan.current && (
-                                                        <span className="bg-teal-500 text-white text-[10px] uppercase font-black px-2 py-0.5 rounded">Active</span>
-                                                    )}
+                                                )}
+                                                <div className="mb-6">
+                                                    <h4 className="text-white text-lg font-black tracking-tighter">{plan.name}</h4>
+                                                    <p className="text-3xl font-black text-white mt-1">{plan.price}<span className="text-[10px] font-bold text-slate-500 ml-1">/UNIT</span></p>
                                                 </div>
-                                                <ul className="space-y-2 mb-6">
+                                                <ul className="space-y-3 mb-8">
                                                     {plan.features.map(f => (
-                                                        <li key={f} className="text-xs text-slate-400 flex items-center gap-2">
+                                                        <li key={f} className="text-[10px] font-bold text-slate-400 flex items-center gap-2 uppercase tracking-tighter">
                                                             <div className="w-1 h-1 bg-teal-500 rounded-full" /> {f}
                                                         </li>
                                                     ))}
                                                 </ul>
-                                                <Button
-                                                    variant={plan.current ? 'outline' : 'primary'}
-                                                    className={`w-full text-xs py-2 ${!plan.current && 'bg-teal-600 hover:bg-teal-500'}`}
+                                                <button
+                                                    className={`w-full py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${plan.current
+                                                        ? 'bg-white/5 text-slate-500 border border-white/5'
+                                                        : 'bg-teal-500 text-slate-900 shadow-lg shadow-teal-500/20 hover:scale-105 active:scale-95'}`}
                                                     onClick={() => !plan.current && toast.success(`Redirecting to ${plan.name} checkout...`)}
                                                 >
-                                                    {plan.current ? 'Current Plan' : 'Upgrade Now'}
-                                                </Button>
+                                                    {plan.current ? 'CURRENT PROTOCOL' : 'UPGRADE UPLINK'}
+                                                </button>
                                             </div>
                                         ))}
                                     </div>

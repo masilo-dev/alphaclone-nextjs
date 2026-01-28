@@ -21,6 +21,7 @@ import {
    MapPin,
    Video
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from './ui/UIComponents';
 import LoginModal from './auth/LoginModal';
 import { Project, User } from '../types';
@@ -164,8 +165,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <button onClick={() => setIsLoginOpen(true)} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
                               Login
                            </button>
-                           <Button onClick={() => setIsLoginOpen(true)} className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold px-6">
-                              Sign Up
+                           <Button onClick={() => window.location.href = '/register'} className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-6 shadow-lg shadow-teal-500/20">
+                              Start for Free
                            </Button>
                         </div>
                      </div>
@@ -204,7 +205,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      </Link>
                      <div className="pt-4 border-t border-slate-800 flex flex-col gap-3">
                         <Button onClick={() => setIsLoginOpen(true)} variant="outline" className="w-full justify-center">Login</Button>
-                        <Button onClick={() => setIsLoginOpen(true)} className="w-full justify-center bg-teal-500 text-slate-950">Sign Up</Button>
+                        <Button onClick={() => window.location.href = '/register'} className="w-full justify-center bg-teal-500 text-slate-950 font-bold">Start for Free</Button>
                      </div>
                   </div>
                )}
@@ -215,45 +216,82 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                {/* Local Glow for Hero Emphasis */}
                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-teal-500/10 blur-[120px] -z-10 rounded-full" />
 
-               <div className="max-w-4xl mx-auto px-4 text-center">
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/50 backdrop-blur border border-slate-700/50 text-teal-400 text-sm font-medium mb-8 animate-fade-in shadow-lg shadow-teal-900/20">
+               <div className="max-w-5xl mx-auto px-4 text-center">
+                  <motion.div
+                     initial={{ opacity: 0, y: 20 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/50 backdrop-blur border border-slate-700/50 text-teal-400 text-sm font-medium mb-8 shadow-lg shadow-teal-900/20"
+                  >
                      <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
-                     AlphaClone Business OS v2.0
-                  </div>
-                  <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white mb-6 md:mb-8 leading-tight animate-slide-up">
-                     The All-In-One<br />
-                     <span className="text-teal-400">Business Operating System</span>
-                  </h1>
-                  <p className="text-base sm:text-lg md:text-xl text-slate-400 mb-8 md:mb-10 leading-relaxed max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: '0.1s' }}>
-                     Run your entire business from one intelligent dashboard. Includes CRM, Project Management, Video Meetings, AI Sales Agents, and Security Monitoring.
-                  </p>
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up px-4 sm:px-0" style={{ animationDelay: '0.2s' }}>
+                     AlphaClone Business OS v2.0 • 14 Day Free Trial
+                  </motion.div>
+
+                  <motion.h1
+                     initial={{ opacity: 0, y: 20 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     transition={{ delay: 0.1 }}
+                     className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-white mb-6 md:mb-8 leading-[1.1]"
+                  >
+                     Run Your Business<br />
+                     <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 via-blue-400 to-violet-400">
+                        At Warp Speed
+                     </span>
+                  </motion.h1>
+
+                  <motion.p
+                     initial={{ opacity: 0, y: 20 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     transition={{ delay: 0.2 }}
+                     className="text-lg sm:text-xl md:text-2xl text-slate-400 mb-8 md:mb-12 leading-relaxed max-w-3xl mx-auto"
+                  >
+                     The only platform that combines high-performance CRM, Project Management, and AI Agents into one seamless, premium ecosystem.
+                  </motion.p>
+
+                  <motion.div
+                     initial={{ opacity: 0, y: 20 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     transition={{ delay: 0.3 }}
+                     className="flex flex-col sm:flex-row items-center justify-center gap-6 px-4 sm:px-0"
+                  >
                      <Button
-                        onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')}
+                        onClick={() => window.location.href = '/register'}
                         size="lg"
-                        className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-8 h-12 w-full sm:w-auto"
+                        className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-10 h-14 w-full sm:w-auto text-lg shadow-xl shadow-teal-500/20 hover:scale-105 transition-transform"
                      >
-                        Book a Consultation
+                        Start For Free
                      </Button>
                      <Button
                         size="lg"
                         variant="outline"
-                        onClick={() => window.location.href = '/who-we-serve'}
-                        className="border-slate-700 bg-slate-900/50 backdrop-blur hover:bg-slate-800 text-white px-8 h-12 w-full sm:w-auto"
+                        onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')}
+                        className="border-slate-700 bg-slate-900/50 backdrop-blur hover:bg-slate-800 text-white px-10 h-14 w-full sm:w-auto text-lg hover:border-slate-500"
                      >
-                        See Who This Is For
+                        Book a Demo
                      </Button>
-                  </div>
+                  </motion.div>
                </div>
             </section>
             {/* Who We Serve Section */}
             <section id="who-we-serve" className="py-24 bg-slate-950/80 backdrop-blur-sm border-y border-slate-800/50">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="text-center mb-16">
-                     <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Who We Serve</h2>
-                     <p className="text-slate-400 max-w-2xl mx-auto text-lg">
-                        AlphaClone is built for teams who are tired of juggling multiple tools and want a unified system that just works.
-                     </p>
+                     <motion.h2
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="text-4xl md:text-5xl font-bold text-white mb-6"
+                     >
+                        Who We Serve
+                     </motion.h2>
+                     <motion.p
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.1 }}
+                        className="text-slate-400 max-w-2xl mx-auto text-xl"
+                     >
+                        AlphaClone is the operating system for high-growth teams who demand unified control and premium performance.
+                     </motion.p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -508,13 +546,21 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         { icon: Zap, title: "Rapid Custom Development", desc: "Our streamlined process delivers complex custom solutions in 14 days or less, faster than most companies can implement generic platforms." },
                         { icon: Award, title: "Proven Track Record", desc: "Our custom solutions have helped businesses increase efficiency by 67%, reduce costs by 34%, and achieve measurable ROI within 90 days." }
                      ].map((card, i) => (
-                        <div key={i} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 hover:border-teal-500/30 transition-all group backdrop-blur-md">
+                        <motion.div
+                           key={i}
+                           initial={{ opacity: 0, y: 20 }}
+                           whileInView={{ opacity: 1, y: 0 }}
+                           viewport={{ once: true }}
+                           transition={{ delay: i * 0.1 }}
+                           whileHover={{ y: -5 }}
+                           className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 hover:border-teal-500/30 transition-all group backdrop-blur-md"
+                        >
                            <div className="w-14 h-14 bg-slate-800/50 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                               <card.icon className="w-7 h-7 text-teal-400" />
                            </div>
                            <h3 className="text-xl font-bold text-white mb-4">{card.title}</h3>
                            <p className="text-slate-400 leading-relaxed">{card.desc}</p>
-                        </div>
+                        </motion.div>
                      ))}
                   </div>
                </div>
@@ -530,9 +576,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                      {/* AI Chatbot */}
-                     <div className="bg-slate-950/60 rounded-2xl p-8 border border-slate-800 hover:border-green-500/30 transition-all backdrop-blur-md">
-                        <div className="w-14 h-14 bg-green-500 rounded-xl flex items-center justify-center mb-6">
-                           <Bot className="w-8 h-8 text-white" />
+                     <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        whileHover={{ y: -5 }}
+                        className="bg-slate-950/60 rounded-3xl p-8 border border-slate-800/50 hover:border-green-500/30 transition-colors backdrop-blur-md relative overflow-hidden group"
+                     >
+                        <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="w-16 h-16 bg-green-500 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-green-500/20 group-hover:scale-110 transition-transform">
+                           <Bot className="w-9 h-9 text-white" />
                         </div>
                         <h3 className="text-2xl font-bold text-white mb-4">AI Sales Agents</h3>
                         <p className="text-slate-400 text-sm mb-6 leading-relaxed">
@@ -546,17 +599,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               </li>
                            ))}
                         </ul>
-                        <div className="flex flex-col gap-3">
-                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-semibold">
+                        <div className="flex flex-col gap-3 relative z-10">
+                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold h-12">
                               Book Consultation
                            </Button>
                         </div>
-                     </div>
+                     </motion.div>
 
                      {/* CRM */}
-                     <div className="bg-slate-950/60 rounded-2xl p-8 border border-slate-800 hover:border-orange-500/30 transition-all backdrop-blur-md">
-                        <div className="w-14 h-14 bg-orange-500 rounded-xl flex items-center justify-center mb-6">
-                           <Database className="w-8 h-8 text-white" />
+                     <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.1 }}
+                        whileHover={{ y: -5 }}
+                        className="bg-slate-950/60 rounded-3xl p-8 border border-slate-800/50 hover:border-orange-500/30 transition-colors backdrop-blur-md relative overflow-hidden group"
+                     >
+                        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform">
+                           <Database className="w-9 h-9 text-white" />
                         </div>
                         <h3 className="text-2xl font-bold text-white mb-4">CRM & Sales Pipeline</h3>
                         <p className="text-slate-400 text-sm mb-6 leading-relaxed">
@@ -570,41 +631,57 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               </li>
                            ))}
                         </ul>
-                        <div className="flex flex-col gap-3">
-                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-semibold">
+                        <div className="flex flex-col gap-3 relative z-10">
+                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-bold h-12">
                               Book Consultation
                            </Button>
                         </div>
-                     </div>
+                     </motion.div>
 
-                     {/* Security Center (Replacing API) */}
-                     <div className="bg-slate-950/60 rounded-2xl p-8 border border-slate-800 hover:border-red-500/30 transition-all backdrop-blur-md">
-                        <div className="w-14 h-14 bg-red-500 rounded-xl flex items-center justify-center mb-6">
-                           <ShieldCheck className="w-8 h-8 text-white" />
+                     {/* Security Center */}
+                     <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.2 }}
+                        whileHover={{ y: -5 }}
+                        className="bg-slate-950/60 rounded-3xl p-8 border border-slate-800/50 hover:border-red-500/30 transition-colors backdrop-blur-md relative overflow-hidden group"
+                     >
+                        <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="w-16 h-16 bg-red-500 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-red-500/20 group-hover:scale-110 transition-transform">
+                           <ShieldCheck className="w-9 h-9 text-white" />
                         </div>
                         <h3 className="text-2xl font-bold text-white mb-4">Security Command Center</h3>
                         <p className="text-slate-400 text-sm mb-6 leading-relaxed">
                            Monitor your digital footprint for vulnerabilities. Check SSL, headers, and reputation instantly.
                         </p>
                         <ul className="space-y-3 mb-8">
-                           {['SSL/TLS Validation', 'Vulnerability Scanning', 'Trust Score Analysis', 'Daily Monitoring ($5/mo)'].map((item, i) => (
+                           {['SSL/TLS Validation', 'Vulnerability Scanning', 'Trust Score Analysis', 'Daily Monitoring'].map((item, i) => (
                               <li key={i} className="flex items-center text-sm text-slate-300">
                                  <CheckCircle2 className="w-4 h-4 text-red-500 mr-2 flex-shrink-0" />
                                  {item}
                               </li>
                            ))}
                         </ul>
-                        <div className="flex flex-col gap-3">
-                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-red-600 hover:bg-red-500 text-white font-semibold">
+                        <div className="flex flex-col gap-3 relative z-10">
+                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold h-12">
                               Book Consultation
                            </Button>
                         </div>
-                     </div>
+                     </motion.div>
 
-                     {/* Video Platform (Replacing Custom Websites) */}
-                     <div className="bg-slate-950/60 rounded-2xl p-8 border border-slate-800 hover:border-indigo-500/30 transition-all backdrop-blur-md">
-                        <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center mb-6">
-                           <Video className="w-8 h-8 text-white" />
+                     {/* Video Platform */}
+                     <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.3 }}
+                        whileHover={{ y: -5 }}
+                        className="bg-slate-950/60 rounded-3xl p-8 border border-slate-800/50 hover:border-indigo-500/30 transition-colors backdrop-blur-md relative overflow-hidden group"
+                     >
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
+                           <Video className="w-9 h-9 text-white" />
                         </div>
                         <h3 className="text-2xl font-bold text-white mb-4">Unified Video Platform</h3>
                         <p className="text-slate-400 text-sm mb-6 leading-relaxed">
@@ -618,17 +695,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               </li>
                            ))}
                         </ul>
-                        <div className="flex flex-col gap-3">
-                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">
+                        <div className="flex flex-col gap-3 relative z-10">
+                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold h-12">
                               Schedule Meeting
                            </Button>
                         </div>
-                     </div>
+                     </motion.div>
 
                      {/* Mobile Apps */}
-                     <div className="bg-slate-950/60 rounded-2xl p-8 border border-slate-800 hover:border-pink-500/30 transition-all backdrop-blur-md">
-                        <div className="w-14 h-14 bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl flex items-center justify-center mb-6">
-                           <Smartphone className="w-8 h-8 text-white" />
+                     <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.4 }}
+                        whileHover={{ y: -5 }}
+                        className="bg-slate-950/60 rounded-3xl p-8 border border-slate-800/50 hover:border-pink-500/30 transition-colors backdrop-blur-md relative overflow-hidden group"
+                     >
+                        <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-rose-500 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-pink-500/20 group-hover:scale-110 transition-transform">
+                           <Smartphone className="w-9 h-9 text-white" />
                         </div>
                         <h3 className="text-2xl font-bold text-white mb-4">Mobile Companion App</h3>
                         <p className="text-slate-400 text-sm mb-6 leading-relaxed">
@@ -642,17 +727,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               </li>
                            ))}
                         </ul>
-                        <div className="flex flex-col gap-3">
-                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-semibold">
+                        <div className="flex flex-col gap-3 relative z-10">
+                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-bold h-12">
                               Book Consultation
                            </Button>
                         </div>
-                     </div>
+                     </motion.div>
 
                      {/* Dashboards */}
-                     <div className="bg-slate-950/60 rounded-2xl p-8 border border-slate-800 hover:border-cyan-500/30 transition-all backdrop-blur-md">
-                        <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-xl flex items-center justify-center mb-6">
-                           <BarChart className="w-8 h-8 text-white" />
+                     <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.5 }}
+                        whileHover={{ y: -5 }}
+                        className="bg-slate-950/60 rounded-3xl p-8 border border-slate-800/50 hover:border-cyan-500/30 transition-colors backdrop-blur-md relative overflow-hidden group"
+                     >
+                        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-cyan-500/20 group-hover:scale-110 transition-transform">
+                           <BarChart className="w-9 h-9 text-white" />
                         </div>
                         <h3 className="text-2xl font-bold text-white mb-4">Financial Analytics</h3>
                         <p className="text-slate-400 text-sm mb-6 leading-relaxed">
@@ -666,12 +759,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               </li>
                            ))}
                         </ul>
-                        <div className="flex flex-col gap-3">
-                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold">
+                        <div className="flex flex-col gap-3 relative z-10">
+                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold h-12">
                               Book Demo
                            </Button>
                         </div>
-                     </div>
+                     </motion.div>
                   </div>
                </div>
             </section>
@@ -732,37 +825,111 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                </div>
             </section>
 
-            {/* Investment Approach */}
-            <section className="py-24 bg-slate-900/50 backdrop-blur-sm">
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-slate-800/40 rounded-3xl p-8 md:p-16 border border-slate-700/30 backdrop-blur-md">
-                  <div className="text-center mb-16">
-                     <h2 className="text-3xl font-bold text-white mb-6">Project-Based Investment Approach</h2>
-                     <p className="text-slate-400 max-w-2xl mx-auto">
-                        Every project is unique, and so is our approach to pricing. We believe in transparent, value-driven investments that align with your business goals and deliver measurable ROI.
+            {/* Pricing Section */}
+            <section id="pricing" className="py-32 bg-slate-950/50 backdrop-blur-sm relative overflow-hidden">
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-teal-500/5 blur-[120px] -z-10 rounded-full" />
+
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="text-center mb-20">
+                     <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Simple, Transparent Pricing</h2>
+                     <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+                        Scale your business with an operating system that grows with you. No hidden fees, no per-seat charges.
                      </p>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
-                     <div className="flex flex-col items-center">
-                        <div className="w-16 h-16 bg-teal-900/30 rounded-2xl flex items-center justify-center mb-6 text-teal-400">
-                           <Settings className="w-8 h-8" />
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+                     {/* Starter Plan */}
+                     <motion.div
+                        whileHover={{ y: -10 }}
+                        className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 flex flex-col backdrop-blur-xl relative overflow-hidden group"
+                     >
+                        <div className="absolute inset-0 bg-gradient-to-b from-teal-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="relative mb-8">
+                           <h3 className="text-xl font-bold text-white mb-2">Starter</h3>
+                           <p className="text-slate-400 text-sm">Best for solo founders & small teams.</p>
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-4">Tailored Solutions</h3>
-                        <p className="text-slate-400 text-sm">Custom development based on your specific requirements, business model, and growth objectives.</p>
-                     </div>
-                     <div className="flex flex-col items-center">
-                        <div className="w-16 h-16 bg-blue-900/30 rounded-2xl flex items-center justify-center mb-6 text-blue-400">
-                           <MessageSquare className="w-8 h-8" />
+                        <div className="relative mb-8 flex items-baseline gap-1">
+                           <span className="text-4xl font-bold text-white">$16</span>
+                           <span className="text-slate-500">/mo</span>
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-4">Transparent Consultation</h3>
-                        <p className="text-slate-400 text-sm">Detailed project analysis and transparent quotes provided after understanding your vision.</p>
-                     </div>
-                     <div className="flex flex-col items-center">
-                        <div className="w-16 h-16 bg-emerald-900/30 rounded-2xl flex items-center justify-center mb-6 text-emerald-400">
-                           <TrendingUp className="w-8 h-8" />
+                        <ul className="space-y-4 mb-10 flex-grow">
+                           {['5 Multi-tenant Users', 'Core CRM Pipeline', '5GB Secure Storage', 'Standard Project MGMT', '2 Video Meetings/Mo'].map((feat) => (
+                              <li key={feat} className="flex items-center gap-3 text-sm text-slate-300">
+                                 <CheckCircle2 className="w-4 h-4 text-teal-500" />
+                                 {feat}
+                              </li>
+                           ))}
+                        </ul>
+                        <Button
+                           onClick={() => window.location.href = '/register'}
+                           className="w-full h-12 bg-slate-800 hover:bg-slate-700 text-white font-bold border border-slate-700"
+                        >
+                           Start Free Trial
+                        </Button>
+                     </motion.div>
+
+                     {/* Professional Plan (Highlighted) */}
+                     <motion.div
+                        whileHover={{ y: -10 }}
+                        className="bg-slate-900/80 border-2 border-teal-500/50 rounded-3xl p-8 flex flex-col backdrop-blur-xl relative overflow-hidden shadow-2xl shadow-teal-500/10"
+                     >
+                        <div className="absolute top-0 right-0 bg-teal-500 text-slate-950 text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">
+                           Most Popular
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-4">ROI-Focused Investment</h3>
-                        <p className="text-slate-400 text-sm">Strategic investments that prioritize long-term value, scalability, and business growth.</p>
-                     </div>
+                        <div className="relative mb-8">
+                           <h3 className="text-2xl font-bold text-white mb-2 text-teal-400">Professional</h3>
+                           <p className="text-slate-400 text-sm">The power of AlphaClone Business OS.</p>
+                        </div>
+                        <div className="relative mb-8 flex items-baseline gap-1">
+                           <span className="text-5xl font-bold text-white">$48</span>
+                           <span className="text-slate-500">/mo</span>
+                        </div>
+                        <ul className="space-y-4 mb-10 flex-grow">
+                           {['25 Multi-tenant Users', 'Infinite CRM Pipelines', 'AI Sales Automation', '25GB Secure Storage', 'Priority Meeting Support', 'Custom Branding'].map((feat) => (
+                              <li key={feat} className="flex items-center gap-3 text-sm text-slate-200">
+                                 <CheckCircle2 className="w-5 h-5 text-teal-400" />
+                                 {feat}
+                              </li>
+                           ))}
+                        </ul>
+                        <Button
+                           onClick={() => window.location.href = '/register'}
+                           className="w-full h-14 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-lg shadow-lg shadow-teal-500/20"
+                        >
+                           Start Growth Trial
+                        </Button>
+                     </motion.div>
+
+                     {/* Enterprise Plan */}
+                     <motion.div
+                        whileHover={{ y: -10 }}
+                        className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 flex flex-col backdrop-blur-xl relative overflow-hidden group"
+                     >
+                        <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="relative mb-8">
+                           <h3 className="text-xl font-bold text-white mb-2">Enterprise</h3>
+                           <p className="text-slate-400 text-sm">Total scale and custom infrastructure.</p>
+                        </div>
+                        <div className="relative mb-8 flex items-baseline gap-1">
+                           <span className="text-4xl font-bold text-white">$299</span>
+                           <span className="text-slate-500">/mo</span>
+                        </div>
+                        <ul className="space-y-4 mb-10 flex-grow">
+                           {['Unlimited Users', 'Dedicated DB Instance', 'White-labeled Ecosystem', 'API Access', '24/7 Priority Engineer', 'On-premise Options'].map((feat) => (
+                              <li key={feat} className="flex items-center gap-3 text-sm text-slate-300">
+                                 <CheckCircle2 className="w-4 h-4 text-blue-500" />
+                                 {feat}
+                              </li>
+                           ))}
+                        </ul>
+                        <Button
+                           variant="outline"
+                           onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')}
+                           className="w-full h-12 border-slate-700 bg-slate-900/50 hover:bg-slate-800 text-white font-bold"
+                        >
+                           Contact Sales
+                        </Button>
+                     </motion.div>
                   </div>
                </div>
             </section>

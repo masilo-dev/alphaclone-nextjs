@@ -18,6 +18,7 @@ export interface CalendarEvent {
     color?: string;
     is_all_day: boolean;
     reminder_minutes: number;
+    metadata?: Record<string, any>;
     created_at: string;
     updated_at: string;
 }

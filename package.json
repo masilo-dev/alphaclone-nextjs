@@ -28,6 +28,7 @@
     "date-fns": "^4.1.0",
     "dompurify": "^3.3.1",
     "emoji-picker-react": "^4.16.1",
+    "framer-motion": "^12.29.2",
     "jotai": "^2.16.2",
     "jspdf": "^4.0.0",
     "jspdf-autotable": "^5.0.7",

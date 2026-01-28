@@ -11,6 +11,8 @@ export interface BookingSlot {
     available: boolean;
 }
 
+const BUFFER_MINUTES = 15; // 15-minute buffer between meetings
+
 export const bookingService = {
     /**
      * Get tenant public booking profile by slug
@@ -133,9 +135,15 @@ export const bookingService = {
                 }
 
                 // Interval: 30 mins defaults, or equal to duration? 
-                // Usually booking slots are every 15, 30, or 60 mins.
-                // Let's hardcode 30 min intervals for now for flexibility.
-                currentSlot = addMinutes(currentSlot, 30);
+                // Enhanced logic: Slot interval = duration + buffer
+                currentSlot = addMinutes(currentSlot, durationMinutes + BUFFER_MINUTES);
+
+                // Align to next 15-minute block for cleaner scheduling if needed
+                const mins = currentSlot.getMinutes();
+                const remainder = mins % 15;
+                if (remainder !== 0) {
+                    currentSlot = addMinutes(currentSlot, 15 - remainder);
+                }
             }
 
             console.log(`[getAvailableSlots] Generated ${slots.length} available slots for date ${dateStr}`);
@@ -159,7 +167,7 @@ export const bookingService = {
         tenantId: string,
         meetingTypeId: string,
         startTime: string, // ISO
-        clientDetails: { name: string; email: string; phone?: string; topic?: string; notes?: string }
+        clientDetails: { name: string; email: string; phone?: string; topic?: string; notes?: string; customFields?: Record<string, any> }
     ): Promise<{ bookingId: string | null; error: string | null }> {
         try {
             const tenant = await tenantService.getTenant(tenantId);
@@ -203,7 +211,12 @@ Video Link: ${call.daily_room_url}`,
                 attendees: [clientDetails.email], // logic to handle email attendees vs user IDs?
                 is_all_day: false,
                 reminder_minutes: 30,
-                color: '#8b5cf6' // Violet for bookings
+                color: '#8b5cf6', // Violet for bookings
+                metadata: {
+                    customFields: clientDetails.customFields || {},
+                    topic: clientDetails.topic,
+                    phone: clientDetails.phone
+                }
             }, true); // forceCreate=true because we verified slot availability in UI (optimistic)
 
             if (calError || !event) throw new Error('Failed to schedule calendar event');

@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, XCircle, MessageSquare, Phone, Clock, DollarSign, FileText, Calendar, TrendingUp, Plus } from 'lucide-react';
+import { Users, XCircle, MessageSquare, Phone, Clock, DollarSign, FileText, Calendar, TrendingUp, Plus, Filter, Heart, Activity, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Project, User } from '../../types';
 import { userService } from '../../services/userService';
 import { clientActivityService, ClientTimeline } from '../../services/clientActivityService';
-import { Button } from '../ui/UIComponents';
+import { Button, Badge } from '../ui/UIComponents';
 import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 
@@ -15,6 +15,8 @@ interface CRMTabProps {
     openVideoCall: (clientId: string) => void;
     onNavigateToMessages?: (clientId: string) => void;
 }
+
+type ActivityFilter = 'all' | 'message' | 'call' | 'meeting' | 'contract' | 'payment' | 'project_update' | 'file_upload' | 'note';
 
 const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall, onNavigateToMessages }) => {
     const router = useRouter();
@@ -29,6 +31,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
     const [showAddClient, setShowAddClient] = useState(false);
     const [newClient, setNewClient] = useState({ name: '', email: '', company: '' });
     const [isCreatingClient, setIsCreatingClient] = useState(false);
+    const [activityFilter, setActivityFilter] = useState<ActivityFilter>('all');
 
     useEffect(() => {
         const loadClients = async () => {
@@ -53,6 +56,41 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
         setClientTimeline(timeline);
         setLoadingTimeline(false);
     };
+
+    const calculateHealthScore = (timeline: ClientTimeline) => {
+        const lastContact = timeline.stats.last_contact;
+        if (!lastContact) return 0;
+
+        const lastContactDate = new Date(lastContact);
+        const daysSinceLastContact = (new Date().getTime() - lastContactDate.getTime()) / (1000 * 60 * 60 * 24);
+
+        let score = 100;
+        // Deduct points for inactivity
+        score -= Math.min(daysSinceLastContact * 5, 50);
+
+        // Add points for total activity
+        const totalActivity = timeline.activities.length;
+        score += Math.min(totalActivity * 2, 30);
+
+        // Penalize poor response time (if over 24 hours)
+        if (timeline.stats.response_time_avg > 24) {
+            score -= 10;
+        }
+
+        return Math.max(0, Math.min(100, score));
+    };
+
+    const getHealthColor = (score: number) => {
+        if (score >= 80) return 'text-green-400 bg-green-500/10 border-green-500/20';
+        if (score >= 50) return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
+        return 'text-red-400 bg-red-500/10 border-red-500/20';
+    };
+
+    const filteredActivities = useMemo(() => {
+        if (!clientTimeline) return [];
+        if (activityFilter === 'all') return clientTimeline.activities;
+        return clientTimeline.activities.filter(a => a.activity_type === activityFilter);
+    }, [clientTimeline, activityFilter]);
 
     const handleAddClient = async () => {
         if (!newClient.name || !newClient.email) {
@@ -241,13 +279,22 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
                     {/* Activity Timeline - Right Side */}
                     <div className="xl:col-span-2">
                         {selectedClient && clientTimeline ? (
-                            <div className="glass-panel p-6 rounded-2xl border border-white/5">
-                                <div className="flex justify-between items-start mb-6">
-                                    <div>
-                                        <h3 className="text-xl font-bold text-white mb-1">
-                                            {clientTimeline.client_name}
-                                        </h3>
-                                        <p className="text-sm text-slate-400">Complete Activity Timeline</p>
+                            <div className="glass-panel p-6 rounded-2xl border border-white/5 h-full flex flex-col">
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                                    <div className="flex items-center gap-4">
+                                        <div>
+                                            <h3 className="text-xl font-bold text-white mb-1">
+                                                {clientTimeline.client_name}
+                                            </h3>
+                                            <p className="text-sm text-slate-400">Activity Timeline & Engagement</p>
+                                        </div>
+                                        <div className={`flex flex-col items-center px-4 py-2 rounded-xl border ${getHealthColor(calculateHealthScore(clientTimeline))}`}>
+                                            <span className="text-[10px] font-bold uppercase tracking-wider opacity-60">Health</span>
+                                            <div className="flex items-center gap-1 font-bold text-lg">
+                                                <Heart className="w-4 h-4 fill-current" />
+                                                {calculateHealthScore(clientTimeline)}
+                                            </div>
+                                        </div>
                                     </div>
                                     <button
                                         onClick={() => setShowAddNote(!showAddNote)}
@@ -257,110 +304,123 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
                                     </button>
                                 </div>
 
-                                {/* Stats Dashboard */}
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <MessageSquare className="w-4 h-4 text-blue-400" />
-                                            <span className="text-xs text-blue-400">Messages</span>
-                                        </div>
-                                        <div className="text-2xl font-bold text-white">{clientTimeline.stats.total_messages}</div>
+                                {/* Quick Stats Section */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                                    <div className="p-3 bg-slate-800/40 rounded-xl border border-white/5">
+                                        <div className="text-xs text-slate-500 mb-1">Messages</div>
+                                        <div className="text-lg font-bold text-white">{clientTimeline.stats.total_messages}</div>
                                     </div>
-                                    <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <Phone className="w-4 h-4 text-green-400" />
-                                            <span className="text-xs text-green-400">Calls</span>
-                                        </div>
-                                        <div className="text-2xl font-bold text-white">{clientTimeline.stats.total_calls}</div>
+                                    <div className="p-3 bg-slate-800/40 rounded-xl border border-white/5">
+                                        <div className="text-xs text-slate-500 mb-1">Calls</div>
+                                        <div className="text-lg font-bold text-white">{clientTimeline.stats.total_calls}</div>
                                     </div>
-                                    <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-3">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <Calendar className="w-4 h-4 text-purple-400" />
-                                            <span className="text-xs text-purple-400">Meetings</span>
+                                    <div className="p-3 bg-slate-800/40 rounded-xl border border-white/5">
+                                        <div className="text-xs text-slate-500 mb-1">Last Contact</div>
+                                        <div className="text-xs font-bold text-teal-400 truncate">
+                                            {clientTimeline.stats.last_contact ? new Date(clientTimeline.stats.last_contact).toLocaleDateString() : 'Never'}
                                         </div>
-                                        <div className="text-2xl font-bold text-white">{clientTimeline.stats.total_meetings}</div>
                                     </div>
-                                    <div className="bg-teal-500/10 border border-teal-500/20 rounded-lg p-3">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <DollarSign className="w-4 h-4 text-teal-400" />
-                                            <span className="text-xs text-teal-400">Payments</span>
-                                        </div>
-                                        <div className="text-2xl font-bold text-white">{clientTimeline.stats.total_payments}</div>
+                                    <div className="p-3 bg-slate-800/40 rounded-xl border border-white/5">
+                                        <div className="text-xs text-slate-500 mb-1">Avg. Resp</div>
+                                        <div className="text-lg font-bold text-white">{clientTimeline.stats.response_time_avg.toFixed(1)}h</div>
                                     </div>
                                 </div>
 
-                                {/* Add Note Form */}
-                                {showAddNote && (
-                                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 mb-6">
-                                        <h4 className="text-sm font-semibold text-white mb-3">Add Client Note</h4>
-                                        <input
-                                            type="text"
-                                            placeholder="Note title..."
-                                            value={noteTitle}
-                                            onChange={(e) => setNoteTitle(e.target.value)}
-                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm mb-2 focus:outline-none focus:border-teal-500"
-                                        />
-                                        <textarea
-                                            placeholder="Note description..."
-                                            value={noteDescription}
-                                            onChange={(e) => setNoteDescription(e.target.value)}
-                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm mb-3 focus:outline-none focus:border-teal-500 min-h-[80px]"
-                                        />
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={handleAddNote}
-                                                className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm rounded-lg transition-colors"
-                                            >
-                                                Save Note
-                                            </button>
-                                            <button
-                                                onClick={() => setShowAddNote(false)}
-                                                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-lg transition-colors"
-                                            >
-                                                Cancel
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
+                                {/* Activity Filters */}
+                                <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-none">
+                                    <Filter className="w-4 h-4 text-slate-500 mr-2 flex-shrink-0" />
+                                    {(['all', 'message', 'call', 'meeting', 'contract', 'payment', 'project_update', 'file_upload', 'note'] as ActivityFilter[]).map((filter) => (
+                                        <button
+                                            key={filter}
+                                            onClick={() => setActivityFilter(filter)}
+                                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase transition-all whitespace-nowrap border ${activityFilter === filter
+                                                ? 'bg-teal-500 text-white border-teal-400 shadow-lg shadow-teal-500/20'
+                                                : 'bg-slate-800 text-slate-400 border-white/5 hover:border-white/10'
+                                                }`}
+                                        >
+                                            {filter}
+                                        </button>
+                                    ))}
+                                </div>
 
-                                {/* Activity Timeline */}
-                                <div className="space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar">
-                                    {loadingTimeline ? (
-                                        <div className="text-center py-8">
-                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto"></div>
+                                {/* Timeline Content */}
+                                <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
+                                    {showAddNote && (
+                                        <div className="bg-slate-800/80 border border-teal-500/30 rounded-2xl p-4 animate-in slide-in-from-top-2 duration-200">
+                                            <h4 className="text-sm font-semibold text-white mb-3">New Client Note</h4>
+                                            <input
+                                                type="text"
+                                                placeholder="Title of your note..."
+                                                value={noteTitle}
+                                                onChange={(e) => setNoteTitle(e.target.value)}
+                                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm mb-2 focus:outline-none focus:border-teal-500"
+                                            />
+                                            <textarea
+                                                placeholder="Write detailed observations..."
+                                                value={noteDescription}
+                                                onChange={(e) => setNoteDescription(e.target.value)}
+                                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm mb-3 focus:outline-none focus:border-teal-500 min-h-[100px]"
+                                            />
+                                            <div className="flex gap-2">
+                                                <Button size="sm" onClick={handleAddNote}>Save Note</Button>
+                                                <Button size="sm" variant="outline" onClick={() => setShowAddNote(false)}>Cancel</Button>
+                                            </div>
                                         </div>
-                                    ) : clientTimeline.activities.length === 0 ? (
-                                        <div className="text-center py-8 text-slate-400">
-                                            No activity yet
+                                    )}
+
+                                    {loadingTimeline ? (
+                                        <div className="flex flex-col items-center justify-center h-full gap-3 opacity-50">
+                                            <Activity className="w-8 h-8 text-teal-500 animate-pulse" />
+                                            <span className="text-sm">Fetching timeline...</span>
+                                        </div>
+                                    ) : filteredActivities.length === 0 ? (
+                                        <div className="text-center py-12 text-slate-500">
+                                            <Clock className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                                            <p>No activity matches the selected filter.</p>
                                         </div>
                                     ) : (
-                                        clientTimeline.activities.map((activity) => (
-                                            <div key={activity.id} className="flex gap-3 p-3 bg-slate-800/30 rounded-lg border border-slate-700/50 hover:border-slate-600 transition-colors">
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center border flex-shrink-0 ${getActivityColor(activity.activity_type)}`}>
-                                                    {getActivityIcon(activity.activity_type)}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex justify-between items-start mb-1">
-                                                        <h4 className="text-sm font-semibold text-white">{activity.title}</h4>
-                                                        <span className="text-xs text-slate-500 whitespace-nowrap ml-2">
-                                                            {new Date(activity.created_at).toLocaleDateString()} {new Date(activity.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        </span>
+                                        <div className="relative pl-6 border-l border-slate-800 space-y-6">
+                                            {filteredActivities.map((activity) => (
+                                                <div key={activity.id} className="relative group">
+                                                    {/* Timeline Dot */}
+                                                    <div className={`absolute -left-[31px] w-2.5 h-2.5 rounded-full border-2 border-slate-950 z-10 ${getActivityColor(activity.activity_type).split(' ')[1].replace('text-', 'bg-')}`} />
+
+                                                    <div className="glass-panel p-4 rounded-xl border border-white/5 hover:border-white/10 transition-all bg-slate-800/20">
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className={`p-1.5 rounded-lg ${getActivityColor(activity.activity_type)}`}>
+                                                                    {getActivityIcon(activity.activity_type)}
+                                                                </span>
+                                                                <div>
+                                                                    <h4 className="text-sm font-bold text-white leading-tight">{activity.title}</h4>
+                                                                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{activity.activity_type}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-[10px] text-slate-500 font-mono text-right">
+                                                                <div>{new Date(activity.created_at).toLocaleDateString()}</div>
+                                                                <div>{new Date(activity.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                                            </div>
+                                                        </div>
+                                                        {activity.description && (
+                                                            <p className="text-xs text-slate-400 pl-8 border-l border-slate-700/50 mt-2 py-1 italic line-clamp-3 group-hover:line-clamp-none transition-all cursor-default">
+                                                                "{activity.description}"
+                                                            </p>
+                                                        )}
                                                     </div>
-                                                    {activity.description && (
-                                                        <p className="text-xs text-slate-400 line-clamp-2">{activity.description}</p>
-                                                    )}
                                                 </div>
-                                            </div>
-                                        ))
+                                            ))}
+                                        </div>
                                     )}
                                 </div>
                             </div>
                         ) : (
-                            <div className="glass-panel p-12 rounded-2xl border border-white/5 text-center">
-                                <Users className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                                <h3 className="text-lg font-semibold text-white mb-2">Select a Client</h3>
-                                <p className="text-sm text-slate-400">
-                                    Click on a client to view their complete activity timeline and communication history
+                            <div className="glass-panel p-12 rounded-2xl border border-white/5 text-center flex flex-col items-center justify-center h-full">
+                                <div className="w-24 h-24 bg-slate-800 rounded-full flex items-center justify-center mb-6 border border-white/5 group-hover:scale-110 transition-transform">
+                                    <Users className="w-10 h-10 text-teal-500 opacity-40" />
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-2">AlphaClone CRM Intel</h3>
+                                <p className="text-sm text-slate-400 max-w-xs mx-auto">
+                                    Selecting a client reveals their full engagement history, health score, and predicted performance indicators.
                                 </p>
                             </div>
                         )}

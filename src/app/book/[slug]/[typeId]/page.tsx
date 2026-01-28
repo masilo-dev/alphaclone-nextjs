@@ -6,6 +6,7 @@ import { bookingService, BookingSlot } from '@/services/bookingService';
 import { Tenant } from '@/services/tenancy/types';
 import { Card } from '@/components/ui/UIComponents';
 import { format, addDays, startOfToday, isSameDay } from 'date-fns';
+import { Clock, Calendar, CheckSquare, Plus, AlertCircle, User, LayoutGrid, Trello, BarChart, ChevronLeft, ChevronRight, ArrowRight, Check, FileText, MessageSquare, MoreVertical } from 'lucide-react';
 
 export default function BookingSlotPage() {
     const params = useParams();
@@ -130,44 +131,68 @@ export default function BookingSlotPage() {
     const nextDays = Array.from({ length: 7 }).map((_, i) => addDays(startOfToday(), i));
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white p-4 md:p-12">
-            <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
+        <div className="min-h-screen bg-[#050505] text-white p-4 md:p-12 relative overflow-hidden">
+            {/* Background elements */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-teal-500/10 blur-[120px] rounded-full animate-pulse"></div>
+                <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-500/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+            </div>
 
-                {/* Sidebar Info */}
-                <div className="md:col-span-1 space-y-6">
-                    <button onClick={() => router.back()} className="text-slate-400 hover:text-white text-sm">
-                        ← Back
+            <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-12 relative z-10">
+                {/* 1. Profile Sidebar */}
+                <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-left-4 duration-700">
+                    <button
+                        onClick={() => router.push(`/book/${slug}`)}
+                        className="flex items-center gap-2 text-slate-500 hover:text-white text-xs font-black uppercase tracking-widest group transition-all"
+                    >
+                        <span className="group-hover:-translate-x-1 transition-transform">←</span> BACK TO SECTORS
                     </button>
-                    <div>
-                        <h2 className="text-slate-400 text-sm uppercase tracking-wider mb-2">Scheduling</h2>
-                        <h1 className="text-2xl md:text-3xl font-bold mb-2">{meetingType.name}</h1>
-                        <div className="flex items-center gap-2 text-slate-400">
-                            <span>⏱ {meetingType.duration} min</span>
-                            <span>•</span>
-                            <span>🎥 Video Call</span>
+
+                    <div className="space-y-6">
+                        <div className="relative inline-block">
+                            <div className="absolute inset-0 bg-gradient-to-r from-teal-500 to-violet-500 rounded-3xl blur opacity-20"></div>
+                            {tenant.settings.branding?.logo ? (
+                                <img src={tenant.settings.branding.logo} className="w-20 h-20 rounded-3xl object-cover border border-white/10 relative z-10 p-1 bg-slate-900" />
+                            ) : (
+                                <div className="w-20 h-20 rounded-3xl bg-slate-900 border border-white/10 flex items-center justify-center relative z-10">
+                                    <span className="text-2xl font-black text-white/20">{tenant.name.charAt(0)}</span>
+                                </div>
+                            )}
                         </div>
-                    </div>
-                    <p className="text-slate-500 text-sm leading-relaxed break-words">
-                        {meetingType.description}
-                    </p>
-                    {tenant.settings.branding?.logo && (
-                        <div className="pt-6 border-t border-slate-800">
-                            <div className="flex items-center gap-3">
-                                <img src={tenant.settings.branding.logo} className="w-10 h-10 rounded-full" />
-                                <span className="font-medium text-slate-300">{tenant.name}</span>
+
+                        <div>
+                            <h2 className="text-teal-400 text-xs font-black uppercase tracking-[0.2em] mb-3">Unit Deployment</h2>
+                            <h1 className="text-3xl md:text-5xl font-black tracking-tighter text-white mb-4 leading-none">{meetingType.name}</h1>
+                            <div className="flex flex-wrap items-center gap-3">
+                                <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                                    <Clock className="w-3 h-3 text-teal-400" /> {meetingType.duration} MIN SESSION
+                                </span>
+                                <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-teal-500"></div> ENCRYPTED VIDEO
+                                </span>
                             </div>
                         </div>
-                    )}
+
+                        <div className="glass-panel p-6 rounded-[2rem] border border-white/5 bg-slate-900/40 backdrop-blur-3xl">
+                            <p className="text-slate-400 text-sm leading-relaxed font-medium italic">
+                                "{meetingType.description || 'Initialize a high-impact session with our lead strategists to accelerate your project trajectory.'}"
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Main Content */}
-                <Card className="md:col-span-2 p-4 md:p-8 bg-slate-900 border-slate-800">
-                    <div className="space-y-8">
+                {/* 2. Selection Area */}
+                <div className="lg:col-span-8 flex flex-col gap-8 animate-in fade-in slide-in-from-right-4 duration-700 delay-200">
+                    <div className="glass-panel p-8 md:p-10 rounded-[3rem] border border-white/5 bg-slate-900/40 backdrop-blur-3xl space-y-12">
 
-                        {/* 1. Date Picker (Horizontal) */}
-                        <div className="space-y-4">
-                            <h3 className="tex-sm font-medium text-slate-300">Select Date</h3>
-                            <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-thin scrollbar-thumb-slate-700">
+                        {/* Date Picker */}
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Coordinate Selection</h3>
+                                <span className="text-[10px] font-bold text-teal-500/60 uppercase tracking-widest italic">Temporal alignment required</span>
+                            </div>
+
+                            <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
                                 {nextDays.map(date => {
                                     const isSelected = isSameDay(date, selectedDate);
                                     return (
@@ -175,40 +200,47 @@ export default function BookingSlotPage() {
                                             key={date.toISOString()}
                                             onClick={() => setSelectedDate(date)}
                                             className={`
-                                                flex flex-col items-center justify-center min-w-[3rem] p-2 rounded-xl border transition-all
+                                                flex flex-col items-center justify-center min-w-[5rem] h-24 rounded-2xl border transition-all duration-500 relative group
                                                 ${isSelected
-                                                    ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-900/20'
-                                                    : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600 hover:bg-slate-800'}
+                                                    ? 'bg-gradient-to-br from-teal-500 to-teal-600 border-teal-400 text-white shadow-2xl shadow-teal-500/20 scale-105 z-10'
+                                                    : 'bg-white/5 border-white/5 text-slate-500 hover:border-white/10 hover:bg-white/10'}
                                             `}
                                         >
-                                            <span className="text-xs uppercase font-bold">{format(date, 'EEE')}</span>
-                                            <span className="text-xl font-bold">{format(date, 'd')}</span>
+                                            <span className={`text-[10px] font-black uppercase tracking-widest mb-1 ${isSelected ? 'text-white/80' : 'text-slate-600'}`}>
+                                                {format(date, 'EEE')}
+                                            </span>
+                                            <span className="text-2xl font-black tracking-tighter">{format(date, 'd')}</span>
+                                            {isSelected && (
+                                                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white"></div>
+                                            )}
                                         </button>
                                     );
                                 })}
                             </div>
                         </div>
 
-                        {/* 2. Slot Picker */}
-                        <div className="space-y-4">
-                            <h3 className="tex-sm font-medium text-slate-300">Available Times</h3>
-                            {loadingSlots ? (
-                                <div className="h-20 flex items-center justify-center text-slate-500">Check availability...</div>
-                            ) : slots.length === 0 ? (
-                                <div className="text-center p-6 bg-slate-800/30 rounded-lg text-slate-500 text-sm">
-                                    No slots available on this date.
+                        {/* Slot Picker */}
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Available Windows</h3>
+                                {loadingSlots && <div className="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>}
+                            </div>
+
+                            {slots.length === 0 && !loadingSlots ? (
+                                <div className="text-center py-12 bg-white/5 border border-dashed border-white/10 rounded-2xl">
+                                    <p className="text-slate-600 text-[10px] font-black uppercase tracking-widest">No terminal availability detected</p>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                     {slots.map((slot, i) => (
                                         <button
                                             key={i}
                                             onClick={() => setSelectedSlot(slot)}
                                             className={`
-                                                py-2 px-3 rounded-lg text-sm font-medium transition-all border
+                                                py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-300 border
                                                 ${selectedSlot === slot
-                                                    ? 'bg-white text-slate-900 border-white'
-                                                    : 'bg-slate-800 text-teal-400 border-slate-700 hover:border-teal-500/50 hover:bg-slate-800/80'}
+                                                    ? 'bg-white text-slate-900 border-white shadow-xl scale-95'
+                                                    : 'bg-white/5 text-teal-400 border-white/5 hover:border-teal-500/30 hover:bg-white/10'}
                                             `}
                                         >
                                             {format(new Date(slot.start), 'h:mm a')}
@@ -218,85 +250,106 @@ export default function BookingSlotPage() {
                             )}
                         </div>
 
-                        {/* 3. Details Form (Shows when slot selected) */}
+                        {/* Form Area */}
                         {selectedSlot && (
-                            <div className="pt-8 border-t border-slate-800 animate-in fade-in slide-in-from-top-4 duration-300">
-                                <h3 className="text-lg font-bold mb-6">Enter Details</h3>
-                                <form onSubmit={handleBook} className="space-y-4">
-                                    <div className="grid md:grid-cols-2 gap-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs text-slate-400">Your Name</label>
+                            <div className="pt-12 border-t border-white/5 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+                                    <div className="space-y-2">
+                                        <h3 className="text-2xl md:text-3xl font-black text-white tracking-tighter">Initialize Link</h3>
+                                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Selected Window: {format(new Date(selectedSlot.start), 'MMMM do, h:mm a')}</p>
+                                    </div>
+                                    <div className="flex -space-x-3">
+                                        {[1, 2, 3].map(i => (
+                                            <div key={i} className="w-10 h-10 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-600 uppercase">
+                                                ID
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <form onSubmit={handleBook} className="space-y-6">
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Full Name</label>
                                             <input
                                                 required
                                                 type="text"
-                                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+                                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800"
+                                                placeholder="Enter full legal name"
                                                 value={name}
                                                 onChange={e => setName(e.target.value)}
                                             />
                                         </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs text-slate-400">Email Address</label>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Email Endpoint</label>
                                             <input
                                                 required
                                                 type="email"
-                                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+                                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800"
+                                                placeholder="Enter secure email address"
                                                 value={email}
                                                 onChange={e => setEmail(e.target.value)}
                                             />
-
                                         </div>
                                     </div>
-                                    <div className="grid md:grid-cols-2 gap-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs text-slate-400">Phone Number</label>
+
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Mobile Uplink</label>
                                             <input
                                                 required
                                                 type="tel"
-                                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+                                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800"
                                                 placeholder="+1 (555) 000-0000"
                                                 value={phone}
                                                 onChange={e => setPhone(e.target.value)}
                                             />
                                         </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs text-slate-400">Topic of Discussion</label>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Primary Objective</label>
                                             <input
                                                 required
                                                 type="text"
-                                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
-                                                placeholder="What should we discuss?"
+                                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800"
+                                                placeholder="Define mission focus..."
                                                 value={topic}
                                                 onChange={e => setTopic(e.target.value)}
                                             />
                                         </div>
                                     </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs text-slate-400">Notes (Optional)</label>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Extended Intel (Optional)</label>
                                         <textarea
-                                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none min-h-[100px]"
+                                            className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800 min-h-[120px] resize-none"
+                                            placeholder="Provide additional context for the session..."
                                             value={notes}
                                             onChange={e => setNotes(e.target.value)}
                                         />
                                     </div>
 
                                     {error && (
-                                        <div className="p-3 bg-red-500/10 text-red-400 text-sm rounded-lg border border-red-500/20">
-                                            {error}
+                                        <div className="p-4 bg-red-500/10 text-red-400 text-[10px] font-black uppercase tracking-widest rounded-2xl border border-red-500/20 animate-pulse">
+                                            Protocol Failure: {error}
                                         </div>
                                     )}
 
                                     <button
                                         type="submit"
                                         disabled={submitting}
-                                        className="w-full py-3 bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="w-full py-6 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 text-slate-900 font-black text-xs uppercase tracking-[0.3em] rounded-2xl transition-all shadow-2xl shadow-teal-500/20 active:scale-95 disabled:opacity-50"
                                     >
-                                        {submitting ? 'Confirming...' : 'Schedule Meeting'}
+                                        {submitting ? 'PROCESSING PROTOCOL...' : 'CONFIRM UNIT DEPLOYMENT'}
                                     </button>
                                 </form>
                             </div>
                         )}
                     </div>
-                </Card>
+
+                    <div className="text-center opacity-20 hover:opacity-100 transition-opacity">
+                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em]">Encrypted Session Initialization Protocol Alpha-9</p>
+                    </div>
+                </div>
             </div>
         </div>
     );

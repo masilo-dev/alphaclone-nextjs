@@ -84,7 +84,57 @@ export interface PipelineStats {
     totalValue: number;
 }
 
-export const dealService = {
+export interface DealService {
+    getTenantId(): string;
+    getDeals(filters?: {
+        ownerId?: string;
+        stage?: DealStage;
+        contactId?: string;
+        limit?: number;
+    }): Promise<{ deals: Deal[]; error: string | null }>;
+    getDealById(dealId: string): Promise<{ deal: Deal | null; error: string | null }>;
+    createDeal(userId: string, dealData: CreateDealInput): Promise<{ deal: Deal | null; error: string | null }>;
+    updateDeal(dealId: string, updates: Partial<Deal>): Promise<{ deal: Deal | null; error: string | null }>;
+    deleteDeal(dealId: string): Promise<{ success: boolean; error: string | null }>;
+    getDealActivities(dealId: string): Promise<{ activities: DealActivity[]; error: string | null }>;
+    addDealActivity(
+        dealId: string,
+        userId: string,
+        activityType: string,
+        title: string,
+        options?: {
+            description?: string;
+            durationMinutes?: number;
+            outcome?: string;
+            nextAction?: string;
+            metadata?: any;
+        }
+    ): Promise<{ activity: DealActivity | null; error: string | null }>;
+    getDealProducts(dealId: string): Promise<{ products: DealProduct[]; error: string | null }>;
+    addDealProduct(
+        dealId: string,
+        productData: {
+            productName: string;
+            description?: string;
+            quantity: number;
+            unitPrice: number;
+            discountPercent?: number;
+            taxPercent?: number;
+        }
+    ): Promise<{ product: DealProduct | null; error: string | null }>;
+    deleteDealProduct(productId: string): Promise<{ success: boolean; error: string | null }>;
+    getPipelineStats(ownerId?: string): Promise<{ stats: PipelineStats[]; error: string | null }>;
+    getWeightedPipelineValue(ownerId?: string): Promise<{ value: number; error: string | null }>;
+    getWinRate(
+        startDate?: string,
+        endDate?: string,
+        ownerId?: string
+    ): Promise<{ winRate: number; totalWon: number; totalLost: number; error: string | null }>;
+    getSalesForecast(months?: number): Promise<{ forecast: any[]; error: string | null }>;
+    getWinLossTrends(months?: number): Promise<{ trends: any[]; error: string | null }>;
+}
+
+export const dealService: DealService = {
     /**
      * Get tenant ID (required for all operations)
      */
@@ -663,7 +713,7 @@ export const dealService = {
             let query = supabase
                 .from('deals')
                 .select('stage, actual_close_date')
-                .eq('tenant_id', tenantId) // ← TENANT FILTER
+                .eq('tenant_id', tenantId)
                 .in('stage', ['closed_won', 'closed_lost']);
 
             if (startDate) {
@@ -689,6 +739,87 @@ export const dealService = {
             return { winRate, totalWon, totalLost, error: null };
         } catch (err) {
             return { winRate: 0, totalWon: 0, totalLost: 0, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * Get sales forecast (weighted value by month)
+     */
+    async getSalesForecast(months: number = 6): Promise<{ forecast: any[]; error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+
+            const { data, error } = await supabase
+                .from('deals')
+                .select('value, probability, expected_close_date')
+                .eq('tenant_id', tenantId)
+                .not('stage', 'in', '(closed_won,closed_lost)')
+                .not('expected_close_date', 'is', null);
+
+            if (error) throw error;
+
+            const forecastMap = new Map<string, number>();
+            const now = new Date();
+
+            (data || []).forEach((deal: any) => {
+                const closeDate = new Date(deal.expected_close_date);
+                const month = closeDate.toLocaleString('default', { month: 'short', year: 'numeric' });
+                const weightedValue = ((deal.value || 0) * (deal.probability || 0)) / 100;
+
+                forecastMap.set(month, (forecastMap.get(month) || 0) + weightedValue);
+            });
+
+            const forecast = Array.from(forecastMap.entries()).map(([month, value]) => ({
+                month,
+                value,
+            }));
+
+            return { forecast, error: null };
+        } catch (err) {
+            return { forecast: [], error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * Get win/loss trends over time
+     */
+    async getWinLossTrends(months: number = 6): Promise<{ trends: any[]; error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+
+            const { data, error } = await supabase
+                .from('deals')
+                .select('stage, actual_close_date')
+                .eq('tenant_id', tenantId)
+                .in('stage', ['closed_won', 'closed_lost'])
+                .not('actual_close_date', 'is', null);
+
+            if (error) throw error;
+
+            const trendsMap = new Map<string, { won: number; lost: number }>();
+
+            (data || []).forEach((deal: any) => {
+                const date = new Date(deal.actual_close_date);
+                const month = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+                const current = trendsMap.get(month) || { won: 0, lost: 0 };
+
+                if (deal.stage === 'closed_won') {
+                    current.won += 1;
+                } else {
+                    current.lost += 1;
+                }
+                trendsMap.set(month, current);
+            });
+
+            const trends = Array.from(trendsMap.entries()).map(([month, data]) => ({
+                month,
+                won: data.won,
+                lost: data.lost,
+            }));
+
+            return { trends, error: null };
+        } catch (err) {
+            return { trends: [], error: err instanceof Error ? err.message : 'Unknown error' };
         }
     },
 };

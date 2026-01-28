@@ -8,6 +8,7 @@ export interface BusinessProject {
     status: 'backlog' | 'todo' | 'in_progress' | 'review' | 'done';
     assignedTo: string[];
     dueDate?: string;
+    startDate?: string;
     progress: number;
     clientId?: string;
     isPublic: boolean;
@@ -37,6 +38,7 @@ export const businessProjectService = {
                 status: p.status,
                 assignedTo: p.assigned_to || [],
                 dueDate: p.due_date,
+                startDate: p.start_date,
                 progress: p.progress || 0,
                 clientId: p.client_id,
                 createdAt: p.created_at,
@@ -64,6 +66,7 @@ export const businessProjectService = {
                     status: project.status || 'backlog',
                     assigned_to: project.assignedTo || [],
                     due_date: project.dueDate,
+                    start_date: project.startDate,
                     progress: project.progress || 0,
                     client_id: project.clientId,
                     is_public: project.isPublic || false
@@ -81,6 +84,7 @@ export const businessProjectService = {
                 status: data.status,
                 assignedTo: data.assigned_to || [],
                 dueDate: data.due_date,
+                startDate: data.start_date,
                 progress: data.progress || 0,
                 clientId: data.client_id,
                 isPublic: data.is_public || false,
@@ -107,6 +111,7 @@ export const businessProjectService = {
             if (updates.status !== undefined) updateData.status = updates.status;
             if (updates.assignedTo !== undefined) updateData.assigned_to = updates.assignedTo;
             if (updates.dueDate !== undefined) updateData.due_date = updates.dueDate;
+            if (updates.startDate !== undefined) updateData.start_date = updates.startDate;
             if (updates.progress !== undefined) updateData.progress = updates.progress;
             if (updates.clientId !== undefined) updateData.client_id = updates.clientId;
             if (updates.isPublic !== undefined) updateData.is_public = updates.isPublic;
