@@ -112,15 +112,16 @@ interface ModalProps {
   onClose: () => void;
   children: React.ReactNode;
   title?: string;
+  maxWidth?: string;
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
+export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title, maxWidth = 'max-w-md' }) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 pt-safe pb-safe">
-      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md shadow-2xl animate-fade-in overflow-hidden max-h-[85vh] flex flex-col">
+      <div className={`absolute inset-0 bg-slate-950/80 backdrop-blur-sm`} onClick={onClose} />
+      <div className={`relative bg-slate-900 border border-slate-700 rounded-2xl w-full ${maxWidth} shadow-2xl animate-fade-in overflow-hidden max-h-[85vh] flex flex-col`}>
         <div className="flex items-center justify-between p-4 border-b border-slate-800 flex-shrink-0">
           <h3 className="text-lg font-semibold text-white">{title}</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-slate-800 rounded-lg">

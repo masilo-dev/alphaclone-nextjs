@@ -3,10 +3,11 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
-import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Video, MapPin, X, Clock, Users as UsersIcon, Loader2 } from 'lucide-react';
+import { format, isBefore } from 'date-fns'; // Added isBefore
+import { Calendar as CalendarIcon, Video, MapPin, X, Clock, Users as UsersIcon, Loader2, CheckSquare, CreditCard } from 'lucide-react';
 import { Card, Button, Badge, Modal, Input } from '../ui/UIComponents';
 import { calendarService, CalendarEvent } from '../../services/calendarService';
+import { taskService } from '../../services/taskService'; // Added taskService
 import { User } from '../../types';
 import toast from 'react-hot-toast';
 
@@ -94,7 +95,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
     const handleCreateEvent = async () => {
         if (!newEvent.title.trim()) {
-            toast.error('Event title is required');
+            toast.error('Title is required');
             return;
         }
 
@@ -106,24 +107,47 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         setIsSaving(true);
 
         try {
-            const { error } = await calendarService.createEvent({
-                user_id: user.id,
-                ...newEvent,
-                attendees: newEvent.attendees || [],
-                color: getEventColor(newEvent.type),
-                reminder_minutes: 15,
-            });
+            // -- INDEPENDENT TASK CREATION LOGIC --
+            if (newEvent.type === 'task') {
+                const { error } = await taskService.createTask(user.id, {
+                    title: newEvent.title,
+                    description: newEvent.description,
+                    assignedTo: user.id, // Assign to self
+                    // No project/client needed (Independent)
+                    startDate: new Date(newEvent.start_time).toISOString(),
+                    dueDate: new Date(newEvent.end_time).toISOString(),
+                    priority: 'medium',
+                });
 
-            if (!error) {
-                toast.success('Event created successfully!');
-                setShowEventModal(false);
-                resetForm();
-                loadEvents();
+                if (!error) {
+                    toast.success('Task created successfully!');
+                    setShowEventModal(false);
+                    resetForm();
+                    loadEvents(); // Reload to fetch the new task event
+                } else {
+                    toast.error('Failed to create task');
+                }
             } else {
-                toast.error('Failed to create event');
+                // Standard Calendar Event
+                const { error } = await calendarService.createEvent({
+                    user_id: user.id,
+                    ...newEvent,
+                    attendees: newEvent.attendees || [],
+                    color: getEventColor(newEvent.type, {}), // Default color
+                    reminder_minutes: 15,
+                });
+
+                if (!error) {
+                    toast.success('Event created successfully!');
+                    setShowEventModal(false);
+                    resetForm();
+                    loadEvents();
+                } else {
+                    toast.error('Failed to create event');
+                }
             }
         } catch (err) {
-            toast.error('Failed to create event');
+            toast.error('Failed to create item');
         } finally {
             setIsSaving(false);
         }
@@ -196,13 +220,24 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         });
     };
 
-    const getEventColor = (type: string) => {
+    // Updated to handle Overdue Tasks
+    const getEventColor = (type: string, event: Partial<CalendarEvent>) => {
+        // Warning for undone/overdue tasks
+        if (type === 'task') {
+            const isCompleted = event.metadata?.status === 'completed';
+            const isOverdue = event.end_time && isBefore(new Date(event.end_time), new Date()) && !isCompleted;
+
+            if (isCompleted) return '#10b981'; // Green (Completed)
+            if (isOverdue) return '#ef4444';   // Red (Overdue)
+            return '#f59e0b';                  // Amber (Pending)
+        }
+
         switch (type) {
             case 'call': return '#10b981'; // Green
             case 'meeting': return '#3b82f6'; // Blue
             case 'reminder': return '#f59e0b'; // Orange
             case 'deadline': return '#ef4444'; // Red
-            case 'task': return '#8b5cf6'; // Purple
+            case 'invoice': return '#ef4444'; // Red (Money Owed)
             default: return '#3b82f6';
         }
     };
@@ -213,7 +248,8 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             case 'meeting': return <UsersIcon className="w-4 h-4" />;
             case 'reminder': return <Clock className="w-4 h-4" />;
             case 'deadline': return <Clock className="w-4 h-4" />;
-            case 'task': return <Clock className="w-4 h-4" />;
+            case 'task': return <CheckSquare className="w-4 h-4" />;
+            case 'invoice': return <CreditCard className="w-4 h-4" />;
             default: return <CalendarIcon className="w-4 h-4" />;
         }
     };
@@ -224,10 +260,11 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             title: event.title,
             start: event.start_time,
             end: event.end_time,
-            backgroundColor: event.color || getEventColor(event.type),
-            borderColor: event.color || getEventColor(event.type),
+            backgroundColor: getEventColor(event.type, event), // Pass full event for logic
+            borderColor: getEventColor(event.type, event),
             allDay: event.is_all_day,
             textColor: '#ffffff',
+            extendedProps: { ...event } // Pass data for click handling
         }));
     };
 
@@ -419,13 +456,25 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                     <div
                                         className="px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-2"
                                         style={{
-                                            backgroundColor: `${getEventColor(selectedEvent.type)}20`,
-                                            color: getEventColor(selectedEvent.type)
+                                            backgroundColor: `${getEventColor(selectedEvent.type, selectedEvent)}20`,
+                                            color: getEventColor(selectedEvent.type, selectedEvent)
                                         }}
                                     >
                                         {getEventTypeIcon(selectedEvent.type)}
                                         {selectedEvent.type.charAt(0).toUpperCase() + selectedEvent.type.slice(1)}
                                     </div>
+                                    {(selectedEvent.type === 'task' || selectedEvent.type === 'invoice') && (
+                                        <Badge variant={
+                                            selectedEvent.color === '#10b981' ? 'success' : // Completed
+                                                selectedEvent.color === '#ef4444' ? 'error' : // Overdue
+                                                    'warning' // Pending
+                                        }>
+                                            {selectedEvent.type === 'task'
+                                                ? (selectedEvent.metadata?.status === 'completed' ? 'Completed' : (isBefore(new Date(selectedEvent.end_time), new Date()) ? 'Overdue' : 'Pending'))
+                                                : selectedEvent.metadata?.status
+                                            }
+                                        </Badge>
+                                    )}
                                 </div>
                             </div>
 
@@ -478,12 +527,24 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                 >
                                     Close
                                 </Button>
-                                <Button
-                                    onClick={() => handleDeleteEvent(selectedEvent.id)}
-                                    className="flex-1 bg-red-600 hover:bg-red-500"
-                                >
-                                    Delete Event
-                                </Button>
+                                {(selectedEvent.type === 'task' || selectedEvent.type === 'invoice') ? (
+                                    <Button
+                                        onClick={() => {
+                                            if (selectedEvent.type === 'task') window.location.href = '/dashboard/tasks';
+                                            if (selectedEvent.type === 'invoice') window.location.href = '/dashboard/business/billing';
+                                        }}
+                                        className="flex-1 bg-slate-700 hover:bg-slate-600"
+                                    >
+                                        View {selectedEvent.type === 'task' ? 'Task' : 'Invoice'}
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        onClick={() => handleDeleteEvent(selectedEvent.id)}
+                                        className="flex-1 bg-red-600 hover:bg-red-500"
+                                    >
+                                        Delete Event
+                                    </Button>
+                                )}
                             </div>
                         </div>
                     ) : (

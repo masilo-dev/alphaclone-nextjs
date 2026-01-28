@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { loadStripe } from '@stripe/stripe-js';
+import { jsPDF } from 'jspdf';
 import { ENV } from '@/config/env';
 import { tenantService } from './tenancy/TenantService';
 import { activityService } from './activityService';
@@ -18,9 +19,11 @@ export interface Invoice {
     due_date: string;
     paid_at?: string;
     description: string;
-    items: InvoiceItem[];
+    items?: InvoiceItem[];
     created_at: string;
     metadata?: any;
+    project?: { name: string };
+    user?: { name: string; email: string };
 }
 
 export interface InvoiceItem {
@@ -109,6 +112,99 @@ export const paymentService = {
             .limit(limit);
 
         return { invoices: data, error };
+    },
+
+    /**
+     * Generate PDF for an invoice (Internal)
+     */
+    generateInvoicePDF(invoice: Invoice) {
+        const doc = new jsPDF();
+
+        // Header
+        doc.setFontSize(22);
+        doc.setTextColor(40, 40, 40);
+        doc.text('INVOICE', 20, 20);
+
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Invoice ID: ${invoice.id.toUpperCase()}`, 20, 30);
+        doc.text(`Date: ${new Date(invoice.created_at).toLocaleDateString()}`, 20, 35);
+        doc.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, 20, 40);
+
+        // Status
+        doc.setFontSize(14);
+        if (invoice.status === 'paid') {
+            doc.setTextColor(0, 128, 0);
+            doc.text('PAID', 160, 25);
+        } else {
+            doc.setTextColor(200, 0, 0);
+            doc.text(invoice.status.toUpperCase(), 160, 25);
+        }
+
+        // Details
+        let yPos = 60;
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(12);
+
+        doc.text(`Project: ${invoice.project?.name || 'General Service'}`, 20, yPos);
+        yPos += 10;
+        doc.text(`Description: ${invoice.description}`, 20, yPos);
+        yPos += 20;
+
+        // Line Items Table Header
+        doc.setFillColor(240, 240, 240);
+        doc.rect(20, yPos, 170, 10, 'F');
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Description', 25, yPos + 7);
+        doc.text('Amount', 160, yPos + 7);
+        yPos += 15;
+
+        // Items (Placeholder if items array is missing)
+        doc.setFont('helvetica', 'normal');
+        if (invoice.items && invoice.items.length > 0) {
+            invoice.items.forEach(item => {
+                doc.text(item.description, 25, yPos);
+                doc.text(`$${item.amount.toLocaleString()}`, 160, yPos);
+                yPos += 10;
+            });
+        } else {
+            doc.text(invoice.description, 25, yPos);
+            doc.text(`$${invoice.amount.toLocaleString()}`, 160, yPos);
+            yPos += 10;
+        }
+
+        // Total
+        yPos += 10;
+        doc.setLineWidth(0.5);
+        doc.line(20, yPos, 190, yPos);
+        yPos += 10;
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Total:', 120, yPos);
+        doc.text(`$${invoice.amount.toLocaleString()} ${invoice.currency.toUpperCase()}`, 160, yPos);
+
+        return doc;
+    },
+
+    async downloadInvoicePDF(invoiceId: string) {
+        // Fetch full invoice details
+        const { data: invoice, error } = await supabase
+            .from('invoices')
+            .select(`*, project:project_id(name)`)
+            .eq('id', invoiceId)
+            .single();
+
+        if (error || !invoice) {
+            console.error('Failed to fetch invoice for PDF:', error);
+            throw new Error('Invoice not found');
+        }
+
+        // Ensure items is an array if null
+        const fullInvoice = { ...invoice, items: invoice.items || [] } as Invoice;
+
+        const doc = this.generateInvoicePDF(fullInvoice);
+        doc.save(`Invoice_${invoice.id.substring(0, 8)}.pdf`);
     },
 
     /**

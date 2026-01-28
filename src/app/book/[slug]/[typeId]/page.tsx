@@ -5,9 +5,13 @@ import { useParams, useRouter } from 'next/navigation';
 import { bookingService, BookingSlot } from '@/services/bookingService';
 import { Tenant } from '@/services/tenancy/types';
 import { Card } from '@/components/ui/UIComponents';
-import { format, addDays, startOfToday, isSameDay, isValid } from 'date-fns';
+import {
+    format, addDays, startOfToday, isSameDay, isValid,
+    startOfMonth, endOfMonth, startOfWeek, endOfWeek,
+    eachDayOfInterval, isSameMonth, addMonths, subMonths, isBefore
+} from 'date-fns';
 import { safeFormat } from '@/utils/dateUtils';
-import { Clock, Calendar, CheckSquare, Plus, AlertCircle, User, LayoutGrid, Trello, BarChart, ChevronLeft, ChevronRight, ArrowRight, Check, FileText, MessageSquare, MoreVertical } from 'lucide-react';
+import { Clock, Calendar as CalendarIcon, CheckSquare, Plus, AlertCircle, User, LayoutGrid, ChevronLeft, ChevronRight, ArrowRight, Check, FileText, Globe } from 'lucide-react';
 
 export default function BookingSlotPage() {
     const params = useParams();
@@ -16,6 +20,7 @@ export default function BookingSlotPage() {
     const typeId = params?.typeId as string;
 
     const [tenant, setTenant] = useState<Tenant | null>(null);
+    const [currentMonth, setCurrentMonth] = useState<Date>(startOfToday());
     const [selectedDate, setSelectedDate] = useState<Date>(startOfToday());
     const [slots, setSlots] = useState<BookingSlot[]>([]);
     const [loadingSlots, setLoadingSlots] = useState(false);
@@ -62,10 +67,6 @@ export default function BookingSlotPage() {
 
         if (error) {
             console.error('[BookingSlotPage] Error loading slots:', error);
-            // Optionally set error state to show meaningful message if it's not just "no slots"
-            // For now, we rely on the specific "slots.length === 0" check in render
-        } else {
-            console.log('[BookingSlotPage] Slots loaded:', slots?.length);
         }
 
         setSlots(slots || []);
@@ -95,8 +96,24 @@ export default function BookingSlotPage() {
         }
     };
 
+    // Calendar Grid Logic
+    const calendarDays = React.useMemo(() => {
+        const monthStart = startOfMonth(currentMonth);
+        const monthEnd = endOfMonth(monthStart);
+        const startDate = startOfWeek(monthStart);
+        const endDate = endOfWeek(monthEnd);
+        return eachDayOfInterval({ start: startDate, end: endDate });
+    }, [currentMonth]);
+
+    const previousMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
+    const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
+
     // Render loading/error states...
-    if (!tenant) return <div className="p-12 text-center text-slate-400">Loading...</div>;
+    if (!tenant) return (
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+            <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+    );
 
     const meetingType = tenant.settings.booking?.meetingTypes.find(t => t.id === typeId);
     if (!meetingType) return <div className="p-12 text-center text-red-400">Invalid Meeting Type</div>;
@@ -128,8 +145,6 @@ export default function BookingSlotPage() {
         );
     }
 
-    // Generate next 7 days for quick picker
-    const nextDays = Array.from({ length: 7 }).map((_, i) => addDays(startOfToday(), i));
     const isCompact = !!selectedSlot;
 
     return (
@@ -170,7 +185,7 @@ export default function BookingSlotPage() {
                                     <Clock className="w-2.5 h-2.5 md:w-3 md:h-3 text-teal-400" /> {meetingType.duration} MIN
                                 </span>
                                 <span className="px-2 py-0.5 md:px-3 md:py-1 bg-white/5 border border-white/10 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 md:gap-2">
-                                    <div className="w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-teal-500"></div> ENCRYPTED
+                                    <Globe className="w-2.5 h-2.5 md:w-3 md:h-3 text-teal-400" /> GLOBAL
                                 </span>
                             </div>
                         </div>
@@ -185,88 +200,115 @@ export default function BookingSlotPage() {
                     </div>
                 </div>
 
-                {/* 2. Selection Area */}
+                {/* 2. Selection Area (Calendar + Slots) */}
                 <div className={`${isCompact ? 'lg:col-span-9' : 'lg:col-span-8'} flex flex-col gap-6 md:gap-8 animate-in fade-in slide-in-from-right-4 duration-700 delay-200 transition-all`}>
-                    <div className={`glass-panel ${isCompact ? 'p-6 md:p-8' : 'p-8 md:p-10'} rounded-[2.5rem] md:rounded-[3rem] border border-white/5 bg-slate-900/40 backdrop-blur-3xl ${isCompact ? 'space-y-6' : 'space-y-10 md:space-y-12'} transition-all duration-500`}>
+                    <div className={`glass-panel ${isCompact ? 'p-6' : 'p-8 md:p-10'} rounded-[2.5rem] md:rounded-[3rem] border border-white/5 bg-slate-900/40 backdrop-blur-3xl transition-all duration-500`}>
 
-                        {/* Date Picker */}
-                        <div className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Coordinate Selection</h3>
-                                <span className="text-[10px] font-bold text-teal-500/60 uppercase tracking-widest italic">Temporal alignment required</span>
-                            </div>
-
-                            <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
-                                {nextDays.map(date => {
-                                    const isSelected = isSameDay(date, selectedDate);
-                                    return (
-                                        <button
-                                            key={date.toISOString()}
-                                            onClick={() => setSelectedDate(date)}
-                                            className={`
-                                                flex flex-col items-center justify-center ${isCompact ? 'min-w-[4rem] h-16' : 'min-w-[5rem] h-20 md:h-24'} rounded-xl md:rounded-2xl border transition-all duration-500 relative group
-                                                ${isSelected
-                                                    ? 'bg-gradient-to-br from-teal-500 to-teal-600 border-teal-400 text-white shadow-2xl shadow-teal-500/20 scale-105 z-10'
-                                                    : 'bg-white/5 border-white/5 text-slate-500 hover:border-white/10 hover:bg-white/10'}
-                                            `}
-                                        >
-                                            <span className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest ${isCompact ? 'mb-0' : 'mb-1'} ${isSelected ? 'text-white/80' : 'text-slate-600'}`}>
-                                                {safeFormat(date, 'EEE')}
+                        {!selectedSlot ? (
+                            <div className="grid lg:grid-cols-2 gap-12">
+                                {/* Calendar Column */}
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Select Date</h3>
+                                        <div className="flex gap-2">
+                                            <button onClick={previousMonth} className="p-2 hover:bg-white/5 rounded-full text-slate-400 hover:text-white transition-colors">
+                                                <ChevronLeft className="w-4 h-4" />
+                                            </button>
+                                            <span className="text-sm font-bold text-slate-300 w-32 text-center">
+                                                {format(currentMonth, 'MMMM yyyy')}
                                             </span>
-                                            <span className={`${isCompact ? 'text-lg' : 'text-xl md:text-2xl'} font-black tracking-tighter`}>{safeFormat(date, 'd')}</span>
-                                            {isSelected && (
-                                                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white"></div>
-                                            )}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Slot Picker */}
-                        <div className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Available Windows</h3>
-                                {loadingSlots && <div className="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>}
-                            </div>
-
-                            {slots.length === 0 && !loadingSlots ? (
-                                <div className="text-center py-12 bg-white/5 border border-dashed border-white/10 rounded-2xl">
-                                    <p className="text-slate-600 text-[10px] font-black uppercase tracking-widest">No terminal availability detected</p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                    {slots.map((slot, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => setSelectedSlot(slot)}
-                                            className={`
-                                                py-3 md:py-4 rounded-xl md:rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest transition-all duration-300 border
-                                                ${selectedSlot === slot
-                                                    ? 'bg-white text-slate-900 border-white shadow-xl scale-95'
-                                                    : 'bg-white/5 text-teal-400 border-white/5 hover:border-teal-500/30 hover:bg-white/10'}
-                                            `}
-                                        >
-                                            {safeFormat(slot.start, 'h:mm a')}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Form Area */}
-                        {selectedSlot && (
-                            <div className="pt-12 border-t border-white/5 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-                                    <div className={`space-y-1 ${isCompact ? '' : 'md:space-y-2'}`}>
-                                        <h3 className={`${isCompact ? 'text-xl md:text-2xl' : 'text-2xl md:text-3xl'} font-black text-white tracking-tighter transition-all`}>Initialize Link</h3>
-                                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Selected Window: {safeFormat(selectedSlot.start, 'MMMM do, h:mm a')}</p>
+                                            <button onClick={nextMonth} className="p-2 hover:bg-white/5 rounded-full text-slate-400 hover:text-white transition-colors">
+                                                <ChevronRight className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </div>
+
+                                    <div className="grid grid-cols-7 gap-y-4 gap-x-1 sm:gap-x-2 text-center">
+                                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
+                                            <div key={d} className="text-[10px] font-black text-slate-600 flex justify-center items-center">{d}</div>
+                                        ))}
+                                        {calendarDays.map((day, idx) => {
+                                            const isToday = isSameDay(day, startOfToday());
+                                            const isSelected = isSameDay(day, selectedDate);
+                                            const isCurrentMonth = isSameMonth(day, currentMonth);
+                                            const isPast = isBefore(day, startOfToday());
+
+                                            return (
+                                                <button
+                                                    key={day.toISOString()}
+                                                    disabled={isPast}
+                                                    onClick={() => setSelectedDate(day)}
+                                                    className={`
+                                                        h-10 w-10 mx-auto rounded-full flex items-center justify-center text-xs font-bold transition-all relative
+                                                        ${!isCurrentMonth ? 'opacity-0 pointer-events-none' : ''}
+                                                        ${isPast ? 'text-slate-800 cursor-not-allowed line-through decoration-slate-800' : ''}
+                                                        ${isSelected
+                                                            ? 'bg-teal-500 text-slate-900 shadow-lg shadow-teal-500/20 scale-110'
+                                                            : 'text-slate-400 hover:bg-white/5 hover:text-white'}
+                                                        ${isToday && !isSelected ? 'border border-teal-500/50 text-teal-500' : ''}
+                                                    `}
+                                                >
+                                                    {format(day, 'd')}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Slots Column */}
+                                <div className="space-y-6 lg:border-l lg:border-white/5 lg:pl-12">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+                                            Availability
+                                        </h3>
+                                        {loadingSlots && <div className="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>}
+                                    </div>
+
+                                    <p className="text-sm font-medium text-white">
+                                        {format(selectedDate, 'EEEE, MMMM do')}
+                                    </p>
+
+                                    {slots.length === 0 && !loadingSlots ? (
+                                        <div className="py-12 text-center">
+                                            <p className="text-slate-600 text-[10px] font-black uppercase tracking-widest">No slots available</p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                            {slots.map((slot, i) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => setSelectedSlot(slot)}
+                                                    className="py-3 px-4 bg-white/5 border border-white/5 hover:border-teal-500/50 hover:bg-teal-500/10 rounded-xl text-teal-400 text-xs font-bold transition-all text-center"
+                                                >
+                                                    {safeFormat(slot.start, 'h:mm a')}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+                                <div className="flex items-center justify-between mb-8">
+                                    <button
+                                        onClick={() => setSelectedSlot(null)}
+                                        className="text-xs font-black text-slate-500 uppercase tracking-widest hover:text-white transition-colors"
+                                    >
+                                        ← Change Time
+                                    </button>
+                                    <div className="text-right">
+                                        <div className="text-sm font-bold text-white">{format(selectedDate, 'MMMM do')}</div>
+                                        <div className="text-xs font-black text-teal-500 uppercase tracking-widest">
+                                            {safeFormat(selectedSlot.start, 'h:mm a')}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+                                    <h3 className="text-2xl md:text-3xl font-black text-white tracking-tighter">Initialize Link</h3>
                                     <div className="flex -space-x-3">
                                         {[1, 2, 3].map(i => (
-                                            <div key={i} className="w-10 h-10 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-600 uppercase">
-                                                ID
-                                            </div>
+                                            <div key={i} className="w-10 h-10 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-600 uppercase">ID</div>
                                         ))}
                                     </div>
                                 </div>
@@ -275,61 +317,28 @@ export default function BookingSlotPage() {
                                     <div className="grid md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Full Name</label>
-                                            <input
-                                                required
-                                                type="text"
-                                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800"
-                                                placeholder="Enter full legal name"
-                                                value={name}
-                                                onChange={e => setName(e.target.value)}
-                                            />
+                                            <input required type="text" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800" placeholder="Enter full legal name" value={name} onChange={e => setName(e.target.value)} />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Email Endpoint</label>
-                                            <input
-                                                required
-                                                type="email"
-                                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800"
-                                                placeholder="Enter secure email address"
-                                                value={email}
-                                                onChange={e => setEmail(e.target.value)}
-                                            />
+                                            <input required type="email" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800" placeholder="Enter secure email address" value={email} onChange={e => setEmail(e.target.value)} />
                                         </div>
                                     </div>
 
                                     <div className="grid md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Mobile Uplink</label>
-                                            <input
-                                                required
-                                                type="tel"
-                                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800"
-                                                placeholder="+1 (555) 000-0000"
-                                                value={phone}
-                                                onChange={e => setPhone(e.target.value)}
-                                            />
+                                            <input required type="tel" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800" placeholder="+1 (555) 000-0000" value={phone} onChange={e => setPhone(e.target.value)} />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Primary Objective</label>
-                                            <input
-                                                required
-                                                type="text"
-                                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800"
-                                                placeholder="Define mission focus..."
-                                                value={topic}
-                                                onChange={e => setTopic(e.target.value)}
-                                            />
+                                            <input required type="text" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800" placeholder="Define mission focus..." value={topic} onChange={e => setTopic(e.target.value)} />
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Extended Intel (Optional)</label>
-                                        <textarea
-                                            className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800 min-h-[120px] resize-none"
-                                            placeholder="Provide additional context for the session..."
-                                            value={notes}
-                                            onChange={e => setNotes(e.target.value)}
-                                        />
+                                        <textarea className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800 min-h-[120px] resize-none" placeholder="Provide additional context..." value={notes} onChange={e => setNotes(e.target.value)} />
                                     </div>
 
                                     {error && (
@@ -338,16 +347,13 @@ export default function BookingSlotPage() {
                                         </div>
                                     )}
 
-                                    <button
-                                        type="submit"
-                                        disabled={submitting}
-                                        className="w-full py-6 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 text-slate-900 font-black text-xs uppercase tracking-[0.3em] rounded-2xl transition-all shadow-2xl shadow-teal-500/20 active:scale-95 disabled:opacity-50"
-                                    >
+                                    <button type="submit" disabled={submitting} className="w-full py-6 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 text-slate-900 font-black text-xs uppercase tracking-[0.3em] rounded-2xl transition-all shadow-2xl shadow-teal-500/20 active:scale-95 disabled:opacity-50">
                                         {submitting ? 'PROCESSING PROTOCOL...' : 'CONFIRM UNIT DEPLOYMENT'}
                                     </button>
                                 </form>
                             </div>
                         )}
+
                     </div>
 
                     <div className="text-center opacity-20 hover:opacity-100 transition-opacity">

@@ -280,6 +280,48 @@ export const leadService = {
     },
 
     /**
+     * Get a single lead by ID
+     */
+    async getLeadById(id: string): Promise<{ lead: Lead | null; error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            const { data, error } = await supabase
+                .from('leads')
+                .select('*')
+                .eq('id', id)
+                .eq('tenant_id', tenantId) // ← VERIFY OWNERSHIP
+                .single();
+
+            if (error) throw error;
+
+            const lead: Lead = {
+                id: data.id,
+                owner_id: data.owner_id,
+                businessName: data.business_name,
+                industry: data.industry,
+                location: data.location,
+                phone: data.phone,
+                email: data.email,
+                website: data.website,
+                source: data.source,
+                stage: data.stage,
+                value: data.value,
+                notes: data.notes,
+                created_at: data.created_at,
+                // UI compatibility
+                status: data.stage === 'lead' ? 'New' : data.stage,
+                fb: data.website,
+                outreachMessage: data.outreach_message,
+                outreachStatus: data.outreach_status
+            };
+
+            return { lead, error: null };
+        } catch (err) {
+            return { lead: null, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
      * Delete a lead
      */
     async deleteLead(id: string): Promise<{ error: string | null }> {

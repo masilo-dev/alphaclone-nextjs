@@ -17,43 +17,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Initial session check
-        const initAuth = async () => {
-            try {
-                // Check for session
-                const { user: currentUser } = await authService.getCurrentUser();
-                setUser(currentUser);
-            } catch (err) {
-                console.error('Auth initialization error:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        initAuth();
-
         // Subscribe to auth changes
         const { data: { subscription } } = authService.onAuthStateChange((u, event) => {
-            if (true) {
-                console.log(`AuthContext: Handling ${event} event, User: ${u?.email}`);
+            console.log(`AuthContext: Handling ${event} event, User: ${u?.email}`);
 
-                // If we just signed in, we might be about to redirect. 
-                // Ensure we are in a loading state while the profile is fetched.
-                if (event === 'SIGNED_IN' && !u) {
-                    setLoading(true);
-                } else if (event === 'SIGNED_OUT') {
-                    setUser(null);
-                    setLoading(false);
-                } else {
-                    setUser(u);
-                    setLoading(false);
-                }
+            if (u) {
+                // User is authenticated and profile is loaded
+                setUser(u);
+                setLoading(false);
+            } else if (event === 'SIGNED_OUT') {
+                // Explicit sign out
+                setUser(null);
+                setLoading(false);
+            } else if (event === 'SIGNED_IN' && !u) {
+                // Signed in but no user data (shouldn't happen with our wrapper, but safe fallback)
+                // Keep loading if we expect a user? Or set null?
+                // If wrapper failed to get profile, it sends user=null.
+                setUser(null);
+                setLoading(false);
+            } else {
+                // Initial session check or other events where no user is present
+                setUser(null);
+                setLoading(false);
             }
         });
-
-        // Session is now handled server-side by /auth/callback route
-        // Client only needs to listen for the session change
-        // const handleAuthCallback = ... (removed to prevent race conditions)
 
         return () => {
             subscription.unsubscribe();

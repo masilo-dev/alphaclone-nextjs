@@ -10,7 +10,7 @@ export interface CalendarEvent {
     description?: string;
     start_time: string;
     end_time: string;
-    type: 'meeting' | 'call' | 'reminder' | 'deadline' | 'task';
+    type: 'meeting' | 'call' | 'reminder' | 'deadline' | 'task' | 'invoice';
     video_room_id?: string;
     attendees?: string[];
     location?: string;
@@ -19,6 +19,8 @@ export interface CalendarEvent {
     is_all_day: boolean;
     reminder_minutes: number;
     metadata?: Record<string, any>;
+    related_to_lead?: string;
+    related_entity_id?: string;
     created_at: string;
     updated_at: string;
 }
@@ -31,25 +33,133 @@ export interface ConflictDetection {
 
 export const calendarService = {
     /**
-     * Get all events for a user
+     * Get all events for a user (federated from Events, Tasks, Invoices, Contracts)
      */
     async getEvents(userId: string, startDate?: Date, endDate?: Date) {
-        let query = supabase
+        const tenantId = tenantService.getCurrentTenantId();
+
+        // 1. Calendar Events Query
+        let eventsQuery = supabase
             .from('calendar_events')
             .select('*')
-            .eq('tenant_id', tenantService.getCurrentTenantId())
+            .eq('tenant_id', tenantId)
             .or(`user_id.eq.${userId},attendees.cs.{${userId}}`);
 
+        // 2. Tasks Query
+        let tasksQuery = supabase
+            .from('tasks')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .eq('assigned_to', userId)
+            .neq('status', 'completed');
+
+        // 3. Invoices Query (Unpaid/Due)
+        let invoicesQuery = supabase
+            .from('business_invoices')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .neq('status', 'paid');
+
+        // 4. Contracts Query (Payment Due)
+        let contractsQuery = supabase
+            .from('contracts')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .not('payment_due_date', 'is', null) // Only with due dates
+            .neq('payment_status', 'paid');
+
         if (startDate) {
-            query = query.gte('start_time', startDate.toISOString());
+            eventsQuery = eventsQuery.gte('start_time', startDate.toISOString());
+            tasksQuery = tasksQuery.gte('due_date', startDate.toISOString());
+            invoicesQuery = invoicesQuery.gte('due_date', startDate.toISOString());
+            contractsQuery = contractsQuery.gte('payment_due_date', startDate.toISOString());
         }
         if (endDate) {
-            query = query.lte('end_time', endDate.toISOString());
+            eventsQuery = eventsQuery.lte('end_time', endDate.toISOString());
+            tasksQuery = tasksQuery.lte('due_date', endDate.toISOString());
+            invoicesQuery = invoicesQuery.lte('due_date', endDate.toISOString());
+            contractsQuery = contractsQuery.lte('payment_due_date', endDate.toISOString());
         }
 
-        const { data, error } = await query.order('start_time', { ascending: true });
+        const [eventsRes, tasksRes, invoicesRes, contractsRes] = await Promise.all([
+            eventsQuery.order('start_time', { ascending: true }),
+            tasksQuery.order('due_date', { ascending: true }),
+            invoicesQuery.order('due_date', { ascending: true }),
+            contractsQuery.order('payment_due_date', { ascending: true })
+        ]);
 
-        return { events: data, error };
+        // Map Calendar Events
+        const events: CalendarEvent[] = (eventsRes.data || []).map((e: any) => ({
+            ...e,
+            type: e.type || 'meeting',
+            start_time: e.start_time,
+            end_time: e.end_time
+        }));
+
+        // Map Tasks to Events
+        const taskEvents: CalendarEvent[] = (tasksRes.data || [])
+            .filter((t: any) => !t.metadata?.is_booking_shadow)
+            .map((t: any) => ({
+                id: `task_${t.id}`,
+                user_id: t.assigned_to || userId,
+                title: `Task: ${t.title}`,
+                description: t.description,
+                start_time: t.start_date || t.due_date,
+                end_time: t.due_date,
+                type: 'task',
+                color: '#f59e0b', // Amber
+                is_all_day: !t.start_date,
+                reminder_minutes: 0,
+                metadata: { taskId: t.id, status: t.status, priority: t.priority },
+                related_entity_id: t.id,
+                related_to_lead: t.related_to_lead,
+                created_at: t.created_at,
+                updated_at: t.updated_at
+            }));
+
+        // Map Invoices to Events
+        const invoiceEvents: CalendarEvent[] = (invoicesRes.data || []).map((inv: any) => ({
+            id: `inv_${inv.id}`,
+            user_id: userId,
+            title: `Due: Invoice #${inv.invoice_number}`,
+            description: `Amount: $${inv.total} - Status: ${inv.status}`,
+            start_time: inv.due_date,
+            end_time: inv.due_date,
+            type: 'invoice',
+            color: '#ef4444', // Red
+            is_all_day: true,
+            reminder_minutes: 0,
+            metadata: { invoiceId: inv.id, amount: inv.total, status: inv.status },
+            related_entity_id: inv.id,
+            created_at: inv.created_at,
+            updated_at: inv.updated_at
+        }));
+
+        // Map Contracts to Events
+        const contractEvents: CalendarEvent[] = (contractsRes.data || []).map((c: any) => ({
+            id: `contract_${c.id}`,
+            user_id: userId,
+            title: `Contract Payment: ${c.title}`,
+            description: `Amount: $${c.payment_amount || 0} - Status: ${c.payment_status}`,
+            start_time: c.payment_due_date,
+            end_time: c.payment_due_date,
+            type: 'invoice', // Reuse invoice type logic
+            color: '#dc2626', // Darker Red
+            is_all_day: true,
+            reminder_minutes: 0,
+            metadata: { contractId: c.id, amount: c.payment_amount, status: c.payment_status },
+            related_entity_id: c.id,
+            created_at: c.created_at,
+            updated_at: c.updated_at
+        }));
+
+        const combinedEvents = [...events, ...taskEvents, ...invoiceEvents, ...contractEvents];
+        combinedEvents.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+
+        return {
+            events: combinedEvents,
+            error: eventsRes.error || tasksRes.error || invoicesRes.error || contractsRes.error
+        };
     },
 
     /**
@@ -70,7 +180,6 @@ export const calendarService = {
      * Create new calendar event with conflict detection
      */
     async createEvent(event: Omit<CalendarEvent, 'id' | 'created_at' | 'updated_at'>, forceCreate: boolean = false) {
-        // Check for conflicts first
         const conflict = await this.detectConflicts(
             event.user_id,
             new Date(event.start_time),
@@ -94,7 +203,6 @@ export const calendarService = {
      * Update existing event with conflict detection
      */
     async updateEvent(eventId: string, updates: Partial<CalendarEvent>, forceUpdate: boolean = false) {
-        // If updating time, check for conflicts
         if (updates.start_time || updates.end_time) {
             const { data: existingEvent } = await supabase
                 .from('calendar_events')
@@ -156,7 +264,8 @@ export const calendarService = {
         title: string,
         startTime: Date,
         durationMinutes: number = 60,
-        attendees: string[] = []
+        attendees: string[] = [],
+        relatedToLead?: string
     ) {
         const endTime = addMinutes(startTime, durationMinutes);
         const videoRoomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -167,12 +276,12 @@ export const calendarService = {
             description: 'Video call meeting',
             start_time: startTime.toISOString(),
             end_time: endTime.toISOString(),
-            type: 'call' as const,
+            type: 'meeting' as const,
             video_room_id: videoRoomId,
             attendees,
-            color: '#10b981',
             is_all_day: false,
             reminder_minutes: 15,
+            related_to_lead: relatedToLead
         };
 
         return this.createEvent(event);

@@ -3,6 +3,7 @@ import { Search, UserPlus, Phone, CheckCircle2, Bot, Send, Trash2, Upload, FileS
 import { generateLeads, chatWithAI, isAnyAIConfigured } from '../../services/unifiedAIService';
 import { leadService, Lead } from '../../services/leadService';
 import { fileImportService } from '../../services/fileImportService';
+import LeadDetailModal from './leads/LeadDetailModal';
 import { Button, Input, Card, Modal } from '../ui/UIComponents';
 import { TableSkeleton } from '../ui/Skeleton';
 import * as XLSX from 'xlsx';
@@ -22,7 +23,8 @@ const SalesAgent: React.FC = () => {
     // Google Places Config
     const [showSettings, setShowSettings] = useState(false);
     const [apiKey, setApiKey] = useState(localStorage.getItem('ALPHA_GOOGLE_PLACES_KEY') || '');
-    const [viewingMessage, setViewingMessage] = useState<{ title: string, body: string } | null>(null);
+    const [selectedLeadForDetail, setSelectedLeadForDetail] = useState<Lead | null>(null);
+    const [viewingMessage, setViewingMessage] = useState<{ title: string; body: string } | null>(null);
 
     // Manual Entry State
     const [showManualModal, setShowManualModal] = useState(false);
@@ -422,7 +424,9 @@ const SalesAgent: React.FC = () => {
                                                             className="rounded border-slate-700 bg-slate-900"
                                                         />
                                                     </td>
-                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 font-medium text-white max-w-[120px] sm:max-w-none truncate">{lead.businessName}</td>
+                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 font-medium text-white max-w-[120px] sm:max-w-none truncate hover:text-teal-400 cursor-pointer" onClick={() => setSelectedLeadForDetail(lead)}>
+                                                        {lead.businessName}
+                                                    </td>
                                                     <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden md:table-cell">{lead.industry || '-'}</td>
                                                     <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden lg:table-cell">{lead.location || '-'}</td>
                                                     <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
@@ -490,13 +494,11 @@ const SalesAgent: React.FC = () => {
                                                                             Create Deal
                                                                         </button>
                                                                         <button
-                                                                            onClick={() => {
-                                                                                toast('Task creation coming soon!', { icon: 'ℹ️' });
-                                                                            }}
+                                                                            onClick={() => setSelectedLeadForDetail(lead)}
                                                                             className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
                                                                         >
                                                                             <CheckCircle2 className="w-3 h-3 text-purple-400" />
-                                                                            Create Task
+                                                                            Manage Lead
                                                                         </button>
                                                                         <button
                                                                             onClick={() => {
@@ -627,7 +629,21 @@ const SalesAgent: React.FC = () => {
                     </div>
                 </div>
             </Modal>
-        </div>
+
+            {/* Lead Detail Modal */}
+            {
+                selectedLeadForDetail && (
+                    <LeadDetailModal
+                        isOpen={!!selectedLeadForDetail}
+                        onClose={() => setSelectedLeadForDetail(null)}
+                        lead={selectedLeadForDetail}
+                        onLeadUpdate={() => {
+                            // Optional: refresh list
+                        }}
+                    />
+                )
+            }
+        </div >
     );
 };
 

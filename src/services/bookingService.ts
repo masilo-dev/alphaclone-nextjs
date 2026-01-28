@@ -2,8 +2,9 @@ import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
 import { calendarService } from './calendarService';
 import { dailyService } from './dailyService';
+import { taskService } from './taskService';
 import { Tenant } from './tenancy/types';
-import { addMinutes, format, parse, startOfDay } from 'date-fns';
+import { addMinutes, format, parse, startOfDay, isValid } from 'date-fns';
 
 export interface BookingSlot {
     start: string; // ISO string
@@ -56,7 +57,7 @@ export const bookingService = {
             let { availability } = tenant.settings.booking;
 
             // Smart Default: If availability is not configured, default to Mon-Fri, 9am-5pm
-            if (!availability || !availability.days || availability.days.length === 0) {
+            if (!availability || !availability.days || availability.days.length === 0 || !availability.hours) {
                 availability = {
                     days: [1, 2, 3, 4, 5], // Mon-Fri
                     hours: { start: '09:00', end: '17:00' }
@@ -64,6 +65,10 @@ export const bookingService = {
             }
             // Fix: Use parse to get local date from YYYY-MM-DD string to avoid UTC shift issues
             const targetDate = parse(dateStr, 'yyyy-MM-dd', new Date());
+
+            if (!isValid(targetDate)) {
+                return { slots: [], error: 'Invalid date provided' };
+            }
 
             // Check if day is allowed
             if (!availability.days.includes(targetDate.getDay())) {
@@ -221,6 +226,19 @@ Video Link: ${call.daily_room_url}`,
             }, true); // forceCreate=true because we verified slot availability in UI (optimistic)
 
             if (calError || !event) throw new Error('Failed to schedule calendar event');
+
+            // 3. Create Task (Meeting = Task Principle)
+            await taskService.createTask(host.userId, {
+                title: `Meeting: ${meetingType.name} with ${clientDetails.name}`,
+                description: `Client: ${clientDetails.name}\nTopic: ${clientDetails.topic || 'N/A'}\nNotes: ${clientDetails.notes || ''}`,
+                dueDate: start.toISOString(), // Task is "due" at start time
+                startDate: start.toISOString(),
+                priority: 'medium',
+                relatedToContact: undefined, // Could match by email if we searched
+                assignedTo: host.userId,
+                tags: ['meeting', 'booking'],
+                metadata: { is_booking_shadow: true }
+            });
 
             // TODO: Send Email Notification (Client & Host)
 

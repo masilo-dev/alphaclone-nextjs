@@ -11,6 +11,7 @@ export interface Task {
     relatedToContact?: string;
     relatedToProject?: string;
     relatedToDeal?: string;
+    relatedToLead?: string;
     priority: 'low' | 'medium' | 'high' | 'urgent';
     status: 'todo' | 'in_progress' | 'completed' | 'cancelled';
     dueDate?: string;
@@ -46,6 +47,7 @@ export interface CreateTaskInput {
     relatedToContact?: string;
     relatedToProject?: string;
     relatedToDeal?: string;
+    relatedToLead?: string;
     priority?: 'low' | 'medium' | 'high' | 'urgent';
     dueDate?: string;
     startDate?: string;
@@ -53,6 +55,7 @@ export interface CreateTaskInput {
     tags?: string[];
     reminderAt?: string;
     subtasks?: Array<{ title: string; completed: boolean }>;
+    metadata?: any;
 }
 
 export const taskService = {
@@ -74,6 +77,7 @@ export const taskService = {
         relatedToContact?: string;
         relatedToProject?: string;
         relatedToDeal?: string;
+        relatedToLead?: string;
         limit?: number;
     }): Promise<{ tasks: Task[]; error: string | null }> {
         try {
@@ -99,6 +103,9 @@ export const taskService = {
             if (filters?.relatedToDeal) {
                 query = query.eq('related_to_deal', filters.relatedToDeal);
             }
+            if (filters?.relatedToLead) {
+                query = query.eq('related_to_lead', filters.relatedToLead);
+            }
 
             const { data, error } = await query
                 .order('due_date', { ascending: true, nullsFirst: false })
@@ -116,6 +123,7 @@ export const taskService = {
                 relatedToContact: t.related_to_contact,
                 relatedToProject: t.related_to_project,
                 relatedToDeal: t.related_to_deal,
+                relatedToLead: t.related_to_lead,
                 priority: t.priority,
                 status: t.status,
                 dueDate: t.due_date,
@@ -164,6 +172,7 @@ export const taskService = {
                 relatedToContact: data.related_to_contact,
                 relatedToProject: data.related_to_project,
                 relatedToDeal: data.related_to_deal,
+                relatedToLead: data.related_to_lead,
                 priority: data.priority,
                 status: data.status,
                 dueDate: data.due_date,
@@ -205,6 +214,7 @@ export const taskService = {
                     related_to_contact: taskData.relatedToContact,
                     related_to_project: taskData.relatedToProject,
                     related_to_deal: taskData.relatedToDeal,
+                    related_to_lead: taskData.relatedToLead,
                     priority: taskData.priority || 'medium',
                     due_date: taskData.dueDate,
                     start_date: taskData.startDate,
@@ -212,6 +222,7 @@ export const taskService = {
                     tags: taskData.tags || [],
                     reminder_at: taskData.reminderAt,
                     subtasks: taskData.subtasks || [],
+                    metadata: taskData.metadata || {},
                 })
                 .select()
                 .single();
@@ -233,6 +244,7 @@ export const taskService = {
                 relatedToContact: data.related_to_contact,
                 relatedToProject: data.related_to_project,
                 relatedToDeal: data.related_to_deal,
+                relatedToLead: data.related_to_lead,
                 priority: data.priority,
                 status: data.status,
                 dueDate: data.due_date,
@@ -266,6 +278,8 @@ export const taskService = {
             if (updates.title !== undefined) updateData.title = updates.title;
             if (updates.description !== undefined) updateData.description = updates.description;
             if (updates.assignedTo !== undefined) updateData.assigned_to = updates.assignedTo;
+            if (updates.relatedToDeal !== undefined) updateData.related_to_deal = updates.relatedToDeal;
+            if (updates.relatedToLead !== undefined) updateData.related_to_lead = updates.relatedToLead;
             if (updates.priority !== undefined) updateData.priority = updates.priority;
             if (updates.status !== undefined) updateData.status = updates.status;
             if (updates.dueDate !== undefined) updateData.due_date = updates.dueDate;
@@ -302,6 +316,7 @@ export const taskService = {
                 relatedToContact: data.related_to_contact,
                 relatedToProject: data.related_to_project,
                 relatedToDeal: data.related_to_deal,
+                relatedToLead: data.related_to_lead,
                 priority: data.priority,
                 status: data.status,
                 dueDate: data.due_date,
@@ -456,6 +471,7 @@ export const taskService = {
                 relatedToContact: t.related_to_contact,
                 relatedToProject: t.related_to_project,
                 relatedToDeal: t.related_to_deal,
+                relatedToLead: t.related_to_lead,
                 priority: t.priority,
                 status: t.status,
                 dueDate: t.due_date,
@@ -512,6 +528,7 @@ export const taskService = {
                 relatedToContact: t.related_to_contact,
                 relatedToProject: t.related_to_project,
                 relatedToDeal: t.related_to_deal,
+                relatedToLead: t.related_to_lead,
                 priority: t.priority,
                 status: t.status,
                 dueDate: t.due_date,

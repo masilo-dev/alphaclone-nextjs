@@ -16,6 +16,9 @@ export interface Contract {
     client_signed_at?: string;
     admin_signature?: string;
     admin_signed_at?: string;
+    payment_due_date?: string; // ISO Date
+    payment_amount?: number;
+    payment_status?: 'pending' | 'paid' | 'overdue';
     created_at: string;
 }
 
@@ -46,6 +49,9 @@ export const contractService = {
                 client_id: contract.client_id, // Link to Client profile
                 owner_id: userData.user?.id,   // Link to Admin user
                 status: 'draft',
+                payment_due_date: contract.payment_due_date,
+                payment_amount: contract.payment_amount,
+                payment_status: contract.payment_status || 'pending'
             })
             .select()
             .single();

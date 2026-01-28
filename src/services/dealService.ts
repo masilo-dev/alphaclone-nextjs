@@ -76,6 +76,7 @@ export interface CreateDealInput {
     nextStep?: string;
     description?: string;
     tags?: string[];
+    metadata?: any;
 }
 
 export interface PipelineStats {
@@ -282,6 +283,7 @@ export const dealService: DealService = {
                     next_step: dealData.nextStep,
                     description: dealData.description,
                     tags: dealData.tags || [],
+                    metadata: dealData.metadata || {},
                 })
                 .select()
                 .single();
@@ -352,6 +354,7 @@ export const dealService: DealService = {
             if (updates.customFields !== undefined) updateData.custom_fields = updates.customFields;
             if (updates.lostReason !== undefined) updateData.lost_reason = updates.lostReason;
             if (updates.wonDetails !== undefined) updateData.won_details = updates.wonDetails;
+            if (updates.metadata !== undefined) updateData.metadata = updates.metadata;
 
             // Auto-set actual_close_date when deal is won or lost
             if ((updates.stage === 'closed_won' || updates.stage === 'closed_lost') && !updates.actualCloseDate) {

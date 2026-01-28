@@ -1,7 +1,8 @@
 import React from 'react';
 import { Button, Badge } from '../ui/UIComponents';
-import { CreditCard, CheckCircle } from 'lucide-react';
+import { CreditCard, CheckCircle, Download } from 'lucide-react';
 import { User, Invoice } from '../../types';
+import { paymentService } from '../../services/paymentService';
 
 interface FinanceTabProps {
     user: User;
@@ -67,14 +68,22 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                         {inv.status}
                                     </Badge>
                                 </td>
-                                <td className="px-6 py-4 text-right">
+                                <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => paymentService.downloadInvoicePDF(inv.id)}
+                                        title="Download PDF"
+                                    >
+                                        <Download className="w-4 h-4" />
+                                    </Button>
                                     {inv.status !== 'Paid' && user.role === 'client' && (
                                         <Button size="sm" onClick={() => handlePayClick(inv)}>
                                             Pay Now
                                         </Button>
                                     )}
                                     {inv.status === 'Paid' && (
-                                        <span className="text-green-500 text-xs font-bold flex items-center justify-end gap-1">
+                                        <span className="text-green-500 text-xs font-bold flex items-center gap-1">
                                             <CheckCircle className="w-3 h-3" /> Paid
                                         </span>
                                     )}
