@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Input, Button } from '@/components/ui/UIComponents';
 import { LOGO_URL } from '@/constants';
 import { AlertCircle, LogIn, UserPlus, FileText, CheckCircle2 } from 'lucide-react';
@@ -12,7 +12,9 @@ import { SubscriptionPlan } from '@/services/tenancy/types';
 export default function LoginPage() {
     const { isPWA } = usePWA();
     const router = useRouter();
-    const [isRegistering, setIsRegistering] = useState(false);
+    const searchParams = useSearchParams();
+    const isRegisterMode = searchParams.get('register') === 'true';
+    const [isRegistering, setIsRegistering] = useState(isRegisterMode);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');

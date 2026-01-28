@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { tenantService } from '@/services/tenancy/TenantService';
 import { Tenant } from '@/services/tenancy/types';
-import { Settings, Copy, Plus, X } from 'lucide-react';
-import { Card } from '@/components/ui/UIComponents';
+import { Settings, Copy, Plus, X, ExternalLink, Check } from 'lucide-react';
+import { Card, Button } from '@/components/ui/UIComponents';
 
 interface BookingSettingsProps {
     tenant: Tenant;
@@ -54,10 +54,21 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
         });
     };
 
+    // Body scroll lock
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = 'unset'; };
+    }, []);
+
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <Card className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="flex items-center justify-between mb-8">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] p-0 sm:p-4 animate-in fade-in duration-300">
+            <div
+                className="absolute inset-0 bg-transparent"
+                onClick={onClose}
+            />
+            <Card className="relative bg-[#0a0a0a] border border-slate-800/50 sm:rounded-3xl p-0 flex flex-col w-full max-w-2xl h-full sm:h-auto sm:max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
+                {/* Header */}
+                <div className="flex items-center justify-between p-6 border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-xl shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="p-3 bg-teal-500/10 rounded-xl">
                             <Settings className="w-6 h-6 text-teal-400" />
@@ -72,67 +83,97 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                     </button>
                 </div>
 
-                <div className="space-y-8">
+                {/* Scrollable Content */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-10 overscroll-contain">
                     {/* 1. Main Toggle & Link */}
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl">
-                            <label className="flex items-center gap-3 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={settings.enabled}
-                                    onChange={(e) => setSettings({ ...settings, enabled: e.target.checked })}
-                                    className="w-5 h-5 rounded text-teal-500 bg-slate-700 border-slate-600"
-                                />
-                                <span className="font-medium">Enable Public Booking Page</span>
+                        <div className="flex items-center justify-between p-5 bg-teal-500/5 border border-teal-500/10 rounded-2xl group transition-all hover:bg-teal-500/10">
+                            <label className="flex items-center gap-4 cursor-pointer select-none">
+                                <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${settings.enabled ? 'bg-teal-500 border-teal-500' : 'border-slate-600 bg-slate-800'}`}>
+                                    {settings.enabled && <Check className="w-4 h-4 text-slate-950 font-bold" />}
+                                    <input
+                                        type="checkbox"
+                                        checked={settings.enabled}
+                                        onChange={(e) => setSettings({ ...settings, enabled: e.target.checked })}
+                                        className="hidden"
+                                    />
+                                </div>
+                                <div>
+                                    <span className="font-bold text-white tracking-wide block">Booking Page Status</span>
+                                    <span className="text-xs text-slate-500 uppercase font-mono tracking-widest leading-none">
+                                        {settings.enabled ? 'Global Up-Link Active' : 'System Offline'}
+                                    </span>
+                                </div>
                             </label>
                             {settings.enabled && (
-                                <button
-                                    className="text-xs flex items-center gap-1.5 text-teal-400 hover:text-teal-300 bg-teal-500/10 px-3 py-1.5 rounded-lg border border-teal-500/20"
-                                    onClick={() => {
-                                        const url = `${window.location.origin}/book/${settings.slug}`;
-                                        navigator.clipboard.writeText(url);
-                                    }}
-                                >
-                                    <Copy className="w-3 h-3" />
-                                    Copy Link
-                                </button>
+                                <div className="flex gap-2">
+                                    <button
+                                        className="text-[10px] flex items-center gap-2 text-teal-400 hover:text-white bg-slate-900 px-4 py-2 rounded-xl border border-slate-800 transition-all font-black tracking-widest uppercase italic"
+                                        onClick={() => {
+                                            const url = `${window.location.origin}/book/${settings.slug}`;
+                                            window.open(url, '_blank');
+                                        }}
+                                    >
+                                        <ExternalLink className="w-3 h-3" />
+                                        PREVIEW
+                                    </button>
+                                    <button
+                                        className="text-[10px] flex items-center gap-2 text-slate-950 bg-teal-500 hover:bg-white px-4 py-2 rounded-xl transition-all font-black tracking-widest uppercase"
+                                        onClick={() => {
+                                            const url = `${window.location.origin}/book/${settings.slug}`;
+                                            navigator.clipboard.writeText(url);
+                                        }}
+                                    >
+                                        <Copy className="w-3 h-3" />
+                                        COPY LINK
+                                    </button>
+                                </div>
                             )}
                         </div>
                         {settings.enabled && (
-                            <div className="flex items-center gap-3">
-                                <span className="text-slate-400 text-sm">Booking URL:</span>
-                                <input
-                                    type="text"
-                                    value={settings.slug}
-                                    onChange={(e) => setSettings({ ...settings, slug: e.target.value })}
-                                    className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-sm min-w-[200px]"
-                                />
+                            <div className="flex flex-col gap-2">
+                                <span className="text-slate-500 text-[10px] font-black tracking-widest uppercase px-2">Deployment Path</span>
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-500 font-mono text-xs">
+                                        alphaclone.tech/book/
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={settings.slug}
+                                        onChange={(e) => setSettings({ ...settings, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-[125px] pr-4 py-4 text-sm font-bold text-teal-400 focus:border-teal-500/50 outline-none transition-all"
+                                        placeholder="your-custom-slug"
+                                    />
+                                </div>
                             </div>
                         )}
                     </div>
 
                     {/* 2. Availability */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-bold">Availability</h3>
-                        <div className="grid grid-cols-7 gap-2">
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] px-2 leading-none">Service Frequency</h3>
+                            <div className="h-[1px] flex-1 bg-slate-800 mx-4 opacity-50" />
+                        </div>
+                        <div className="grid grid-cols-4 sm:grid-cols-7 gap-3">
                             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
                                 <button
                                     key={day}
                                     onClick={() => toggleDay(idx)}
                                     className={`
-                                        p-2 rounded-lg text-sm font-bold border transition-all
+                                        h-14 sm:h-auto aspect-square sm:aspect-auto sm:py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95
                                         ${settings.availability.days.includes(idx)
-                                            ? 'bg-teal-500 text-slate-900 border-teal-400'
-                                            : 'bg-slate-900 text-slate-500 border-slate-700 hover:border-slate-500'}
+                                            ? 'bg-white text-slate-950 border-white shadow-[0_0_20px_rgba(255,255,255,0.1)]'
+                                            : 'bg-slate-900/50 text-slate-500 border-slate-800 hover:border-slate-600'}
                                     `}
                                 >
                                     {day}
                                 </button>
                             ))}
                         </div>
-                        <div className="flex items-center gap-4">
-                            <div className="space-y-1">
-                                <label className="text-xs text-slate-400">Start Time</label>
+                        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-slate-900/50 p-6 rounded-3xl border border-slate-800/50">
+                            <div className="flex-1 w-full space-y-2">
+                                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-2">Shift Start</label>
                                 <input
                                     type="time"
                                     value={settings.availability.hours.start}
@@ -146,12 +187,14 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                             }
                                         }
                                     })}
-                                    className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 w-32"
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-base font-bold text-white focus:border-teal-500/50 outline-none"
                                 />
                             </div>
-                            <span className="pt-5 text-slate-500">to</span>
-                            <div className="space-y-1">
-                                <label className="text-xs text-slate-400">End Time</label>
+                            <div className="hidden sm:block pt-6">
+                                <div className="w-8 h-[2px] bg-slate-800 rounded-full" />
+                            </div>
+                            <div className="flex-1 w-full space-y-2">
+                                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-2">Shift End</label>
                                 <input
                                     type="time"
                                     value={settings.availability.hours.end}
@@ -165,16 +208,17 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                             }
                                         }
                                     })}
-                                    className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 w-32"
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-base font-bold text-white focus:border-teal-500/50 outline-none"
                                 />
                             </div>
                         </div>
                     </div>
 
                     {/* 3. Meeting Types */}
-                    <div className="space-y-4">
+                    <div className="space-y-6 pb-6">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-bold">Meeting Types</h3>
+                            <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] px-2 leading-none">Transmission Types</h3>
+                            <div className="h-[1px] flex-1 bg-slate-800 mx-4 opacity-50" />
                             <button
                                 onClick={() => setSettings({
                                     ...settings,
@@ -183,63 +227,81 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                         { id: Math.random().toString(36).substr(2, 9), name: 'New Meeting', duration: 30, price: 0 }
                                     ]
                                 })}
-                                className="text-xs flex items-center gap-1 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors"
+                                className="text-[10px] flex items-center gap-2 bg-slate-900 border border-slate-800 hover:border-slate-600 px-4 py-2 rounded-xl transition-all font-black uppercase tracking-widest text-white active:scale-95"
                             >
-                                <Plus className="w-3 h-3" /> Add Type
+                                <Plus className="w-3 h-3 text-teal-400" /> ADD TYPE
                             </button>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {settings.meetingTypes.map((type, idx) => (
-                                <div key={type.id} className="flex gap-3 items-center bg-slate-800/30 p-3 rounded-xl border border-slate-800/50">
-                                    <input
-                                        type="text"
-                                        value={type.name}
-                                        onChange={(e) => {
-                                            const newTypes = [...settings.meetingTypes];
-                                            newTypes[idx].name = e.target.value;
-                                            setSettings({ ...settings, meetingTypes: newTypes });
-                                        }}
-                                        className="bg-transparent border-b border-slate-700 focus:border-teal-500 outline-none px-2 py-1 flex-1"
-                                        placeholder="Meeting Name"
-                                    />
-                                    <div className="flex items-center gap-2">
+                                <div key={type.id} className="group flex flex-col sm:flex-row gap-4 sm:items-center bg-slate-900/40 p-5 rounded-2xl border border-slate-800/50 hover:border-slate-700/50 transition-all">
+                                    <div className="flex-1 flex items-center gap-4">
+                                        <div className="w-10 h-10 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-center shrink-0">
+                                            <span className="text-xs font-black text-slate-600">0{idx + 1}</span>
+                                        </div>
                                         <input
-                                            type="number"
-                                            value={type.duration}
+                                            type="text"
+                                            value={type.name}
                                             onChange={(e) => {
                                                 const newTypes = [...settings.meetingTypes];
-                                                newTypes[idx].duration = parseInt(e.target.value);
+                                                newTypes[idx].name = e.target.value;
                                                 setSettings({ ...settings, meetingTypes: newTypes });
                                             }}
-                                            className="bg-slate-950 border border-slate-700 rounded px-2 py-1 w-20 text-center text-sm"
+                                            className="bg-transparent text-white font-bold placeholder:text-slate-700 outline-none w-full"
+                                            placeholder="Meeting Name"
                                         />
-                                        <span className="text-xs text-slate-500">min</span>
                                     </div>
-                                    <button
-                                        onClick={() => {
-                                            const newTypes = settings.meetingTypes.filter((_, i) => i !== idx);
-                                            setSettings({ ...settings, meetingTypes: newTypes });
-                                        }}
-                                        className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
+                                    <div className="flex items-center justify-between sm:justify-end gap-6 sm:pl-4 sm:border-l sm:border-slate-800">
+                                        <div className="flex items-center gap-3">
+                                            <input
+                                                type="number"
+                                                value={type.duration}
+                                                onChange={(e) => {
+                                                    const newTypes = [...settings.meetingTypes];
+                                                    newTypes[idx].duration = parseInt(e.target.value);
+                                                    setSettings({ ...settings, meetingTypes: newTypes });
+                                                }}
+                                                className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 w-24 text-center text-sm font-black text-teal-400"
+                                            />
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">MIN</span>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                const newTypes = settings.meetingTypes.filter((_, i) => i !== idx);
+                                                setSettings({ ...settings, meetingTypes: newTypes });
+                                            }}
+                                            className="p-3 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all active:scale-90"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     </div>
                 </div>
 
-                <div className="flex gap-3 pt-8 mt-4 border-t border-slate-800">
-                    <button onClick={onClose} className="flex-1 py-3 text-slate-400 hover:bg-slate-800 rounded-xl font-medium">
-                        Cancel
+                {/* Footer Actions */}
+                <div className="p-6 border-t border-slate-800/50 bg-slate-900/50 backdrop-blur-xl flex gap-4 shrink-0">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 py-4 text-[10px] font-black tracking-widest uppercase text-slate-500 hover:text-white hover:bg-slate-800 rounded-2xl transition-all"
+                    >
+                        DISCARD
                     </button>
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="flex-1 py-3 bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold rounded-xl transition-all disabled:opacity-50"
+                        className="flex-[2] py-4 bg-teal-500 hover:bg-teal-400 disabled:bg-slate-800 text-slate-950 font-black tracking-[0.2em] uppercase rounded-2xl transition-all shadow-[0_0_30px_rgba(45,212,191,0.2)] disabled:shadow-none active:scale-[0.98] flex items-center justify-center gap-3"
                     >
-                        {saving ? 'Saving...' : 'Save Settings'}
+                        {saving ? (
+                            <>
+                                <div className="w-4 h-4 border-2 border-slate-950/20 border-t-slate-950 rounded-full animate-spin" />
+                                SYNCING...
+                            </>
+                        ) : (
+                            'UPDATE PROTOCOLS'
+                        )}
                     </button>
                 </div>
             </Card>

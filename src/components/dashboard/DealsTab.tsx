@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { TrendingUp, Plus, DollarSign, Calendar, User, Target, UserPlus } from 'lucide-react';
+import { TrendingUp, Plus, DollarSign, Calendar, User, Target, UserPlus, BarChart2, PieChart as PieChartIcon, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { dealService, Deal, DealStage } from '../../services/dealService';
 import { leadService, Lead } from '../../services/leadService';
 import { Button, Modal, Input } from '../ui/UIComponents';
@@ -7,6 +7,20 @@ import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import LeadSelector from '../common/LeadSelector';
 import toast from 'react-hot-toast';
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    AreaChart,
+    Area,
+    Cell,
+    PieChart,
+    Pie
+} from 'recharts';
 
 interface DealsTabProps {
     userId: string;
@@ -18,6 +32,9 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
     const [loading, setLoading] = useState(true);
     const [pipelineStats, setPipelineStats] = useState<any[]>([]);
     const [weightedValue, setWeightedValue] = useState(0);
+    const [forecastData, setForecastData] = useState<any[]>([]);
+    const [trendData, setTrendData] = useState<any[]>([]);
+    const [winRateData, setWinRateData] = useState<any>(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showCreateFromLeadModal, setShowCreateFromLeadModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,6 +62,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
     useEffect(() => {
         loadDeals();
         loadPipelineStats();
+        loadAnalytics();
     }, [userId, userRole]);
 
     const loadDeals = async () => {
@@ -80,6 +98,22 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
             }
         } catch (err) {
             console.error('Failed to load pipeline stats', err);
+        }
+    };
+
+    const loadAnalytics = async () => {
+        try {
+            const [forecastRes, trendRes, winRateRes] = await Promise.all([
+                dealService.getSalesForecast(),
+                dealService.getWinLossTrends(),
+                dealService.getWinRate()
+            ]);
+
+            if (!forecastRes.error) setForecastData(forecastRes.forecast);
+            if (!trendRes.error) setTrendData(trendRes.trends);
+            if (!winRateRes.error) setWinRateData(winRateRes);
+        } catch (err) {
+            console.error('Failed to load analytics', err);
         }
     };
 
@@ -258,16 +292,139 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                 )}
             </div>
 
-            {/* Pipeline Stats Summary */}
-            {userRole === 'admin' && pipelineStats.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    {pipelineStats.slice(0, 4).map((stat) => (
-                        <div key={stat.stage} className="glass-panel p-4 rounded-xl border border-white/5">
-                            <div className="text-slate-400 text-xs uppercase mb-1">{stageLabels[stat.stage as DealStage]}</div>
-                            <div className="text-2xl font-bold text-white">{stat.dealCount}</div>
-                            <div className="text-teal-400 text-sm">{formatCurrency(stat.totalValue)}</div>
+            {/* Top Stats Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="glass-panel p-4 rounded-xl border border-white/5 bg-teal-500/5">
+                    <div className="flex items-center justify-between mb-2">
+                        <DollarSign className="w-5 h-5 text-teal-400" />
+                        {winRateData && (
+                            <span className="text-[10px] bg-teal-500/20 text-teal-400 px-2 py-0.5 rounded-full">
+                                {winRateData.winRate.toFixed(1)}% Win Rate
+                            </span>
+                        )}
+                    </div>
+                    <div className="text-2xl font-bold text-white">{formatCurrency(weightedValue)}</div>
+                    <div className="text-slate-400 text-xs uppercase tracking-wider">Weighted Pipeline</div>
+                </div>
+
+                <div className="glass-panel p-4 rounded-xl border border-white/5 bg-violet-500/5">
+                    <div className="flex items-center justify-between mb-2">
+                        <TrendingUp className="w-5 h-5 text-violet-400" />
+                        <span className="text-[10px] bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded-full">Active</span>
+                    </div>
+                    <div className="text-2xl font-bold text-white">{deals.length}</div>
+                    <div className="text-slate-400 text-xs uppercase tracking-wider">Total Deals</div>
+                </div>
+
+                <div className="glass-panel p-4 rounded-xl border border-white/5 bg-blue-500/5">
+                    <div className="flex items-center justify-between mb-2">
+                        <BarChart2 className="w-5 h-5 text-blue-400" />
+                        {forecastData.length > 0 && (
+                            <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">
+                                Next {forecastData.length} mo.
+                            </span>
+                        )}
+                    </div>
+                    <div className="text-2xl font-bold text-white">
+                        {formatCurrency(forecastData.reduce((sum, d) => sum + d.value, 0))}
+                    </div>
+                    <div className="text-slate-400 text-xs uppercase tracking-wider">Projected Revenue</div>
+                </div>
+
+                <div className="glass-panel p-4 rounded-xl border border-white/5 bg-emerald-500/5">
+                    <div className="flex items-center justify-between mb-2">
+                        <PieChartIcon className="w-5 h-5 text-emerald-400" />
+                        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">Avg</span>
+                    </div>
+                    <div className="text-2xl font-bold text-white">
+                        {deals.length > 0 ? (deals.reduce((sum, d) => sum + (d.probability || 0), 0) / deals.length).toFixed(0) : 0}%
+                    </div>
+                    <div className="text-slate-400 text-xs uppercase tracking-wider">Avg. Probability</div>
+                </div>
+            </div>
+
+            {/* Sales Analytics Section */}
+            {(userRole === 'admin' || userRole === 'tenant_admin') && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div className="glass-panel p-6 rounded-2xl border border-white/5 bg-slate-900/50">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="font-bold text-white flex items-center gap-2">
+                                <BarChart2 className="w-4 h-4 text-teal-400" /> Sales Forecast
+                            </h3>
+                            <div className="text-[10px] text-slate-500">Weighted value by month</div>
                         </div>
-                    ))}
+                        <div className="h-64 w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={forecastData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                                    <XAxis
+                                        dataKey="month"
+                                        stroke="#64748b"
+                                        fontSize={10}
+                                        tickLine={false}
+                                        axisLine={false}
+                                    />
+                                    <YAxis
+                                        stroke="#64748b"
+                                        fontSize={10}
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tickFormatter={(value) => `$${value >= 1000 ? (value / 1000).toFixed(0) + 'k' : value}`}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '8px' }}
+                                        itemStyle={{ color: '#2dd4bf' }}
+                                        formatter={(value: any) => [formatCurrency(Number(value || 0)), 'Weighted Value']}
+                                    />
+                                    <Bar dataKey="value" fill="#14b8a6" radius={[4, 4, 0, 0]} barSize={30} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    <div className="glass-panel p-6 rounded-2xl border border-white/5 bg-slate-900/50">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="font-bold text-white flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4 text-violet-400" /> Win/Loss Trends
+                            </h3>
+                            <div className="text-[10px] text-slate-500">Historical performance</div>
+                        </div>
+                        <div className="h-64 w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={trendData}>
+                                    <defs>
+                                        <linearGradient id="colorWon" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorLost" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                                    <XAxis
+                                        dataKey="month"
+                                        stroke="#64748b"
+                                        fontSize={10}
+                                        tickLine={false}
+                                        axisLine={false}
+                                    />
+                                    <YAxis
+                                        stroke="#64748b"
+                                        fontSize={10}
+                                        tickLine={false}
+                                        axisLine={false}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '8px' }}
+                                    />
+                                    <Area type="monotone" dataKey="won" stroke="#10b981" fillOpacity={1} fill="url(#colorWon)" strokeWidth={2} />
+                                    <Area type="monotone" dataKey="lost" stroke="#ef4444" fillOpacity={1} fill="url(#colorLost)" strokeWidth={2} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
                 </div>
             )}
 
