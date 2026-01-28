@@ -58,7 +58,7 @@ export const PrivacyPolicy = () => (
 
       <section>
          <h3 className="text-xl font-bold text-white mb-4">3. Data Storage & Security</h3>
-         <p className="mb-4">Your data is securely stored on enterprise-grade servers hosted by Supabase and AWS. We implement robust technical and organizational measures to protect your personal data, including:</p>
+         <p className="mb-4">Your data is securely stored on enterprise-grade servers hosted by Secure Cloud Infrastructure. We implement robust technical and organizational measures to protect your personal data, including:</p>
          <ul className="list-disc pl-5 space-y-2 mb-4 text-slate-400">
             <li><strong>Encryption:</strong> Data is encrypted in transit (TLS 1.2+) and at rest (AES-256).</li>
             <li><strong>Access Controls:</strong> Strict role-based access controls limit who can view your data within our organization.</li>
@@ -93,11 +93,11 @@ export const PrivacyPolicy = () => (
          <h3 className="text-xl font-bold text-white mb-4">5. Third-Party Sharing</h3>
          <p className="mb-4">We may share your data with the following trusted sub-processors to provide our services:</p>
          <ul className="list-disc pl-5 space-y-2 mb-4 text-slate-400">
-            <li><strong>Supabase:</strong> Database and Authentication services.</li>
-            <li><strong>Stripe:</strong> Payment processing.</li>
-            <li><strong>Daily.co:</strong> Video conferencing infrastructure.</li>
-            <li><strong>Resend:</strong> Transactional email delivery.</li>
-            <li><strong>Google Gemini:</strong> AI processing (anonymized where possible).</li>
+            <li><strong>Cloud Database Provider:</strong> Database and Authentication services.</li>
+            <li><strong>Payment Processor:</strong> Payment processing.</li>
+            <li><strong>Video Infrastructure Provider:</strong> Video conferencing infrastructure.</li>
+            <li><strong>Email Service Provider:</strong> Transactional email delivery.</li>
+            <li><strong>AI Service Provider:</strong> AI processing (anonymized where possible).</li>
          </ul>
       </section>
 
@@ -200,12 +200,12 @@ export const CookiePolicy = () => (
                   <tr className="border-b border-slate-800 bg-slate-900/10">
                      <td className="p-4 font-medium text-blue-400">Performance/Analytical</td>
                      <td className="p-4">Help us understand how visitors interact with the website.</td>
-                     <td className="p-4">Google Analytics, Vercel Analytics</td>
+                     <td className="p-4">Traffic Analysis Tools</td>
                   </tr>
                   <tr className="border-b border-slate-800 bg-slate-900/30">
                      <td className="p-4 font-medium text-purple-400">Marketing/Targeting</td>
                      <td className="p-4">Used to track visitors across websites to display relevant ads.</td>
-                     <td className="p-4">Facebook Pixel, LinkedIn Insight</td>
+                     <td className="p-4">Marketing Performance Tools</td>
                   </tr>
                </tbody>
             </table>
