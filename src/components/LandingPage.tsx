@@ -1103,7 +1103,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <li><Link href="/privacy-policy" className="hover:text-teal-400">Privacy Policy</Link></li>
                            <li><Link href="/terms-of-service" className="hover:text-teal-400">Terms of Service</Link></li>
                            <li><Link href="/cookie-policy" className="hover:text-teal-400">Cookie Policy</Link></li>
-                           <li><Link href="/gdpr" className="hover:text-teal-400">GDPR</Link></li>
+
                         </ul>
                      </div>
                   </div>

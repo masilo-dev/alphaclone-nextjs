@@ -19,7 +19,7 @@ const LegalLayout: React.FC<{ title: string, lastUpdated: string, children: Reac
             <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 sm:mb-4">{title}</h1>
             <p className="text-slate-500 text-xs sm:text-sm">Last Updated: {lastUpdated}</p>
          </div>
-         <div className="space-y-6 text-slate-300 leading-relaxed">
+         <div className="space-y-8 text-slate-300 leading-relaxed">
             {children}
          </div>
       </main>
@@ -30,121 +30,195 @@ const LegalLayout: React.FC<{ title: string, lastUpdated: string, children: Reac
 );
 
 export const PrivacyPolicy = () => (
-   <LegalLayout title="Privacy Policy" lastUpdated="October 24, 2025">
-      <h3 className="text-xl font-bold text-white mt-8 mb-4">1. Introduction</h3>
-      <p className="mb-4">Welcome to AlphaClone Systems. We are committed to protecting your personal information and your right to privacy. If you have any questions or concerns about this policy, or our practices with regards to your personal information, please contact us at <span className="text-teal-400">legal@alphaclone.tech</span>.</p>
-
-      <h3 className="text-xl font-bold text-white mt-8 mb-4">2. Information We Collect</h3>
-      <p className="mb-4">We collect personal information that you voluntarily provide to us when you register on the Services, express an interest in obtaining information about us or our products and Services, when you participate in activities on the Services or otherwise when you contact us.</p>
-      <ul className="list-disc pl-5 space-y-2 mb-4">
-         <li><strong>Personal Data:</strong> Name, email address, phone number, and company details.</li>
-         <li><strong>Authentication Data:</strong> Passwords, password hints, and similar security information used for authentication and account access.</li>
-         <li><strong>Payment Data:</strong> We may collect data necessary to process your payment if you make purchases, such as your payment instrument number (such as a credit card number), and the security code associated with your payment instrument. All payment data is stored by our payment processor (Stripe).</li>
-      </ul>
-
-      <h3 className="text-xl font-bold text-white mt-8 mb-4">3. How We Use Your Information</h3>
-      <p className="mb-4">We use personal information collected via our Services for a variety of business purposes described below. We process your personal information for these purposes in reliance on our legitimate business interests, in order to enter into or perform a contract with you, with your consent, and/or for compliance with our legal obligations.</p>
-      <ul className="list-disc pl-5 space-y-2 mb-4">
-         <li>To facilitate account creation and logon process.</li>
-         <li>To send you marketing and promotional communications.</li>
-         <li>To send administrative information to you.</li>
-         <li>To fulfill and manage your orders.</li>
-         <li>To protect our Services (e.g. fraud monitoring and prevention).</li>
-         <li>To deliver targeted advertising to you.</li>
-      </ul>
-
-      <h3 className="text-xl font-bold text-white mt-8 mb-4">4. Sharing Your Information</h3>
-      <p className="mb-4">We only share information with your consent, to comply with laws, to provide you with services, to protect your rights, or to fulfill business obligations. We may process or share your data that we hold based on the following legal basis:</p>
-      <ul className="list-disc pl-5 space-y-2 mb-4">
-         <li><strong>Consent:</strong> We may process your data if you have given us specific consent to use your personal information for a specific purpose.</li>
-         <li><strong>Legitimate Interests:</strong> We may process your data when it is reasonably necessary to achieve our legitimate business interests.</li>
-         <li><strong>Performance of a Contract:</strong> Where we have entered into a contract with you, we may process your personal information to fulfill the terms of our contract.</li>
-      </ul>
-
-      <h3 className="text-xl font-bold text-white mt-8 mb-4">5. Data Retention</h3>
-      <p className="mb-4">We will only keep your personal information for as long as it is necessary for the purposes set out in this privacy notice, unless a longer retention period is required or permitted by law (such as tax, accounting or other legal requirements).</p>
-
-      <h3 className="text-xl font-bold text-white mt-8 mb-4">6. Security of Your Information</h3>
-      <p className="mb-4">AlphaClone Systems employs enterprise-grade security measures (SOC2 Type II standards) to protect your personal information from unauthorized access, use, or disclosure. However, please also remember that we cannot guarantee that the internet itself is 100% secure. Although we will do our best to protect your personal information, transmission of personal information to and from our Services is at your own risk. You should only access the services within a secure environment.</p>
-
-      <h3 className="text-xl font-bold text-white mt-8 mb-4">7. Contact Us</h3>
-      <p>If you have questions or comments about this policy, you may email us at <span className="text-teal-400">legal@alphaclone.tech</span> or by post to:</p>
-      <div className="mt-4 p-4 bg-slate-900 border border-slate-800 rounded-lg inline-block">
-         <p className="font-bold text-white">AlphaClone Systems HQ</p>
-         <p>123 Innovation Drive</p>
-         <p>Tech City, TC 90210</p>
-         <p>United States</p>
+   <LegalLayout title="Privacy Policy" lastUpdated="January 28, 2026">
+      <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-lg mb-6">
+         <p className="text-sm">This Privacy Policy applies to AlphaClone Systems ("AlphaClone", "we", "us", or "our") and is fully compliant with the General Data Protection Regulation (GDPR).</p>
       </div>
+
+      <section>
+         <h3 className="text-xl font-bold text-white mb-4">1. Data Collection</h3>
+         <p className="mb-4">We collect personal data that you voluntarily provide to us when you register on the Platform, express an interest in obtaining information about us or our products and Services, when you participate in activities on the Platform, or otherwise when you contact us.</p>
+         <ul className="list-disc pl-5 space-y-2 mb-4 text-slate-400">
+            <li><strong>Personal Identity Information:</strong> Name, email address, phone number, and business name.</li>
+            <li><strong>Technical Data:</strong> IP address, browser type and version, time zone setting, browser plug-in types, operating system, and platform.</li>
+            <li><strong>Payment Information:</strong> Credit card details and billing address (processed securely by our third-party payment processors).</li>
+            <li><strong>Usage Data:</strong> Information about how you use our website, products, and services.</li>
+         </ul>
+      </section>
+
+      <section>
+         <h3 className="text-xl font-bold text-white mb-4">2. Legal Basis for Processing</h3>
+         <p className="mb-4">Under GDPR, we rely on the following legal bases to process your personal data:</p>
+         <ul className="list-disc pl-5 space-y-2 mb-4 text-slate-400">
+            <li><strong>Consent:</strong> We may process your data if you have given us specific consent to use your personal information for a specific purpose.</li>
+            <li><strong>contractual Necessity:</strong> Processing is necessary for the performance of a contract to which you are a party (e.g., providing the AlphaClone service).</li>
+            <li><strong>Legitimate Interests:</strong> We may process your data when it is reasonably necessary to achieve our legitimate business interests (e.g., fraud prevention, improving our services).</li>
+         </ul>
+      </section>
+
+      <section>
+         <h3 className="text-xl font-bold text-white mb-4">3. Data Storage & Security</h3>
+         <p className="mb-4">Your data is securely stored on enterprise-grade servers hosted by Supabase and AWS. We implement robust technical and organizational measures to protect your personal data, including:</p>
+         <ul className="list-disc pl-5 space-y-2 mb-4 text-slate-400">
+            <li><strong>Encryption:</strong> Data is encrypted in transit (TLS 1.2+) and at rest (AES-256).</li>
+            <li><strong>Access Controls:</strong> Strict role-based access controls limit who can view your data within our organization.</li>
+            <li><strong>Regular Audits:</strong> We conduct regular security assessments to identify and mitigate vulnerabilities.</li>
+         </ul>
+      </section>
+
+      <section>
+         <h3 className="text-xl font-bold text-white mb-4">4. User Rights (GDPR)</h3>
+         <p className="mb-4">You have specific rights regarding your personal data:</p>
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-slate-900 p-4 rounded border border-slate-800">
+               <strong className="text-white block mb-1">Right to Access</strong>
+               <span className="text-sm">Request copies of your personal data.</span>
+            </div>
+            <div className="bg-slate-900 p-4 rounded border border-slate-800">
+               <strong className="text-white block mb-1">Right to Rectification</strong>
+               <span className="text-sm">Request correction of any information you believe is inaccurate.</span>
+            </div>
+            <div className="bg-slate-900 p-4 rounded border border-slate-800">
+               <strong className="text-white block mb-1">Right to Erasure ("Right to be Forgotten")</strong>
+               <span className="text-sm">Request that we delete your personal data under certain conditions.</span>
+            </div>
+            <div className="bg-slate-900 p-4 rounded border border-slate-800">
+               <strong className="text-white block mb-1">Right to Data Portability</strong>
+               <span className="text-sm">Request that we transfer your data to another organization or directly to you.</span>
+            </div>
+         </div>
+      </section>
+
+      <section>
+         <h3 className="text-xl font-bold text-white mb-4">5. Third-Party Sharing</h3>
+         <p className="mb-4">We may share your data with the following trusted sub-processors to provide our services:</p>
+         <ul className="list-disc pl-5 space-y-2 mb-4 text-slate-400">
+            <li><strong>Supabase:</strong> Database and Authentication services.</li>
+            <li><strong>Stripe:</strong> Payment processing.</li>
+            <li><strong>Daily.co:</strong> Video conferencing infrastructure.</li>
+            <li><strong>Resend:</strong> Transactional email delivery.</li>
+            <li><strong>Google Gemini:</strong> AI processing (anonymized where possible).</li>
+         </ul>
+      </section>
+
+      <section>
+         <h3 className="text-xl font-bold text-white mb-4">6. Data Protection Officer</h3>
+         <p className="mb-4">We have appointed a Data Protection Officer (DPO) to oversee our data protection strategy. If you have any questions about this policy or your data rights, please contact:</p>
+         <div className="mt-2 p-4 bg-slate-900 border border-slate-800 rounded-lg inline-block">
+            <p className="font-bold text-white">Data Protection Officer</p>
+            <p>AlphaClone Systems</p>
+            <p><a href="mailto:dpo@alphaclone.tech" className="text-teal-400 hover:underline">dpo@alphaclone.tech</a></p>
+         </div>
+      </section>
    </LegalLayout>
 );
 
 export const TermsOfService = () => (
-   <LegalLayout title="Terms of Service" lastUpdated="October 24, 2025">
-      <h3 className="text-xl font-bold text-white mt-8 mb-4">1. Agreement to Terms</h3>
-      <p className="mb-4">These Terms of Service constitute a legally binding agreement made between you, whether personally or on behalf of an entity ("you") and AlphaClone Systems ("Company", "we", "us", or "our"), concerning your access to and use of the AlphaClone platform and services. By accessing the Services, you acknowledge that you have read, understood, and agree to be bound by all of these Terms of Service.</p>
-
-      <p className="mb-4 font-bold text-teal-400/80">IF YOU DO NOT AGREE WITH ALL OF THESE TERMS OF SERVICE, THEN YOU ARE EXPRESSLY PROHIBITED FROM USING THE SITE AND YOU MUST DISCONTINUE USE IMMEDIATELY.</p>
-
-      <h3 className="text-xl font-bold text-white mt-8 mb-4">2. Intellectual Property Rights</h3>
-      <p className="mb-4">Unless otherwise indicated, the Site is our proprietary property and all source code, databases, functionality, software, website designs, audio, video, text, photographs, and graphics on the Site (collectively, the "Content") and the trademarks, service marks, and logos contained therein (the "Marks") are owned or controlled by us or licensed to us, and are protected by copyright and trademark laws and various other intellectual property rights and unfair competition laws of the United States, foreign jurisdictions, and international conventions.</p>
-
-      <div className="bg-slate-900 border-l-4 border-teal-500 p-4 my-4">
-         <p className="text-sm italic">Note regarding Client Work: Unless otherwise stated in a specific Master Services Agreement (MSA), custom code developed specifically for a client is transferred to the client upon full payment of all associated invoices. Platform components and reusable libraries remain the property of AlphaClone Systems.</p>
+   <LegalLayout title="Terms of Use" lastUpdated="January 28, 2026">
+      <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-lg mb-6">
+         <p className="text-sm">These Terms of Use constitute a legally binding agreement between you and AlphaClone Systems regarding your use of the AlphaClone Business Operating System.</p>
       </div>
 
-      <h3 className="text-xl font-bold text-white mt-8 mb-4">3. User Representations</h3>
-      <p className="mb-4">By using the Site, you represent and warrant that:</p>
-      <ul className="list-disc pl-5 space-y-2 mb-4">
-         <li>All registration information you submit will be true, accurate, current, and complete.</li>
-         <li>You will maintain the accuracy of such information and promptly update such registration information as necessary.</li>
-         <li>You have the legal capacity and you agree to comply with these Terms of Service.</li>
-         <li>You are not a minor in the jurisdiction in which you reside.</li>
-         <li>You will not access the Site through automated or non-human means, whether through a bot, script or otherwise.</li>
-         <li>You will not use the Site for any illegal or unauthorized purpose.</li>
-      </ul>
+      <section>
+         <h3 className="text-xl font-bold text-white mb-4">1. User Eligibility</h3>
+         <p className="mb-4">By accessing the Platform, you represent and warrant that:</p>
+         <ul className="list-disc pl-5 space-y-2 mb-4 text-slate-400">
+            <li>You are at least 18 years of age.</li>
+            <li>You have the legal capacity to enter into a binding contract.</li>
+            <li>All registration information you submit is truthful and accurate.</li>
+            <li>You will use the Platform in compliance with all applicable laws and regulations.</li>
+         </ul>
+      </section>
 
-      <h3 className="text-xl font-bold text-white mt-8 mb-4">4. Fees and Payment</h3>
-      <p className="mb-4">We accept the following forms of payment: Visa, Mastercard, American Express, Discover, PayPal, and Bank Transfer. You may be required to purchase or pay a fee to access some of our services. You agree to provide current, complete, and accurate purchase and account information for all purchases made via the Services.</p>
-      <p className="mb-4">You agree to pay all charges or fees at the prices then in effect for your purchases, and you authorize us to charge your chosen payment provider for any such amounts upon making your purchase.</p>
+      <section>
+         <h3 className="text-xl font-bold text-white mb-4">2. Acceptable Use Policy</h3>
+         <p className="mb-4">You agree not to use the Platform for any unlawful purpose or any purpose prohibited under this clause. Protocol explicitly prohibits:</p>
+         <ul className="list-disc pl-5 space-y-2 mb-4 text-slate-400">
+            <li><strong>Reverse Engineering:</strong> Attempting to reverse engineer, decompile, hack, disable, interfere with, disassemble, copy, or disrupt the integrity or performance of the Platform.</li>
+            <li><strong>Scraping:</strong> Using any robot, spider, scraper, or other automated means to access the Platform for any purpose without our express written permission.</li>
+            <li><strong>Illegal Activities:</strong> Using the Platform to transmit unwanted commercial email (spam) or engage in phishing, fraud, or other criminal activities.</li>
+         </ul>
+      </section>
 
-      <h3 className="text-xl font-bold text-white mt-8 mb-4">5. Limitation of Liability</h3>
-      <p className="mb-4">IN NO EVENT WILL WE OR OUR DIRECTORS, EMPLOYEES, OR AGENTS BE LIABLE TO YOU OR ANY THIRD PARTY FOR ANY DIRECT, INDIRECT, CONSEQUENTIAL, EXEMPLARY, INCIDENTAL, SPECIAL, OR PUNITIVE DAMAGES, INCLUDING LOST PROFIT, LOST REVENUE, LOSS OF DATA, OR OTHER DAMAGES ARISING FROM YOUR USE OF THE SITE, EVEN IF WE HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.</p>
+      <section>
+         <h3 className="text-xl font-bold text-white mb-4">3. Intellectual Property</h3>
+         <p className="mb-4"><strong>Platform IP:</strong> The Platform, including its source code, databases, functionality, software, website designs, audio, video, text, photographs, and graphics, is defined as "AlphaClone Content" and is owned by us.</p>
+         <p className="mb-4"><strong>User Content:</strong> You retain ownership of any data, files, or intellectual property you upload to the Platform ("User Content"). By uploading User Content, you grant AlphaClone a license to host, copy, transmit, and display such content solely as necessary to provide the Services to you.</p>
+      </section>
 
-      <h3 className="text-xl font-bold text-white mt-8 mb-4">6. Term and Termination</h3>
-      <p className="mb-4">These Terms of Service shall remain in full force and effect while you use the Site. WITHOUT LIMITING ANY OTHER PROVISION OF THESE TERMS OF SERVICE, WE RESERVE THE RIGHT TO, IN OUR SOLE DISCRETION AND WITHOUT NOTICE OR LIABILITY, DENY ACCESS TO AND USE OF THE SITE (INCLUDING BLOCKING CERTAIN IP ADDRESSES), TO ANY PERSON FOR ANY REASON OR FOR NO REASON.</p>
+      <section>
+         <h3 className="text-xl font-bold text-white mb-4">4. Payment & Subscriptions</h3>
+         <ul className="list-disc pl-5 space-y-2 mb-4 text-slate-400">
+            <li><strong>Billing:</strong> Subscriptions are billed in advance on a monthly or annual basis.</li>
+            <li><strong>Refunds:</strong> All fees are non-refundable unless otherwise required by law.</li>
+            <li><strong>Late Payment:</strong> If any fee is not paid in a timely manner, we reserve the right to revoke access to your account and the Platform until such fee is paid.</li>
+         </ul>
+      </section>
+
+      <section>
+         <h3 className="text-xl font-bold text-white mb-4">5. Limitation of Liability</h3>
+         <p className="mb-4 uppercase text-slate-400 text-sm">To the maximum extent permitted by law, AlphaClone Systems shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, goodwill, or other intangible losses, resulting from (a) your access to or use of or inability to access or use the services; (b) any conduct or content of any third party on the services; or (c) unauthorized access, use, or alteration of your transmissions or content.</p>
+      </section>
+
+      <section>
+         <h3 className="text-xl font-bold text-white mb-4">6. Termination</h3>
+         <p className="mb-4">We may terminate or suspend your account and bar access to the Service immediately, without prior notice or liability, under our sole discretion, for any reason whatsoever and without limitation, including but not limited to specific breaches of the Terms.</p>
+      </section>
+
+      <section>
+         <h3 className="text-xl font-bold text-white mb-4">7. Governing Law</h3>
+         <p className="mb-4">These Terms shall be governed and construed in accordance with the laws of the United States, without regard to its conflict of law provisions. Our failure to enforce any right or provision of these Terms will not be considered a waiver of those rights.</p>
+      </section>
    </LegalLayout>
 );
 
 export const CookiePolicy = () => (
-   <LegalLayout title="Cookie Policy" lastUpdated="October 24, 2025">
-      <h3 className="text-xl font-bold text-white mt-8 mb-4">1. What Are Cookies</h3>
-      <p className="mb-4">Cookies are small text files that are placed on your computer or mobile device when you visit a website. They are widely used to make websites work more efficiently and to provide information to the owners of the site.</p>
-
-      <h3 className="text-xl font-bold text-white mt-8 mb-4">2. How We Use Cookies</h3>
-      <p className="mb-4">We use cookies to enhance your browsing experience, serve personalized ads or content, and analyze our traffic. By computing your preferences, we can deliver a better user experience.</p>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
-         <div className="bg-slate-900/50 p-5 rounded-xl border border-slate-800 hover:border-teal-500/30 transition-colors">
-            <h4 className="font-bold text-white mb-2 text-lg">Essential Cookies</h4>
-            <p className="text-sm text-slate-400">Strictly necessary for the website to function. They enable core functionality such as security, network management, and accessibility.</p>
-         </div>
-         <div className="bg-slate-900/50 p-5 rounded-xl border border-slate-800 hover:border-blue-500/30 transition-colors">
-            <h4 className="font-bold text-white mb-2 text-lg">Performance & Analytics</h4>
-            <p className="text-sm text-slate-400">Allow us to count visits and traffic sources so we can measure and improve the performance of our site. Use Google Analytics and internal logging.</p>
-         </div>
-         <div className="bg-slate-900/50 p-5 rounded-xl border border-slate-800 hover:border-purple-500/30 transition-colors">
-            <h4 className="font-bold text-white mb-2 text-lg">Functionality</h4>
-            <p className="text-sm text-slate-400">Enable the website to provide enhanced functionality and personalization, such as remembering your login details or language.</p>
-         </div>
-         <div className="bg-slate-900/50 p-5 rounded-xl border border-slate-800 hover:border-pink-500/30 transition-colors">
-            <h4 className="font-bold text-white mb-2 text-lg">Marketing</h4>
-            <p className="text-sm text-slate-400">May be set by our advertising partners to build a profile of your interests and show you relevant adverts on other sites.</p>
-         </div>
+   <LegalLayout title="Cookie Policy" lastUpdated="January 28, 2026">
+      <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-lg mb-6">
+         <p className="text-sm">This Cookie Policy explains how AlphaClone Systems uses cookies and similar technologies to recognize you when you visit our website. It explains what these technologies are and why we use them, as well as your rights to control our use of them.</p>
       </div>
 
-      <h3 className="text-xl font-bold text-white mt-8 mb-4">3. Managing Preferences</h3>
-      <p className="mb-4">Most web browsers allow some control of most cookies through the browser settings. To find out more about cookies, including how to see what cookies have been set, visit <a href="https://www.aboutcookies.org" className="text-teal-400 hover:underline">www.aboutcookies.org</a> or <a href="https://www.allaboutcookies.org" className="text-teal-400 hover:underline">www.allaboutcookies.org</a>.</p>
+      <section>
+         <h3 className="text-xl font-bold text-white mb-4">1. Categories of Cookies</h3>
+         <p className="mb-4">We use the following categories of cookies on our Platform:</p>
 
-      <p className="mt-8 text-sm text-slate-500 italic">Note: Blocking essential cookies may impact your ability to use critical features of the AlphaClone platform.</p>
+         <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse rounded-lg overflow-hidden">
+               <thead>
+                  <tr className="bg-slate-900 text-white text-sm">
+                     <th className="p-4 font-semibold">Category</th>
+                     <th className="p-4 font-semibold">Purpose</th>
+                     <th className="p-4 font-semibold">Example</th>
+                  </tr>
+               </thead>
+               <tbody className="text-sm text-slate-400">
+                  <tr className="border-b border-slate-800 bg-slate-900/30">
+                     <td className="p-4 font-medium text-teal-400">Strictly Necessary</td>
+                     <td className="p-4">Essential for the platform to function. Cannot be disabled.</td>
+                     <td className="p-4">Session ID, Auth Token</td>
+                  </tr>
+                  <tr className="border-b border-slate-800 bg-slate-900/10">
+                     <td className="p-4 font-medium text-blue-400">Performance/Analytical</td>
+                     <td className="p-4">Help us understand how visitors interact with the website.</td>
+                     <td className="p-4">Google Analytics, Vercel Analytics</td>
+                  </tr>
+                  <tr className="border-b border-slate-800 bg-slate-900/30">
+                     <td className="p-4 font-medium text-purple-400">Marketing/Targeting</td>
+                     <td className="p-4">Used to track visitors across websites to display relevant ads.</td>
+                     <td className="p-4">Facebook Pixel, LinkedIn Insight</td>
+                  </tr>
+               </tbody>
+            </table>
+         </div>
+      </section>
+
+      <section>
+         <h3 className="text-xl font-bold text-white mb-4">2. How to Manage Cookies</h3>
+         <p className="mb-4">You have the right to decide whether to accept or reject cookies. You can exercise your cookie rights by setting your browser controls to accept or refuse cookies.</p>
+         <p className="mb-4">Most web browsers allow you to control cookies through their settings preferences. To find out more about cookies, including how to see what cookies have been set and how to manage and delete them, visit <a href="https://www.aboutcookies.org" className="text-teal-400 hover:underline">www.aboutcookies.org</a>.</p>
+         <div className="bg-slate-900 border-l-4 border-yellow-500 p-4 mt-4">
+            <p className="text-sm text-slate-300"><strong>Please Note:</strong> If you choose to reject cookies, you may still use our website though your access to some functionality and areas of our website may be restricted.</p>
+         </div>
+      </section>
    </LegalLayout>
 );
