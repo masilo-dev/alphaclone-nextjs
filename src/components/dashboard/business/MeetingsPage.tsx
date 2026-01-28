@@ -6,6 +6,7 @@ import { Settings, Video, Calendar, Clock, User as UserIcon, Link, Copy } from '
 import { BookingSettings } from './BookingSettings';
 import SimpleVideoMeeting from '../SimpleVideoMeeting';
 import { format, isFuture } from 'date-fns';
+import { safeFormat } from '../../../utils/dateUtils';
 import { Button, Card, Badge } from '@/components/ui/UIComponents';
 
 interface MeetingsPageProps {
@@ -90,11 +91,11 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                                 <div className="flex items-center gap-4 text-slate-300 mt-2">
                                     <span className="flex items-center gap-1.5">
                                         <Clock className="w-4 h-4 text-teal-400" />
-                                        {format(new Date(nextMeeting.scheduled_at || nextMeeting.created_at), 'h:mm a')}
+                                        {safeFormat(nextMeeting.scheduled_at || nextMeeting.created_at, 'h:mm a')}
                                     </span>
                                     <span className="flex items-center gap-1.5">
                                         <Calendar className="w-4 h-4 text-teal-400" />
-                                        {format(new Date(nextMeeting.scheduled_at || nextMeeting.created_at), 'MMM d, yyyy')}
+                                        {safeFormat(nextMeeting.scheduled_at || nextMeeting.created_at, 'MMM d, yyyy')}
                                     </span>
                                 </div>
                             </div>
@@ -146,14 +147,14 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                                         <div className="flex justify-between items-center">
                                             <div className="flex items-center gap-4">
                                                 <div className="flex flex-col items-center justify-center w-12 h-12 bg-slate-800 rounded-lg text-slate-400 group-hover:text-white transition-colors">
-                                                    <span className="text-xs font-bold uppercase">{format(new Date(meeting.scheduled_at || meeting.created_at), 'MMM')}</span>
-                                                    <span className="text-lg font-bold">{format(new Date(meeting.scheduled_at || meeting.created_at), 'd')}</span>
+                                                    <span className="text-xs font-bold uppercase">{safeFormat(meeting.scheduled_at || meeting.created_at, 'MMM')}</span>
+                                                    <span className="text-lg font-bold">{safeFormat(meeting.scheduled_at || meeting.created_at, 'd')}</span>
                                                 </div>
                                                 <div>
                                                     <div className="font-medium text-white">{meeting.title}</div>
                                                     <div className="text-sm text-slate-400 flex items-center gap-2">
                                                         <Clock className="w-3 h-3" />
-                                                        {format(new Date(meeting.scheduled_at || meeting.created_at), 'h:mm a')}
+                                                        {safeFormat(meeting.scheduled_at || meeting.created_at, 'h:mm a')}
                                                     </div>
                                                 </div>
                                             </div>

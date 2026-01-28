@@ -110,18 +110,19 @@ export const bookingService = {
             while (addMinutes(currentSlot, durationMinutes) <= workEnd) {
                 const slotEnd = addMinutes(currentSlot, durationMinutes);
 
-                // Check collision with events
+                // Improved Overlap Check (using precise Date comparisons)
                 const isBlocked = (events || []).some((e: any) => {
-                    const eventStart = new Date(e.start_time);
-                    const eventEnd = new Date(e.end_time);
+                    const eventStart = new Date(e.start_time).getTime();
+                    const eventEnd = new Date(e.end_time).getTime();
+                    const slotStartTime = currentSlot.getTime();
+                    const slotEndTime = slotEnd.getTime();
 
-                    // Simple overlap check
-                    return (currentSlot < eventEnd && slotEnd > eventStart);
+                    // Overlap: (start1 < end2) AND (end1 > start2)
+                    return (slotStartTime < eventEnd && slotEndTime > eventStart);
                 });
 
-                // Smart Availability: Enforce 2-hour minimum lead time
-                // The user cannot book a slot sooner than 2 hours from RIGHT NOW.
-                const leadTimeCutoff = addMinutes(new Date(), 120);
+                // Smart Availability: Enforce 60-minute minimum lead time (Reduced from 120)
+                const leadTimeCutoff = addMinutes(new Date(), 60);
 
                 if (!isBlocked && currentSlot > leadTimeCutoff) {
                     slots.push({
