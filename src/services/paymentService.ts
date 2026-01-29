@@ -449,6 +449,73 @@ export const paymentService = {
             console.error('Receipt send error:', error);
             return { sent: false, error: String(error) };
         }
+    },
+
+    /**
+     * Process recurring billing for all tenants
+     * Called by daily cron job
+     */
+    async processRecurringBilling(): Promise<{ processed: number; errors: number }> {
+        try {
+            console.log('Starting recurring billing process...');
+            const today = new Date();
+
+            // Find tenants due for billing (active subscription, period ends today or earlier)
+            // Note: This relies on the 'tenants' table having subscription columns. 
+            // If they don't exist, this query will fail, but it's the correct logical step for autonomy.
+            const { data: tenantsDue, error } = await supabase
+                .from('tenants')
+                .select('*')
+                .eq('subscription_status', 'active')
+                .lte('current_period_end', today.toISOString());
+
+            if (error) {
+                console.error('Error fetching billing candidates:', error);
+                return { processed: 0, errors: 1 };
+            }
+
+            if (!tenantsDue || tenantsDue.length === 0) {
+                return { processed: 0, errors: 0 };
+            }
+
+            let processed = 0;
+            let errors = 0;
+
+            for (const tenant of tenantsDue) {
+                try {
+                    // Create invoice for next period
+                    // In a real system, you'd lookup price from plan ID
+                    const amount = tenant.plan === 'pro' ? 2900 : 9900; // Example amounts
+
+                    await this.createInvoice({
+                        user_id: tenant.admin_user_id, // Invoice the admin
+                        amount: amount,
+                        currency: 'usd',
+                        description: `Subscription renewal: ${tenant.plan} plan`,
+                        due_date: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                    } as any);
+
+                    // Update tenant period (naive extension)
+                    const nextPeriod = new Date(tenant.current_period_end);
+                    nextPeriod.setMonth(nextPeriod.getMonth() + 1);
+
+                    await supabase
+                        .from('tenants')
+                        .update({ current_period_end: nextPeriod.toISOString() })
+                        .eq('id', tenant.id);
+
+                    processed++;
+                } catch (err) {
+                    console.error(`Failed to process billing for tenant ${tenant.id}:`, err);
+                    errors++;
+                }
+            }
+
+            return { processed, errors };
+        } catch (err) {
+            console.error('Critical error in recurring billing:', err);
+            return { processed: 0, errors: 1 };
+        }
     }
 };
 

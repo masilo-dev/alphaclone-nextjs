@@ -344,6 +344,40 @@ class ContractExpirationService {
             };
         }
     }
+    /**
+     * Perform daily maintenance tasks
+     * This method is called by the cron job
+     */
+    async performDailyMaintenance(): Promise<{
+        notificationsSent: number;
+        renewalsProcessed: number;
+        errors: number;
+    }> {
+        try {
+            console.log('Starting daily contract maintenance...');
+
+            // 1. Send expiration notifications
+            const { sent, errors: notifErrors } = await this.sendExpirationNotifications();
+            console.log(`Sent ${sent} expiration notifications`);
+
+            // 2. Process auto-renewals
+            const { renewed, errors: renewalErrors } = await this.processAutoRenewals();
+            console.log(`Processed ${renewed} auto-renewals`);
+
+            return {
+                notificationsSent: sent,
+                renewalsProcessed: renewed,
+                errors: notifErrors + renewalErrors
+            };
+        } catch (error) {
+            console.error('Error in performDailyMaintenance:', error);
+            return {
+                notificationsSent: 0,
+                renewalsProcessed: 0,
+                errors: 1
+            };
+        }
+    }
 }
 
 export const contractExpirationService = new ContractExpirationService();
