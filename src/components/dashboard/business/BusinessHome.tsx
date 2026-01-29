@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { businessClientService } from '../../../services/businessClientService';
-import { businessProjectService } from '../../../services/businessProjectService';
-import { businessInvoiceService } from '../../../services/businessInvoiceService';
 import {
     DollarSign,
     Users,
@@ -43,42 +41,24 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
 
         setLoading(true);
         try {
-            // Load clients
-            const { clients } = await businessClientService.getClients(currentTenant.id);
+            // Fetch aggregated stats from RPC
+            const { stats, error } = await businessClientService.getDashboardStats(currentTenant.id);
 
-            // Load projects
-            const { projects } = await businessProjectService.getProjects(currentTenant.id);
-
-            // Load invoices
-            const { invoices } = await businessInvoiceService.getInvoices(currentTenant.id);
-
-            // Calculate metrics
-            const totalRevenue = invoices
-                .filter(inv => inv.status === 'paid')
-                .reduce((sum, inv) => sum + inv.total, 0);
-
-            const pendingInvoices = invoices.filter(inv => inv.status !== 'paid').length;
-            const activeProjects = projects.filter(p => p.status !== 'done').length;
+            if (error || !stats) {
+                console.error('Failed to load dashboard stats:', error);
+                return;
+            }
 
             setMetrics({
-                totalRevenue,
-                totalClients: clients.length,
-                activeProjects,
-                pendingInvoices
+                totalRevenue: stats.totalRevenue || 0,
+                totalClients: stats.totalClients || 0,
+                activeProjects: stats.activeProjects || 0,
+                pendingInvoices: stats.pendingInvoices || 0
             });
 
-            // Generate revenue data for chart (last 6 months)
-            const monthlyRevenue = generateMonthlyRevenue(invoices);
-            setRevenueData(monthlyRevenue);
+            setRevenueData(stats.monthlyRevenue || []);
+            setRecentActivity(stats.recentActivity || []);
 
-            // Recent activity
-            const activity = [
-                ...clients.slice(0, 3).map(c => ({ type: 'client', text: `New client: ${c.name}`, time: c.createdAt })),
-                ...projects.slice(0, 3).map(p => ({ type: 'project', text: `Project updated: ${p.name}`, time: p.updatedAt })),
-                ...invoices.slice(0, 3).map(i => ({ type: 'invoice', text: `Invoice ${i.invoiceNumber} ${i.status}`, time: i.createdAt }))
-            ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 5);
-
-            setRecentActivity(activity);
         } catch (error) {
             console.error('Error loading dashboard data:', error);
         } finally {
@@ -86,34 +66,6 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
         }
     };
 
-    const generateMonthlyRevenue = (invoices: any[]) => {
-        const last6Months = [];
-        for (let i = 5; i >= 0; i--) {
-            const date = new Date();
-            date.setMonth(date.getMonth() - i);
-            last6Months.push(date);
-        }
-
-        return last6Months.map(date => {
-            const monthName = date.toLocaleString('default', { month: 'short' });
-            const monthYear = date.getFullYear();
-            const monthIndex = date.getMonth();
-
-            const monthRevenue = invoices
-                .filter(inv => {
-                    const invDate = new Date(inv.issueDate || inv.createdAt);
-                    return invDate.getMonth() === monthIndex &&
-                        invDate.getFullYear() === monthYear &&
-                        inv.status === 'paid';
-                })
-                .reduce((sum, inv) => sum + inv.total, 0);
-
-            return {
-                month: monthName,
-                revenue: monthRevenue
-            };
-        });
-    };
 
     if (loading) {
         return (

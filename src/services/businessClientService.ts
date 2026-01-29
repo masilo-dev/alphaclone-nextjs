@@ -176,5 +176,21 @@ export const businessClientService = {
             console.error('Error importing clients:', err);
             return { count: 0, error: err.message };
         }
+    },
+
+    /**
+     * Get aggregated dashboard stats
+     */
+    async getDashboardStats(tenantId: string): Promise<{ stats: any; error: string | null }> {
+        try {
+            const { data, error } = await supabase
+                .rpc('get_tenant_dashboard_stats', { p_tenant_id: tenantId });
+
+            if (error) throw error;
+            return { stats: data, error: null };
+        } catch (err: any) {
+            console.error('Error fetching dashboard stats:', err);
+            return { stats: null, error: err.message };
+        }
     }
 };
