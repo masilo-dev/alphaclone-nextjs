@@ -138,16 +138,16 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     }
 
     return (
-        <div className="flex gap-6 h-full">
-            {/* Sidebar */}
-            <div className="w-64 bg-slate-900/50 border border-slate-800 rounded-xl p-4 h-fit">
-                <h3 className="text-lg font-semibold mb-4">Settings</h3>
-                <div className="space-y-2">
+        <div className="flex flex-col md:flex-row gap-6 h-full">
+            {/* Sidebar / Tabs */}
+            <div className="w-full md:w-64 bg-slate-900/50 border border-slate-800 rounded-xl p-4 h-fit shrink-0">
+                <h3 className="text-lg font-semibold mb-4 hidden md:block">Settings</h3>
+                <div className="flex md:flex-col overflow-x-auto md:overflow-visible gap-2 pb-2 md:pb-0 scrollbar-hide">
                     {tabs.map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === tab.id
+                            className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 rounded-lg transition-all whitespace-nowrap ${activeTab === tab.id
                                 ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20'
                                 : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                                 }`}

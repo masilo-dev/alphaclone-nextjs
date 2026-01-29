@@ -163,7 +163,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                                                 size="sm"
                                                 variant="secondary"
                                                 onClick={() => onJoinRoom?.(`/meet/${meeting.id}`)}
-                                                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                                className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                                             >
                                                 Join
                                             </Button>

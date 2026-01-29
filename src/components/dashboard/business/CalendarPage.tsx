@@ -127,8 +127,8 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                 </div>
             </div>
 
-            {/* Calendar Grid */}
-            <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+            {/* Desktop Calendar Grid */}
+            <div className="hidden md:block bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
                 {/* Day Headers */}
                 <div className="grid grid-cols-7 border-b border-slate-800">
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
@@ -185,6 +185,18 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                 </div>
             </div>
 
+            {/* Mobile Agenda View */}
+            <div className="md:hidden">
+                <MobileCalendarView
+                    currentDate={currentDate}
+                    events={events}
+                    onSelectDate={(date: Date) => {
+                        setSelectedDate(date);
+                        setShowAddModal(true);
+                    }}
+                />
+            </div>
+
             {/* Add Event Modal */}
             {showAddModal && (
                 <AddEventModal
@@ -208,6 +220,78 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                     onClose={() => setShowBookingSettings(false)}
                 />
             )}
+        </div>
+    );
+};
+
+const MobileCalendarView = ({ currentDate, events, onSelectDate }: any) => {
+    const getDaysInMonth = (date: Date) => {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        return daysInMonth;
+    };
+
+    const daysCount = getDaysInMonth(currentDate);
+    const days = Array.from({ length: daysCount }, (_, i) => i + 1);
+
+    return (
+        <div className="space-y-4 pb-20">
+            {days.map(day => {
+                const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+                const dayEvents = events.filter((e: any) => {
+                    const eventDate = new Date(e.startTime);
+                    return eventDate.toDateString() === date.toDateString();
+                });
+                const isToday = date.toDateString() === new Date().toDateString();
+
+                return (
+                    <div key={day} className={`bg-slate-900/40 border ${isToday ? 'border-teal-500/50 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'border-white/5'} rounded-2xl overflow-hidden backdrop-blur-sm`}>
+                        <div className={`p-4 flex items-center justify-between ${isToday ? 'bg-teal-500/10' : 'bg-white/5'}`}>
+                            <div className="flex items-center gap-4">
+                                <div className={`w-12 h-12 flex flex-col items-center justify-center rounded-xl border ${isToday ? 'bg-teal-500 text-slate-950 border-teal-400' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
+                                    <span className="text-lg font-black leading-none">{day}</span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{date.toLocaleDateString('en-US', { weekday: 'long' })}</span>
+                                    {isToday && <span className="text-[10px] font-black text-teal-400 uppercase tracking-widest">Today</span>}
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => onSelectDate(date)}
+                                className="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors border border-slate-700"
+                            >
+                                <Plus className="w-4 h-4 text-white" />
+                            </button>
+                        </div>
+
+                        <div className="p-4 space-y-3">
+                            {dayEvents.length > 0 ? (
+                                dayEvents.map((event: any) => (
+                                    <div key={event.id} className="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between shadow-sm">
+                                        <div>
+                                            <h4 className="text-sm font-bold text-white mb-1.5">{event.title}</h4>
+                                            <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className={`w-2 h-2 rounded-full ${event.eventType === 'meeting' ? 'bg-blue-500' :
+                                                        event.eventType === 'deadline' ? 'bg-red-500' :
+                                                            event.eventType === 'reminder' ? 'bg-orange-500' : 'bg-teal-500'
+                                                        }`} />
+                                                    <span className="uppercase tracking-wide text-[10px]">{event.eventType}</span>
+                                                </div>
+                                                <div className="w-px h-3 bg-slate-700"></div>
+                                                <span>{new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-center py-2 text-[10px] font-black uppercase tracking-widest text-slate-700">No events scheduled</div>
+                            )}
+                        </div>
+                    </div>
+                );
+            })}
         </div>
     );
 };

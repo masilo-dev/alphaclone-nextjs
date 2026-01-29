@@ -18,7 +18,9 @@ import {
     Briefcase,
     Target,
     CheckCircle2,
-    Clock
+    Clock,
+    ChevronDown,
+    ChevronUp
 } from 'lucide-react';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -216,31 +218,122 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 </div>
             </div>
 
-            {viewMode === 'kanban' ? (
-                <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={closestCorners} sensors={sensors}>
-                    <div className="flex-1 overflow-x-auto scrollbar-hide">
-                        <div className="flex gap-6 h-full min-w-max pb-4">
-                            {columns.map(column => (
-                                <KanbanColumn
-                                    key={column.id}
-                                    column={column}
-                                    projects={getProjectsByStatus(column.id)}
-                                    onDelete={handleDeleteProject}
-                                />
-                            ))}
+            <div className="hidden lg:block flex-1 overflow-hidden">
+                {viewMode === 'kanban' ? (
+                    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={closestCorners} sensors={sensors}>
+                        <div className="flex-1 overflow-x-auto scrollbar-hide h-full">
+                            <div className="flex gap-6 h-full min-w-max pb-4">
+                                {columns.map(column => (
+                                    <KanbanColumn
+                                        key={column.id}
+                                        column={column}
+                                        projects={getProjectsByStatus(column.id)}
+                                        onDelete={handleDeleteProject}
+                                    />
+                                ))}
+                            </div>
                         </div>
+                        <DragOverlay>
+                            {activeId ? <ProjectCard project={projects.find(p => p.id === activeId)!} isDragging onDelete={() => { }} /> : null}
+                        </DragOverlay>
+                    </DndContext>
+                ) : (
+                    <div className="flex-1">
+                        <ProjectTimeline />
                     </div>
-                    <DragOverlay>
-                        {activeId ? <ProjectCard project={projects.find(p => p.id === activeId)!} isDragging onDelete={() => { }} /> : null}
-                    </DragOverlay>
-                </DndContext>
-            ) : (
-                <div className="flex-1">
-                    <ProjectTimeline />
-                </div>
-            )}
+                )}
+            </div>
+
+            <div className="lg:hidden flex-1 overflow-y-auto">
+                <MobileProjectList projects={projects} onDelete={handleDeleteProject} />
+            </div>
 
             {showAddModal && <AddProjectModal clients={clients} onClose={() => setShowAddModal(false)} onAdd={handleAddProject} />}
+        </div>
+    );
+};
+
+const MobileProjectList = ({ projects, onDelete }: any) => {
+    const [expanded, setExpanded] = useState<string | null>(null);
+
+    if (projects.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center py-12 opacity-50">
+                <Briefcase className="w-12 h-12 text-slate-500 mb-4" />
+                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No Active Initiatives</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-3 pb-20">
+            {projects.map((project: BusinessProject) => (
+                <div key={project.id} className="bg-slate-900/40 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-md">
+                    <div
+                        onClick={() => setExpanded(expanded === project.id ? null : project.id)}
+                        className="p-4 flex items-center justify-between cursor-pointer active:bg-white/5 transition-colors"
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className={`w-1.5 h-10 rounded-full ${project.status === 'done' ? 'bg-teal-500 shadow-[0_0_10px_rgba(20,184,166,0.5)]' :
+                                    project.status === 'in_progress' ? 'bg-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.5)]' :
+                                        project.status === 'review' ? 'bg-orange-500' :
+                                            project.status === 'todo' ? 'bg-blue-500' : 'bg-slate-500'
+                                }`} />
+                            <div>
+                                <h4 className="font-bold text-white text-sm tracking-tight">{project.name}</h4>
+                                <span className="text-[10px] uppercase text-slate-500 font-bold tracking-widest flex items-center gap-2">
+                                    {project.status.replace('_', ' ')}
+                                    <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
+                                    <span className={`${project.progress === 100 ? 'text-teal-400' : 'text-slate-400'}`}>{project.progress}% Complete</span>
+                                </span>
+                            </div>
+                        </div>
+                        {expanded === project.id ? <ChevronUp className="w-5 h-5 text-slate-500" /> : <ChevronDown className="w-5 h-5 text-slate-500" />}
+                    </div>
+
+                    {expanded === project.id && (
+                        <div className="px-4 pb-5 pt-0 border-t border-white/5 space-y-5 animate-in slide-in-from-top-2 duration-200">
+                            {project.description && (
+                                <p className="text-xs text-slate-400 mt-4 leading-relaxed italic border-l-2 border-slate-800 pl-3">"{project.description}"</p>
+                            )}
+
+                            <div className="space-y-2">
+                                <div className="w-full bg-slate-950 rounded-full h-2 shadow-inner border border-white/5">
+                                    <div className="bg-gradient-to-r from-teal-500 to-violet-500 h-full rounded-full transition-all duration-1000" style={{ width: `${project.progress}%` }} />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 bg-slate-950/30 p-3 rounded-xl border border-white/5">
+                                {project.startDate && (
+                                    <div>
+                                        <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Start Date</div>
+                                        <div className="text-xs font-bold text-white flex items-center gap-2">
+                                            <Calendar className="w-3 h-3 text-slate-400" />
+                                            {new Date(project.startDate).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                )}
+                                {project.dueDate && (
+                                    <div>
+                                        <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Target Date</div>
+                                        <div className="text-xs font-bold text-white flex items-center gap-2">
+                                            <Target className="w-3 h-3 text-slate-400" />
+                                            {new Date(project.dueDate).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
+                                className="w-full py-3 bg-red-500/10 text-red-500 font-bold text-[10px] uppercase tracking-widest rounded-xl hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                            >
+                                <Trash2 className="w-3 h-3" /> Terminate Initiative
+                            </button>
+                        </div>
+                    )}
+                </div>
+            ))}
         </div>
     );
 };

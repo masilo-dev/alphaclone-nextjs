@@ -144,16 +144,18 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                     <button
                         onClick={handleExportPDF}
                         className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors"
+                        title="Export PDF"
                     >
                         <Download className="w-4 h-4" />
-                        Export PDF
+                        <span className="hidden sm:inline">Export PDF</span>
                     </button>
                     <button
                         onClick={handleExportExcel}
                         className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors"
+                        title="Export Excel"
                     >
                         <Download className="w-4 h-4" />
-                        Export Excel
+                        <span className="hidden sm:inline">Export Excel</span>
                     </button>
                 </div>
             </div>

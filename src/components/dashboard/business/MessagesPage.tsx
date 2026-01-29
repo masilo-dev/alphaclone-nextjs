@@ -6,7 +6,8 @@ import {
     Send,
     Paperclip,
     Search,
-    MoreVertical
+    MoreVertical,
+    ArrowLeft
 } from 'lucide-react';
 
 interface MessagesPageProps {
@@ -82,9 +83,9 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
     }
 
     return (
-        <div className="h-full flex gap-4">
+        <div className="h-full flex md:gap-4 relative">
             {/* Conversations List */}
-            <div className="w-80 bg-slate-900/50 border border-slate-800 rounded-xl flex flex-col">
+            <div className={`w-full md:w-80 bg-slate-900/50 border border-slate-800 rounded-xl flex-col ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
                 <div className="p-4 border-b border-slate-800">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -125,13 +126,19 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
                 </div>
             </div>
 
-            {/* Messages Area */}
-            <div className="flex-1 bg-slate-900/50 border border-slate-800 rounded-xl flex flex-col">
+            {/* Messages Area - Mobile Only (when active) OR Desktop */}
+            <div className={`flex-1 bg-slate-900/50 border border-slate-800 rounded-xl flex-col ${selectedConversation ? 'flex' : 'hidden md:flex'}`}>
                 {selectedConversation ? (
                     <>
                         {/* Header */}
                         <div className="p-4 border-b border-slate-800 flex items-center justify-between">
                             <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => setSelectedConversation(null)}
+                                    className="md:hidden p-2 -ml-2 hover:bg-slate-800 rounded-full transition-colors"
+                                >
+                                    <ArrowLeft className="w-5 h-5 text-slate-400" />
+                                </button>
                                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold">
                                     {selectedConversation.name.charAt(0)}
                                 </div>
@@ -196,7 +203,7 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 };
 

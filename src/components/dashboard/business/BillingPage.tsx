@@ -118,7 +118,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
                     className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors"
                 >
                     <Plus className="w-4 h-4" />
-                    Create Invoice
+                    <span className="hidden sm:inline">Create Invoice</span>
                 </button>
             </div>
 
@@ -139,7 +139,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
             </div>
 
             {/* Filters */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
                 {['all', 'draft', 'sent', 'paid', 'overdue'].map(status => (
                     <button
                         key={status}
@@ -198,53 +198,58 @@ const InvoiceCard = ({ invoice, clients, onDownload, onDelete }: any) => {
 
     return (
         <div className="bg-slate-900/50 border border-slate-800 hover:border-slate-700 rounded-xl p-4 transition-all group">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-teal-500/10 border border-teal-500/20 rounded-lg flex items-center justify-center">
+                    <div className="w-12 h-12 bg-teal-500/10 border border-teal-500/20 rounded-lg flex items-center justify-center shrink-0">
                         <FileText className="w-6 h-6 text-teal-400" />
                     </div>
                     <div>
-                        <h3 className="font-semibold">{invoice.invoiceNumber}</h3>
+                        <h3 className="font-semibold break-all">{invoice.invoiceNumber}</h3>
                         <p className="text-sm text-slate-400">{client?.name || 'No client'}</p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="text-right">
-                        <p className="text-2xl font-bold text-teal-400">${invoice.total.toLocaleString()}</p>
-                        <p className="text-xs text-slate-500">Due: {invoice.dueDate}</p>
+                <div className="flex flex-col md:flex-row md:items-center gap-4 border-t md:border-t-0 border-slate-800 pt-4 md:pt-0">
+                    <div className="flex items-center justify-between md:block md:text-right">
+                        <div className="md:hidden text-sm text-slate-400">Total</div>
+                        <div>
+                            <p className="text-2xl font-bold text-teal-400">${invoice.total.toLocaleString()}</p>
+                            <p className="text-xs text-slate-500 text-right">Due: {invoice.dueDate}</p>
+                        </div>
                     </div>
 
-                    <span className={`text-xs px-3 py-1 rounded-full border ${statusColors[invoice.status as keyof typeof statusColors]}`}>
-                        {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                    </span>
+                    <div className="flex items-center justify-between md:justify-end gap-3">
+                        <span className={`text-xs px-3 py-1 rounded-full border ${statusColors[invoice.status as keyof typeof statusColors]}`}>
+                            {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                        </span>
 
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => {
-                                const url = `${window.location.origin}/invoice/${invoice.id}`;
-                                navigator.clipboard.writeText(url);
-                                alert('Payment link copied to clipboard!');
-                            }}
-                            className={`p-2 rounded-lg transition-colors ${invoice.isPublic ? 'bg-teal-500/10 hover:bg-teal-500/20 text-teal-400' : 'bg-slate-800 text-slate-500'}`}
-                            title={invoice.isPublic ? 'Copy Payment Link' : 'Invoice is Private'}
-                        >
-                            <Share2 className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={() => onDownload(invoice)}
-                            className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-                            title="Download PDF"
-                        >
-                            <Download className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={() => onDelete(invoice.id)}
-                            className="p-2 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors"
-                            title="Delete"
-                        >
-                            <Trash2 className="w-4 h-4 text-red-400" />
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => {
+                                    const url = `${window.location.origin}/invoice/${invoice.id}`;
+                                    navigator.clipboard.writeText(url);
+                                    alert('Payment link copied to clipboard!');
+                                }}
+                                className={`p-2 rounded-lg transition-colors ${invoice.isPublic ? 'bg-teal-500/10 hover:bg-teal-500/20 text-teal-400' : 'bg-slate-800 text-slate-500'}`}
+                                title={invoice.isPublic ? 'Copy Payment Link' : 'Invoice is Private'}
+                            >
+                                <Share2 className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => onDownload(invoice)}
+                                className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+                                title="Download PDF"
+                            >
+                                <Download className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => onDelete(invoice.id)}
+                                className="p-2 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors"
+                                title="Delete"
+                            >
+                                <Trash2 className="w-4 h-4 text-red-400" />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

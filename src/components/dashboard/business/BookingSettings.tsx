@@ -68,7 +68,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
             />
             <Card className="relative bg-[#0a0a0a] border border-slate-800/50 sm:rounded-3xl p-0 flex flex-col w-full max-w-2xl h-full sm:h-auto sm:max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-xl shrink-0">
+                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-xl shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="p-3 bg-teal-500/10 rounded-xl">
                             <Settings className="w-6 h-6 text-teal-400" />
@@ -84,7 +84,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                 </div>
 
                 {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-10 overscroll-contain">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 sm:space-y-10 overscroll-contain">
                     {/* 1. Main Toggle & Link */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between p-5 bg-teal-500/5 border border-teal-500/10 rounded-2xl group transition-all hover:bg-teal-500/10">
@@ -106,9 +106,9 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                 </div>
                             </label>
                             {settings.enabled && (
-                                <div className="flex gap-2">
+                                <div className="flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0">
                                     <button
-                                        className="text-[10px] flex items-center gap-2 text-teal-400 hover:text-white bg-slate-900 px-4 py-2 rounded-xl border border-slate-800 transition-all font-black tracking-widest uppercase italic"
+                                        className="text-[10px] flex items-center justify-center gap-2 text-teal-400 hover:text-white bg-slate-900 px-4 py-3 sm:py-2 rounded-xl border border-slate-800 transition-all font-black tracking-widest uppercase italic w-full sm:w-auto"
                                         onClick={() => {
                                             const url = `${window.location.origin}/book/${settings.slug}`;
                                             window.open(url, '_blank');
@@ -118,7 +118,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                         PREVIEW
                                     </button>
                                     <button
-                                        className="text-[10px] flex items-center gap-2 text-slate-950 bg-teal-500 hover:bg-white px-4 py-2 rounded-xl transition-all font-black tracking-widest uppercase"
+                                        className="text-[10px] flex items-center justify-center gap-2 text-slate-950 bg-teal-500 hover:bg-white px-4 py-3 sm:py-2 rounded-xl transition-all font-black tracking-widest uppercase w-full sm:w-auto"
                                         onClick={() => {
                                             const url = `${window.location.origin}/book/${settings.slug}`;
                                             navigator.clipboard.writeText(url);
@@ -134,14 +134,17 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                             <div className="flex flex-col gap-2">
                                 <span className="text-slate-500 text-[10px] font-black tracking-widest uppercase px-2">Deployment Path</span>
                                 <div className="relative group">
-                                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-500 font-mono text-xs">
+                                    <div className="hidden sm:flex absolute inset-y-0 left-4 items-center pointer-events-none text-slate-500 font-mono text-xs">
+                                        alphaclone.tech/book/
+                                    </div>
+                                    <div className="sm:hidden mb-2 text-slate-500 font-mono text-xs px-1">
                                         alphaclone.tech/book/
                                     </div>
                                     <input
                                         type="text"
                                         value={settings.slug}
                                         onChange={(e) => setSettings({ ...settings, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-[125px] pr-4 py-4 text-sm font-bold text-teal-400 focus:border-teal-500/50 outline-none transition-all"
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl sm:pl-[125px] px-4 py-4 text-sm font-bold text-teal-400 focus:border-teal-500/50 outline-none transition-all"
                                         placeholder="your-custom-slug"
                                     />
                                 </div>
@@ -155,13 +158,13 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                             <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] px-2 leading-none">Service Frequency</h3>
                             <div className="h-[1px] flex-1 bg-slate-800 mx-4 opacity-50" />
                         </div>
-                        <div className="grid grid-cols-4 sm:grid-cols-7 gap-3">
+                        <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-3">
                             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
                                 <button
                                     key={day}
                                     onClick={() => toggleDay(idx)}
                                     className={`
-                                        h-14 sm:h-auto aspect-square sm:aspect-auto sm:py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95
+                                        h-12 sm:h-auto aspect-square sm:aspect-auto sm:py-4 rounded-xl sm:rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95
                                         ${settings.availability.days.includes(idx)
                                             ? 'bg-white text-slate-950 border-white shadow-[0_0_20px_rgba(255,255,255,0.1)]'
                                             : 'bg-slate-900/50 text-slate-500 border-slate-800 hover:border-slate-600'}
