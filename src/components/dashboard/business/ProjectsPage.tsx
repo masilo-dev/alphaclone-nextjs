@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -465,7 +467,8 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
 
     useEffect(() => {
         if (initialData) {
-            setFormData({
+            setFormData(prev => ({
+                ...prev,
                 name: initialData.name,
                 description: initialData.description || '',
                 status: initialData.status,
@@ -473,7 +476,7 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
                 dueDate: initialData.dueDate ? new Date(initialData.dueDate).toISOString().split('T')[0] : '',
                 progress: initialData.progress || 0,
                 clientId: initialData.clientId || ''
-            });
+            }));
         }
     }, [initialData]);
 

@@ -15,6 +15,20 @@ export interface CollaborationDocument {
     version: number;
 }
 
+interface DBCollaborationDocument {
+    id: string;
+    title: string;
+    content: string;
+    type: 'document' | 'whiteboard' | 'note';
+    project_id?: string;
+    task_id?: string;
+    created_by: string;
+    created_at: string;
+    updated_at: string;
+    participants: string[];
+    version: number;
+}
+
 export interface CursorPosition {
     userId: string;
     userName: string;
@@ -180,13 +194,14 @@ export const collaborationService = {
                     filter: `id=eq.${documentId}`,
                 },
                 (payload: RealtimePostgresChangesPayload<any>) => {
-                    const doc = payload.new as any;
+                    const doc = payload.new as DBCollaborationDocument;
                     onUpdate({
                         id: doc.id,
                         title: doc.title,
                         content: doc.content,
                         type: doc.type,
                         projectId: doc.project_id,
+                        taskId: doc.task_id,
                         createdBy: doc.created_by,
                         createdAt: doc.created_at,
                         updatedAt: doc.updated_at,

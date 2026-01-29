@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { collaborationService, CollaborationDocument, CursorPosition } from '@/services/collaborationService';
 import { Loader2, Users, Save, X, Maximize2, Minimize2 } from 'lucide-react';
@@ -26,6 +28,10 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
     const subscriptionRef = useRef<{ unsubscribe: () => void; sendCursor: (c: CursorPosition) => void } | null>(null);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+    // Ref for document ID to access inside closure if needed
+    const document_id_ref = useRef<string | null>(null);
+    useEffect(() => { document_id_ref.current = document?.id || null; }, [document]);
+
     useEffect(() => {
         loadDocument();
         return () => {
@@ -37,64 +43,62 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
     const loadDocument = async () => {
         setLoading(true);
         try {
-            // First, try to find an existing document for this task
-            const { data: existingDoc } = await (window as any).supabase
-                .from('collaboration_documents')
-                .select('*')
-                .eq('task_id', taskId)
-                .single();
+            const { document: doc, error } = await collaborationService.getDocumentByTaskId(taskId);
 
-            let docId = existingDoc?.id;
-
-            if (!docId) {
+            if (doc) {
+                setDocument(doc);
+                if (doc.content && editorRef.current) {
+                    editorRef.current.value = doc.content;
+                }
+            } else {
                 // Create a new document if it doesn't exist
                 const { document: newDoc, error: createError } = await collaborationService.createDocument(
-                    `Notes for Task ${taskId.substring(0, 8)}`,
+                    'Task Notes',
                     'note',
                     undefined,
-                    userId
+                    userId,
+                    taskId
                 );
 
-                if (createError) throw new Error(createError);
-
-                // Link it to the task (this is a bit manual because createDocument service doesn't take taskId yet)
-                await (window as any).supabase
-                    .from('collaboration_documents')
-                    .update({ task_id: taskId })
-                    .eq('id', newDoc?.id);
-
-                docId = newDoc?.id;
-            }
-
-            const { document: fullDoc, error: fetchError } = await collaborationService.getDocument(docId);
-            if (fetchError) throw new Error(fetchError);
-
-            setDocument(fullDoc);
-
-            // Subscribe to real-time updates
-            subscriptionRef.current = collaborationService.subscribeToDocument(
-                docId,
-                (updatedDoc) => {
-                    // Only update if it's a newer version and we aren't currently editing (or simple sync)
-                    setDocument(prev => {
-                        if (!prev || updatedDoc.version > prev.version) {
-                            return updatedDoc;
-                        }
-                        return prev;
-                    });
-                },
-                (activeCursors) => {
-                    setCursors(activeCursors.filter(c => c.userId !== userId));
+                if (createError) {
+                    toast.error('Failed to create notes document');
+                    return;
                 }
-            );
 
-        } catch (err) {
-            console.error('Failed to load collaborative notes:', err);
-            toast.error('Failed to initialize collaborative environment');
+                if (newDoc) {
+                    setDocument(newDoc);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading document:', error);
+            toast.error('Failed to load notes');
         } finally {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (!document) return;
+
+        const sub = collaborationService.subscribeToDocument(
+            document.id,
+            (updatedDoc) => {
+                // Simple sync visualization (could be enhanced)
+            },
+            (updatedCursors) => {
+                setCursors(updatedCursors.filter(c => c.userId !== userId));
+            }
+        );
+
+        subscriptionRef.current = {
+            unsubscribe: sub.unsubscribe,
+            sendCursor: sub.sendCursor
+        };
+
+        return () => {
+            sub.unsubscribe();
+        };
+    }, [document?.id, userId]);
 
     const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const newContent = e.target.value;
@@ -113,20 +117,21 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
 
             // Auto-save logic (debounced)
             if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-            saveTimeoutRef.current = setTimeout(() => {
-                saveDocument(newContent);
+            setIsSaving(true);
+            saveTimeoutRef.current = setTimeout(async () => {
+                await saveDocument(newContent);
             }, 1000);
         }
     };
 
     const saveDocument = async (content: string) => {
         if (!document) return;
-        setIsSaving(true);
         try {
-            const { success, error } = await collaborationService.updateDocument(document.id, content, userId);
-            if (!success) throw new Error(error || 'Save failed');
+            const { error } = await collaborationService.updateDocument(document.id, content, userId);
+            if (error) throw new Error(error);
         } catch (err) {
             console.error('Auto-save failed:', err);
+            toast.error('Failed to save notes');
         } finally {
             setIsSaving(false);
         }
@@ -183,7 +188,7 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
             <div className="flex-1 relative bg-[#0a0a0a] group">
                 <textarea
                     ref={editorRef}
-                    value={document?.content}
+                    defaultValue={document?.content}
                     onChange={handleContentChange}
                     className="w-full h-full p-8 bg-transparent text-slate-300 font-mono text-sm leading-relaxed focus:outline-none resize-none placeholder:text-slate-800"
                     placeholder="Enter strategic notes here... Real-time sync enabled."
