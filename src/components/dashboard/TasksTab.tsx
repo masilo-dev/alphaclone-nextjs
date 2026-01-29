@@ -15,7 +15,9 @@ import {
     Check,
     FileText,
     MessageSquare,
-    MoreVertical
+    MoreVertical,
+    CheckCircle2,
+    X
 } from 'lucide-react';
 import { taskService, Task } from '../../services/taskService';
 import { Button, Modal, Input } from '../ui/UIComponents';
@@ -541,6 +543,131 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         </DndContext>
     );
 
+    // Mobile Status Update Sheet/Modal
+    const StatusUpdateModal = ({ task, onClose, onUpdate }: { task: Task | null, onClose: () => void, onUpdate: (status: Task['status']) => void }) => {
+        if (!task) return null;
+
+        const statuses: { value: Task['status'], label: string, color: string, icon: React.ElementType }[] = [
+            { value: 'todo', label: 'Planning', color: 'bg-slate-700/50 text-slate-300 border-slate-600/50', icon: CheckSquare },
+            { value: 'in_progress', label: 'In Progress', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: Clock },
+            { value: 'completed', label: 'Completed', color: 'bg-teal-500/20 text-teal-400 border-teal-500/30', icon: Check },
+            { value: 'cancelled', label: 'Archived', color: 'bg-red-500/20 text-red-400 border-red-500/30', icon: AlertCircle },
+        ];
+
+        return (
+            <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center pointer-events-none">
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto transition-opacity" onClick={onClose}></div>
+                <div className="w-full sm:max-w-sm bg-slate-900 border-t sm:border border-white/10 p-6 rounded-t-3xl sm:rounded-3xl pointer-events-auto transform transition-transform animate-in slide-in-from-bottom-10 shadow-2xl shadow-teal-500/10">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-bold text-white">Update Status</h3>
+                        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                            <X className="w-5 h-5 text-slate-400" />
+                        </button>
+                    </div>
+
+                    <div className="space-y-3">
+                        {statuses.map((status) => (
+                            <button
+                                key={status.value}
+                                onClick={() => onUpdate(status.value)}
+                                className={`w-full p-4 rounded-xl border flex items-center justify-between group transition-all ${task.status === status.value
+                                    ? 'bg-gradient-to-r from-teal-500/10 to-teal-500/5 border-teal-500/50 shadow-lg shadow-teal-500/10'
+                                    : 'bg-slate-800/50 border-white/5 hover:bg-slate-800'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className={`p-2 rounded-lg ${status.color.split(' ')[0]} ${status.color.split(' ')[1]}`}>
+                                        <status.icon className="w-5 h-5" />
+                                    </div>
+                                    <span className={`font-bold uppercase tracking-wider text-sm ${task.status === status.value ? 'text-teal-400' : 'text-slate-300'}`}>
+                                        {status.label}
+                                    </span>
+                                </div>
+                                {task.status === status.value && (
+                                    <CheckCircle2 className="w-5 h-5 text-teal-400" />
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const MobileTaskList = () => {
+        const [editingStatusTask, setEditingStatusTask] = useState<Task | null>(null);
+
+        const handleMobileStatusClick = (e: React.MouseEvent, task: Task) => {
+            e.stopPropagation();
+            setEditingStatusTask(task);
+        };
+
+        return (
+            <>
+                <div className="space-y-4 pb-20">
+                    {tasks.map(task => (
+                        <div key={task.id} className="bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-4 active:scale-[0.99] transition-transform duration-100">
+                            <div className="flex justify-between items-start gap-4 mb-3">
+                                <div className="flex-1">
+                                    <h4 className="text-white font-bold text-sm leading-snug mb-1">{task.title}</h4>
+                                    <p className="text-slate-500 text-xs line-clamp-1">{task.description || "No description"}</p>
+                                </div>
+                                <button
+                                    onClick={(e) => handleMobileStatusClick(e, task)}
+                                    className={`shrink-0 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all ${getStatusColor(task.status)}`}
+                                >
+                                    {task.status === 'completed' ? <Check className="w-3 h-3" /> : task.status === 'in_progress' ? <Clock className="w-3 h-3" /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
+                                    {task.status.replace('_', ' ')}
+                                </button>
+                            </div>
+
+                            <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                                <div className="flex items-center gap-3">
+                                    {task.dueDate && (
+                                        <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide ${new Date(task.dueDate) < new Date() && task.status !== 'completed' ? 'text-red-400' : 'text-slate-500'}`}>
+                                            <Calendar className="w-3 h-3" />
+                                            {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                        </div>
+                                    )}
+                                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest ${getPriorityColor(task.priority)}`}>
+                                        {task.priority}
+                                    </span>
+                                </div>
+
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setNotesTaskId(task.id);
+                                    }}
+                                    className="p-2 -mr-2 text-slate-400 hover:text-white active:bg-white/5 rounded-full transition-colors"
+                                >
+                                    <FileText className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                    {tasks.length === 0 && (
+                        <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                            <CheckSquare className="w-12 h-12 mb-3 opacity-20" />
+                            <p className="text-sm font-medium">No tasks found</p>
+                        </div>
+                    )}
+                </div>
+
+                <StatusUpdateModal
+                    task={editingStatusTask}
+                    onClose={() => setEditingStatusTask(null)}
+                    onUpdate={(status) => {
+                        if (editingStatusTask) {
+                            handleStatusChange(editingStatusTask.id, status);
+                            setEditingStatusTask(null);
+                        }
+                    }}
+                />
+            </>
+        );
+    };
+
     return (
         <div className="space-y-6 animate-fade-in h-full flex flex-col bg-slate-950/30 p-2 md:p-6 rounded-3xl backdrop-blur-sm border border-white/5">
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-2">
@@ -560,8 +687,8 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                 </div>
 
                 <div className="flex items-center gap-3 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
-                    {/* View Switchers */}
-                    <div className="flex p-1 bg-slate-900/60 rounded-xl border border-white/5 backdrop-blur-md">
+                    {/* View Switchers - Hidden on Mobile */}
+                    <div className="hidden lg:flex p-1 bg-slate-900/60 rounded-xl border border-white/5 backdrop-blur-md">
                         <button
                             onClick={() => setViewMode('grid')}
                             className={`p-2 rounded-lg transition-all flex items-center gap-2 ${viewMode === 'grid' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
@@ -624,9 +751,16 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                     />
                 ) : (
                     <div className="h-full">
-                        {viewMode === 'grid' && renderGridView()}
-                        {viewMode === 'kanban' && renderKanbanView()}
-                        {viewMode === 'gantt' && <GanttView />}
+                        {/* Desktop Views */}
+                        <div className="hidden lg:block h-full">
+                            {viewMode === 'grid' && renderGridView()}
+                            {viewMode === 'kanban' && renderKanbanView()}
+                            {viewMode === 'gantt' && <GanttView />}
+                        </div>
+                        {/* Mobile View */}
+                        <div className="lg:hidden h-full overflow-y-auto">
+                            <MobileTaskList />
+                        </div>
                     </div>
                 )}
             </div>

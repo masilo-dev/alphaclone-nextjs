@@ -7,6 +7,7 @@ export interface CollaborationDocument {
     content: string;
     type: 'document' | 'whiteboard' | 'note';
     projectId?: string;
+    taskId?: string;
     createdBy: string;
     createdAt: string;
     updatedAt: string;
@@ -38,7 +39,8 @@ export const collaborationService = {
         title: string,
         type: 'document' | 'whiteboard' | 'note',
         projectId?: string,
-        userId?: string
+        userId?: string,
+        taskId?: string
     ): Promise<{ document: CollaborationDocument | null; error: string | null }> {
         try {
             const { data, error } = await supabase
@@ -47,6 +49,7 @@ export const collaborationService = {
                     title,
                     type,
                     project_id: projectId,
+                    task_id: taskId,
                     content: '',
                     created_by: userId,
                     participants: userId ? [userId] : [],
@@ -92,6 +95,46 @@ export const collaborationService = {
                 .single();
 
             if (error) throw error;
+
+            return {
+                document: {
+                    id: data.id,
+                    title: data.title,
+                    content: data.content,
+                    type: data.type,
+                    projectId: data.project_id,
+                    createdBy: data.created_by,
+                    createdAt: data.created_at,
+                    updatedAt: data.updated_at,
+                    participants: data.participants || [],
+                    version: data.version,
+                },
+                error: null,
+            };
+        } catch (error) {
+            return {
+                document: null,
+                error: error instanceof Error ? error.message : 'Failed to fetch document',
+            };
+        }
+    },
+
+    /**
+     * Get document by Task ID
+     */
+    async getDocumentByTaskId(taskId: string): Promise<{ document: CollaborationDocument | null; error: string | null }> {
+        try {
+            const { data, error } = await supabase
+                .from('collaboration_documents')
+                .select('*')
+                .eq('task_id', taskId)
+                .single();
+
+            if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "not found" which returns null data, handled below
+
+            if (!data) {
+                return { document: null, error: null };
+            }
 
             return {
                 document: {

@@ -102,7 +102,7 @@ export const businessProjectService = {
     /**
      * Update a project
      */
-    async updateProject(projectId: string, updates: Partial<BusinessProject>): Promise<{ error: string | null }> {
+    async updateProject(projectId: string, updates: Partial<BusinessProject>): Promise<{ project: BusinessProject | null; error: string | null }> {
         try {
             const updateData: Record<string, any> = {};
 
@@ -118,17 +118,35 @@ export const businessProjectService = {
 
             updateData.updated_at = new Date().toISOString();
 
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from('business_projects')
                 .update(updateData)
-                .eq('id', projectId);
+                .eq('id', projectId)
+                .select()
+                .single();
 
             if (error) throw error;
 
-            return { error: null };
+            const updatedProject: BusinessProject = {
+                id: data.id,
+                tenantId: data.tenant_id,
+                name: data.name,
+                description: data.description,
+                status: data.status,
+                assignedTo: data.assigned_to || [],
+                dueDate: data.due_date,
+                startDate: data.start_date,
+                progress: data.progress || 0,
+                clientId: data.client_id,
+                isPublic: data.is_public || false,
+                createdAt: data.created_at,
+                updatedAt: data.updated_at
+            };
+
+            return { project: updatedProject, error: null };
         } catch (err: any) {
             console.error('Error updating project:', err);
-            return { error: err.message };
+            return { project: null, error: err.message };
         }
     },
 

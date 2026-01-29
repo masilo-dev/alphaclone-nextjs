@@ -85,12 +85,25 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
         setActiveId(null);
     };
 
-    const handleAddProject = async (projectData: Partial<BusinessProject>) => {
+    const [editingProject, setEditingProject] = useState<BusinessProject | null>(null);
+
+    const handleSaveProject = async (projectData: Partial<BusinessProject>) => {
         if (!currentTenant) return;
-        const { project, error } = await businessProjectService.createProject(currentTenant.id, projectData);
-        if (!error && project) {
-            setProjects([project, ...projects]);
-            setShowAddModal(false);
+
+        if (editingProject) {
+            // Update existing
+            const { project, error } = await businessProjectService.updateProject(editingProject.id, projectData);
+            if (!error && project) {
+                setProjects(projects.map(p => p.id === editingProject.id ? { ...p, ...project } : p));
+                setEditingProject(null);
+            }
+        } else {
+            // Create new
+            const { project, error } = await businessProjectService.createProject(currentTenant.id, projectData);
+            if (!error && project) {
+                setProjects([project, ...projects]);
+                setShowAddModal(false);
+            }
         }
     };
 
@@ -117,7 +130,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
         return (
             <div className="glass-panel overflow-hidden rounded-3xl border border-white/5 flex flex-col h-full min-h-[500px] backdrop-blur-xl bg-slate-900/40">
                 <div className="flex border-b border-white/10 divide-x divide-white/5 bg-slate-950/60 sticky top-0 z-20">
-                    <div className="w-80 min-w-80 p-5 font-black text-slate-400 text-[10px] uppercase tracking-[0.2em]">Strategic Initiatives</div>
+                    <div className="w-80 min-w-80 p-5 font-black text-slate-400 text-xs uppercase tracking-[0.2em]">Project Roadmap</div>
                     <div className="flex-1 overflow-x-auto flex divide-x divide-white/5 scrollbar-hide">
                         {months.map((m, i) => (
                             <div key={i} className="min-w-[200px] p-4 text-center">
@@ -141,10 +154,10 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                                 <div className="w-80 min-w-80 p-5 flex flex-col gap-1 sticky left-0 z-10 bg-slate-900/90 backdrop-blur-xl border-r border-white/5">
                                     <h4 className="text-sm font-semibold text-slate-100 group-hover:text-teal-400 transition-colors uppercase tracking-tight">{proj.name}</h4>
                                     <div className="flex items-center gap-3">
-                                        <span className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-1">
+                                        <span className="text-xs font-black text-slate-500 uppercase flex items-center gap-1">
                                             <Target className="w-3 h-3" /> {proj.status.replace('_', ' ')}
                                         </span>
-                                        <span className="text-[10px] font-black text-teal-500 flex items-center gap-1">
+                                        <span className="text-xs font-black text-teal-500 flex items-center gap-1">
                                             <CheckCircle2 className="w-3 h-3" /> {proj.progress}%
                                         </span>
                                     </div>
@@ -155,7 +168,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                                         style={{ left: `${Math.max(0, startPos)}%`, width: `${Math.max(1, duration)}%` }}
                                     >
                                         <div className="absolute inset-0 bg-gradient-to-r from-teal-500/40 to-violet-500/40 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                        <span className="text-[10px] font-black text-white uppercase tracking-tighter truncate z-10">{proj.name}</span>
+                                        <span className="text-xs font-black text-white uppercase tracking-tighter truncate z-10">{proj.name}</span>
                                     </div>
                                 </div>
                             </div>
@@ -229,12 +242,13 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                                         column={column}
                                         projects={getProjectsByStatus(column.id)}
                                         onDelete={handleDeleteProject}
+                                        onEdit={setEditingProject}
                                     />
                                 ))}
                             </div>
                         </div>
                         <DragOverlay>
-                            {activeId ? <ProjectCard project={projects.find(p => p.id === activeId)!} isDragging onDelete={() => { }} /> : null}
+                            {activeId ? <ProjectCard project={projects.find(p => p.id === activeId)!} isDragging onDelete={() => { }} onEdit={() => { }} /> : null}
                         </DragOverlay>
                     </DndContext>
                 ) : (
@@ -245,15 +259,25 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
             </div>
 
             <div className="lg:hidden flex-1 overflow-y-auto">
-                <MobileProjectList projects={projects} onDelete={handleDeleteProject} />
+                <MobileProjectList projects={projects} onDelete={handleDeleteProject} onEdit={setEditingProject} />
             </div>
 
-            {showAddModal && <AddProjectModal clients={clients} onClose={() => setShowAddModal(false)} onAdd={handleAddProject} />}
+            {(showAddModal || editingProject) && (
+                <ProjectModal
+                    clients={clients}
+                    initialData={editingProject}
+                    onClose={() => {
+                        setShowAddModal(false);
+                        setEditingProject(null);
+                    }}
+                    onSave={handleSaveProject}
+                />
+            )}
         </div>
     );
 };
 
-const MobileProjectList = ({ projects, onDelete }: any) => {
+const MobileProjectList = ({ projects, onDelete, onEdit }: any) => {
     const [expanded, setExpanded] = useState<string | null>(null);
 
     if (projects.length === 0) {
@@ -324,12 +348,20 @@ const MobileProjectList = ({ projects, onDelete }: any) => {
                                 )}
                             </div>
 
-                            <button
-                                onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
-                                className="w-full py-3 bg-red-500/10 text-red-500 font-bold text-[10px] uppercase tracking-widest rounded-xl hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
-                            >
-                                <Trash2 className="w-4 h-4" /> Delete Project
-                            </button>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onEdit(project); }}
+                                    className="flex-1 py-3 bg-slate-800 text-slate-300 font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-slate-700 hover:text-white transition-all flex items-center justify-center gap-2"
+                                >
+                                    Modify
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
+                                    className="flex-1 py-3 bg-red-500/10 text-red-500 font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Trash2 className="w-4 h-4" /> Delete
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -338,17 +370,17 @@ const MobileProjectList = ({ projects, onDelete }: any) => {
     );
 };
 
-const KanbanColumn = ({ column, projects, onDelete }: any) => {
+const KanbanColumn = ({ column, projects, onDelete, onEdit }: any) => {
     return (
         <div className="flex flex-col w-80 group/col">
             <div className={`border-t-4 ${column.color} ${column.bg} border-x border-white/5 rounded-t-3xl px-5 py-4 flex items-center justify-between backdrop-blur-md`}>
                 <h3 className="font-black text-white text-xs uppercase tracking-[0.1em]">{column.title}</h3>
-                <span className="text-[10px] font-black text-slate-500 bg-white/5 px-2.5 py-1 rounded-full">{projects.length}</span>
+                <span className="text-xs font-black text-slate-500 bg-white/5 px-2.5 py-1 rounded-full">{projects.length}</span>
             </div>
             <SortableContext id={column.id} items={projects.map((p: any) => p.id)} strategy={verticalListSortingStrategy}>
                 <div className="flex-1 bg-slate-900/20 border-x border-b border-white/5 rounded-b-3xl p-4 space-y-4 overflow-y-auto min-h-[500px] scrollbar-hide">
                     {projects.map((project: BusinessProject) => (
-                        <ProjectCard key={project.id} project={project} onDelete={onDelete} />
+                        <ProjectCard key={project.id} project={project} onDelete={onDelete} onEdit={onEdit} />
                     ))}
                     {projects.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-12 opacity-20">
@@ -362,7 +394,7 @@ const KanbanColumn = ({ column, projects, onDelete }: any) => {
     );
 };
 
-const ProjectCard = ({ project, isDragging, onDelete }: any) => {
+const ProjectCard = ({ project, isDragging, onDelete, onEdit }: any) => {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: project.id });
     const style = { transform: CSS.Translate.toString(transform), transition };
 
@@ -372,6 +404,7 @@ const ProjectCard = ({ project, isDragging, onDelete }: any) => {
             style={style}
             {...attributes}
             {...listeners}
+            onClick={() => onEdit && onEdit(project)}
             className={`glass-panel p-5 rounded-2xl border transition-all cursor-grab active:cursor-grabbing group/card ${isDragging ? 'opacity-50 scale-105 z-50 border-teal-500 shadow-2xl shadow-teal-500/20' : 'border-white/5 bg-slate-900/60 hover:border-white/20'
                 }`}
         >
@@ -393,7 +426,7 @@ const ProjectCard = ({ project, isDragging, onDelete }: any) => {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         {project.dueDate && (
-                            <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase">
+                            <div className="flex items-center gap-1.5 text-xs font-black text-slate-500 uppercase">
                                 <Calendar className="w-3 h-3" />
                                 {new Date(project.dueDate).toLocaleDateString()}
                             </div>
@@ -410,8 +443,8 @@ const ProjectCard = ({ project, isDragging, onDelete }: any) => {
                 </div>
 
                 <div className="space-y-2 pt-4 border-t border-white/5">
-                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
-                        <span className="text-slate-500">Execution Velocity</span>
+                    <div className="flex items-center justify-between text-xs font-black uppercase tracking-widest">
+                        <span className="text-slate-500">Progress</span>
                         <span className="text-teal-400">{project.progress}%</span>
                     </div>
                     <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden border border-white/5 shadow-inner">
@@ -423,16 +456,35 @@ const ProjectCard = ({ project, isDragging, onDelete }: any) => {
     );
 };
 
-const AddProjectModal = ({ clients, onClose, onAdd }: any) => {
-    const [formData, setFormData] = useState({ name: '', description: '', status: 'backlog', startDate: new Date().toISOString().split('T')[0], dueDate: '', progress: 0, clientId: '' });
+const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
+    const [formData, setFormData] = useState({
+        name: '', description: '', status: 'backlog',
+        startDate: new Date().toISOString().split('T')[0], dueDate: '',
+        progress: 0, clientId: ''
+    });
+
+    useEffect(() => {
+        if (initialData) {
+            setFormData({
+                name: initialData.name,
+                description: initialData.description || '',
+                status: initialData.status,
+                startDate: initialData.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : '',
+                dueDate: initialData.dueDate ? new Date(initialData.dueDate).toISOString().split('T')[0] : '',
+                progress: initialData.progress || 0,
+                clientId: initialData.clientId || ''
+            });
+        }
+    }, [initialData]);
+
     return (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-[100] p-4">
             <div className="bg-slate-900 border border-white/10 rounded-[2rem] p-8 max-w-md w-full shadow-2xl shadow-teal-500/5 animate-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between mb-8">
-                    <h3 className="text-xl font-bold text-white">New Project</h3>
+                    <h3 className="text-xl font-bold text-white">{initialData ? 'Edit Project' : 'New Project'}</h3>
                     <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl transition-colors"><X className="w-5 h-5 text-slate-400" /></button>
                 </div>
-                <form onSubmit={(e) => { e.preventDefault(); onAdd(formData); }} className="space-y-5">
+                <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-5">
                     <div className="space-y-1.5">
                         <label className="text-sm font-semibold text-slate-300 ml-1">Project Name *</label>
                         <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -443,6 +495,19 @@ const AddProjectModal = ({ clients, onClose, onAdd }: any) => {
                         <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3}
                             className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-normal focus:border-teal-400 outline-none transition-all resize-none shadow-inner" placeholder="Project details..." />
                     </div>
+                    {initialData && (
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-semibold text-slate-300 ml-1">Percent Complete ({formData.progress}%)</label>
+                            <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                value={formData.progress}
+                                onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) })}
+                                className="w-full h-2 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-teal-500"
+                            />
+                        </div>
+                    )}
                     <div className="space-y-1.5">
                         <label className="text-sm font-semibold text-slate-300 ml-1">Client</label>
                         <select value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
@@ -465,7 +530,7 @@ const AddProjectModal = ({ clients, onClose, onAdd }: any) => {
                     </div>
                     <div className="flex gap-4 pt-6">
                         <button type="button" onClick={onClose} className="flex-1 px-6 py-4 bg-slate-800 hover:bg-slate-700 rounded-2xl font-bold text-sm text-slate-300 transition-all">Cancel</button>
-                        <button type="submit" className="flex-1 px-6 py-4 bg-teal-500 hover:bg-teal-400 text-slate-900 rounded-2xl font-bold text-sm transition-all shadow-lg shadow-teal-500/20 active:scale-95">Create Project</button>
+                        <button type="submit" className="flex-1 px-6 py-4 bg-teal-500 hover:bg-teal-400 text-slate-900 rounded-2xl font-bold text-sm transition-all shadow-lg shadow-teal-500/20 active:scale-95">{initialData ? 'Save Changes' : 'Create Project'}</button>
                     </div>
                 </form>
             </div>

@@ -41,6 +41,7 @@ const MeetingPage: React.FC<MeetingPageProps> = ({ user }) => {
     // State for local media
     const [muted, setMuted] = useState(false);
     const [cameraOff, setCameraOff] = useState(false);
+    const [screenShareOn, setScreenShareOn] = useState(false);
     const [chatOpen, setChatOpen] = useState(false);
     const [participantsOpen, setParticipantsOpen] = useState(false);
 
@@ -413,6 +414,7 @@ const MeetingPage: React.FC<MeetingPageProps> = ({ user }) => {
                     callObject={callObjectRef.current}
                     muted={muted}
                     cameraOff={cameraOff}
+                    screenShareOn={screenShareOn}
                     chatOpen={chatOpen}
                     participantsOpen={participantsOpen}
                     onToggleMute={() => {
@@ -424,6 +426,15 @@ const MeetingPage: React.FC<MeetingPageProps> = ({ user }) => {
                         const newState = !cameraOff;
                         setCameraOff(newState);
                         callObjectRef.current?.setLocalVideo(!newState);
+                    }}
+                    onToggleScreenShare={() => {
+                        if (screenShareOn) {
+                            callObjectRef.current?.stopScreenShare();
+                            setScreenShareOn(false);
+                        } else {
+                            callObjectRef.current?.startScreenShare();
+                            setScreenShareOn(true);
+                        }
                     }}
                     onToggleChat={() => setChatOpen(!chatOpen)}
                     onToggleParticipants={() => setParticipantsOpen(!participantsOpen)}
