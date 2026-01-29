@@ -228,7 +228,7 @@ export default function WhoWeServePage() {
                             <div className="space-y-4">
                                 <div>
                                     <p className="text-sm font-semibold text-slate-300 mb-2">Your Challenge:</p>
-                                    <p className="text-sm text-slate-400">Can't trust third-party SaaS with sensitive data. Need full control over where your data lives.</p>
+                                    <p className="text-sm text-slate-400">Can&apos;t trust third-party SaaS with sensitive data. Need full control over where your data lives.</p>
                                 </div>
                                 <div>
                                     <p className="text-sm font-semibold text-green-400 mb-2">How We Help:</p>
@@ -290,7 +290,7 @@ export default function WhoWeServePage() {
             <section className="py-24 px-4">
                 <div className="max-w-4xl mx-auto text-center">
                     <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-                        Don't See Yourself Here?
+                        Don&apos;t See Yourself Here?
                     </h2>
                     <p className="text-xl text-slate-400 mb-8">
                         We work with all types of businesses. Let's discuss how AlphaClone can help you consolidate your tools and reduce costs.

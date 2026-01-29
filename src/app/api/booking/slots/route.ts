@@ -3,11 +3,19 @@ import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { addMinutes, parse, isValid } from 'date-fns';
 
-// Init Supabase Admin Client (Service Role)
-const supabaseAdmin = createClient(
-    process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY!
-);
+
+// Helper to get Supabase Admin Client
+function getSupabaseAdmin() {
+    const url = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
+
+    if (!url || !key) {
+        throw new Error('Missing Supabase Service Role credentials');
+    }
+
+    return createClient(url, key);
+}
+
 
 const BUFFER_MINUTES = 15;
 
@@ -24,7 +32,10 @@ export async function GET(req: NextRequest) {
     try {
         console.log(`[BookingAPI] Fetching slots for tenant ${tenantId} on ${dateStr}`);
 
+        console.log(`[BookingAPI] Fetching slots for tenant ${tenantId} on ${dateStr}`);
+
         // 1. Get Tenant Settings (for availability hours)
+        const supabaseAdmin = getSupabaseAdmin();
         const { data: tenant, error: tenantError } = await supabaseAdmin
             .from('tenants')
             .select('settings')

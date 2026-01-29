@@ -3,14 +3,22 @@ import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { addMinutes } from 'date-fns';
 
-// Init Supabase Admin Client (Service Role)
-const supabaseAdmin = createClient(
-    process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY!
-);
+
+// Helper to get Supabase Admin Client
+function getSupabaseAdmin() {
+    const url = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
+
+    if (!url || !key) {
+        throw new Error('Missing Supabase Service Role credentials');
+    }
+
+    return createClient(url, key);
+}
 
 const DAILY_API_KEY = process.env.DAILY_API_KEY;
 const DAILY_API_URL = 'https://api.daily.co/v1';
+
 
 export async function POST(req: NextRequest) {
     try {
@@ -24,6 +32,7 @@ export async function POST(req: NextRequest) {
         console.log(`[BookingAPI] Creating booking for tenant ${tenantId}`);
 
         // 1. Get Tenant & Meeting Type
+        const supabaseAdmin = getSupabaseAdmin();
         const { data: tenant, error: tenantError } = await supabaseAdmin
             .from('tenants')
             .select('*')

@@ -214,7 +214,7 @@ export default function PublicInvoicePage() {
 
                                 <div className="p-6 bg-slate-900/30 border border-slate-900 rounded-2xl">
                                     <p className="text-slate-500 text-xs italic text-center">
-                                        By clicking 'Pay Now', you agree to AlphaClone's standard Terms of Service and Refund Policy.
+                                        By clicking &apos;Pay Now&apos;, you agree to AlphaClone&apos;s standard Terms of Service and Refund Policy.
                                     </p>
                                 </div>
                             </div>
