@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { supabase } from '../../../lib/supabase';
+import AvailabilityEditor from '../../booking/AvailabilityEditor';
 import {
     Building,
     Palette,
@@ -9,7 +10,8 @@ import {
     Shield,
     Save,
     Upload,
-    Loader2
+    Loader2,
+    Calendar
 } from 'lucide-react';
 import { fileUploadService } from '../../../services/fileUploadService';
 
@@ -130,7 +132,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         { id: 'business', label: 'Business Profile', icon: Building },
         { id: 'branding', label: 'Branding', icon: Palette },
         { id: 'notifications', label: 'Notifications', icon: Bell },
-        { id: 'security', label: 'Security', icon: Shield }
+        { id: 'security', label: 'Security', icon: Shield },
+        { id: 'booking', label: 'Booking System', icon: Calendar }
     ];
 
     if (loading) {
@@ -329,6 +332,13 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {/* Booking System Tab */}
+                {activeTab === 'booking' && (
+                    <div className="space-y-6">
+                        <AvailabilityEditor />
                     </div>
                 )}
 

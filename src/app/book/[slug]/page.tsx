@@ -2,9 +2,20 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { bookingService } from '@/services/bookingService';
+import { supabase } from '@/lib/supabase';
+import { Clock, ArrowRight, Calendar, User, CheckCircle2 } from 'lucide-react';
 import { Tenant } from '@/services/tenancy/types';
-import { Card } from '@/components/ui/UIComponents';
+import { tenantService } from '@/services/tenancy/TenantService';
+
+interface BookingType {
+    id: string;
+    name: string;
+    slug: string;
+    description: string;
+    duration: number;
+    price: number;
+    currency: string;
+}
 
 export default function BookingLandingPage() {
     const params = useParams();
@@ -12,23 +23,43 @@ export default function BookingLandingPage() {
     const slug = params?.slug as string;
 
     const [tenant, setTenant] = useState<Tenant | null>(null);
+    const [bookingTypes, setBookingTypes] = useState<BookingType[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (slug) loadProfile();
+        if (slug) loadData();
     }, [slug]);
 
-    const loadProfile = async () => {
+    const loadData = async () => {
         try {
-            const { tenant, error } = await bookingService.getBookingProfile(slug);
-            if (error) {
-                setError(error);
-            } else {
-                setTenant(tenant);
+            // 1. Get Tenant
+            const tenantData = await tenantService.getTenantBySlug(slug);
+            if (!tenantData) throw new Error('Tenant not found');
+            setTenant(tenantData);
+
+            // 2. Get Booking Types (Services)
+            // Note: In production we'd use a service method, but direct query is fine for now
+            const { data: services, error: serviceError } = await supabase
+                .from('booking_types')
+                .select('*')
+                .eq('tenant_id', tenantData.id)
+                .eq('is_active', true)
+                .order('duration', { ascending: true }); // Sort by duration or name
+
+            if (serviceError) console.error('Error fetching services:', serviceError);
+
+            // Mock data if empty (For Development Visualization)
+            if (!services || services.length === 0) {
+                // For now, let's just show an empty state or maybe a "demo" service?
+                // No, empty state is better, urges user to create one.
+                // OR we can map legacy JSON settings if they exist?
+                // Let's stick to the new table. If empty, it's empty.
             }
+
+            setBookingTypes(services || []);
         } catch (err) {
-            setError('Failed to load profile');
+            setError(String(err));
         } finally {
             setLoading(false);
         }
@@ -36,139 +67,100 @@ export default function BookingLandingPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center text-teal-400">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-                    <p>Loading booking profile...</p>
-                </div>
+            <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
         );
     }
 
-    if (error || !tenant || !tenant.settings.booking) {
+    if (!tenant) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center text-red-400">
+            <div className="min-h-screen bg-[#050505] flex items-center justify-center text-slate-400">
                 <div className="text-center">
-                    <h1 className="text-2xl font-bold mb-2">Profile Not Found</h1>
-                    <p className="text-slate-400">{error || 'This booking page does not exist.'}</p>
+                    <h1 className="text-2xl font-bold text-white mb-2">404</h1>
+                    <p>Profile not found.</p>
                 </div>
             </div>
         );
     }
-
-    const { booking, branding } = tenant.settings;
 
     return (
-        <div className="min-h-screen bg-[#050505] text-white p-4 md:p-12 relative overflow-hidden">
-            {/* Background elements */}
+        <div className="min-h-screen bg-[#050505] text-white p-6 relative overflow-hidden">
+            {/* Background Ambience */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-teal-500/10 blur-[120px] rounded-full animate-pulse"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-500/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+                <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-teal-500/10 blur-[150px] rounded-full"></div>
+                <div className="absolute bottom-[-20%] left-[-10%] w-[50%] h-[50%] bg-violet-500/10 blur-[150px] rounded-full"></div>
             </div>
 
-            <div className="max-w-4xl mx-auto space-y-16 relative z-10">
-                {/* Header Section */}
-                <div className="text-center space-y-6 pt-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    {branding?.logo ? (
-                        <div className="relative inline-block group">
-                            <div className="absolute inset-0 bg-gradient-to-r from-teal-500 to-violet-500 rounded-3xl blur opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                            <img
-                                src={branding.logo}
-                                alt={tenant.name}
-                                className="w-24 h-24 mx-auto rounded-3xl object-cover border border-white/10 shadow-2xl relative z-10 p-1 bg-slate-900"
-                            />
-                        </div>
-                    ) : (
-                        <div className="w-24 h-24 mx-auto rounded-3xl bg-gradient-to-br from-teal-500/20 to-violet-500/20 border border-white/10 flex items-center justify-center">
-                            <span className="text-4xl font-black text-white/20">{tenant.name.charAt(0)}</span>
-                        </div>
-                    )}
+            <div className="max-w-4xl mx-auto relative z-10 pt-12 md:pt-20">
 
-                    <div className="space-y-2">
-                        <h1 className="text-4xl md:text-6xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60">
-                            {tenant.name}
-                        </h1>
-                        <p className="text-slate-400 text-sm md:text-lg font-medium tracking-wide uppercase flex items-center justify-center gap-3">
-                            <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-ping"></span>
-                            Strategic Access Portal
-                        </p>
-                    </div>
-                </div>
-
-                {/* Grid of Meeting Types */}
-                <div className="grid grid-cols-1 gap-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
-                    {booking.meetingTypes.map((type, index) => (
-                        <div
-                            key={type.id}
-                            onClick={() => router.push(`/book/${slug}/${type.id}`)}
-                            className="group relative cursor-pointer"
-                        >
-                            {/* Card Hover Effect */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-teal-500 to-violet-500 rounded-[2rem] blur-xl opacity-0 group-hover:opacity-10 transition-all duration-500 -z-10"></div>
-
-                            <div className="glass-panel p-6 md:p-8 rounded-[2rem] border border-white/5 bg-slate-900/40 backdrop-blur-3xl hover:border-white/20 transition-all duration-500 flex flex-col md:flex-row items-center gap-8 group-hover:translate-x-2">
-                                <div className="flex-1 space-y-4 text-center md:text-left">
-                                    <div className="flex flex-col md:flex-row md:items-center gap-4">
-                                        <h3 className="text-2xl md:text-3xl font-black text-white group-hover:text-teal-300 transition-colors tracking-tight">
-                                            {type.name}
-                                        </h3>
-                                        <div className="flex items-center gap-2 justify-center md:justify-start">
-                                            <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                                {type.duration} MIN SESSION
-                                            </span>
-                                            {type.price > 0 && (
-                                                <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-black uppercase tracking-widest text-emerald-400">
-                                                    ${type.price} PREMIUM
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <p className="text-slate-400 text-sm md:text-base leading-relaxed max-w-2xl font-medium italic overflow-hidden text-ellipsis">
-                                        "{type.description || 'Initialize a high-impact session with our lead strategists.'}"
-                                    </p>
-                                </div>
-
-                                <div className="hidden md:flex flex-col items-center gap-3">
-                                    <div className="w-14 h-14 rounded-full border border-white/10 flex items-center justify-center bg-white/5 group-hover:bg-teal-500 group-hover:border-teal-400 transition-all duration-500 group-hover:scale-110">
-                                        <svg className="w-6 h-6 text-white group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                        </svg>
-                                    </div>
-                                    <span className="text-[10px] font-black text-slate-500 group-hover:text-teal-400 uppercase tracking-widest transition-colors">Select Unit</span>
-                                </div>
-
-                                <div className="md:hidden w-full">
-                                    <button className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-500 transition-colors">
-                                        Initialize Unit
-                                    </button>
-                                </div>
+                {/* Header / Profile */}
+                <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <div className="flex justify-center mb-6">
+                        {tenant.settings.branding?.logo ? (
+                            <img src={tenant.settings.branding.logo} className="w-24 h-24 rounded-3xl object-cover border border-white/10 shadow-2xl shadow-teal-500/20" />
+                        ) : (
+                            <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 flex items-center justify-center shadow-2xl">
+                                <span className="text-3xl font-black text-white/20">{tenant.name.charAt(0)}</span>
                             </div>
-                        </div>
-                    ))}
-
-                    {booking.meetingTypes.length === 0 && (
-                        <div className="text-center py-20 bg-slate-900/20 border-2 border-dashed border-white/5 rounded-[3rem] animate-pulse">
-                            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <svg className="w-8 h-8 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <h3 className="text-xl font-bold text-slate-400 mb-2">No active units available</h3>
-                            <p className="text-slate-600 text-sm font-medium uppercase tracking-widest">Awaiting sector initialization</p>
-                        </div>
-                    )}
-                </div>
-
-                {/* Footer Credits */}
-                <div className="text-center pt-20 animate-in fade-in duration-1000 delay-500">
-                    <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em] mb-4">Secured by AlphaClone Unified Intelligence</p>
-                    <div className="flex items-center justify-center gap-8">
-                        <div className="h-px w-12 bg-gradient-to-r from-transparent to-slate-800"></div>
-                        <div className="w-2 h-2 rounded-full bg-slate-800"></div>
-                        <div className="h-px w-12 bg-gradient-to-l from-transparent to-slate-800"></div>
+                        )}
                     </div>
+                    <h1 className="text-3xl md:text-4xl font-black tracking-tight mb-3 bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+                        {tenant.name}
+                    </h1>
+                    <p className="text-slate-400 max-w-lg mx-auto leading-relaxed">
+                        Welcome to our scheduling page. Please select an event type below to continue with your booking.
+                    </p>
                 </div>
+
+                {/* Services Grid */}
+                {bookingTypes.length > 0 ? (
+                    <div className="grid md:grid-cols-2 gap-4 md:gap-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+                        {bookingTypes.map(service => (
+                            <div
+                                key={service.id}
+                                onClick={() => router.push(`/book/${slug}/${service.slug}`)}
+                                className="group relative p-6 md:p-8 bg-slate-900/40 border border-white/5 hover:border-teal-500/50 rounded-[2rem] hover:bg-slate-900/60 transition-all cursor-pointer backdrop-blur-xl overflow-hidden"
+                            >
+                                {/* Hover Glow */}
+                                <div className="absolute inset-0 bg-gradient-to-br from-teal-500/0 to-teal-500/0 group-hover:from-teal-500/5 group-hover:to-transparent transition-all duration-500"></div>
+
+                                <div className="relative flex justify-between items-start mb-6">
+                                    <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                                        <div className={`w-3 h-3 rounded-full ${['bg-teal-500', 'bg-violet-500', 'bg-orange-500', 'bg-pink-500'][Math.floor(Math.random() * 4)]}`}></div>
+                                    </div>
+                                    <span className="text-slate-500 group-hover:text-teal-400 transition-colors">
+                                        <ArrowRight className="w-5 h-5 -rotate-45 group-hover:rotate-0 transition-transform duration-300" />
+                                    </span>
+                                </div>
+
+                                <h3 className="text-xl font-bold mb-2 group-hover:text-white transition-colors">{service.name}</h3>
+                                <div className="flex items-center gap-4 text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">
+                                    <span className="flex items-center gap-1.5">
+                                        <Clock className="w-3.5 h-3.5" /> {service.duration} mins
+                                    </span>
+                                    {service.price > 0 && (
+                                        <span className="flex items-center gap-1.5 text-emerald-400">
+                                            Only {service.currency} {service.price}
+                                        </span>
+                                    )}
+                                </div>
+
+                                <p className="text-sm text-slate-400 leading-relaxed opacity-80 line-clamp-2">
+                                    {service.description || 'No description provided.'}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-20 bg-slate-900/30 rounded-[3rem] border border-white/5 border-dashed">
+                        <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Calendar className="w-6 h-6 text-slate-500" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-300 mb-2">No active services</h3>
+                        <p className="text-slate-500 text-sm max-w-xs mx-auto">This partner hasn't set up any booking types yet.</p>
+                    </div>
+                )}
             </div>
         </div>
     );
