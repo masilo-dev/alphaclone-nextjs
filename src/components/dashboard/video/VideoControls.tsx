@@ -48,7 +48,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({
     onToggleChat,
     onToggleSettings,
     onEndForAll,
-    onEndForAll,
+
     isAdmin = false,
     roomUrl,
     callId
