@@ -84,7 +84,7 @@ export const contractService = {
         Project Details: ${projectDetails}
 
         CRITICAL INSTRUCTIONS:
-        - DO NOT use placeholders like "__________", "****", or "[INSERT HERE]".
+        - DO NOT use placeholders like "__________" or "[INSERT HERE]".
         - Use professional, realistic text for all clauses.
         - Ensure all currency values are explicitly formatted (e.g., $5,000 USD).
         - Format as clear text suitable for a contract editor.

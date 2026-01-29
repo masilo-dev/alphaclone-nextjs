@@ -181,16 +181,33 @@ export const businessClientService = {
     /**
      * Get aggregated dashboard stats
      */
-    async getDashboardStats(tenantId: string): Promise<{ stats: any; error: string | null }> {
+    async getDashboardStats(tenantId: string): Promise<{ stats: DashboardStats | null; error: string | null }> {
         try {
             const { data, error } = await supabase
                 .rpc('get_tenant_dashboard_stats', { p_tenant_id: tenantId });
 
             if (error) throw error;
-            return { stats: data, error: null };
+            return { stats: data as DashboardStats, error: null };
         } catch (err: any) {
             console.error('Error fetching dashboard stats:', err);
             return { stats: null, error: err.message };
         }
     }
 };
+
+export interface DashboardStats {
+    totalRevenue: number;
+    totalClients: number;
+    activeProjects: number;
+    pendingInvoices: number;
+    recentActivity: Array<{
+        type: 'client' | 'project' | 'invoice';
+        text: string;
+        time: string;
+    }>;
+    monthlyRevenue: Array<{
+        month: string;
+        year: number;
+        revenue: number;
+    }>;
+}

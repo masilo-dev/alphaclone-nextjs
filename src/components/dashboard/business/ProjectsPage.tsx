@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { businessProjectService, BusinessProject } from '../../../services/businessProjectService';
+import { contractService } from '../../../services/contractService';
 import { businessClientService } from '../../../services/businessClientService';
 import {
     Plus,
@@ -38,10 +39,22 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const { currentTenant } = useTenant();
     const [projects, setProjects] = useState<BusinessProject[]>([]);
     const [clients, setClients] = useState<any[]>([]);
+    const [contracts, setContracts] = useState<any[]>([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<ViewMode>('kanban');
+
+    // Deep Linking Support
+    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    useEffect(() => {
+        if (searchParams?.get('create') === 'true') {
+            setShowAddModal(true);
+        }
+    }, [searchParams]);
+
+    // Pass clientId if present in URL
+    const defaultClientId = searchParams?.get('clientId') || '';
 
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
@@ -64,8 +77,10 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
         setLoading(true);
         const { projects: projectData } = await businessProjectService.getProjects(currentTenant.id);
         const { clients: clientData } = await businessClientService.getClients(currentTenant.id);
+        const { contracts: contractData } = await contractService.getUserContracts(user.id, 'tenant_admin');
         setProjects(projectData || []);
         setClients(clientData || []);
+        setContracts(contractData || []);
         setLoading(false);
     };
 
@@ -81,6 +96,21 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
         const activeProject = projects.find(p => p.id === projectId);
         if (activeProject && activeProject.status !== newStatus) {
+
+            // ENFORCEMENT: Block progress if no signed contract for client projects
+            if (activeProject.clientId) {
+                const hasContract = contracts.some(c =>
+                    c.client_id === activeProject.clientId &&
+                    (c.status === 'fully_signed' || c.status === 'client_signed')
+                );
+
+                if (!hasContract) {
+                    alert('Action Blocked: A signed contract is required before moving this project forward.');
+                    setActiveId(null);
+                    return;
+                }
+            }
+
             await businessProjectService.updateProject(projectId, { status: newStatus as any });
             setProjects(projects.map(p => p.id === projectId ? { ...p, status: newStatus as any } : p));
         }
@@ -462,7 +492,7 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
     const [formData, setFormData] = useState({
         name: '', description: '', status: 'backlog',
         startDate: new Date().toISOString().split('T')[0], dueDate: '',
-        progress: 0, clientId: ''
+        progress: 0, clientId: (initialData?.clientId) || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('clientId') : '') || ''
     });
 
     useEffect(() => {

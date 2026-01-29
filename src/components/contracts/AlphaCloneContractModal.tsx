@@ -7,6 +7,8 @@ import { contractService } from '../../services/contractService';
 import toast from 'react-hot-toast';
 import { User, Project } from '../../types';
 
+import { useTenant } from '../../contexts/TenantContext';
+
 interface Props {
     isOpen: boolean;
     onClose: () => void;
@@ -32,6 +34,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
     existingContractId,
     existingContractText
 }) => {
+    const { currentTenant } = useTenant();
     const [step, setStep] = useState<'edit' | 'preview' | 'sign' | 'success'>('edit');
     const [contractText, setContractText] = useState('');
     const [comments, setComments] = useState<Comment[]>([]);
@@ -164,7 +167,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                     <div>
                         <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                             <FileText className="w-6 h-6 text-teal-400" />
-                            AlphaClone Systems Contract
+                            {currentTenant?.name || 'Service'} Contract
                         </h2>
                         <p className="text-sm text-slate-400 mt-1">
                             {existingContractId ? 'Review and Sign' : 'Professional Service Agreement'}
@@ -395,14 +398,14 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                     <h3 className="text-green-400 font-bold text-sm">Sign Contract</h3>
                                     <p className="text-slate-400 text-xs mt-1">
                                         By signing, you legally agree to all terms in this contract.
-                                        {user.role === 'admin' && ' Signing as Bonnie (Authorized Agent of AlphaClone Systems).'}
+                                        {user.role === 'admin' && ` Signing as ${user.name} (Authorized Agent of ${currentTenant?.name || 'Company'}).`}
                                     </p>
                                 </div>
                             </div>
 
                             <div>
                                 <label className="text-sm font-medium text-white mb-2 block">
-                                    {user.role === 'admin' ? 'Sign as Bonnie (AlphaClone Agent)' : `Sign as ${user.name}`}
+                                    {user.role === 'admin' ? `Sign as ${user.name} (${currentTenant?.name || 'Provider'})` : `Sign as ${user.name}`}
                                 </label>
                                 <div className="border-2 border-slate-700 rounded-xl overflow-hidden bg-white">
                                     <SignaturePad
@@ -453,6 +456,28 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                     Close Window
                                 </Button>
                             </div>
+
+                            {existingContractId && (
+                                <div className="mt-8 pt-6 border-t border-slate-800 w-full max-w-md">
+                                    <p className="text-slate-500 text-sm mb-3">Share External Signing Link</p>
+                                    <div className="flex gap-2">
+                                        <input
+                                            readOnly
+                                            value={`${window.location.origin}/contract/${existingContractId}`}
+                                            className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-400 text-sm"
+                                        />
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(`${window.location.origin}/contract/${existingContractId}`);
+                                                toast.success('Link copied!');
+                                            }}
+                                        >
+                                            Copy
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

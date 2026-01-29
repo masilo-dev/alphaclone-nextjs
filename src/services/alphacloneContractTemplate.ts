@@ -41,200 +41,102 @@ export const SCOPE_TEMPLATES = {
 // Generate contract from variables
 export function generateAlphaCloneContract(variables: ContractVariables): string {
     return `
-# PROFESSIONAL SERVICES AGREEMENT
+# MASTER SERVICES AGREEMENT
 
-**Date:** ${variables.contractDate}
+**Reference Date:** ${variables.contractDate}
 
-**Between:**
-- **AlphaClone Systems** ("Service Provider")
-- **${variables.clientName}${variables.clientCompany ? ` / ${variables.clientCompany}` : ''}** ("Client")
-${variables.clientAddress ? `- **Address:** ${variables.clientAddress}` : ''}
-${variables.clientEmail ? `- **Email:** ${variables.clientEmail}` : ''}
+**BETWEEN:**
 
-**Project:** ${variables.projectName}
+**1. AlphaClone Systems** ("Service Provider")
+**2. ${variables.clientName}**${variables.clientCompany ? ` (representing ${variables.clientCompany})` : ''} ("Client")
+
+${variables.clientAddress ? `Address: ${variables.clientAddress}` : ''}
+${variables.clientEmail ? `Email: ${variables.clientEmail}` : ''}
 
 ---
 
-## 1. PROJECT SCOPE
+## 1. SERVICES AND SCOPE
 
-The Service Provider agrees to deliver the following services:
+The Service Provider agrees to perform the following services (the "Services") for the Client:
 
-**Project Description:**
+**Project Name:** ${variables.projectName}
+
+**Detailed Scope of Work:**
 ${variables.projectScope}
 
 **Deliverables:**
 ${variables.projectDeliverables}
 
----
+The Service Provider shall perform the Services in a professional and workmanlike manner, consistent with industry standards.
 
-## 2. TIMELINE
+## 2. COMPENSATION AND PAYMENT
 
-**Project Start Date:** ${variables.startDate}
-**Expected Delivery Date:** ${variables.deliveryDate}
-
-The project will be completed in phases with regular client updates and milestone reviews.
-
----
-
-## 3. PAYMENT TERMS
-
-**Total Project Amount:** $${variables.totalAmount.toLocaleString()} USD
-**Deposit Amount:** $${variables.depositAmount.toLocaleString()} USD
+**Total Contract Value:** $${variables.totalAmount.toLocaleString()} USD
+**Deposit Required:** $${variables.depositAmount.toLocaleString()} USD
 
 **Payment Schedule:**
 ${variables.paymentSchedule}
 
-**Payment Methods:**
-- Bank transfer
-- Credit card (via Stripe)
-- PayPal
+**Payment Terms:**
+Invoices are due upon receipt. Late payments shall incur interest at a rate of 1.5% per month or the maximum rate permitted by law, whichever is less. The Service Provider reserves the right to suspend work if payments are more than 14 days overdue.
 
-**Late Payment:**
-Late payments will incur a 1.5% monthly interest charge. Work may be paused if payment is more than 14 days overdue.
+## 3. TERM AND TERMINATION
 
----
+**Start Date:** ${variables.startDate}
+**Estimated Completion:** ${variables.deliveryDate}
 
-## 4. CLIENT RESPONSIBILITIES
+Either party may terminate this Agreement with 14 days' written notice. In the event of termination by the Client, the Client shall pay the Service Provider for all work performed and expenses incurred up to the date of termination.
 
-The Client agrees to:
-- Provide timely feedback (within 5 business days)
-- Supply necessary content, assets, and credentials
-- Designate a primary point of contact
-- Review and approve deliverables at each phase
-- Make payments according to the schedule
+## 4. INTELLECTUAL PROPERTY
 
----
+Upon full payment of all fees due, the Service Provider assigns to the Client all right, title, and interest in the custom work product created specifically for the Client under this Agreement. The Service Provider retains ownership of all pre-existing materials, generic code libraries, and tools used to create the work product.
 
-## 5. INTELLECTUAL PROPERTY
+## 5. CONFIDENTIALITY
 
-**Ownership:**
-Upon full payment, the Client will own all custom code and designs created specifically for this project.
+Each party agrees to maintain the confidentiality of the other party's proprietary information disclosed during the term of this Agreement. This obligation includes technical data, business strategies, and customer lists. This clause survives the termination of this Agreement for a period of three (3) years.
 
-**Service Provider Retains:**
-- Pre-existing code libraries and frameworks
-- General methodologies and processes
-- Right to use project as portfolio example (with Client approval)
+## 6. INDEMNIFICATION
 
-**Third-Party Components:**
-Any third-party libraries or services remain subject to their respective licenses.
+The Client agrees to indemnify and hold harmless the Service Provider against any claims, damages, or expenses arising from the Client's use of the deliverables, or from any content or materials provided by the Client.
 
----
+## 7. WARRANTIES AND DISCLAIMER
 
-## 6. CONFIDENTIALITY
+The Service Provider warrants that the Services will be performed substantially in accordance with the specifications. EXCEPT AS EXPRESSLY STATED HEREIN, THE SERVICE PROVIDER MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
 
-Both parties agree to:
-- Keep confidential information private
-- Not disclose project details without written consent
-- Return or destroy confidential materials upon request
+## 8. LIMITATION OF LIABILITY
 
-This obligation survives contract termination for 3 years.
+IN NO EVENT SHALL EITHER PARTY BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES. THE SERVICE PROVIDER'S TOTAL LIABILITY UNDER THIS AGREEMENT SHALL NOT EXCEED THE TOTAL FEES PAID BY THE CLIENT UNDER THIS AGREEMENT.
+
+## 9. NON-SOLICITATION
+
+During the term of this Agreement and for twelve (12) months thereafter, neither party shall directly or indirectly solicit for employment or engagement any employee or contractor of the other party.
+
+## 10. GOVERNING LAW AND DISPUTE RESOLUTION
+
+This Agreement shall be governed by the laws of the jurisdiction in which the Service Provider is registered. Any disputes arising under this Agreement shall be resolved first through good-faith negotiation, and if unresolved, by binding arbitration.
+
+## 11. ENTIRE AGREEMENT
+
+This Agreement constitutes the entire understanding between the parties and supersedes all prior agreements or understandings, whether written or oral. Amendments must be in writing and signed by both parties.
 
 ---
 
-## 7. WARRANTIES AND LIMITATIONS
+**IN WITNESS WHEREOF**, the parties have executed this Agreement as of the date first above written.
 
-**Service Provider Warrants:**
-- Services will be performed in a professional manner
-- Deliverables will substantially conform to specifications
-- Code will be free of known malware or malicious code
-
-**Warranty Period:** 30 days from delivery
-
-**Limitations:**
-- No warranty for third-party components
-- No liability for Client-provided content or data
-- Maximum liability limited to fees paid for this project
-
----
-
-## 8. REVISIONS AND CHANGE REQUESTS
-
-**Included Revisions:**
-- Up to 2 rounds of design revisions
-- Minor bug fixes during development
-- Reasonable adjustments to meet specifications
-
-**Additional Work:**
-Changes beyond the original scope will be quoted separately and require written approval before proceeding.
-
----
-
-## 9. TERMINATION
-
-**By Client:**
-Client may terminate with 14 days written notice. Client remains responsible for:
-- All work completed to date
-- Non-refundable expenses incurred
-- Minimum 50% of remaining contract value
-
-**By Service Provider:**
-Service Provider may terminate if:
-- Client fails to pay within 30 days of invoice
-- Client fails to provide required materials
-- Client breaches material terms of this agreement
-
-**Effect of Termination:**
-- Service Provider delivers all completed work
-- Client pays for all work completed
-- Confidentiality obligations survive
-
----
-
-## 10. SUPPORT AND MAINTENANCE
-
-**Included Support (30 days post-launch):**
-- Bug fixes for issues present at launch
-- Performance optimization
-- Basic training and documentation
-
-**Extended Support:**
-Available separately at hourly or monthly rates.
-
----
-
-## 11. GENERAL PROVISIONS
-
-**Governing Law:**
-This agreement is governed by applicable laws.
-
-**Entire Agreement:**
-This contract represents the complete agreement and supersedes all prior discussions.
-
-**Amendments:**
-Changes must be in writing and signed by both parties.
-
-**Assignment:**
-Neither party may assign this agreement without written consent.
-
-**Force Majeure:**
-Neither party is liable for delays due to circumstances beyond reasonable control.
-
----
-
-## 12. ACCEPTANCE
-
-By signing below, both parties agree to the terms of this Professional Services Agreement.
-
-**AlphaClone Systems:**
-
-Signature: (Digital Signature)
-Name: (Print Name)
-Title: (Authorized Agent)
+**SERVICE PROVIDER:**
+AlphaClone Systems
+Signature: __________________________
+Title: Authorized Representative
 Date: ${variables.contractDate}
 
-
-**Client (${variables.clientName}):**
-
-Signature: (Digital Signature)
-Name: (Print Name)
-Title: (Authorized Agent)
+**CLIENT:**
+${variables.clientName}
+Signature: __________________________
+Title: Authorized Representative
 Date: ${variables.contractDate}
 
 ---
-
-**Questions?** Contact us at support@alphaclone.systems
-
-This contract was generated using AlphaClone's automated contract system.
+*This document is digitally generated and legally binding upon signature.*
 `.trim();
 }
 

@@ -274,6 +274,18 @@ const ClientCard = ({ client, onDelete, onCall }: { client: BusinessClient; onDe
                 <Phone className="w-5 h-5 text-slate-400 group-hover/call:text-teal-400" />
             </button>
 
+            {/* Proposal Button */}
+            <button
+                onClick={(e) => {
+                    e.stopPropagation(); // Avoid triggering card click if any
+                    // Navigate to Projects with pre-fill
+                    window.location.href = `/dashboard/business/projects?create=true&clientId=${client.id}`;
+                }}
+                className="absolute top-4 right-24 text-xs bg-slate-800 border border-slate-700 text-slate-300 px-3 py-1.5 rounded-lg hover:border-teal-500 hover:text-teal-400 transition-colors"
+            >
+                Create Proposal
+            </button>
+
             <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold">
@@ -339,7 +351,7 @@ const AddClientModal = ({ onClose, onAdd }: any) => {
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-2xl w-full">
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-bold">Add New Client</h3>
                     <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded">

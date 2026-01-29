@@ -4,6 +4,7 @@ import { useTenant } from '../../../contexts/TenantContext';
 import { businessInvoiceService, BusinessInvoice } from '../../../services/businessInvoiceService';
 import { businessClientService } from '../../../services/businessClientService';
 import { businessProjectService } from '../../../services/businessProjectService';
+import { contractService } from '../../../services/contractService';
 import {
     Plus,
     Download,
@@ -27,6 +28,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
     const [invoices, setInvoices] = useState<BusinessInvoice[]>([]);
     const [clients, setClients] = useState<any[]>([]);
     const [projects, setProjects] = useState<any[]>([]);
+    const [contracts, setContracts] = useState<any[]>([]);
     const [filter, setFilter] = useState<string>('all');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -44,10 +46,12 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
         const { invoices: invData } = await businessInvoiceService.getInvoices(currentTenant.id);
         const { clients: clientData } = await businessClientService.getClients(currentTenant.id);
         const { projects: projectData } = await businessProjectService.getProjects(currentTenant.id);
+        const { contracts: contractData } = await contractService.getUserContracts(user.id, 'tenant_admin');
 
         setInvoices(invData);
         setClients(clientData);
         setProjects(projectData);
+        setContracts(contractData || []);
         setLoading(false);
     };
 
@@ -178,6 +182,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
                 <CreateInvoiceModal
                     clients={clients}
                     projects={projects}
+                    contracts={contracts}
                     onClose={() => setShowCreateModal(false)}
                     onCreate={handleCreateInvoice}
                 />
@@ -257,7 +262,8 @@ const InvoiceCard = ({ invoice, clients, onDownload, onDelete }: any) => {
     );
 };
 
-const CreateInvoiceModal = ({ clients, projects, onClose, onCreate }: any) => {
+const CreateInvoiceModal = ({ clients, projects, contracts, onClose, onCreate }: any) => {
+    const props = { contracts }; // Capture for logic usage
     const [formData, setFormData] = useState({
         clientId: '',
         projectId: '',
@@ -288,6 +294,20 @@ const CreateInvoiceModal = ({ clients, projects, onClose, onCreate }: any) => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        // ENFORCEMENT: Block invoice if no contract
+        if (formData.clientId) {
+            // @ts-ignore - contracts passed via parent props but not clearly typed on modal yet (quick fix)
+            const hasContract = (props.contracts || []).some((c: any) =>
+                c.client_id === formData.clientId &&
+                (c.status === 'fully_signed' || c.status === 'client_signed')
+            );
+
+            if (!hasContract) {
+                alert('Action Blocked: You cannot bill a client without a signed contract.');
+                return;
+            }
+        }
 
         const totals = businessInvoiceService.calculateTotals(formData.lineItems, 0);
 
