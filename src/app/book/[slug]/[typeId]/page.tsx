@@ -8,10 +8,14 @@ import { Card } from '@/components/ui/UIComponents';
 import {
     format, addDays, startOfToday, isSameDay, isValid,
     startOfMonth, endOfMonth, startOfWeek, endOfWeek,
-    eachDayOfInterval, isSameMonth, addMonths, subMonths, isBefore
+    eachDayOfInterval, isSameMonth, addMonths, subMonths, isBefore, parseISO, getHours
 } from 'date-fns';
 import { safeFormat } from '@/utils/dateUtils';
-import { Clock, Calendar as CalendarIcon, CheckSquare, Plus, AlertCircle, User, LayoutGrid, ChevronLeft, ChevronRight, ArrowRight, Check, FileText, Globe } from 'lucide-react';
+import {
+    Clock, Calendar as CalendarIcon, CheckSquare, Plus, AlertCircle, User,
+    LayoutGrid, ChevronLeft, ChevronRight, ArrowRight, Check, FileText, Globe,
+    Sun, Moon, Sunset
+} from 'lucide-react';
 
 export default function BookingSlotPage() {
     const params = useParams();
@@ -25,6 +29,7 @@ export default function BookingSlotPage() {
     const [slots, setSlots] = useState<BookingSlot[]>([]);
     const [loadingSlots, setLoadingSlots] = useState(false);
     const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(null);
+    const [userTimezone, setUserTimezone] = useState('');
 
     // Form State
     const [name, setName] = useState('');
@@ -38,6 +43,8 @@ export default function BookingSlotPage() {
 
     useEffect(() => {
         if (slug) loadProfile();
+        // Toddler-Proof Feature #1: Auto-detect Timezone
+        setUserTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
     }, [slug]);
 
     useEffect(() => {
@@ -107,6 +114,24 @@ export default function BookingSlotPage() {
 
     const previousMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
     const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
+
+    // Toddler-Proof Feature #3: Slot Grouping
+    const groupedSlots = React.useMemo(() => {
+        const groups = {
+            morning: [] as BookingSlot[],
+            afternoon: [] as BookingSlot[],
+            evening: [] as BookingSlot[]
+        };
+
+        slots.forEach(slot => {
+            const hour = getHours(parseISO(slot.start));
+            if (hour < 12) groups.morning.push(slot);
+            else if (hour < 17) groups.afternoon.push(slot);
+            else groups.evening.push(slot);
+        });
+
+        return groups;
+    }, [slots]);
 
     // Render loading/error states...
     if (!tenant) return (
@@ -209,20 +234,20 @@ export default function BookingSlotPage() {
                                         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Select Date</h3>
                                         <div className="flex gap-2">
                                             <button onClick={previousMonth} className="p-2 hover:bg-white/5 rounded-full text-slate-400 hover:text-white transition-colors">
-                                                <ChevronLeft className="w-4 h-4" />
+                                                <ChevronLeft className="w-5 h-5" />
                                             </button>
-                                            <span className="text-sm font-bold text-slate-300 w-32 text-center">
+                                            <span className="text-sm font-bold text-slate-300 w-32 text-center flex items-center justify-center">
                                                 {format(currentMonth, 'MMMM yyyy')}
                                             </span>
                                             <button onClick={nextMonth} className="p-2 hover:bg-white/5 rounded-full text-slate-400 hover:text-white transition-colors">
-                                                <ChevronRight className="w-4 h-4" />
+                                                <ChevronRight className="w-5 h-5" />
                                             </button>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-7 gap-y-4 gap-x-1 sm:gap-x-2 text-center">
+                                    <div className="grid grid-cols-7 gap-y-6 gap-x-2 text-center">
                                         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
-                                            <div key={d} className="text-[10px] font-black text-slate-600 flex justify-center items-center">{d}</div>
+                                            <div key={d} className="text-[11px] font-black text-slate-600 flex justify-center items-center h-8">{d}</div>
                                         ))}
                                         {calendarDays.map((day, idx) => {
                                             const isToday = isSameDay(day, startOfToday());
@@ -235,12 +260,13 @@ export default function BookingSlotPage() {
                                                     key={day.toISOString()}
                                                     disabled={isPast}
                                                     onClick={() => setSelectedDate(day)}
+                                                    // Toddler-Proof Feature #2: Big Touch Targets (h-12 w-12 = 48px)
                                                     className={`
-                                                        h-10 w-10 mx-auto rounded-full flex items-center justify-center text-xs font-bold transition-all relative
+                                                        h-12 w-12 mx-auto rounded-full flex items-center justify-center text-sm font-bold transition-all relative
                                                         ${!isCurrentMonth ? 'opacity-0 pointer-events-none' : ''}
                                                         ${isPast ? 'text-slate-800 cursor-not-allowed line-through decoration-slate-800' : ''}
                                                         ${isSelected
-                                                            ? 'bg-teal-500 text-slate-900 shadow-lg shadow-teal-500/20 scale-110'
+                                                            ? 'bg-teal-500 text-slate-900 shadow-xl shadow-teal-500/20 scale-110'
                                                             : 'text-slate-400 hover:bg-white/5 hover:text-white'}
                                                         ${isToday && !isSelected ? 'border border-teal-500/50 text-teal-500' : ''}
                                                     `}
@@ -249,6 +275,11 @@ export default function BookingSlotPage() {
                                                 </button>
                                             );
                                         })}
+                                    </div>
+
+                                    <div className="flex items-center justify-center gap-2 text-[10px] text-slate-600 font-medium">
+                                        <Globe className="w-3 h-3" />
+                                        <span>Times shown in {userTimezone}</span>
                                     </div>
                                 </div>
 
@@ -271,16 +302,48 @@ export default function BookingSlotPage() {
                                             <p className="text-slate-600 text-[10px]">Try selecting a different date</p>
                                         </div>
                                     ) : (
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar min-h-[100px]">
-                                            {slots.map((slot, i) => (
-                                                <button
-                                                    key={i}
-                                                    onClick={() => setSelectedSlot(slot)}
-                                                    className="py-4 px-4 bg-white/5 border border-white/5 hover:border-teal-500/50 hover:bg-teal-500/10 rounded-2xl text-teal-400 text-sm font-bold transition-all text-center active:scale-95 touch-manipulation"
-                                                >
-                                                    {safeFormat(slot.start, 'h:mm a')}
-                                                </button>
-                                            ))}
+                                        <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                                            {/* Morning */}
+                                            {groupedSlots.morning.length > 0 && (
+                                                <div className="space-y-3">
+                                                    <div className="flex items-center gap-2 text-xs font-bold text-teal-400/80 uppercase tracking-wider">
+                                                        <Sun className="w-3 h-3" /> Morning
+                                                    </div>
+                                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                                        {groupedSlots.morning.map((slot, i) => (
+                                                            <SlotButton key={i} slot={slot} onClick={() => setSelectedSlot(slot)} />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Afternoon */}
+                                            {groupedSlots.afternoon.length > 0 && (
+                                                <div className="space-y-3">
+                                                    <div className="flex items-center gap-2 text-xs font-bold text-orange-400/80 uppercase tracking-wider">
+                                                        <Sunset className="w-3 h-3" /> Afternoon
+                                                    </div>
+                                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                                        {groupedSlots.afternoon.map((slot, i) => (
+                                                            <SlotButton key={i} slot={slot} onClick={() => setSelectedSlot(slot)} />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Evening */}
+                                            {groupedSlots.evening.length > 0 && (
+                                                <div className="space-y-3">
+                                                    <div className="flex items-center gap-2 text-xs font-bold text-indigo-400/80 uppercase tracking-wider">
+                                                        <Moon className="w-3 h-3" /> Evening
+                                                    </div>
+                                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                                        {groupedSlots.evening.map((slot, i) => (
+                                                            <SlotButton key={i} slot={slot} onClick={() => setSelectedSlot(slot)} />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -306,31 +369,64 @@ export default function BookingSlotPage() {
                                     <h3 className="text-2xl md:text-3xl font-black text-white tracking-tighter">Enter Details</h3>
                                 </div>
 
+                                {/* Toddler-Proof Feature #4: Smart Form with AutoComplete */}
                                 <form onSubmit={handleBook} className="space-y-6">
                                     <div className="grid md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Full Name</label>
-                                            <input required type="text" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800" placeholder="Enter full legal name" value={name} onChange={e => setName(e.target.value)} />
+                                            <input
+                                                required
+                                                autoComplete="name"
+                                                type="text"
+                                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800"
+                                                placeholder="Enter full legal name"
+                                                value={name}
+                                                onChange={e => setName(e.target.value)}
+                                            />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Email</label>
-                                            <input required type="email" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800" placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)} />
+                                            <input
+                                                required
+                                                autoComplete="email"
+                                                type="email"
+                                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800"
+                                                placeholder="your@email.com"
+                                                value={email}
+                                                onChange={e => setEmail(e.target.value)}
+                                            />
                                         </div>
                                     </div>
 
                                     <div className="grid md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Phone Number</label>
-                                            <input required type="tel" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800" placeholder="+1 (555) 000-0000" value={phone} onChange={e => setPhone(e.target.value)} />
+                                            <input
+                                                required
+                                                autoComplete="tel"
+                                                type="tel"
+                                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800"
+                                                placeholder="+1 (555) 000-0000"
+                                                value={phone}
+                                                onChange={e => setPhone(e.target.value)}
+                                            />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Primary Objective</label>
-                                            <input required type="text" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800" placeholder="Define mission focus..." value={topic} onChange={e => setTopic(e.target.value)} />
+                                            <input
+                                                required
+                                                autoComplete="off"
+                                                type="text"
+                                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800"
+                                                placeholder="Define mission focus..."
+                                                value={topic}
+                                                onChange={e => setTopic(e.target.value)}
+                                            />
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Additional Notes</label>
+                                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Additional Notes <span className="opacity-50 lowercase">(optional)</span></label>
                                         <textarea className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800 min-h-[120px] resize-none" placeholder="Anything else we should know?" value={notes} onChange={e => setNotes(e.target.value)} />
                                     </div>
 
@@ -355,5 +451,16 @@ export default function BookingSlotPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+function SlotButton({ slot, onClick }: { slot: BookingSlot, onClick: () => void }) {
+    return (
+        <button
+            onClick={onClick}
+            className="py-4 px-4 bg-white/5 border border-white/5 hover:border-teal-500/50 hover:bg-teal-500/10 rounded-2xl text-teal-400 text-sm font-bold transition-all text-center active:scale-95 touch-manipulation"
+        >
+            {safeFormat(slot.start, 'h:mm a')}
+        </button>
     );
 }

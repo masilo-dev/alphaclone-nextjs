@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';
 const SalesAgent: React.FC = () => {
     const aiConfigured = isAnyAIConfigured();
     const [activeTab, setActiveTab] = useState<'leads' | 'agent'>('leads');
-    const [searchParams, setSearchParams] = useState({ industry: '', location: 'Zimbabwe' });
+    const [searchParams, setSearchParams] = useState({ industry: '', location: '' });
     const [leads, setLeads] = useState<Lead[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -20,9 +20,6 @@ const SalesAgent: React.FC = () => {
 
     const [showUpload, setShowUpload] = useState(false);
 
-    // Google Places Config
-    const [showSettings, setShowSettings] = useState(false);
-    const [apiKey, setApiKey] = useState(localStorage.getItem('ALPHA_GOOGLE_PLACES_KEY') || '');
     const [selectedLeadForDetail, setSelectedLeadForDetail] = useState<Lead | null>(null);
     const [viewingMessage, setViewingMessage] = useState<{ title: string; body: string } | null>(null);
 
@@ -64,10 +61,7 @@ const SalesAgent: React.FC = () => {
         }
     };
 
-    const handleSaveKey = (val: string) => {
-        setApiKey(val);
-        localStorage.setItem('ALPHA_GOOGLE_PLACES_KEY', val);
-    };
+
 
     // Initial Load
     useEffect(() => {
@@ -107,7 +101,7 @@ const SalesAgent: React.FC = () => {
         try {
             console.log('🚀 Starting AI lead generation...');
             // Pass API key if available
-            const results = await generateLeads(searchParams.industry, searchParams.location, apiKey, 'tenant');
+            const results = await generateLeads(searchParams.industry, searchParams.location, '', 'tenant');
 
             if (results && results.length > 0) {
                 console.log(`✅ Generated ${results.length} leads, saving to database...`);
@@ -311,31 +305,7 @@ const SalesAgent: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Advanced Settings Checkbox */}
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setShowSettings(!showSettings)}
-                                    className="text-xs flex items-center gap-1 text-slate-400 hover:text-teal-400 transition-colors"
-                                >
-                                    <Settings className="w-3 h-3" />
-                                    {showSettings ? 'Hide Settings' : 'Advanced Search Settings'}
-                                </button>
-                            </div>
 
-                            {/* API Key Input */}
-                            {showSettings && (
-                                <div className="p-4 rounded-lg bg-slate-950/50 border border-slate-800 animate-fade-in">
-                                    <Input
-                                        label="Google Places API Key (Optional)"
-                                        placeholder="Paste your key here for real-time Google Maps data..."
-                                        value={apiKey}
-                                        onChange={e => handleSaveKey(e.target.value)}
-                                    />
-                                    <p className="text-[10px] text-slate-500 mt-1">
-                                        Leave empty to use AI simulation. Add key for real business data.
-                                    </p>
-                                </div>
-                            )}
 
                             <div className="flex flex-wrap gap-2 sm:gap-3">
                                 <Button onClick={handleSearch} className="flex-1 sm:flex-initial bg-teal-500 hover:bg-teal-400" isLoading={isSearching} disabled={!aiConfigured}>

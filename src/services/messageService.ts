@@ -493,6 +493,43 @@ export const messageService = {
     },
 
     /**
+     * PROCESS Incoming Message (Auto-Pilot Logic)
+     * Checks if auto-pilot is enabled for this conversation/user validation would happen here or in caller.
+     * Generates a reply using Gemini and sends it.
+     */
+    async processIncomingMessage(
+        tenantId: string,
+        message: ChatMessage,
+        senderName: string
+    ): Promise<{ autoReply: ChatMessage | null; error: string | null }> {
+        try {
+            // Import dynamically
+            const { generateAutoReply } = await import('./geminiService');
+
+            // 1. Generate text
+            const replyText = await generateAutoReply(message.text, senderName);
+
+            if (!replyText) return { autoReply: null, error: 'Failed to generate reply' };
+
+            // 2. Send the message as 'model' (AI Agent)
+            const { message: sentMessage, error } = await this.sendMessage(
+                'ai-agent',
+                'AlphaClone Agent',
+                'model',
+                replyText,
+                message.senderId, // Reply to the sender
+                [],
+                'normal'
+            );
+
+            return { autoReply: sentMessage, error };
+        } catch (err) {
+            console.error('Auto-Pilot Error:', err);
+            return { autoReply: null, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
      * AI Auto-Reply: Drafts a reply when admin is unavailable
      */
     async draftAutoReply(

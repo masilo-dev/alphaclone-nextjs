@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { messageService } from '../../../services/messageService';
+import toast from 'react-hot-toast';
 import {
     Send,
     Paperclip,
     Search,
     MoreVertical,
-    ArrowLeft
+    ArrowLeft,
+    Bot
 } from 'lucide-react';
 
 interface MessagesPageProps {
@@ -78,6 +80,45 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
         loadMessages(selectedConversation.id);
     };
 
+    const [autoPilotEnabled, setAutoPilotEnabled] = useState(false);
+
+    // Watch for new messages to trigger Auto-Pilot
+    useEffect(() => {
+        if (!autoPilotEnabled || !messages.length) return;
+
+        const lastMessage = messages[messages.length - 1]; // Messages are likely loaded via loadMessages which might be reverse order or not. 
+        // Logic check: Messages from `loadMessages` are slice(0, 10).
+        // Messages in state `messages` are sorted? 
+        // Existing code: `setMessages(msgs.slice(0, 10));` ... `msgs` comes from `messageService.getMessages` ... which does `.reverse()`. 
+        // So `messages[messages.length - 1]` is the NEWEST message.
+
+        // If newest message is from USER and we haven't replied yet (naive check: last message is user)
+        if (lastMessage.senderId !== user.id && lastMessage.senderId !== 'ai-agent' && lastMessage.role === 'user') {
+            const replyId = `reply-to-${lastMessage.id}`;
+            // Prevent duplicate replies loop - in real app use DB 'replied' flag or local Set
+            const alreadyReplied = sessionStorage.getItem(replyId);
+
+            if (!alreadyReplied) {
+                console.log('🤖 Auto-Pilot Triggered for:', lastMessage.text);
+                sessionStorage.setItem(replyId, 'processing');
+
+                // Trigger AI
+                messageService.processIncomingMessage(
+                    currentTenant?.id || '',
+                    lastMessage,
+                    selectedConversation?.name || 'Client'
+                ).then(({ autoReply }) => {
+                    if (autoReply) {
+                        toast.success('AI Auto-Replied to client');
+                        // Add to local state immediately
+                        setMessages(prev => [...prev, autoReply]);
+                        sessionStorage.setItem(replyId, 'done');
+                    }
+                });
+            }
+        }
+    }, [messages, autoPilotEnabled, user.id, currentTenant, selectedConversation]);
+
     if (loading) {
         return <div className="flex items-center justify-center h-full"><div className="text-slate-400">Loading messages...</div></div>;
     }
@@ -86,7 +127,26 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
         <div className="h-full flex md:gap-4 relative">
             {/* Conversations List */}
             <div className={`w-full md:w-80 bg-slate-900/50 border border-slate-800 rounded-2xl flex-col ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
-                <div className="p-4 border-b border-slate-800">
+                <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950/30 rounded-t-2xl">
+                    <h3 className="font-bold text-white">Messages</h3>
+                    {/* Auto-Pilot Toggle */}
+                    <button
+                        onClick={() => {
+                            const newState = !autoPilotEnabled;
+                            setAutoPilotEnabled(newState);
+                            toast(newState ? "AI Auto-Pilot ACTIVATED 🤖" : "AI Auto-Pilot Deactivated", { icon: newState ? '🟢' : '⚪️' });
+                        }}
+                        className={`flex items-center gap-2 text-[10px] uppercase font-bold px-3 py-1.5 rounded-full border transition-all ${autoPilotEnabled
+                            ? 'bg-teal-500/20 text-teal-400 border-teal-500/50 shadow-lg shadow-teal-500/10'
+                            : 'bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-600'
+                            }`}
+                    >
+                        <Bot className={`w-3 h-3 ${autoPilotEnabled ? 'animate-pulse' : ''}`} />
+                        {autoPilotEnabled ? 'Auto-Pilot ON' : 'Auto-Pilot OFF'}
+                    </button>
+                </div>
+
+                <div className="p-4 pt-2 border-b border-slate-800">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <input
