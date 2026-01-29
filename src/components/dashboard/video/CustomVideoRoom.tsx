@@ -19,9 +19,9 @@ interface CustomVideoRoomProps {
     onToggleMinimize?: () => void;
 }
 
-// Check if user is admin
+// Check if user is admin or tenant admin
 const isUserAdmin = (user: User): boolean => {
-    return user.role === 'admin';
+    return user.role === 'admin' || user.role === 'tenant_admin';
 };
 
 /**
@@ -705,6 +705,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 onEndForAll={isUserAdmin(user) ? handleEndMeetingForAll : undefined}
                 isAdmin={isUserAdmin(user)}
                 roomUrl={roomUrl}
+                callId={callId}
             />
         </div>
     );

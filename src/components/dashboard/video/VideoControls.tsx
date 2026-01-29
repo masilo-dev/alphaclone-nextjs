@@ -29,6 +29,7 @@ interface VideoControlsProps {
     onEndForAll?: (() => void | Promise<void>) | undefined;
     isAdmin?: boolean;
     roomUrl?: string;
+    callId?: string;
 }
 
 /**
@@ -47,22 +48,52 @@ const VideoControls: React.FC<VideoControlsProps> = ({
     onToggleChat,
     onToggleSettings,
     onEndForAll,
+    onEndForAll,
     isAdmin = false,
-    roomUrl
+    roomUrl,
+    callId
 }) => {
     const [copied, setCopied] = React.useState(false);
 
     const handleCopyLink = async () => {
-        if (!roomUrl) return;
-
         try {
-            await navigator.clipboard.writeText(roomUrl);
+            // Priority:
+            // 1. callId -> Construct branded link
+            // 2. window.location.href -> If we are on the call page
+            // 3. roomUrl -> Fallback (but we try to avoid exposing this)
+
+            let linkToCopy = '';
+
+            if (callId) {
+                linkToCopy = `${window.location.origin}/meet/${callId}`;
+            } else if (window.location.pathname.startsWith('/meet/') || window.location.pathname.startsWith('/call/')) {
+                linkToCopy = window.location.href;
+            } else if (roomUrl) {
+                // If we don't have a callId and aren't on a call page, we might have to use roomUrl
+                // But for security, we prefer not to.
+                linkToCopy = roomUrl;
+            } else {
+                toast.error('No link available to copy');
+                return;
+            }
+
+            await navigator.clipboard.writeText(linkToCopy);
             setCopied(true);
             toast.success('Meeting link copied!');
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
             toast.error('Failed to copy link');
         }
+    };
+
+    const handleScreenShareClick = () => {
+        // Mobile check
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+            toast.error('Screen sharing is only available on desktop devices.');
+            return;
+        }
+        onToggleScreenShare();
     };
 
     return (
@@ -133,7 +164,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 
                         {/* Screen share toggle */}
                         <button
-                            onClick={onToggleScreenShare}
+                            onClick={handleScreenShareClick}
                             className={`p-3.5 rounded-xl transition-all duration-300 border backdrop-blur-md shadow-lg group relative overflow-hidden ${isScreenSharing
                                 ? 'bg-teal-500/20 border-teal-500/50 text-teal-500 hover:bg-teal-500/30 box-shadow-glow-teal'
                                 : 'bg-white/10 border-white/10 text-white hover:bg-white/20 hover:border-white/20'
