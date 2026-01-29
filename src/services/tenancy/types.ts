@@ -48,6 +48,7 @@ export interface TenantSettings {
         availability: {
             days: number[]; // 0=Sunday, 1=Monday, etc.
             hours: { start: string; end: string }; // "09:00", "17:00"
+            timezone?: string; // e.g. "America/New_York", default "UTC"
         };
         meetingTypes: {
             id: string;

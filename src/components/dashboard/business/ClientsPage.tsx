@@ -202,13 +202,13 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         placeholder="Search clients..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all font-medium"
                     />
                 </div>
                 <select
                     value={selectedStage}
                     onChange={(e) => setSelectedStage(e.target.value)}
-                    className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                    className="px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all font-medium min-w-[140px]"
                 >
                     <option value="all">All Stages</option>
                     <option value="lead">Leads</option>
@@ -264,11 +264,11 @@ const ClientCard = ({ client, onDelete, onCall }: { client: BusinessClient; onDe
     };
 
     return (
-        <div className="bg-slate-900/50 border border-slate-800 hover:border-slate-700 rounded-xl p-4 transition-all group relative">
+        <div className="bg-slate-900/50 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 transition-all group relative shadow-sm">
             {/* Call Button (Mobile/Direct Action) */}
             <button
                 onClick={() => onCall(client)}
-                className="absolute top-4 right-12 p-2 hover:bg-teal-500/10 rounded-full transition-colors group/call"
+                className="absolute top-4 right-12 p-2.5 hover:bg-teal-500/10 rounded-full transition-colors group/call active:scale-95"
                 title="Video Call"
             >
                 <Phone className="w-5 h-5 text-slate-400 group-hover/call:text-teal-400" />

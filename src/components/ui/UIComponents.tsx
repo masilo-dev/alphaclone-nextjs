@@ -18,7 +18,7 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const baseStyles = "inline-flex items-center justify-center rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none active:scale-95";
+  const baseStyles = "inline-flex items-center justify-center rounded-xl font-medium transition-all focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none active:scale-95";
 
   const variants = {
     primary: "bg-teal-600 text-white hover:bg-teal-500 shadow-lg shadow-teal-900/20",
@@ -56,7 +56,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 export const Card: React.FC<CardProps> = ({ children, className = '', hoverEffect = false, ...props }) => {
   return (
     <div
-      className={`bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 ${hoverEffect ? 'hover:bg-slate-800/80 transition-all duration-300 hover:border-teal-500/30 hover:shadow-lg hover:shadow-teal-900/10' : ''} ${className}`}
+      className={`bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 ${hoverEffect ? 'hover:bg-slate-800/80 transition-all duration-300 hover:border-teal-500/30 hover:shadow-lg hover:shadow-teal-900/10' : ''} ${className}`}
       {...props}
     >
       {children}
@@ -98,7 +98,7 @@ export const Input: React.FC<InputProps> = ({ label, error, className = '', ...p
     <div className="w-full">
       {label && <label className="block text-sm font-medium text-slate-300 mb-1.5">{label}</label>}
       <input
-        className={`w-full bg-slate-900 border ${error ? 'border-red-500' : 'border-slate-700'} rounded-lg px-4 py-2.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all ${className}`}
+        className={`w-full bg-slate-900 border ${error ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all ${className}`}
         {...props}
       />
       {error && <p className="mt-1 text-xs text-red-400">{error}</p>}
@@ -121,7 +121,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title, 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 pt-safe pb-safe">
       <div className={`absolute inset-0 bg-slate-950/80 backdrop-blur-sm`} onClick={onClose} />
-      <div className={`relative bg-slate-900 border border-slate-700 rounded-2xl w-full ${maxWidth} shadow-2xl animate-fade-in overflow-hidden max-h-[85vh] flex flex-col`}>
+      <div className={`relative bg-slate-900 border border-slate-700 rounded-3xl w-full ${maxWidth} shadow-2xl animate-fade-in overflow-hidden max-h-[85vh] flex flex-col`}>
         <div className="flex items-center justify-between p-4 border-b border-slate-800 flex-shrink-0">
           <h3 className="text-lg font-semibold text-white">{title}</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-slate-800 rounded-lg">

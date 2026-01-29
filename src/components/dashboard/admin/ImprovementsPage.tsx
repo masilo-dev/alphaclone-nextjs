@@ -169,7 +169,7 @@ const ImprovementsPage: React.FC = () => {
                         <select
                             value={filters.status || ''}
                             onChange={(e) => handleFilterChange('status', e.target.value)}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-teal-500"
+                            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-teal-500"
                         >
                             <option value="">All Statuses</option>
                             <option value="new">New</option>
@@ -184,7 +184,7 @@ const ImprovementsPage: React.FC = () => {
                         <select
                             value={filters.severity || ''}
                             onChange={(e) => handleFilterChange('severity', e.target.value)}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-teal-500"
+                            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-teal-500"
                         >
                             <option value="">All Priorities</option>
                             <option value="high">High</option>
@@ -263,7 +263,7 @@ const ImprovementsPage: React.FC = () => {
             {/* Detail Modal */}
             {selectedImprovement && (
                 <Modal isOpen={detailModalOpen} onClose={() => setDetailModalOpen(false)}>
-                    <div className="bg-slate-900 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                    <div className="bg-slate-900 rounded-3xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         {/* Header */}
                         <div className="flex items-start justify-between mb-6">
                             <div>
@@ -335,7 +335,7 @@ const ImprovementsPage: React.FC = () => {
                             <select
                                 value={editStatus}
                                 onChange={(e) => setEditStatus(e.target.value as Improvement['status'])}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-teal-500"
+                                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-teal-500"
                             >
                                 <option value="new">New</option>
                                 <option value="reviewed">Reviewed</option>
@@ -351,7 +351,7 @@ const ImprovementsPage: React.FC = () => {
                                 value={editNotes}
                                 onChange={(e) => setEditNotes(e.target.value)}
                                 placeholder="Add internal notes about this improvement..."
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-none"
+                                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-none"
                                 rows={4}
                             />
                         </div>

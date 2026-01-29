@@ -148,7 +148,7 @@ const TeamMemberCard = ({ member, onRemove, isCurrentUser }: any) => {
     };
 
     return (
-        <div className="bg-slate-900/50 border border-slate-800 hover:border-slate-700 rounded-xl p-6 transition-all group">
+        <div className="bg-slate-900/50 border border-slate-800 hover:border-slate-700 rounded-2xl p-6 transition-all group">
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-lg">

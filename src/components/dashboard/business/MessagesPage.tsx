@@ -85,14 +85,14 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
     return (
         <div className="h-full flex md:gap-4 relative">
             {/* Conversations List */}
-            <div className={`w-full md:w-80 bg-slate-900/50 border border-slate-800 rounded-xl flex-col ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
+            <div className={`w-full md:w-80 bg-slate-900/50 border border-slate-800 rounded-2xl flex-col ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
                 <div className="p-4 border-b border-slate-800">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <input
                             type="text"
                             placeholder="Search messages..."
-                            className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500 text-sm"
+                            className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 text-sm transition-all"
                         />
                     </div>
                 </div>
@@ -127,7 +127,7 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
             </div>
 
             {/* Messages Area - Mobile Only (when active) OR Desktop */}
-            <div className={`flex-1 bg-slate-900/50 border border-slate-800 rounded-xl flex-col ${selectedConversation ? 'flex' : 'hidden md:flex'}`}>
+            <div className={`flex-1 bg-slate-900/50 border border-slate-800 rounded-2xl flex-col ${selectedConversation ? 'flex' : 'hidden md:flex'}`}>
                 {selectedConversation ? (
                     <>
                         {/* Header */}
@@ -160,9 +160,9 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
                                     className={`flex ${msg.senderId === user.id ? 'justify-end' : 'justify-start'}`}
                                 >
                                     <div
-                                        className={`max-w-md px-4 py-2 rounded-lg ${msg.senderId === user.id
-                                            ? 'bg-teal-500 text-white'
-                                            : 'bg-slate-800 text-slate-100'
+                                        className={`max-w-md px-5 py-3 rounded-2xl ${msg.senderId === user.id
+                                            ? 'bg-teal-500 text-white rounded-br-none'
+                                            : 'bg-slate-800 text-slate-100 rounded-bl-none'
                                             }`}
                                     >
                                         <p className="text-sm">{msg.text}</p>
@@ -186,7 +186,7 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
                                     onChange={(e) => setNewMessage(e.target.value)}
                                     onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                                     placeholder="Type a message..."
-                                    className="flex-1 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                                    className="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all"
                                 />
                                 <button
                                     onClick={handleSendMessage}

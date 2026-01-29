@@ -124,17 +124,17 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
 
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
-                    <p className="text-sm text-slate-400 mb-1">Total Revenue</p>
-                    <p className="text-2xl font-bold text-teal-400">${stats.total.toLocaleString()}</p>
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                    <p className="text-sm font-medium text-slate-400 mb-1">Total Revenue</p>
+                    <p className="text-2xl font-bold text-teal-400 tracking-tight">${stats.total.toLocaleString()}</p>
                 </div>
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
-                    <p className="text-sm text-slate-400 mb-1">Paid</p>
-                    <p className="text-2xl font-bold text-green-400">${stats.paid.toLocaleString()}</p>
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                    <p className="text-sm font-medium text-slate-400 mb-1">Paid</p>
+                    <p className="text-2xl font-bold text-green-400 tracking-tight">${stats.paid.toLocaleString()}</p>
                 </div>
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
-                    <p className="text-sm text-slate-400 mb-1">Pending</p>
-                    <p className="text-2xl font-bold text-orange-400">${stats.pending.toLocaleString()}</p>
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                    <p className="text-sm font-medium text-slate-400 mb-1">Pending</p>
+                    <p className="text-2xl font-bold text-orange-400 tracking-tight">${stats.pending.toLocaleString()}</p>
                 </div>
             </div>
 
@@ -144,8 +144,8 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
                     <button
                         key={status}
                         onClick={() => setFilter(status)}
-                        className={`px-4 py-2 rounded-lg transition-colors ${filter === status
-                            ? 'bg-teal-500 text-white'
+                        className={`px-5 py-2.5 rounded-xl font-medium transition-all text-sm ${filter === status
+                            ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20'
                             : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
                             }`}
                     >
@@ -197,7 +197,7 @@ const InvoiceCard = ({ invoice, clients, onDownload, onDelete }: any) => {
     };
 
     return (
-        <div className="bg-slate-900/50 border border-slate-800 hover:border-slate-700 rounded-xl p-4 transition-all group">
+        <div className="bg-slate-900/50 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 transition-all group shadow-sm">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-teal-500/10 border border-teal-500/20 rounded-lg flex items-center justify-center shrink-0">
@@ -299,8 +299,8 @@ const CreateInvoiceModal = ({ clients, projects, onClose, onCreate }: any) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+            <div className="bg-slate-900 border border-white/10 rounded-3xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-bold">Create Invoice</h3>
                     <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded">

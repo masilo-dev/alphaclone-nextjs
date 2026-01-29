@@ -191,27 +191,27 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Revenue Chart */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h3 className="text-lg font-semibold mb-4">Revenue & Expenses</h3>
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                    <h3 className="text-lg font-bold mb-4">Revenue & Expenses</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={revenueData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                             <XAxis dataKey="month" stroke="#94a3b8" />
                             <YAxis stroke="#94a3b8" />
                             <Tooltip
-                                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }}
+                                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px' }}
                                 labelStyle={{ color: '#94a3b8' }}
                             />
                             <Legend />
-                            <Bar dataKey="revenue" fill="#2dd4bf" name="Revenue" />
-                            <Bar dataKey="expenses" fill="#ef4444" name="Expenses" />
+                            <Bar dataKey="revenue" fill="#2dd4bf" name="Revenue" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="expenses" fill="#ef4444" name="Expenses" radius={[4, 4, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
 
                 {/* Client Distribution */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h3 className="text-lg font-semibold mb-4">Client Distribution</h3>
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                    <h3 className="text-lg font-bold mb-4">Client Distribution</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <PieChart>
                             <Pie
@@ -228,41 +228,41 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
                             </Pie>
-                            <Tooltip />
+                            <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px' }} />
                         </PieChart>
                     </ResponsiveContainer>
                 </div>
 
                 {/* Project Status */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h3 className="text-lg font-semibold mb-4">Project Status</h3>
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                    <h3 className="text-lg font-bold mb-4">Project Status</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={projectData} layout="vertical">
                             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                             <XAxis type="number" stroke="#94a3b8" />
-                            <YAxis dataKey="name" type="category" stroke="#94a3b8" />
+                            <YAxis dataKey="name" type="category" stroke="#94a3b8" width={100} />
                             <Tooltip
-                                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }}
+                                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px' }}
                                 labelStyle={{ color: '#94a3b8' }}
                             />
-                            <Bar dataKey="value" fill="#8b5cf6" />
+                            <Bar dataKey="value" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
 
                 {/* Revenue Trend */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                    <h3 className="text-lg font-semibold mb-4">Revenue Trend</h3>
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                    <h3 className="text-lg font-bold mb-4">Revenue Trend</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={revenueData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                             <XAxis dataKey="month" stroke="#94a3b8" />
                             <YAxis stroke="#94a3b8" />
                             <Tooltip
-                                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155' }}
+                                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px' }}
                                 labelStyle={{ color: '#94a3b8' }}
                             />
-                            <Line type="monotone" dataKey="revenue" stroke="#2dd4bf" strokeWidth={2} />
+                            <Line type="monotone" dataKey="revenue" stroke="#2dd4bf" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
@@ -272,14 +272,14 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
 };
 
 const MetricCard = ({ label, value, icon: Icon, color }: any) => (
-    <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
         <div className="flex items-center gap-3 mb-2">
-            <div className={`p-2 rounded-lg bg-slate-950 border border-slate-800 ${color}`}>
+            <div className={`p-2.5 rounded-xl bg-slate-950 border border-slate-800 ${color}`}>
                 <Icon className="w-5 h-5" />
             </div>
-            <p className="text-sm text-slate-400">{label}</p>
+            <p className="text-sm font-medium text-slate-400">{label}</p>
         </div>
-        <p className="text-2xl font-bold">{value}</p>
+        <p className="text-2xl font-bold tracking-tight">{value}</p>
     </div>
 );
 

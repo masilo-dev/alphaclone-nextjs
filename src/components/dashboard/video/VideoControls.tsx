@@ -71,8 +71,8 @@ const VideoControls: React.FC<VideoControlsProps> = ({
             <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black via-slate-950/80 to-transparent pointer-events-none" />
 
             {/* Glass Bar */}
-            <div className="relative max-w-4xl mx-auto mb-6 px-6">
-                <div className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 p-4 flex items-center justify-between transition-all hover:bg-slate-900/50 hover:border-white/20 hover:scale-[1.01]">
+            <div className="relative max-w-4xl mx-auto mb-4 sm:mb-6 px-4 sm:px-6">
+                <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 p-2 sm:p-4 flex items-center justify-between transition-all hover:bg-slate-900/70 hover:border-white/20">
 
                     {/* Left side - Meeting info */}
                     <div className="flex items-center space-x-4">
@@ -96,7 +96,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                     </div>
 
                     {/* Center - Main controls */}
-                    <div className="flex items-center justify-center gap-3">
+                    <div className="flex items-center justify-center gap-2 sm:gap-3 overflow-x-auto scrollbar-hide py-1 px-1">
                         {/* Microphone toggle */}
                         <button
                             onClick={onToggleMic}
@@ -151,10 +151,11 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                         {/* Leave button */}
                         <button
                             onClick={onLeave}
-                            className="p-3.5 rounded-xl bg-red-600 hover:bg-red-500 transition-all ml-4 border border-red-400 shadow-lg shadow-red-900/50 transform hover:scale-105 active:scale-95 group"
-                            title="Leave meeting"
+                            className="p-3.5 sm:p-3.5 rounded-xl bg-red-600 hover:bg-red-500 transition-all ml-2 sm:ml-4 border-2 border-red-500 shadow-[0_0_15px_rgba(220,38,38,0.5)] transform hover:scale-105 active:scale-95 group relative overflow-hidden"
+                            title="End Call"
                         >
-                            <PhoneOff className="w-5 h-5 text-white group-hover:rotate-90 transition-transform" />
+                            <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <PhoneOff className="w-6 h-6 sm:w-5 sm:h-5 text-white group-hover:rotate-90 transition-transform relative z-10" />
                         </button>
 
                         {/* Admin: End meeting for all button */}

@@ -246,8 +246,8 @@ const MobileCalendarView = ({ currentDate, events, onSelectDate }: any) => {
                 const isToday = date.toDateString() === new Date().toDateString();
 
                 return (
-                    <div key={day} className={`bg-slate-900/40 border ${isToday ? 'border-teal-500/50 shadow-[0_0_15px_rgba(20,184,166,0.1)]' : 'border-white/5'} rounded-2xl overflow-hidden backdrop-blur-sm`}>
-                        <div className={`p-4 flex items-center justify-between ${isToday ? 'bg-teal-500/10' : 'bg-white/5'}`}>
+                    <div key={day} className={`bg-slate-900/40 border-b ${isToday ? 'border-teal-500/30' : 'border-white/5'} first:rounded-t-2xl last:rounded-b-2xl last:border-b-0 backdrop-blur-sm`}>
+                        <div className={`p-4 flex items-center justify-between ${isToday ? 'bg-teal-500/5' : ''}`}>
                             <div className="flex items-center gap-4">
                                 <div className={`w-12 h-12 flex flex-col items-center justify-center rounded-xl border ${isToday ? 'bg-teal-500 text-slate-950 border-teal-400' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
                                     <span className="text-lg font-black leading-none">{day}</span>
@@ -259,16 +259,17 @@ const MobileCalendarView = ({ currentDate, events, onSelectDate }: any) => {
                             </div>
                             <button
                                 onClick={() => onSelectDate(date)}
-                                className="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors border border-slate-700"
+                                className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors border border-slate-700/50"
                             >
-                                <Plus className="w-4 h-4 text-white" />
+                                <Plus className="w-4 h-4 text-slate-300" />
                             </button>
                         </div>
 
-                        <div className="p-4 space-y-3">
-                            {dayEvents.length > 0 ? (
-                                dayEvents.map((event: any) => (
-                                    <div key={event.id} className="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between shadow-sm">
+                        {/* Only show day content if there are events or it's today */}
+                        {(dayEvents.length > 0) && (
+                            <div className="px-4 pb-4 space-y-2">
+                                {dayEvents.map((event: any) => (
+                                    <div key={event.id} className="bg-slate-950/50 border border-white/5 p-3 rounded-lg flex items-center justify-between ml-14">
                                         <div>
                                             <h4 className="text-sm font-bold text-white mb-1.5">{event.title}</h4>
                                             <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
@@ -284,15 +285,13 @@ const MobileCalendarView = ({ currentDate, events, onSelectDate }: any) => {
                                             </div>
                                         </div>
                                     </div>
-                                ))
-                            ) : (
-                                <div className="text-center py-2 text-[10px] font-black uppercase tracking-widest text-slate-700">No events scheduled</div>
-                            )}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 );
             })}
-        </div>
+        </div >
     );
 };
 

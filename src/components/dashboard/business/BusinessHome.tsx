@@ -157,7 +157,8 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Revenue Chart */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+                {/* Revenue Chart */}
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                         <TrendingUp className="w-5 h-5 text-teal-400" />
                         Revenue Trend
@@ -177,7 +178,8 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
                 </div>
 
                 {/* Recent Activity */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+                {/* Recent Activity */}
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                         <Clock className="w-5 h-5 text-violet-400" />
                         Recent Activity
@@ -202,7 +204,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
                 <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <QuickActionButton
@@ -253,7 +255,7 @@ const QuickActionButton = ({ label, icon: Icon, onClick, disabled = false }: any
     <button
         onClick={disabled ? undefined : onClick}
         disabled={disabled}
-        className={`flex items-center justify-between p-4 border rounded-xl transition-all group ${disabled
+        className={`flex items-center justify-between p-4 border rounded-2xl transition-all group ${disabled
             ? 'bg-slate-800/30 border-slate-700/50 cursor-not-allowed opacity-50'
             : 'bg-slate-800/50 hover:bg-slate-800 border-slate-700 hover:border-teal-500/50'
             }`}

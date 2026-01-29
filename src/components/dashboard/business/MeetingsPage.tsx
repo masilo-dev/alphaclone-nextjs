@@ -103,7 +103,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
 
                         <Button
                             onClick={() => onJoinRoom?.(`/meet/${nextMeeting.id}`)}
-                            className="w-full md:w-auto px-8 py-4 text-lg bg-teal-500 hover:bg-teal-400 text-white shadow-lg shadow-teal-900/40 rounded-xl transition-all hover:scale-105"
+                            className="w-full md:w-auto px-8 py-4 text-lg bg-teal-500 hover:bg-teal-400 text-white shadow-lg shadow-teal-900/40 rounded-2xl transition-all hover:scale-105"
                         >
                             Join Meeting Now
                         </Button>
@@ -143,7 +143,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                                 </div>
                             ) : (
                                 upcomingMeetings.map(meeting => (
-                                    <div key={meeting.id} className="bg-slate-900/40 border border-slate-800 hover:border-slate-700 rounded-xl p-4 transition-all hover:bg-slate-900/60 group">
+                                    <div key={meeting.id} className="bg-slate-900/40 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 transition-all hover:bg-slate-900/60 group">
                                         <div className="flex justify-between items-center">
                                             <div className="flex items-center gap-4">
                                                 <div className="flex flex-col items-center justify-center w-12 h-12 bg-slate-800 rounded-lg text-slate-400 group-hover:text-white transition-colors">

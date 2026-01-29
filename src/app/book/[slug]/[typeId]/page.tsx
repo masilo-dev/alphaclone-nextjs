@@ -178,22 +178,19 @@ export default function BookingSlotPage() {
                         </div>
 
                         <div>
-                            <h2 className="text-teal-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2 opacity-60">Unit Deployment</h2>
+                            <h2 className="text-teal-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2 opacity-60">Schedule Session</h2>
                             <h1 className={`${isCompact ? 'text-xl md:text-2xl' : 'text-3xl md:text-5xl'} font-black tracking-tighter text-white mb-3 md:mb-4 leading-none transition-all duration-500`}>{meetingType.name}</h1>
                             <div className="flex flex-wrap items-center gap-2 md:gap-3">
                                 <span className="px-2 py-0.5 md:px-3 md:py-1 bg-white/5 border border-white/10 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 md:gap-2">
                                     <Clock className="w-2.5 h-2.5 md:w-3 md:h-3 text-teal-400" /> {meetingType.duration} MIN
-                                </span>
-                                <span className="px-2 py-0.5 md:px-3 md:py-1 bg-white/5 border border-white/10 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 md:gap-2">
-                                    <Globe className="w-2.5 h-2.5 md:w-3 md:h-3 text-teal-400" /> GLOBAL
                                 </span>
                             </div>
                         </div>
 
                         {!isCompact && (
                             <div className="glass-panel p-6 rounded-[2rem] border border-white/5 bg-slate-900/40 backdrop-blur-3xl animate-in fade-in duration-500">
-                                <p className="text-slate-400 text-sm leading-relaxed font-medium italic">
-                                    "{meetingType.description || 'Initialize a high-impact session with our lead strategists to accelerate your project trajectory.'}"
+                                <p className="text-slate-400 text-sm leading-relaxed font-medium">
+                                    "{meetingType.description || 'Please select a time that works best for you.'}"
                                 </p>
                             </div>
                         )}
@@ -269,16 +266,17 @@ export default function BookingSlotPage() {
                                     </p>
 
                                     {slots.length === 0 && !loadingSlots ? (
-                                        <div className="py-12 text-center">
-                                            <p className="text-slate-600 text-[10px] font-black uppercase tracking-widest">No slots available</p>
+                                        <div className="py-12 text-center bg-white/5 rounded-2xl border border-white/5">
+                                            <p className="text-slate-500 text-xs font-black uppercase tracking-widest mb-2">No units available</p>
+                                            <p className="text-slate-600 text-[10px]">Try selecting a different date</p>
                                         </div>
                                     ) : (
-                                        <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar min-h-[100px]">
                                             {slots.map((slot, i) => (
                                                 <button
                                                     key={i}
                                                     onClick={() => setSelectedSlot(slot)}
-                                                    className="py-3 px-4 bg-white/5 border border-white/5 hover:border-teal-500/50 hover:bg-teal-500/10 rounded-xl text-teal-400 text-xs font-bold transition-all text-center"
+                                                    className="py-4 px-4 bg-white/5 border border-white/5 hover:border-teal-500/50 hover:bg-teal-500/10 rounded-2xl text-teal-400 text-sm font-bold transition-all text-center active:scale-95 touch-manipulation"
                                                 >
                                                     {safeFormat(slot.start, 'h:mm a')}
                                                 </button>
@@ -305,12 +303,7 @@ export default function BookingSlotPage() {
                                 </div>
 
                                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-                                    <h3 className="text-2xl md:text-3xl font-black text-white tracking-tighter">Initialize Link</h3>
-                                    <div className="flex -space-x-3">
-                                        {[1, 2, 3].map(i => (
-                                            <div key={i} className="w-10 h-10 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-600 uppercase">ID</div>
-                                        ))}
-                                    </div>
+                                    <h3 className="text-2xl md:text-3xl font-black text-white tracking-tighter">Enter Details</h3>
                                 </div>
 
                                 <form onSubmit={handleBook} className="space-y-6">
@@ -320,14 +313,14 @@ export default function BookingSlotPage() {
                                             <input required type="text" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800" placeholder="Enter full legal name" value={name} onChange={e => setName(e.target.value)} />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Email Endpoint</label>
-                                            <input required type="email" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800" placeholder="Enter secure email address" value={email} onChange={e => setEmail(e.target.value)} />
+                                            <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Email</label>
+                                            <input required type="email" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800" placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)} />
                                         </div>
                                     </div>
 
                                     <div className="grid md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Mobile Uplink</label>
+                                            <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Phone Number</label>
                                             <input required type="tel" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800" placeholder="+1 (555) 000-0000" value={phone} onChange={e => setPhone(e.target.value)} />
                                         </div>
                                         <div className="space-y-2">
@@ -337,8 +330,8 @@ export default function BookingSlotPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Extended Intel (Optional)</label>
-                                        <textarea className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800 min-h-[120px] resize-none" placeholder="Provide additional context..." value={notes} onChange={e => setNotes(e.target.value)} />
+                                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Additional Notes</label>
+                                        <textarea className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white focus:ring-2 focus:ring-teal-500/50 outline-none transition-all font-bold placeholder:text-slate-800 min-h-[120px] resize-none" placeholder="Anything else we should know?" value={notes} onChange={e => setNotes(e.target.value)} />
                                     </div>
 
                                     {error && (
@@ -348,7 +341,7 @@ export default function BookingSlotPage() {
                                     )}
 
                                     <button type="submit" disabled={submitting} className="w-full py-6 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 text-slate-900 font-black text-xs uppercase tracking-[0.3em] rounded-2xl transition-all shadow-2xl shadow-teal-500/20 active:scale-95 disabled:opacity-50">
-                                        {submitting ? 'PROCESSING PROTOCOL...' : 'CONFIRM UNIT DEPLOYMENT'}
+                                        {submitting ? 'CONFIRMING...' : 'CONFIRM BOOKING'}
                                     </button>
                                 </form>
                             </div>
@@ -357,7 +350,7 @@ export default function BookingSlotPage() {
                     </div>
 
                     <div className="text-center opacity-20 hover:opacity-100 transition-opacity">
-                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em]">Encrypted Session Initialization Protocol Alpha-9</p>
+                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em]">Secure Booking</p>
                     </div>
                 </div>
             </div>

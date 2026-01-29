@@ -44,11 +44,11 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
     const columns = [
-        { id: 'backlog', title: 'Ideation', color: 'border-slate-500', bg: 'bg-slate-500/10' },
-        { id: 'todo', title: 'In Planning', color: 'border-blue-500', bg: 'bg-blue-500/10' },
-        { id: 'in_progress', title: 'Development', color: 'border-violet-500', bg: 'bg-violet-500/10' },
-        { id: 'review', title: 'Quality Assurance', color: 'border-orange-500', bg: 'bg-orange-500/10' },
-        { id: 'done', title: 'Completed', color: 'border-teal-500', bg: 'bg-teal-500/10' }
+        { id: 'backlog', title: 'Ideas', color: 'border-slate-500', bg: 'bg-slate-500/10' },
+        { id: 'todo', title: 'To Do', color: 'border-blue-500', bg: 'bg-blue-500/10' },
+        { id: 'in_progress', title: 'In Progress', color: 'border-violet-500', bg: 'bg-violet-500/10' },
+        { id: 'review', title: 'Review', color: 'border-orange-500', bg: 'bg-orange-500/10' },
+        { id: 'done', title: 'Done', color: 'border-teal-500', bg: 'bg-teal-500/10' }
     ];
 
     useEffect(() => {
@@ -95,7 +95,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     };
 
     const handleDeleteProject = async (projectId: string) => {
-        if (!confirm('Destroy this project initiative? This action is irreversible.')) return;
+        if (!confirm('Delete this project? This action cannot be undone.')) return;
         const { error } = await businessProjectService.deleteProject(projectId);
         if (!error) {
             setProjects(projects.filter(p => p.id !== projectId));
@@ -139,7 +139,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                         return (
                             <div key={proj.id} className="flex divide-x divide-white/5 hover:bg-white/5 group transition-all duration-300">
                                 <div className="w-80 min-w-80 p-5 flex flex-col gap-1 sticky left-0 z-10 bg-slate-900/90 backdrop-blur-xl border-r border-white/5">
-                                    <h4 className="text-sm font-bold text-slate-100 group-hover:text-teal-400 transition-colors uppercase tracking-tight">{proj.name}</h4>
+                                    <h4 className="text-sm font-semibold text-slate-100 group-hover:text-teal-400 transition-colors uppercase tracking-tight">{proj.name}</h4>
                                     <div className="flex items-center gap-3">
                                         <span className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-1">
                                             <Target className="w-3 h-3" /> {proj.status.replace('_', ' ')}
@@ -183,11 +183,11 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                         <div className="p-3 bg-gradient-to-br from-teal-500 to-violet-600 rounded-2xl shadow-xl shadow-teal-500/20">
                             <Briefcase className="w-6 h-6 text-white" />
                         </div>
-                        <h2 className="text-3xl lg:text-4xl font-black text-white tracking-tighter">
-                            Strategic <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-violet-400">Hub</span>
+                        <h2 className="text-3xl lg:text-4xl font-bold text-white tracking-tight">
+                            Projects <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-violet-400">Hub</span>
                         </h2>
                     </div>
-                    <p className="text-slate-500 font-bold text-xs uppercase tracking-[0.2em] ml-1">{projects.length} Active Deployments</p>
+                    <p className="text-slate-500 font-medium text-sm ml-1">{projects.length} Active Projects</p>
                 </div>
 
                 <div className="flex items-center gap-4 w-full lg:w-auto">
@@ -197,7 +197,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                             className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${viewMode === 'kanban' ? 'bg-gradient-to-r from-teal-500 to-teal-400 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
                         >
                             <Trello className="w-4 h-4" />
-                            <span className="text-xs font-black uppercase tracking-wider">Kanban</span>
+                            <span className="text-xs font-bold">Board</span>
                         </button>
                         <button
                             onClick={() => setViewMode('timeline')}
@@ -213,7 +213,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                         className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white text-slate-900 hover:bg-teal-50 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl hover:shadow-white/10 active:scale-95"
                     >
                         <Plus className="w-4 h-4" />
-                        New Initiative
+                        New Project
                     </button>
                 </div>
             </div>
@@ -260,7 +260,7 @@ const MobileProjectList = ({ projects, onDelete }: any) => {
         return (
             <div className="flex flex-col items-center justify-center py-12 opacity-50">
                 <Briefcase className="w-12 h-12 text-slate-500 mb-4" />
-                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No Active Initiatives</p>
+                <p className="text-sm font-medium text-slate-400">No Active Projects</p>
             </div>
         );
     }
@@ -275,13 +275,13 @@ const MobileProjectList = ({ projects, onDelete }: any) => {
                     >
                         <div className="flex items-center gap-4">
                             <div className={`w-1.5 h-10 rounded-full ${project.status === 'done' ? 'bg-teal-500 shadow-[0_0_10px_rgba(20,184,166,0.5)]' :
-                                    project.status === 'in_progress' ? 'bg-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.5)]' :
-                                        project.status === 'review' ? 'bg-orange-500' :
-                                            project.status === 'todo' ? 'bg-blue-500' : 'bg-slate-500'
+                                project.status === 'in_progress' ? 'bg-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.5)]' :
+                                    project.status === 'review' ? 'bg-orange-500' :
+                                        project.status === 'todo' ? 'bg-blue-500' : 'bg-slate-500'
                                 }`} />
                             <div>
-                                <h4 className="font-bold text-white text-sm tracking-tight">{project.name}</h4>
-                                <span className="text-[10px] uppercase text-slate-500 font-bold tracking-widest flex items-center gap-2">
+                                <h4 className="font-semibold text-white text-base">{project.name}</h4>
+                                <span className="text-xs text-slate-500 font-medium flex items-center gap-2">
                                     {project.status.replace('_', ' ')}
                                     <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
                                     <span className={`${project.progress === 100 ? 'text-teal-400' : 'text-slate-400'}`}>{project.progress}% Complete</span>
@@ -306,8 +306,8 @@ const MobileProjectList = ({ projects, onDelete }: any) => {
                             <div className="grid grid-cols-2 gap-4 bg-slate-950/30 p-3 rounded-xl border border-white/5">
                                 {project.startDate && (
                                     <div>
-                                        <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Start Date</div>
-                                        <div className="text-xs font-bold text-white flex items-center gap-2">
+                                        <div className="text-xs text-slate-500 font-medium mb-1">Start Date</div>
+                                        <div className="text-sm font-semibold text-white flex items-center gap-2">
                                             <Calendar className="w-3 h-3 text-slate-400" />
                                             {new Date(project.startDate).toLocaleDateString()}
                                         </div>
@@ -315,8 +315,8 @@ const MobileProjectList = ({ projects, onDelete }: any) => {
                                 )}
                                 {project.dueDate && (
                                     <div>
-                                        <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Target Date</div>
-                                        <div className="text-xs font-bold text-white flex items-center gap-2">
+                                        <div className="text-xs text-slate-500 font-medium mb-1">Due Date</div>
+                                        <div className="text-sm font-semibold text-white flex items-center gap-2">
                                             <Target className="w-3 h-3 text-slate-400" />
                                             {new Date(project.dueDate).toLocaleDateString()}
                                         </div>
@@ -328,7 +328,7 @@ const MobileProjectList = ({ projects, onDelete }: any) => {
                                 onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
                                 className="w-full py-3 bg-red-500/10 text-red-500 font-bold text-[10px] uppercase tracking-widest rounded-xl hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
                             >
-                                <Trash2 className="w-3 h-3" /> Terminate Initiative
+                                <Trash2 className="w-4 h-4" /> Delete Project
                             </button>
                         </div>
                     )}
@@ -353,7 +353,7 @@ const KanbanColumn = ({ column, projects, onDelete }: any) => {
                     {projects.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-12 opacity-20">
                             <Plus className="w-8 h-8 text-slate-500 mb-2" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Empty Sector</span>
+                            <span className="text-xs font-medium text-slate-500">Empty</span>
                         </div>
                     )}
                 </div>
@@ -429,22 +429,22 @@ const AddProjectModal = ({ clients, onClose, onAdd }: any) => {
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-[100] p-4">
             <div className="bg-slate-900 border border-white/10 rounded-[2rem] p-8 max-w-md w-full shadow-2xl shadow-teal-500/5 animate-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between mb-8">
-                    <h3 className="text-2xl font-black text-white tracking-tighter">Initialize Initiative</h3>
+                    <h3 className="text-xl font-bold text-white">New Project</h3>
                     <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl transition-colors"><X className="w-5 h-5 text-slate-400" /></button>
                 </div>
                 <form onSubmit={(e) => { e.preventDefault(); onAdd(formData); }} className="space-y-5">
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Initiative Name *</label>
+                        <label className="text-sm font-semibold text-slate-300 ml-1">Project Name *</label>
                         <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-bold focus:border-teal-400 outline-none transition-all shadow-inner" placeholder="Project Alpha..." />
+                            className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-medium focus:border-teal-400 outline-none transition-all shadow-inner" placeholder="Website Redesign..." />
                     </div>
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Strategic Intel</label>
+                        <label className="text-sm font-semibold text-slate-300 ml-1">Description</label>
                         <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3}
-                            className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-medium focus:border-teal-400 outline-none transition-all resize-none shadow-inner" placeholder="Mission details..." />
+                            className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-normal focus:border-teal-400 outline-none transition-all resize-none shadow-inner" placeholder="Project details..." />
                     </div>
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Client Node</label>
+                        <label className="text-sm font-semibold text-slate-300 ml-1">Client</label>
                         <select value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
                             className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-bold focus:border-teal-400 outline-none appearance-none">
                             <option value="">Internal</option>
@@ -453,19 +453,19 @@ const AddProjectModal = ({ clients, onClose, onAdd }: any) => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Launch date</label>
+                            <label className="text-sm font-semibold text-slate-300 ml-1">Start Date</label>
                             <input type="date" value={formData.startDate} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                                 className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-bold focus:border-teal-400 outline-none" />
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Target Date</label>
+                            <label className="text-sm font-semibold text-slate-300 ml-1">Due Date</label>
                             <input type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                                 className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-bold focus:border-teal-400 outline-none" />
                         </div>
                     </div>
                     <div className="flex gap-4 pt-6">
-                        <button type="button" onClick={onClose} className="flex-1 px-6 py-4 bg-slate-800 hover:bg-slate-700 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-300 transition-all">Abort</button>
-                        <button type="submit" className="flex-1 px-6 py-4 bg-gradient-to-r from-teal-500 to-teal-400 hover:from-teal-400 hover:to-teal-300 text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-teal-500/20 active:scale-95">Confirm</button>
+                        <button type="button" onClick={onClose} className="flex-1 px-6 py-4 bg-slate-800 hover:bg-slate-700 rounded-2xl font-bold text-sm text-slate-300 transition-all">Cancel</button>
+                        <button type="submit" className="flex-1 px-6 py-4 bg-teal-500 hover:bg-teal-400 text-slate-900 rounded-2xl font-bold text-sm transition-all shadow-lg shadow-teal-500/20 active:scale-95">Create Project</button>
                     </div>
                 </form>
             </div>

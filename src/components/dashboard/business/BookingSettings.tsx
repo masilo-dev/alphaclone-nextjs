@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { tenantService } from '@/services/tenancy/TenantService';
-import { Tenant } from '@/services/tenancy/types';
+import { Tenant, TenantSettings } from '@/services/tenancy/types';
 import { Settings, Copy, Plus, X, ExternalLink, Check } from 'lucide-react';
 import { Card, Button } from '@/components/ui/UIComponents';
 
@@ -11,12 +11,13 @@ interface BookingSettingsProps {
 }
 
 export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpdate, onClose }) => {
-    const [settings, setSettings] = useState(tenant.settings.booking || {
+    const [settings, setSettings] = useState<NonNullable<TenantSettings['booking']>>(tenant.settings.booking || {
         enabled: false,
         slug: tenant.slug,
         availability: {
             days: [1, 2, 3, 4, 5], // Mon-Fri
-            hours: { start: '09:00', end: '17:00' }
+            hours: { start: '09:00', end: '17:00' },
+            timezone: 'UTC' // Default
         },
         meetingTypes: [
             { id: '30min', name: '30 Min Meeting', duration: 30, price: 0 }
@@ -164,7 +165,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                     key={day}
                                     onClick={() => toggleDay(idx)}
                                     className={`
-                                        h-12 sm:h-auto aspect-square sm:aspect-auto sm:py-4 rounded-xl sm:rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95
+                                        h-12 sm:h-auto aspect-square sm:aspect-auto sm:py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95
                                         ${settings.availability.days.includes(idx)
                                             ? 'bg-white text-slate-950 border-white shadow-[0_0_20px_rgba(255,255,255,0.1)]'
                                             : 'bg-slate-900/50 text-slate-500 border-slate-800 hover:border-slate-600'}
@@ -214,6 +215,37 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                     className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-base font-bold text-white focus:border-teal-500/50 outline-none"
                                 />
                             </div>
+                        </div>
+
+                        {/* Timezone Selector */}
+                        <div className="bg-slate-900/50 p-6 rounded-3xl border border-slate-800/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="space-y-1">
+                                <label className="text-sm font-bold text-white">Operational Timezone</label>
+                                <p className="text-xs text-slate-500">Your availability will be calculated based on this zone.</p>
+                            </div>
+                            <select
+                                value={settings.availability.timezone || 'UTC'}
+                                onChange={(e) => setSettings({
+                                    ...settings,
+                                    availability: {
+                                        ...settings.availability,
+                                        timezone: e.target.value
+                                    }
+                                })}
+                                className="w-full sm:w-64 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-teal-500/50"
+                            >
+                                <option value="UTC">UTC (Universal Time)</option>
+                                <option value="America/New_York">Eastern Time (US & Canada)</option>
+                                <option value="America/Chicago">Central Time (US & Canada)</option>
+                                <option value="America/Denver">Mountain Time (US & Canada)</option>
+                                <option value="America/Los_Angeles">Pacific Time (US & Canada)</option>
+                                <option value="Europe/London">London (GMT/BST)</option>
+                                <option value="Europe/Paris">Paris (CET)</option>
+                                <option value="Asia/Dubai">Dubai (GST)</option>
+                                <option value="Asia/Singapore">Singapore (SGT)</option>
+                                <option value="Asia/Tokyo">Tokyo (JST)</option>
+                                <option value="Australia/Sydney">Sydney (AEST)</option>
+                            </select>
                         </div>
                     </div>
 
