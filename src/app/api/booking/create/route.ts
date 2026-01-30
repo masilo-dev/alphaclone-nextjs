@@ -3,15 +3,20 @@ import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 
 // Initialize Clients
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Initialize Clients inside handler to avoid build-time errors if env vars missing
+// const supabase = createClient(...);
 
 const DAILY_API_KEY = process.env.DAILY_API_KEY;
 
 export async function POST(req: Request) {
     try {
+        // Initialize Supabase Client
+        // Must be inside handler to avoid build-time error if key is missing during static generation
+        const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+
         const body = await req.json();
         const {
             tenant_id,
