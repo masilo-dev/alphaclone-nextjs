@@ -10,7 +10,8 @@ import {
 } from 'date-fns';
 import {
     Clock, ChevronLeft, ChevronRight, Globe,
-    Sun, Moon, Sunset, CheckCircle2, AlertCircle
+    Sun, Moon, Sunset, CheckCircle2, AlertCircle,
+    Calendar, User
 } from 'lucide-react';
 import { tenantService } from '@/services/tenancy/TenantService';
 import { Tenant } from '@/services/tenancy/types';
@@ -57,7 +58,53 @@ export default function BookingPage() {
         notes: ''
     });
     const [submitting, setSubmitting] = useState(false);
-    const [success, setSuccess] = useState(false);
+    const [bookingSuccess, setBookingSuccess] = useState<{ date: Date; time: string; url: string } | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    const handleBook = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedSlot || !tenant || !service) return;
+
+        setSubmitting(true);
+        try {
+            // Prepare payload
+            const payload = {
+                tenant_id: tenant.id,
+                booking_type_id: service.id,
+                booking_type_name: service.name,
+                client_name: formData.name,
+                client_email: formData.email,
+                client_phone: formData.phone,
+                client_notes: formData.notes,
+                start_time: selectedSlot.start,
+                end_time: selectedSlot.end,
+                time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            };
+
+            const res = await fetch('/api/booking/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.error || 'Booking failed');
+
+            setBookingSuccess({
+                date: parseISO(selectedSlot.start),
+                time: format(parseISO(selectedSlot.start), 'h:mm a'),
+                url: data.roomUrl
+            });
+            toast.success('Booking confirmed!');
+        } catch (err: any) {
+            console.error(err);
+            toast.error('Failed to book appointment. Please try again.');
+            setError(err.message || 'Failed to book appointment.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     // Initialization
     useEffect(() => {
@@ -82,9 +129,10 @@ export default function BookingPage() {
             if (error || !s) throw new Error('Service not found');
             setService(s);
 
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
             toast.error('Failed to load booking details');
+            setError(err.message || 'Failed to load booking details');
         }
     };
 
@@ -133,42 +181,9 @@ export default function BookingPage() {
             setSlots(mockSlots);
         } catch (err) {
             toast.error('Could not load availability');
+            setError('Could not load availability');
         } finally {
             setLoadingSlots(false);
-        }
-    };
-
-    const handleBook = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!tenant || !service || !selectedSlot) return;
-        setSubmitting(true);
-
-        try {
-            // Insert into 'bookings' table directly (since we have public insert policy)
-            // Or use API route for emails etc.
-            // Using API route is better for side-effects (emails, calendar sync).
-
-            // For now, let's try direct Supabase insert to verify Schema
-            const { error } = await supabase.from('bookings').insert({
-                tenant_id: tenant.id,
-                booking_type_id: service.id,
-                client_name: formData.name,
-                client_email: formData.email,
-                client_phone: formData.phone,
-                client_notes: formData.notes,
-                start_time: selectedSlot.start,
-                end_time: selectedSlot.end,
-                status: 'confirmed',
-                metadata: { source: 'web_booking_v3' }
-            });
-
-            if (error) throw error;
-            setSuccess(true);
-        } catch (err) {
-            console.error(err);
-            toast.error('Booking failed. Please try again.');
-        } finally {
-            setSubmitting(false);
         }
     };
 
@@ -201,33 +216,70 @@ export default function BookingPage() {
     // --- Loading / Error States ---
     if (!tenant || !service) return <div className="h-screen bg-[#050505] flex items-center justify-center text-slate-500 animate-pulse">Loading...</div>;
 
-    // --- Success View ---
-    if (success) {
+    if (error) {
         return (
-            <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6">
-                <div className="max-w-md w-full bg-slate-900/50 border border-teal-500/30 rounded-[2rem] p-8 text-center relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/20 blur-[50px] rounded-full"></div>
-                    <div className="w-20 h-20 bg-teal-500/20 text-teal-400 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl shadow-xl shadow-teal-500/10">
-                        <CheckCircle2 className="w-10 h-10" />
-                    </div>
-                    <h2 className="text-3xl font-black text-white mb-2">Confirmed!</h2>
-                    <p className="text-slate-400 mb-8">You are booked with {tenant.name}.</p>
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white p-4">
+                <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl max-w-md text-center">
+                    <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-xl font-bold mb-2">Something went wrong</h2>
+                    <p className="text-slate-400">{error || 'Service not found'}</p>
+                </div>
+            </div>
+        );
+    }
 
-                    <div className="bg-slate-950 p-6 rounded-2xl mb-8 border border-white/5">
-                        <div className="text-white font-bold text-lg mb-1">{service.name}</div>
-                        <div className="text-teal-400 text-sm font-bold uppercase tracking-wider">
-                            {format(parseISO(selectedSlot!.start), 'EEEE, MMMM do @ h:mm a')}
+    if (bookingSuccess) {
+        return (
+            <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-teal-500/30 flex items-center justify-center p-4">
+                <div className="w-full max-w-lg bg-slate-900 border border-white/5 rounded-[2rem] p-8 text-center animate-in fade-in zoom-in duration-500 shadow-2xl">
+                    <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <CheckCircle2 className="w-10 h-10 text-teal-400" />
+                    </div>
+                    <h1 className="text-2xl font-black text-white mb-2">Booking Confirmed!</h1>
+                    <p className="text-slate-400 mb-8">Passports ready! We've sent a confirmation email to <span className="text-white font-medium">{formData.email}</span>.</p>
+
+                    <div className="bg-slate-950 rounded-xl p-6 mb-8 text-left border border-white/5">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
+                                <Calendar className="w-5 h-5 text-slate-400" />
+                            </div>
+                            <div>
+                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Date</div>
+                                <div className="font-bold text-white">{format(bookingSuccess.date, 'EEEE, MMMM do, yyyy')}</div>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
+                                <Clock className="w-5 h-5 text-slate-400" />
+                            </div>
+                            <div>
+                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Time</div>
+                                <div className="font-bold text-white">{bookingSuccess.time}</div>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
+                                <User className="w-5 h-5 text-slate-400" />
+                            </div>
+                            <div>
+                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Service</div>
+                                <div className="font-bold text-white">{service?.name}</div>
+                            </div>
                         </div>
                     </div>
 
-                    <button
-                        onClick={() => {
-                            setSuccess(false);
-                            setSelectedSlot(null);
-                            setSelectedDate(null);
-                        }}
-                        className="text-slate-500 hover:text-white text-sm font-bold uppercase tracking-widest transition-colors"
-                    >
+                    {bookingSuccess.url && (
+                        <a
+                            href={bookingSuccess.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block w-full py-4 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black uppercase tracking-widest text-xs rounded-xl transition-all shadow-lg shadow-teal-500/20 mb-4"
+                        >
+                            Join Video Call
+                        </a>
+                    )}
+
+                    <button onClick={() => window.location.reload()} className="text-xs font-bold text-slate-500 hover:text-white transition-colors">
                         Book Another
                     </button>
                 </div>
@@ -287,7 +339,7 @@ export default function BookingPage() {
                 </div>
 
                 {/* 2. Calendar & Slots */}
-                <div className={`${isSlotSelected ? 'hidden lg:block lg:col-span-4' : 'lg:col-span-8'} transition-all`}>
+                <div className={`${(isDateSelected || isSlotSelected) ? 'hidden lg:block lg:col-span-4' : 'lg:col-span-8'} transition-all`}>
                     <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 backdrop-blur-xl">
                         {/* Month Nav */}
                         <div className="flex items-center justify-between mb-8 px-2">
@@ -300,7 +352,7 @@ export default function BookingPage() {
 
                         {/* Calendar Grid */}
                         <div className="grid grid-cols-7 gap-y-4 mb-8 text-center">
-                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <div key={d} className="text-[10px] font-black text-slate-600">{d}</div>)}
+                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => <div key={`${d}-${i}`} className="text-[10px] font-black text-slate-600">{d}</div>)}
                             {calendarDays.map(day => {
                                 const isCurrentMonth = isSameMonth(day, currentMonth);
                                 const isSelected = selectedDate && isSameDay(day, selectedDate);
@@ -343,7 +395,7 @@ export default function BookingPage() {
                 </div>
 
                 {/* 3. Slot List (Desktop) OR Form (Both) */}
-                <div className={`${isSlotSelected ? 'lg:col-span-4' : 'hidden lg:block lg:col-span-0 opacity-0'} transition-all`}>
+                <div className={`${(isDateSelected || isSlotSelected) ? 'lg:col-span-4 opacity-100' : 'hidden lg:block lg:col-span-0 opacity-0'} transition-all`}>
 
                     {!isSlotSelected ? (
                         // Desktop Slot Picker
@@ -399,9 +451,8 @@ export default function BookingPage() {
                         </div>
                     )}
                 </div>
-
             </div>
-        </div>
+        </div >
     );
 }
 
