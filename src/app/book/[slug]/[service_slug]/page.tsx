@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { fetchBookingData, BookingType } from '@/actions/booking';
 import {
     format, addDays, startOfToday, isSameDay, isValid,
     startOfMonth, endOfMonth, startOfWeek, endOfWeek,
@@ -13,19 +13,8 @@ import {
     Sun, Moon, Sunset, CheckCircle2, AlertCircle,
     Calendar, User
 } from 'lucide-react';
-import { tenantService } from '@/services/tenancy/TenantService';
 import { Tenant } from '@/services/tenancy/types';
 import toast from 'react-hot-toast';
-
-// Types
-interface BookingType {
-    id: string;
-    name: string;
-    description: string;
-    duration: number;
-    price: number;
-    currency: string;
-}
 
 interface BookingSlot {
     start: string; // ISO
@@ -113,22 +102,9 @@ export default function BookingPage() {
 
     const loadInitialData = async () => {
         try {
-            // 1. Fetch Tenant
-            const t = await tenantService.getTenantBySlug(activeSlug);
-            if (!t) throw new Error('Tenant not found');
-            setTenant(t);
-
-            // 2. Fetch Service (Booking Type)
-            const { data: s, error } = await supabase
-                .from('booking_types')
-                .select('*')
-                .eq('tenant_id', t.id)
-                .eq('slug', serviceSlug)
-                .single();
-
-            if (error || !s) throw new Error('Service not found');
-            setService(s);
-
+            const { tenant, service } = await fetchBookingData(activeSlug, serviceSlug);
+            setTenant(tenant);
+            setService(service);
         } catch (err: any) {
             console.error(err);
             toast.error('Failed to load booking details');
