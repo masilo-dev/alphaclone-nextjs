@@ -38,6 +38,17 @@ export default {
             fontFamily: {
                 sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
             },
+            // STRICT APP TYPOGRAPHY SCALE
+            fontSize: {
+                xs: ['12px', '16px'],
+                sm: ['13px', '18px'], // App-like small
+                base: ['14px', '20px'], // Standard body
+                md: ['16px', '24px'],
+                lg: ['18px', '28px'],
+                xl: ['22px', '30px'], // Section headers
+                '2xl': ['24px', '32px'],
+                '3xl': ['32px', '40px'], // Hero headers
+            },
             animation: {
                 'fade-in': 'fadeIn 0.5s ease-out',
                 'slide-up': 'slideUp 0.5s ease-out',

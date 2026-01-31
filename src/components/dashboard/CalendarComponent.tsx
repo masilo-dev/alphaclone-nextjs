@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -48,6 +48,31 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         attendees: [],
     });
     const [availableUsers] = useState<any[]>([]);
+
+    // UseRef to control FullCalendar API
+    const calendarRef = useRef<FullCalendar>(null);
+
+    // Responsive View Logic
+    useEffect(() => {
+        const handleResize = () => {
+            const api = calendarRef.current?.getApi();
+            if (api) {
+                const isMobile = window.innerWidth < 768;
+                const currentView = api.view.type;
+                const desiredView = isMobile ? 'timeGridDay' : 'dayGridMonth';
+
+                if (currentView !== desiredView) {
+                    api.changeView(desiredView);
+                }
+            }
+        };
+
+        // Initial check
+        handleResize();
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [isLoading]); // Re-run when loading finishes to ensure calendar is mounted
 
     useEffect(() => {
         loadEvents();
@@ -280,10 +305,11 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
+            {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <CalendarIcon className="w-6 h-6 text-teal-400" />
+                    <h2 className="text-lg md:text-xl font-bold text-white flex items-center gap-2">
+                        <CalendarIcon className="w-5 h-5 md:w-6 md:h-6 text-teal-400" />
                         Calendar
                     </h2>
                     <p className="text-slate-400 mt-1">Manage your schedule and meetings</p>
@@ -368,8 +394,35 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
                     .calendar-dark-theme .fc-toolbar-title {
                         color: #f1f5f9;
-                        font-size: 1.5rem;
+                        font-size: 1.15rem; /* ~18px Max */
                         font-weight: 700;
+                    }
+
+                    /* STRICT TYPOGRAPHY OVERRIDES */
+                    .calendar-dark-theme .fc-event-title,
+                    .calendar-dark-theme .fc-event-time {
+                        font-size: 12px !important;
+                        font-weight: 500;
+                    }
+                    
+                    .calendar-dark-theme .fc-col-header-cell-cushion {
+                        font-size: 13px !important; 
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                    }
+
+                    .calendar-dark-theme .fc-timegrid-slot-label-cushion {
+                        font-size: 12px !important;
+                    }
+
+                    /* Hide specific views on mobile via CSS as backup */
+                    @media (max-width: 768px) {
+                        .fc-dayGridMonth-button, .fc-timeGridWeek-button {
+                            display: none !important;
+                        }
+                        .fc-toolbar-title {
+                            font-size: 1rem !important;
+                        }
                     }
 
                     .calendar-dark-theme .fc-event {
@@ -415,8 +468,9 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                     }
                 `}</style>
                 <FullCalendar
+                    ref={calendarRef}
                     plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                    initialView="dayGridMonth"
+                    initialView={typeof window !== 'undefined' && window.innerWidth < 768 ? 'timeGridDay' : 'dayGridMonth'}
                     headerToolbar={{
                         left: 'prev,next today',
                         center: 'title',

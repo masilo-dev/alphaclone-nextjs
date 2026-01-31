@@ -77,7 +77,7 @@ export default function CallPage() {
     }
 
     return (
-        <div className="h-screen w-screen bg-slate-950 overflow-hidden">
+        <div className="h-screen w-screen bg-slate-950 overflow-hidden overscroll-none touch-none">
             {roomUrl && user && (
                 <CustomVideoRoom
                     user={user}

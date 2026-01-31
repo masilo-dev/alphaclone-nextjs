@@ -1,4 +1,6 @@
 
+"use client";
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, X, Sparkles, Loader2, BrainCircuit, Globe, MapPin, Image as ImageIcon, Zap } from 'lucide-react';
 import { chatWithAI } from '../services/unifiedAIService';

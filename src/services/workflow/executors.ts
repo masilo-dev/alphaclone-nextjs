@@ -5,6 +5,7 @@
 
 import type { WorkflowStep, WorkflowContext, StepExecutor } from './types';
 import { eventBusHelpers } from '../eventBus';
+import { generateText } from '../unifiedAIService';
 
 /**
  * Email Step Executor
@@ -156,22 +157,75 @@ const loopExecutor: StepExecutor = async (step, context) => {
 
 /**
  * AI Decision Step Executor
- * AI-powered decision making
+ * AI-powered decision making using Gemini/Claude
  */
 const aiDecisionExecutor: StepExecutor = async (step, context) => {
-    const { prompt, options } = step.config;
+    const { prompt, options, decisionType } = step.config;
 
-    console.log(`[AIDecisionExecutor] Making AI decision`);
+    console.log(`[AIDecisionExecutor] Making real AI decision (Type: ${decisionType || 'general'})`);
 
-    // TODO: Integrate with Google Gemini AI
-    // For now, return a mock decision
-    const decision = options?.[0] || 'default';
+    // 1. Construct the system prompt and context
+    let systemPrompt = `You are an AI decision engine for a professional Business OS.
+Your task is to review the provided context and choose the most appropriate action from the allowed options.
 
-    return {
-        decision,
-        confidence: 0.85,
-        reasoning: 'AI analysis completed'
-    };
+ALLOWED OPTIONS:
+${options?.map((o: string) => `- ${o}`).join('\n') || '- default'}
+
+CRITICAL INSTRUCTIONS:
+- Return ONLY a JSON object with keys: "decision", "confidence", and "reasoning".
+- "decision" must exactly match one of the ALLOWED OPTIONS.
+- "confidence" should be a number between 0 and 1.
+- "reasoning" should be a concise explanation (1-2 sentences).
+- Do not provide any other text or explanation outside the JSON.`;
+
+    // Add specialized logic for lead qualification
+    if (decisionType === 'lead_qualification') {
+        systemPrompt += `\n\nLEAD QUALIFICATION CRITERIA (BANT):
+- Budget: Does the lead have the financial capacity?
+- Authority: Is the contact a decision-maker?
+- Need: Is there a clear business problem we can solve?
+- Timeline: Is there an urgency or defined timeframe?
+
+Evaluate the lead context against these criteria to make your decision.`;
+    }
+
+    const userPrompt = `CONTEXT VARIABLES:
+${JSON.stringify(context.variables, null, 2)}
+
+DECISION PROMPT:
+${replaceVariables(prompt, context)}`;
+
+    try {
+        // 2. Call AI Service
+        const { text, error } = await generateText(`${systemPrompt}\n\n${userPrompt}`, 1024);
+
+        if (error || !text) {
+            throw new Error(error || 'AI returned no decision text');
+        }
+
+        // 3. Parse and Validate Response
+        const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const result = JSON.parse(cleaned);
+
+        // Ensure decision is valid
+        const finalDecision = options?.includes(result.decision) ? result.decision : (options?.[0] || 'unknown');
+
+        return {
+            decision: finalDecision,
+            confidence: result.confidence || 0.5,
+            reasoning: result.reasoning || 'Decision reached via AI analysis.',
+            rawResponse: text // Keep for audit logging
+        };
+    } catch (error: any) {
+        console.error('[AIDecisionExecutor] AI Call failed:', error);
+        // Fallback to first option on failure
+        return {
+            decision: options?.[0] || 'error',
+            confidence: 0,
+            reasoning: `AI failure: ${error.message}. Falling back to default option.`,
+            error: true
+        };
+    }
 };
 
 /**

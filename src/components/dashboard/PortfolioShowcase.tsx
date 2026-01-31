@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { ExternalLink, Globe, Calendar, Tag, Search, Plus, Edit, Trash2, Upload, Image as ImageIcon, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { Project } from '../../types';
@@ -346,11 +348,10 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                         <button
                             key={cat.id}
                             onClick={() => setFilter(cat.id as any)}
-                            className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                                filter === cat.id
+                            className={`px-4 py-2 rounded-lg font-medium transition-all ${filter === cat.id
                                     ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/50'
                                     : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
-                            }`}
+                                }`}
                         >
                             {cat.label} ({cat.count})
                         </button>

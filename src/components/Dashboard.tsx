@@ -40,6 +40,7 @@ import NotificationCenter from './dashboard/NotificationCenter';
 import ThemeToggle from './ThemeToggle';
 import EnhancedGlobalSearch from './dashboard/EnhancedGlobalSearch';
 import Sidebar from './dashboard/Sidebar';
+import BottomNav from './dashboard/BottomNav';
 import ExitIntentModal from './ExitIntentModal';
 import IncomingCallModal from './dashboard/video/IncomingCallModal';
 // import { generateContract, generateArchitectSpecs } from '../services/geminiService';
@@ -1551,6 +1552,14 @@ const Dashboard: React.FC<DashboardProps> = ({
         onLogout={onLogout}
       />
 
+      {/* Mobile Bottom Navigation */}
+      <BottomNav
+        activeTab={activeTab}
+        onNavigate={(href) => setActiveTab(href)}
+        onToggleMenu={() => setSidebarOpen(true)}
+        unreadCount={unreadMessageCount}
+      />
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-950">
         {/* Header - Hidden during video calls unless manually toggled */}
@@ -1596,11 +1605,14 @@ const Dashboard: React.FC<DashboardProps> = ({
         )}
 
         {/* Main Content Area */}
-        <main id="main-content" className="flex-1 overflow-y-auto p-8 bg-slate-950 scroll-smooth relative" role="main">
-          {/* Background decorative elements */}
-          <div className="fixed top-20 left-1/3 w-96 h-96 bg-teal-600/5 rounded-full blur-3xl pointer-events-none" />
-          <div className="relative z-10 max-w-7xl mx-auto h-full">
-            {renderContent()}
+        <main id="main-content" className="flex-1 overflow-y-auto w-full bg-slate-950 scroll-smooth relative pb-safe md:pb-0" role="main">
+          {/* Content Wrapper for Max Width & Padding */}
+          <div className="max-w-[1240px] mx-auto p-4 md:p-8 pb-24 md:pb-8 min-h-full">
+            {/* Background decorative elements */}
+            <div className="fixed top-20 left-1/3 w-96 h-96 bg-teal-600/5 rounded-full blur-3xl pointer-events-none" />
+            <div className="relative z-10 max-w-7xl mx-auto h-full">
+              {renderContent()}
+            </div>
           </div>
         </main>
       </div>

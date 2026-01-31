@@ -14,6 +14,7 @@ const envSchema = z.object({
 
     // Daily.co (optional - for video calls, domain is required if using video)
     VITE_DAILY_DOMAIN: z.string().optional(),
+    DAILY_API_KEY: z.string().optional(),
 
     // Stripe (optional - for payments)
     VITE_STRIPE_PUBLIC_KEY: z.string()
@@ -37,6 +38,7 @@ function validateEnv() {
         VITE_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.superbase_anon_public_key,
         VITE_GEMINI_API_KEY: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY,
         VITE_DAILY_DOMAIN: process.env.NEXT_PUBLIC_DAILY_DOMAIN || process.env.VITE_DAILY_DOMAIN,
+        DAILY_API_KEY: process.env.DAILY_API_KEY || process.env.NEXT_PUBLIC_DAILY_API_KEY,
         VITE_STRIPE_PUBLIC_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || process.env.VITE_STRIPE_PUBLIC_KEY,
         VITE_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.VITE_SENTRY_DSN,
     };
@@ -74,6 +76,7 @@ function validateEnv() {
                 VITE_SUPABASE_ANON_KEY: env.VITE_SUPABASE_ANON_KEY,
                 VITE_GEMINI_API_KEY: env.VITE_GEMINI_API_KEY,
                 VITE_DAILY_DOMAIN: env.VITE_DAILY_DOMAIN,
+                DAILY_API_KEY: env.DAILY_API_KEY,
                 VITE_STRIPE_PUBLIC_KEY: env.VITE_STRIPE_PUBLIC_KEY,
                 VITE_SENTRY_DSN: env.VITE_SENTRY_DSN,
             } as any;
