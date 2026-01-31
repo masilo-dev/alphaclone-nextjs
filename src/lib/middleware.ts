@@ -9,6 +9,12 @@ export async function updateSession(request: NextRequest) {
         },
     })
 
+    // Safety check for missing environment variables to prevent 500 crashes
+    if (!ENV.VITE_SUPABASE_URL || !ENV.VITE_SUPABASE_ANON_KEY) {
+        console.error('Middleware Error: Missing Supabase Environment Variables');
+        return response;
+    }
+
     const supabase = createServerClient(
         ENV.VITE_SUPABASE_URL,
         ENV.VITE_SUPABASE_ANON_KEY,
