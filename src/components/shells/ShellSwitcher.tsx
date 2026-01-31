@@ -6,8 +6,17 @@ import MarketingShell from './MarketingShell';
 import AppShell from './AppShell';
 import Splash from '@/components/pwa/Splash';
 
+import { usePathname } from 'next/navigation';
+
 export default function ShellSwitcher({ children }: { children: React.ReactNode }) {
     const { isPWA, isLoading } = usePWA();
+    const pathname = usePathname();
+
+    // optimization: Booking pages are always "Marketing/Web" mode.
+    // Bypass PWA Loading/Splash screen completely for faster generic user access.
+    if (pathname?.startsWith('/book') || pathname?.startsWith('/meet')) {
+        return <MarketingShell>{children}</MarketingShell>;
+    }
 
     if (isLoading) {
         // While checking PWA status, we can show a splash or a very minimal loading state.
