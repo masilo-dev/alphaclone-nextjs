@@ -34,6 +34,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
         setSaving(true);
         try {
             await tenantService.updateTenant(tenant.id, {
+                slug: settings.slug, // Sync root slug for routing
                 settings: {
                     ...tenant.settings,
                     booking: settings
@@ -41,8 +42,13 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
             });
             onUpdate();
             onClose();
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to save booking settings', err);
+            if (err.message?.includes('violates unique constraint') || err.code === '23505') {
+                alert('This booking link is already taken. Please choose another one.');
+            } else {
+                alert('Failed to save settings. Please try again.');
+            }
         } finally {
             setSaving(false);
         }
