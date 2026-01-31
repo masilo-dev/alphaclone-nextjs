@@ -58,7 +58,10 @@ export const bookingService = {
 
             const data = await response.json();
             return { slots: data.slots || [], error: null };
-        } catch (err) {
+        } catch (err: any) {
+            if (err.name === 'AbortError') {
+                return { slots: [], error: null }; // Ignore intended aborts
+            }
             console.error(err);
             return { slots: [], error: String(err) };
         }
@@ -94,7 +97,10 @@ export const bookingService = {
 
             const data = await response.json();
             return { bookingId: data.bookingId, error: null };
-        } catch (err) {
+        } catch (err: any) {
+            if (err.name === 'AbortError') {
+                return { bookingId: null, error: null };
+            }
             console.error('[createBooking] Error:', err);
             return { bookingId: null, error: String(err) };
         }
