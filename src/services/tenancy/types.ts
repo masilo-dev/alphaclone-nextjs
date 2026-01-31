@@ -57,6 +57,10 @@ export interface TenantSettings {
             price: number; // 0 for free
             description?: string;
         }[];
+        // Logic Settings
+        bufferTime?: number; // default 15 mins
+        minNotice?: number; // default 4 hours
+        futureLimit?: number; // default 60 days
     };
 }
 

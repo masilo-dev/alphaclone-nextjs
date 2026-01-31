@@ -89,9 +89,9 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <h2 className="text-2xl font-bold">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-4">
+                    <h2 className="text-xl sm:text-2xl font-bold">
                         {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                     </h2>
                     <div className="flex gap-2">
@@ -109,17 +109,17 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                         </button>
                     </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex w-full sm:w-auto gap-2">
                     <button
                         onClick={() => setShowBookingSettings(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors"
                     >
                         <Settings className="w-4 h-4" />
-                        Settings
+                        <span className="sr-only sm:not-sr-only">Settings</span>
                     </button>
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors font-semibold text-slate-950"
                     >
                         <Plus className="w-4 h-4" />
                         Add Event

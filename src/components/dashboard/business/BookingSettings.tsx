@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { tenantService } from '@/services/tenancy/TenantService';
 import { Tenant, TenantSettings } from '@/services/tenancy/types';
-import { Settings, Copy, Plus, X, ExternalLink, Check } from 'lucide-react';
+import { Settings, Copy, Plus, X, ExternalLink, Globe } from 'lucide-react';
 import { Card, Button } from '@/components/ui/UIComponents';
 
 interface BookingSettingsProps {
@@ -21,7 +21,11 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
         },
         meetingTypes: [
             { id: '30min', name: '30 Min Meeting', duration: 30, price: 0 }
-        ]
+        ],
+        // Default Logic Settings
+        bufferTime: 15,
+        minNotice: 4,
+        futureLimit: 60
     });
 
     const [saving, setSaving] = useState(false);
@@ -69,17 +73,17 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
             />
             <Card className="relative bg-[#0a0a0a] border border-slate-800/50 sm:rounded-3xl p-0 flex flex-col w-full max-w-2xl h-full sm:h-auto sm:max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-xl shrink-0">
+                <div className="flex items-start sm:items-center justify-between p-4 sm:p-6 border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-xl shrink-0">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-teal-500/10 rounded-xl">
-                            <Settings className="w-6 h-6 text-teal-400" />
+                        <div className="p-2 sm:p-3 bg-teal-500/10 rounded-xl">
+                            <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-teal-400" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold">Booking Settings</h2>
-                            <p className="text-slate-400 text-sm">Configure your public booking page</p>
+                            <h2 className="text-lg sm:text-xl font-bold">Booking Settings</h2>
+                            <p className="text-slate-400 text-xs sm:text-sm">Configure your public booking page</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg">
+                    <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg -mr-2 sm:mr-0">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -87,67 +91,62 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 sm:space-y-10 overscroll-contain">
                     {/* 1. Main Toggle & Link */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between p-5 bg-teal-500/5 border border-teal-500/10 rounded-2xl group transition-all hover:bg-teal-500/10">
-                            <label className="flex items-center gap-4 cursor-pointer select-none">
-                                <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${settings.enabled ? 'bg-teal-500 border-teal-500' : 'border-slate-600 bg-slate-800'}`}>
-                                    {settings.enabled && <Check className="w-4 h-4 text-slate-950 font-bold" />}
-                                    <input
-                                        type="checkbox"
-                                        checked={settings.enabled}
-                                        onChange={(e) => setSettings({ ...settings, enabled: e.target.checked })}
-                                        className="hidden"
-                                    />
-                                </div>
-                                <div>
-                                    <span className="font-bold text-white tracking-wide block">Booking Page Status</span>
-                                    <span className="text-xs text-slate-500 uppercase font-mono tracking-widest leading-none">
-                                        {settings.enabled ? 'Global Up-Link Active' : 'System Offline'}
-                                    </span>
-                                </div>
+                    <div className="space-y-6">
+                        {/* Enable Toggle */}
+                        <div className="flex items-center justify-between p-4 bg-slate-900/30 rounded-2xl border border-slate-800">
+                            <div>
+                                <h3 className="font-bold text-white text-sm">Public Booking Page</h3>
+                                <p className="text-xs text-slate-500">Allow clients to book you online.</p>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={settings.enabled}
+                                    onChange={(e) => setSettings({ ...settings, enabled: e.target.checked })}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
                             </label>
-                            {settings.enabled && (
-                                <div className="flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0">
-                                    <button
-                                        className="text-[10px] flex items-center justify-center gap-2 text-teal-400 hover:text-white bg-slate-900 px-4 py-3 sm:py-2 rounded-xl border border-slate-800 transition-all font-black tracking-widest uppercase italic w-full sm:w-auto"
-                                        onClick={() => {
-                                            const url = `${window.location.origin}/book/${settings.slug}`;
-                                            window.open(url, '_blank');
-                                        }}
-                                    >
-                                        <ExternalLink className="w-3 h-3" />
-                                        PREVIEW
-                                    </button>
-                                    <button
-                                        className="text-[10px] flex items-center justify-center gap-2 text-slate-950 bg-teal-500 hover:bg-white px-4 py-3 sm:py-2 rounded-xl transition-all font-black tracking-widest uppercase w-full sm:w-auto"
-                                        onClick={() => {
-                                            const url = `${window.location.origin}/book/${settings.slug}`;
-                                            navigator.clipboard.writeText(url);
-                                        }}
-                                    >
-                                        <Copy className="w-3 h-3" />
-                                        COPY LINK
-                                    </button>
-                                </div>
-                            )}
                         </div>
+
                         {settings.enabled && (
-                            <div className="flex flex-col gap-2">
-                                <span className="text-slate-500 text-[10px] font-black tracking-widest uppercase px-2">Deployment Path</span>
-                                <div className="relative group">
-                                    <div className="hidden sm:flex absolute inset-y-0 left-4 items-center pointer-events-none text-slate-500 font-mono text-xs">
-                                        alphaclone.tech/book/
+                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                {/* Link Display & Copy */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">Your Booking Link</label>
+                                    <div className="flex gap-2">
+                                        <div className="flex-1 bg-slate-950 border border-slate-800 rounded-xl flex items-center px-4 py-3 gap-2 overflow-hidden">
+                                            <Globe className="w-4 h-4 text-slate-500 shrink-0" />
+                                            <span className="text-sm text-slate-500 truncate inline-block max-w-[120px] sm:max-w-none">alphaclone.tech/book/</span>
+                                            <input
+                                                value={settings.slug}
+                                                onChange={(e) => setSettings({ ...settings, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                                                className="flex-1 bg-transparent border-none outline-none text-sm font-bold text-white placeholder-slate-600 min-w-[50px]"
+                                                placeholder="username"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                const url = `${window.location.origin}/book/${settings.slug}`;
+                                                navigator.clipboard.writeText(url);
+                                            }}
+                                            className="p-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700 transition-colors"
+                                            title="Copy Link"
+                                        >
+                                            <Copy className="w-5 h-5" />
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                const url = `${window.location.origin}/book/${settings.slug}`;
+                                                window.open(url, '_blank');
+                                            }}
+                                            className="p-3 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 rounded-xl border border-teal-500/20 transition-colors"
+                                            title="Open Page"
+                                        >
+                                            <ExternalLink className="w-5 h-5" />
+                                        </button>
                                     </div>
-                                    <div className="sm:hidden mb-2 text-slate-500 font-mono text-xs px-1">
-                                        alphaclone.tech/book/
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={settings.slug}
-                                        onChange={(e) => setSettings({ ...settings, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl sm:pl-[125px] px-4 py-4 text-sm font-bold text-teal-400 focus:border-teal-500/50 outline-none transition-all"
-                                        placeholder="your-custom-slug"
-                                    />
+                                    <p className="text-[10px] text-slate-500 px-1">Tip: Keep your slug short and simple.</p>
                                 </div>
                             </div>
                         )}
@@ -246,6 +245,76 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                 <option value="Asia/Tokyo">Tokyo (JST)</option>
                                 <option value="Australia/Sydney">Sydney (AEST)</option>
                             </select>
+                        </div>
+
+                        {/* [NEW] Booking Logic Settings */}
+                        <div className="bg-slate-900/50 p-6 rounded-3xl border border-slate-800/50 space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] px-2 leading-none">Smart Logic</h3>
+                                <div className="h-[1px] flex-1 bg-slate-800 mx-4 opacity-50" />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                                {/* Buffer Time */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-2">Buffer Time</label>
+                                    <div className="relative">
+                                        <select
+                                            value={settings.bufferTime || 15}
+                                            onChange={(e) => setSettings({ ...settings, bufferTime: parseInt(e.target.value) })}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-teal-500/50 appearance-none"
+                                        >
+                                            <option value={0}>None</option>
+                                            <option value={5}>5 mins</option>
+                                            <option value={10}>10 mins</option>
+                                            <option value={15}>15 mins</option>
+                                            <option value={30}>30 mins</option>
+                                            <option value={60}>1 hour</option>
+                                        </select>
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-xs font-bold">MIN</div>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 px-2 leading-tight">Padding between meetings.</p>
+                                </div>
+
+                                {/* Min Notice */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-2">Minimum Notice</label>
+                                    <div className="relative">
+                                        <select
+                                            value={settings.minNotice || 4}
+                                            onChange={(e) => setSettings({ ...settings, minNotice: parseInt(e.target.value) })}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-teal-500/50 appearance-none"
+                                        >
+                                            <option value={0}>Instant</option>
+                                            <option value={1}>1 hour</option>
+                                            <option value={2}>2 hours</option>
+                                            <option value={4}>4 hours</option>
+                                            <option value={24}>24 hours</option>
+                                            <option value={48}>48 hours</option>
+                                        </select>
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-xs font-bold">URS</div>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 px-2 leading-tight">Prevent last-minute bookings.</p>
+                                </div>
+
+                                {/* Future Limit */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-2">Booking Limit</label>
+                                    <div className="relative">
+                                        <select
+                                            value={settings.futureLimit || 60}
+                                            onChange={(e) => setSettings({ ...settings, futureLimit: parseInt(e.target.value) })}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-teal-500/50 appearance-none"
+                                        >
+                                            <option value={14}>2 weeks</option>
+                                            <option value={30}>30 days</option>
+                                            <option value={60}>60 days</option>
+                                            <option value={90}>3 months</option>
+                                        </select>
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-xs font-bold">DYS</div>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 px-2 leading-tight">How far ahead people can book.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

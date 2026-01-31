@@ -6,12 +6,11 @@ import { fetchBookingData, BookingType } from '@/actions/booking';
 import {
     format, addDays, startOfToday, isSameDay, isValid,
     startOfMonth, endOfMonth, startOfWeek, endOfWeek,
-    eachDayOfInterval, isSameMonth, addMonths, subMonths, isBefore, parseISO, getHours
+    eachDayOfInterval, isSameMonth, addMonths, subMonths, isBefore, parseISO, getHours, set
 } from 'date-fns';
 import {
     Clock, ChevronLeft, ChevronRight, Globe,
-    Sun, Moon, Sunset, CheckCircle2, AlertCircle,
-    Calendar, User
+    CheckCircle2, AlertCircle, Calendar, User, ArrowLeft, Phone, Mail
 } from 'lucide-react';
 import { Tenant } from '@/services/tenancy/types';
 import toast from 'react-hot-toast';
@@ -21,6 +20,8 @@ interface BookingSlot {
     end: string;   // ISO
 }
 
+type Step = 'date' | 'time' | 'form' | 'success';
+
 export default function BookingPage() {
     const params = useParams();
     const router = useRouter();
@@ -29,6 +30,11 @@ export default function BookingPage() {
 
     const [tenant, setTenant] = useState<Tenant | null>(null);
     const [service, setService] = useState<BookingType | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Flow State
+    const [step, setStep] = useState<Step>('date');
 
     // Calendar State
     const [currentMonth, setCurrentMonth] = useState<Date>(startOfToday());
@@ -48,7 +54,97 @@ export default function BookingPage() {
     });
     const [submitting, setSubmitting] = useState(false);
     const [bookingSuccess, setBookingSuccess] = useState<{ date: Date; time: string; url: string } | null>(null);
-    const [error, setError] = useState<string | null>(null);
+
+    // Logic Settings (Defaults)
+    const bufferTime = tenant?.settings.booking?.bufferTime || 15;
+    const minNotice = tenant?.settings.booking?.minNotice || 4;
+    const futureLimit = tenant?.settings.booking?.futureLimit || 60;
+
+    // --- Data Loading ---
+    useEffect(() => {
+        if (activeSlug && serviceSlug) loadInitialData();
+    }, [activeSlug, serviceSlug]);
+
+    const loadInitialData = async () => {
+        try {
+            const { tenant, service } = await fetchBookingData(activeSlug, serviceSlug);
+            setTenant(tenant);
+            setService(service);
+        } catch (err: any) {
+            console.error(err);
+            setError(err.message || 'Failed to load booking details');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --- Slot Fetching ---
+    useEffect(() => {
+        if (selectedDate && tenant && service) {
+            fetchSlots(selectedDate);
+            // On mobile, moving to date select doesn't auto-advance, user taps slot later
+            // On desktop, we show slots side-by-side
+        } else {
+            setSlots([]);
+        }
+    }, [selectedDate, tenant, service]);
+
+    const fetchSlots = async (date: Date) => {
+        setLoadingSlots(true);
+        try {
+            // TODO: Replace with real RPC
+            // Mocking logic to respect settings
+            await new Promise(r => setTimeout(r, 400));
+
+            const mockSlots: BookingSlot[] = [];
+            const startHour = 9;
+            const endHour = 17;
+            const duration = service?.duration || 30;
+            const totalDuration = duration + bufferTime;
+
+            let current = new Date(date);
+            current.setHours(startHour, 0, 0, 0);
+
+            const end = new Date(date);
+            end.setHours(endHour, 0, 0, 0);
+
+            const now = new Date();
+            // Apply Min Notice
+            const minStart = new Date(now.getTime() + minNotice * 60 * 60 * 1000);
+
+            while (current < end) {
+                const slotStart = new Date(current);
+                const slotEnd = new Date(current.getTime() + duration * 60000);
+
+                // Check logic
+                if (slotStart > minStart) {
+                    // Random availability
+                    if (Math.random() > 0.3) {
+                        mockSlots.push({
+                            start: slotStart.toISOString(),
+                            end: slotEnd.toISOString()
+                        });
+                    }
+                }
+
+                // Increment by duration + buffer
+                current = new Date(current.getTime() + totalDuration * 60000);
+            }
+
+            setSlots(mockSlots);
+        } catch (err) {
+            toast.error('Could not load availability');
+        } finally {
+            setLoadingSlots(false);
+        }
+    };
+
+    const handleSlotSelect = (slot: BookingSlot) => {
+        setSelectedSlot(slot);
+        if (window.innerWidth < 1024) {
+            setStep('form'); // Mobile auto-advance
+        }
+    };
 
     const handleBook = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -56,7 +152,6 @@ export default function BookingPage() {
 
         setSubmitting(true);
         try {
-            // Prepare payload
             const payload = {
                 tenant_id: tenant.id,
                 booking_type_id: service.id,
@@ -70,14 +165,8 @@ export default function BookingPage() {
                 time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone
             };
 
-            const res = await fetch('/api/booking/create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
+            const res = await fetch('/api/booking/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             const data = await res.json();
-
             if (!res.ok) throw new Error(data.error || 'Booking failed');
 
             setBookingSuccess({
@@ -85,177 +174,56 @@ export default function BookingPage() {
                 time: format(parseISO(selectedSlot.start), 'h:mm a'),
                 url: data.roomUrl
             });
-            toast.success('Booking confirmed!');
+            setStep('success');
+            toast.success('Confirmed!');
         } catch (err: any) {
-            console.error(err);
-            toast.error('Failed to book appointment. Please try again.');
-            setError(err.message || 'Failed to book appointment.');
+            toast.error('Booking failed. Please try again.');
         } finally {
             setSubmitting(false);
         }
     };
 
-    // Initialization
-    useEffect(() => {
-        if (activeSlug && serviceSlug) loadInitialData();
-    }, [activeSlug, serviceSlug]);
+    // --- Render Helpers ---
+    const calendarDays = useMemo(() => eachDayOfInterval({
+        start: startOfWeek(startOfMonth(currentMonth)),
+        end: endOfWeek(endOfMonth(currentMonth))
+    }), [currentMonth]);
 
-    const loadInitialData = async () => {
-        try {
-            const { tenant, service } = await fetchBookingData(activeSlug, serviceSlug);
-            setTenant(tenant);
-            setService(service);
-        } catch (err: any) {
-            console.error(err);
-            toast.error('Failed to load booking details');
-            setError(err.message || 'Failed to load booking details');
-        }
-    };
+    if (loading) return <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center"><div className="w-8 h-8 border-4 border-slate-900 dark:border-white border-t-transparent rounded-full animate-spin"></div></div>;
+    if (error || !tenant || !service) return <div className="min-h-screen flex items-center justify-center text-red-500">{error || 'Not found'}</div>;
 
-    // Load Slots when Date Changes
-    useEffect(() => {
-        if (selectedDate && tenant && service) {
-            fetchSlots(selectedDate);
-        } else {
-            setSlots([]);
-        }
-    }, [selectedDate, tenant, service]);
-
-    const fetchSlots = async (date: Date) => {
-        setLoadingSlots(true);
-        try {
-            // TODO: Replace with real RPC or server-side logic
-            // Ideally: fetch(`/api/booking/slots?date=${...}&type=${service.id}`)
-
-            // MOCK LOGIC FOR UI DEV
-            // Generate some random slots for now to prove UI works
-            await new Promise(r => setTimeout(r, 600)); // Fake latency
-
-            const mockSlots: BookingSlot[] = [];
-            const startHour = 9;
-            const endHour = 17;
-            const duration = service?.duration || 30;
-
-            // Generate slots every [duration] minutes
-            let current = new Date(date);
-            current.setHours(startHour, 0, 0, 0);
-
-            const end = new Date(date);
-            end.setHours(endHour, 0, 0, 0);
-
-            while (current < end) {
-                // Randomly skip some to simulate busy
-                if (Math.random() > 0.3) {
-                    mockSlots.push({
-                        start: current.toISOString(),
-                        end: new Date(current.getTime() + duration * 60000).toISOString()
-                    });
-                }
-                current = new Date(current.getTime() + duration * 60000);
-            }
-
-            setSlots(mockSlots);
-        } catch (err) {
-            toast.error('Could not load availability');
-            setError('Could not load availability');
-        } finally {
-            setLoadingSlots(false);
-        }
-    };
-
-    // --- Helpers ---
-    const calendarDays = useMemo(() => {
-        const monthStart = startOfMonth(currentMonth);
-        const monthEnd = endOfMonth(monthStart);
-        const startDate = startOfWeek(monthStart);
-        const endDate = endOfWeek(monthEnd);
-        return eachDayOfInterval({ start: startDate, end: endDate });
-    }, [currentMonth]);
-
-    const groupedSlots = useMemo(() => {
-        const groups = {
-            morning: [] as BookingSlot[],
-            afternoon: [] as BookingSlot[],
-            evening: [] as BookingSlot[]
-        };
-
-        slots.forEach(slot => {
-            const hour = getHours(parseISO(slot.start));
-            if (hour < 12) groups.morning.push(slot);
-            else if (hour < 17) groups.afternoon.push(slot);
-            else groups.evening.push(slot);
-        });
-
-        return groups;
-    }, [slots]);
-
-    // --- Loading / Error States ---
-    if (!tenant || !service) return <div className="h-screen bg-[#050505] flex items-center justify-center text-slate-500 animate-pulse">Loading...</div>;
-
-    if (error) {
+    // Success View
+    if (step === 'success' && bookingSuccess) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white p-4">
-                <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl max-w-md text-center">
-                    <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                    <h2 className="text-xl font-bold mb-2">Something went wrong</h2>
-                    <p className="text-slate-400">{error || 'Service not found'}</p>
-                </div>
-            </div>
-        );
-    }
-
-    if (bookingSuccess) {
-        return (
-            <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-teal-500/30 flex items-center justify-center p-4">
-                <div className="w-full max-w-lg bg-slate-900 border border-white/5 rounded-[2rem] p-8 text-center animate-in fade-in zoom-in duration-500 shadow-2xl">
-                    <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <CheckCircle2 className="w-10 h-10 text-teal-400" />
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-6">
+                <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 text-center shadow-xl animate-in zoom-in-95 duration-300">
+                    <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <CheckCircle2 className="w-8 h-8 text-green-500" />
                     </div>
-                    <h1 className="text-2xl font-black text-white mb-2">Booking Confirmed!</h1>
-                    <p className="text-slate-400 mb-8">Passports ready! We've sent a confirmation email to <span className="text-white font-medium">{formData.email}</span>.</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Booking Confirmed</h1>
+                    <p className="text-slate-500 mb-8">We've sent a calendar invite to {formData.email}</p>
 
-                    <div className="bg-slate-950 rounded-xl p-6 mb-8 text-left border border-white/5">
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
-                                <Calendar className="w-5 h-5 text-slate-400" />
-                            </div>
-                            <div>
-                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Date</div>
-                                <div className="font-bold text-white">{format(bookingSuccess.date, 'EEEE, MMMM do, yyyy')}</div>
-                            </div>
+                    <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-6 mb-6 text-left border border-slate-100 dark:border-slate-800 space-y-4">
+                        <div className="flex justify-between">
+                            <span className="text-sm font-medium text-slate-500">Service</span>
+                            <span className="text-sm font-bold text-slate-900 dark:text-white">{service.name}</span>
                         </div>
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
-                                <Clock className="w-5 h-5 text-slate-400" />
-                            </div>
-                            <div>
-                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Time</div>
-                                <div className="font-bold text-white">{bookingSuccess.time}</div>
-                            </div>
+                        <div className="flex justify-between">
+                            <span className="text-sm font-medium text-slate-500">Date</span>
+                            <span className="text-sm font-bold text-slate-900 dark:text-white">{format(bookingSuccess.date, 'MMM do, yyyy')}</span>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
-                                <User className="w-5 h-5 text-slate-400" />
-                            </div>
-                            <div>
-                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Service</div>
-                                <div className="font-bold text-white">{service?.name}</div>
-                            </div>
+                        <div className="flex justify-between">
+                            <span className="text-sm font-medium text-slate-500">Time</span>
+                            <span className="text-sm font-bold text-slate-900 dark:text-white">{bookingSuccess.time}</span>
                         </div>
                     </div>
 
                     {bookingSuccess.url && (
-                        <a
-                            href={bookingSuccess.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block w-full py-4 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black uppercase tracking-widest text-xs rounded-xl transition-all shadow-lg shadow-teal-500/20 mb-4"
-                        >
-                            Join Video Call
+                        <a href={bookingSuccess.url} target="_blank" className="block w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl mb-3 hover:opacity-90 transition-opacity">
+                            Join Meeting
                         </a>
                     )}
-
-                    <button onClick={() => window.location.reload()} className="text-xs font-bold text-slate-500 hover:text-white transition-colors">
+                    <button onClick={() => window.location.reload()} className="text-sm font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
                         Book Another
                     </button>
                 </div>
@@ -263,236 +231,245 @@ export default function BookingPage() {
         );
     }
 
-    const isDateSelected = !!selectedDate;
-    const isSlotSelected = !!selectedSlot;
-
-    // --- Main Render ---
     return (
-        <div className="min-h-screen bg-[#050505] text-white p-4 lg:p-12 relative flex items-center justify-center">
-            {/* Background */}
-            <div className="fixed inset-0 pointer-events-none">
-                <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-teal-500/5 blur-[100px] rounded-full"></div>
-            </div>
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 font-sans selection:bg-teal-500/30">
+            {/* Header / Nav */}
+            <div className="max-w-6xl mx-auto p-4 md:p-8">
+                <button
+                    onClick={() => {
+                        if (step === 'form') setStep('date');
+                        else router.back();
+                    }}
+                    className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors mb-8"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    {step === 'form' ? 'Back to Calendar' : 'Back'}
+                </button>
 
-            <div className={`w-full max-w-7xl grid transition-all duration-700 gap-8 ${isSlotSelected ? 'lg:grid-cols-12' : 'lg:grid-cols-12'}`}>
+                <div className="grid lg:grid-cols-12 gap-8 lg:gap-16">
 
-                {/* 1. Sidebar (Service Info) */}
-                <div className={`${isSlotSelected ? 'lg:col-span-4 lg:opacity-50' : 'lg:col-span-4'} flex flex-col gap-6 lg:border-r lg:border-white/5 lg:pr-8`}>
-                    <button onClick={() => router.back()} className="self-start text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-white transition-colors mb-4">
-                        ← Back
-                    </button>
-
-                    <div>
-                        <div className="flex items-center gap-4 mb-6">
+                    {/* LEFT PANEL: Context */}
+                    <div className="lg:col-span-4 space-y-8">
+                        <div className="flex items-start gap-4">
                             {tenant.settings.branding?.logo ? (
-                                <img src={tenant.settings.branding.logo} className="w-16 h-16 rounded-2xl object-cover" />
+                                <img src={tenant.settings.branding.logo} className="w-16 h-16 rounded-2xl object-cover shadow-sm" />
                             ) : (
-                                <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center font-black text-2xl text-slate-600">
+                                <div className="w-16 h-16 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-xl font-bold text-slate-400">
                                     {tenant.name[0]}
                                 </div>
                             )}
                             <div>
-                                <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">{tenant.name}</div>
-                                <h1 className="text-2xl font-black">{service.name}</h1>
+                                <p className="text-sm font-medium text-slate-500">{tenant.name}</p>
+                                <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">{service.name}</h1>
                             </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-2 mb-6">
-                            <span className="px-3 py-1 bg-white/5 rounded-full text-xs font-bold text-slate-300 flex items-center gap-2">
-                                <Clock className="w-3.5 h-3.5 text-teal-500" /> {service.duration} mins
-                            </span>
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3 text-sm font-medium text-slate-600 dark:text-slate-400">
+                                <Clock className="w-5 h-5 text-slate-900 dark:text-white" />
+                                {service.duration} min
+                            </div>
                             {service.price > 0 && (
-                                <span className="px-3 py-1 bg-white/5 rounded-full text-xs font-bold text-emerald-400">
+                                <div className="flex items-center gap-3 text-sm font-medium text-slate-600 dark:text-slate-400">
+                                    <div className="w-5 h-5 flex items-center justify-center font-bold text-slate-900 dark:text-white">$</div>
                                     {service.currency} {service.price}
-                                </span>
+                                </div>
                             )}
                         </div>
 
-                        <p className="text-slate-400 text-sm leading-relaxed whitespace-pre-line">
-                            {service.description}
-                        </p>
-                    </div>
-                </div>
+                        {service.description && (
+                            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 pt-6">
+                                {service.description}
+                            </p>
+                        )}
 
-                {/* 2. Calendar & Slots */}
-                <div className={`${(isDateSelected || isSlotSelected) ? 'hidden lg:block lg:col-span-4' : 'lg:col-span-8'} transition-all`}>
-                    <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 backdrop-blur-xl">
-                        {/* Month Nav */}
-                        <div className="flex items-center justify-between mb-8 px-2">
-                            <h2 className="text-lg font-bold">{format(currentMonth, 'MMMM yyyy')}</h2>
-                            <div className="flex gap-1">
-                                <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 hover:bg-white/5 rounded-full text-slate-400"><ChevronLeft className="w-5 h-5" /></button>
-                                <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 hover:bg-white/5 rounded-full text-slate-400"><ChevronRight className="w-5 h-5" /></button>
+                        {/* Desktop: Selected Slot Preview */}
+                        {selectedSlot && window.innerWidth >= 1024 && (
+                            <div className="mt-8 p-4 bg-teal-50 dark:bg-teal-500/10 border border-teal-100 dark:border-teal-500/20 rounded-xl">
+                                <div className="text-xs font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider mb-1">Selected Time</div>
+                                <div className="font-semibold text-teal-900 dark:text-teal-100">
+                                    {format(parseISO(selectedSlot.start), 'EEEE, MMMM do')}
+                                    <br />
+                                    {format(parseISO(selectedSlot.start), 'h:mm a')}
+                                </div>
                             </div>
-                        </div>
-
-                        {/* Calendar Grid */}
-                        <div className="grid grid-cols-7 gap-y-4 mb-8 text-center">
-                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => <div key={`${d}-${i}`} className="text-[10px] font-black text-slate-600">{d}</div>)}
-                            {calendarDays.map(day => {
-                                const isCurrentMonth = isSameMonth(day, currentMonth);
-                                const isSelected = selectedDate && isSameDay(day, selectedDate);
-                                const isPast = isBefore(day, startOfToday());
-
-                                return (
-                                    <button
-                                        key={day.toISOString()}
-                                        disabled={isPast || !isCurrentMonth}
-                                        onClick={() => setSelectedDate(day)}
-                                        className={`
-                                            h-10 w-10 mx-auto rounded-full flex items-center justify-center text-sm font-bold transition-all
-                                            ${!isCurrentMonth ? 'opacity-0' : ''}
-                                            ${isPast ? 'text-slate-800 decoration-slate-800 line-through' : ''}
-                                            ${isSelected ? 'bg-teal-500 text-slate-950 scale-110 shadow-lg shadow-teal-500/20' : 'text-slate-300 hover:bg-white/10'}
-                                        `}
-                                    >
-                                        {format(day, 'd')}
-                                    </button>
-                                )
-                            })}
-                        </div>
-
-                        <div className="flex justify-center items-center gap-2 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                            <Globe className="w-3 h-3" /> {Intl.DateTimeFormat().resolvedOptions().timeZone}
-                        </div>
+                        )}
                     </div>
 
-                    {/* Mobile Only Slot View (If date selected but no slot) */}
-                    {isDateSelected && !isSlotSelected && (
-                        <div className="mt-6 block lg:hidden">
-                            <h3 className="text-sm font-bold text-slate-400 mb-4 uppercase tracking-wider">Available Times</h3>
-                            <SlotsList
-                                loading={loadingSlots}
-                                slots={groupedSlots}
-                                onSelect={setSelectedSlot}
-                            />
-                        </div>
-                    )}
-                </div>
+                    {/* RIGHT PANEL: Interaction Area */}
+                    <div className="lg:col-span-8">
+                        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl shadow-slate-200/50 dark:shadow-none min-h-[500px]">
 
-                {/* 3. Slot List (Desktop) OR Form (Both) */}
-                <div className={`${(isDateSelected || isSlotSelected) ? 'lg:col-span-4 opacity-100' : 'hidden lg:block lg:col-span-0 opacity-0'} transition-all`}>
+                            {/* STEP: DATE & TIME */}
+                            {step === 'date' && (
+                                <div className="flex flex-col md:flex-row gap-8 h-full">
+                                    {/* Calendar */}
+                                    <div className="flex-1">
+                                        <div className="flex items-center justify-between mb-6">
+                                            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                                                {format(currentMonth, 'MMMM yyyy')}
+                                            </h2>
+                                            <div className="flex gap-1">
+                                                <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors"><ChevronLeft className="w-5 h-5" /></button>
+                                                <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors"><ChevronRight className="w-5 h-5" /></button>
+                                            </div>
+                                        </div>
 
-                    {!isSlotSelected ? (
-                        // Desktop Slot Picker
-                        isDateSelected && (
-                            <div className="h-full border-l border-white/5 pl-8 animate-in fade-in slide-in-from-right-8 duration-500">
-                                <h3 className="text-sm font-bold text-slate-400 mb-6 uppercase tracking-wider">
-                                    {format(selectedDate!, 'EEEE, MMM do')}
-                                </h3>
-                                <SlotsList
-                                    loading={loadingSlots}
-                                    slots={groupedSlots}
-                                    onSelect={setSelectedSlot}
-                                />
-                            </div>
-                        )
-                    ) : (
-                        // Booking Form
-                        <div className="bg-slate-900 border border-white/5 rounded-[2rem] p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-8 duration-500 shadow-2xl">
-                            <div className="flex justify-between items-start mb-6">
-                                <div>
-                                    <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Selected Time</div>
-                                    <div className="text-xl font-black text-white">{format(parseISO(selectedSlot.start), 'h:mm a')}</div>
-                                    <div className="text-sm text-teal-400 font-bold">{format(parseISO(selectedSlot.start), 'MMMM do, yyyy')}</div>
+                                        <div className="grid grid-cols-7 gap-y-2 text-center mb-2">
+                                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <div key={d} className="text-[10px] font-bold text-slate-400 uppercase">{d}</div>)}
+                                        </div>
+                                        <div className="grid grid-cols-7 gap-y-2">
+                                            {calendarDays.map((day, i) => {
+                                                const isCurrentMonth = isSameMonth(day, currentMonth);
+                                                const isPast = isBefore(day, startOfToday());
+                                                const isSelected = selectedDate && isSameDay(day, selectedDate);
+                                                return (
+                                                    <button
+                                                        key={i}
+                                                        disabled={isPast || !isCurrentMonth}
+                                                        onClick={() => setSelectedDate(day)}
+                                                        className={`
+                                                            h-10 w-10 mx-auto rounded-full flex items-center justify-center text-sm font-medium transition-all
+                                                            ${!isCurrentMonth ? 'opacity-0 pointer-events-none' : ''}
+                                                            ${isPast ? 'text-slate-300 dark:text-slate-700 line-through decoration-slate-300' : ''}
+                                                            ${isSelected
+                                                                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold scale-110'
+                                                                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}
+                                                        `}
+                                                    >
+                                                        {format(day, 'd')}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        <div className="mt-8 flex items-center justify-center gap-2 text-xs font-medium text-slate-500 bg-slate-50 dark:bg-slate-950/50 py-2 rounded-lg">
+                                            <Globe className="w-3.5 h-3.5" />
+                                            {Intl.DateTimeFormat().resolvedOptions().timeZone}
+                                        </div>
+                                    </div>
+
+                                    {/* Slots Column (Desktop: Side / Mobile: Below) */}
+                                    <div className={`md:w-64 md:border-l border-slate-200 dark:border-slate-800 md:pl-8 ${!selectedDate ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">
+                                            {selectedDate ? format(selectedDate, 'EEEE, MMM d') : 'Select date'}
+                                        </h3>
+
+                                        {loadingSlots ? (
+                                            <div className="space-y-3">
+                                                {[1, 2, 3].map(i => <div key={i} className="h-10 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse" />)}
+                                            </div>
+                                        ) : slots.length === 0 ? (
+                                            <div className="text-sm text-slate-500 py-4">No availability for this day.</div>
+                                        ) : (
+                                            <div className="space-y-3 max-h-[300px] md:max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                                {slots.map((slot, idx) => (
+                                                    <button
+                                                        key={idx}
+                                                        onClick={() => {
+                                                            async function handleDesktopClick() {
+                                                                setSelectedSlot(slot);
+                                                                // On desktop, we stay here but update selection state, 
+                                                                // actually let's move to form on desktop too for simplicity?
+                                                                // The user asked for "Simple". Simple = Step by Step is often clearer.
+                                                                // But commonly desktop allows seeing both.
+                                                                // Let's optimize: Mobile -> Auto-advance. Desktop -> Show "Next" button or Auto-Advance?
+                                                                // Let's Auto-Advance on both for immediate feedback.
+                                                                setStep('form');
+                                                            }
+                                                            handleDesktopClick();
+                                                        }}
+                                                        className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-900 dark:hover:border-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex justify-between group"
+                                                    >
+                                                        {format(parseISO(slot.start), 'h:mm a')}
+                                                        <span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <button onClick={() => setSelectedSlot(null)} className="p-2 hover:bg-white/5 rounded-full text-slate-500 hover:text-white">
-                                    ✕
-                                </button>
-                            </div>
+                            )}
 
-                            <form onSubmit={handleBook} className="space-y-4">
-                                <Input label="Full Name" value={formData.name} onChange={v => setFormData({ ...formData, name: v })} required />
-                                <Input label="Email Address" type="email" value={formData.email} onChange={v => setFormData({ ...formData, email: v })} required />
-                                <Input label="Phone Number" type="tel" value={formData.phone} onChange={v => setFormData({ ...formData, phone: v })} />
+                            {/* STEP: FORM */}
+                            {step === 'form' && selectedSlot && (
+                                <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-300">
+                                    <div>
+                                        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Final Details</h2>
+                                        <p className="text-slate-500 text-sm">Please fill in your information to complete the booking.</p>
+                                    </div>
 
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">Notes</label>
-                                    <textarea
-                                        value={formData.notes}
-                                        onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                                        className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-teal-500 focus:outline-none transition-colors min-h-[100px] resize-none"
-                                        placeholder="Optional..."
-                                    />
+                                    <form onSubmit={handleBook} className="space-y-5">
+                                        <div className="space-y-4">
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Full Name</label>
+                                                <div className="relative">
+                                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                    <input
+                                                        required
+                                                        value={formData.name}
+                                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                                        className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                                        placeholder="John Doe"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Email Address</label>
+                                                <div className="relative">
+                                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                    <input
+                                                        required
+                                                        type="email"
+                                                        value={formData.email}
+                                                        onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                                        className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                                        placeholder="john@example.com"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Phone (Optional)</label>
+                                                <div className="relative">
+                                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                    <input
+                                                        type="tel"
+                                                        value={formData.phone}
+                                                        onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                                        className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                                        placeholder="+1 (555) 000-0000"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Notes</label>
+                                                <textarea
+                                                    rows={3}
+                                                    value={formData.notes}
+                                                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all resize-none"
+                                                    placeholder="Anything we should know?"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            disabled={submitting}
+                                            className="w-full py-4 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-950 font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                                        >
+                                            {submitting ? 'Confirming...' : 'Confirm Booking'}
+                                        </button>
+                                    </form>
                                 </div>
+                            )}
 
-                                <button
-                                    type="submit"
-                                    disabled={submitting}
-                                    className="w-full py-4 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black uppercase tracking-widest text-xs rounded-xl transition-all active:scale-95 disabled:opacity-50 mt-4"
-                                >
-                                    {submitting ? 'Confirming...' : 'Confirm Booking'}
-                                </button>
-                            </form>
                         </div>
-                    )}
+                    </div>
                 </div>
             </div>
-        </div >
-    );
-}
-
-// --- Sub Components ---
-
-function SlotsList({ slots, loading, onSelect }: { slots: any, loading: boolean, onSelect: (s: BookingSlot) => void }) {
-    if (loading) return <div className="flex justify-center p-8"><div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div></div>;
-
-    // Check if empty
-    if (!slots.morning.length && !slots.afternoon.length && !slots.evening.length) {
-        return <div className="text-center text-slate-500 text-sm py-12">No available times.</div>;
-    }
-
-    return (
-        <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-            {['morning', 'afternoon', 'evening'].map(period => {
-                const periodSlots = slots[period as keyof typeof slots];
-                if (!periodSlots.length) return null;
-
-                return (
-                    <div key={period} className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        <div className="flex items-center gap-2 text-[10px] font-black text-slate-600 uppercase tracking-widest">
-                            {period === 'morning' && <Sun className="w-3 h-3 text-orange-400" />}
-                            {period === 'afternoon' && <Sunset className="w-3 h-3 text-pink-400" />}
-                            {period === 'evening' && <Moon className="w-3 h-3 text-indigo-400" />}
-                            {period}
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-2">
-                            {periodSlots.map((slot: BookingSlot, idx: number) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => onSelect(slot)}
-                                    className="py-3 px-2 bg-white/5 border border-white/5 hover:border-teal-500 hover:bg-teal-500/10 rounded-xl text-teal-400 text-xs font-bold transition-all text-center active:scale-95"
-                                >
-                                    {format(parseISO(slot.start), 'h:mm a')}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                );
-            })}
-        </div>
-    );
-}
-
-interface InputProps {
-    label: string;
-    value: string;
-    onChange: (value: string) => void;
-    type?: string;
-    required?: boolean;
-}
-
-function Input({ label, value, onChange, type = 'text', required = false }: InputProps) {
-    return (
-        <div className="space-y-1">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">{label}</label>
-            <input
-                type={type}
-                required={required}
-                value={value}
-                onChange={e => onChange(e.target.value)}
-                className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-teal-500 focus:outline-none transition-colors font-bold"
-            />
         </div>
     );
 }
