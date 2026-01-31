@@ -61,7 +61,7 @@ class TenantService {
             .from('tenants')
             .select('*')
             .eq('slug', slug)
-            .single();
+            .maybeSingle();
 
         if (error) return null;
         return data as Tenant;
