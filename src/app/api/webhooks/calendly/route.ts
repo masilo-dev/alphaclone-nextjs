@@ -73,7 +73,7 @@ async function handleInviteeCreated(payload: any, supabase: any) {
     const tenantId = tenant?.id;
 
     // Map to bookings table
-    const { error } = await supabase
+    const { data: booking, error: bookingError } = await supabase
         .from('bookings')
         .insert({
             tenant_id: tenantId,
@@ -89,19 +89,54 @@ async function handleInviteeCreated(payload: any, supabase: any) {
                 calendly_event_uri: eventUri,
                 full_payload: payload
             }
-        });
+        })
+        .select()
+        .single();
 
-    if (error) console.error('Error inserting booking from Calendly:', error);
+    if (bookingError) {
+        console.error('Error inserting booking from Calendly:', bookingError);
+    } else {
+        // Also sync to video_calls so it shows in Meetings dashboard
+        // We'll use the tenant's primary user or the host if we can find them
+        const { data: userData } = await supabase
+            .from('users')
+            .select('id')
+            .eq('tenant_id', tenantId)
+            .eq('role', 'tenant')
+            .limit(1)
+            .maybeSingle();
+
+        if (userData) {
+            await supabase
+                .from('video_calls')
+                .insert({
+                    host_id: userData.id,
+                    title: `Calendly: ${name || 'Guest'}`,
+                    status: 'scheduled',
+                    scheduled_at: booking.start_time,
+                    daily_room_url: payload.scheduled_event?.location?.location || null, // Could be Zoom/Meet link
+                    description: questions_and_answers ? JSON.stringify(questions_and_answers) : null,
+                    metadata: {
+                        booking_id: booking.id,
+                        calendly_event_uri: eventUri
+                    }
+                });
+        }
+    }
 }
 
 async function handleInviteeCanceled(payload: any, supabase: any) {
     const { uri: inviteeUri } = payload;
 
-    // Update status to canceled in bookings table based on metadata URI
-    const { error } = await supabase
+    // Update status to canceled in bookings table
+    await supabase
         .from('bookings')
         .update({ status: 'canceled' })
         .filter('metadata->>calendly_invitee_uri', 'eq', inviteeUri);
 
-    if (error) console.error('Error canceling booking from Calendly:', error);
+    // Also update video_calls
+    await supabase
+        .from('video_calls')
+        .update({ status: 'cancelled' })
+        .filter('metadata->>calendly_invitee_uri', 'eq', inviteeUri);
 }

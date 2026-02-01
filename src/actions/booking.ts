@@ -66,7 +66,7 @@ export async function fetchTenantBookingPage(slug: string): Promise<{ tenant: Te
         .from('booking_types')
         .select('*')
         .eq('tenant_id', tenant.id)
-        .eq('active', true); // Assuming there's an active flag, otherwise remove
+        .eq('is_active', true);
 
     if (servicesError) {
         console.error('Fetch services error:', servicesError);

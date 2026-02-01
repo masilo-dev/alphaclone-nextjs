@@ -140,7 +140,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         { id: 'branding', label: 'Branding', icon: Palette },
         { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'security', label: 'Security', icon: Shield },
-        { id: 'booking', label: 'Booking System', icon: Calendar }
+        { id: 'booking', label: 'Calendly Integration', icon: Calendar }
     ];
 
     if (loading) {

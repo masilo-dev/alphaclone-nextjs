@@ -67,6 +67,13 @@ export default function BookingPage() {
     const loadInitialData = async () => {
         try {
             const { tenant, service } = await fetchBookingData(activeSlug, serviceSlug);
+
+            // Redirect to main booking page if Calendly is enabled (deprecating legacy service links)
+            if ((tenant.settings as any)?.calendly?.enabled) {
+                router.replace(`/book/${activeSlug}`);
+                return;
+            }
+
             setTenant(tenant);
             setService(service);
         } catch (err: any) {

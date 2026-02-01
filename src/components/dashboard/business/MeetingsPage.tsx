@@ -102,10 +102,17 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                         </div>
 
                         <Button
-                            onClick={() => onJoinRoom?.(`/meet/${nextMeeting.id}`)}
+                            onClick={() => {
+                                const externalUrl = nextMeeting.daily_room_url || nextMeeting.metadata?.calendly_event?.location?.location;
+                                if (externalUrl && !externalUrl.includes(window.location.hostname)) {
+                                    window.open(externalUrl, '_blank');
+                                } else {
+                                    onJoinRoom?.(`/meet/${nextMeeting.id}`);
+                                }
+                            }}
                             className="w-full md:w-auto px-8 py-4 text-lg bg-teal-500 hover:bg-teal-400 text-white shadow-lg shadow-teal-900/40 rounded-2xl transition-all hover:scale-105"
                         >
-                            Join Meeting Now
+                            {nextMeeting.daily_room_url && !nextMeeting.daily_room_url.includes(window.location.hostname) ? 'Open Meeting Link' : 'Join Meeting Now'}
                         </Button>
                     </div>
                 </div>
@@ -162,10 +169,17 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                                             <Button
                                                 size="sm"
                                                 variant="secondary"
-                                                onClick={() => onJoinRoom?.(`/meet/${meeting.id}`)}
+                                                onClick={() => {
+                                                    const externalUrl = meeting.daily_room_url || meeting.metadata?.calendly_event?.location?.location;
+                                                    if (externalUrl && !externalUrl.includes(window.location.hostname)) {
+                                                        window.open(externalUrl, '_blank');
+                                                    } else {
+                                                        onJoinRoom?.(`/meet/${meeting.id}`);
+                                                    }
+                                                }}
                                                 className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                                             >
-                                                Join
+                                                {meeting.daily_room_url && !meeting.daily_room_url.includes(window.location.hostname) ? 'Open Link' : 'Join'}
                                             </Button>
                                         </div>
                                     </div>

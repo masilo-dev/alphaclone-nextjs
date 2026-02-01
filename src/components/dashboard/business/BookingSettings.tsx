@@ -112,7 +112,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                         </div>
                     )}
 
-                    <div className={((tenant.settings as any)?.calendly?.enabled) ? "opacity-40 pointer-events-none select-none grayscale" : ""}>
+                    <div className={((tenant.settings as any)?.calendly?.enabled) ? "hidden" : ""}>
                         {/* 1. Main Toggle & Link */}
                         <div className="space-y-6">
                             {/* Enable Toggle */}
