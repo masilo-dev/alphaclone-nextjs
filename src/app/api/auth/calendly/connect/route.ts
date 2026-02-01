@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     const redirectUri = ENV.VITE_CALENDLY_REDIRECT_URI;
 
     if (!clientId || !redirectUri) {
-        return NextResponse.json({ error: 'Calendly OAuth is not configured' }, { status: 500 });
+        return NextResponse.redirect(new URL(`/dashboard/settings?tab=booking&error=calendly_not_configured`, req.url));
     }
 
     // Create state to keep track of tenantId

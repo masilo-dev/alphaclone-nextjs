@@ -6,6 +6,9 @@ import { supabase } from '../../../lib/supabase';
 const CalendlySettings: React.FC = () => {
     const { currentTenant, refreshTenants } = useTenant();
     const [connecting, setConnecting] = useState(false);
+    const [manualUrl, setManualUrl] = useState('');
+    const [showManual, setShowManual] = useState(false);
+    const [saving, setSaving] = useState(false);
     const calendlyConfig = (currentTenant?.settings as any)?.calendly;
 
     const isConnected = calendlyConfig?.enabled && calendlyConfig?.accessToken;
@@ -28,7 +31,8 @@ const CalendlySettings: React.FC = () => {
                     enabled: false,
                     accessToken: null,
                     refreshToken: null,
-                    expiresAt: null
+                    expiresAt: null,
+                    eventUrl: null
                 }
             };
 
@@ -43,6 +47,37 @@ const CalendlySettings: React.FC = () => {
         } catch (err: any) {
             console.error('Disconnect error:', err);
             alert('Failed to disconnect Calendly');
+        }
+    };
+
+    const handleSaveManual = async () => {
+        if (!currentTenant || !manualUrl) return;
+        setSaving(true);
+        try {
+            const updatedSettings = {
+                ...(currentTenant.settings as any),
+                calendly: {
+                    ...(currentTenant.settings as any)?.calendly,
+                    enabled: true,
+                    eventUrl: manualUrl,
+                    isManual: true
+                }
+            };
+
+            const { error } = await supabase
+                .from('tenants')
+                .update({ settings: updatedSettings })
+                .eq('id', currentTenant.id);
+
+            if (error) throw error;
+            await refreshTenants();
+            setShowManual(false);
+            setManualUrl('');
+        } catch (err) {
+            console.error('Save manual error:', err);
+            alert('Failed to save link');
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -99,21 +134,56 @@ const CalendlySettings: React.FC = () => {
                                 </button>
                             </>
                         ) : (
-                            <button
-                                onClick={handleConnect}
-                                disabled={connecting}
-                                className="flex items-center gap-2 px-6 py-2.5 bg-teal-500 hover:bg-teal-600 text-slate-900 font-black text-sm uppercase tracking-widest rounded-xl shadow-lg shadow-teal-500/20 transition-all active:scale-95 disabled:opacity-50"
-                            >
-                                {connecting ? (
-                                    <RefreshCw className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    <CheckCircle2 className="w-4 h-4" />
-                                )}
-                                {connecting ? 'CONNECTING...' : 'CONNECT CALENDLY'}
-                            </button>
+                            <div className="flex flex-col gap-3 items-end">
+                                <button
+                                    onClick={handleConnect}
+                                    disabled={connecting}
+                                    className="flex items-center gap-2 px-6 py-2.5 bg-teal-500 hover:bg-teal-600 text-slate-900 font-black text-sm uppercase tracking-widest rounded-xl shadow-lg shadow-teal-500/20 transition-all active:scale-95 disabled:opacity-50"
+                                >
+                                    {connecting ? (
+                                        <RefreshCw className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <CheckCircle2 className="w-4 h-4" />
+                                    )}
+                                    {connecting ? 'CONNECTING...' : 'CONNECT CALENDLY'}
+                                </button>
+                                <button
+                                    onClick={() => setShowManual(!showManual)}
+                                    className="text-xs text-slate-500 hover:text-teal-400 font-medium underline underline-offset-4"
+                                >
+                                    {showManual ? 'Cancel manual entry' : 'Or connect manually with link'}
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
+
+                {showManual && !isConnected && (
+                    <div className="mt-6 pt-6 border-t border-slate-800 space-y-4 animate-fade-in">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Paste your Calendly Link</label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={manualUrl}
+                                    onChange={(e) => setManualUrl(e.target.value)}
+                                    placeholder="https://calendly.com/your-profile/30min"
+                                    className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-teal-500 transition-colors"
+                                />
+                                <button
+                                    onClick={handleSaveManual}
+                                    disabled={saving || !manualUrl}
+                                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-xl transition-all disabled:opacity-50"
+                                >
+                                    {saving ? 'SAVING...' : 'SAVE LINK'}
+                                </button>
+                            </div>
+                            <p className="text-[10px] text-slate-500 italic">
+                                Note: Manual links enable the booking page but do not sync dashboard meetings automatically.
+                            </p>
+                        </div>
+                    </div>
+                )}
 
                 {isConnected && calendlyConfig.eventUrl && (
                     <div className="mt-6 pt-6 border-t border-slate-800 flex items-center justify-between">

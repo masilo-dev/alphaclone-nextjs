@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { supabase } from '../../../lib/supabase';
@@ -39,6 +40,28 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        const error = searchParams.get('error');
+        const tab = searchParams.get('tab');
+
+        if (tab) {
+            setActiveTab(tab);
+        }
+
+        if (error === 'calendly_not_configured') {
+            toast.error('Calendly OAuth is not configured on the server. Please use the manual link option.');
+        } else if (error) {
+            toast.error(`Error: ${error}`);
+        }
+
+        const success = searchParams.get('success');
+        if (success === 'calendly_connected') {
+            toast.success('Calendly connected successfully!');
+            setActiveTab('booking');
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         if (currentTenant) {
