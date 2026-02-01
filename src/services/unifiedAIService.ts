@@ -36,7 +36,7 @@ export const generateText = async (prompt: string, maxTokens: number = 2048): Pr
     if (providers.gemini && geminiAI) {
         try {
             console.log('🔵 Using Gemini AI');
-            const model = geminiAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+            const model = geminiAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
             const result = await model.generateContent(prompt);
             const response = await result.response;
             return { text: response.text(), error: null };
@@ -131,7 +131,7 @@ export const chatWithAI = async (
     if (providers.gemini && geminiAI) {
         try {
             console.log('🔵 Using Gemini Chat');
-            const model = geminiAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+            const model = geminiAI.getGenerativeModel({ model: 'gemini-1.5-pro-latest' });
 
             const systemPrompt = {
                 role: 'user',

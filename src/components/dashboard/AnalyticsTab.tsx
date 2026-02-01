@@ -82,11 +82,10 @@ const AnalyticsTab: React.FC = () => {
                         <button
                             key={range}
                             onClick={() => setDateRange(range)}
-                            className={`px-4 py-2 rounded-lg text-sm transition-all ${
-                                dateRange === range
+                            className={`px-4 py-2 rounded-lg text-sm transition-all ${dateRange === range
                                     ? 'bg-teal-600 text-white shadow-lg shadow-teal-500/20'
                                     : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                            }`}
+                                }`}
                         >
                             {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : range === '90d' ? '90 Days' : '1 Year'}
                         </button>
@@ -170,7 +169,7 @@ const AnalyticsTab: React.FC = () => {
                         <TrendingUp className="w-5 h-5 text-teal-400" /> Revenue & Projects Trend
                     </h3>
                     <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height={300}>
                             <AreaChart data={revenueChartData}>
                                 <defs>
                                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -202,7 +201,7 @@ const AnalyticsTab: React.FC = () => {
                         <Activity className="w-5 h-5 text-violet-500" /> Project Status Distribution
                     </h3>
                     <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
                                 <Pie
                                     data={projectStatusData}

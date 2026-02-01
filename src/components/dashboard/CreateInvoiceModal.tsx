@@ -36,7 +36,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     .from('business_settings')
                     .select('bank_details, mobile_payment_details')
                     .eq('tenant_id', tenantId)
-                    .single();
+                    .maybeSingle();
 
                 if (data) {
                     setTenantDefaults({

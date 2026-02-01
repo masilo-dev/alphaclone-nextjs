@@ -21,7 +21,7 @@ const getModel = (modelName: string) => {
 export const geminiService = {
     async generateContent(prompt: string) {
         try {
-            const model = getModel('gemini-1.5-flash');
+            const model = getModel('gemini-1.5-flash-latest');
             const result = await model.generateContent(prompt);
             const response = await result.response;
             return { text: response.text(), error: null };
@@ -33,7 +33,7 @@ export const geminiService = {
 
     async generateContentWithImage(prompt: string, imageParts: any[]) {
         try {
-            const model = getModel('gemini-1.5-flash');
+            const model = getModel('gemini-1.5-flash-latest');
             const result = await model.generateContent([prompt, ...imageParts]);
             const response = await result.response;
             return { text: response.text(), error: null };
@@ -51,7 +51,7 @@ export const chatWithGemini = async (
     image?: string
 ) => {
     try {
-        const model = getModel('gemini-1.5-pro');
+        const model = getModel('gemini-1.5-pro-latest');
 
         // Add system prompt to prevent hallucination
         const systemPrompt = {
@@ -128,7 +128,7 @@ CRITICAL INSTRUCTIONS:
 
 export const editImage = async (image: string, prompt: string) => {
     try {
-        const model = getModel('gemini-1.5-flash');
+        const model = getModel('gemini-1.5-flash-latest');
         const base64Data = image.split(',')[1];
         const mimeType = image.split(';')[0]?.split(':')[1] || 'image/png';
         const imagePart = {
