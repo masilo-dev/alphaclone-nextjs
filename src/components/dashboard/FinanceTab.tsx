@@ -22,7 +22,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                     <CreditCard className="w-6 h-6 text-teal-400" /> Financial Center
                 </h2>
-                {user.role === 'admin' && <Button onClick={onCreateInvoice}>Create Invoice</Button>}
+                {(user.role === 'admin' || user.role === 'tenant_admin') && <Button onClick={onCreateInvoice}>Create Invoice</Button>}
             </div>
 
             {/* Financial Summary Cards */}

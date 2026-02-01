@@ -32,7 +32,7 @@ import { toast } from 'react-hot-toast';
 import MilestoneManager from './dashboard/projects/MilestoneManager';
 import { Button, Card, Input, Modal } from './ui/UIComponents';
 import { CLIENT_NAV_ITEMS, ADMIN_NAV_ITEMS, TENANT_ADMIN_NAV_ITEMS, LOGO_URL } from '../constants';
-import { User, Project, ChatMessage, DashboardStat, GalleryItem, Invoice, ProjectStage } from '../types';
+import { User, Project, ChatMessage, DashboardStat, GalleryItem, Invoice, ProjectStage, UserRole } from '../types';
 import BusinessDashboard from './dashboard/business/BusinessDashboard';
 
 import AIStudio from './dashboard/AIStudio';
@@ -214,17 +214,20 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [selectedProjectForMilestones, setSelectedProjectForMilestones] = useState<Project | null>(null);
 
   // -- ISOLATION LOGIC --
+  // Super Admin: sees ALL data across ALL tenants
+  // Tenant Admin: sees all data within their tenant
+  // Client: sees only their own data
   const filteredProjects = user.role === 'admin'
-    ? projects
-    : projects.filter(p => p.ownerId === user.id);
+    ? projects // Super Admin sees everything
+    : projects.filter(p => p.ownerId === user.id); // Clients see only their own
 
   const filteredMessages = user.role === 'admin'
-    ? messages
+    ? messages // Super Admin sees everything
     : messages.filter(m => m.senderId === user.id || m.recipientId === user.id);
 
-  const filteredInvoices = user.role === 'admin'
-    ? invoices
-    : invoices.filter(i => i.clientId === user.id);
+  const filteredInvoices = (user.role as UserRole) === 'admin' || (user.role as UserRole) === 'tenant_admin'
+    ? invoices // Admin sees all (cross-tenant), tenant_admin sees tenant-scoped (from service)
+    : invoices.filter(i => i.clientId === user.id); // Clients see only their own invoices
 
   // Stats Logic
   // Stats Logic - REAL DATA ONLY (No Placeholders)
@@ -277,8 +280,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   const refreshInvoices = async () => {
     // setIsLoadingInvoices(true);
     let result;
-    if (user.role === 'admin') {
-      result = await paymentService.getAllInvoices();
+    if (user.role === 'admin' || user.role === 'tenant_admin') {
+      result = await paymentService.getAllInvoices(user.role); // Pass role for filtering
     } else {
       result = await paymentService.getUserInvoices(user.id);
     }
@@ -834,20 +837,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             </WidgetErrorBoundary>
           </React.Suspense>
         );
-      case '/dashboard/admin/users':
-        return (
-          <React.Suspense fallback={<div className="p-8 text-slate-500">Loading User Locations...</div>}>
-            <WidgetErrorBoundary title="User Locations">
-              <div className="p-6 space-y-6">
-                <div>
-                  <h1 className="text-3xl font-bold text-slate-900">User Locations</h1>
-                  <p className="text-slate-500">Track registration origin and login locations</p>
-                </div>
-                <UserLocationTable />
-              </div>
-            </WidgetErrorBoundary>
-          </React.Suspense>
-        );
+
 
       case '/dashboard/messages':
         return (
@@ -966,6 +956,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         );
 
       case '/dashboard/finance':
+        // Clients see read-only invoice view, tenant_admin sees full billing/subscription management
         return (
           <React.Suspense fallback={<div>Loading Finance...</div>}>
             <FinanceTab

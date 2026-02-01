@@ -34,6 +34,7 @@ import TasksTab from '../TasksTab';
 import SalesAgent from '../SalesAgent';
 import DealsTab from '../DealsTab';
 import AlphaCloneContractModal from '../../contracts/AlphaCloneContractModal';
+import ContractDashboard from '../../contracts/ContractDashboard';
 
 interface BusinessDashboardProps {
     user: User;
@@ -201,6 +202,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             case '/dashboard/leads':
                 if (planFeatures && !planFeatures.fullCRM) return <LockedFeature feature="Leads & Pipelines" />;
                 return <DealsTab userId={user.id} userRole={user.role} />;
+            case '/dashboard/business/contracts':
+                return <ContractDashboard user={user} />;
 
             default:
                 return <BusinessHome user={user} />;
@@ -222,7 +225,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             case '/dashboard/crm': return 'CRM';
             case '/dashboard/tasks': return 'Tasks';
             case '/dashboard/sales-agent': return 'Sales Agent';
+            case '/dashboard/sales-agent': return 'Sales Agent';
             case '/dashboard/leads': return 'Leads & Pipelines';
+            case '/dashboard/business/contracts': return 'Contracts';
             default: return 'AlphaClone';
         }
     };
@@ -289,18 +294,18 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                         >
                             {activeTab === item.href && <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent" />}
                             <item.icon className={`w-5 h-5 flex-shrink-0 ${activeTab === item.href ? 'text-white' : 'group-hover:text-teal-400 transition-colors'}`} />
-                            <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden md:block'} flex-1 text-left whitespace-nowrap`}>{item.label}</span>
+                            <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden md:block'} flex-1 text-left whitespace-nowrap text-sm font-medium`}>{item.label}</span>
                         </button>
                     ))}
                 </nav>
 
-                <div className="p-4 border-t border-slate-800 bg-slate-900">
+                <div className="p-4 border-t border-slate-800 bg-slate-900 mt-auto">
                     <button
                         onClick={onLogout}
                         className={`flex items-center gap-3 text-slate-400 hover:text-red-400 w-full ${sidebarOpen ? 'px-4' : 'justify-center px-2'} py-3 rounded-xl hover:bg-red-500/10 transition-colors group active:scale-95`}
                     >
                         <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                        <span className={`${sidebarOpen ? 'block' : 'hidden'}`}>Log Out</span>
+                        <span className={`${sidebarOpen ? 'block' : 'hidden md:hidden'} text-sm font-medium`}>Log Out</span>
                     </button>
                 </div>
             </aside>

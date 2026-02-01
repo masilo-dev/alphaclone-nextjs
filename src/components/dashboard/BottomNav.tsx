@@ -7,20 +7,22 @@ import {
     Menu,
     DollarSign
 } from 'lucide-react';
-import { NavItem } from '../../types';
+import { NavItem, UserRole } from '../../types';
 
 interface BottomNavProps {
     activeTab: string;
     onNavigate: (href: string) => void;
     onToggleMenu: () => void;
     unreadCount?: number;
+    userRole?: UserRole; // Add user role
 }
 
 const BottomNav: React.FC<BottomNavProps> = ({
     activeTab,
     onNavigate,
     onToggleMenu,
-    unreadCount = 0
+    unreadCount = 0,
+    userRole = 'client'
 }) => {
     const router = useRouter();
 

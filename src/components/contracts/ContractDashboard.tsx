@@ -18,7 +18,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
 
     // Role-based access: client can only view and sign, admin can do everything
-    const isAdmin = user.role === 'admin';
+    const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
 
     // Editor State
     const [isEditing, setIsEditing] = useState(false);

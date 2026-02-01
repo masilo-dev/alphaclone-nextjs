@@ -22,21 +22,28 @@ export const projectService = {
      */
     async getProjects(userId: string, role: UserRole, limit: number = 100): Promise<{ projects: Project[]; error: string | null }> {
         try {
-            const tenantId = this.getTenantId();
-
             let query = supabase
                 .from('projects')
                 .select('*');
 
-            // Only filter by tenant if tenant ID exists
-            if (tenantId) {
-                query = query.eq('tenant_id', tenantId);
-            }
-
-            // Clients only see their own projects, admins see all within tenant
-            if (role !== 'admin') {
+            // Super Admin (role === 'admin') sees ALL projects across ALL tenants
+            // Tenant Admin (role === 'tenant_admin') sees all projects within their tenant
+            // Clients see only their own projects
+            if (role === 'tenant_admin') {
+                // Tenant admins: filter by their tenant
+                const tenantId = this.getTenantId();
+                if (tenantId) {
+                    query = query.eq('tenant_id', tenantId);
+                }
+            } else if (role !== 'admin') {
+                // Regular clients: filter by owner AND tenant
+                const tenantId = this.getTenantId();
+                if (tenantId) {
+                    query = query.eq('tenant_id', tenantId);
+                }
                 query = query.eq('owner_id', userId);
             }
+            // Note: Super Admin (role === 'admin') has NO filters applied
 
             const { data, error } = await query
                 .order('created_at', { ascending: false })

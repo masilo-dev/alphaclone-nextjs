@@ -33,7 +33,7 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
   { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
   { label: 'My Projects', href: '/dashboard/projects', icon: Briefcase },
   { label: 'Project Calendar', href: '/dashboard/calendar', icon: Calendar },
-  { label: 'Finance & Payments', href: '/dashboard/finance', icon: DollarSign },
+  { label: 'Invoices & Payments', href: '/dashboard/finance', icon: DollarSign },
   { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
   { label: 'AI Studio', href: '/dashboard/ai-studio', icon: Palette },
   { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
@@ -45,7 +45,7 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
 // --- ADMIN NAVIGATION ---
 export const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Platform Command', href: '/dashboard/admin/tenants', icon: Users },
-  { label: 'User Locations', href: '/dashboard/admin/users', icon: MapPin },
+
   { label: 'Command Center', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Live Operations', href: '/dashboard/analytics', icon: Activity },
   {
@@ -107,6 +107,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
   { label: 'Invoices & Billing', href: '/dashboard/business/billing', icon: DollarSign },
   { label: 'Reports', href: '/dashboard/business/reports', icon: BarChart3 },
+  { label: 'Contracts', href: '/dashboard/business/contracts', icon: FileText },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
@@ -119,7 +120,7 @@ export const ADMIN_STATS: DashboardStat[] = [
 
 export const CLIENT_STATS: DashboardStat[] = [
   { label: 'Active Projects', value: '1', icon: Briefcase, color: 'bg-teal-600' },
-  { label: 'Unread Messages', value: '3', icon: MessageSquare, color: 'bg-blue-600' },
   { label: 'Pending Invoices', value: '1', icon: DollarSign, color: 'bg-yellow-600' },
-  { label: 'Project Days', value: '12', icon: Clock, color: 'bg-purple-600' },
+  { label: 'Unread Messages', value: '3', icon: MessageSquare, color: 'bg-blue-600' },
+  { label: 'Upcoming Meetings', value: '2', icon: Video, color: 'bg-purple-600' },
 ];

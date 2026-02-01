@@ -114,17 +114,28 @@ export const paymentService = {
     },
 
     /**
-     * Get all invoices (Admin)
+     * Get all invoices (Admin/Tenant Admin)
+     * Super Admin (role='admin') sees ALL invoices across ALL tenants
+     * Tenant Admin (role='tenant_admin') sees invoices within their tenant only
      */
-    async getAllInvoices(limit: number = 50) {
-        const { data, error } = await supabase
+    async getAllInvoices(role?: string, limit: number = 50) {
+        let query = supabase
             .from('invoices')
             .select(`
         *,
         project:project_id (name),
         user:user_id (name, email)
-      `)
-            .eq('tenant_id', tenantService.getCurrentTenantId())
+      `);
+
+        // Only apply tenant filtering for tenant_admin, NOT for super admin
+        if (role !== 'admin') {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (tenantId) {
+                query = query.eq('tenant_id', tenantId);
+            }
+        }
+
+        const { data, error } = await query
             .order('created_at', { ascending: false })
             .limit(limit);
 
