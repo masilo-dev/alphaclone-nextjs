@@ -1,8 +1,4 @@
-/**
- * AI Core - Deeply integrated AI system
- * NOT a separate service - this IS the system intelligence
- */
-
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ENV } from '../../config/env';
 import { supabase } from '../../lib/supabase';
 import { tenantService } from '../tenancy/TenantService';
