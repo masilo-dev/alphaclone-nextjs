@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { supabase } from '../../../lib/supabase';
-import AvailabilityEditor from '../../booking/AvailabilityEditor';
+import toast from 'react-hot-toast';
+import CalendlySettings from './CalendlySettings';
 import {
     Building,
     Palette,
@@ -371,9 +372,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 
                 {/* Booking System Tab */}
                 {activeTab === 'booking' && (
-                    <div className="space-y-6">
-                        <AvailabilityEditor />
-                    </div>
+                    <CalendlySettings />
                 )}
 
                 {/* Save Button for Forms */}

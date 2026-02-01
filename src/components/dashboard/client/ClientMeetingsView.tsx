@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { dailyService, VideoCall } from '../../../services/dailyService';
+import { supabase } from '../../../lib/supabase';
 import { User, Video, Calendar, Clock, AlertCircle } from 'lucide-react';
 import { Card, Badge, Button } from '@/components/ui/UIComponents';
 import { format, isFuture } from 'date-fns';
@@ -25,16 +26,38 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
     const loadMeetings = async () => {
         if (!user) return;
         setLoading(true);
-        // "getUserVideoCall" fetches calls where user is host OR participant
-        const { calls, error } = await dailyService.getUserVideoCall(user.id);
-        if (!error && calls) {
-            setMeetings(calls);
+
+        // 1. Fetch manual video calls from Daily service
+        const { calls: dailyCalls, error: dailyError } = await dailyService.getUserVideoCall(user.id);
+
+        // 2. Fetch synced bookings from our database
+        // We match by the user's email since Calendly bookings use email
+        const { data: bookingData, error: bookingError } = await supabase
+            .from('bookings')
+            .select('*')
+            .eq('client_email', user.email)
+            .eq('status', 'confirmed');
+
+        if (!dailyError && dailyCalls) {
+            // Map bookings to a format similar to VideoCall if needed, or just combine
+            const mappedBookings: VideoCall[] = (bookingData || []).map((b: any) => ({
+                id: b.id,
+                title: `Booking: ${b.client_name}`,
+                status: b.status,
+                scheduled_at: b.start_time,
+                created_at: b.created_at,
+                // For joined meetings, we might need a meeting link if it's a video call
+                // Calendly payloads often have a location or join URL
+                room_url: b.metadata?.full_payload?.location?.join_url || b.metadata?.full_payload?.scheduled_event?.location?.join_url
+            }));
+
+            setMeetings([...dailyCalls, ...mappedBookings]);
         }
         setLoading(false);
     };
 
     const upcomingMeetings = meetings.filter(m =>
-        (m.status === 'scheduled' || m.status === 'active') &&
+        (m.status === 'scheduled' || m.status === 'active' || (m.status as any) === 'confirmed') &&
         // Show active meetings or future ones.
         (m.status === 'active' || isFuture(new Date(m.scheduled_at || m.created_at)))
     );

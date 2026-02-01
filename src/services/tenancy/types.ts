@@ -66,6 +66,14 @@ export interface TenantSettings {
         minNotice?: number; // default 4 hours
         futureLimit?: number; // default 60 days
     };
+    calendly?: {
+        enabled: boolean;
+        accessToken?: string;
+        refreshToken?: string;
+        expiresAt?: string;
+        calendlyUserUri?: string;
+        eventUrl?: string; // Default event link for the tenant
+    };
 }
 
 // Subscription Plans

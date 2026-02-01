@@ -25,6 +25,12 @@ const envSchema = z.object({
     // Optional
     VITE_SENTRY_DSN: z.string().url().optional(),
     VITE_VAPID_PUBLIC_KEY: z.string().optional(),
+
+    // Calendly OAuth (required for bookings)
+    VITE_CALENDLY_CLIENT_ID: z.string().optional(),
+    CALENDLY_CLIENT_SECRET: z.string().optional(),
+    VITE_CALENDLY_REDIRECT_URI: z.string().url().optional(),
+    CALENDLY_WEBHOOK_SIGNING_KEY: z.string().optional(),
 });
 
 /**
@@ -41,6 +47,10 @@ function validateEnv() {
         DAILY_API_KEY: process.env.DAILY_API_KEY || process.env.NEXT_PUBLIC_DAILY_API_KEY,
         VITE_STRIPE_PUBLIC_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || process.env.VITE_STRIPE_PUBLIC_KEY,
         VITE_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.VITE_SENTRY_DSN,
+        VITE_CALENDLY_CLIENT_ID: process.env.NEXT_PUBLIC_CALENDLY_CLIENT_ID || process.env.VITE_CALENDLY_CLIENT_ID || process.env.CALENDLY_CLIENT_ID,
+        CALENDLY_CLIENT_SECRET: process.env.CALENDLY_CLIENT_SECRET,
+        VITE_CALENDLY_REDIRECT_URI: process.env.NEXT_PUBLIC_CALENDLY_REDIRECT_URI || process.env.VITE_CALENDLY_REDIRECT_URI || process.env.CALENDLY_REDIRECT_URI,
+        CALENDLY_WEBHOOK_SIGNING_KEY: process.env.CALENDLY_WEBHOOK_SIGNING_KEY,
     };
 
     // Helper to treat empty strings as undefined
@@ -79,6 +89,10 @@ function validateEnv() {
                 DAILY_API_KEY: env.DAILY_API_KEY,
                 VITE_STRIPE_PUBLIC_KEY: env.VITE_STRIPE_PUBLIC_KEY,
                 VITE_SENTRY_DSN: env.VITE_SENTRY_DSN,
+                VITE_CALENDLY_CLIENT_ID: env.VITE_CALENDLY_CLIENT_ID,
+                CALENDLY_CLIENT_SECRET: env.CALENDLY_CLIENT_SECRET,
+                VITE_CALENDLY_REDIRECT_URI: env.VITE_CALENDLY_REDIRECT_URI,
+                CALENDLY_WEBHOOK_SIGNING_KEY: env.CALENDLY_WEBHOOK_SIGNING_KEY,
             } as any;
         }
         throw error;

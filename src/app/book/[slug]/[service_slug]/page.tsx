@@ -15,6 +15,7 @@ import {
 import { Tenant } from '@/services/tenancy/types';
 import { bookingService, BookingSlot } from '@/services/bookingService';
 import toast from 'react-hot-toast';
+import CalendlyEmbed from '@/components/booking/CalendlyEmbed';
 
 // Redundant local interface removed. Using imported BookingSlot from @/services/bookingService.
 
@@ -269,171 +270,182 @@ export default function BookingPage() {
                     {/* RIGHT PANEL: Interaction Area */}
                     <div className="lg:col-span-8">
                         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl shadow-slate-200/50 dark:shadow-none min-h-[500px]">
+                            {(tenant.settings as any)?.calendly?.enabled && (tenant.settings as any)?.calendly?.eventUrl ? (
+                                <CalendlyEmbed
+                                    url={(tenant.settings as any).calendly.eventUrl}
+                                    branding={{
+                                        primaryColor: tenant.settings.branding?.primaryColor,
+                                        backgroundColor: '#0f172a' // Dark slate to match theme
+                                    }}
+                                />
+                            ) : (
+                                <>
+                                    {/* STEP: DATE & TIME */}
+                                    {step === 'date' && (
+                                        <div className="flex flex-col md:flex-row gap-8 h-full">
+                                            {/* Calendar */}
+                                            <div className="flex-1">
+                                                <div className="flex items-center justify-between mb-6">
+                                                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                                                        {format(currentMonth, 'MMMM yyyy')}
+                                                    </h2>
+                                                    <div className="flex gap-1">
+                                                        <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors"><ChevronLeft className="w-5 h-5" /></button>
+                                                        <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors"><ChevronRight className="w-5 h-5" /></button>
+                                                    </div>
+                                                </div>
 
-                            {/* STEP: DATE & TIME */}
-                            {step === 'date' && (
-                                <div className="flex flex-col md:flex-row gap-8 h-full">
-                                    {/* Calendar */}
-                                    <div className="flex-1">
-                                        <div className="flex items-center justify-between mb-6">
-                                            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                                                {format(currentMonth, 'MMMM yyyy')}
-                                            </h2>
-                                            <div className="flex gap-1">
-                                                <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors"><ChevronLeft className="w-5 h-5" /></button>
-                                                <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors"><ChevronRight className="w-5 h-5" /></button>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-7 gap-y-2 text-center mb-2">
-                                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <div key={d} className="text-[10px] font-bold text-slate-400 uppercase">{d}</div>)}
-                                        </div>
-                                        <div className="grid grid-cols-7 gap-y-2">
-                                            {calendarDays.map((day, i) => {
-                                                const isCurrentMonth = isSameMonth(day, currentMonth);
-                                                const isPast = isBefore(day, startOfToday());
-                                                const isSelected = selectedDate && isSameDay(day, selectedDate);
-                                                return (
-                                                    <button
-                                                        key={i}
-                                                        disabled={isPast || !isCurrentMonth}
-                                                        onClick={() => setSelectedDate(day)}
-                                                        className={`
+                                                <div className="grid grid-cols-7 gap-y-2 text-center mb-2">
+                                                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <div key={d} className="text-[10px] font-bold text-slate-400 uppercase">{d}</div>)}
+                                                </div>
+                                                <div className="grid grid-cols-7 gap-y-2">
+                                                    {calendarDays.map((day, i) => {
+                                                        const isCurrentMonth = isSameMonth(day, currentMonth);
+                                                        const isPast = isBefore(day, startOfToday());
+                                                        const isSelected = selectedDate && isSameDay(day, selectedDate);
+                                                        return (
+                                                            <button
+                                                                key={i}
+                                                                disabled={isPast || !isCurrentMonth}
+                                                                onClick={() => setSelectedDate(day)}
+                                                                className={`
                                                             h-10 w-10 mx-auto rounded-full flex items-center justify-center text-sm font-medium transition-all
                                                             ${!isCurrentMonth ? 'opacity-0 pointer-events-none' : ''}
                                                             ${isPast ? 'text-slate-300 dark:text-slate-700 line-through decoration-slate-300' : ''}
                                                             ${isSelected
-                                                                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold scale-110'
-                                                                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}
+                                                                        ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold scale-110'
+                                                                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}
                                                         `}
-                                                    >
-                                                        {format(day, 'd')}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                        <div className="mt-8 flex items-center justify-center gap-2 text-xs font-medium text-slate-500 bg-slate-50 dark:bg-slate-950/50 py-2 rounded-lg">
-                                            <Globe className="w-3.5 h-3.5" />
-                                            {Intl.DateTimeFormat().resolvedOptions().timeZone}
-                                        </div>
-                                    </div>
-
-                                    {/* Slots Column (Desktop: Side / Mobile: Below) */}
-                                    <div className={`md:w-64 md:border-l border-slate-200 dark:border-slate-800 md:pl-8 ${!selectedDate ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">
-                                            {selectedDate ? format(selectedDate, 'EEEE, MMM d') : 'Select date'}
-                                        </h3>
-
-                                        {loadingSlots ? (
-                                            <div className="space-y-3">
-                                                {[1, 2, 3].map(i => <div key={i} className="h-10 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse" />)}
-                                            </div>
-                                        ) : slots.length === 0 ? (
-                                            <div className="text-sm text-slate-500 py-4">No availability for this day.</div>
-                                        ) : (
-                                            <div className="space-y-3 max-h-[300px] md:max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                                                {slots.map((slot, idx) => (
-                                                    <button
-                                                        key={idx}
-                                                        onClick={() => {
-                                                            async function handleDesktopClick() {
-                                                                setSelectedSlot(slot);
-                                                                // On desktop, we stay here but update selection state, 
-                                                                // actually let's move to form on desktop too for simplicity?
-                                                                // The user asked for "Simple". Simple = Step by Step is often clearer.
-                                                                // But commonly desktop allows seeing both.
-                                                                // Let's optimize: Mobile -> Auto-advance. Desktop -> Show "Next" button or Auto-Advance?
-                                                                // Let's Auto-Advance on both for immediate feedback.
-                                                                setStep('form');
-                                                            }
-                                                            handleDesktopClick();
-                                                        }}
-                                                        className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-900 dark:hover:border-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex justify-between group"
-                                                    >
-                                                        {format(parseISO(slot.start), 'h:mm a')}
-                                                        <span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* STEP: FORM */}
-                            {step === 'form' && selectedSlot && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-300">
-                                    <div>
-                                        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Final Details</h2>
-                                        <p className="text-slate-500 text-sm">Please fill in your information to complete the booking.</p>
-                                    </div>
-
-                                    <form onSubmit={handleBook} className="space-y-5">
-                                        <div className="space-y-4">
-                                            <div className="space-y-1.5">
-                                                <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Full Name</label>
-                                                <div className="relative">
-                                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                                    <input
-                                                        required
-                                                        value={formData.name}
-                                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                                        className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
-                                                        placeholder="John Doe"
-                                                    />
+                                                            >
+                                                                {format(day, 'd')}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                                <div className="mt-8 flex items-center justify-center gap-2 text-xs font-medium text-slate-500 bg-slate-50 dark:bg-slate-950/50 py-2 rounded-lg">
+                                                    <Globe className="w-3.5 h-3.5" />
+                                                    {Intl.DateTimeFormat().resolvedOptions().timeZone}
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-1.5">
-                                                <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Email Address</label>
-                                                <div className="relative">
-                                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                                    <input
-                                                        required
-                                                        type="email"
-                                                        value={formData.email}
-                                                        onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                                        className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
-                                                        placeholder="john@example.com"
-                                                    />
-                                                </div>
-                                            </div>
+                                            {/* Slots Column (Desktop: Side / Mobile: Below) */}
+                                            <div className={`md:w-64 md:border-l border-slate-200 dark:border-slate-800 md:pl-8 ${!selectedDate ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">
+                                                    {selectedDate ? format(selectedDate, 'EEEE, MMM d') : 'Select date'}
+                                                </h3>
 
-                                            <div className="space-y-1.5">
-                                                <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Phone (Optional)</label>
-                                                <div className="relative">
-                                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                                    <input
-                                                        type="tel"
-                                                        value={formData.phone}
-                                                        onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                                        className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
-                                                        placeholder="+1 (555) 000-0000"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-1.5">
-                                                <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Notes</label>
-                                                <textarea
-                                                    rows={3}
-                                                    value={formData.notes}
-                                                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all resize-none"
-                                                    placeholder="Anything we should know?"
-                                                />
+                                                {loadingSlots ? (
+                                                    <div className="space-y-3">
+                                                        {[1, 2, 3].map(i => <div key={i} className="h-10 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse" />)}
+                                                    </div>
+                                                ) : slots.length === 0 ? (
+                                                    <div className="text-sm text-slate-500 py-4">No availability for this day.</div>
+                                                ) : (
+                                                    <div className="space-y-3 max-h-[300px] md:max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                                        {slots.map((slot, idx) => (
+                                                            <button
+                                                                key={idx}
+                                                                onClick={() => {
+                                                                    async function handleDesktopClick() {
+                                                                        setSelectedSlot(slot);
+                                                                        // On desktop, we stay here but update selection state, 
+                                                                        // actually let's move to form on desktop too for simplicity?
+                                                                        // The user asked for "Simple". Simple = Step by Step is often clearer.
+                                                                        // But commonly desktop allows seeing both.
+                                                                        // Let's optimize: Mobile -> Auto-advance. Desktop -> Show "Next" button or Auto-Advance?
+                                                                        // Let's Auto-Advance on both for immediate feedback.
+                                                                        setStep('form');
+                                                                    }
+                                                                    handleDesktopClick();
+                                                                }}
+                                                                className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-900 dark:hover:border-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex justify-between group"
+                                                            >
+                                                                {format(parseISO(slot.start), 'h:mm a')}
+                                                                <span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
+                                    )}
 
-                                        <button
-                                            type="submit"
-                                            disabled={submitting}
-                                            className="w-full py-4 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-950 font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-                                        >
-                                            {submitting ? 'Confirming...' : 'Confirm Booking'}
-                                        </button>
-                                    </form>
-                                </div>
+                                    {/* STEP: FORM */}
+                                    {step === 'form' && selectedSlot && (
+                                        <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-300">
+                                            <div>
+                                                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Final Details</h2>
+                                                <p className="text-slate-500 text-sm">Please fill in your information to complete the booking.</p>
+                                            </div>
+
+                                            <form onSubmit={handleBook} className="space-y-5">
+                                                <div className="space-y-4">
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Full Name</label>
+                                                        <div className="relative">
+                                                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                            <input
+                                                                required
+                                                                value={formData.name}
+                                                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                                                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                                                placeholder="John Doe"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Email Address</label>
+                                                        <div className="relative">
+                                                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                            <input
+                                                                required
+                                                                type="email"
+                                                                value={formData.email}
+                                                                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                                                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                                                placeholder="john@example.com"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Phone (Optional)</label>
+                                                        <div className="relative">
+                                                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                            <input
+                                                                type="tel"
+                                                                value={formData.phone}
+                                                                onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                                                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                                                placeholder="+1 (555) 000-0000"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Notes</label>
+                                                        <textarea
+                                                            rows={3}
+                                                            value={formData.notes}
+                                                            onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                                                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all resize-none"
+                                                            placeholder="Anything we should know?"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <button
+                                                    type="submit"
+                                                    disabled={submitting}
+                                                    className="w-full py-4 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-950 font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                                                >
+                                                    {submitting ? 'Confirming...' : 'Confirm Booking'}
+                                                </button>
+                                            </form>
+                                        </div>
+                                    )}
+                                </>
                             )}
 
                         </div>

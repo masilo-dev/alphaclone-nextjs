@@ -9,7 +9,8 @@ import {
     Eye,
     LogIn,
     Trash2,
-    MapPin
+    MapPin,
+    Calendar // Added for Calendly status
 } from 'lucide-react';
 import { tenantManagementService, TenantInfo } from '../../../services/tenantManagementService';
 import { securityLogService } from '../../../services/securityLogService';
@@ -101,8 +102,9 @@ const SuperAdminTenantsTab: React.FC = () => {
                     <thead>
                         <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 text-sm">
                             <th className="p-4 font-medium">Business Name</th>
-                            <th className="p-4 font-medium">Plan</th>
+                            <th className="p-4 font-medium">Subscription</th>
                             <th className="p-4 font-medium">Status</th>
+                            <th className="p-4 font-medium text-center">Calendly</th>
                             <th className="p-4 font-medium">Users</th>
                             <th className="p-4 font-medium">Created</th>
                             <th className="p-4 font-medium text-right">Actions</th>
@@ -136,6 +138,18 @@ const SuperAdminTenantsTab: React.FC = () => {
                                         <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(tenant.status)} uppercase tracking-wide`}>
                                             {tenant.status}
                                         </span>
+                                    </td>
+                                    <td className="p-4 text-center">
+                                        {(tenant.settings as any)?.calendly?.enabled ? (
+                                            <div className="flex items-center justify-center text-teal-400" title="Calendly Connected">
+                                                <Calendar className="w-4 h-4" />
+                                                <div className="w-1.5 h-1.5 bg-teal-400 rounded-full ml-1 animate-pulse" />
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center justify-center text-slate-600" title="Not Connected">
+                                                <Calendar className="w-4 h-4" />
+                                            </div>
+                                        )}
                                     </td>
                                     <td className="p-4 font-mono text-slate-300">
                                         {tenant.userCount}

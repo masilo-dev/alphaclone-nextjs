@@ -19,15 +19,25 @@ export const businessEventService = {
      */
     async getEvents(tenantId: string): Promise<{ events: BusinessEvent[]; error: string | null }> {
         try {
-            const { data, error } = await supabase
+            // 1. Fetch manual business events
+            const { data: eventData, error: eventError } = await supabase
                 .from('business_events')
                 .select('*')
                 .eq('tenant_id', tenantId)
                 .order('start_time', { ascending: true });
 
-            if (error) throw error;
+            if (eventError) throw eventError;
 
-            const events = (data || []).map((e: any) => ({
+            // 2. Fetch automated bookings
+            const { data: bookingData, error: bookingError } = await supabase
+                .from('bookings')
+                .select('*')
+                .eq('tenant_id', tenantId)
+                .eq('status', 'confirmed');
+
+            if (bookingError) throw bookingError;
+
+            const manualEvents = (eventData || []).map((e: any) => ({
                 id: e.id,
                 tenantId: e.tenant_id,
                 title: e.title,
@@ -40,7 +50,19 @@ export const businessEventService = {
                 createdAt: e.created_at
             }));
 
-            return { events, error: null };
+            const bookingEvents = (bookingData || []).map((b: any) => ({
+                id: b.id,
+                tenantId: b.tenant_id,
+                title: `Booking: ${b.client_name}`,
+                description: b.client_notes,
+                startTime: b.start_time,
+                endTime: b.end_time,
+                eventType: 'booking',
+                attendees: [b.client_email],
+                createdAt: b.created_at
+            }));
+
+            return { events: [...manualEvents, ...bookingEvents], error: null };
         } catch (err: any) {
             console.error('Error fetching events:', err);
             return { events: [], error: err.message };

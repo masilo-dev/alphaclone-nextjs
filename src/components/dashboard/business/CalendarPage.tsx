@@ -168,7 +168,10 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                                     {dayEvents.slice(0, 3).map(event => (
                                         <div
                                             key={event.id}
-                                            className="text-xs px-2 py-1 bg-teal-500/20 text-teal-400 rounded truncate"
+                                            className={`text-xs px-2 py-1 rounded truncate ${event.eventType === 'booking'
+                                                    ? 'bg-purple-500/20 text-purple-400'
+                                                    : 'bg-teal-500/20 text-teal-400'
+                                                }`}
                                         >
                                             {event.title}
                                         </div>

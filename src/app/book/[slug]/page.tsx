@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { fetchTenantBookingPage, BookingType } from '@/actions/booking';
 import { Tenant } from '@/services/tenancy/types';
 import { Clock, ArrowRight, Video, Calendar, MapPin, Loader2 } from 'lucide-react';
+import CalendlyEmbed from '@/components/booking/CalendlyEmbed';
 
 export default function BookingLandingPage() {
     const params = useParams();
@@ -76,48 +77,60 @@ export default function BookingLandingPage() {
                     </div>
                 </div>
 
-                {/* Services List */}
-                <div className="grid gap-4 animate-in slide-in-from-bottom-8 duration-1000 delay-100 fade-in fill-mode-backwards">
-                    {bookingTypes.length === 0 ? (
+                {/* Services List or Calendly Embed */}
+                <div className="animate-in slide-in-from-bottom-8 duration-1000 delay-100 fade-in fill-mode-backwards">
+                    {(tenant.settings as any)?.calendly?.enabled && (tenant.settings as any)?.calendly?.eventUrl ? (
+                        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-2xl">
+                            <CalendlyEmbed
+                                url={(tenant.settings as any).calendly.eventUrl}
+                                branding={{
+                                    primaryColor: tenant.settings.branding?.primaryColor,
+                                    backgroundColor: '#0f172a'
+                                }}
+                            />
+                        </div>
+                    ) : bookingTypes.length === 0 ? (
                         <div className="text-center p-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 border-dashed">
                             <p className="text-slate-400">No active services available.</p>
                         </div>
                     ) : (
-                        bookingTypes.map((service) => (
-                            <div
-                                key={service.id}
-                                onClick={() => router.push(`/book/${slug}/${service.slug}`)}
-                                className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xl transition-all cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4"
-                            >
-                                <div className="space-y-2">
-                                    <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
-                                        {service.name}
-                                    </h2>
-                                    {service.description && (
-                                        <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 pr-4">{service.description}</p>
-                                    )}
-                                    <div className="flex items-center gap-4 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 pt-1">
-                                        <div className="flex items-center gap-1.5">
-                                            <Clock className="w-3.5 h-3.5" />
-                                            {service.duration} mins
-                                        </div>
-                                        {service.price > 0 && (
-                                            <div className="flex items-center gap-1.5">
-                                                <span>$</span>
-                                                {service.price} {service.currency}
-                                            </div>
+                        <div className="grid gap-4">
+                            {bookingTypes.map((service) => (
+                                <div
+                                    key={service.id}
+                                    onClick={() => router.push(`/book/${slug}/${service.slug}`)}
+                                    className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xl transition-all cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4"
+                                >
+                                    <div className="space-y-2">
+                                        <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+                                            {service.name}
+                                        </h2>
+                                        {service.description && (
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 pr-4">{service.description}</p>
                                         )}
-                                        <div className="flex items-center gap-1.5">
-                                            <Video className="w-3.5 h-3.5" />
-                                            Online
+                                        <div className="flex items-center gap-4 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 pt-1">
+                                            <div className="flex items-center gap-1.5">
+                                                <Clock className="w-3.5 h-3.5" />
+                                                {service.duration} mins
+                                            </div>
+                                            {service.price > 0 && (
+                                                <div className="flex items-center gap-1.5">
+                                                    <span>$</span>
+                                                    {service.price} {service.currency}
+                                                </div>
+                                            )}
+                                            <div className="flex items-center gap-1.5">
+                                                <Video className="w-3.5 h-3.5" />
+                                                Online
+                                            </div>
                                         </div>
                                     </div>
+                                    <div className="hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 text-slate-400 group-hover:bg-slate-900 group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-slate-900 transition-all transform group-hover:translate-x-1">
+                                        <ArrowRight className="w-4 h-4" />
+                                    </div>
                                 </div>
-                                <div className="hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 text-slate-400 group-hover:bg-slate-900 group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-slate-900 transition-all transform group-hover:translate-x-1">
-                                    <ArrowRight className="w-4 h-4" />
-                                </div>
-                            </div>
-                        ))
+                            ))}
+                        </div>
                     )}
                 </div>
 

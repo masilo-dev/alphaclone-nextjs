@@ -8,6 +8,7 @@ export interface TenantInfo {
     userCount: number;
     lastActivity?: string;
     subscription?: string;
+    settings?: any; // Added to expose calendly status
 }
 
 export const tenantManagementService = {
@@ -33,7 +34,8 @@ export const tenantManagementService = {
                 status: tenant.status || 'active',
                 createdAt: tenant.created_at,
                 userCount: tenant.tenant_users?.[0]?.count || 0,
-                subscription: tenant.subscription_tier || 'free'
+                subscription: tenant.subscription_tier || 'free',
+                settings: tenant.settings // Expose settings for UI checks
             }));
 
             return { tenants, error: null };
