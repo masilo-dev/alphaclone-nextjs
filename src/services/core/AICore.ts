@@ -3,11 +3,11 @@
  * NOT a separate service - this IS the system intelligence
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { ENV } from '../../config/env';
 import { supabase } from '../../lib/supabase';
 import { tenantService } from '../tenancy/TenantService';
 
-const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
+const GEMINI_API_KEY = ENV.VITE_GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 interface AIContext {

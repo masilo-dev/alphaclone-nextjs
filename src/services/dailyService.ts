@@ -160,13 +160,20 @@ class DailyService {
 
             const { data: tenantData } = await supabase
                 .from('tenants')
-                .select('subscription_status, subscription_plan')
+                .select('subscription_status, subscription_plan, slug')
                 .eq('id', tenantId)
                 .single();
 
+            const isSuperAdminTenant = tenantData?.slug === 'default';
             const plan = (tenantData?.subscription_plan as any) || 'free';
             const { PLAN_PRICING } = await import('./tenancy/types');
-            const planFeatures = PLAN_PRICING[plan as keyof typeof PLAN_PRICING].features;
+            const planFeatures = { ...PLAN_PRICING[plan as keyof typeof PLAN_PRICING].features }; // Clone features
+
+            // SUPER ADMIN BYPASS: Default tenant has no limits
+            if (isSuperAdminTenant) {
+                planFeatures.maxVideoMeetingsPerMonth = -1;
+                planFeatures.maxVideoMinutesPerMeeting = -1;
+            }
 
             // 1. Check Monthly Meeting Limit
             if (planFeatures.maxVideoMeetingsPerMonth !== -1) {

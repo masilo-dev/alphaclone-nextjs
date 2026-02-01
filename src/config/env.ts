@@ -53,10 +53,21 @@ function validateEnv() {
         CALENDLY_WEBHOOK_SIGNING_KEY: process.env.CALENDLY_WEBHOOK_SIGNING_KEY || process.env.VITE_CALENDLY_WEBHOOK_SIGNING_KEY || process.env.NEXT_PUBLIC_CALENDLY_WEBHOOK_SIGNING_KEY,
     };
 
-    // Helper to treat empty strings as undefined
+    // Helper to treat empty strings or whitespace-only as undefined, and trim all strings
     Object.keys(env).forEach(key => {
-        if (env[key as keyof typeof env] === '') {
-            (env as any)[key] = undefined;
+        let val = (env as any)[key];
+        if (typeof val === 'string') {
+            val = val.trim();
+
+            // Clean up common copy-paste errors
+            if (key === 'CALENDLY_CLIENT_SECRET' && val.startsWith(':')) {
+                val = val.substring(1).trim();
+            }
+            if (key === 'VITE_CALENDLY_REDIRECT_URI' && val.endsWith('.')) {
+                val = val.substring(0, val.length - 1).trim();
+            }
+
+            (env as any)[key] = val === '' ? undefined : val;
         }
     });
 

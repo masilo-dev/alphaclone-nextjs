@@ -1,8 +1,9 @@
 ﻿
  name                               value               environments                        created    
- CALENDLY_WEBHOOK_SIGNING_KEY       Encrypted           Development, Preview, Production    53m ago    
- CALENDLY_CLIENT_ID                 Encrypted           Development, Preview, Production    53m ago    
- CALENDLY_CLIENT_SECRET             Encrypted           Development, Preview, Production    53m ago    
+ CALENDLY_REDIRECT_URI              Encrypted           Development, Preview, Production    4m ago     
+ CALENDLY_WEBHOOK_SIGNING_KEY       Encrypted           Development, Preview, Production    60m ago    
+ CALENDLY_CLIENT_ID                 Encrypted           Development, Preview, Production    60m ago    
+ CALENDLY_CLIENT_SECRET             Encrypted           Development, Preview, Production    60m ago    
  DAILY_API_KEY                      Encrypted           Production, Preview, Development    5d ago     
  STRIPE_SECRET_KEY                  Encrypted           Development, Preview, Production    5d ago     
  NEXT_PUBLIC_DAILY_DOMAIN           Encrypted           Development, Preview, Production    5d ago     
