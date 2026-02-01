@@ -309,7 +309,7 @@ const SalesAgent: React.FC = () => {
 
                             <div className="flex flex-wrap gap-2 sm:gap-3">
                                 <Button onClick={handleSearch} className="flex-1 sm:flex-initial bg-teal-500 hover:bg-teal-400" isLoading={isSearching} disabled={!aiConfigured}>
-                                    <Search className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">{aiConfigured ? 'Find Leads' : 'Setup Required'}</span>
+                                    <Search className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">{aiConfigured ? 'Find Leads' : 'AI core offline'}</span>
                                 </Button>
 
                                 <Button onClick={() => setShowManualModal(true)} variant="outline" className="flex-1 sm:flex-initial border-dashed border-slate-600 hover:border-teal-500 hover:text-teal-400">
