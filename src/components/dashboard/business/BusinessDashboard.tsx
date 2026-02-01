@@ -259,7 +259,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
 
             {/* Sidebar */}
             <aside className={`${sidebarOpen
-                ? 'w-72 translate-x-0'
+                ? 'w-72 translate-x-0 pb-24 md:pb-0'
                 : 'w-0 -translate-x-full md:w-16 md:translate-x-0'
                 } bg-slate-900 border-r border-slate-800 flex flex-col fixed md:relative z-50 h-full transition-all duration-300 shadow-2xl overflow-hidden`}>
                 <div className="h-16 flex items-center px-6 border-b border-slate-800 bg-slate-900">
