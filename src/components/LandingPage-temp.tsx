@@ -232,7 +232,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up px-4 sm:px-0" style={{ animationDelay: '0.2s' }}>
                      <Button
-                        onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')}
+                        onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
                         size="lg"
                         className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-8 h-12 w-full sm:w-auto"
                      >
@@ -353,7 +353,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            ))}
                         </ul>
                         <div className="flex flex-col gap-3">
-                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-semibold">
+                           <Button onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')} className="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-semibold">
                               Book Consultation
                            </Button>
                         </div>
@@ -401,7 +401,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            ))}
                         </ul>
                         <div className="flex flex-col gap-3">
-                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">
+                           <Button onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')} className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">
                               Schedule Meeting
                            </Button>
                         </div>
@@ -449,7 +449,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            ))}
                         </ul>
                         <div className="flex flex-col gap-3">
-                           <Button onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')} className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold">
+                           <Button onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')} className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold">
                               Book Demo
                            </Button>
                         </div>
@@ -615,7 +615,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                                        <p className="text-sm text-slate-400">Pick a time that works for you via Calendly.</p>
                                     </div>
                                     <Button
-                                       onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')}
+                                       onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
                                        className="bg-teal-600 hover:bg-teal-500 text-white"
                                     >
                                        Book Meeting

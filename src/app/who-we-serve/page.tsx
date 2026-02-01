@@ -64,7 +64,7 @@ export default function WhoWeServePage() {
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <Button
-                            onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')}
+                            onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
                             size="lg"
                             className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-8 h-12 w-full sm:w-auto"
                         >
@@ -297,7 +297,7 @@ export default function WhoWeServePage() {
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <Button
-                            onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')}
+                            onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
                             size="lg"
                             className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-8 h-12 w-full sm:w-auto"
                         >

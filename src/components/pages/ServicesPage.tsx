@@ -105,7 +105,7 @@ const ServicesPage: React.FC = () => {
                                 <Button
                                     size="sm"
                                     className="bg-teal-600 hover:bg-teal-500 w-full"
-                                    onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')}
+                                    onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
                                 >
                                     Book Meeting
                                 </Button>
@@ -131,7 +131,7 @@ const ServicesPage: React.FC = () => {
                         <Button
                             size="lg"
                             className="text-lg px-8 py-4 bg-teal-600 hover:bg-teal-500"
-                            onClick={() => window.open('https://calendly.com/alphaclonesystems/new-meeting', '_blank')}
+                            onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
                         >
                             Schedule Consultation
                         </Button>
