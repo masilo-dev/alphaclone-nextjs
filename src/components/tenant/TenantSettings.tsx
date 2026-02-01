@@ -52,11 +52,10 @@ export default function TenantSettings() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors relative ${
-              activeTab === tab.id
+            className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors relative ${activeTab === tab.id
                 ? 'text-teal-400'
                 : 'text-slate-400 hover:text-slate-300'
-            }`}
+              }`}
           >
             <tab.icon className="w-4 h-4" />
             {tab.label}
@@ -331,13 +330,12 @@ function TeamSettings({ tenant, isAdmin }: any) {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    member.role === 'admin'
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${member.role === 'admin'
                       ? 'bg-purple-500/20 text-purple-300'
                       : member.role === 'member'
-                      ? 'bg-blue-500/20 text-blue-300'
-                      : 'bg-slate-600 text-slate-300'
-                  }`}>
+                        ? 'bg-blue-500/20 text-blue-300'
+                        : 'bg-slate-600 text-slate-300'
+                    }`}>
                     {member.role}
                   </span>
 
@@ -368,7 +366,7 @@ function BillingSettings({ tenant, isAdmin }: any) {
           <div>
             <div className="text-2xl font-bold text-white capitalize">{currentPlan}</div>
             <div className="text-slate-400">
-              {currentPlan === 'free' ? 'Free forever' : `$${currentPlan === 'starter' ? 29 : currentPlan === 'professional' ? 99 : 299}/month`}
+              {currentPlan === 'free' ? 'Free forever' : `$${currentPlan === 'starter' ? 25 : currentPlan === 'pro' ? 89 : 200}/month`}
             </div>
           </div>
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { businessClientService } from '../../../services/businessClientService';
-import { businessProjectService } from '../../../services/businessProjectService';
+import { projectService } from '../../../services/projectService';
 import { businessInvoiceService } from '../../../services/businessInvoiceService';
 import {
     TrendingUp,
@@ -44,7 +44,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
         setLoading(true);
         try {
             const { clients } = await businessClientService.getClients(currentTenant.id);
-            const { projects } = await businessProjectService.getProjects(currentTenant.id);
+            const { projects } = await projectService.getProjects(user.id, user.role);
             const { invoices } = await businessInvoiceService.getInvoices(currentTenant.id);
 
             // Calculate stats
@@ -52,8 +52,8 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 .filter(inv => inv.status === 'paid')
                 .reduce((sum, inv) => sum + inv.total, 0);
 
-            const activeProjects = projects.filter(p => p.status !== 'done').length;
-            const completedProjects = projects.filter(p => p.status === 'done').length;
+            const activeProjects = projects.filter(p => p.status === 'Active' || p.status === 'Pending').length;
+            const completedProjects = projects.filter(p => p.status === 'Completed').length;
 
             setStats({
                 totalRevenue,
@@ -93,11 +93,11 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
             }));
             setClientData(clientStages);
 
-            // Project status distribution
-            const statuses = ['backlog', 'todo', 'in_progress', 'review', 'done'];
-            const projectStatuses = statuses.map(status => ({
-                name: status.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-                value: projects.filter(p => p.status === status).length
+            // Project status distribution (mapped to stages)
+            const projectStages: any[] = ['Discovery', 'Design', 'Development', 'Testing', 'Deployment', 'Maintenance'];
+            const projectStatuses = projectStages.map(stage => ({
+                name: stage,
+                value: projects.filter(p => p.currentStage === stage).length
             }));
             setProjectData(projectStatuses);
 

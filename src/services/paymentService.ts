@@ -22,8 +22,16 @@ export interface Invoice {
     items?: InvoiceItem[];
     created_at: string;
     metadata?: any;
+    payment_method?: 'stripe' | 'bank' | 'mobile_money';
+    manual_payment_instructions?: string;
     project?: { name: string };
     user?: { name: string; email: string };
+    tenant?: {
+        name: string;
+        email?: string;
+        address?: string;
+        registration_number?: string;
+    };
 }
 
 export interface InvoiceItem {
@@ -46,12 +54,21 @@ export const paymentService = {
      * Create a new invoice
      */
     async createInvoice(invoice: Omit<Invoice, 'id' | 'created_at' | 'status'>) {
+        // Check if tenant has payment processing enabled
+        const tenantId = tenantService.getCurrentTenantId();
+        const { data: tenant } = await supabase.from('tenants').select('subscription_plan').eq('id', tenantId).single();
+        const { PLAN_PRICING } = await import('./tenancy/types');
+        const plan = (tenant?.subscription_plan as any) || 'free';
+        if (!PLAN_PRICING[plan as keyof typeof PLAN_PRICING].features.paymentProcessing) {
+            return { invoice: null, error: new Error('Payment processing is not enabled for your current plan. Please upgrade to use this feature.') };
+        }
+
         const { data, error } = await supabase
             .from('invoices')
             .insert({
                 ...invoice,
                 status: 'draft',
-                tenant_id: tenantService.getCurrentTenantId(),
+                tenant_id: tenantId,
             })
             .select()
             .single();
@@ -131,6 +148,19 @@ export const paymentService = {
         doc.text(`Date: ${new Date(invoice.created_at).toLocaleDateString()}`, 20, 35);
         doc.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, 20, 40);
 
+        // Issuer Details (Right Side)
+        const issuer = invoice.tenant || { name: 'AlphaClone Systems' };
+        doc.setTextColor(40, 40, 40);
+        doc.setFont('helvetica', 'bold');
+        doc.text('ISSUER:', 120, 30);
+        doc.setFont('helvetica', 'normal');
+        doc.text(issuer.name, 120, 35);
+        if (issuer.address) {
+            const splitAddress = doc.splitTextToSize(issuer.address, 70);
+            doc.text(splitAddress, 120, 40);
+        }
+        if (issuer.email) doc.text(`Email: ${issuer.email}`, 120, 55);
+
         // Status
         doc.setFontSize(14);
         if (invoice.status === 'paid') {
@@ -184,6 +214,28 @@ export const paymentService = {
         doc.text('Total:', 120, yPos);
         doc.text(`$${invoice.amount.toLocaleString()} ${invoice.currency.toUpperCase()}`, 160, yPos);
 
+        // Manual Payment Instructions
+        if (invoice.payment_method && invoice.payment_method !== 'stripe' && invoice.manual_payment_instructions) {
+            yPos += 20;
+            doc.setFontSize(10);
+            doc.setTextColor(15, 118, 110); // Teal-700
+            doc.text('PAYMENT INSTRUCTIONS:', 20, yPos);
+            yPos += 7;
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(60, 60, 60);
+
+            const splitText = doc.splitTextToSize(invoice.manual_payment_instructions, 150);
+            doc.text(splitText, 20, yPos);
+        }
+
+        // Legal Footer & Tax Disclaimer
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        const footerY = 280;
+        doc.text('TAX DISCLAIMER:', 20, footerY);
+        doc.text('Tax calculation and reporting responsibility lies solely with the issuer. AlphaClone Systems provides software', 20, footerY + 4);
+        doc.text('only and does not collect or remit taxes on behalf of users.', 20, footerY + 8);
+
         return doc;
     },
 
@@ -191,7 +243,11 @@ export const paymentService = {
         // Fetch full invoice details
         const { data: invoice, error } = await supabase
             .from('invoices')
-            .select(`*, project:project_id(name)`)
+            .select(`
+                *, 
+                project:project_id(name),
+                tenant:tenant_id(name, email, address)
+            `)
             .eq('id', invoiceId)
             .single();
 
@@ -467,6 +523,7 @@ export const paymentService = {
                 .from('tenants')
                 .select('*')
                 .eq('subscription_status', 'active')
+                .is('deletion_pending_at', null)
                 .lte('current_period_end', today.toISOString());
 
             if (error) {
@@ -485,13 +542,15 @@ export const paymentService = {
                 try {
                     // Create invoice for next period
                     // In a real system, you'd lookup price from plan ID
-                    const amount = tenant.plan === 'pro' ? 2900 : 9900; // Example amounts
+                    const planName = tenant.subscription_plan || 'starter';
+                    const amount = planName === 'pro' ? 8900 :
+                        planName === 'enterprise' ? 20000 : 2500; // Updated to match PLAN_PRICING ($25, $89, $200)
 
                     await this.createInvoice({
                         user_id: tenant.admin_user_id, // Invoice the admin
                         amount: amount,
                         currency: 'usd',
-                        description: `Subscription renewal: ${tenant.plan} plan`,
+                        description: `Subscription renewal: ${planName} plan`,
                         due_date: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
                     } as any);
 
@@ -517,5 +576,13 @@ export const paymentService = {
             return { processed: 0, errors: 1 };
         }
     }
+};
+
+export const ALPHACLONE_BANK_DETAILS = {
+    bankName: "Alpha Global Bank",
+    accountNumber: "001-9922881-01",
+    accountName: "Alphaclone Systems Ltd",
+    swiftCode: "ALPHUS66",
+    instructions: "Please use your Tenant ID as the reference."
 };
 

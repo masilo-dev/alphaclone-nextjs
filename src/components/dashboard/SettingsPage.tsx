@@ -4,6 +4,8 @@ import { Button, Card, Input } from '../ui/UIComponents';
 import { User as UserType } from '../../types';
 import { userService } from '../../services/userService';
 import toast from 'react-hot-toast';
+import { useTenant } from '../../contexts/TenantContext';
+import { SubscriptionPlan, PLAN_PRICING } from '../../services/tenancy/types';
 
 interface SettingsPageProps {
     user: UserType;
@@ -12,6 +14,7 @@ interface SettingsPageProps {
 const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'security' | 'appearance' | 'billing'>('profile');
     const [isSaving, setIsSaving] = useState(false);
+    const { currentTenant } = useTenant();
 
     const [profileData, setProfileData] = useState({
         name: user.name,
@@ -143,6 +146,51 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 
     const handleSaveAppearance = () => {
         toast.success('Appearance preferences saved!');
+    };
+
+    const handleUpgrade = async (planId: string) => {
+        if (!currentTenant) return;
+
+        const planPricing = PLAN_PRICING[planId as SubscriptionPlan];
+        if (!planPricing?.stripePriceId) {
+            toast.error('This plan cannot be upgraded online.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/stripe/create-checkout-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    priceId: planPricing.stripePriceId,
+                    tenantId: currentTenant.id,
+                    adminEmail: user.email,
+                })
+            });
+            const { url } = await response.json();
+            if (url) window.location.href = url;
+        } catch (err) {
+            toast.error('Failed to initiate checkout');
+        }
+    };
+
+    const handleManageBilling = async () => {
+        if (!currentTenant?.stripe_customer_id) {
+            toast.error('No active billing found. Upgrade first!');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/stripe/create-portal-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId: currentTenant.id })
+            });
+            const { url } = await response.json();
+            if (url) window.location.href = url;
+        } catch (err) {
+            toast.error('Failed to open billing portal');
+        }
     };
 
     return (
@@ -382,60 +430,82 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                 <div>
                                     <h3 className="text-lg font-bold text-white mb-4">Subscription Plan</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        {[
-                                            {
-                                                name: 'Starter',
-                                                price: '$49',
-                                                features: ['Up to 5 Projects', 'Basic CRM', 'Email Support'],
-                                                current: user.role === 'client'
-                                            },
-                                            {
-                                                name: 'Professional',
-                                                price: '$149',
-                                                features: ['Unlimited Projects', 'Enterprise CRM', 'Priority Support', 'AI Sales Agent'],
-                                                current: user.role === 'tenant_admin'
-                                            },
-                                            {
-                                                name: 'Enterprise',
-                                                price: 'Custom',
-                                                features: ['Dedicated Instance', '24/7 Support', 'Full AI Suite', 'Custom Integrations'],
-                                                current: user.role === 'admin'
-                                            }
-                                        ].map((plan) => (
-                                            <div
-                                                key={plan.name}
-                                                className={`p-6 rounded-3xl border-2 transition-all duration-500 relative overflow-hidden group ${plan.current
-                                                    ? 'border-teal-500 bg-teal-500/5'
-                                                    : 'border-white/5 bg-slate-900/40 hover:border-white/10'
-                                                    }`}
-                                            >
-                                                {plan.current && (
-                                                    <div className="absolute top-0 right-0 px-3 py-1 bg-teal-500 text-slate-900 text-[8px] font-black uppercase tracking-widest rounded-bl-xl">
-                                                        ACTIVE
-                                                    </div>
-                                                )}
-                                                <div className="mb-6">
-                                                    <h4 className="text-white text-lg font-black tracking-tighter">{plan.name}</h4>
-                                                    <p className="text-3xl font-black text-white mt-1">{plan.price}<span className="text-[10px] font-bold text-slate-500 ml-1">/UNIT</span></p>
-                                                </div>
-                                                <ul className="space-y-3 mb-8">
-                                                    {plan.features.map(f => (
-                                                        <li key={f} className="text-[10px] font-bold text-slate-400 flex items-center gap-2 uppercase tracking-tighter">
-                                                            <div className="w-1 h-1 bg-teal-500 rounded-full" /> {f}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                                <button
-                                                    className={`w-full py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${plan.current
-                                                        ? 'bg-white/5 text-slate-500 border border-white/5'
-                                                        : 'bg-teal-500 text-slate-900 shadow-lg shadow-teal-500/20 hover:scale-105 active:scale-95'}`}
-                                                    onClick={() => !plan.current && toast.success(`Redirecting to ${plan.name} checkout...`)}
+                                        {(['starter', 'pro', 'enterprise'] as SubscriptionPlan[]).map((planId) => {
+                                            const plan = PLAN_PRICING[planId];
+                                            const isCurrent = currentTenant?.subscription_plan === planId;
+
+                                            return (
+                                                <div
+                                                    key={planId}
+                                                    className={`p-6 rounded-3xl border-2 transition-all duration-500 relative overflow-hidden group ${isCurrent
+                                                        ? 'border-teal-500 bg-teal-500/5'
+                                                        : 'border-white/5 bg-slate-900/40 hover:border-white/10'
+                                                        }`}
                                                 >
-                                                    {plan.current ? 'CURRENT PROTOCOL' : 'UPGRADE UPLINK'}
-                                                </button>
-                                            </div>
-                                        ))}
+                                                    {isCurrent && (
+                                                        <div className="absolute top-0 right-0 px-3 py-1 bg-teal-500 text-slate-900 text-[8px] font-black uppercase tracking-widest rounded-bl-xl">
+                                                            ACTIVE
+                                                        </div>
+                                                    )}
+                                                    <div className="mb-6">
+                                                        <h4 className="text-white text-lg font-black tracking-tighter capitalize">{planId}</h4>
+                                                        <p className="text-3xl font-black text-white mt-1">
+                                                            ${plan.monthly}
+                                                            <span className="text-[10px] font-bold text-slate-500 ml-1">/MO</span>
+                                                        </p>
+                                                    </div>
+                                                    <ul className="space-y-3 mb-8">
+                                                        <li className="text-[10px] font-bold text-slate-400 flex items-center gap-2 uppercase tracking-tighter">
+                                                            <div className="w-1 h-1 bg-teal-500 rounded-full" /> {plan.features.maxUsers === -1 ? 'Unlimited' : plan.features.maxUsers} Users
+                                                        </li>
+                                                        <li className="text-[10px] font-bold text-slate-400 flex items-center gap-2 uppercase tracking-tighter">
+                                                            <div className="w-1 h-1 bg-teal-500 rounded-full" /> {plan.features.maxProjects === -1 ? 'Unlimited' : plan.features.maxProjects} Projects
+                                                        </li>
+                                                        <li className="text-[10px] font-bold text-slate-400 flex items-center gap-2 uppercase tracking-tighter">
+                                                            <div className="w-1 h-1 bg-teal-500 rounded-full" /> {plan.features.maxVideoMeetingsPerMonth === -1 ? 'Unlimited' : plan.features.maxVideoMeetingsPerMonth} Video Meetings/mo
+                                                        </li>
+                                                        <li className="text-[10px] font-bold text-slate-400 flex items-center gap-2 uppercase tracking-tighter">
+                                                            <div className="w-1 h-1 bg-teal-500 rounded-full" /> {plan.features.maxVideoMinutesPerMeeting === -1 ? 'Unlimited' : plan.features.maxVideoMinutesPerMeeting} mins per meeting
+                                                        </li>
+                                                        {plan.features.aiAssistant && (
+                                                            <li className="text-[10px] font-bold text-slate-400 flex items-center gap-2 uppercase tracking-tighter">
+                                                                <div className="w-1 h-1 bg-teal-500 rounded-full" /> AI Sales Agent
+                                                            </li>
+                                                        )}
+                                                        {plan.features.contractGeneration && (
+                                                            <li className="text-[10px] font-bold text-slate-400 flex items-center gap-2 uppercase tracking-tighter">
+                                                                <div className="w-1 h-1 bg-teal-500 rounded-full" /> Contract Generation
+                                                            </li>
+                                                        )}
+                                                        {plan.features.fullCRM && (
+                                                            <li className="text-[10px] font-bold text-slate-400 flex items-center gap-2 uppercase tracking-tighter">
+                                                                <div className="w-1 h-1 bg-teal-500 rounded-full" /> Full CRM & Processing
+                                                            </li>
+                                                        )}
+                                                    </ul>
+                                                    <button
+                                                        className={`w-full py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${isCurrent
+                                                            ? 'bg-white/5 text-slate-500 border border-white/5'
+                                                            : 'bg-teal-500 text-slate-900 shadow-lg shadow-teal-500/20 hover:scale-105 active:scale-95'}`}
+                                                        onClick={() => !isCurrent && handleUpgrade(planId)}
+                                                    >
+                                                        {isCurrent ? 'CURRENT PROTOCOL' : 'UPGRADE UPLINK'}
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
+                                    {currentTenant?.stripe_customer_id && (
+                                        <div className="mt-4">
+                                            <Button
+                                                variant="outline"
+                                                onClick={handleManageBilling}
+                                                className="w-full text-[10px] font-black uppercase tracking-widest"
+                                            >
+                                                Manage Subscriptions & Invoices
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="pt-6 border-t border-slate-800">

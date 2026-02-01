@@ -6,7 +6,7 @@ import MeetingChat, { ChatMessage } from './MeetingChat';
 import { User } from '../../../types';
 import { dailyService } from '../../../services/dailyService';
 import toast from 'react-hot-toast';
-import { ChevronRight, ChevronLeft, Minimize2, Maximize2, X, Mic, MicOff, Video, VideoOff } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Minimize2, Maximize2, X, Mic, MicOff, Video, VideoOff, Users } from 'lucide-react';
 
 interface CustomVideoRoomProps {
     user: User;
@@ -603,51 +603,95 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 </button>
             )}
 
-            {/* Video grid - responsive padding and gap */}
-            <div className="absolute inset-0 pb-20 sm:pb-24 overflow-auto p-2 sm:p-4">
-                <div className={`grid gap-2 sm:gap-4 h-full ${gridClass}`}>
-                    {/* Limit Indicator */}
+            {/* TOP BAR - Consolidates Metadata & Status (Gate B.3) */}
+            <div className={`absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black/80 to-transparent z-[110] flex items-center justify-between px-6 transition-transform duration-300 ${isMinimized ? '-translate-y-full' : 'translate-y-0'}`}>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center space-x-2 bg-teal-500/10 px-3 py-1 rounded-full border border-teal-500/30 backdrop-blur-md">
+                        <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse shadow-[0_0_8px_rgba(20,184,166,0.6)]" />
+                        <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">Autonomous Session</span>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3">
                     {isRestricted && isJoined && (
-                        <div className="fixed top-4 right-4 z-[120] bg-black/60 backdrop-blur px-4 py-2 rounded-full border border-teal-500/50 flex items-center gap-3">
-                            <div className="flex flex-col items-end">
-                                <span className={`text-xs font-bold ${MAX_DURATION_SECONDS - secondsElapsed < 120 ? 'text-red-400 animate-pulse' : 'text-teal-400'}`}>
-                                    SESSION LIMIT: {Math.floor((MAX_DURATION_SECONDS - secondsElapsed) / 60)}:{((MAX_DURATION_SECONDS - secondsElapsed) % 60).toString().padStart(2, '0')}
-                                </span>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Local participant first */}
-                    {localParticipant && (
-                        <CustomVideoTile
-                            participant={localParticipant}
-                            isLocal={true}
-                            isAdmin={isUserAdmin(user)}
-                        />
-                    )}
-
-                    {/* Remote participants */}
-                    {remoteParticipants.map(participant => (
-                        <CustomVideoTile
-                            key={participant.sessionId}
-                            participant={participant}
-                            isLocal={false}
-                            isAdmin={isUserAdmin(user)}
-                            onMuteParticipant={handleMuteParticipant}
-                            onRemoveParticipant={handleRemoveParticipant}
-                        />
-                    ))}
-
-                    {/* Empty state when alone */}
-                    {participants.length === 1 && (
-                        <div className="col-span-full flex items-center justify-center">
-                            <div className="text-center text-gray-400">
-                                <p className="text-lg mb-2">Waiting for others to join...</p>
-                                <p className="text-sm">Share the meeting link with participants</p>
-                            </div>
+                        <div className="bg-black/40 backdrop-blur-xl px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
+                            <span className={`text-[11px] font-black tracking-tighter ${MAX_DURATION_SECONDS - secondsElapsed < 120 ? 'text-red-400 animate-pulse' : 'text-slate-300'}`}>
+                                {Math.floor((MAX_DURATION_SECONDS - secondsElapsed) / 60)}:{((MAX_DURATION_SECONDS - secondsElapsed) % 60).toString().padStart(2, '0')}
+                            </span>
+                            <div className="w-px h-3 bg-white/10" />
+                            <span className="text-[10px] text-slate-500 font-bold uppercase">Time Left</span>
                         </div>
                     )}
                 </div>
+            </div>
+
+            {/* MAIN STAGE & SHELF - Layout Reflow (Gate E) */}
+            <div className="absolute inset-0 pt-16 pb-24 overflow-hidden flex flex-col">
+
+                {/* 1. THE STAGE (Host / Active Speaker) - Max 35% Mobile Height (Gate B.1) */}
+                <div className="flex-1 flex flex-col min-h-0">
+                    <div className="flex-1 p-2 sm:p-4 flex items-center justify-center min-h-0">
+                        {participants.length > 0 && (remoteParticipants[0] || localParticipant) ? (
+                            <div className="w-full h-full max-w-5xl mx-auto">
+                                <CustomVideoTile
+                                    participant={(remoteParticipants[0] || localParticipant)!}
+                                    isLocal={remoteParticipants.length === 0}
+                                    isAdmin={isUserAdmin(user)}
+                                    variant="stage"
+                                />
+                            </div>
+                        ) : (
+                            /* Empty state when alone */
+                            <div className="text-center text-gray-500 animate-in fade-in zoom-in duration-700">
+                                <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700">
+                                    <Users className="w-8 h-8 opacity-20" />
+                                </div>
+                                <p className="text-lg font-medium text-slate-400">Waiting for participants...</p>
+                                <p className="text-sm text-slate-600">Your Business OS is ready for the meeting</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* 2. THE SHELF (Guest List) - Density Logic (Gate B.2) */}
+                {participants.length > 1 && (
+                    <div className="h-28 sm:h-36 bg-black/20 backdrop-blur-sm border-t border-white/5 flex flex-col">
+                        <div className="px-4 pt-2 flex items-center justify-between">
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Participants ({participants.length})</span>
+                        </div>
+                        <div className="flex-1 flex overflow-x-auto overflow-y-hidden gap-2 p-2 sm:p-3 scrollbar-hide">
+                            {/* If local participated in stage, don't show here unless count > 2, etc. 
+                                For simplicity: Show all EXCEPT the one currently on stage. */}
+                            {participants
+                                .filter(p => p.sessionId !== (remoteParticipants[0]?.sessionId || localParticipant?.sessionId))
+                                .map(participant => (
+                                    <div key={participant.sessionId} className="h-full aspect-video flex-shrink-0 animate-in slide-in-from-right duration-300">
+                                        <CustomVideoTile
+                                            participant={participant}
+                                            isLocal={participant.isLocal}
+                                            isAdmin={isUserAdmin(user)}
+                                            variant="sidecar"
+                                            onMuteParticipant={handleMuteParticipant}
+                                            onRemoveParticipant={handleRemoveParticipant}
+                                        />
+                                    </div>
+                                ))
+                            }
+
+                            {/* Always show local video in shelf if remote is on stage */}
+                            {remoteParticipants.length > 0 && localParticipant && (
+                                <div className="h-full aspect-video flex-shrink-0 order-first">
+                                    <CustomVideoTile
+                                        participant={localParticipant}
+                                        isLocal={true}
+                                        isAdmin={isUserAdmin(user)}
+                                        variant="sidecar"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Participants sidebar */}

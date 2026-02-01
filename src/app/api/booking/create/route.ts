@@ -36,6 +36,21 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
+        // 1b. Fetch Plan and Enforce Limits
+        const { data: tenantData } = await supabase
+            .from('tenants')
+            .select('subscription_plan')
+            .eq('id', tenant_id)
+            .single();
+
+        const plan = tenantData?.subscription_plan || 'free';
+        const { PLAN_PRICING } = await import('@/services/tenancy/types');
+        const planFeatures = PLAN_PRICING[plan as keyof typeof PLAN_PRICING]?.features;
+
+        if (!planFeatures) {
+            return NextResponse.json({ error: 'Invalid plan configuration' }, { status: 500 });
+        }
+
         // 2. Get Host ID (Tenant Owner)
         // We need a host for the video call.
         const { data: users, error: userError } = await supabase
@@ -50,11 +65,35 @@ export async function POST(req: Request) {
         }
         const host_id = users[0].user_id;
 
+        // 2b. Conflict Check (Harden against Race Conditions)
+        const requestedStart = new Date(start_time);
+        const requestedEnd = new Date(end_time);
+
+        const { data: overlapping, error: conflictError } = await supabase
+            .from('calendar_events')
+            .select('id')
+            .eq('user_id', host_id)
+            .or(`and(start_time.lt.${requestedEnd.toISOString()},end_time.gt.${requestedStart.toISOString()})`)
+            .limit(1);
+
+        if (conflictError) throw new Error('Failed to verify slot availability');
+        if (overlapping && overlapping.length > 0) {
+            return NextResponse.json({ error: 'This slot was just taken. Please select another time.' }, { status: 409 });
+        }
+
         // 3. Create Daily Room
         // Room name: "booking-{short_random}"
         const roomName = `booking-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+
+        // 3a. Enforce Video Duration Limit
+        const meetingDurationMinutes = (new Date(end_time).getTime() - new Date(start_time).getTime()) / 60000;
+        const maxMinutes = planFeatures.maxVideoMinutesPerMeeting;
+
+        // If plan limit is stricter than requested duration, cap it
+        const finalDurationMinutes = maxMinutes === -1 ? meetingDurationMinutes : Math.min(meetingDurationMinutes, maxMinutes);
+
         const startUnix = Math.floor(new Date(start_time).getTime() / 1000);
-        const endUnix = Math.floor(new Date(end_time).getTime() / 1000);
+        const endUnix = startUnix + (finalDurationMinutes * 60);
 
         let dailyRoomUrl = '';
         let roomId = '';

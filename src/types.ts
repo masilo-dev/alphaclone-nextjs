@@ -54,10 +54,11 @@ export interface Project {
   ownerName?: string; // Helper for contract generation
   name: string;
   category: string;
-  status: 'Active' | 'Pending' | 'Completed' | 'Declined';
+  status: 'Active' | 'Pending' | 'Completed' | 'Declined' | 'backlog' | 'todo' | 'in_progress' | 'review' | 'done';
   currentStage: ProjectStage; // Detailed stage
   progress: number;
   dueDate?: string;
+  startDate?: string;
   team: string[];
   image?: string;
   description?: string;
@@ -68,6 +69,8 @@ export interface Project {
   externalUrl?: string;
   isPublic?: boolean;
   showInPortfolio?: boolean;
+  clientId?: string;
+  createdAt?: string; // ISO Date
 }
 
 export interface Invoice {

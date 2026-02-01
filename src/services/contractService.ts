@@ -19,6 +19,11 @@ export interface Contract {
     payment_due_date?: string; // ISO Date
     payment_amount?: number;
     payment_status?: 'pending' | 'paid' | 'overdue';
+    metadata?: {
+        signer_ip?: string;
+        content_hash?: string;
+        version?: string;
+    };
     created_at: string;
 }
 
@@ -122,6 +127,20 @@ export const contractService = {
         const updates: any = {};
         const now = new Date().toISOString();
 
+        // Fetch current content for hashing
+        const { data: contract } = await supabase.from('contracts').select('content').eq('id', contractId).single();
+        const contentHash = contract?.content ? await this.generateHash(contract.content) : undefined;
+
+        // Try to get IP address (client-side)
+        let ipAddress = 'unknown';
+        try {
+            const response = await fetch('https://api.ipify.org?format=json');
+            const data = await response.json();
+            ipAddress = data.ip;
+        } catch (e) {
+            console.warn('Could not fetch IP for audit log');
+        }
+
         if (role === 'client') {
             updates.client_signature = signatureDataUrl;
             updates.client_signed_at = now;
@@ -129,9 +148,15 @@ export const contractService = {
         } else {
             updates.admin_signature = signatureDataUrl;
             updates.admin_signed_at = now;
-            // Admin signing either initiates or finalizes
             updates.status = 'fully_signed';
         }
+
+        updates.metadata = {
+            signer_ip: ipAddress,
+            content_hash: contentHash,
+            signed_by_role: role,
+            timestamp: now
+        };
 
         const { data, error } = await supabase
             .from('contracts')
@@ -141,6 +166,19 @@ export const contractService = {
             .single();
 
         return { contract: data, error };
+    },
+
+    /**
+     * Helper to generate a hash of the contract content
+     */
+    async generateHash(text: string): Promise<string> {
+        if (typeof window === 'undefined' || !window.crypto || !window.crypto.subtle) {
+            return 'native-crypto-unavailable';
+        }
+        const msgUint8 = new TextEncoder().encode(text);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     },
 
     /**

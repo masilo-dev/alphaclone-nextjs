@@ -3,7 +3,7 @@ import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { businessInvoiceService, BusinessInvoice } from '../../../services/businessInvoiceService';
 import { businessClientService } from '../../../services/businessClientService';
-import { businessProjectService } from '../../../services/businessProjectService';
+import { projectService } from '../../../services/projectService';
 import { contractService } from '../../../services/contractService';
 import {
     Plus,
@@ -45,7 +45,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
         setLoading(true);
         const { invoices: invData } = await businessInvoiceService.getInvoices(currentTenant.id);
         const { clients: clientData } = await businessClientService.getClients(currentTenant.id);
-        const { projects: projectData } = await businessProjectService.getProjects(currentTenant.id);
+        const { projects: projectData } = await projectService.getProjects(user.id, user.role);
         const { contracts: contractData } = await contractService.getUserContracts(user.id, 'tenant_admin');
 
         setInvoices(invData);

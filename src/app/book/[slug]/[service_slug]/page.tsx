@@ -13,12 +13,10 @@ import {
     CheckCircle2, AlertCircle, Calendar, User, ArrowLeft, Phone, Mail
 } from 'lucide-react';
 import { Tenant } from '@/services/tenancy/types';
+import { bookingService, BookingSlot } from '@/services/bookingService';
 import toast from 'react-hot-toast';
 
-interface BookingSlot {
-    start: string; // ISO
-    end: string;   // ISO
-}
+// Redundant local interface removed. Using imported BookingSlot from @/services/bookingService.
 
 type Step = 'date' | 'time' | 'form' | 'success';
 
@@ -90,48 +88,22 @@ export default function BookingPage() {
     }, [selectedDate, tenant, service]);
 
     const fetchSlots = async (date: Date) => {
+        if (!tenant?.id || !service?.id) return;
         setLoadingSlots(true);
         try {
-            // TODO: Replace with real RPC
-            // Mocking logic to respect settings
-            await new Promise(r => setTimeout(r, 400));
+            const dateStr = format(date, 'yyyy-MM-dd');
+            const { slots: fetchedSlots, error } = await bookingService.getAvailableSlots(
+                tenant.id,
+                dateStr,
+                service.duration || 30
+            );
 
-            const mockSlots: BookingSlot[] = [];
-            const startHour = 9;
-            const endHour = 17;
-            const duration = service?.duration || 30;
-            const totalDuration = duration + bufferTime;
-
-            let current = new Date(date);
-            current.setHours(startHour, 0, 0, 0);
-
-            const end = new Date(date);
-            end.setHours(endHour, 0, 0, 0);
-
-            const now = new Date();
-            // Apply Min Notice
-            const minStart = new Date(now.getTime() + minNotice * 60 * 60 * 1000);
-
-            while (current < end) {
-                const slotStart = new Date(current);
-                const slotEnd = new Date(current.getTime() + duration * 60000);
-
-                // Check logic
-                if (slotStart > minStart) {
-                    // Random availability
-                    if (Math.random() > 0.3) {
-                        mockSlots.push({
-                            start: slotStart.toISOString(),
-                            end: slotEnd.toISOString()
-                        });
-                    }
-                }
-
-                // Increment by duration + buffer
-                current = new Date(current.getTime() + totalDuration * 60000);
+            if (error) {
+                toast.error(error);
+                setSlots([]);
+            } else {
+                setSlots(fetchedSlots);
             }
-
-            setSlots(mockSlots);
         } catch (err) {
             toast.error('Could not load availability');
         } finally {
@@ -152,32 +124,30 @@ export default function BookingPage() {
 
         setSubmitting(true);
         try {
-            const payload = {
-                tenant_id: tenant.id,
-                booking_type_id: service.id,
-                booking_type_name: service.name,
-                client_name: formData.name,
-                client_email: formData.email,
-                client_phone: formData.phone,
-                client_notes: formData.notes,
-                start_time: selectedSlot.start,
-                end_time: selectedSlot.end,
-                time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone
-            };
+            const { bookingId, error: bookingError } = await bookingService.createBooking(
+                tenant.id,
+                service.id,
+                selectedSlot.start,
+                selectedSlot.end,
+                {
+                    name: formData.name,
+                    email: formData.email,
+                    phone: formData.phone,
+                    notes: formData.notes
+                }
+            );
 
-            const res = await fetch('/api/booking/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Booking failed');
+            if (bookingError) throw new Error(bookingError);
 
             setBookingSuccess({
                 date: parseISO(selectedSlot.start),
                 time: format(parseISO(selectedSlot.start), 'h:mm a'),
-                url: data.roomUrl
+                url: `/meet/active` // Placeholder, will be updated by server response if possible
             });
             setStep('success');
             toast.success('Confirmed!');
         } catch (err: any) {
-            toast.error('Booking failed. Please try again.');
+            toast.error(err.message || 'Booking failed. Please try again.');
         } finally {
             setSubmitting(false);
         }

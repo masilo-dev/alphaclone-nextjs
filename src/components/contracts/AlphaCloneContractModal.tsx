@@ -56,7 +56,12 @@ const AlphaCloneContractModal: React.FC<Props> = ({
         depositAmount: (project.budget || 10000) * 0.5,
         startDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
         deliveryDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-        contractDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+        contractDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+        providerName: currentTenant?.name || 'Authorized Service Provider',
+        providerAddress: '',
+        providerEmail: user.email || '',
+        providerRegistration: '',
+        governingJurisdiction: '[Your State/Country Jurisdiction]'
     });
 
     useEffect(() => {
@@ -159,6 +164,37 @@ const AlphaCloneContractModal: React.FC<Props> = ({
 
     if (!isOpen) return null;
 
+    // Check feature flag
+    const plan = currentTenant?.subscription_plan || 'free';
+    const { PLAN_PRICING } = require('../../services/tenancy/types');
+    const planFeatures = PLAN_PRICING[plan as keyof typeof PLAN_PRICING]?.features;
+
+    if (planFeatures && !planFeatures.contractGeneration && user.role === 'admin') {
+        return (
+            <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 backdrop-blur-sm overflow-y-auto">
+                <div className="w-full max-w-md bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl p-8 text-center">
+                    <div className="w-16 h-16 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <FileText className="w-8 h-8 text-teal-400" />
+                    </div>
+                    <h2 className="text-xl font-bold text-white mb-2">Upgrade to Pro</h2>
+                    <p className="text-slate-400 mb-6">
+                        Contract generation and professional service agreements are available on our Pro and Enterprise plans.
+                    </p>
+                    <div className="flex flex-col gap-3">
+                        <Button
+                            onClick={() => window.location.href = '/dashboard/settings?tab=billing'}
+                            className="bg-teal-600 hover:bg-teal-500 font-bold"
+                        >
+                            Upgrade Plan
+                        </Button>
+                        <Button variant="outline" onClick={onClose} className="border-slate-700 text-slate-400 hover:text-white">
+                            Close
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
     return (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 backdrop-blur-sm overflow-y-auto">
             <div className="w-full max-w-6xl bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl my-8">
@@ -228,6 +264,45 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                     onChange={(e) => handleVariableChange('clientAddress', e.target.value)}
                                     placeholder="Optional"
                                 />
+                            </div>
+
+                            <div className="border-t border-slate-800 pt-4">
+                                <h3 className="text-white font-bold mb-3 flex items-center gap-2">
+                                    <FileText className="w-5 h-5 text-teal-400" />
+                                    Provider Details (Your Business)
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <Input
+                                        label="Provider Business Name *"
+                                        value={variables.providerName}
+                                        onChange={(e) => handleVariableChange('providerName', e.target.value)}
+                                    />
+                                    <Input
+                                        label="Business Registration #"
+                                        value={variables.providerRegistration}
+                                        onChange={(e) => handleVariableChange('providerRegistration', e.target.value)}
+                                        placeholder="e.g. TAX ID, EIN"
+                                    />
+                                    <Input
+                                        label="Provider Email *"
+                                        value={variables.providerEmail}
+                                        onChange={(e) => handleVariableChange('providerEmail', e.target.value)}
+                                    />
+                                    <Input
+                                        label="Governing Jurisdiction *"
+                                        value={variables.governingJurisdiction}
+                                        onChange={(e) => handleVariableChange('governingJurisdiction', e.target.value)}
+                                        placeholder="e.g. State of California, USA"
+                                    />
+                                </div>
+                                <div className="mt-4">
+                                    <Input
+                                        label="Provider Address"
+                                        value={variables.providerAddress}
+                                        onChange={(e) => handleVariableChange('providerAddress', e.target.value)}
+                                        placeholder="Optional but recommended"
+                                    />
+                                </div>
                             </div>
 
                             <div className="border-t border-slate-800 pt-4">
@@ -382,7 +457,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                     <Button variant="outline" onClick={onClose}>Cancel</Button>
                                     <Button onClick={() => setStep('sign')} className="bg-green-600 hover:bg-green-500">
                                         <CheckCircle className="w-4 h-4 mr-2" />
-                                        {user.role === 'admin' ? 'Sign as Bonnie' : 'Sign Contract'}
+                                        {user.role === 'admin' ? `Sign as ${user.name}` : 'Sign Contract'}
                                     </Button>
                                 </div>
                             </div>

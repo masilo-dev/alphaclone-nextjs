@@ -22,6 +22,7 @@ export const tenantManagementService = {
                     *,
                     tenant_users (count)
                 `)
+                .is('deletion_pending_at', null)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -106,9 +107,13 @@ export const tenantManagementService = {
      */
     async deleteTenant(tenantId: string): Promise<{ error: string | null }> {
         try {
+            // Soft delete for admin as well
             const { error } = await supabase
                 .from('tenants')
-                .delete()
+                .update({
+                    deletion_pending_at: new Date().toISOString(),
+                    subscription_status: 'suspended'
+                })
                 .eq('id', tenantId);
 
             if (error) throw error;

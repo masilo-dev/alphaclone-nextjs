@@ -74,19 +74,25 @@ export const bookingService = {
         tenantId: string,
         meetingTypeId: string,
         startTime: string, // ISO
+        endTime: string, // ISO
         clientDetails: { name: string; email: string; phone?: string; topic?: string; notes?: string; customFields?: Record<string, any> }
     ): Promise<{ bookingId: string | null; error: string | null }> {
         try {
-            const response = await fetch('/api/booking', {
+            const response = await fetch('/api/booking/create', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    tenantId,
-                    meetingTypeId,
-                    startTime,
-                    clientDetails
+                    tenant_id: tenantId,
+                    booking_type_id: meetingTypeId,
+                    start_time: startTime,
+                    end_time: endTime,
+                    client_name: clientDetails.name,
+                    client_email: clientDetails.email,
+                    client_phone: clientDetails.phone,
+                    client_notes: clientDetails.notes,
+                    time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone
                 })
             });
 

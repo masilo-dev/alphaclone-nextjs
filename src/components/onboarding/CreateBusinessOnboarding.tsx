@@ -4,7 +4,7 @@ import { useTenant } from '../../contexts/TenantContext';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 
-import { SubscriptionPlan } from '../../services/tenancy/types';
+import { SubscriptionPlan, PLAN_PRICING } from '../../services/tenancy/types';
 
 interface PlanOption {
   id: SubscriptionPlan;
@@ -17,62 +17,46 @@ interface PlanOption {
 
 const plans: PlanOption[] = [
   {
-    id: 'free',
-    name: 'Free',
-    price: 0,
-    period: 'forever',
-    features: [
-      '1 team member',
-      '5 projects',
-      '100 tasks',
-      'Basic features',
-      'Community support'
-    ]
-  },
-  {
     id: 'starter',
     name: 'Starter',
-    price: 29,
+    price: 25,
     period: 'per month',
     popular: true,
     features: [
       '5 team members',
       '25 projects',
-      'Unlimited tasks',
-      'All features',
-      'Email support',
-      'Custom branding'
+      '10 Video Meetings/mo',
+      '60 mins per meeting',
+      'Advanced Booking System',
+      'Payment Processing'
     ]
   },
   {
-    id: 'professional',
-    name: 'Professional',
-    price: 99,
+    id: 'pro',
+    name: 'Pro',
+    price: 89,
     period: 'per month',
     features: [
       '20 team members',
-      'Unlimited projects',
-      'Unlimited everything',
-      'Priority support',
-      'Advanced analytics',
-      'API access',
-      'Custom integrations'
+      '100 projects',
+      '50 Video Meetings/mo',
+      '90 mins per meeting',
+      'AI Sales Assistant',
+      'Contract Generation'
     ]
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
-    price: 299,
+    price: 200,
     period: 'per month',
     features: [
       'Unlimited team members',
-      'Unlimited everything',
-      'White-label',
-      'Dedicated support',
-      'Custom domain',
-      'SLA guarantee',
-      'Advanced security',
-      'Custom contracts'
+      'Unlimited projects',
+      '200 Video Meetings/mo',
+      '180 mins per meeting',
+      'Full CRM & Automation',
+      'Custom API Access'
     ]
   }
 ];
@@ -133,14 +117,47 @@ export default function CreateBusinessOnboarding() {
       setIsCreating(true);
 
       // Create tenant
-      await createTenant({
+      const tenant = await createTenant({
         name: businessName.trim(),
         slug: businessSlug.trim(),
         plan: selectedPlan
       });
 
-      // Success! Redirect to dashboard
-      // (createTenant automatically switches to new tenant and reloads)
+      // If it's a paid plan, redirect to Stripe Checkout
+      if (selectedPlan !== 'free') {
+        const planPricing = PLAN_PRICING[selectedPlan];
+        if (planPricing.stripePriceId) {
+          try {
+            const response = await fetch('/api/stripe/create-checkout-session', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                priceId: planPricing.stripePriceId,
+                tenantId: tenant.id,
+                adminEmail: user?.email,
+                successUrl: window.location.origin + '/dashboard?checkout=success',
+                cancelUrl: window.location.origin + '/dashboard?checkout=cancelled',
+              })
+            });
+
+            const { url, error: stripeError } = await response.json();
+            if (url) {
+              window.location.href = url;
+              return;
+            }
+            if (stripeError) throw new Error(stripeError);
+          } catch (checkoutErr: any) {
+            console.error('Checkout redirect failed:', checkoutErr);
+            // Fallback: just go to dashboard if Stripe fails
+            router.push('/dashboard');
+          }
+        }
+      }
+
+      // Success! Redirect to dashboard (if not already handled by Stripe)
+      router.push('/dashboard');
 
     } catch (err: any) {
       console.error('Failed to create business:', err);
@@ -263,7 +280,7 @@ export default function CreateBusinessOnboarding() {
             <div>
               <h2 className="text-2xl font-bold text-white mb-2 text-center">Choose Your Plan</h2>
               <p className="text-slate-400 text-center mb-8">
-                Start free, upgrade anytime. No credit card required.
+                Start with a 14-day free trial on any plan. Cancel anytime.
               </p>
 
               {error && (

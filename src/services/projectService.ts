@@ -56,6 +56,7 @@ export const projectService = {
                 currentStage: p.current_stage,
                 progress: p.progress,
                 dueDate: p.due_date,
+                startDate: p.start_date,
                 team: p.team || [],
                 image: p.image,
                 description: p.description,
@@ -64,6 +65,8 @@ export const projectService = {
                 externalUrl: p.external_url,
                 isPublic: p.is_public,
                 showInPortfolio: p.show_in_portfolio,
+                clientId: p.client_id,
+                createdAt: p.created_at,
             }));
 
             return { projects, error: null };
@@ -176,6 +179,7 @@ export const projectService = {
                     current_stage: project.currentStage,
                     progress: project.progress,
                     due_date: project.dueDate,
+                    start_date: project.startDate,
                     team: project.team,
                     image: project.image,
                     description: project.description,
@@ -184,6 +188,7 @@ export const projectService = {
                     external_url: project.externalUrl,
                     is_public: project.isPublic,
                     show_in_portfolio: project.showInPortfolio,
+                    client_id: project.clientId,
                 })
                 .select()
                 .single();

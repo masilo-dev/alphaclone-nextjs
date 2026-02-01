@@ -5,6 +5,12 @@
 
 // Contract variables interface
 export interface ContractVariables {
+    contractDate: string;
+    providerName: string;
+    providerAddress?: string;
+    providerEmail?: string;
+    providerRegistration?: string;
+    governingJurisdiction: string;
     clientName: string;
     clientCompany: string;
     clientAddress: string;
@@ -17,7 +23,6 @@ export interface ContractVariables {
     depositAmount: number;
     startDate: string;
     deliveryDate: string;
-    contractDate: string;
 }
 
 // Payment schedule templates
@@ -47,10 +52,16 @@ export function generateAlphaCloneContract(variables: ContractVariables): string
 
 **BETWEEN:**
 
-**1. AlphaClone Systems** ("Service Provider")
+**1. ${variables.providerName}** ("Service Provider")
 **2. ${variables.clientName}**${variables.clientCompany ? ` (representing ${variables.clientCompany})` : ''} ("Client")
 
-${variables.clientAddress ? `Address: ${variables.clientAddress}` : ''}
+**Service Provider Contact:**
+${variables.providerAddress ? `Address: ${variables.providerAddress}` : 'Address: On File'}
+${variables.providerEmail ? `Email: ${variables.providerEmail}` : ''}
+${variables.providerRegistration ? `Registration: ${variables.providerRegistration}` : ''}
+
+**Client Contact:**
+${variables.clientAddress ? `Address: ${variables.clientAddress}` : 'Address: On File'}
 ${variables.clientEmail ? `Email: ${variables.clientEmail}` : ''}
 
 ---
@@ -112,31 +123,38 @@ IN NO EVENT SHALL EITHER PARTY BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, 
 During the term of this Agreement and for twelve (12) months thereafter, neither party shall directly or indirectly solicit for employment or engagement any employee or contractor of the other party.
 
 ## 10. GOVERNING LAW AND DISPUTE RESOLUTION
+ 
+This Agreement shall be governed by the laws of ${variables.governingJurisdiction}. Any disputes arising under this Agreement shall be resolved first through good-faith negotiation, and if unresolved, by binding arbitration in ${variables.governingJurisdiction}.
 
-This Agreement shall be governed by the laws of the jurisdiction in which the Service Provider is registered. Any disputes arising under this Agreement shall be resolved first through good-faith negotiation, and if unresolved, by binding arbitration.
+## 11. PLATFORM DISCLAIMER & LEGAL SEPARATION
+AlphaClone Systems (the "Platform Provider") provides the underlying software utilized by the Service Provider to manage this project. The Client acknowledges that:
+1. The Platform Provider is not a party to this Agreement.
+2. The Platform Provider bears no responsibility for the Services, deliverables, or conduct of the Service Provider or Client.
+3. The Platform Provider does not hold, manage, or safeguard funds for the Service Provider or Client.
+4. All tax reporting and payment obligations arising from this Agreement are the sole responsibility of the respective parties.
 
-## 11. ENTIRE AGREEMENT
+## 12. ENTIRE AGREEMENT
 
 This Agreement constitutes the entire understanding between the parties and supersedes all prior agreements or understandings, whether written or oral. Amendments must be in writing and signed by both parties.
 
 ---
 
 **IN WITNESS WHEREOF**, the parties have executed this Agreement as of the date first above written.
-
+ 
 **SERVICE PROVIDER:**
-AlphaClone Systems
-Signature: __________________________
+${variables.providerName}
+Signature: [DIGITAL SIGNATURE]
 Title: Authorized Representative
 Date: ${variables.contractDate}
-
+ 
 **CLIENT:**
 ${variables.clientName}
-Signature: __________________________
+Signature: [DIGITAL SIGNATURE]
 Title: Authorized Representative
 Date: ${variables.contractDate}
-
+ 
 ---
-*This document is digitally generated and legally binding upon signature.*
+*This document is digitally generated and legally binding upon signature. Signature metadata, including IP addresses and timestamps, are recorded by the system.*
 `.trim();
 }
 
@@ -158,7 +176,7 @@ export function generateContractFromTemplate(
 **Date:** ${today}
 
 **Between:**
-- **AlphaClone Systems** ("Service Provider")
+- **Authorized Service Provider** ("Service Provider")
 - **${clientName}** ("Client")
 
 **Project:** ${projectName}
@@ -371,9 +389,12 @@ Date: (Date of Signing)
 
 ---
 
-**Questions?** Contact us at support@alphaclone.systems
+**Questions?** Contact the Service Provider's support team.
 
-This contract was generated using AlphaClone's automated contract system. For custom terms, please contact our legal team.
+## LEGAL DISCLAIMER
+AlphaClone Systems is a platform provider and is not a party to this agreement. All liability for services rendered lies with the Service Provider.
+
+This contract was generated using AlphaClone's automated contract system. For custom terms, please contact the Service Provider.
 `.trim();
 }
 
@@ -393,7 +414,7 @@ export function generateNDATemplate(clientName: string): string {
 **Date:** ${today}
 
 **Between:**
-- **AlphaClone Systems** ("Disclosing Party")
+- **Authorized Service Provider** ("Disclosing Party")
 - **${clientName}** ("Receiving Party")
 
 Both parties agree to protect confidential information shared during business discussions.
@@ -459,8 +480,8 @@ Each deliverable will be considered complete when:
 
 **Approved by:**
 
-AlphaClone Systems: _______________________  Date: __________
+Authorized Provider: [DIGITAL SIGNATURE]  Date: __________
 
-${clientName}: _______________________  Date: __________
+${clientName}: [DIGITAL SIGNATURE]  Date: __________
 `.trim();
 }

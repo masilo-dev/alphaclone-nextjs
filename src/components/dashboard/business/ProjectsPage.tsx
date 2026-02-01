@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
-import { businessProjectService, BusinessProject } from '../../../services/businessProjectService';
+import { projectService } from '../../../services/projectService';
+import { Project as BusinessProject } from '../../../types';
 import { contractService } from '../../../services/contractService';
 import { businessClientService } from '../../../services/businessClientService';
 import {
@@ -75,7 +76,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const loadData = async () => {
         if (!currentTenant) return;
         setLoading(true);
-        const { projects: projectData } = await businessProjectService.getProjects(currentTenant.id);
+        const { projects: projectData } = await projectService.getProjects(user.id, user.role);
         const { clients: clientData } = await businessClientService.getClients(currentTenant.id);
         const { contracts: contractData } = await contractService.getUserContracts(user.id, 'tenant_admin');
         setProjects(projectData || []);
@@ -111,7 +112,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 }
             }
 
-            await businessProjectService.updateProject(projectId, { status: newStatus as any });
+            await projectService.updateProject(projectId, { status: newStatus as any });
             setProjects(projects.map(p => p.id === projectId ? { ...p, status: newStatus as any } : p));
         }
         setActiveId(null);
@@ -124,14 +125,21 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
         if (editingProject) {
             // Update existing
-            const { project, error } = await businessProjectService.updateProject(editingProject.id, projectData);
-            if (!error && project) {
-                setProjects(projects.map(p => p.id === editingProject.id ? { ...p, ...project } : p));
+            const { error } = await projectService.updateProject(editingProject.id, projectData);
+            if (!error) {
+                setProjects(projects.map(p => p.id === editingProject.id ? { ...p, ...projectData } : p));
                 setEditingProject(null);
             }
         } else {
             // Create new
-            const { project, error } = await businessProjectService.createProject(currentTenant.id, projectData);
+            const projectToCreate: any = {
+                ...projectData,
+                ownerId: user.id,
+                ownerName: user.name,
+                currentStage: 'Discovery',
+                status: 'Active'
+            };
+            const { project, error } = await projectService.createProject(projectToCreate);
             if (!error && project) {
                 setProjects([project, ...projects]);
                 setShowAddModal(false);
@@ -141,7 +149,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
     const handleDeleteProject = async (projectId: string) => {
         if (!confirm('Delete this project? This action cannot be undone.')) return;
-        const { error } = await businessProjectService.deleteProject(projectId);
+        const { error } = await projectService.deleteProject(projectId);
         if (!error) {
             setProjects(projects.filter(p => p.id !== projectId));
         }
@@ -150,7 +158,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const getProjectsByStatus = (status: string) => projects.filter(p => p.status === status);
 
     const ProjectTimeline = () => {
-        const sorted = [...projects].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        const sorted = [...projects].sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
         const timelineStart = new Date();
         timelineStart.setMonth(timelineStart.getMonth() - 1);
         const months = Array.from({ length: 6 }).map((_, i) => {
@@ -173,7 +181,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 </div>
                 <div className="flex-1 overflow-y-auto divide-y divide-white/5">
                     {sorted.map(proj => {
-                        const start = proj.startDate ? new Date(proj.startDate) : new Date(proj.createdAt);
+                        const start = proj.startDate ? new Date(proj.startDate) : new Date(proj.createdAt || new Date().toISOString());
                         const end = proj.dueDate ? new Date(proj.dueDate) : new Date(start);
                         if (end < start) end.setMonth(start.getMonth() + 1);
 

@@ -154,30 +154,43 @@ class DailyService {
         isPublic?: boolean;
     }): Promise<{ call: VideoCall | null; error: string | null }> {
         try {
-            // ENFORCE TRIAL LIMITS
+            // ENFORCE PLAN LIMITS
             const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('No tenant context found');
+
             const { data: tenantData } = await supabase
                 .from('tenants')
-                .select('subscription_status')
+                .select('subscription_status, subscription_plan')
                 .eq('id', tenantId)
                 .single();
 
-            const isTrial = tenantData?.subscription_status === 'trial';
+            const plan = (tenantData?.subscription_plan as any) || 'free';
+            const { PLAN_PRICING } = await import('./tenancy/types');
+            const planFeatures = PLAN_PRICING[plan as keyof typeof PLAN_PRICING].features;
 
-            if (isTrial) {
+            // 1. Check Monthly Meeting Limit
+            if (planFeatures.maxVideoMeetingsPerMonth !== -1) {
+                const now = new Date();
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
                 const { count } = await supabase
                     .from('video_calls')
                     .select('*', { count: 'exact', head: true })
-                    .eq('host_id', data.hostId);
+                    .eq('host_id', data.hostId)
+                    .gte('created_at', startOfMonth);
 
-                const { TRIAL_LIMITS } = await import('./tenancy/types');
-
-                if (count && count >= TRIAL_LIMITS.MAX_MEETINGS) {
-                    return { call: null, error: `Trial limit reached: You can only host ${TRIAL_LIMITS.MAX_MEETINGS} meetings during your trial. Please upgrade to unlock unlimited meetings.` };
+                if (count !== null && count >= planFeatures.maxVideoMeetingsPerMonth) {
+                    return {
+                        call: null,
+                        error: `Monthly limit reached: Your ${plan} plan allows ${planFeatures.maxVideoMeetingsPerMonth} meetings per month. Please upgrade to host more.`
+                    };
                 }
             }
 
-            const durationLimit = isTrial ? 50 : (data.duration || 1440);
+            // 2. Determine Duration Limit
+            const durationLimit = planFeatures.maxVideoMinutesPerMeeting === -1
+                ? (data.duration || 1440)
+                : Math.min(data.duration || 1440, planFeatures.maxVideoMinutesPerMeeting);
 
             // Create Daily room
             const { room, error: roomError } = await this.createRoom({

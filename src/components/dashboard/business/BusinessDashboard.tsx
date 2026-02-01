@@ -12,7 +12,8 @@ import {
     CheckSquare,
     Bot,
     TrendingUp,
-    Video
+    Video,
+    ShieldCheck
 } from 'lucide-react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -136,7 +137,29 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
 
     // Map routes to display content
     const renderBusinessContent = () => {
-        // ... switch statement ...
+        const plan = currentTenant?.subscription_plan || 'free';
+        const { PLAN_PRICING } = require('../../../services/tenancy/types');
+        const planFeatures = PLAN_PRICING[plan as keyof typeof PLAN_PRICING]?.features;
+
+        const LockedFeature = ({ feature }: { feature: string }) => (
+            <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in-up">
+                <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mb-6">
+                    <ShieldCheck className="w-10 h-10 text-teal-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">{feature} is Locked</h3>
+                <p className="text-slate-400 max-w-md mb-8">
+                    The full CRM suite, including Leads and Pipelines, is available on our Pro and Enterprise plans. Upgrade to supercharge your sales workflow.
+                </p>
+                <div className="flex gap-4">
+                    <button
+                        onClick={() => setActiveTab('/dashboard/business/billing')}
+                        className="bg-teal-600 hover:bg-teal-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-teal-900/20"
+                    >
+                        View Upgrade Options
+                    </button>
+                </div>
+            </div>
+        );
 
         switch (activeTab) {
             case '/dashboard':
@@ -162,6 +185,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
 
             // New Routes
             case '/dashboard/crm':
+                if (planFeatures && !planFeatures.fullCRM) return <LockedFeature feature="CRM Suite" />;
                 // Pass empty projects for now or implement fetching
                 return <CRMTab
                     projects={[]}
@@ -172,8 +196,10 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             case '/dashboard/tasks':
                 return <TasksTab userId={user.id} userRole={user.role} />;
             case '/dashboard/sales-agent':
+                if (planFeatures && !planFeatures.fullCRM) return <LockedFeature feature="AI Sales Agent" />;
                 return <SalesAgent />;
             case '/dashboard/leads':
+                if (planFeatures && !planFeatures.fullCRM) return <LockedFeature feature="Leads & Pipelines" />;
                 return <DealsTab userId={user.id} userRole={user.role} />;
 
             default:
@@ -341,7 +367,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
 
                         <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 overflow-hidden">
                             <img
-                                src={currentTenant?.logoUrl || user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
+                                src={currentTenant?.logo_url || user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
                                 alt="Profile"
                                 className="w-full h-full object-cover"
                             />

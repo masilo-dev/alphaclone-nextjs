@@ -31,7 +31,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         email: '',
         taxRate: 0,
         currency: 'USD',
-        invoicePrefix: 'INV'
+        invoicePrefix: 'INV',
+        bankDetails: '',
+        mobilePaymentDetails: ''
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -64,7 +66,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                     email: data.email || '',
                     taxRate: data.tax_rate || 0,
                     currency: data.currency || 'USD',
-                    invoicePrefix: data.invoice_prefix || 'INV'
+                    invoicePrefix: data.invoice_prefix || 'INV',
+                    bankDetails: data.bank_details || '',
+                    mobilePaymentDetails: data.mobile_payment_details || ''
                 });
             }
         } catch (error) {
@@ -92,6 +96,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                     tax_rate: settings.taxRate,
                     currency: settings.currency,
                     invoice_prefix: settings.invoicePrefix,
+                    bank_details: settings.bankDetails,
+                    mobile_payment_details: settings.mobilePaymentDetails,
                     updated_at: new Date().toISOString()
                 });
 
@@ -210,6 +216,34 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                     rows={3}
                                     className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
                                 />
+                            </div>
+
+                            <div className="pt-4 border-t border-slate-800">
+                                <h4 className="text-md font-bold mb-4 text-teal-400">Payment Instructions (Manual)</h4>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Bank Details</label>
+                                        <textarea
+                                            value={settings.bankDetails}
+                                            onChange={(e) => setSettings({ ...settings, bankDetails: e.target.value })}
+                                            rows={3}
+                                            placeholder="Bank Name, Account Number, Swift, etc."
+                                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                                        />
+                                        <p className="text-xs text-slate-500 mt-1">These will be shown on invoices if 'Bank Transfer' is selected.</p>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Mobile Payment / Other</label>
+                                        <input
+                                            type="text"
+                                            value={settings.mobilePaymentDetails}
+                                            onChange={(e) => setSettings({ ...settings, mobilePaymentDetails: e.target.value })}
+                                            placeholder="e.g. Mobile number, PayPal email"
+                                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

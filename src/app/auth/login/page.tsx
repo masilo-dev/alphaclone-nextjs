@@ -20,7 +20,7 @@ export default function LoginPage() {
     const [name, setName] = useState('');
     const [businessName, setBusinessName] = useState('');
     const [isBusiness, setIsBusiness] = useState(false);
-    const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>('basic');
+    const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>('starter');
     const [legalAccepted, setLegalAccepted] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -30,22 +30,22 @@ export default function LoginPage() {
 
     const plans: { id: SubscriptionPlan, name: string, price: string, features: string[] }[] = [
         {
-            id: 'basic',
-            name: 'Basic',
-            price: '$16/mo',
-            features: ['5 Users', 'Basic CRM', '5GB Storage', '2 Meetings/Month']
+            id: 'starter',
+            name: 'Starter',
+            price: '$25/mo',
+            features: ['5 Users', '10 Video Mtgs/mo', '60m/meeting', 'Full CRM Access']
         },
         {
             id: 'pro',
             name: 'Pro',
-            price: '$48/mo',
-            features: ['25 Users', 'Advanced CRM', 'AI Sales Agent', 'Priority Support']
+            price: '$89/mo',
+            features: ['20 Users', '50 Video Mtgs/mo', '90m/meeting', 'Contract Gen.']
         },
         {
-            id: 'premium',
-            name: 'Premium',
-            price: '$80/mo',
-            features: ['Unlimited Users', 'Infinite CRM', 'Dedicated Manager', 'API Access']
+            id: 'enterprise',
+            name: 'Enterprise',
+            price: '$200/mo',
+            features: ['Unlimited Users', '200 Video Mtgs/mo', '180m/meeting', 'Custom API']
         }
     ];
 
@@ -106,9 +106,9 @@ export default function LoginPage() {
                             trialEndDate.setDate(trialEndDate.getDate() + 14); // 14 Days Trial
 
                             await tenantService.updateTenant(newTenant.id, {
-                                trialEndsAt: trialEndDate,
-                                subscriptionStatus: 'trial',
-                                subscriptionPlan: selectedPlan
+                                trial_ends_at: trialEndDate,
+                                subscription_status: 'trial',
+                                subscription_plan: selectedPlan
                             });
 
                         } catch (tenantErr) {
@@ -158,7 +158,7 @@ export default function LoginPage() {
         try {
             const { paymentService } = await import('@/services/paymentService');
             // 1. Create a setup/first invoice for the subscription
-            const amount = selectedPlan === 'basic' ? 16 : selectedPlan === 'pro' ? 48 : 80;
+            const amount = selectedPlan === 'starter' ? 25 : selectedPlan === 'pro' ? 89 : 200;
 
             const { invoice, error: invoiceErr } = await paymentService.createInvoice({
                 user_id: 'pending', // Will be linked during processing or use current user
@@ -178,7 +178,7 @@ export default function LoginPage() {
             // Mark tenant as active/paid (simplified for now)
             const { tenantService } = await import('@/services/tenancy/TenantService');
             await tenantService.updateTenant(newTenantData.id, {
-                subscriptionStatus: 'active'
+                subscription_status: 'active'
             });
 
             router.push('/dashboard');
@@ -219,7 +219,7 @@ export default function LoginPage() {
                         <div className="flex justify-between items-center">
                             <span className="text-white font-bold">Total Due</span>
                             <span className="text-2xl font-black text-teal-400">
-                                {selectedPlan === 'basic' ? '$16' : selectedPlan === 'pro' ? '$48' : '$80'}
+                                {selectedPlan === 'starter' ? '$25' : selectedPlan === 'pro' ? '$89' : '$200'}
                             </span>
                         </div>
                     </div>

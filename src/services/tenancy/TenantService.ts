@@ -47,6 +47,7 @@ class TenantService {
             .from('tenants')
             .select('*')
             .eq('id', tenantId)
+            .is('deletion_pending_at', null)
             .single();
 
         if (error) return null;
@@ -61,6 +62,7 @@ class TenantService {
             .from('tenants')
             .select('*')
             .eq('slug', slug)
+            .is('deletion_pending_at', null)
             .maybeSingle();
 
         if (error) return null;
@@ -89,9 +91,13 @@ class TenantService {
      * Delete tenant
      */
     async deleteTenant(tenantId: string): Promise<void> {
+        // Implement 90-day retention policy (Soft Delete)
         const { error } = await supabase
             .from('tenants')
-            .delete()
+            .update({
+                deletion_pending_at: new Date().toISOString(),
+                subscription_status: 'suspended'
+            })
             .eq('id', tenantId);
 
         if (error) throw error;

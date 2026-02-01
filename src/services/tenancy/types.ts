@@ -9,13 +9,17 @@ export interface Tenant {
     name: string;
     slug: string;
     domain?: string;
-    logoUrl?: string;
+    logo_url?: string;
     settings: TenantSettings;
-    subscriptionPlan: SubscriptionPlan;
-    subscriptionStatus: SubscriptionStatus;
-    trialEndsAt?: Date;
-    createdAt: Date;
-    updatedAt: Date;
+    subscription_plan: SubscriptionPlan;
+    subscription_status: SubscriptionStatus;
+    trial_ends_at?: Date;
+    current_period_end?: Date;
+    deletion_pending_at?: Date;
+    stripe_customer_id?: string;
+    admin_user_id?: string;
+    created_at: Date;
+    updated_at: Date;
 }
 
 // Tenant Settings
@@ -66,7 +70,7 @@ export interface TenantSettings {
 
 // Subscription Plans
 // Subscription Plans
-export type SubscriptionPlan = 'free' | 'basic' | 'starter' | 'pro' | 'professional' | 'premium' | 'enterprise';
+export type SubscriptionPlan = 'free' | 'starter' | 'pro' | 'enterprise' | 'custom';
 
 export type SubscriptionStatus = 'active' | 'cancelled' | 'suspended' | 'trial';
 
@@ -137,6 +141,12 @@ export interface PlanFeatures {
     maxUsers: number;
     maxProjects: number;
     maxStorage: number; // GB
+    maxVideoMeetingsPerMonth: number;
+    maxVideoMinutesPerMeeting: number;
+    contractGeneration: boolean;
+    paymentProcessing: boolean;
+    fullCRM: boolean;
+    advancedBookings: boolean;
     workflows: boolean;
     aiAssistant: boolean;
     videoConferencing: boolean;
@@ -146,7 +156,7 @@ export interface PlanFeatures {
 }
 
 // Plan Pricing
-export const PLAN_PRICING: Record<SubscriptionPlan, { monthly: number; yearly: number; features: PlanFeatures }> = {
+export const PLAN_PRICING: Record<SubscriptionPlan, { monthly: number; yearly: number; features: PlanFeatures; stripePriceId?: string }> = {
     free: {
         monthly: 0,
         yearly: 0,
@@ -154,22 +164,13 @@ export const PLAN_PRICING: Record<SubscriptionPlan, { monthly: number; yearly: n
             maxUsers: 1,
             maxProjects: 3,
             maxStorage: 1,
+            maxVideoMeetingsPerMonth: 2,
+            maxVideoMinutesPerMeeting: 30,
+            contractGeneration: false,
+            paymentProcessing: false,
+            fullCRM: false,
+            advancedBookings: false,
             workflows: false,
-            aiAssistant: false,
-            videoConferencing: false,
-            customDomain: false,
-            prioritySupport: false,
-            apiAccess: false
-        }
-    },
-    basic: { // Alias for Starter in some contexts
-        monthly: 16,
-        yearly: 160,
-        features: {
-            maxUsers: 5,
-            maxProjects: 10,
-            maxStorage: 5,
-            workflows: true,
             aiAssistant: false,
             videoConferencing: true,
             customDomain: false,
@@ -178,12 +179,19 @@ export const PLAN_PRICING: Record<SubscriptionPlan, { monthly: number; yearly: n
         }
     },
     starter: {
-        monthly: 16,
-        yearly: 160,
+        monthly: 25,
+        yearly: 250,
+        stripePriceId: 'price_starter_monthly',
         features: {
             maxUsers: 5,
-            maxProjects: 10,
-            maxStorage: 5,
+            maxProjects: 25,
+            maxStorage: 10,
+            maxVideoMeetingsPerMonth: 10,
+            maxVideoMinutesPerMeeting: 60,
+            contractGeneration: false,
+            paymentProcessing: true,
+            fullCRM: false,
+            advancedBookings: true,
             workflows: true,
             aiAssistant: false,
             videoConferencing: true,
@@ -192,43 +200,20 @@ export const PLAN_PRICING: Record<SubscriptionPlan, { monthly: number; yearly: n
             apiAccess: false
         }
     },
-    pro: { // Alias for Professional
-        monthly: 48,
-        yearly: 480,
+    pro: {
+        monthly: 89,
+        yearly: 890,
+        stripePriceId: 'price_pro_monthly',
         features: {
-            maxUsers: 25,
-            maxProjects: 50,
-            maxStorage: 25,
-            workflows: true,
-            aiAssistant: true,
-            videoConferencing: true,
-            customDomain: true,
-            prioritySupport: true,
-            apiAccess: true
-        }
-    },
-    professional: {
-        monthly: 48,
-        yearly: 480,
-        features: {
-            maxUsers: 25,
-            maxProjects: 50,
-            maxStorage: 25,
-            workflows: true,
-            aiAssistant: true,
-            videoConferencing: true,
-            customDomain: true,
-            prioritySupport: true,
-            apiAccess: true
-        }
-    },
-    premium: {
-        monthly: 80,
-        yearly: 800,
-        features: {
-            maxUsers: -1, // unlimited
-            maxProjects: -1, // unlimited
-            maxStorage: -1, // unlimited
+            maxUsers: 20,
+            maxProjects: 100,
+            maxStorage: 50,
+            maxVideoMeetingsPerMonth: 50,
+            maxVideoMinutesPerMeeting: 90,
+            contractGeneration: true,
+            paymentProcessing: true,
+            fullCRM: true,
+            advancedBookings: true,
             workflows: true,
             aiAssistant: true,
             videoConferencing: true,
@@ -238,12 +223,40 @@ export const PLAN_PRICING: Record<SubscriptionPlan, { monthly: number; yearly: n
         }
     },
     enterprise: {
-        monthly: 299,
-        yearly: 2990,
+        monthly: 200,
+        yearly: 2000,
+        stripePriceId: 'price_enterprise_monthly',
+        features: {
+            maxUsers: -1,
+            maxProjects: -1,
+            maxStorage: 500,
+            maxVideoMeetingsPerMonth: 200,
+            maxVideoMinutesPerMeeting: 180,
+            contractGeneration: true,
+            paymentProcessing: true,
+            fullCRM: true,
+            advancedBookings: true,
+            workflows: true,
+            aiAssistant: true,
+            videoConferencing: true,
+            customDomain: true,
+            prioritySupport: true,
+            apiAccess: true
+        }
+    },
+    custom: {
+        monthly: 0, // Quote based
+        yearly: 0,
         features: {
             maxUsers: -1,
             maxProjects: -1,
             maxStorage: -1,
+            maxVideoMeetingsPerMonth: -1, // Unlimited
+            maxVideoMinutesPerMeeting: -1, // Unlimited
+            contractGeneration: true,
+            paymentProcessing: true,
+            fullCRM: true,
+            advancedBookings: true,
             workflows: true,
             aiAssistant: true,
             videoConferencing: true,

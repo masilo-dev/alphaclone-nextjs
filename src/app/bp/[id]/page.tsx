@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { businessProjectService, BusinessProject } from '@/services/businessProjectService';
+import { projectService } from '@/services/projectService';
+import { Project as BusinessProject } from '@/types';
 import { Card } from '@/components/ui/UIComponents';
 import { Calendar, Briefcase, CheckCircle2, Clock } from 'lucide-react';
 
@@ -21,11 +22,11 @@ export default function PublicBusinessProjectPage() {
 
     const loadProject = async () => {
         try {
-            const { project, error } = await businessProjectService.getPublicProject(projectId);
+            const { project, error } = await projectService.getPublicProjectStatus(projectId);
             if (error) {
                 setError(error);
             } else {
-                setProject(project);
+                setProject(project as BusinessProject);
             }
         } catch (err) {
             setError('Failed to load project details');
@@ -57,12 +58,11 @@ export default function PublicBusinessProjectPage() {
         );
     }
 
-    const statusColors = {
-        backlog: 'text-slate-400 bg-slate-400/10 border-slate-400/20',
-        todo: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
-        in_progress: 'text-violet-400 bg-violet-400/10 border-violet-400/20',
-        review: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
-        done: 'text-teal-400 bg-teal-400/10 border-teal-500/20'
+    const statusColors: any = {
+        Active: 'text-teal-400 bg-teal-400/10 border-teal-500/20',
+        Pending: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
+        Completed: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+        Declined: 'text-red-400 bg-red-400/10 border-red-400/20'
     };
 
     return (
