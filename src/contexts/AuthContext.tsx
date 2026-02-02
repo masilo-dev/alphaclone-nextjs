@@ -21,6 +21,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data: { subscription } } = authService.onAuthStateChange((u, event) => {
             console.log(`AuthContext: Handling ${event} event, User: ${u?.email}`);
 
+            // OPTIMIZATION: Prevent unnecessary state updates (flip-flopping)
+            // If we already have the same user loaded, ignores INITIAL_SESSION or SIGNED_IN events
+            if (u && user && u.id === user.id && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
+                console.log('AuthContext: User already loaded, skipping update');
+                return;
+            }
+
             if (u) {
                 // User is authenticated and profile is loaded
                 setUser(u);
@@ -31,12 +38,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setLoading(false);
             } else if (event === 'SIGNED_IN' && !u) {
                 // Signed in but no user data (shouldn't happen with our wrapper, but safe fallback)
-                // Keep loading if we expect a user? Or set null?
-                // If wrapper failed to get profile, it sends user=null.
                 setUser(null);
                 setLoading(false);
             } else {
                 // Initial session check or other events where no user is present
+                // Don't clear user if we're just refreshing session token!
+                if (event === 'TOKEN_REFRESHED' && user) {
+                    return;
+                }
                 setUser(null);
                 setLoading(false);
             }

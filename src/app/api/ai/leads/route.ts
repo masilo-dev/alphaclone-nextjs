@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import { generateLeads } from '@/services/geminiService';
 
+
+export const runtime = 'nodejs';
+
 export async function POST(req: Request) {
     try {
+        console.log("DEBUG: Checking Gemini API Key...");
+        console.log("DEBUG: GEMINI_API_KEY present:", !!process.env.VITE_GEMINI_API_KEY || !!process.env.NEXT_PUBLIC_GEMINI_API_KEY);
+
         const { industry, location } = await req.json();
 
         if (!industry || !location) {
