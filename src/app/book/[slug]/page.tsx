@@ -71,11 +71,11 @@ export default function BookingLandingPage() {
 
                     <div className="space-y-2">
                         <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">{tenant.name}</h1>
-                        {!(tenant.settings as any)?.calendly?.enabled && (
-                            <p className="text-slate-500 dark:text-slate-400 max-w-lg mx-auto leading-relaxed">
-                                Welcome! Please select a service below to schedule a time with us.
-                            </p>
-                        )}
+                        <p className="text-slate-500 dark:text-slate-400 max-w-lg mx-auto leading-relaxed">
+                            {(tenant.settings as any)?.calendly?.enabled
+                                ? 'Select a time below to schedule your session.'
+                                : 'Our automated booking system is being updated. Please check back soon.'}
+                        </p>
                     </div>
                 </div>
 

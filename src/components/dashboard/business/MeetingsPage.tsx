@@ -3,7 +3,7 @@ import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { dailyService, VideoCall } from '../../../services/dailyService';
 import { Settings, Video, Calendar, Clock, User as UserIcon, Link, Copy } from 'lucide-react';
-import { BookingSettings } from './BookingSettings';
+import { CalendlySettingsModal } from './CalendlySettingsModal';
 import SimpleVideoMeeting from '../SimpleVideoMeeting';
 import { format, isFuture } from 'date-fns';
 import { safeFormat } from '../../../utils/dateUtils';
@@ -46,7 +46,11 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
     const nextMeeting = upcomingMeetings[0];
 
     const copyBookingLink = () => {
-        if (currentTenant?.settings.booking?.slug) {
+        const calendlyUrl = (currentTenant?.settings as any)?.calendly?.eventUrl;
+        if (calendlyUrl) {
+            navigator.clipboard.writeText(calendlyUrl);
+            import('react-hot-toast').then(({ toast }) => toast.success('Calendly link copied!'));
+        } else if (currentTenant?.settings.booking?.slug) {
             const url = `${window.location.origin}/book/${currentTenant.settings.booking.slug}`;
             navigator.clipboard.writeText(url);
             import('react-hot-toast').then(({ toast }) => toast.success('Booking link copied!'));
@@ -62,7 +66,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                     <p className="text-slate-400">Stable video meetings & bookings management</p>
                 </div>
                 <div className="flex gap-2">
-                    {currentTenant?.settings.booking?.enabled && (
+                    {((currentTenant?.settings as any)?.calendly?.enabled || currentTenant?.settings.booking?.enabled) && (
                         <Button variant="outline" onClick={copyBookingLink} className="gap-2 border-slate-700 hover:bg-slate-800">
                             <Link className="w-4 h-4" />
                             Booking Link
@@ -192,9 +196,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
 
             {/* Settings Modal */}
             {showSettings && currentTenant && (
-                <BookingSettings
-                    tenant={currentTenant}
-                    onUpdate={refreshTenants}
+                <CalendlySettingsModal
                     onClose={() => setShowSettings(false)}
                 />
             )}

@@ -9,7 +9,9 @@ const OPENAI_API_KEY = ENV.VITE_OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI
 const MANUS_API_KEY = process.env.NEXT_PUBLIC_MANUS_API_KEY || process.env.MANUS_API_KEY || '';
 
 // Initialize providers
-const geminiAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
+// Note: Client-side SDK initialization is disabled to prevent API key exposure and configuration errors.
+// All AI calls should be proxied through server routes.
+const geminiAI = null;
 
 // Check which providers are available
 export const getAvailableProviders = () => {
@@ -27,222 +29,66 @@ export const isAnyAIConfigured = () => {
 };
 
 /**
- * Generate text content using the first available AI provider
+ * Generate text content using the first available AI provider (proxied through server-side route)
  */
 export const generateText = async (prompt: string, maxTokens: number = 2048): Promise<{ text: string | null; error: any }> => {
-    const providers = getAvailableProviders();
+    try {
+        console.log('🔄 Calling Server-side AI Generate Proxy...');
+        const response = await fetch('/api/ai/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                prompt,
+                maxTokens
+            })
+        });
 
-    // Try Gemini first (free tier available)
-    if (providers.gemini && geminiAI) {
-        try {
-            console.log('🔵 Using Gemini AI');
-            const model = geminiAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            return { text: response.text(), error: null };
-        } catch (error) {
-            console.error('❌ Gemini failed:', error);
-            // Fall through to try next provider
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to generate text');
         }
+
+        return await response.json();
+    } catch (error: any) {
+        console.error('❌ AI Generate failed:', error);
+        return { text: null, error: error.message };
     }
-
-    // Try Claude if Gemini failed or not available
-    if (providers.claude) {
-        try {
-            console.log('🟣 Using Claude AI');
-            const response = await fetch('https://api.anthropic.com/v1/messages', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': ANTHROPIC_API_KEY,
-                    'anthropic-version': '2023-06-01'
-                },
-                body: JSON.stringify({
-                    model: 'claude-3-5-sonnet-20241022',
-                    max_tokens: maxTokens,
-                    messages: [{
-                        role: 'user',
-                        content: prompt
-                    }]
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Claude API error');
-            }
-
-            const data = await response.json();
-            return { text: data.content[0].text, error: null };
-        } catch (error) {
-            console.error('❌ Claude failed:', error);
-            // Fall through to try next provider
-        }
-    }
-
-    // Try OpenAI if both Gemini and Claude failed
-    if (providers.openai) {
-        try {
-            console.log('🟢 Using OpenAI');
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${OPENAI_API_KEY}`
-                },
-                body: JSON.stringify({
-                    model: 'gpt-4-turbo-preview',
-                    messages: [{
-                        role: 'user',
-                        content: prompt
-                    }],
-                    max_tokens: maxTokens
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('OpenAI API error');
-            }
-
-            const data = await response.json();
-            return { text: data.choices[0].message.content, error: null };
-        } catch (error) {
-            console.error('❌ OpenAI failed:', error);
-        }
-    }
-
-    // No providers available or all failed
-    return {
-        text: null,
-        error: 'No AI provider is configured or all providers failed. Please set VITE_GEMINI_API_KEY, VITE_ANTHROPIC_API_KEY, or VITE_OPENAI_API_KEY.'
-    };
 };
 
 /**
- * Start a chat session (uses Gemini if available, falls back to Claude)
+ * Start a chat session (proxied through server-side route for security and reliability)
  */
 export const chatWithAI = async (
     history: { role: string; text: string }[],
     message: string,
     image?: string
 ): Promise<{ text: string; grounding: any }> => {
-    const providers = getAvailableProviders();
+    try {
+        console.log('🔄 Calling Server-side AI Proxy...');
+        const response = await fetch('/api/ai/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                history,
+                message,
+                image
+            })
+        });
 
-    // Try Gemini with chat for multi-turn conversations
-    if (providers.gemini && geminiAI) {
-        try {
-            console.log('🔵 Using Gemini Chat');
-            const model = geminiAI.getGenerativeModel({ model: 'gemini-1.5-pro-latest' });
-
-            const systemPrompt = {
-                role: 'user',
-                parts: [{
-                    text: `You are a professional business assistant for AlphaClone Systems.
-CRITICAL INSTRUCTIONS:
-- Only provide accurate, factual information based on context provided
-- If you don't know something, say "I don't have that information"
-- Never make up or fabricate data, numbers, or details
-- Stay professional and concise
-- Focus on the user's actual query`
-                }]
-            };
-
-            const modelResponse = {
-                role: 'model',
-                parts: [{ text: 'Understood. I will provide only accurate, factual responses.' }]
-            };
-
-            const chatHistory = [
-                systemPrompt,
-                modelResponse,
-                ...history.map((h: any) => ({
-                    role: h.role === 'model' ? 'model' : 'user',
-                    parts: [{ text: h.text }]
-                }))
-            ];
-
-            const chat = model.startChat({
-                history: chatHistory,
-                generationConfig: {
-                    maxOutputTokens: 2048,
-                    temperature: 0.7,
-                    topP: 0.9,
-                    topK: 40
-                },
-            });
-
-            let result;
-            if (image) {
-                const base64Data = image.split(',')[1];
-                const mimeType = image.split(';')[0]?.split(':')[1] || 'image/png';
-                const imagePart = {
-                    inlineData: {
-                        data: base64Data,
-                        mimeType: mimeType
-                    }
-                };
-                result = await chat.sendMessage([message, imagePart]);
-            } else {
-                result = await chat.sendMessage(message);
-            }
-
-            const response = await result.response;
-            return {
-                text: response.text(),
-                grounding: null
-            };
-        } catch (error) {
-            console.error('❌ Gemini chat failed:', error);
-            // Fall through to Claude
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to get response from AI assistant');
         }
+
+        return await response.json();
+    } catch (error: any) {
+        console.error('❌ AI Chat failed:', error);
+        throw error;
     }
-
-    // Fall back to Claude for chat
-    if (providers.claude) {
-        try {
-            console.log('🟣 Using Claude Chat');
-
-            // Build messages array from history + new message
-            const messages = [
-                ...history.map((h: any) => ({
-                    role: h.role === 'model' ? 'assistant' : 'user',
-                    content: h.text
-                })),
-                {
-                    role: 'user',
-                    content: message
-                }
-            ];
-
-            const response = await fetch('https://api.anthropic.com/v1/messages', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': ANTHROPIC_API_KEY,
-                    'anthropic-version': '2023-06-01'
-                },
-                body: JSON.stringify({
-                    model: 'claude-3-5-sonnet-20241022',
-                    max_tokens: 2048,
-                    system: 'You are a professional business assistant for AlphaClone Systems.',
-                    messages: messages
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Claude API error');
-            }
-
-            const data = await response.json();
-            return {
-                text: data.content[0].text,
-                grounding: null
-            };
-        } catch (error) {
-            console.error('❌ Claude chat failed:', error);
-        }
-    }
-
-    throw new Error('No AI provider available for chat');
 };
 
 /**
@@ -320,128 +166,64 @@ export const generateLeadsWithManus = async (industry: string, location: string)
 };
 
 /**
- * Generate leads using AI or Google Places
- * @param industry - Target industry
- * @param location - Target location
- * @param googleApiKey - Optional Google Places API key
- * @param mode - 'admin' or 'tenant'. Admin uses Manus AI (premium), Tenant uses Gemini AI.
+ * Generate leads using AI or Google Places (proxied through server-side route)
  */
 export const generateLeads = async (industry: string, location: string, googleApiKey?: string, mode: 'admin' | 'tenant' = 'tenant') => {
-    if (!isAnyAIConfigured()) {
-        throw new Error('AI API key is not configured. Please contact administrator.');
-    }
-
     if (!industry || !location) {
         throw new Error('Industry and location are required to generate leads.');
     }
 
     console.log(`🔍 Generating leads for: ${industry} in ${location} (Mode: ${mode})`);
-    let leads: any[] = [];
-    let leadSource = 'Unknown';
 
-    // 1. Try Manus AI First (ONLY FOR ADMIN)
-    if (mode === 'admin' && MANUS_API_KEY) {
-        try {
-            leads = await generateLeadsWithManus(industry, location);
-            leadSource = 'Manus AI';
-        } catch (error) {
-            console.warn('⚠️ Manus AI failed, falling back to other providers:', error);
-            // Continue to fallback options
-        }
-    }
+    try {
+        console.log('🔄 Calling Server-side AI Leads Proxy...');
+        const response = await fetch('/api/ai/leads', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                industry,
+                location,
+                mode
+            })
+        });
 
-    // 2. Try Google Places if Key Provided (Fallback for Admin or Primary for Tenant if key exists)
-    if (leads.length === 0 && googleApiKey) {
-        console.log("🗺️ Using Google Places API for real data...");
-        const { places, error } = await googlePlacesService.searchPlaces(`${industry} in ${location}`, googleApiKey);
-
-        if (error) {
-            console.warn("⚠️ Google Places failed, falling back to AI:", error);
-        } else if (places.length > 0) {
-            leads = places.map((p: any) => ({
-                id: crypto.randomUUID(),
-                ...p,
-                status: 'New',
-                source: 'Google Places'
-            }));
-            leadSource = 'Google Places';
-        }
-    }
-
-    // 3. AI Generation (Gemini - Primary for Tenant or Fallback for Admin)
-    if (leads.length === 0) {
-        console.log(`🤖 Using Gemini AI for ${mode} data...`);
-        const prompt = `Generate EXACTLY 5 realistic and professional business leads for the "${industry}" industry in "${location}".
-
-CRITICAL REQUIREMENTS:
-- All data must be plausible and realistic for ${location}
-- Business names must be appropriate for ${industry} industry
-- Phone numbers must follow standard ${location} format
-- Email addresses must be professional and realistic
-- DO NOT fabricate real companies - create plausible fictional ones
-- DO NOT use placeholder data like "example.com" or "123-456-7890"
-
-Return ONLY a valid JSON array (no markdown, no explanation) where each object has:
-- id: random 8-character alphanumeric string
-- businessName: realistic business name (not a real company)
-- industry: "${industry}"
-- location: "${location}"
-- phone: realistic phone number for ${location}
-- email: professional email (firstname@businessname.com format)
-- fb: lowercase facebook handle (no spaces, hyphens allowed)
-- status: "New"
-
-Example format:
-[{"id":"abc12345","businessName":"TechFlow Solutions","industry":"${industry}","location":"${location}","phone":"+263-71-234-5678","email":"info@techflow.co.zw","fb":"techflowsolutions","status":"New"}]`;
-
-        const { text, error } = await generateText(prompt, 2048);
-
-        if (error || !text) {
-            console.error('❌ AI Error:', error);
-            throw new Error(error || 'AI service returned no data. Please try again.');
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to generate leads');
         }
 
-        try {
-            const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            const parsed = JSON.parse(cleanedText);
+        const { leads } = await response.json();
 
-            if (Array.isArray(parsed)) {
-                leads = parsed.map((lead: any) => ({
+        // Auto-Generate Outreach Messages for ALL leads
+        console.log("📧 Generating auto-outreach messages...");
+
+        const enrichedLeads = await Promise.all(leads.map(async (lead: any) => {
+            try {
+                const message = await generateOutreachMessage(lead);
+                return {
                     ...lead,
-                    source: 'Gemini AI'
-                }));
-                leadSource = 'Gemini AI';
+                    outreachMessage: message,
+                    outreachStatus: 'pending',
+                    leadSource: lead.source || 'AI'
+                };
+            } catch (e) {
+                return {
+                    ...lead,
+                    outreachMessage: "Failed to generate.",
+                    outreachStatus: 'error',
+                    leadSource: lead.source || 'AI'
+                };
             }
-        } catch (e: any) {
-            console.error("❌ Failed to parse leads:", e);
-            throw new Error('Failed to parse AI response.');
-        }
+        }));
+
+        console.log(`✅ Ready: ${enrichedLeads.length} leads with messages`);
+        return enrichedLeads;
+    } catch (error: any) {
+        console.error('❌ Lead Generation failed:', error);
+        throw error;
     }
-
-    // 4. Auto-Generate Outreach Messages for ALL leads (using Gemini)
-    console.log("📧 Generating auto-outreach messages...");
-
-    const enrichedLeads = await Promise.all(leads.map(async (lead) => {
-        try {
-            const message = await generateOutreachMessage(lead);
-            return {
-                ...lead,
-                outreachMessage: message,
-                outreachStatus: 'pending',
-                leadSource: lead.source || leadSource
-            };
-        } catch (e) {
-            return {
-                ...lead,
-                outreachMessage: "Failed to generate.",
-                outreachStatus: 'error',
-                leadSource: lead.source || leadSource
-            };
-        }
-    }));
-
-    console.log(`✅ Ready: ${enrichedLeads.length} leads with messages (Source: ${leadSource})`);
-    return enrichedLeads;
 };
 
 export default {

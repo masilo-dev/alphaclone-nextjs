@@ -307,6 +307,48 @@ class TenantService {
             localStorage.removeItem('currentTenantId');
         }
     }
+
+    /**
+     * Update subscription plan
+     */
+    async updateSubscription(
+        tenantId: string,
+        plan: SubscriptionPlan,
+        status: string = 'active'
+    ): Promise<Tenant> {
+        const { data, error } = await supabase
+            .from('tenants')
+            .update({
+                subscription_plan: plan,
+                subscription_status: status,
+                current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                cancel_at_period_end: false
+            })
+            .eq('id', tenantId)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data as Tenant;
+    }
+
+    /**
+     * Toggle cancel at period end
+     */
+    async toggleCancelAtPeriodEnd(
+        tenantId: string,
+        cancelAtPeriodEnd: boolean
+    ): Promise<Tenant> {
+        const { data, error } = await supabase
+            .from('tenants')
+            .update({ cancel_at_period_end: cancelAtPeriodEnd })
+            .eq('id', tenantId)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data as Tenant;
+    }
 }
 
 export const tenantService = new TenantService();

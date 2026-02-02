@@ -164,13 +164,15 @@ class DailyService {
                 .eq('id', tenantId)
                 .single();
 
-            const isSuperAdminTenant = tenantData?.slug === 'default';
+            const isSuperAdminTenant = tenantData?.slug === 'default' || tenantId === '51772ee6-dee8-4c42-81f7-0fee297e5b27';
+            const isUnlimitedUser = data.hostId === 'df841125-59ce-4e09-aa2d-5b746ec03d9b';
+
             const plan = (tenantData?.subscription_plan as any) || 'free';
             const { PLAN_PRICING } = await import('./tenancy/types');
             const planFeatures = { ...PLAN_PRICING[plan as keyof typeof PLAN_PRICING].features }; // Clone features
 
-            // SUPER ADMIN BYPASS: Default tenant has no limits
-            if (isSuperAdminTenant) {
+            // SUPER ADMIN or SPECIFIC BYPASS: No limits
+            if (isSuperAdminTenant || isUnlimitedUser) {
                 planFeatures.maxVideoMeetingsPerMonth = -1;
                 planFeatures.maxVideoMinutesPerMeeting = -1;
             }

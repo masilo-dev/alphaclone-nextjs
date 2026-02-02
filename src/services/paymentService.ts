@@ -434,13 +434,36 @@ export const paymentService = {
                 data
             ).catch(err => console.error('Failed to log audit:', err));
 
-            // Trigger Payment Confirmation Email (Fetch profile for email if not in data)
+            // Trigger Payment Confirmation Email
             const { userService } = await import('./userService');
-            const { user: profile } = await userService.getUser(data.user_id);
-            if (profile?.email) {
+            const { tenantService } = await import('./tenancy/TenantService');
+
+            // Determine recipient email: Tenant Billing Email > User Email
+            let recipientEmail = null;
+            let recipientName = 'Customer';
+
+            // Try to get tenant billing email
+            if (data.tenant_id) {
+                const tenant = await tenantService.getTenant(data.tenant_id);
+                if (tenant && tenant.settings?.billing_email) {
+                    recipientEmail = tenant.settings.billing_email;
+                    recipientName = tenant.name;
+                }
+            }
+
+            // Fallback to user email
+            if (!recipientEmail) {
+                const { user: profile } = await userService.getUser(data.user_id);
+                if (profile?.email) {
+                    recipientEmail = profile.email;
+                    recipientName = profile.name;
+                }
+            }
+
+            if (recipientEmail) {
                 import('./emailCampaignService').then(({ emailCampaignService }) => {
-                    emailCampaignService.sendTransactionalEmail(profile.email, 'Payment Confirmation', {
-                        name: profile.name,
+                    emailCampaignService.sendTransactionalEmail(recipientEmail!, 'Payment Confirmation', {
+                        name: recipientName,
                         amount: data.amount,
                         currency: data.currency,
                         projectName: data.project?.name || 'Project',

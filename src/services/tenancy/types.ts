@@ -18,6 +18,7 @@ export interface Tenant {
     deletion_pending_at?: Date;
     stripe_customer_id?: string;
     admin_user_id?: string;
+    cancel_at_period_end?: boolean;
     created_at: Date;
     updated_at: Date;
 }
@@ -74,6 +75,7 @@ export interface TenantSettings {
         calendlyUserUri?: string;
         eventUrl?: string; // Default event link for the tenant
     };
+    billing_email?: string;
 }
 
 // Subscription Plans

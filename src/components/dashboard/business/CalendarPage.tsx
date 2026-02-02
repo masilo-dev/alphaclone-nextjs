@@ -10,7 +10,7 @@ import {
     X,
     Settings // Import Settings icon
 } from 'lucide-react';
-import { BookingSettings } from './BookingSettings'; // Import component
+import { CalendlySettingsModal } from './CalendlySettingsModal'; // Import component
 
 interface CalendarPageProps {
     user: User;
@@ -169,8 +169,8 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                                         <div
                                             key={event.id}
                                             className={`text-xs px-2 py-1 rounded truncate ${event.eventType === 'booking'
-                                                    ? 'bg-purple-500/20 text-purple-400'
-                                                    : 'bg-teal-500/20 text-teal-400'
+                                                ? 'bg-purple-500/20 text-purple-400'
+                                                : 'bg-teal-500/20 text-teal-400'
                                                 }`}
                                         >
                                             {event.title}
@@ -213,13 +213,8 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
             )}
 
             {/* Booking Settings Modal */}
-            {showBookingSettings && currentTenant && (
-                <BookingSettings
-                    tenant={currentTenant}
-                    onUpdate={() => {
-                        refreshTenants();
-                        // Also reload events if needed, but not strictly required for settings
-                    }}
+            {showBookingSettings && (
+                <CalendlySettingsModal
                     onClose={() => setShowBookingSettings(false)}
                 />
             )}

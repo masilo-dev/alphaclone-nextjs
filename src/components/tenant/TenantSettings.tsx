@@ -53,8 +53,8 @@ export default function TenantSettings() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors relative ${activeTab === tab.id
-                ? 'text-teal-400'
-                : 'text-slate-400 hover:text-slate-300'
+              ? 'text-teal-400'
+              : 'text-slate-400 hover:text-slate-300'
               }`}
           >
             <tab.icon className="w-4 h-4" />
@@ -82,6 +82,7 @@ function GeneralSettings({ tenant, isAdmin, onUpdate }: any) {
   const [isSaving, setIsSaving] = useState(false);
   const [name, setName] = useState(tenant.name);
   const [description, setDescription] = useState(tenant.settings?.description || '');
+  const [billingEmail, setBillingEmail] = useState(tenant.settings?.billing_email || '');
 
   const handleSave = async () => {
     try {
@@ -91,7 +92,8 @@ function GeneralSettings({ tenant, isAdmin, onUpdate }: any) {
         name,
         settings: {
           ...tenant.settings,
-          description
+          description,
+          billing_email: billingEmail
         }
       });
 
@@ -102,6 +104,10 @@ function GeneralSettings({ tenant, isAdmin, onUpdate }: any) {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleBillingEmailChange = (email: string) => {
+    // Local state update if needed, but for now we are using the main save
   };
 
   return (
@@ -137,6 +143,26 @@ function GeneralSettings({ tenant, isAdmin, onUpdate }: any) {
             </div>
             <p className="text-xs text-slate-500 mt-1">
               URL cannot be changed after creation
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Billing Email
+            </label>
+            {isEditing && isAdmin ? (
+              <input
+                type="email"
+                value={billingEmail}
+                onChange={(e) => setBillingEmail(e.target.value)}
+                placeholder="invoices@example.com"
+                className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
+              />
+            ) : (
+              <p className="text-white">{billingEmail || 'Same as admin email'}</p>
+            )}
+            <p className="text-xs text-slate-500 mt-1">
+              Invoices and payment receipts will be sent here
             </p>
           </div>
 
@@ -184,6 +210,7 @@ function GeneralSettings({ tenant, isAdmin, onUpdate }: any) {
                     setIsEditing(false);
                     setName(tenant.name);
                     setDescription(tenant.settings?.description || '');
+                    setBillingEmail(tenant.settings?.billing_email || '');
                   }}
                   disabled={isSaving}
                   className="px-4 py-2 text-slate-400 hover:text-white transition-colors disabled:opacity-50"
@@ -331,10 +358,10 @@ function TeamSettings({ tenant, isAdmin }: any) {
 
                 <div className="flex items-center gap-3">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${member.role === 'admin'
-                      ? 'bg-purple-500/20 text-purple-300'
-                      : member.role === 'member'
-                        ? 'bg-blue-500/20 text-blue-300'
-                        : 'bg-slate-600 text-slate-300'
+                    ? 'bg-purple-500/20 text-purple-300'
+                    : member.role === 'member'
+                      ? 'bg-blue-500/20 text-blue-300'
+                      : 'bg-slate-600 text-slate-300'
                     }`}>
                     {member.role}
                   </span>
@@ -356,6 +383,35 @@ function TeamSettings({ tenant, isAdmin }: any) {
 
 function BillingSettings({ tenant, isAdmin }: any) {
   const currentPlan = tenant.subscription_plan || 'free';
+  const isCanceled = tenant.cancel_at_period_end;
+  const isPaidPlan = currentPlan !== 'free';
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
+
+  const handleSubscriptionAction = async (action: 'cancel_at_period_end' | 'resume') => {
+    if (!confirm(action === 'cancel_at_period_end'
+      ? 'Are you sure you want to cancel? You will retain access until the end of the current billing period.'
+      : 'Resume your subscription?')) return;
+
+    try {
+      setLoadingAction(action);
+      const response = await fetch('/api/stripe/manage-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId: tenant.id, action }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || 'Failed to update subscription');
+
+      // Reload page to reflect changes (or use a refresh context if available)
+      window.location.reload();
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setLoadingAction(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -364,32 +420,84 @@ function BillingSettings({ tenant, isAdmin }: any) {
 
         <div className="flex items-center justify-between mb-6">
           <div>
-            <div className="text-2xl font-bold text-white capitalize">{currentPlan}</div>
+            <div className="flex items-center gap-3">
+              <div className="text-2xl font-bold text-white capitalize">{currentPlan}</div>
+              {isCanceled && (
+                <span className="px-2 py-1 bg-amber-500/10 text-amber-500 text-xs rounded-full border border-amber-500/20">
+                  Cancels at period end
+                </span>
+              )}
+            </div>
             <div className="text-slate-400">
               {currentPlan === 'free' ? 'Free forever' : `$${currentPlan === 'starter' ? 25 : currentPlan === 'pro' ? 89 : 200}/month`}
             </div>
           </div>
 
           {isAdmin && (
-            <button className="px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors">
-              Upgrade Plan
-            </button>
+            <div className="flex gap-2">
+              {isPaidPlan && (
+                isCanceled ? (
+                  <button
+                    onClick={() => handleSubscriptionAction('resume')}
+                    disabled={!!loadingAction}
+                    className="px-4 py-2 bg-teal-500/10 text-teal-400 hover:bg-teal-500/20 border border-teal-500/20 rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    {loadingAction === 'resume' && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Resume Subscription
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleSubscriptionAction('cancel_at_period_end')}
+                    disabled={!!loadingAction}
+                    className="px-4 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    {loadingAction === 'cancel_at_period_end' && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Cancel Subscription
+                  </button>
+                )
+              )}
+              <button className="px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors">
+                {currentPlan === 'free' ? 'Upgrade Plan' : 'Change Plan'}
+              </button>
+            </div>
           )}
         </div>
 
-        <div className="text-sm text-slate-400">
-          <p>Next billing date: Not set</p>
-          <p className="mt-1">Payment method: None</p>
+        <div className="text-sm text-slate-400 border-t border-slate-700 pt-4 mt-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-slate-500 mb-1">Billing Status</p>
+              <p className="text-white font-medium capitalize">{tenant.subscription_status || 'Active'}</p>
+            </div>
+            <div>
+              <p className="text-slate-500 mb-1">Current Period Ends</p>
+              <p className="text-white font-medium">
+                {tenant.current_period_end
+                  ? new Date(tenant.current_period_end).toLocaleDateString()
+                  : 'N/A'}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
       {isAdmin && (
         <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
           <h2 className="text-xl font-semibold text-white mb-4">Payment Method</h2>
-          <p className="text-slate-400 mb-4">No payment method on file</p>
-          <button className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors">
-            Add Payment Method
-          </button>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-slate-700 rounded">
+                <CreditCard className="w-6 h-6 text-slate-300" />
+              </div>
+              <div>
+                <p className="text-white font-medium">Stripe Secure Payment</p>
+                <p className="text-xs text-slate-400">Managed via Stripe</p>
+              </div>
+            </div>
+            <button className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm">
+              Update Card
+            </button>
+          </div>
         </div>
       )}
     </div>
