@@ -79,6 +79,8 @@ export const leadService = {
         try {
             const tenantId = this.getTenantId();
 
+            // Trial limits removed - unlimited leads allowed
+            /*
             // ENFORCE TRIAL LIMITS
             const { data: tenantData } = await supabase
                 .from('tenants')
@@ -115,6 +117,7 @@ export const leadService = {
                     return { lead: null, error: `Daily trial limit reached: You can only add ${TRIAL_LIMITS.MAX_LEADS_PER_DAY} leads per day during your trial. Please upgrade for unlimited daily leads.` };
                 }
             }
+            */
 
             const { data: userData } = await supabase.auth.getUser();
 
@@ -172,6 +175,8 @@ export const leadService = {
         try {
             const tenantId = this.getTenantId();
 
+            // Trial limits removed - unlimited bulk leads allowed
+            /*
             // ENFORCE TRIAL LIMITS
             const { data: tenantData } = await supabase
                 .from('tenants')
@@ -216,6 +221,7 @@ export const leadService = {
                     leads = leads.slice(0, allowedLeadsCount);
                 }
             }
+            */
 
             const { data: userData } = await supabase.auth.getUser();
             const ownerId = userData.user?.id;

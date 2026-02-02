@@ -203,7 +203,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                     </div>
 
                     {/* Right side - Additional controls */}
-                    <div className="hidden sm:flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 pl-2 border-l border-white/5 ml-2">
                         {onToggleChat && (
                             <button
                                 onClick={onToggleChat}

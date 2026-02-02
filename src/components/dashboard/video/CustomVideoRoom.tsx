@@ -65,10 +65,11 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
 
     const [callStartTime, setCallStartTime] = useState<Date | null>(null);
     const [secondsElapsed, setSecondsElapsed] = useState(0);
-    const MAX_DURATION_SECONDS = 20 * 60; // 20 minutes
+    const MAX_DURATION_SECONDS = 25 * 60; // 25 minutes
     const isRestricted = user.role !== 'admin';
     const [showParticipants, setShowParticipants] = useState(false);
     const [showChat, setShowChat] = useState(false);
+    const [viewMode, setViewMode] = useState<'grid' | 'speaker'>('speaker');
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const joinAttemptedRef = useRef(false); // Prevent double join in React Strict Mode
     const isJoinedRef = useRef(isJoined); // Track joined state without causing re-renders
@@ -613,6 +614,21 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 </div>
 
                 <div className="flex items-center gap-3">
+                    <div className="flex bg-black/40 backdrop-blur-xl rounded-full border border-white/10 p-0.5">
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all ${viewMode === 'grid' ? 'bg-teal-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                        >
+                            Grid
+                        </button>
+                        <button
+                            onClick={() => setViewMode('speaker')}
+                            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all ${viewMode === 'speaker' ? 'bg-teal-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                        >
+                            Stage
+                        </button>
+                    </div>
+
                     {isRestricted && isJoined && (
                         <div className="bg-black/40 backdrop-blur-xl px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
                             <span className={`text-[11px] font-black tracking-tighter ${MAX_DURATION_SECONDS - secondsElapsed < 120 ? 'text-red-400 animate-pulse' : 'text-slate-300'}`}>
@@ -626,105 +642,131 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
             </div>
 
             {/* MAIN STAGE & SHELF - Layout Reflow (Gate E) */}
-            <div className="absolute inset-0 pt-16 pb-24 overflow-hidden flex flex-col">
+            <div className={`absolute inset-0 pt-16 pb-24 overflow-hidden flex flex-col ${viewMode === 'grid' ? 'p-4' : ''}`}>
 
-                {/* 1. THE STAGE (Host / Active Speaker) - Max 35% Mobile Height (Gate B.1) */}
-                <div className="flex-1 flex flex-col min-h-0">
-                    <div className="flex-1 p-2 sm:p-4 flex items-center justify-center min-h-0">
-                        {participants.length > 0 && (remoteParticipants[0] || localParticipant) ? (
-                            <div className="w-full h-full max-w-5xl mx-auto">
+                {/* Grid View Mode */}
+                {viewMode === 'grid' && (
+                    <div className={`grid gap-4 w-full h-full ${gridClass} auto-rows-fr`}>
+                        {participants.map(participant => (
+                            <div key={participant.sessionId} className="relative rounded-2xl overflow-hidden bg-slate-900 border border-slate-800 shadow-xl">
                                 <CustomVideoTile
-                                    participant={(remoteParticipants[0] || localParticipant)!}
-                                    isLocal={remoteParticipants.length === 0}
+                                    participant={participant}
+                                    isLocal={participant.isLocal}
                                     isAdmin={isUserAdmin(user)}
                                     variant="stage"
                                 />
-                            </div>
-                        ) : (
-                            /* Empty state when alone */
-                            <div className="text-center text-gray-500 animate-in fade-in zoom-in duration-700">
-                                <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700">
-                                    <Users className="w-8 h-8 opacity-20" />
-                                </div>
-                                <p className="text-lg font-medium text-slate-400">Waiting for participants...</p>
-                                <p className="text-sm text-slate-600">Your Business OS is ready for the meeting</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* 2. THE SHELF (Guest List) - Density Logic (Gate B.2) */}
-                {participants.length > 1 && (
-                    <div className="h-28 sm:h-36 bg-black/20 backdrop-blur-sm border-t border-white/5 flex flex-col">
-                        <div className="px-4 pt-2 flex items-center justify-between">
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Participants ({participants.length})</span>
-                        </div>
-                        <div className="flex-1 flex overflow-x-auto overflow-y-hidden gap-2 p-2 sm:p-3 scrollbar-hide">
-                            {/* If local participated in stage, don't show here unless count > 2, etc. 
-                                For simplicity: Show all EXCEPT the one currently on stage. */}
-                            {participants
-                                .filter(p => p.sessionId !== (remoteParticipants[0]?.sessionId || localParticipant?.sessionId))
-                                .map(participant => (
-                                    <div key={participant.sessionId} className="h-full aspect-video flex-shrink-0 animate-in slide-in-from-right duration-300">
-                                        <CustomVideoTile
-                                            participant={participant}
-                                            isLocal={participant.isLocal}
-                                            isAdmin={isUserAdmin(user)}
-                                            variant="sidecar"
-                                            onMuteParticipant={handleMuteParticipant}
-                                            onRemoveParticipant={handleRemoveParticipant}
-                                        />
-                                    </div>
-                                ))
-                            }
-
-                            {/* Always show local video in shelf if remote is on stage */}
-                            {remoteParticipants.length > 0 && localParticipant && (
-                                <div className="h-full aspect-video flex-shrink-0 order-first">
-                                    <CustomVideoTile
-                                        participant={localParticipant}
-                                        isLocal={true}
-                                        isAdmin={isUserAdmin(user)}
-                                        variant="sidecar"
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* Participants sidebar */}
-            {showParticipants && (
-                <div className="absolute right-0 top-0 bottom-24 w-80 bg-gray-800 border-l border-gray-700 p-4 overflow-auto z-10">
-                    <h3 className="text-white text-lg font-semibold mb-4">
-                        Participants ({participants.length})
-                    </h3>
-                    <div className="space-y-2">
-                        {participants.map(participant => (
-                            <div
-                                key={participant.sessionId}
-                                className="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg"
-                            >
-                                <div className="w-10 h-10 rounded-full bg-teal-500 flex items-center justify-center">
-                                    <span className="text-white font-medium">
-                                        {(participant?.userName?.[0] || 'G').toUpperCase()}
-                                    </span>
-                                </div>
-                                <div className="flex-1">
-                                    <p className="text-white text-sm font-medium">
-                                        {participant.userName || 'Guest'}
-                                        {participant.isLocal && ' (You)'}
-                                    </p>
-                                    <p className="text-gray-400 text-xs">
-                                        {participant.isLocal ? 'You' : 'Participant'}
-                                    </p>
+                                <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-xs text-white font-medium">
+                                    {participant.userName || 'Guest'} {participant.isLocal && '(You)'}
                                 </div>
                             </div>
                         ))}
                     </div>
-                </div>
-            )}
+                )}
+
+                {/* Speaker View Mode (Stage + Shelf) */}
+                {viewMode === 'speaker' && (
+                    <>
+                        {/* 1. THE STAGE (Host / Active Speaker) - Max 35% Mobile Height (Gate B.1) */}
+                        <div className="flex-1 flex flex-col min-h-0">
+                            <div className="flex-1 p-2 sm:p-4 flex items-center justify-center min-h-0">
+                                {participants.length > 0 && (remoteParticipants[0] || localParticipant) ? (
+                                    <div className="w-full h-full max-w-5xl mx-auto">
+                                        <CustomVideoTile
+                                            participant={(remoteParticipants[0] || localParticipant)!}
+                                            isLocal={remoteParticipants.length === 0}
+                                            isAdmin={isUserAdmin(user)}
+                                            variant="stage"
+                                        />
+                                    </div>
+                                ) : (
+                                    /* Empty state when alone */
+                                    <div className="text-center text-gray-500 animate-in fade-in zoom-in duration-700">
+                                        <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700">
+                                            <Users className="w-8 h-8 opacity-20" />
+                                        </div>
+                                        <p className="text-lg font-medium text-slate-400">Waiting for participants...</p>
+                                        <p className="text-sm text-slate-600">Your Business OS is ready for the meeting</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* 2. THE SHELF (Guest List) - Density Logic (Gate B.2) */}
+                        {participants.length > 1 && (
+                            <div className="h-28 sm:h-36 bg-black/20 backdrop-blur-sm border-t border-white/5 flex flex-col">
+                                <div className="px-4 pt-2 flex items-center justify-between">
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Participants ({participants.length})</span>
+                                </div>
+                                <div className="flex-1 flex overflow-x-auto overflow-y-hidden gap-2 p-2 sm:p-3 scrollbar-hide">
+                                    {/* If local participated in stage, don't show here unless count > 2, etc. 
+                                For simplicity: Show all EXCEPT the one currently on stage. */}
+                                    {participants
+                                        .filter(p => p.sessionId !== (remoteParticipants[0]?.sessionId || localParticipant?.sessionId))
+                                        .map(participant => (
+                                            <div key={participant.sessionId} className="h-full aspect-video flex-shrink-0 animate-in slide-in-from-right duration-300">
+                                                <CustomVideoTile
+                                                    participant={participant}
+                                                    isLocal={participant.isLocal}
+                                                    isAdmin={isUserAdmin(user)}
+                                                    variant="sidecar"
+                                                    onMuteParticipant={handleMuteParticipant}
+                                                    onRemoveParticipant={handleRemoveParticipant}
+                                                />
+                                            </div>
+                                        ))
+                                    }
+
+                                    {/* Always show local video in shelf if remote is on stage */}
+                                    {remoteParticipants.length > 0 && localParticipant && (
+                                        <div className="h-full aspect-video flex-shrink-0 order-first">
+                                            <CustomVideoTile
+                                                participant={localParticipant}
+                                                isLocal={true}
+                                                isAdmin={isUserAdmin(user)}
+                                                variant="sidecar"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
+
+            {/* Participants sidebar */}
+            {
+                showParticipants && (
+                    <div className="absolute right-0 top-0 bottom-24 w-80 bg-gray-800 border-l border-gray-700 p-4 overflow-auto z-10">
+                        <h3 className="text-white text-lg font-semibold mb-4">
+                            Participants ({participants.length})
+                        </h3>
+                        <div className="space-y-2">
+                            {participants.map(participant => (
+                                <div
+                                    key={participant.sessionId}
+                                    className="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg"
+                                >
+                                    <div className="w-10 h-10 rounded-full bg-teal-500 flex items-center justify-center">
+                                        <span className="text-white font-medium">
+                                            {(participant?.userName?.[0] || 'G').toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-white text-sm font-medium">
+                                            {participant.userName || 'Guest'}
+                                            {participant.isLocal && ' (You)'}
+                                        </p>
+                                        <p className="text-gray-400 text-xs">
+                                            {participant.isLocal ? 'You' : 'Participant'}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )
+            }
 
             {/* Chat panel */}
             <MeetingChat
@@ -751,7 +793,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 roomUrl={roomUrl}
                 callId={callId}
             />
-        </div>
+        </div >
     );
 };
 

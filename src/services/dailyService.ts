@@ -177,6 +177,9 @@ class DailyService {
                 planFeatures.maxVideoMinutesPerMeeting = -1;
             }
 
+            // Meeting count limits removed - unlimited meetings allowed
+            // Only duration per meeting is limited (25 minutes for non-admin users)
+            /*
             // 1. Check Monthly Meeting Limit
             if (planFeatures.maxVideoMeetingsPerMonth !== -1) {
                 const now = new Date();
@@ -195,6 +198,7 @@ class DailyService {
                     };
                 }
             }
+            */
 
             // 2. Determine Duration Limit
             const durationLimit = planFeatures.maxVideoMinutesPerMeeting === -1

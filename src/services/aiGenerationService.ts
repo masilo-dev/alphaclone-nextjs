@@ -34,6 +34,8 @@ class AIGenerationService {
         prompt: string,
         style: 'modern' | 'minimalist' | 'vintage' | 'abstract' = 'modern'
     ): Promise<GenerationResult> {
+        // Rate limits removed - unlimited logo generation
+        /*
         // Check rate limit
         const { allowed, remaining } = await rateLimitService.checkLimit(userId, userRole, 'logo');
         if (!allowed) {
@@ -43,6 +45,7 @@ class AIGenerationService {
                 remaining: 0
             };
         }
+        */
 
         try {
             const enhancedPrompt = `Professional ${style} logo design: ${prompt}. Clean, vector-style, suitable for business branding. High quality, simple background, modern aesthetic.`;
@@ -109,6 +112,8 @@ class AIGenerationService {
         prompt: string,
         size: '1024x1024' | '1792x1024' | '1024x1792' = '1024x1024'
     ): Promise<GenerationResult> {
+        // Rate limits removed - unlimited image generation
+        /*
         // Check rate limit
         const { allowed, remaining } = await rateLimitService.checkLimit(userId, userRole, 'image');
         if (!allowed) {
@@ -118,6 +123,7 @@ class AIGenerationService {
                 remaining: 0
             };
         }
+        */
 
         try {
             const response = await fetch('https://api.openai.com/v1/images/generations', {
@@ -181,6 +187,8 @@ class AIGenerationService {
         prompt: string,
         type: 'blog' | 'email' | 'social' | 'general' = 'general'
     ): Promise<GenerationResult> {
+        // Rate limits removed - unlimited content generation
+        /*
         // Check rate limit
         const { allowed, remaining } = await rateLimitService.checkLimit(userId, userRole, 'content');
         if (!allowed) {
@@ -190,6 +198,7 @@ class AIGenerationService {
                 remaining: 0
             };
         }
+        */
 
         try {
             const systemPrompts = {
