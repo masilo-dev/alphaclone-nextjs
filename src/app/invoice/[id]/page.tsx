@@ -10,8 +10,9 @@ import jsPDF from 'jspdf';
 export default function PublicInvoicePage() {
     const params = useParams();
     const invoiceId = params?.id as string;
-    const [invoice, setInvoice] = useState<BusinessInvoice | null>(null);
+    const [invoice, setInvoice] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
+    const [processing, setProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -22,9 +23,11 @@ export default function PublicInvoicePage() {
 
     const loadInvoice = async () => {
         try {
-            const { invoice, error } = await businessInvoiceService.getPublicInvoice(invoiceId);
+            const { invoice, error } = await businessInvoiceService.getInvoiceWithDetails(invoiceId);
             if (error) {
                 setError(error);
+            } else if (invoice && !invoice.is_public) {
+                setError('This invoice is not authorized for public viewing.');
             } else {
                 setInvoice(invoice);
             }
@@ -37,16 +40,23 @@ export default function PublicInvoicePage() {
 
     const handleDownloadPDF = () => {
         if (!invoice) return;
-        const doc = new jsPDF();
-        doc.setFontSize(20);
-        doc.text('INVOICE', 20, 20);
-        doc.setFontSize(12);
-        doc.text(`Invoice #: ${invoice.invoiceNumber}`, 20, 40);
-        doc.text(`Issue Date: ${invoice.issueDate}`, 20, 50);
-        doc.text(`Due Date: ${invoice.dueDate}`, 20, 60);
-        doc.text(`Status: ${invoice.status.toUpperCase()}`, 20, 70);
-        doc.text(`Total: $${invoice.total.toFixed(2)}`, 20, 90);
-        doc.save(`invoice-${invoice.invoiceNumber}.pdf`);
+        const doc = businessInvoiceService.generatePDF(invoice, invoice.tenant, invoice.client);
+        doc.save(`invoice-${invoice.invoice_number || invoice.invoiceNumber}.pdf`);
+    };
+
+    const handleMockPayment = async () => {
+        setProcessing(true);
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 2500));
+
+        const { error } = await businessInvoiceService.markAsPaid(invoiceId);
+
+        if (!error) {
+            setInvoice({ ...invoice, status: 'paid' });
+        } else {
+            alert('Payment failed: ' + error);
+        }
+        setProcessing(false);
     };
 
     if (loading) {
@@ -99,7 +109,7 @@ export default function PublicInvoicePage() {
                         <div className="flex justify-between items-start mb-12">
                             <div>
                                 <p className="text-slate-500 text-xs uppercase tracking-widest font-bold mb-1">Invoice Reference</p>
-                                <h2 className="text-3xl font-mono font-bold text-white">{invoice.invoiceNumber}</h2>
+                                <h2 className="text-3xl font-mono font-bold text-white">{invoice.invoice_number || invoice.invoiceNumber}</h2>
                             </div>
                             <Badge variant={isPaid ? 'success' : 'neutral'} className="px-4 py-1.5 text-sm uppercase">
                                 {invoice.status}
@@ -109,11 +119,11 @@ export default function PublicInvoicePage() {
                         <div className="grid grid-cols-2 gap-8 mb-12">
                             <div>
                                 <p className="text-slate-500 text-xs uppercase font-bold mb-2">Issue Date</p>
-                                <p className="text-lg font-medium">{new Date(invoice.issueDate).toLocaleDateString()}</p>
+                                <p className="text-lg font-medium">{new Date(invoice.issue_date || invoice.issueDate).toLocaleDateString()}</p>
                             </div>
                             <div>
                                 <p className="text-slate-500 text-xs uppercase font-bold mb-2">Due Date</p>
-                                <p className="text-lg font-medium text-teal-400">{new Date(invoice.dueDate).toLocaleDateString()}</p>
+                                <p className="text-lg font-medium text-teal-400">{new Date(invoice.due_date || invoice.dueDate).toLocaleDateString()}</p>
                             </div>
                         </div>
 
@@ -121,7 +131,7 @@ export default function PublicInvoicePage() {
                         <div className="space-y-4 border-t border-white/5 pt-8">
                             <p className="text-slate-500 text-xs uppercase font-bold mb-4">Billing Summary</p>
                             <div className="space-y-3">
-                                {invoice.lineItems.map((item, idx) => (
+                                {(invoice.line_items || invoice.lineItems || []).map((item: any, idx: number) => (
                                     <div key={idx} className="flex justify-between items-center bg-slate-950/30 p-4 rounded-xl border border-white/5">
                                         <div>
                                             <p className="font-semibold text-slate-200">{item.description}</p>
@@ -170,7 +180,7 @@ export default function PublicInvoicePage() {
                                 </div>
                                 <h3 className="text-2xl font-bold">Payment Confirmed</h3>
                                 <p className="text-slate-400 text-sm leading-relaxed">
-                                    Thank you for your business. Your payment for {invoice.invoiceNumber} has been successfully processed and verified on the blockchain.
+                                    Thank you for your business. Your payment for {invoice.invoice_number || invoice.invoiceNumber} has been successfully processed and verified on the blockchain.
                                 </p>
                                 <div className="pt-4 mt-4 border-t border-teal-500/20">
                                     <p className="text-xs text-teal-500 font-mono uppercase tracking-widest">Transaction Verified</p>
@@ -199,8 +209,17 @@ export default function PublicInvoicePage() {
                                             </div>
                                         </div>
 
-                                        <button className="w-full py-4 bg-teal-500 hover:bg-teal-400 text-black font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_10px_30px_rgba(20,184,166,0.3)] hover:-translate-y-1">
-                                            Pay ${invoice.total.toLocaleString()} Now
+                                        <button
+                                            onClick={handleMockPayment}
+                                            disabled={processing}
+                                            className="w-full py-4 bg-teal-500 hover:bg-teal-400 disabled:bg-teal-900 disabled:text-teal-500 text-black font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_10px_30px_rgba(20,184,166,0.3)] hover:-translate-y-1"
+                                        >
+                                            {processing ? (
+                                                <span className="flex items-center justify-center gap-2">
+                                                    <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
+                                                    Processing...
+                                                </span>
+                                            ) : `Pay $${invoice.total.toLocaleString()} Now`}
                                         </button>
                                     </div>
 

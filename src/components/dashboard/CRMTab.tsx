@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, XCircle, MessageSquare, Phone, Clock, DollarSign, FileText, Calendar, TrendingUp, Plus, Filter, Heart, Activity, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Users, XCircle, MessageSquare, Phone, Clock, DollarSign, FileText, Calendar, TrendingUp, Plus, Filter, Heart, Activity, AlertCircle, CheckCircle2, Zap, Shield, Bot, Globe } from 'lucide-react';
 import { Project, User } from '../../types';
 import { userService } from '../../services/userService';
 import { clientActivityService, ClientTimeline } from '../../services/clientActivityService';
@@ -204,6 +204,51 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
                     className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg font-medium transition-all active:scale-95 shadow-lg shadow-teal-900/20"
                 >
                     <Plus className="w-4 h-4" /> Add Client
+                </button>
+            </div>
+
+            {/* VIP Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <button
+                    onClick={() => router.push('/dashboard/sales-agent')}
+                    className="glass-panel p-4 rounded-2xl border border-teal-500/20 bg-teal-500/5 hover:bg-teal-500/10 transition-all flex items-center gap-4 group"
+                >
+                    <div className="p-3 bg-teal-500/20 rounded-xl group-hover:scale-110 transition-transform">
+                        <Bot className="w-5 h-5 text-teal-400" />
+                    </div>
+                    <div className="text-left">
+                        <h3 className="font-bold text-white text-sm">Initialize Growth Agent</h3>
+                        <p className="text-[10px] text-slate-400 font-medium">AI-powered lead discovery & outreach</p>
+                    </div>
+                    <Zap className="w-4 h-4 text-teal-400 ml-auto opacity-40 group-hover:opacity-100 transition-opacity" />
+                </button>
+
+                <button
+                    onClick={() => router.push('/dashboard/business/contracts')}
+                    className="glass-panel p-4 rounded-2xl border border-violet-500/20 bg-violet-500/5 hover:bg-violet-500/10 transition-all flex items-center gap-4 group"
+                >
+                    <div className="p-3 bg-violet-500/20 rounded-xl group-hover:scale-110 transition-transform">
+                        <Shield className="w-5 h-5 text-violet-400" />
+                    </div>
+                    <div className="text-left">
+                        <h3 className="font-bold text-white text-sm">Draft Global Proposal</h3>
+                        <p className="text-[10px] text-slate-400 font-medium">Generate professional legal contracts</p>
+                    </div>
+                    <FileText className="w-4 h-4 text-violet-400 ml-auto opacity-40 group-hover:opacity-100 transition-opacity" />
+                </button>
+
+                <button
+                    onClick={() => router.push('/dashboard/business/projects')}
+                    className="glass-panel p-4 rounded-2xl border border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 transition-all flex items-center gap-4 group"
+                >
+                    <div className="p-3 bg-blue-500/20 rounded-xl group-hover:scale-110 transition-transform">
+                        <Globe className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <div className="text-left">
+                        <h3 className="font-bold text-white text-sm">Command Center Dispatch</h3>
+                        <p className="text-[10px] text-slate-400 font-medium">Global task & project orchestration</p>
+                    </div>
+                    <TrendingUp className="w-4 h-4 text-blue-400 ml-auto opacity-40 group-hover:opacity-100 transition-opacity" />
                 </button>
             </div>
 

@@ -160,7 +160,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 
     const tabs = [
         { id: 'business', label: 'Business Profile', icon: Building },
-        { id: 'branding', label: 'Branding', icon: Palette },
         { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'security', label: 'Security', icon: Shield },
         { id: 'booking', label: 'Booking & Calendly', icon: Calendar }
@@ -273,61 +272,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                     </div>
                 )}
 
-                {activeTab === 'branding' && (
-                    <div className="space-y-6">
-                        <div>
-                            <h3 className="text-xl font-bold mb-4">Branding</h3>
-                            <p className="text-slate-400 mb-6">Customize your brand appearance</p>
-                        </div>
 
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Logo</label>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-16 h-16 rounded-lg bg-slate-800 border border-slate-700 overflow-hidden flex items-center justify-center">
-                                        {settings.logoUrl ? (
-                                            <img src={settings.logoUrl} alt="Logo" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <Building className="w-8 h-8 text-slate-600" />
-                                        )}
-                                    </div>
-                                    <div>
-                                        <label className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg cursor-pointer transition-colors border border-slate-700">
-                                            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                                            <span className="text-sm font-medium">{uploading ? 'Uploading...' : 'Upload Logo'}</span>
-                                            <input
-                                                type="file"
-                                                className="hidden"
-                                                accept="image/*"
-                                                onChange={handleLogoUpload}
-                                                disabled={uploading}
-                                            />
-                                        </label>
-                                        <p className="text-xs text-slate-500 mt-2">Recommended: 512x512px PNG or JPG</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Brand Color</label>
-                                <div className="flex gap-3">
-                                    <input
-                                        type="color"
-                                        value={settings.brandColor}
-                                        onChange={(e) => setSettings({ ...settings, brandColor: e.target.value })}
-                                        className="w-16 h-10 bg-slate-800 border border-slate-700 rounded-lg cursor-pointer"
-                                    />
-                                    <input
-                                        type="text"
-                                        value={settings.brandColor}
-                                        onChange={(e) => setSettings({ ...settings, brandColor: e.target.value })}
-                                        className="flex-1 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
                 {activeTab === 'notifications' && (
                     <div className="space-y-6">
@@ -399,7 +344,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                 )}
 
                 {/* Save Button for Forms */}
-                {(activeTab === 'business' || activeTab === 'branding') && (
+                {(activeTab === 'business') && (
                     <div className="mt-8 pt-6 border-t border-slate-800">
                         <button
                             onClick={handleSave}

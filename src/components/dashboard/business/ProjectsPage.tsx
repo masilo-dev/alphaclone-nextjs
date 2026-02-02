@@ -29,6 +29,7 @@ import {
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import MilestoneManager from '../projects/MilestoneManager';
 
 interface ProjectsPageProps {
     user: User;
@@ -45,6 +46,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const [activeId, setActiveId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<ViewMode>('kanban');
+    const [selectedProjectForMilestones, setSelectedProjectForMilestones] = useState<BusinessProject | null>(null);
 
     // Deep Linking Support
     const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
@@ -283,6 +285,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                                         projects={getProjectsByStatus(column.id)}
                                         onDelete={handleDeleteProject}
                                         onEdit={setEditingProject}
+                                        onManageMilestones={setSelectedProjectForMilestones}
                                     />
                                 ))}
                             </div>
@@ -317,7 +320,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     );
 };
 
-const MobileProjectList = ({ projects, onDelete, onEdit }: any) => {
+const MobileProjectList = ({ projects, onDelete, onEdit, onManageMilestones }: any) => {
     const [expanded, setExpanded] = useState<string | null>(null);
 
     if (projects.length === 0) {
@@ -396,10 +399,16 @@ const MobileProjectList = ({ projects, onDelete, onEdit }: any) => {
                                     Modify
                                 </button>
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
-                                    className="flex-1 py-3 bg-red-500/10 text-red-500 font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                                    onClick={(e) => { e.stopPropagation(); onManageMilestones(project); }}
+                                    className="flex-1 py-3 bg-teal-500/10 text-teal-400 font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-teal-500 hover:text-white transition-all flex items-center justify-center gap-2"
                                 >
-                                    <Trash2 className="w-4 h-4" /> Delete
+                                    <Target className="w-4 h-4" /> Phases
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
+                                    className="px-4 py-3 bg-red-500/10 text-red-500 font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Trash2 className="w-4 h-4" />
                                 </button>
                             </div>
                         </div>
@@ -410,7 +419,7 @@ const MobileProjectList = ({ projects, onDelete, onEdit }: any) => {
     );
 };
 
-const KanbanColumn = ({ column, projects, onDelete, onEdit }: any) => {
+const KanbanColumn = ({ column, projects, onDelete, onEdit, onManageMilestones }: any) => {
     return (
         <div className="flex flex-col w-80 group/col">
             <div className={`border-t-4 ${column.color} ${column.bg} border-x border-white/5 rounded-t-3xl px-5 py-4 flex items-center justify-between backdrop-blur-md`}>
@@ -420,7 +429,7 @@ const KanbanColumn = ({ column, projects, onDelete, onEdit }: any) => {
             <SortableContext id={column.id} items={projects.map((p: any) => p.id)} strategy={verticalListSortingStrategy}>
                 <div className="flex-1 bg-slate-900/20 border-x border-b border-white/5 rounded-b-3xl p-4 space-y-4 overflow-y-auto min-h-[500px] scrollbar-hide">
                     {projects.map((project: BusinessProject) => (
-                        <ProjectCard key={project.id} project={project} onDelete={onDelete} onEdit={onEdit} />
+                        <ProjectCard key={project.id} project={project} onDelete={onDelete} onEdit={onEdit} onManageMilestones={onManageMilestones} />
                     ))}
                     {projects.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-12 opacity-20">
@@ -434,7 +443,7 @@ const KanbanColumn = ({ column, projects, onDelete, onEdit }: any) => {
     );
 };
 
-const ProjectCard = ({ project, isDragging, onDelete, onEdit }: any) => {
+const ProjectCard = ({ project, isDragging, onDelete, onEdit, onManageMilestones }: any) => {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: project.id });
     const style = { transform: CSS.Translate.toString(transform), transition };
 
@@ -449,13 +458,27 @@ const ProjectCard = ({ project, isDragging, onDelete, onEdit }: any) => {
                 }`}
         >
             <div className="flex items-start justify-between mb-4">
-                <h4 className="font-black text-white text-sm uppercase tracking-tight leading-tight group-hover/card:text-teal-400 transition-colors">{project.name}</h4>
-                <button
-                    onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
-                    className="p-1.5 opacity-0 group-hover/card:opacity-100 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-lg transition-all"
-                >
-                    <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                <div>
+                    <h4 className="font-black text-white text-sm uppercase tracking-tight leading-tight group-hover/card:text-teal-400 transition-colors">{project.name}</h4>
+                    {project.category && (
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 block">{project.category}</span>
+                    )}
+                </div>
+                <div className="flex gap-1">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onManageMilestones(project); }}
+                        className="p-1.5 opacity-0 group-hover/card:opacity-100 bg-teal-500/10 hover:bg-teal-500 text-teal-500 hover:text-white rounded-lg transition-all"
+                        title="Manage Phases"
+                    >
+                        <Target className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
+                        className="p-1.5 opacity-0 group-hover/card:opacity-100 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-lg transition-all"
+                    >
+                        <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                </div>
             </div>
 
             {project.description && (
@@ -498,7 +521,7 @@ const ProjectCard = ({ project, isDragging, onDelete, onEdit }: any) => {
 
 const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
     const [formData, setFormData] = useState({
-        name: '', description: '', status: 'backlog',
+        name: '', description: '', status: 'backlog', category: 'General',
         startDate: new Date().toISOString().split('T')[0], dueDate: '',
         progress: 0, clientId: (initialData?.clientId) || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('clientId') : '') || ''
     });
@@ -513,7 +536,8 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
                 startDate: initialData.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : '',
                 dueDate: initialData.dueDate ? new Date(initialData.dueDate).toISOString().split('T')[0] : '',
                 progress: initialData.progress || 0,
-                clientId: initialData.clientId || ''
+                clientId: initialData.clientId || '',
+                category: initialData.category || 'General'
             }));
         }
     }, [initialData]);
@@ -535,6 +559,21 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
                         <label className="text-sm font-semibold text-slate-300 ml-1">Description</label>
                         <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3}
                             className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-normal focus:border-teal-400 outline-none transition-all resize-none shadow-inner" placeholder="Project details..." />
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-semibold text-slate-300 ml-1">Project Category</label>
+                        <select
+                            value={formData.category}
+                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-bold focus:border-teal-400 outline-none appearance-none"
+                        >
+                            <option value="General">General</option>
+                            <option value="Design">Design</option>
+                            <option value="Development">Development</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Consulting">Consulting</option>
+                            <option value="Operations">Operations</option>
+                        </select>
                     </div>
                     {initialData && (
                         <div className="space-y-1.5">

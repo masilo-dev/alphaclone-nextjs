@@ -211,12 +211,23 @@ const SalesAgent: React.FC = () => {
         setSelectedLeads([]);
     };
 
-    const addToCRM = (id: string, currentStage: string) => {
-        // Logic to move lead to "Qualified" or "Project"
-        // For now just update stage locally or in DB
-        // TODO: Implement stage update in service
-        console.log(`Adding lead ${id} at stage ${currentStage} to CRM`);
-        toast.success("Lead marked as Qualified");
+    const addToCRM = async (id: string, currentStage: string) => {
+        try {
+            const { error } = await leadService.updateLead(id, {
+                stage: 'qualified',
+                status: 'Qualified'
+            });
+
+            if (error) {
+                toast.error(`Failed to qualify lead: ${error}`);
+            } else {
+                toast.success("Lead marked as Qualified");
+                // Update local state
+                setLeads(prev => prev.map(l => l.id === id ? { ...l, stage: 'qualified', status: 'Qualified' } : l));
+            }
+        } catch (err) {
+            toast.error("An unexpected error occurred");
+        }
     };
 
     const handleSendMessage = async () => {

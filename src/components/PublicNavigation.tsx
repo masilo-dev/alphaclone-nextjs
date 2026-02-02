@@ -57,9 +57,11 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                             >
                                 Login
                             </button>
-                            <Button onClick={onLoginClick} size="sm" className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold">
-                                Sign Up
-                            </Button>
+                            <Link href="/register">
+                                <Button size="sm" className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold shadow-lg shadow-teal-500/20">
+                                    Start Free Trial
+                                </Button>
+                            </Link>
                         </div>
                     </div>
 
@@ -95,9 +97,11 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                             <Button onClick={onLoginClick} variant="outline" className="w-full justify-center">
                                 Login
                             </Button>
-                            <Button onClick={onLoginClick} className="w-full justify-center bg-teal-500 text-slate-950">
-                                Sign Up
-                            </Button>
+                            <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
+                                <Button className="w-full justify-center bg-teal-500 text-slate-950 font-bold">
+                                    Start Free Trial
+                                </Button>
+                            </Link>
                         </div>
                     </div>
                 )}

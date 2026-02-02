@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { activityService } from './activityService';
 import { tenantService } from './tenancy/TenantService';
+import { projectService } from './projectService';
 
 export interface Task {
     id: string;
@@ -235,6 +236,11 @@ export const taskService = {
                 taskTitle: taskData.title,
             });
 
+            // Trigger project progress recalculation if linked to a project
+            if (data.related_to_project) {
+                projectService.recalculateProjectProgress(data.related_to_project).catch(err => console.error('Failed to update project progress:', err));
+            }
+
             const task: Task = {
                 id: data.id,
                 title: data.title,
@@ -307,6 +313,11 @@ export const taskService = {
 
             if (error) throw error;
 
+            // Trigger project progress recalculation if linked to a project
+            if (data.related_to_project) {
+                projectService.recalculateProjectProgress(data.related_to_project).catch(err => console.error('Failed to update project progress:', err));
+            }
+
             const task: Task = {
                 id: data.id,
                 title: data.title,
@@ -347,6 +358,14 @@ export const taskService = {
         try {
             const tenantId = this.getTenantId();
 
+            // Fetch task first to check for project linkage
+            const { data: taskData } = await supabase
+                .from('tasks')
+                .select('related_to_project')
+                .eq('id', taskId)
+                .eq('tenant_id', tenantId)
+                .single();
+
             const { error } = await supabase
                 .from('tasks')
                 .delete()
@@ -355,10 +374,26 @@ export const taskService = {
 
             if (error) throw error;
 
+            // Trigger project progress recalculation if it was linked to a project
+            if (taskData?.related_to_project) {
+                projectService.recalculateProjectProgress(taskData.related_to_project).catch(err => console.error('Failed to update project progress:', err));
+            }
+
             return { success: true, error: null };
         } catch (err) {
             return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
         }
+    },
+
+    /**
+     * AI-powered task outline generation (Placeholder for MVP)
+     */
+    async generateTaskOutline(title: string): Promise<{ outline: string; error: string | null }> {
+        // This is a placeholder for a real AI call.
+        // In the future, this would call Gemini.
+        const mockOutline = `Strategy for: ${title}\n\n1. Define core objectives\n2. Identify key stakeholders\n3. Establish timeline and milestones\n4. Allocate necessary resources\n5. Execute initial phase\n6. Review and optimize progress`;
+
+        return { outline: mockOutline, error: null };
     },
 
     /**

@@ -84,16 +84,25 @@ export const contractService = {
      * Generate Draft with AI
      */
     async generateDraft(type: string, clientName: string, projectDetails: string) {
-        const prompt = `Write a professional legal contract for a ${type}.
-        Client Name: ${clientName}
-        Project Details: ${projectDetails}
+        const prompt = `Act as an elite corporate legal counsel. Write a comprehensive, high-stakes professional ${type} for "${clientName}".
+        
+        Project Scope: ${projectDetails}
 
-        CRITICAL INSTRUCTIONS:
-        - DO NOT use placeholders like "__________" or "[INSERT HERE]".
-        - Use professional, realistic text for all clauses.
-        - Ensure all currency values are explicitly formatted (e.g., $5,000 USD).
-        - Format as clear text suitable for a contract editor.
-        - Include standard clauses for Confidentiality, Payment Terms, and Termination.`;
+        STRUCTURE TO FOLLOW:
+        1. MASTER SERVICE AGREEMENT: High-level purpose.
+        2. SCOPE OF WORK: Detailed deliverables based on the project details.
+        3. FINANCIAL TERMS: Explicitly mention payment structures and currency (USD).
+        4. INTELLECTUAL PROPERTY: Assignment of rights upon full payment.
+        5. CONFIDENTIALITY: Professional NDA clauses.
+        6. LIMITATION OF LIABILITY & INDEMNIFICATION.
+        7. TERMINATION & DISPUTE RESOLUTION.
+
+        CRITICAL STYLING:
+        - DO NOT use placeholders like "__________" or "[INSERT HERE]". Populate with realistic, high-end defaults if specific data is missing.
+        - Use sophisticated legal terminology (e.g., "Force Majeure", "Governing Law").
+        - Ensure the tone is authoritative yet partnership-oriented.
+        - Format with clear numbered sections (Section 1.0, 1.1, etc.).
+        - Explicitly state current date as the execution date.`;
 
         // Use unified AI service (supports Claude, Gemini, OpenAI)
         return await generateText(prompt, 3000);
@@ -127,8 +136,8 @@ export const contractService = {
         const updates: any = {};
         const now = new Date().toISOString();
 
-        // Fetch current content for hashing
-        const { data: contract } = await supabase.from('contracts').select('content').eq('id', contractId).single();
+        // Fetch current signatures and content for status check
+        const { data: contract } = await supabase.from('contracts').select('content, client_signature, admin_signature').eq('id', contractId).single();
         const contentHash = contract?.content ? await this.generateHash(contract.content) : undefined;
 
         // Try to get IP address (client-side)
@@ -144,11 +153,13 @@ export const contractService = {
         if (role === 'client') {
             updates.client_signature = signatureDataUrl;
             updates.client_signed_at = now;
-            updates.status = 'client_signed';
+            // If admin has already signed, it becomes fully_signed
+            updates.status = contract?.admin_signature ? 'fully_signed' : 'client_signed';
         } else {
             updates.admin_signature = signatureDataUrl;
             updates.admin_signed_at = now;
-            updates.status = 'fully_signed';
+            // If client has already signed, it becomes fully_signed
+            updates.status = contract?.client_signature ? 'fully_signed' : 'sent';
         }
 
         updates.metadata = {
@@ -182,52 +193,105 @@ export const contractService = {
     },
 
     /**
-     * Generate PDF for a contract
+     * Generate a professional PDF for a contract
      */
-    generatePDF(contract: Contract) {
+    generateProfessionalPDF(contract: any) {
         const doc = new jsPDF();
+        const primaryColor = '#14b8a6'; // Teal-500
+        const pageHeight = doc.internal.pageSize.height;
+        const pageWidth = doc.internal.pageSize.width;
 
-        // Header
+        // Header - Branding
+        doc.setFillColor(15, 23, 42); // slate-900
+        doc.rect(0, 0, 210, 40, 'F');
+
         doc.setFontSize(22);
-        doc.setTextColor(40, 40, 40);
-        doc.text(contract.title, 20, 20);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(255, 255, 255);
+        doc.text(contract.title || 'Service Agreement', 20, 25);
 
-        doc.setFontSize(12);
-        doc.setTextColor(100, 100, 100);
-        doc.text(`Contract ID: ${contract.id.slice(0, 8)}`, 20, 30);
-        doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 36);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(148, 163, 184); // slate-400
+        doc.text(`Reference ID: ${contract.id}`, 20, 33);
 
-        // Content
-        let yPos = 50;
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(12);
+        // Body Content
+        let y = 60;
+        doc.setTextColor(15, 23, 42); // slate-900
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
 
-        const splitText = doc.splitTextToSize(contract.content || '', 170);
-        doc.text(splitText, 20, yPos);
+        const content = typeof contract.content === 'string' ? contract.content : 'No content provided';
+        const splitText = doc.splitTextToSize(content, 170);
 
-        // Signatures
-        const contentHeight = splitText.length * 7;
-        yPos += contentHeight + 20;
+        // Check if content fits on one page (estimating)
+        let linesOnCurrentPage = 0;
+        const maxLinesPerPage = 220;
 
-        // Client Signature
+        splitText.forEach((line: string) => {
+            if (y > 270) {
+                doc.addPage();
+                y = 20;
+            }
+            doc.text(line, 20, y);
+            y += 6;
+        });
+
+        // Signatures Section
+        y += 20;
+        if (y > 220) {
+            doc.addPage();
+            y = 30;
+        }
+
+        doc.setDrawColor(226, 232, 240); // slate-200
+        doc.line(20, y, 190, y);
+        y += 15;
+
+        // Signature Layout
+        const sigWidth = 70;
+        const sigHeight = 30;
+
+        // Client Side
         if (contract.client_signature) {
-            doc.text('Client Signature:', 20, yPos);
-            doc.addImage(contract.client_signature, 'PNG', 20, yPos + 5, 50, 20);
-            doc.text(contract.client_signed_at ? new Date(contract.client_signed_at).toLocaleDateString() : '', 20, yPos + 30);
+            doc.setFont('helvetica', 'bold');
+            doc.text('CLIENT SIGNATURE', 20, y);
+            doc.addImage(contract.client_signature, 'PNG', 20, y + 5, sigWidth, sigHeight);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.text(`Signed at: ${new Date(contract.client_signed_at).toLocaleString()}`, 20, y + 42);
+        } else {
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(148, 163, 184);
+            doc.text('CLIENT SIGNATURE PENDING', 20, y);
         }
 
-        // Admin Signature
+        // Admin Side
         if (contract.admin_signature) {
-            doc.text('Executive Signature:', 100, yPos);
-            doc.addImage(contract.admin_signature, 'PNG', 100, yPos + 5, 50, 20);
-            doc.text(contract.admin_signed_at ? new Date(contract.admin_signed_at).toLocaleDateString() : '', 100, yPos + 30);
+            doc.setTextColor(15, 23, 42);
+            doc.setFont('helvetica', 'bold');
+            doc.text('EXECUTIVE SIGNATURE', 120, y);
+            doc.addImage(contract.admin_signature, 'PNG', 120, y + 5, sigWidth, sigHeight);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.text(`Signed at: ${new Date(contract.admin_signed_at).toLocaleString()}`, 120, y + 42);
+        } else {
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(148, 163, 184);
+            doc.text('EXECUTIVE SIGNATURE PENDING', 120, y);
         }
+
+        // Footer
+        doc.setFontSize(8);
+        doc.setTextColor(148, 163, 184);
+        doc.text('This is a legally binding document generated by AlphaClone Systems.', pageWidth / 2, pageHeight - 15, { align: 'center' });
+        doc.text(`Document ID: ${contract.id} | Page ${doc.getNumberOfPages()}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
 
         return doc;
     },
 
-    downloadPDF(contract: Contract) {
-        const doc = this.generatePDF(contract);
+    downloadPDF(contract: any) {
+        const doc = this.generateProfessionalPDF(contract);
         doc.save(`${contract.title.replace(/\s+/g, '_')}.pdf`);
     }
 };

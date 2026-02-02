@@ -12,7 +12,8 @@ import {
   Zap,
   MessageSquare,
   FileText,
-  Settings
+  Settings,
+  Trash2
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
@@ -64,7 +65,7 @@ export default function SuperAdminDashboard() {
     { id: 'users' as Tab, label: 'Users', icon: Users },
     { id: 'analytics' as Tab, label: 'Analytics', icon: TrendingUp },
     { id: 'security' as Tab, label: 'Security', icon: Shield },
-    { id: 'system' as Tab, label: 'System', icon: Database },
+    { id: 'system' as Tab, label: 'Global Settings', icon: Settings }, // Renamed from System
     { id: 'growth' as Tab, label: 'Growth & Leads', icon: TrendingUp }
   ];
 
@@ -107,6 +108,66 @@ export default function SuperAdminDashboard() {
         {activeTab === 'system' && <SystemTab />}
         {activeTab === 'growth' && <GrowthTab />}
       </div>
+    </div>
+  );
+}
+
+
+function SystemTab() {
+  const [showAddRole, setShowAddRole] = useState(false);
+
+  const handleSaveRole = async () => {
+    // Placeholder for Role Saving
+    alert('Role saved (simulation)');
+    setShowAddRole(false);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-white">Global Settings</h2>
+        <button
+          onClick={() => setShowAddRole(true)}
+          className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors flex items-center gap-2"
+        >
+          <Settings className="w-4 h-4" /> Add Role
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+          <h3 className="text-xl font-semibold text-white mb-4">Platform Roles</h3>
+          <div className="space-y-2">
+            {['Super Admin', 'Tenant Admin', 'Staff', 'Client'].map(role => (
+              <div key={role} className="flex justify-between items-center p-3 bg-slate-900/50 rounded-lg">
+                <span className="text-white font-medium">{role}</span>
+                <span className="text-xs text-slate-500 uppercase">System Default</span>
+              </div>
+            ))}
+            {/* Mock User Added Role */}
+            <div className="flex justify-between items-center p-3 bg-slate-900/50 rounded-lg border border-teal-500/20">
+              <span className="text-white font-medium">Support Agent</span>
+              <div className="flex gap-2">
+                <button className="text-teal-400 text-xs hover:underline">Edit</button>
+                <button className="text-red-400 text-xs hover:underline">Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showAddRole && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 rounded-xl border border-slate-700 p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold text-white mb-4">Add New Global Role</h3>
+            <input type="text" placeholder="Role Name" className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white mb-4" />
+            <div className="flex gap-3">
+              <button onClick={() => setShowAddRole(false)} className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg">Cancel</button>
+              <button onClick={handleSaveRole} className="flex-1 px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg">Save Role</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -602,16 +663,36 @@ function UsersTab() {
                   <div className="text-sm text-slate-400">{user.email}</div>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${user.role === 'admin'
                   ? 'bg-purple-500/20 text-purple-300'
                   : 'bg-blue-500/20 text-blue-300'
                   }`}>
                   {user.role}
                 </span>
-                <button className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded transition-colors">
-                  View Details
-                </button>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => alert('Suspend user logic here')}
+                    className="px-2 py-1 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 text-xs rounded transition-colors border border-orange-500/20"
+                  >
+                    Suspend
+                  </button>
+                  <button
+                    onClick={() => alert('Block user logic here')}
+                    className="px-2 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs rounded transition-colors border border-red-500/20"
+                  >
+                    Block
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm('Delete user?')) alert('Delete logic here');
+                    }}
+                    className="p-1 text-slate-400 hover:text-red-400 transition-colors"
+                    title="Delete User"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -804,79 +885,4 @@ function SecurityTab() {
   );
 }
 
-function SystemTab() {
-  return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">System Management</h2>
 
-      {/* System Health */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Zap className="w-6 h-6 text-green-400" />
-            <h3 className="text-lg font-semibold text-white">API Status</h3>
-          </div>
-          <div className="text-3xl font-bold text-green-400 mb-2">100%</div>
-          <div className="text-sm text-slate-400">All systems operational</div>
-        </div>
-
-        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Database className="w-6 h-6 text-blue-400" />
-            <h3 className="text-lg font-semibold text-white">Database</h3>
-          </div>
-          <div className="text-3xl font-bold text-blue-400 mb-2">98.5%</div>
-          <div className="text-sm text-slate-400">Healthy</div>
-        </div>
-
-        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Activity className="w-6 h-6 text-teal-400" />
-            <h3 className="text-lg font-semibold text-white">Uptime</h3>
-          </div>
-          <div className="text-3xl font-bold text-teal-400 mb-2">99.9%</div>
-          <div className="text-sm text-slate-400">Last 30 days</div>
-        </div>
-      </div>
-
-      {/* System Settings */}
-      <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-        <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-          <Settings className="w-5 h-5 text-teal-400" />
-          System Configuration
-        </h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-slate-900/50 rounded-lg">
-            <div>
-              <div className="text-white font-medium">Maintenance Mode</div>
-              <div className="text-sm text-slate-400">Disable all access temporarily</div>
-            </div>
-            <button className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors">
-              Enable
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between p-4 bg-slate-900/50 rounded-lg">
-            <div>
-              <div className="text-white font-medium">Clear Cache</div>
-              <div className="text-sm text-slate-400">Clear all system caches</div>
-            </div>
-            <button className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors">
-              Clear Now
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between p-4 bg-slate-900/50 rounded-lg">
-            <div>
-              <div className="text-white font-medium">Run Database Backup</div>
-              <div className="text-sm text-slate-400">Create manual backup</div>
-            </div>
-            <button className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors">
-              Backup Now
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}

@@ -330,6 +330,34 @@ export const projectService = {
     },
 
     /**
+     * Recalculate project progress based on completed tasks
+     */
+    async recalculateProjectProgress(projectId: string): Promise<{ progress: number; error: string | null }> {
+        try {
+            const { data: tasks, error } = await supabase
+                .from('tasks')
+                .select('status')
+                .eq('related_to_project', projectId);
+
+            if (error) throw error;
+
+            if (!tasks || tasks.length === 0) {
+                return { progress: 0, error: null };
+            }
+
+            const completedTasks = tasks.filter((t: any) => t.status === 'completed').length;
+            const progress = Math.round((completedTasks / tasks.length) * 100);
+
+            // Update the project with the new progress
+            await this.updateProject(projectId, { progress });
+
+            return { progress, error: null };
+        } catch (err) {
+            return { progress: 0, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
      * Subscribe to real-time project updates (filtered by tenant)
      */
     subscribeToProjects(callback: (project: Project) => void) {

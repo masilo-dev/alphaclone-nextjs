@@ -19,7 +19,9 @@ import {
     MessageSquare,
     MoreVertical,
     CheckCircle2,
-    X
+    X,
+    Sparkles,
+    Loader2
 } from 'lucide-react';
 import { taskService, Task } from '../../services/taskService';
 import { Button, Modal, Input } from '../ui/UIComponents';
@@ -61,6 +63,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [notesTaskId, setNotesTaskId] = useState<string | null>(null);
+    const [isGeneratingOutline, setIsGeneratingOutline] = useState(false);
     const { user } = useAuth();
 
     // Create task form state
@@ -150,6 +153,25 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         setActiveId(null);
     };
 
+    const handleGenerateOutline = async () => {
+        if (!taskForm.title.trim()) {
+            toast.error('Please enter a title first');
+            return;
+        }
+
+        setIsGeneratingOutline(true);
+        try {
+            const { outline, error } = await taskService.generateTaskOutline(taskForm.title);
+            if (error) throw new Error(error || 'Failed to generate outline');
+            setTaskForm(prev => ({ ...prev, description: outline }));
+            toast.success('Intelligence outline generated', { icon: '✨' });
+        } catch (err) {
+            toast.error('Failed to generate outline');
+        } finally {
+            setIsGeneratingOutline(false);
+        }
+    };
+
     const handleCreateTask = async () => {
         if (!taskForm.title.trim()) {
             toast.error('Task title is required');
@@ -211,7 +233,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         }
     };
 
-    // --- Sub-components (could be in separate files, but kept here for Task Excellence) ---
+    // --- Sub-components ---
 
     const TaskCard = ({ task, isDragging }: { task: Task, isDragging?: boolean }) => {
         const {
@@ -333,9 +355,8 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
             });
         }, [tasks]);
 
-        // Calculate timeline range (e.g., 30 days from now)
         const timelineStart = new Date();
-        timelineStart.setDate(timelineStart.getDate() - 7); // Show 1 week back
+        timelineStart.setDate(timelineStart.getDate() - 7);
         const days = Array.from({ length: 45 }).map((_, i) => {
             const date = new Date(timelineStart);
             date.setDate(date.getDate() + i);
@@ -362,7 +383,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                     {sortedTasks.map(task => {
                         const start = task.startDate ? new Date(task.startDate) : new Date(task.createdAt);
                         const end = task.dueDate ? new Date(task.dueDate) : new Date(start);
-                        if (end < start) end.setTime(start.getTime() + 86400000); // Fail-safe
+                        if (end < start) end.setTime(start.getTime() + 86400000);
 
                         const startIndex = Math.max(0, Math.floor((start.getTime() - timelineStart.getTime()) / (1000 * 60 * 60 * 24)));
                         const duration = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
@@ -400,7 +421,6 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         );
     };
 
-    // Main render views
     const renderGridView = () => (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 overflow-y-auto pr-2 pb-6">
             {tasks.map((task) => (
@@ -411,7 +431,6 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                             'border-white/5 bg-slate-900/40'
                         } hover:shadow-2xl hover:shadow-teal-500/10 hover:border-teal-500/30`}
                 >
-                    {/* Visual accents */}
                     <div className={`absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 rounded-full blur-3xl opacity-10 ${task.status === 'completed' ? 'bg-green-500' :
                         task.status === 'in_progress' ? 'bg-blue-500' : 'bg-slate-500'
                         }`}></div>
@@ -491,7 +510,6 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                         )}
                     </div>
 
-                    {/* Completion bar */}
                     <div className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-teal-500 to-violet-500 transition-all duration-700" style={{
                         width: task.status === 'completed' ? '100%' : task.status === 'in_progress' ? '40%' : '5%',
                         opacity: task.status === 'todo' ? 0.3 : 1
@@ -509,30 +527,10 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
             sensors={sensors}
         >
             <div className="flex gap-6 h-full overflow-x-auto pb-4 pr-4">
-                <KanbanColumn
-                    status="todo"
-                    title="Planning"
-                    items={tasks.filter(t => t.status === 'todo')}
-                    color="border-slate-600"
-                />
-                <KanbanColumn
-                    status="in_progress"
-                    title="Active Construction"
-                    items={tasks.filter(t => t.status === 'in_progress')}
-                    color="border-blue-500"
-                />
-                <KanbanColumn
-                    status="completed"
-                    title="Deployed & Finalized"
-                    items={tasks.filter(t => t.status === 'completed')}
-                    color="border-teal-400"
-                />
-                <KanbanColumn
-                    status="cancelled"
-                    title="Archived"
-                    items={tasks.filter(t => t.status === 'cancelled')}
-                    color="border-red-500"
-                />
+                <KanbanColumn status="todo" title="Planning" items={tasks.filter(t => t.status === 'todo')} color="border-slate-600" />
+                <KanbanColumn status="in_progress" title="Active Construction" items={tasks.filter(t => t.status === 'in_progress')} color="border-blue-500" />
+                <KanbanColumn status="completed" title="Deployed & Finalized" items={tasks.filter(t => t.status === 'completed')} color="border-teal-400" />
+                <KanbanColumn status="cancelled" title="Archived" items={tasks.filter(t => t.status === 'cancelled')} color="border-red-500" />
             </div>
 
             <DragOverlay>
@@ -545,7 +543,6 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         </DndContext>
     );
 
-    // Mobile Status Update Sheet/Modal
     const StatusUpdateModal = ({ task, onClose, onUpdate }: { task: Task | null, onClose: () => void, onUpdate: (status: Task['status']) => void }) => {
         if (!task) return null;
 
@@ -585,9 +582,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                         {status.label}
                                     </span>
                                 </div>
-                                {task.status === status.value && (
-                                    <CheckCircle2 className="w-5 h-5 text-teal-400" />
-                                )}
+                                {task.status === status.value && <CheckCircle2 className="w-5 h-5 text-teal-400" />}
                             </button>
                         ))}
                     </div>
@@ -598,11 +593,6 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
 
     const MobileTaskList = () => {
         const [editingStatusTask, setEditingStatusTask] = useState<Task | null>(null);
-
-        const handleMobileStatusClick = (e: React.MouseEvent, task: Task) => {
-            e.stopPropagation();
-            setEditingStatusTask(task);
-        };
 
         return (
             <>
@@ -615,7 +605,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                     <p className="text-slate-500 text-xs line-clamp-1">{task.description || "No description"}</p>
                                 </div>
                                 <button
-                                    onClick={(e) => handleMobileStatusClick(e, task)}
+                                    onClick={(e) => { e.stopPropagation(); setEditingStatusTask(task); }}
                                     className={`shrink-0 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all ${getStatusColor(task.status)}`}
                                 >
                                     {task.status === 'completed' ? <Check className="w-3 h-3" /> : task.status === 'in_progress' ? <Clock className="w-3 h-3" /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
@@ -648,12 +638,6 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                             </div>
                         </div>
                     ))}
-                    {tasks.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-                            <CheckSquare className="w-12 h-12 mb-3 opacity-20" />
-                            <p className="text-sm font-medium">No tasks found</p>
-                        </div>
-                    )}
                 </div>
 
                 <StatusUpdateModal
@@ -682,122 +666,62 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                             Project <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-violet-400">Intelligence</span>
                         </h2>
                     </div>
-                    <p className="text-slate-500 text-xs sm:text-sm font-medium ml-1 flex items-center gap-2 uppercase tracking-widest">
-                        <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse"></span>
-                        {tasks.length} Operational Units Tracked
-                    </p>
                 </div>
 
                 <div className="flex items-center gap-3 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
-                    {/* View Switchers - Hidden on Mobile */}
                     <div className="hidden lg:flex p-1 bg-slate-900/60 rounded-xl border border-white/5 backdrop-blur-md">
-                        <button
-                            onClick={() => setViewMode('grid')}
-                            className={`p-2 rounded-lg transition-all flex items-center gap-2 ${viewMode === 'grid' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
-                        >
-                            <LayoutGrid className="w-4 h-4" />
-                            <span className="text-xs font-bold hidden sm:inline">Grid</span>
-                        </button>
-                        <button
-                            onClick={() => setViewMode('kanban')}
-                            className={`p-2 rounded-lg transition-all flex items-center gap-2 ${viewMode === 'kanban' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
-                        >
-                            <Trello className="w-4 h-4" />
-                            <span className="text-xs font-bold hidden sm:inline">Kanban</span>
-                        </button>
-                        <button
-                            onClick={() => setViewMode('gantt')}
-                            className={`p-2 rounded-lg transition-all flex items-center gap-2 ${viewMode === 'gantt' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
-                        >
-                            <BarChart className="w-4 h-4" />
-                            <span className="text-xs font-bold hidden sm:inline">Timeline</span>
-                        </button>
+                        <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all flex items-center gap-2 ${viewMode === 'grid' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}><LayoutGrid className="w-4 h-4" /></button>
+                        <button onClick={() => setViewMode('kanban')} className={`p-2 rounded-lg transition-all flex items-center gap-2 ${viewMode === 'kanban' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}><Trello className="w-4 h-4" /></button>
+                        <button onClick={() => setViewMode('gantt')} className={`p-2 rounded-lg transition-all flex items-center gap-2 ${viewMode === 'gantt' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}><BarChart className="w-4 h-4" /></button>
                     </div>
 
-                    <div className="h-8 w-px bg-white/10 hidden sm:block"></div>
-
-                    <select
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value as any)}
-                        className="px-4 py-2.5 bg-slate-900/80 border border-white/10 rounded-xl text-white text-xs font-bold focus:outline-none focus:border-teal-500 transition-all uppercase tracking-wider min-w-[140px]"
-                    >
+                    <select value={filter} onChange={(e) => setFilter(e.target.value as any)} className="px-4 py-2.5 bg-slate-900/80 border border-white/10 rounded-xl text-white text-xs font-bold focus:outline-none focus:border-teal-500 transition-all uppercase tracking-wider min-w-[140px]">
                         <option value="all">Global Scope</option>
                         <option value="my_tasks">Assigned To Me</option>
                         <option value="overdue">Critical Overdue</option>
                     </select>
 
                     {(userRole === 'admin' || userRole === 'tenant_admin') && (
-                        <button
-                            onClick={() => setShowCreateModal(true)}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-600 to-teal-400 hover:from-teal-500 hover:to-teal-300 text-white rounded-xl font-black text-xs uppercase tracking-tighter transition-all shadow-lg shadow-teal-600/20 hover:scale-[1.02] active:scale-95 whitespace-nowrap"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Initialize Task
+                        <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-600 to-teal-400 hover:from-teal-500 hover:to-teal-300 text-white rounded-xl font-black text-xs uppercase tracking-tighter transition-all shadow-lg shadow-teal-600/20">
+                            <Plus className="w-4 h-4" /> Initialize Task
                         </button>
                     )}
                 </div>
             </div>
 
             <div className="flex-1 overflow-hidden min-h-0">
-                {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {Array.from({ length: 8 }).map((_, i) => (
-                            <CardSkeleton key={i} />
-                        ))}
-                    </div>
-                ) : tasks.length === 0 ? (
-                    <EmptyState
-                        icon={CheckSquare}
-                        title="No Operational Units Initialized"
-                        description="Start tracking your next initiative by creating your first global task."
-                    />
-                ) : (
+                {loading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">{Array.from({ length: 8 }).map((_, i) => <CardSkeleton key={i} />)}</div> : (
                     <div className="h-full">
-                        {/* Desktop Views */}
                         <div className="hidden lg:block h-full">
                             {viewMode === 'grid' && renderGridView()}
                             {viewMode === 'kanban' && renderKanbanView()}
                             {viewMode === 'gantt' && <GanttView />}
                         </div>
-                        {/* Mobile View */}
-                        <div className="lg:hidden h-full overflow-y-auto">
-                            <MobileTaskList />
-                        </div>
+                        <div className="lg:hidden h-full overflow-y-auto"><MobileTaskList /></div>
                     </div>
                 )}
             </div>
 
-            {/* Create Task Modal - Enhanced Visuals */}
             {showCreateModal && (
                 <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Initialize New Operation">
                     <div className="space-y-5 p-1">
-                        <Input
-                            label="Operational Title *"
-                            value={taskForm.title}
-                            onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
-                            placeholder="What initiative are we starting?"
-                            required
-                        />
+                        <Input label="Operational Title *" value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} placeholder="What initiative are we starting?" required />
 
                         <div>
-                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Briefing & Intel</label>
-                            <textarea
-                                className="w-full bg-slate-950 border border-white/5 rounded-2xl px-4 py-3 text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50 transition-all resize-none shadow-inner"
-                                rows={4}
-                                value={taskForm.description}
-                                onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
-                                placeholder="Strategic details, goals, or requirements..."
-                            />
+                            <div className="flex items-center justify-between mb-1.5 ml-1">
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Briefing & Intel</label>
+                                <button onClick={handleGenerateOutline} disabled={isGeneratingOutline || !taskForm.title} className="flex items-center gap-1.5 text-[10px] font-black text-teal-400 hover:text-teal-300 transition-colors uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed group">
+                                    {isGeneratingOutline ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3 group-hover:animate-pulse" />}
+                                    {isGeneratingOutline ? 'Syncing...' : 'Generate Intel Outline'}
+                                </button>
+                            </div>
+                            <textarea className="w-full bg-slate-950 border border-white/5 rounded-2xl px-4 py-3 text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50 transition-all resize-none shadow-inner" rows={4} value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })} placeholder="Strategic details, goals, or requirements..." />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Priority Tier</label>
-                                <select
-                                    className="w-full bg-slate-950 border border-white/5 rounded-2xl px-4 py-3 text-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50"
-                                    value={taskForm.priority}
-                                    onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value as Task['priority'] })}
-                                >
+                                <select className="w-full bg-slate-950 border border-white/5 rounded-2xl px-4 py-3 text-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50" value={taskForm.priority} onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value as Task['priority'] })}>
                                     <option value="low">Low Impact</option>
                                     <option value="medium">Standard</option>
                                     <option value="high">Mission Critical</option>
@@ -806,62 +730,27 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                             </div>
                             <div>
                                 <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Labor Estimate (Hours)</label>
-                                <input
-                                    type="number"
-                                    className="w-full bg-slate-950 border border-white/5 rounded-2xl px-4 py-3 text-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50"
-                                    value={taskForm.estimatedHours}
-                                    onChange={(e) => setTaskForm({ ...taskForm, estimatedHours: e.target.value })}
-                                    placeholder="0.0"
-                                    step="0.5"
-                                    min="0"
-                                />
+                                <input type="number" className="w-full bg-slate-950 border border-white/5 rounded-2xl px-4 py-3 text-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50" value={taskForm.estimatedHours} onChange={(e) => setTaskForm({ ...taskForm, estimatedHours: e.target.value })} placeholder="0.0" step="0.5" min="0" />
                             </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
-                            <Input
-                                label="Execution Date"
-                                type="date"
-                                value={taskForm.startDate}
-                                onChange={(e) => setTaskForm({ ...taskForm, startDate: e.target.value })}
-                            />
-                            <Input
-                                label="Target Deadline"
-                                type="date"
-                                value={taskForm.dueDate}
-                                onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })}
-                            />
+                            <Input label="Execution Date" type="date" value={taskForm.startDate} onChange={(e) => setTaskForm({ ...taskForm, startDate: e.target.value })} />
+                            <Input label="Target Deadline" type="date" value={taskForm.dueDate} onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })} />
                         </div>
 
                         <div className="pt-6 flex justify-end gap-3 border-t border-white/5 mt-4">
-                            <button
-                                onClick={() => setShowCreateModal(false)}
-                                className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl font-bold transition-all text-xs uppercase tracking-widest"
-                            >
-                                Abort
-                            </button>
-                            <button
-                                onClick={handleCreateTask}
-                                disabled={isSubmitting}
-                                className="px-8 py-3 bg-gradient-to-r from-teal-600 to-teal-400 hover:from-teal-500 hover:to-teal-300 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-teal-600/20 active:scale-95"
-                            >
-                                {isSubmitting ? 'Initializing...' : 'Confirm Operation'}
-                            </button>
+                            <button onClick={() => setShowCreateModal(false)} className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl font-bold transition-all text-xs uppercase tracking-widest">Abort</button>
+                            <button onClick={handleCreateTask} disabled={isSubmitting} className="px-8 py-3 bg-gradient-to-r from-teal-600 to-teal-400 hover:from-teal-500 hover:to-teal-300 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-teal-600/20 active:scale-95">{isSubmitting ? 'Initializing...' : 'Confirm Operation'}</button>
                         </div>
                     </div>
                 </Modal>
             )}
 
-            {/* Collaborative Notes Side Panel / Modal */}
             {notesTaskId && user && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
                     <div className="w-full max-w-4xl h-[80vh] animate-in zoom-in-95 duration-300">
-                        <CollaborativeTaskNotes
-                            taskId={notesTaskId}
-                            userId={user.id}
-                            userName={user.name || 'Strategist'}
-                            onClose={() => setNotesTaskId(null)}
-                        />
+                        <CollaborativeTaskNotes taskId={notesTaskId} userId={user.id} userName={user.name || 'Strategist'} onClose={() => setNotesTaskId(null)} />
                     </div>
                 </div>
             )}

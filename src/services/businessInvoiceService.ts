@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { jsPDF } from 'jspdf';
 
 export interface BusinessInvoice {
     id: string;
@@ -10,7 +11,9 @@ export interface BusinessInvoice {
     dueDate: string;
     status: 'draft' | 'sent' | 'paid' | 'overdue';
     subtotal: number;
+    taxRate: number;
     tax: number;
+    discountAmount: number;
     total: number;
     lineItems: InvoiceLineItem[];
     notes?: string;
@@ -50,7 +53,9 @@ export const businessInvoiceService = {
                 dueDate: inv.due_date,
                 status: inv.status,
                 subtotal: parseFloat(inv.subtotal || 0),
+                taxRate: parseFloat(inv.tax_rate || 0),
                 tax: parseFloat(inv.tax || 0),
+                discountAmount: parseFloat(inv.discount_amount || 0),
                 total: parseFloat(inv.total || 0),
                 lineItems: inv.line_items || [],
                 notes: inv.notes,
@@ -85,7 +90,9 @@ export const businessInvoiceService = {
                     due_date: invoice.dueDate,
                     status: invoice.status || 'draft',
                     subtotal: invoice.subtotal || 0,
+                    tax_rate: invoice.taxRate || 0,
                     tax: invoice.tax || 0,
+                    discount_amount: invoice.discountAmount || 0,
                     total: invoice.total || 0,
                     line_items: invoice.lineItems || [],
                     notes: invoice.notes,
@@ -106,7 +113,9 @@ export const businessInvoiceService = {
                 dueDate: data.due_date,
                 status: data.status,
                 subtotal: parseFloat(data.subtotal || 0),
+                taxRate: parseFloat(data.tax_rate || 0),
                 tax: parseFloat(data.tax || 0),
+                discountAmount: parseFloat(data.discount_amount || 0),
                 total: parseFloat(data.total || 0),
                 lineItems: data.line_items || [],
                 notes: data.notes,
@@ -135,7 +144,9 @@ export const businessInvoiceService = {
             if (updates.dueDate !== undefined) updateData.due_date = updates.dueDate;
             if (updates.status !== undefined) updateData.status = updates.status;
             if (updates.subtotal !== undefined) updateData.subtotal = updates.subtotal;
+            if (updates.taxRate !== undefined) updateData.tax_rate = updates.taxRate;
             if (updates.tax !== undefined) updateData.tax = updates.tax;
+            if (updates.discountAmount !== undefined) updateData.discount_amount = updates.discountAmount;
             if (updates.total !== undefined) updateData.total = updates.total;
             if (updates.lineItems !== undefined) updateData.line_items = updates.lineItems;
             if (updates.notes !== undefined) updateData.notes = updates.notes;
@@ -207,10 +218,10 @@ export const businessInvoiceService = {
     /**
      * Calculate invoice totals
      */
-    calculateTotals(lineItems: InvoiceLineItem[], taxRate: number = 0): { subtotal: number; tax: number; total: number } {
+    calculateTotals(lineItems: InvoiceLineItem[], taxRate: number = 0, discountAmount: number = 0): { subtotal: number; tax: number; total: number } {
         const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
-        const tax = subtotal * (taxRate / 100);
-        const total = subtotal + tax;
+        const tax = (subtotal - discountAmount) * (taxRate / 100);
+        const total = (subtotal - discountAmount) + tax;
 
         return {
             subtotal: Math.round(subtotal * 100) / 100,
@@ -220,42 +231,199 @@ export const businessInvoiceService = {
     },
 
     /**
-     * Get a public invoice by ID (no auth required)
+     * Get an invoice with its related tenant and client details
      */
-    async getPublicInvoice(invoiceId: string): Promise<{ invoice: BusinessInvoice | null; error: string | null }> {
+    async getInvoiceWithDetails(invoiceId: string): Promise<{ invoice: any | null; error: string | null }> {
         try {
             const { data, error } = await supabase
                 .from('business_invoices')
-                .select('*')
+                .select(`
+                    *,
+                    tenant:tenant_id (
+                        id,
+                        name,
+                        slug
+                    ),
+                    client:client_id (
+                        id,
+                        name,
+                        email,
+                        company,
+                        phone
+                    ),
+                    project:project_id (
+                        id,
+                        name
+                    )
+                `)
                 .eq('id', invoiceId)
-                .eq('is_public', true)
                 .single();
 
             if (error) throw error;
 
-            const invoice: BusinessInvoice = {
-                id: data.id,
-                tenantId: data.tenant_id,
-                clientId: data.client_id,
-                projectId: data.project_id,
-                invoiceNumber: data.invoice_number,
-                issueDate: data.issue_date,
-                dueDate: data.due_date,
-                status: data.status,
-                subtotal: parseFloat(data.subtotal || 0),
-                tax: parseFloat(data.tax || 0),
-                total: parseFloat(data.total || 0),
-                lineItems: data.line_items || [],
-                notes: data.notes,
-                isPublic: data.is_public || false,
-                createdAt: data.created_at,
-                updatedAt: data.updated_at
-            };
-
-            return { invoice, error: null };
+            return { invoice: data, error: null };
         } catch (err: any) {
-            console.error('Error fetching public invoice:', err);
+            console.error('Error fetching invoice details:', err);
             return { invoice: null, error: err.message };
         }
+    },
+
+    /**
+     * Mark invoice as paid
+     */
+    async markAsPaid(invoiceId: string): Promise<{ error: string | null }> {
+        try {
+            const { error } = await supabase
+                .from('business_invoices')
+                .update({ status: 'paid', updated_at: new Date().toISOString() })
+                .eq('id', invoiceId);
+
+            if (error) throw error;
+            return { error: null };
+        } catch (err: any) {
+            console.error('Error marking invoice as paid:', err);
+            return { error: err.message };
+        }
+    },
+
+    /**
+     * Generate a professional PDF for a business invoice
+     */
+    generatePDF(invoice: any, tenant: any, client: any) {
+        const doc = new jsPDF();
+        const primaryColor = '#14b8a6'; // Teal-500
+
+        // Header - Company Info
+        doc.setFillColor(248, 250, 252); // slate-50
+        doc.rect(0, 0, 210, 60, 'F');
+
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(15, 23, 42); // slate-900
+        doc.text(tenant.name || 'Company Name', 20, 30);
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 116, 139); // slate-500
+        doc.text('Business Professional Services', 20, 38);
+
+        // Right side - Invoice Label
+        doc.setFontSize(32);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(primaryColor);
+        doc.text('INVOICE', 140, 35);
+
+        // Invoice Metadata
+        doc.setFontSize(10);
+        doc.setTextColor(71, 85, 105); // slate-600
+        doc.text(`Invoice Number:`, 140, 45);
+        doc.setFont('helvetica', 'bold');
+        doc.text(invoice.invoice_number || invoice.invoiceNumber, 175, 45);
+
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Issue Date:`, 140, 50);
+        doc.text(invoice.issue_date || invoice.issueDate, 175, 50);
+
+        doc.text(`Due Date:`, 140, 55);
+        doc.setTextColor(225, 29, 72); // rose-600 for due date
+        doc.text(invoice.due_date || invoice.dueDate, 175, 55);
+
+        // Billing Details
+        doc.setTextColor(15, 23, 42); // slate-900
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('BILL TO:', 20, 80);
+
+        doc.setFontSize(11);
+        doc.text(client.name || 'Client Name', 20, 88);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(71, 85, 105); // slate-600
+        if (client.company) doc.text(client.company, 20, 93);
+        if (client.email) doc.text(client.email, 20, 98);
+        if (client.phone) doc.text(client.phone, 20, 103);
+
+        // Project Info
+        if (invoice.project) {
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(15, 23, 42);
+            doc.text('PROJECT:', 120, 80);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(71, 85, 105);
+            doc.text(invoice.project.name || 'Project Name', 120, 88);
+        }
+
+        // Table Header
+        let y = 120;
+        doc.setFillColor(15, 23, 42); // slate-900
+        doc.rect(20, y, 170, 10, 'F');
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(255, 255, 255);
+        doc.text('DESCRIPTION', 25, y + 6.5);
+        doc.text('QTY', 120, y + 6.5);
+        doc.text('RATE', 145, y + 6.5);
+        doc.text('AMOUNT', 170, y + 6.5);
+
+        // Items
+        y += 18;
+        doc.setTextColor(15, 23, 42);
+        doc.setFont('helvetica', 'normal');
+        const items = invoice.line_items || invoice.lineItems || [];
+
+        items.forEach((item: any, idx: number) => {
+            doc.text(item.description, 25, y);
+            doc.text(item.quantity.toString(), 120, y);
+            doc.text(`$${item.rate.toFixed(2)}`, 145, y);
+            doc.text(`$${item.amount.toFixed(2)}`, 170, y);
+            y += 10;
+
+            // Subtle line
+            doc.setDrawColor(241, 245, 249); // slate-100
+            doc.line(20, y - 6, 190, y - 6);
+        });
+
+        // Totals
+        y += 10;
+        const subtotal = invoice.subtotal;
+        const discount = invoice.discountAmount || invoice.discount_amount || 0;
+        const taxRate = invoice.taxRate || invoice.tax_rate || 0;
+        const tax = invoice.tax || 0;
+        const total = invoice.total;
+
+        doc.setFont('helvetica', 'normal');
+        doc.text('Subtotal:', 140, y);
+        doc.text(`$${subtotal.toFixed(2)}`, 170, y);
+
+        if (discount > 0) {
+            y += 8;
+            doc.setTextColor(239, 68, 68); // Red for discount
+            doc.text('Discount:', 140, y);
+            doc.text(`-$${discount.toFixed(2)}`, 170, y);
+            doc.setTextColor(15, 23, 42); // Reset color
+        }
+
+        y += 8;
+        doc.text(`Tax (${taxRate}%):`, 140, y);
+        doc.text(`$${tax.toFixed(2)}`, 170, y);
+
+        y += 12;
+        doc.setFillColor(248, 250, 252);
+        doc.rect(135, y - 8, 55, 12, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.setTextColor(primaryColor);
+        doc.text('TOTAL:', 140, y);
+        doc.text(`$${total.toFixed(2)}`, 165, y);
+
+        // Footer
+        const pageHeight = doc.internal.pageSize.height;
+        doc.setFontSize(8);
+        doc.setTextColor(148, 163, 184); // slate-400
+        doc.text('Thank you for your business!', 105, pageHeight - 30, { align: 'center' });
+        doc.text('This invoice was generated electronically by AlphaClone Finance Engine.', 105, pageHeight - 25, { align: 'center' });
+        doc.text(`© ${new Date().getFullYear()} ${tenant.name}. All Rights Reserved.`, 105, pageHeight - 20, { align: 'center' });
+
+        return doc;
     }
 };

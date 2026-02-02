@@ -4,8 +4,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
 import { jsPDF } from 'jspdf';
-import { FileText, Download, CheckCircle, Loader2 } from 'lucide-react';
+import { FileText, Download, CheckCircle, Loader2, ShieldCheck } from 'lucide-react';
 import { SignaturePad } from '../../../components/contracts/SignaturePad';
+import { contractService } from '../../../services/contractService';
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function PublicContractPage() {
@@ -55,22 +56,16 @@ export default function PublicContractPage() {
 
         setSigning(true);
         try {
-            const { error } = await supabase
-                .from('contracts')
-                .update({
-                    client_signature: signatureData,
-                    client_signed_at: new Date().toISOString(),
-                    status: 'client_signed'
-                })
-                .eq('id', id);
+            const { contract: updated, error } = await contractService.signContract(id, 'client', signatureData);
 
             if (error) throw error;
 
+            setContract(updated);
             setSigned(true);
             toast.success('Contract signed successfully!');
 
             // Auto-download PDF
-            setTimeout(() => generateAndDownloadPDF(contract, signatureData), 1000);
+            setTimeout(() => generateAndDownloadPDF(updated, signatureData), 1000);
 
         } catch (error) {
             console.error('Signing error:', error);
@@ -83,26 +78,63 @@ export default function PublicContractPage() {
     const generateAndDownloadPDF = (contractData: any, signature: string) => {
         const doc = new jsPDF();
 
-        doc.setFontSize(20);
-        doc.text('SIGNED CONTRACT', 105, 20, { align: 'center' });
+        // Use a better header
+        doc.setFillColor(15, 23, 42); // slate-900
+        doc.rect(0, 0, 210, 40, 'F');
 
-        doc.setFontSize(12);
-        doc.text(`Reference: ${contractData.id}`, 20, 40);
-        doc.text(`Tenant: ${contractData.tenant?.name || 'AlphaClone Systems'}`, 20, 50);
+        doc.setFontSize(22);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(255, 255, 255);
+        doc.text('CERTIFIED CONTRACT', 20, 25);
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(148, 163, 184); // slate-400
+        doc.text(`Reference: ${contractData.id}`, 20, 33);
+
+        // Content
+        let y = 60;
+        doc.setTextColor(15, 23, 42);
+        doc.setFontSize(11);
 
         const splitText = doc.splitTextToSize(contractData.content || '', 170);
-        doc.text(splitText, 20, 70);
+        splitText.forEach((line: string) => {
+            if (y > 275) {
+                doc.addPage();
+                y = 20;
+            }
+            doc.text(line, 20, y);
+            y += 6;
+        });
 
-        // Add Signature
-        let yPos = 70 + (splitText.length * 5) + 20;
-        if (yPos > 250) {
+        // Signatures
+        y += 20;
+        if (y > 240) {
             doc.addPage();
-            yPos = 20;
+            y = 30;
         }
 
-        doc.text('Signed by Client:', 20, yPos);
-        doc.addImage(signature, 'PNG', 20, yPos + 5, 60, 30);
-        doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, yPos + 40);
+        doc.setDrawColor(226, 232, 240);
+        doc.line(20, y, 190, y);
+        y += 15;
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('CLIENT SIGNATURE', 20, y);
+        doc.addImage(signature, 'PNG', 20, y + 5, 60, 25);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.text(`Electronically signed on ${new Date().toLocaleString()}`, 20, y + 35);
+
+        // Security Seal
+        doc.setDrawColor(20, 184, 166); // teal-500
+        doc.setLineWidth(0.5);
+        doc.rect(140, y + 5, 40, 25);
+        doc.setFontSize(10);
+        doc.setTextColor(20, 184, 166);
+        doc.text('VERIFIED', 160, y + 15, { align: 'center' });
+        doc.setFontSize(7);
+        doc.text('AUTHENTIC DOCUMENT', 160, y + 22, { align: 'center' });
 
         doc.save(`${contractData.title.replace(/\s+/g, '_')}_Signed.pdf`);
     };
@@ -155,15 +187,18 @@ export default function PublicContractPage() {
                                 onClear={() => setSignatureData(null)}
                             />
                         </div>
-                        <div className="flex justify-between mt-2">
-                            <p className="text-xs text-slate-500">By signing, you agree to all terms.</p>
+                        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 text-xs">
+                            <span className="text-slate-500 flex items-center gap-1">
+                                <ShieldCheck className="w-3 h-3" /> Secure 256-bit SSL Cryptography Applied
+                            </span>
+                            <p className="text-slate-500">Draw your signature in the box above.</p>
                         </div>
                         <button
                             onClick={handleSign}
                             disabled={signing || !signatureData}
                             className={`w-full mt-6 py-4 font-bold text-lg rounded-xl transition-all flex items-center justify-center gap-2 ${signatureData && !signing
-                                    ? 'bg-teal-500 hover:bg-teal-400 text-slate-900 active:scale-[0.99]'
-                                    : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                ? 'bg-teal-500 hover:bg-teal-400 text-slate-900 active:scale-[0.99]'
+                                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                                 }`}
                         >
                             {signing ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign Contract'}

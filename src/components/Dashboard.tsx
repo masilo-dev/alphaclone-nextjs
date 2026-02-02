@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { ConnectionStatus } from './ConnectionStatus';
 import {
@@ -26,7 +26,8 @@ import {
   MessageSquare,
   Video,
   ListChecks,
-  Share2
+  Share2,
+  AlertCircle
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import MilestoneManager from './dashboard/projects/MilestoneManager';
@@ -68,6 +69,7 @@ const generateArchitectSpecs = async (): Promise<ArchitectData> => {
 import { projectService } from '../services/projectService';
 import { messageService } from '../services/messageService';
 import { paymentService } from '../services/paymentService';
+import { userService } from '../services/userService';
 import SecurityDashboard from './dashboard/SecurityDashboard';
 import ContractDashboard from './contracts/ContractDashboard';
 import AlphaCloneContractModal from './contracts/AlphaCloneContractModal';
@@ -187,17 +189,19 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [createInvoiceOpen, setCreateInvoiceOpen] = useState(false);
 
-  // Welcome Modal (show only once per user)
-  const [welcomeOpen, setWelcomeOpen] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    return !localStorage.getItem(`welcome_seen_${user.id}`);
-  });
-
   // Onboarding Flow (show only once per user)
-  const [showOnboarding, setShowOnboarding] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return !localStorage.getItem(`onboarding_completed_${user.id}`);
-  });
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [totalClientCount, setTotalClientCount] = useState<number>(0);
+
+  // Welcome Modal (show only once per user)
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && user?.id) {
+      setWelcomeOpen(!localStorage.getItem(`welcome_seen_${user.id}`));
+      setShowOnboarding(!localStorage.getItem(`onboarding_completed_${user.id}`));
+    }
+  }, [user.id]);
 
   // Admin Tool States
   const [contractModalOpen, setContractModalOpen] = useState(false);
@@ -231,18 +235,22 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // Stats Logic
   // Stats Logic - REAL DATA ONLY (No Placeholders)
-  // For Admin, we show total projects/messages unless we have a separate fetch. 
-  // Since 'projects' and 'messages' props contain all items for Admin (loaded in parent/layout), we can just count them.
+  const projectDays = useMemo(() => {
+    if (filteredProjects.length === 0) return 0;
+    const oldest = Math.min(...filteredProjects.map(p => new Date(p.createdAt || Date.now()).getTime()));
+    return Math.floor((Date.now() - oldest) / (1000 * 60 * 60 * 24));
+  }, [filteredProjects]);
+
   const currentStats: DashboardStat[] = user.role === 'admin' ? [
-    { label: 'Total Clients', value: projects.length.toString(), icon: Users, color: 'bg-indigo-600' }, // Approximation if projects matches clients, or just count projects
+    { label: 'Total Clients', value: totalClientCount.toString(), icon: Users, color: 'bg-indigo-600' },
     { label: 'Active Projects', value: projects.filter(p => p.status === 'Active').length.toString(), icon: Briefcase, color: 'bg-teal-600' },
     { label: 'Total Revenue', value: `$${invoices.filter(i => i.status === 'Paid').reduce((acc: number, curr: Invoice) => acc + curr.amount, 0).toLocaleString()}`, icon: DollarSign, color: 'bg-green-600' },
-    { label: 'System Health', value: 'Online', icon: Activity, color: 'bg-rose-600' },
+    { label: 'Pending Requests', value: projects.filter(p => p.status === 'Pending').length.toString(), icon: AlertCircle, color: 'bg-orange-600' },
   ] : [
     { label: 'My Projects', value: filteredProjects.length.toString(), icon: Briefcase, color: 'bg-teal-600' },
     { label: 'Messages', value: filteredMessages.length.toString(), icon: UserIcon, color: 'bg-blue-600' },
     { label: 'Due Invoices', value: `$${filteredInvoices.filter(i => i.status === 'Unpaid').reduce((acc: number, curr: Invoice) => acc + curr.amount, 0).toLocaleString()}`, icon: DollarSign, color: 'bg-yellow-600' },
-    { label: 'Project Days', value: '0', icon: Clock, color: 'bg-purple-600' }
+    { label: 'Project Days', value: projectDays.toString(), icon: Clock, color: 'bg-purple-600' }
   ];
 
   // Forms State
@@ -309,7 +317,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
 
       // Load everything in parallel - don't wait for one to finish before starting another
-      await Promise.all([
+      const promises: Promise<any>[] = [
         refreshProjects(),
         refreshInvoices(),
         // Load fewer messages initially (30 instead of 100) for faster load
@@ -318,7 +326,17 @@ const Dashboard: React.FC<DashboardProps> = ({
             setMessages(fetchedMessages);
           }
         })
-      ]);
+      ];
+
+      if (user.role === 'admin') {
+        promises.push(userService.getUsers().then(({ users, error }) => {
+          if (!error && users) {
+            setTotalClientCount(users.filter(u => u.role === 'client').length);
+          }
+        }));
+      }
+
+      await Promise.all(promises);
     };
 
     loadAllData();

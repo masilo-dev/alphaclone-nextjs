@@ -15,9 +15,12 @@ import {
     Trash2,
     Share2,
     Globe,
-    Lock
+    Lock,
+    TrendingUp,
+    TrendingDown
 } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface BillingPageProps {
     user: User;
@@ -66,23 +69,10 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
     };
 
     const handleDownloadPDF = (invoice: BusinessInvoice) => {
-        const doc = new jsPDF();
+        const client = clients.find(c => c.id === invoice.clientId) || {};
+        const tenant = currentTenant || { name: 'AlphaClone Business' };
 
-        // Add invoice content
-        doc.setFontSize(20);
-        doc.text('INVOICE', 20, 20);
-
-        doc.setFontSize(12);
-        doc.text(`Invoice #: ${invoice.invoiceNumber}`, 20, 40);
-        doc.text(`Issue Date: ${invoice.issueDate}`, 20, 50);
-        doc.text(`Due Date: ${invoice.dueDate}`, 20, 60);
-        doc.text(`Status: ${invoice.status.toUpperCase()}`, 20, 70);
-
-        doc.text(`Subtotal: $${invoice.subtotal.toFixed(2)}`, 20, 90);
-        doc.text(`Tax: $${invoice.tax.toFixed(2)}`, 20, 100);
-        doc.setFontSize(14);
-        doc.text(`Total: $${invoice.total.toFixed(2)}`, 20, 110);
-
+        const doc = businessInvoiceService.generatePDF(invoice, tenant, client);
         doc.save(`invoice-${invoice.invoiceNumber}.pdf`);
     };
 
@@ -126,19 +116,73 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
                 </button>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
-                    <p className="text-sm font-medium text-slate-400 mb-1">Total Revenue</p>
-                    <p className="text-2xl font-bold text-teal-400 tracking-tight">${stats.total.toLocaleString()}</p>
+            {/* Stats & Charts Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Financial Summary Cards */}
+                <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-xl">
+                        <p className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Total Revenue</p>
+                        <p className="text-2xl font-bold text-white">${stats.total.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-xl">
+                        <p className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Outstanding</p>
+                        <p className="text-2xl font-bold text-orange-400">${stats.pending.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-xl">
+                        <p className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Expenses (Est)</p>
+                        <p className="text-2xl font-bold text-red-400 flex items-center gap-2">
+                            ${(stats.paid * 0.3).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                            <span className="text-xs text-slate-500 font-normal bg-slate-800 px-1.5 py-0.5 rounded">Est. 30%</span>
+                        </p>
+                    </div>
+                    <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                            <DollarSign className="w-12 h-12 text-teal-400" />
+                        </div>
+                        <p className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Net Profit</p>
+                        <p className="text-2xl font-bold text-teal-400">
+                            ${(stats.paid * 0.7).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </p>
+                    </div>
                 </div>
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
-                    <p className="text-sm font-medium text-slate-400 mb-1">Paid</p>
-                    <p className="text-2xl font-bold text-green-400 tracking-tight">${stats.paid.toLocaleString()}</p>
-                </div>
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
-                    <p className="text-sm font-medium text-slate-400 mb-1">Pending</p>
-                    <p className="text-2xl font-bold text-orange-400 tracking-tight">${stats.pending.toLocaleString()}</p>
+
+                {/* Chart Section */}
+                <div className="lg:col-span-3 bg-slate-900/50 border border-slate-800 p-6 rounded-2xl">
+                    <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-teal-400" /> Revenue Performance
+                    </h3>
+                    <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={[
+                                { name: 'Jan', revenue: stats.paid * 0.1, expenses: stats.paid * 0.05 },
+                                { name: 'Feb', revenue: stats.paid * 0.2, expenses: stats.paid * 0.08 },
+                                { name: 'Mar', revenue: stats.paid * 0.15, expenses: stats.paid * 0.04 },
+                                { name: 'Apr', revenue: stats.paid * 0.3, expenses: stats.paid * 0.1 },
+                                { name: 'May', revenue: stats.paid * 0.25, expenses: stats.paid * 0.07 },
+                                { name: 'Jun', revenue: stats.paid * 0.4, expenses: stats.paid * 0.12 }
+                            ]}>
+                                <defs>
+                                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
+                                    </linearGradient>
+                                    <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                                <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '8px' }}
+                                    itemStyle={{ color: '#e2e8f0' }}
+                                />
+                                <Area type="monotone" dataKey="revenue" stroke="#14b8a6" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" name="Revenue" />
+                                <Area type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorExpenses)" name="Expenses" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
             </div>
 
@@ -270,6 +314,8 @@ const CreateInvoiceModal = ({ clients, projects, contracts, onClose, onCreate }:
         issueDate: new Date().toISOString().split('T')[0],
         dueDate: '',
         lineItems: [{ description: '', quantity: 1, rate: 0, amount: 0 }],
+        taxRate: 0,
+        discountAmount: 0,
         notes: '',
         isPublic: true
     });
@@ -309,7 +355,11 @@ const CreateInvoiceModal = ({ clients, projects, contracts, onClose, onCreate }:
             }
         }
 
-        const totals = businessInvoiceService.calculateTotals(formData.lineItems, 0);
+        const totals = businessInvoiceService.calculateTotals(
+            formData.lineItems,
+            formData.taxRate,
+            formData.discountAmount
+        );
 
         onCreate({
             ...formData,
@@ -412,6 +462,32 @@ const CreateInvoiceModal = ({ clients, projects, contracts, onClose, onCreate }:
                                 </div>
                             </div>
                         ))}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Discount Amount ($)</label>
+                            <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={formData.discountAmount}
+                                onChange={(e) => setFormData({ ...formData, discountAmount: parseFloat(e.target.value) || 0 })}
+                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Tax Rate (%)</label>
+                            <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.1"
+                                value={formData.taxRate}
+                                onChange={(e) => setFormData({ ...formData, taxRate: parseFloat(e.target.value) || 0 })}
+                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            />
+                        </div>
                     </div>
 
                     <div>

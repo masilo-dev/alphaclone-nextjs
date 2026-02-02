@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckSquare, Calendar, Clock, Plus, ArrowRight, Upload, Phone, Mail, Globe, MapPin, User, FileText, Send } from 'lucide-react';
+import { X, CheckSquare, Calendar, Clock, Plus, ArrowRight, Upload, Phone, Mail, Globe, MapPin, User, FileText, Send, Bot } from 'lucide-react';
 import { Modal, Button, Input, Card, Badge } from '../../ui/UIComponents';
 import { Lead, leadService } from '../../../services/leadService';
 import { taskService, Task } from '../../../services/taskService';
@@ -35,6 +35,9 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
     const [meetingTitle, setMeetingTitle] = useState('');
     const [meetingDate, setMeetingDate] = useState('');
     const [meetingTime, setMeetingTime] = useState('');
+    // Notes State
+    const [leadNotes, setLeadNotes] = useState(lead.notes || '');
+    const [isSavingNotes, setIsSavingNotes] = useState(false);
 
     useEffect(() => {
         if (isOpen && lead.id) {
@@ -156,6 +159,20 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
         }
     };
 
+    const handleSaveNotes = async () => {
+        setIsSavingNotes(true);
+        try {
+            const { error } = await leadService.updateLead(lead.id, { notes: leadNotes });
+            if (error) throw new Error(error);
+            toast.success('Notes saved successfully');
+            if (onLeadUpdate) onLeadUpdate({ ...lead, notes: leadNotes });
+        } catch (error) {
+            toast.error('Failed to save notes');
+        } finally {
+            setIsSavingNotes(false);
+        }
+    };
+
     const StatusBadge = ({ status }: { status: string }) => {
         const colors: any = {
             new: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
@@ -203,6 +220,9 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                 <Mail className="w-4 h-4 mr-2" /> Email
                             </Button>
                         )}
+                        <Button variant="outline" className="border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10" size="sm" onClick={() => toast('Quote management coming soon!', { icon: '📄' })}>
+                            <FileText className="w-4 h-4 mr-2" /> Create Quote
+                        </Button>
                         <Button className="bg-teal-600 hover:bg-teal-500" size="sm" onClick={handleConvert}>
                             Convert to Deal
                         </Button>
@@ -376,6 +396,27 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                             <div className="text-center py-12 text-slate-500">
                                 <Calendar className="w-12 h-12 mx-auto mb-3 opacity-20" />
                                 <p>Scheduled meetings will appear on your main calendar.</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'notes' && (
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-semibold text-white">Lead Intelligence & Notes</h3>
+                                <Button size="sm" onClick={handleSaveNotes} isLoading={isSavingNotes} className="bg-teal-600">
+                                    Save Changes
+                                </Button>
+                            </div>
+                            <textarea
+                                className="w-full h-[300px] bg-slate-900 border border-slate-800 rounded-xl p-4 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all font-mono text-sm leading-relaxed"
+                                placeholder="Record meeting outcomes, strategic observations, or lead requirements here..."
+                                value={leadNotes}
+                                onChange={(e) => setLeadNotes(e.target.value)}
+                            />
+                            <div className="flex items-center gap-2 text-xs text-slate-500 italic mt-2">
+                                <Bot className="w-4 h-4 text-teal-400" />
+                                <span>These notes are visible to all members of your team with access to this lead.</span>
                             </div>
                         </div>
                     )}

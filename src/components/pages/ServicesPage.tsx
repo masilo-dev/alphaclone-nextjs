@@ -109,14 +109,15 @@ const ServicesPage: React.FC = () => {
                                 >
                                     Book Meeting
                                 </Button>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="border-slate-700 w-full hover:bg-slate-800"
-                                    onClick={() => setIsLoginOpen(true)}
-                                >
-                                    Start for Free
-                                </Button>
+                                <Link href="/register">
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="border-slate-700 w-full hover:bg-slate-800"
+                                    >
+                                        Start for Free
+                                    </Button>
+                                </Link>
                             </div>
                         </div>
                     ))}
@@ -135,14 +136,15 @@ const ServicesPage: React.FC = () => {
                         >
                             Schedule Consultation
                         </Button>
-                        <Button
-                            size="lg"
-                            variant="outline"
-                            className="text-lg px-8 py-4 border-slate-700 hover:bg-slate-800"
-                            onClick={() => setIsLoginOpen(true)}
-                        >
-                            Start for Free
-                        </Button>
+                        <Link href="/register">
+                            <Button
+                                size="lg"
+                                variant="outline"
+                                className="text-lg px-8 py-4 border-slate-700 hover:bg-slate-800 w-full sm:w-auto"
+                            >
+                                Start for Free
+                            </Button>
+                        </Link>
                     </div>
                 </div>
             </div>

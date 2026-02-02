@@ -15,7 +15,8 @@ import {
     Video,
     ShieldCheck
 } from 'lucide-react';
-import { User } from '../../../types';
+import { Project, User } from '../../../types';
+import { projectService } from '../../../services/projectService';
 import { useTenant } from '../../../contexts/TenantContext';
 // Components
 import BusinessHome from './BusinessHome';
@@ -119,9 +120,27 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
         };
 
         checkTasks();
+
+        // Fetch projects for context in other tabs (CRM, etc)
+        const loadProjects = async () => {
+            if (!currentTenant) return;
+            setLoadingProjects(true);
+            try {
+                const { projects: data } = await projectService.getProjects(user.id, user.role);
+                setProjects(data || []);
+            } catch (err) {
+                console.error('Failed to load projects in BusinessDashboard', err);
+            } finally {
+                setLoadingProjects(false);
+            }
+        };
+
+        loadProjects();
     }, [user, currentTenant]);
 
     const [notification, setNotification] = useState<string | null>(null);
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [loadingProjects, setLoadingProjects] = useState(false);
 
     // Trial Logic - DISABLED as per user request for full access
     const isTrialExpired = React.useMemo(() => {
@@ -186,10 +205,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
 
             // New Routes
             case '/dashboard/crm':
-                if (planFeatures && !planFeatures.fullCRM) return <LockedFeature feature="CRM Suite" />;
-                // Pass empty projects for now or implement fetching
                 return <CRMTab
-                    projects={[]}
+                    projects={projects}
                     declineProject={() => { }}
                     openContractGenerator={handleOpenContract}
                     openVideoCall={handleJoinCall}
@@ -197,10 +214,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             case '/dashboard/tasks':
                 return <TasksTab userId={user.id} userRole={user.role} />;
             case '/dashboard/sales-agent':
-                if (planFeatures && !planFeatures.fullCRM) return <LockedFeature feature="AI Sales Agent" />;
                 return <SalesAgent />;
             case '/dashboard/leads':
-                if (planFeatures && !planFeatures.fullCRM) return <LockedFeature feature="Leads & Pipelines" />;
                 return <DealsTab userId={user.id} userRole={user.role} />;
             case '/dashboard/business/contracts':
                 return <ContractDashboard user={user} />;

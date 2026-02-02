@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { FileText, Plus, Eye, Check, X, DollarSign } from 'lucide-react';
 import { quoteService, Quote, QuoteItem } from '../../services/quoteService';
+import { businessInvoiceService } from '../../services/businessInvoiceService';
+import { useTenant } from '../../contexts/TenantContext';
 import { Button, Modal, Input } from '../ui/UIComponents';
 import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
@@ -12,6 +14,7 @@ interface QuotesTabProps {
 }
 
 const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
+    const { currentTenant } = useTenant();
     const [quotes, setQuotes] = useState<Quote[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'draft' | 'sent' | 'accepted'>('all');
@@ -127,6 +130,56 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
             }
         } catch (err) {
             toast.error('Failed to load quote details');
+        }
+    };
+
+    const handleConvertToInvoice = async () => {
+        if (!selectedQuote) return;
+
+        setIsSubmitting(true);
+        try {
+            // 1. Get items
+            const { items, error: itemsError } = await quoteService.getQuoteItems(selectedQuote.id);
+            if (itemsError) throw new Error(itemsError);
+
+            // 2. Map to Invoice Line Items
+            const lineItems = items.map(item => ({
+                description: item.productName + (item.description ? ` - ${item.description}` : ''),
+                quantity: item.quantity,
+                rate: item.unitPrice,
+                amount: item.lineTotal // Using the line total which already includes discounts/tax if calculated
+            }));
+
+            // 3. Create Invoice
+            const { invoice, error: invError } = await businessInvoiceService.createInvoice(currentTenant?.id || '', {
+                clientId: selectedQuote.contactId,
+                status: 'draft',
+                issueDate: new Date().toISOString().split('T')[0],
+                dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +7 days default
+                subtotal: selectedQuote.subtotal,
+                total: selectedQuote.totalAmount,
+                taxRate: selectedQuote.taxPercent,
+                tax: selectedQuote.taxAmount,
+                discountAmount: selectedQuote.discountAmount,
+                lineItems: lineItems,
+                notes: `Converted from Quote #${selectedQuote.quoteNumber}`
+            });
+
+            if (invError) throw new Error(invError);
+
+            // 4. Update Quote Status
+            await quoteService.updateQuote(selectedQuote.id, { status: 'converted' });
+
+            toast.success('Quote converted to Invoice successfully!');
+            setShowViewModal(false);
+            loadQuotes();
+
+            // Optional: Redirect to Invoice?
+            // router.push('/dashboard/billing'); 
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to convert quote');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -338,8 +391,17 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                             </div>
                         )}
 
-                        <div className="pt-4 flex justify-end">
+                        <div className="pt-4 flex justify-end gap-3">
                             <Button variant="outline" onClick={() => setShowViewModal(false)}>Close</Button>
+                            {selectedQuote.status === 'accepted' && (
+                                <Button
+                                    onClick={handleConvertToInvoice}
+                                    disabled={isSubmitting}
+                                    className="bg-teal-500 hover:bg-teal-600 text-white"
+                                >
+                                    {isSubmitting ? 'Converting...' : 'Convert to Invoice'}
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </Modal>
