@@ -30,6 +30,9 @@ import { contactService } from '../services/contactService';
 import { projectService } from '../services/projectService';
 import InfiniteTicker from './InfiniteTicker';
 const PortfolioShowcase = React.lazy(() => import('./dashboard/PortfolioShowcase'));
+const InteractiveHeroPreview = React.lazy(() => import('./dashboard/InteractiveHeroPreview'));
+const AITerminal = React.lazy(() => import('./dashboard/AITerminal'));
+const InteractiveMap = React.lazy(() => import('./dashboard/InteractiveMap'));
 
 interface LandingPageProps {
    onLogin: (user: User) => void;
@@ -251,7 +254,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      initial={{ opacity: 0, y: 20 }}
                      animate={{ opacity: 1, y: 0 }}
                      transition={{ delay: 0.3 }}
-                     className="flex flex-col sm:flex-row items-center justify-center gap-6 px-4 sm:px-0"
+                     className="flex flex-col sm:flex-row items-center justify-center gap-6 px-4 sm:px-0 mb-20"
                   >
                      <Button
                         onClick={() => window.location.href = '/register'}
@@ -268,6 +271,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      >
                         Book a Demo
                      </Button>
+                  </motion.div>
+
+                  {/* Interactive Dashboard Preview */}
+                  <motion.div
+                     initial={{ opacity: 0, scale: 0.95 }}
+                     animate={{ opacity: 1, scale: 1 }}
+                     transition={{ delay: 0.4, duration: 0.8 }}
+                     className="relative z-20"
+                  >
+                     <React.Suspense fallback={<div className="h-[500px] w-full bg-slate-900/50 rounded-3xl animate-pulse" />}>
+                        <InteractiveHeroPreview />
+                     </React.Suspense>
                   </motion.div>
                </div>
             </section>
@@ -296,7 +311,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                      {/* Growing Agencies */}
-                     <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 hover:border-teal-500/50 transition-all group backdrop-blur-md">
+                     <div className="bg-slate-900/40 border border-slate-800/50 rounded-3xl p-8 hover:border-teal-500/50 transition-all group backdrop-blur-xl relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                         <div className="flex items-center gap-3 mb-6">
                            <div className="w-12 h-12 bg-teal-500/10 rounded-xl flex items-center justify-center">
                               <Target className="w-6 h-6 text-teal-400" />
@@ -329,7 +345,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      </div>
 
                      {/* SaaS Startups */}
-                     <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 hover:border-blue-500/50 transition-all group backdrop-blur-md">
+                     <div className="bg-slate-900/40 border border-slate-800/50 rounded-3xl p-8 hover:border-blue-500/50 transition-all group backdrop-blur-xl relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                         <div className="flex items-center gap-3 mb-6">
                            <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center">
                               <Zap className="w-6 h-6 text-blue-400" />
@@ -362,7 +379,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      </div>
 
                      {/* Consulting Firms */}
-                     <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 hover:border-purple-500/50 transition-all group backdrop-blur-md">
+                     <div className="bg-slate-900/40 border border-slate-800/50 rounded-3xl p-8 hover:border-purple-500/50 transition-all group backdrop-blur-xl relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                         <div className="flex items-center gap-3 mb-6">
                            <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center">
                               <Award className="w-6 h-6 text-purple-400" />
@@ -599,8 +617,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               </li>
                            ))}
                         </ul>
-                        <div className="flex flex-col gap-3 relative z-10">
-                           <Button onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold h-12">
+                        <div className="flex flex-col gap-6 relative z-10">
+                           <div className="mt-4">
+                              <React.Suspense fallback={<div className="h-40 bg-slate-900 animate-pulse rounded-xl" />}>
+                                 <AITerminal />
+                              </React.Suspense>
+                           </div>
+                           <Button onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold h-12">
                               Book Consultation
                            </Button>
                         </div>
@@ -782,19 +805,32 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
             {/* Stats Section */}
             <section className="py-16 bg-slate-950/50 border-y border-slate-900/50 backdrop-blur-sm">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                     {[
-                        { label: "Delivery Guarantee*", value: "18-Day", desc: "*18% discount if we delay" },
-                        { label: "Custom Built", value: "100%", desc: "No templates used" },
-                        { label: "Support Available", value: "24/7", desc: "Dedicated team" },
-                        { label: "PageSpeed Score", value: "90+", desc: "Performance optimized" }
-                     ].map((stat, i) => (
-                        <div key={i} className="bg-slate-900/50 p-8 rounded-2xl text-center border border-slate-800/50 backdrop-blur-md">
-                           <div className="text-3xl md:text-4xl font-bold text-teal-400 mb-2">{stat.value}</div>
-                           <div className="text-white font-medium mb-1">{stat.label}</div>
-                           <div className="text-xs text-slate-500">{stat.desc}</div>
-                        </div>
-                     ))}
+                  <div className="space-y-12">
+                     <React.Suspense fallback={<div className="h-[400px] bg-slate-900 animate-pulse rounded-3xl" />}>
+                        <InteractiveMap />
+                     </React.Suspense>
+
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {[
+                           { label: "Delivery Guarantee*", value: "18-Day", desc: "*18% discount if we delay" },
+                           { label: "Custom Built", value: "100%", desc: "No templates used" },
+                           { label: "Support Available", value: "24/7", desc: "Dedicated team" },
+                           { label: "PageSpeed Score", value: "90+", desc: "Performance optimized" }
+                        ].map((stat, i) => (
+                           <motion.div
+                              key={i}
+                              initial={{ opacity: 0, y: 10 }}
+                              whileInView={{ opacity: 1, y: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ delay: i * 0.1 }}
+                              className="bg-slate-900/40 p-8 rounded-2xl text-center border border-slate-800/50 backdrop-blur-xl group hover:border-teal-500/30 transition-all flex flex-col items-center justify-center shadow-xl"
+                           >
+                              <div className="text-3xl md:text-4xl font-bold text-teal-400 mb-2 group-hover:scale-110 transition-transform">{stat.value}</div>
+                              <div className="text-white font-medium mb-1">{stat.label}</div>
+                              <div className="text-xs text-slate-500">{stat.desc}</div>
+                           </motion.div>
+                        ))}
+                     </div>
                   </div>
                </div>
             </section>
@@ -871,7 +907,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      {/* Professional Plan (Highlighted) */}
                      <motion.div
                         whileHover={{ y: -10 }}
-                        className="bg-slate-900/80 border-2 border-teal-500/50 rounded-3xl p-8 flex flex-col backdrop-blur-xl relative overflow-hidden shadow-2xl shadow-teal-500/10"
+                        className="bg-slate-900/70 border-2 border-teal-500/50 rounded-3xl p-8 flex flex-col backdrop-blur-2xl relative overflow-hidden shadow-2xl shadow-teal-500/20"
                      >
                         <div className="absolute top-0 right-0 bg-teal-500 text-slate-950 text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">
                            Most Popular
@@ -1115,8 +1151,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                   </div>
                </div>
             </footer>
-         </div>
-      </div>
+         </div >
+      </div >
    );
 };
 

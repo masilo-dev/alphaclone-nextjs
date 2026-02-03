@@ -4,6 +4,8 @@ import { Users, XCircle, MessageSquare, Phone, Clock, DollarSign, FileText, Cale
 import { Project, User } from '../../types';
 import { userService } from '../../services/userService';
 import { clientActivityService, ClientTimeline } from '../../services/clientActivityService';
+import { clientLifecycleService, ClientLifecycleSummary } from '../../services/clientLifecycleService';
+import { useTenant } from '../../contexts/TenantContext';
 import { Button, Badge } from '../ui/UIComponents';
 import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
@@ -32,16 +34,27 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
     const [newClient, setNewClient] = useState({ name: '', email: '', company: '' });
     const [isCreatingClient, setIsCreatingClient] = useState(false);
     const [activityFilter, setActivityFilter] = useState<ActivityFilter>('all');
+    const { currentTenant } = useTenant();
+    const [lifecycleSummaries, setLifecycleSummaries] = useState<Record<string, ClientLifecycleSummary>>({});
 
     useEffect(() => {
         const loadClients = async () => {
             const { users } = await userService.getUsers();
-            // Filter to show only clients (assuming role 'client')
-            setClients(users.filter(u => u.role === 'client'));
+            const filteredClients = users.filter(u => u.role === 'client');
+            setClients(filteredClients);
             setLoading(false);
+
+            // Fetch lifecycle summaries if tenant exists
+            if (currentTenant && filteredClients.length > 0) {
+                const summaries = await clientLifecycleService.bulkGetClientLifecycleSummaries(
+                    filteredClients.map(c => c.id),
+                    currentTenant.id
+                );
+                setLifecycleSummaries(summaries);
+            }
         };
         loadClients();
-    }, []);
+    }, [currentTenant]);
 
     // Load client timeline when selected
     useEffect(() => {
@@ -138,10 +151,11 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
         }
     };
 
-    // Combine Clients with their projects
+    // Combine Clients with their projects and lifecycle summaries
     const clientCards = clients.map(client => {
         // Find active project for client
         const clientProject = projects.find(p => p.ownerId === client.id);
+        const summary = lifecycleSummaries[client.id];
 
         return {
             id: client.id,
@@ -150,7 +164,10 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
             avatar: client.avatar,
             project: clientProject,
             status: clientProject ? clientProject.status : 'No Active Project',
-            value: clientProject ? `$${(clientProject.budget || 0).toLocaleString()}` : '$0'
+            value: clientProject ? `$${(clientProject.budget || 0).toLocaleString()}` : '$0',
+            totalProjects: summary?.totalProjects || 0,
+            activeProjects: summary?.activeProjects || 0,
+            totalInvoices: summary?.totalInvoices || 0
         };
     });
 
@@ -304,18 +321,30 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
                                 )}
 
                                 <div className="mt-3 grid grid-cols-2 gap-2">
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleMessageClient(client.id); }}
-                                        className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs rounded-lg border border-blue-500/20 transition-colors flex items-center justify-center gap-1"
-                                    >
-                                        <MessageSquare className="w-3 h-3" /> Message
-                                    </button>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); openVideoCall(client.id); }}
-                                        className="px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 text-xs rounded-lg border border-green-500/20 transition-colors flex items-center justify-center gap-1"
-                                    >
-                                        <Phone className="w-3 h-3" /> Call
-                                    </button>
+                                    <div className="flex flex-col gap-1">
+                                        <div className="flex justify-between text-[10px] text-slate-400">
+                                            <span>Projects:</span>
+                                            <span className="text-teal-400 font-bold">{client.activeProjects} / {client.totalProjects}</span>
+                                        </div>
+                                        <div className="flex justify-between text-[10px] text-slate-400">
+                                            <span>Invoices:</span>
+                                            <span className="text-violet-400 font-bold">{client.totalInvoices}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleMessageClient(client.id); }}
+                                            className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs rounded-lg border border-blue-500/20 transition-colors flex items-center justify-center gap-1"
+                                        >
+                                            <MessageSquare className="w-3 h-3" /> Message
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); openVideoCall(client.id); }}
+                                            className="px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 text-xs rounded-lg border border-green-500/20 transition-colors flex items-center justify-center gap-1"
+                                        >
+                                            <Phone className="w-3 h-3" /> Call
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ))}
