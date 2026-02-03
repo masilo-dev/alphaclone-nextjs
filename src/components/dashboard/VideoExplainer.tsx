@@ -6,6 +6,14 @@ import { Play, Maximize2, Volume2, Shield, Zap, Globe, Cpu } from 'lucide-react'
 
 const VideoExplainer = () => {
     const [isPlaying, setIsPlaying] = useState(false);
+    const videoRef = React.useRef<HTMLVideoElement>(null);
+
+    const handlePlay = () => {
+        setIsPlaying(true);
+        if (videoRef.current) {
+            videoRef.current.play();
+        }
+    };
 
     return (
         <section id="ecosystem" className="py-24 bg-slate-950/50 relative overflow-hidden hidden lg:block">
@@ -28,9 +36,20 @@ const VideoExplainer = () => {
                         viewport={{ once: true }}
                         className="relative aspect-video bg-slate-900 rounded-[2rem] overflow-hidden border border-slate-800 shadow-2xl shadow-blue-500/10"
                     >
-                        {/* Mock Video Placeholder */}
-                        {!isPlaying ? (
-                            <div className="absolute inset-0 flex items-center justify-center bg-slate-900 group-hover:bg-slate-800/50 transition-colors cursor-pointer" onClick={() => setIsPlaying(true)}>
+                        {/* Video Element */}
+                        <video
+                            ref={videoRef}
+                            className={`w-full h-full object-cover transition-opacity duration-500 ${isPlaying ? 'opacity-100' : 'opacity-0 absolute inset-0'}`}
+                            controls={isPlaying}
+                            src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4"
+                            poster="/dashboard-preview.jpg"
+                        >
+                            Your browser does not support the video tag.
+                        </video>
+
+                        {/* Mock Video Placeholder (Cover) */}
+                        {!isPlaying && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-slate-900 group-hover:bg-slate-800/50 transition-colors cursor-pointer z-10" onClick={handlePlay}>
                                 <div className="relative">
                                     <motion.div
                                         animate={{ scale: [1, 1.1, 1] }}
@@ -52,35 +71,26 @@ const VideoExplainer = () => {
                                             </div>
                                             <h3 className="text-2xl font-bold text-white">The Unified Operating System for Growth</h3>
                                         </div>
-                                        <div className="text-slate-500 text-sm font-mono">02:05</div>
+                                        <div className="text-slate-500 text-sm font-mono">12:14</div>
                                     </div>
                                 </div>
                             </div>
-                        ) : (
-                            <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center">
-                                <Cpu className="w-12 h-12 text-teal-400 animate-pulse mb-4" />
-                                <p className="text-slate-400 font-mono text-sm">Streaming AlphaClone Production Feed...</p>
-                                <button
-                                    onClick={() => setIsPlaying(false)}
-                                    className="mt-8 px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-full text-sm font-bold transition-colors"
-                                >
-                                    Close Player
-                                </button>
-                            </div>
                         )}
 
-                        {/* Glass Player Controls */}
-                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] h-14 bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl flex items-center px-6 justify-between opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div className="flex items-center gap-6">
-                                <Play className="w-5 h-5 text-white cursor-pointer hover:text-teal-400 transition-colors" />
-                                <Volume2 className="w-5 h-5 text-white cursor-pointer hover:text-teal-400 transition-colors" />
-                                <div className="text-white text-xs font-mono">00:00 / 02:05</div>
+                        {/* Glass Player Controls (Visual only, hidden when playing) */}
+                        {!isPlaying && (
+                            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] h-14 bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl flex items-center px-6 justify-between opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none">
+                                <div className="flex items-center gap-6">
+                                    <Play className="w-5 h-5 text-white" />
+                                    <Volume2 className="w-5 h-5 text-white" />
+                                    <div className="text-white text-xs font-mono">00:00 / 12:14</div>
+                                </div>
+                                <div className="flex-1 max-w-sm h-1 bg-white/10 rounded-full mx-8">
+                                    <div className="w-1/3 h-full bg-teal-500 rounded-full shadow-[0_0_10px_rgba(20,184,166,0.5)]" />
+                                </div>
+                                <Maximize2 className="w-5 h-5 text-white" />
                             </div>
-                            <div className="flex-1 max-w-sm h-1 bg-white/10 rounded-full mx-8">
-                                <div className="w-1/3 h-full bg-teal-500 rounded-full shadow-[0_0_10px_rgba(20,184,166,0.5)]" />
-                            </div>
-                            <Maximize2 className="w-5 h-5 text-white cursor-pointer hover:text-teal-400 transition-colors" />
-                        </div>
+                        )}
                     </motion.div>
 
                     {/* Floating Context Cards */}

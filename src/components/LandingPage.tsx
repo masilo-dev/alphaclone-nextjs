@@ -20,7 +20,8 @@ import {
    Phone,
    MapPin,
    Video,
-   FileCheck
+   FileCheck,
+   ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from './ui/UIComponents';
@@ -223,62 +224,126 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                <AnimatePresence>
                   {mobileMenuOpen && (
                      <>
+                        {/* Backdrop - High Blur & Opacity to hide content */}
                         <motion.div
                            initial={{ opacity: 0 }}
                            animate={{ opacity: 1 }}
                            exit={{ opacity: 0 }}
                            onClick={() => setMobileMenuOpen(false)}
-                           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
+                           className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-[90]"
                         />
+
+                        {/* Right Drawer */}
                         <motion.div
                            initial={{ x: '100%' }}
                            animate={{ x: 0 }}
                            exit={{ x: '100%' }}
                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                           className="fixed top-0 right-0 bottom-0 w-[80%] max-w-sm bg-slate-950 z-[70] shadow-2xl border-l border-slate-800 p-8 flex flex-col pt-safe"
+                           className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-slate-950 z-[100] shadow-2xl border-l border-slate-800 p-8 flex flex-col pt-safe overflow-y-auto"
                         >
+                           {/* Drawer Header */}
                            <div className="flex justify-between items-center mb-12">
-                              <span className="text-xl font-bold text-white">AlphaClone</span>
-                              <button onClick={() => setMobileMenuOpen(false)} className="text-slate-400"><X /></button>
+                              <span className="text-xl font-bold text-white tracking-tight">AlphaClone</span>
+                              <button
+                                 onClick={() => setMobileMenuOpen(false)}
+                                 className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors"
+                              >
+                                 <X className="w-5 h-5" />
+                              </button>
                            </div>
 
-                           <div className="space-y-6 flex-1">
-                              {[
-                                 { label: 'Home', id: 'home' },
-                                 { label: 'Platform', id: 'ecosystem' },
-                                 { label: 'About', id: 'about' },
-                                 { label: 'Contact', id: 'contact' }
-                              ].map((item) => (
-                                 <button
-                                    key={item.label}
-                                    onClick={() => scrollToSection(item.id)}
-                                    className="block w-full text-left text-2xl font-bold text-slate-300 hover:text-teal-400 transition-colors"
-                                 >
-                                    {item.label}
-                                 </button>
-                              ))}
+                           {/* Links Container */}
+                           <div className="space-y-2 flex-1">
+                              {/* Home */}
+                              <button
+                                 onClick={() => { scrollToSection('home'); setMobileMenuOpen(false); }}
+                                 className="block w-full text-left text-2xl font-bold text-slate-300 hover:text-white py-4 border-b border-slate-900 transition-colors"
+                              >
+                                 Home
+                              </button>
 
-                              <div className="py-4">
-                                 <div className="text-slate-600 text-[10px] font-bold uppercase tracking-widest mb-4">Services</div>
-                                 <div className="space-y-4 pl-4 border-l border-slate-800">
-                                    {['Web Apps', 'Mobile', 'AI Agents', 'Dashboards'].map(s => (
-                                       <button key={s} onClick={() => scrollToSection('services')} className="block text-slate-400 hover:text-white font-medium">{s}</button>
-                                    ))}
-                                 </div>
+                              {/* Platform */}
+                              <button
+                                 onClick={() => { scrollToSection('ecosystem'); setMobileMenuOpen(false); }}
+                                 className="block w-full text-left text-2xl font-bold text-slate-300 hover:text-white py-4 border-b border-slate-900 transition-colors"
+                              >
+                                 Platform
+                              </button>
+
+                              {/* Services (Collapsible) */}
+                              <div className="py-4 border-b border-slate-900 transition-colors">
+                                 <button
+                                    onClick={() => setServicesDropdownOpen(!servicesDropdownOpen)}
+                                    className="flex items-center justify-between w-full text-2xl font-bold text-slate-300 hover:text-white group"
+                                 >
+                                    Services
+                                    <motion.span animate={{ rotate: servicesDropdownOpen ? 180 : 0 }}>
+                                       <ChevronRight className="w-6 h-6 text-slate-600 group-hover:text-teal-400 transition-colors" />
+                                    </motion.span>
+                                 </button>
+
+                                 <AnimatePresence>
+                                    {servicesDropdownOpen && (
+                                       <motion.div
+                                          initial={{ height: 0, opacity: 0 }}
+                                          animate={{ height: 'auto', opacity: 1 }}
+                                          exit={{ height: 0, opacity: 0 }}
+                                          className="overflow-hidden"
+                                       >
+                                          <div className="pt-6 pb-2 pl-2 space-y-4 border-l-2 border-slate-900 ml-1">
+                                             {['Custom Web Apps', 'Mobile Ecosystems', 'AI Automation', 'Enterprise Dashboards'].map((service, i) => (
+                                                <button
+                                                   key={i}
+                                                   onClick={() => {
+                                                      scrollToSection('services');
+                                                      setMobileMenuOpen(false);
+                                                   }}
+                                                   className="block w-full text-left text-lg font-medium text-slate-400 hover:text-teal-400 transition-colors flex items-center gap-3 pl-4"
+                                                >
+                                                   <div className="w-1.5 h-1.5 rounded-full bg-slate-700" />
+                                                   {service}
+                                                </button>
+                                             ))}
+                                          </div>
+                                       </motion.div>
+                                    )}
+                                 </AnimatePresence>
                               </div>
 
+                              {/* Portfolio */}
                               <Link
                                  href="/portfolio"
-                                 className="block w-full text-left text-2xl font-bold text-slate-300 hover:text-teal-400 transition-colors"
                                  onClick={() => setMobileMenuOpen(false)}
+                                 className="block w-full text-left text-2xl font-bold text-slate-300 hover:text-white py-4 border-b border-slate-900 transition-colors"
                               >
                                  Portfolio
                               </Link>
+
+                              {/* About */}
+                              <button
+                                 onClick={() => { scrollToSection('about'); setMobileMenuOpen(false); }}
+                                 className="block w-full text-left text-2xl font-bold text-slate-300 hover:text-white py-4 border-b border-slate-900 transition-colors"
+                              >
+                                 About
+                              </button>
+
+                              {/* Contact */}
+                              <button
+                                 onClick={() => { scrollToSection('contact'); setMobileMenuOpen(false); }}
+                                 className="block w-full text-left text-2xl font-bold text-slate-300 hover:text-white py-4 border-b border-slate-900 transition-colors"
+                              >
+                                 Contact
+                              </button>
                            </div>
 
-                           <div className="pt-8 border-t border-slate-900 flex flex-col gap-4">
-                              <Button onClick={() => setIsLoginOpen(true)} variant="outline" className="w-full h-14 text-white text-lg">Login</Button>
-                              <Button onClick={() => window.location.href = '/register'} className="w-full h-14 bg-teal-500 text-slate-950 font-bold text-lg">Start Today</Button>
+                           {/* Auth Buttons */}
+                           <div className="pt-8 flex flex-col gap-4">
+                              <button onClick={() => setIsLoginOpen(true)} className="w-full py-4 text-center font-bold text-slate-300 border border-slate-800 rounded-2xl hover:bg-slate-900 transition-colors text-lg">
+                                 Log In
+                              </button>
+                              <Button onClick={() => window.location.href = '/register'} className="w-full py-4 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-2xl shadow-lg shadow-teal-500/20 text-lg">
+                                 Start Today
+                              </Button>
                            </div>
                         </motion.div>
                      </>
