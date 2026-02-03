@@ -66,10 +66,10 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                     </div>
 
                     {/* Mobile Menu Button */}
-                    <div className="lg:hidden">
+                    <div className="lg:hidden relative z-[110]">
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className="text-slate-300"
+                            className="text-white hover:text-teal-400 p-2 rounded-lg bg-slate-900/50 border border-slate-800 transition-colors"
                             aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                         >
                             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -77,28 +77,30 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                     </div>
                 </div>
 
-                {/* Mobile Nav */}
+                {/* Mobile Nav Overlay */}
                 {mobileMenuOpen && (
-                    <div className="lg:hidden bg-slate-900 border-t border-slate-800 p-4 space-y-4">
-                        {navItems.map((item) => (
-                            <Link
-                                key={item.path}
-                                href={item.path}
-                                onClick={() => setMobileMenuOpen(false)}
-                                className={`block text-sm font-medium py-2 ${isActive(item.path)
-                                    ? 'text-teal-400'
-                                    : 'text-slate-300 hover:text-white'
-                                    }`}
-                            >
-                                {item.label}
-                            </Link>
-                        ))}
-                        <div className="pt-4 border-t border-slate-800 flex flex-col gap-3">
-                            <Button onClick={onLoginClick} variant="outline" className="w-full justify-center">
+                    <div className="lg:hidden fixed inset-0 z-[100] bg-slate-950/95 backdrop-blur-xl animate-fade-in p-8 pt-24 overflow-y-auto">
+                        <div className="space-y-4">
+                            {navItems.map((item) => (
+                                <Link
+                                    key={item.path}
+                                    href={item.path}
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className={`block text-2xl font-bold py-4 border-b border-slate-900 transition-colors ${isActive(item.path)
+                                        ? 'text-teal-400'
+                                        : 'text-slate-300 hover:text-white'
+                                        }`}
+                                >
+                                    {item.label}
+                                </Link>
+                            ))}
+                        </div>
+                        <div className="pt-8 flex flex-col gap-4">
+                            <Button onClick={onLoginClick} variant="outline" className="w-full py-4 text-center font-bold text-slate-300 border border-slate-800 rounded-2xl hover:bg-slate-900 transition-colors text-lg">
                                 Login
                             </Button>
                             <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
-                                <Button className="w-full justify-center bg-teal-500 text-slate-950 font-bold">
+                                <Button className="w-full py-4 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-2xl shadow-lg shadow-teal-500/20 text-lg h-auto">
                                     Start Free Trial
                                 </Button>
                             </Link>

@@ -1440,7 +1440,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 {/* Mobile Menu Toggle */}
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="p-2 sm:p-3 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800 md:hidden -ml-1"
+                  className="p-2 sm:p-3 text-white hover:text-teal-400 transition-colors rounded-lg hover:bg-slate-800 md:hidden -ml-1"
                   aria-label="Toggle navigation menu"
                 >
                   <Menu className="w-5 h-5" />

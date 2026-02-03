@@ -370,7 +370,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                         {/* Mobile Menu Toggle */}
                         <button
                             onClick={() => setSidebarOpen(!sidebarOpen)}
-                            className="md:hidden p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800"
+                            className="md:hidden p-2 text-white hover:text-teal-400 transition-colors rounded-lg hover:bg-slate-800"
                         >
                             <Menu className="w-6 h-6" />
                         </button>

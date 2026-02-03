@@ -208,13 +208,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      </div>
 
                      {/* Mobile Menu Button */}
-                     <div className="lg:hidden">
+                     <div className="lg:hidden relative z-[110]">
                         <button
                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                           className="text-slate-300"
+                           className="text-white hover:text-teal-400 p-2 rounded-lg bg-slate-900/50 border border-slate-800 transition-colors"
                            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
                         >
-                           {mobileMenuOpen ? <X /> : <Menu />}
+                           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                         </button>
                      </div>
                   </div>
@@ -242,13 +242,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-slate-950 z-[100] shadow-2xl border-l border-slate-800 p-8 flex flex-col pt-safe overflow-y-auto"
                         >
                            {/* Drawer Header */}
-                           <div className="flex justify-between items-center mb-12">
+                           <div className="flex justify-between items-center mb-12 relative z-[110]">
                               <span className="text-xl font-bold text-white tracking-tight">AlphaClone</span>
                               <button
                                  onClick={() => setMobileMenuOpen(false)}
-                                 className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors"
+                                 className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-900 border border-slate-700 text-white hover:text-teal-400 transition-colors shadow-lg active:scale-90"
                               >
-                                 <X className="w-5 h-5" />
+                                 <X className="w-6 h-6" />
                               </button>
                            </div>
 

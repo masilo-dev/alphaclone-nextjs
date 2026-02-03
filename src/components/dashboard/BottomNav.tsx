@@ -41,7 +41,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
     };
 
     return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 pb-safe z-50 h-[env(safe-area-inset-bottom,20px)+64px]">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 pb-safe z-50 h-[calc(env(safe-area-inset-bottom,20px)+64px)]">
             <div className="flex justify-around items-center h-16">
                 {MOBILE_NAV_ITEMS.map((item) => {
                     const isActive = activeTab === item.href;
@@ -49,7 +49,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
                         <button
                             key={item.href}
                             onClick={() => handleNavClick(item.href)}
-                            className={`flex flex-col items-center justify-center w-full h-full space-y-1 active:scale-95 transition-transform ${isActive ? 'text-teal-400' : 'text-slate-500 hover:text-slate-300'
+                            className={`flex flex-col items-center justify-center w-full h-full space-y-1 active:scale-95 transition-transform ${isActive ? 'text-teal-400' : 'text-slate-400 hover:text-slate-300'
                                 }`}
                         >
                             <div className="relative">
