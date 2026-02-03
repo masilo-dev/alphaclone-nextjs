@@ -21,10 +21,10 @@ const VideoExplainer = () => {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-16">
-                    <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Experience AlphaClone Business OS</h2>
+                    <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Introduction to AlphaClone Systems</h2>
                     <p className="text-slate-400 text-lg max-w-2xl mx-auto font-medium">
-                        Watch how we unify your entire operation into one high-performance platform.
-                        Manage CRM, Invoices, Contracts, and AI Agents in a single interface.
+                        The 10-minute walkthrough of the world&apos;s most advanced Multi-Tenant Business OS.
+                        Experience how we unify CRM, Projects, AI, and Security into one platform.
                     </p>
                 </div>
 
@@ -66,12 +66,12 @@ const VideoExplainer = () => {
                                     <div className="flex justify-between items-end">
                                         <div className="space-y-4">
                                             <div className="flex gap-2">
-                                                <span className="px-3 py-1 bg-teal-500/20 text-teal-400 text-[10px] font-bold rounded-full uppercase tracking-tighter border border-teal-500/30">Business OS Walkthrough</span>
-                                                <span className="px-3 py-1 bg-white/5 text-white/50 text-[10px] font-bold rounded-full uppercase tracking-tighter border border-white/10">Full Dashboard Demo</span>
+                                                <span className="px-3 py-1 bg-teal-500/20 text-teal-400 text-[10px] font-bold rounded-full uppercase tracking-tighter border border-teal-500/30">Official Introduction</span>
+                                                <span className="px-3 py-1 bg-white/5 text-white/50 text-[10px] font-bold rounded-full uppercase tracking-tighter border border-white/10">Full Platform Tour</span>
                                             </div>
-                                            <h3 className="text-2xl font-bold text-white">The Unified Operating System for Growth</h3>
+                                            <h3 className="text-2xl font-bold text-white">AlphaClone Systems: The Unified Operating System</h3>
                                         </div>
-                                        <div className="text-slate-500 text-sm font-mono">12:14</div>
+                                        <div className="text-slate-500 text-sm font-mono">10:00</div>
                                     </div>
                                 </div>
                             </div>
@@ -83,7 +83,7 @@ const VideoExplainer = () => {
                                 <div className="flex items-center gap-6">
                                     <Play className="w-5 h-5 text-white" />
                                     <Volume2 className="w-5 h-5 text-white" />
-                                    <div className="text-white text-xs font-mono">00:00 / 12:14</div>
+                                    <div className="text-white text-xs font-mono">00:00 / 10:00</div>
                                 </div>
                                 <div className="flex-1 max-w-sm h-1 bg-white/10 rounded-full mx-8">
                                     <div className="w-1/3 h-full bg-teal-500 rounded-full shadow-[0_0_10px_rgba(20,184,166,0.5)]" />
