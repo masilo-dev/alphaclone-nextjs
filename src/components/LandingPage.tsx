@@ -19,7 +19,8 @@ import {
    Mail,
    Phone,
    MapPin,
-   Video
+   Video,
+   FileCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from './ui/UIComponents';
@@ -33,6 +34,7 @@ const PortfolioShowcase = React.lazy(() => import('./dashboard/PortfolioShowcase
 const InteractiveHeroPreview = React.lazy(() => import('./dashboard/InteractiveHeroPreview'));
 const AITerminal = React.lazy(() => import('./dashboard/AITerminal'));
 const InteractiveMap = React.lazy(() => import('./dashboard/InteractiveMap'));
+const VideoExplainer = React.lazy(() => import('./dashboard/VideoExplainer'));
 
 interface LandingPageProps {
    onLogin: (user: User) => void;
@@ -70,6 +72,7 @@ const PrismBackground = React.memo(() => {
 const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
    const [isLoginOpen, setIsLoginOpen] = useState(false);
+   const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
 
    // Contact Form State
    const [contactForm, setContactForm] = useState({ name: '', email: '', subject: '', message: '' });
@@ -149,15 +152,44 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
 
                      {/* Desktop Nav */}
                      <div className="hidden lg:flex items-center gap-8">
-                        {['Home', 'Ecosystem', 'Services', 'About', 'Contact'].map((item) => (
-                           <button
-                              key={item}
-                              onClick={() => scrollToSection(item.toLowerCase())}
-                              className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
-                           >
-                              {item}
+                        <button onClick={() => scrollToSection('home')} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Home</button>
+                        <button onClick={() => scrollToSection('ecosystem')} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Platform</button>
+
+                        {/* Services Dropdown */}
+                        <div className="relative" onMouseEnter={() => setServicesDropdownOpen(true)} onMouseLeave={() => setServicesDropdownOpen(false)}>
+                           <button className="text-sm font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-1 group">
+                              Services
+                              <motion.span animate={{ rotate: servicesDropdownOpen ? 180 : 0 }}>
+                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                              </motion.span>
                            </button>
-                        ))}
+
+                           <AnimatePresence>
+                              {servicesDropdownOpen && (
+                                 <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
+                                    className="absolute top-full left-0 w-64 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 mt-2"
+                                 >
+                                    {[
+                                       { title: 'Custom Web Apps', desc: 'High-performance Next.js builds' },
+                                       { title: 'Mobile Ecosystems', desc: 'iOS & Android native solutions' },
+                                       { title: 'AI Automation', desc: 'Custom LLMs & Sales Agents' },
+                                       { title: 'Enterprise Dashboards', desc: 'Unified business control' }
+                                    ].map((s, i) => (
+                                       <button key={i} onClick={() => scrollToSection('services')} className="w-full text-left p-3 rounded-xl hover:bg-slate-800 transition-colors group mb-1">
+                                          <div className="text-sm font-bold text-white group-hover:text-teal-400">{s.title}</div>
+                                          <div className="text-[10px] text-slate-500">{s.desc}</div>
+                                       </button>
+                                    ))}
+                                 </motion.div>
+                              )}
+                           </AnimatePresence>
+                        </div>
+
+                        <button onClick={() => scrollToSection('about')} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">About</button>
+                        <button onClick={() => scrollToSection('contact')} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Contact</button>
                         <Link
                            href="/portfolio"
                            className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
@@ -169,7 +201,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               Login
                            </button>
                            <Button onClick={() => window.location.href = '/register'} className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-6 shadow-lg shadow-teal-500/20">
-                              Start for Free
+                              Start Today
                            </Button>
                         </div>
                      </div>
@@ -187,31 +219,71 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                   </div>
                </div>
 
-               {/* Mobile Nav */}
-               {mobileMenuOpen && (
-                  <div className="lg:hidden bg-slate-900 border-b border-slate-800 p-4 space-y-4">
-                     {['Home', 'Ecosystem', 'Services', 'About', 'Contact'].map((item) => (
-                        <button
-                           key={item}
-                           onClick={() => scrollToSection(item.toLowerCase())}
-                           className="block w-full text-left text-sm font-medium text-slate-300 hover:text-white py-2"
+               {/* Mobile Nav Drawer */}
+               <AnimatePresence>
+                  {mobileMenuOpen && (
+                     <>
+                        <motion.div
+                           initial={{ opacity: 0 }}
+                           animate={{ opacity: 1 }}
+                           exit={{ opacity: 0 }}
+                           onClick={() => setMobileMenuOpen(false)}
+                           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
+                        />
+                        <motion.div
+                           initial={{ x: '100%' }}
+                           animate={{ x: 0 }}
+                           exit={{ x: '100%' }}
+                           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                           className="fixed top-0 right-0 bottom-0 w-[80%] max-w-sm bg-slate-950 z-[70] shadow-2xl border-l border-slate-800 p-8 flex flex-col pt-safe"
                         >
-                           {item}
-                        </button>
-                     ))}
-                     <Link
-                        href="/portfolio"
-                        className="block w-full text-left text-sm font-medium text-slate-300 hover:text-white py-2"
-                        onClick={() => setMobileMenuOpen(false)}
-                     >
-                        Portfolio
-                     </Link>
-                     <div className="pt-4 border-t border-slate-800 flex flex-col gap-3">
-                        <Button onClick={() => setIsLoginOpen(true)} variant="outline" className="w-full justify-center">Login</Button>
-                        <Button onClick={() => window.location.href = '/register'} className="w-full justify-center bg-teal-500 text-slate-950 font-bold">Start for Free</Button>
-                     </div>
-                  </div>
-               )}
+                           <div className="flex justify-between items-center mb-12">
+                              <span className="text-xl font-bold text-white">AlphaClone</span>
+                              <button onClick={() => setMobileMenuOpen(false)} className="text-slate-400"><X /></button>
+                           </div>
+
+                           <div className="space-y-6 flex-1">
+                              {[
+                                 { label: 'Home', id: 'home' },
+                                 { label: 'Platform', id: 'ecosystem' },
+                                 { label: 'About', id: 'about' },
+                                 { label: 'Contact', id: 'contact' }
+                              ].map((item) => (
+                                 <button
+                                    key={item.label}
+                                    onClick={() => scrollToSection(item.id)}
+                                    className="block w-full text-left text-2xl font-bold text-slate-300 hover:text-teal-400 transition-colors"
+                                 >
+                                    {item.label}
+                                 </button>
+                              ))}
+
+                              <div className="py-4">
+                                 <div className="text-slate-600 text-[10px] font-bold uppercase tracking-widest mb-4">Services</div>
+                                 <div className="space-y-4 pl-4 border-l border-slate-800">
+                                    {['Web Apps', 'Mobile', 'AI Agents', 'Dashboards'].map(s => (
+                                       <button key={s} onClick={() => scrollToSection('services')} className="block text-slate-400 hover:text-white font-medium">{s}</button>
+                                    ))}
+                                 </div>
+                              </div>
+
+                              <Link
+                                 href="/portfolio"
+                                 className="block w-full text-left text-2xl font-bold text-slate-300 hover:text-teal-400 transition-colors"
+                                 onClick={() => setMobileMenuOpen(false)}
+                              >
+                                 Portfolio
+                              </Link>
+                           </div>
+
+                           <div className="pt-8 border-t border-slate-900 flex flex-col gap-4">
+                              <Button onClick={() => setIsLoginOpen(true)} variant="outline" className="w-full h-14 text-white text-lg">Login</Button>
+                              <Button onClick={() => window.location.href = '/register'} className="w-full h-14 bg-teal-500 text-slate-950 font-bold text-lg">Start Today</Button>
+                           </div>
+                        </motion.div>
+                     </>
+                  )}
+               </AnimatePresence>
             </nav>
 
             {/* Hero Section */}
@@ -226,7 +298,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/50 backdrop-blur border border-slate-700/50 text-teal-400 text-sm font-medium mb-8 shadow-lg shadow-teal-900/20"
                   >
                      <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
-                     AlphaClone Business OS v2.0 • 14 Day Free Trial
+                     Unified Operations Intelligence
                   </motion.div>
 
                   <motion.h1
@@ -524,30 +596,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                </div>
             </section>
 
-            {/* Why Choose Custom */}
-            <section className="py-24 bg-slate-900/50 backdrop-blur-sm" id="ecosystem">
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <h2 className="text-3xl md:text-4xl font-bold text-center text-white mb-16">Why Choose Custom Development?</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
-                     {[
-                        { title: "Perfect Business Fit", desc: "Built exactly for your workflows, processes, and business logic - no compromises or workarounds required." },
-                        { title: "Scalable Architecture", desc: "Built with growth in mind, our solutions scale seamlessly as your business expands and requirements evolve." },
-                        { title: "Full Ownership", desc: "You own the complete source code and intellectual property - no vendor lock-in or ongoing licensing fees." },
-                        { title: "Competitive Advantage", desc: "Custom solutions provide unique capabilities that your competitors using generic platforms simply cannot match." }
-                     ].map((item, i) => (
-                        <div key={i} className="flex gap-4">
-                           <div className="mt-1 flex-shrink-0">
-                              <CheckCircle2 className="w-6 h-6 text-teal-400" />
-                           </div>
-                           <div>
-                              <h3 className="text-xl font-bold text-white mb-2">{item.title}</h3>
-                              <p className="text-slate-400 leading-relaxed">{item.desc}</p>
-                           </div>
-                        </div>
-                     ))}
-                  </div>
-               </div>
-            </section>
+            {/* Video Explainer (Replacing Ecosystem) */}
+            <React.Suspense fallback={<div className="h-[600px] w-full bg-slate-900/50 animate-pulse" />}>
+               <VideoExplainer />
+            </React.Suspense>
 
             {/* About Section */}
             <section id="about" className="py-24 bg-slate-950/50 backdrop-blur-sm">
@@ -588,206 +640,159 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
             <section id="services" className="py-24 bg-slate-900/50 backdrop-blur-sm">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="text-center mb-16">
-                     <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Platform Capabilities</h2>
-                     <p className="text-slate-400 max-w-2xl mx-auto">Everything you need to grow your business, integrated into one secure platform.</p>
+                     <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">Core Platform Capabilities</h2>
+                     <p className="text-slate-400 max-w-2xl mx-auto text-lg leading-relaxed">
+                        Every system you need to scale, unified into one high-performance architecture.
+                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                     {/* AI Chatbot */}
-                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        whileHover={{ y: -5 }}
-                        className="bg-slate-950/60 rounded-3xl p-8 border border-slate-800/50 hover:border-green-500/30 transition-colors backdrop-blur-md relative overflow-hidden group"
-                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="w-16 h-16 bg-green-500 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-green-500/20 group-hover:scale-110 transition-transform">
-                           <Bot className="w-9 h-9 text-white" />
-                        </div>
-                        <h3 className="text-2xl font-bold text-white mb-4">AI Sales Agents</h3>
-                        <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-                           Intelligent AI that captures leads, qualifies prospects, and books meetings 24/7 on autopilot.
-                        </p>
-                        <ul className="space-y-3 mb-8">
-                           {['Auto-Lead Qualification', '24/7 Availability', 'Instant Responses', 'CRM Integration'].map((item, i) => (
-                              <li key={i} className="flex items-center text-sm text-slate-300">
-                                 <CheckCircle2 className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                                 {item}
-                              </li>
-                           ))}
-                        </ul>
-                        <div className="flex flex-col gap-6 relative z-10">
-                           <div className="mt-4">
-                              <React.Suspense fallback={<div className="h-40 bg-slate-900 animate-pulse rounded-xl" />}>
-                                 <AITerminal />
-                              </React.Suspense>
-                           </div>
-                           <Button onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold h-12">
-                              Book Consultation
-                           </Button>
-                        </div>
-                     </motion.div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
+                     {[
+                        {
+                           id: 'ai-agents',
+                           icon: Bot,
+                           color: 'teal',
+                           title: 'AI Sales Agents',
+                           summary: 'Capture, qualify, and convert leads 24/7 on autopilot.',
+                           details: [
+                              'Automated Lead Qualification using GPT-4o',
+                              'Instant Response across WhatsApp, Email & Web',
+                              'Seamless CRM Integration for Lead Tracking',
+                              'Advanced Knowledge Base Customization'
+                           ],
+                           showExtra: <AITerminal />
+                        },
+                        {
+                           id: 'crm',
+                           icon: Database,
+                           color: 'blue',
+                           title: 'Enterprise CRM',
+                           summary: 'Master your deal flow with high-performance tracking.',
+                           details: [
+                              'Visual Kanban Sales Pipelines',
+                              'Client Lifecycle Automation & Notifications',
+                              'Unified Communication History',
+                              'Real-time Revenue Forecasting'
+                           ]
+                        },
+                        {
+                           id: 'security',
+                           icon: ShieldCheck,
+                           color: 'violet',
+                           title: 'Security Command',
+                           summary: 'End-to-end encryption for all business operations.',
+                           details: [
+                              'SIEM-grade Security Monitoring',
+                              'Automatic SSL & Domain Reputation Checks',
+                              'End-to-End Encrypted Video Conferencing',
+                              'Role-Based Access Control (RBAC)'
+                           ]
+                        },
+                        {
+                           id: 'mobile',
+                           icon: Smartphone,
+                           color: 'indigo',
+                           title: 'Mobile Companion',
+                           summary: 'Manage your entire business from your pocket.',
+                           details: [
+                              'Native iOS & Android Applications',
+                              'Push Notifications for Critical Updates',
+                              'Offline Access to Client Data',
+                              'Instant Mobile Video Calls'
+                           ]
+                        },
+                        {
+                           id: 'finance',
+                           icon: BarChart,
+                           color: 'emerald',
+                           title: 'Finance Hub',
+                           summary: 'Automated billing and revenue reconcilliation.',
+                           details: [
+                              'Automated Stripe Invoice Generation',
+                              'Subscription Management & Pro-rating',
+                              'Real-time Profit & Loss Reporting',
+                              'Multi-Currency Support & Tax Compliance'
+                           ]
+                        },
+                        {
+                           id: 'contracts',
+                           icon: FileCheck,
+                           color: 'cyan',
+                           title: 'Contract Logic',
+                           summary: 'Generate and sign legally sound agreements in seconds.',
+                           details: [
+                              'AI-Powered Contract Drafting',
+                              'Dynamic Milestone-Based Agreements',
+                              'Secure Digital Signatures',
+                              'Integrated Version Control'
+                           ]
+                        }
+                     ].map((service, i) => {
+                        const [expanded, setExpanded] = useState(false);
+                        return (
+                           <motion.div
+                              key={service.id}
+                              initial={{ opacity: 0, y: 20 }}
+                              whileInView={{ opacity: 1, y: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ delay: i * 0.1 }}
+                              className="bg-slate-950/60 rounded-[2.5rem] p-8 border border-slate-800/50 hover:border-teal-500/30 transition-all backdrop-blur-md relative overflow-hidden group flex flex-col h-fit"
+                           >
+                              <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
-                     {/* CRM */}
-                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.1 }}
-                        whileHover={{ y: -5 }}
-                        className="bg-slate-950/60 rounded-3xl p-8 border border-slate-800/50 hover:border-orange-500/30 transition-colors backdrop-blur-md relative overflow-hidden group"
-                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform">
-                           <Database className="w-9 h-9 text-white" />
-                        </div>
-                        <h3 className="text-2xl font-bold text-white mb-4">CRM & Sales Pipeline</h3>
-                        <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-                           Track every deal, manage customer relationships, and visualize your sales funnel in real-time.
-                        </p>
-                        <ul className="space-y-3 mb-8">
-                           {['Visual Deal Pipelines', 'Contact Management', 'Automated Workflows', 'Revenue Forecasting'].map((item, i) => (
-                              <li key={i} className="flex items-center text-sm text-slate-300">
-                                 <CheckCircle2 className="w-4 h-4 text-orange-500 mr-2 flex-shrink-0" />
-                                 {item}
-                              </li>
-                           ))}
-                        </ul>
-                        <div className="flex flex-col gap-3 relative z-10">
-                           <Button onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')} className="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-bold h-12">
-                              Book Consultation
-                           </Button>
-                        </div>
-                     </motion.div>
+                              <div className="flex items-center gap-4 mb-8">
+                                 <div className={`w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg border border-slate-800 group-hover:scale-110 transition-transform`}>
+                                    <service.icon className="w-7 h-7 text-teal-400" />
+                                 </div>
+                                 <h3 className="text-2xl font-bold text-white leading-tight">{service.title}</h3>
+                              </div>
 
-                     {/* Security Center */}
-                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.2 }}
-                        whileHover={{ y: -5 }}
-                        className="bg-slate-950/60 rounded-3xl p-8 border border-slate-800/50 hover:border-red-500/30 transition-colors backdrop-blur-md relative overflow-hidden group"
-                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="w-16 h-16 bg-red-500 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-red-500/20 group-hover:scale-110 transition-transform">
-                           <ShieldCheck className="w-9 h-9 text-white" />
-                        </div>
-                        <h3 className="text-2xl font-bold text-white mb-4">Security Command Center</h3>
-                        <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-                           Monitor your digital footprint for vulnerabilities. Check SSL, headers, and reputation instantly.
-                        </p>
-                        <ul className="space-y-3 mb-8">
-                           {['SSL/TLS Validation', 'Vulnerability Scanning', 'Trust Score Analysis', 'Daily Monitoring'].map((item, i) => (
-                              <li key={i} className="flex items-center text-sm text-slate-300">
-                                 <CheckCircle2 className="w-4 h-4 text-red-500 mr-2 flex-shrink-0" />
-                                 {item}
-                              </li>
-                           ))}
-                        </ul>
-                        <div className="flex flex-col gap-3 relative z-10">
-                           <Button onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')} className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold h-12">
-                              Book Consultation
-                           </Button>
-                        </div>
-                     </motion.div>
+                              <p className="text-slate-400 text-sm mb-6 leading-relaxed flex-1">
+                                 {service.summary}
+                              </p>
 
-                     {/* Video Platform */}
-                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.3 }}
-                        whileHover={{ y: -5 }}
-                        className="bg-slate-950/60 rounded-3xl p-8 border border-slate-800/50 hover:border-indigo-500/30 transition-colors backdrop-blur-md relative overflow-hidden group"
-                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
-                           <Video className="w-9 h-9 text-white" />
-                        </div>
-                        <h3 className="text-2xl font-bold text-white mb-4">Unified Video Platform</h3>
-                        <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-                           Host high-quality video meetings directly within your project workspace. No external links needed.
-                        </p>
-                        <ul className="space-y-3 mb-8">
-                           {['HD Video Conferencing', 'Screen Sharing', 'Chat Integration', '20min Free / Client'].map((item, i) => (
-                              <li key={i} className="flex items-center text-sm text-slate-300">
-                                 <CheckCircle2 className="w-4 h-4 text-indigo-400 mr-2 flex-shrink-0" />
-                                 {item}
-                              </li>
-                           ))}
-                        </ul>
-                        <div className="flex flex-col gap-3 relative z-10">
-                           <Button onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')} className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold h-12">
-                              Schedule Meeting
-                           </Button>
-                        </div>
-                     </motion.div>
+                              <AnimatePresence>
+                                 {expanded && (
+                                    <motion.div
+                                       initial={{ height: 0, opacity: 0 }}
+                                       animate={{ height: 'auto', opacity: 1 }}
+                                       exit={{ height: 0, opacity: 0 }}
+                                       className="overflow-hidden"
+                                    >
+                                       <div className="pt-6 border-t border-slate-800/50 mt-2 space-y-4">
+                                          <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Specifications</div>
+                                          <ul className="space-y-3 pb-4">
+                                             {service.details.map((detail, idx) => (
+                                                <li key={idx} className="flex items-start text-sm text-slate-300">
+                                                   <CheckCircle2 className="w-4 h-4 text-teal-400 mr-2 flex-shrink-0 mt-0.5" />
+                                                   <span>{detail}</span>
+                                                </li>
+                                             ))}
+                                          </ul>
+                                          {service.showExtra && (
+                                             <div className="mb-4 pt-4">
+                                                <React.Suspense fallback={<div className="h-40 bg-slate-900 animate-pulse rounded-xl" />}>
+                                                   {service.showExtra}
+                                                </React.Suspense>
+                                             </div>
+                                          )}
+                                       </div>
+                                    </motion.div>
+                                 )}
+                              </AnimatePresence>
 
-                     {/* Mobile Apps */}
-                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.4 }}
-                        whileHover={{ y: -5 }}
-                        className="bg-slate-950/60 rounded-3xl p-8 border border-slate-800/50 hover:border-pink-500/30 transition-colors backdrop-blur-md relative overflow-hidden group"
-                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-rose-500 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-pink-500/20 group-hover:scale-110 transition-transform">
-                           <Smartphone className="w-9 h-9 text-white" />
-                        </div>
-                        <h3 className="text-2xl font-bold text-white mb-4">Mobile Companion App</h3>
-                        <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-                           Manage your business on the go. Available for iOS and Android for all Business OS users.
-                        </p>
-                        <ul className="space-y-3 mb-8">
-                           {['Push Notifications', 'Offline Access', 'Real-time Chat', 'Task Management'].map((item, i) => (
-                              <li key={i} className="flex items-center text-sm text-slate-300">
-                                 <CheckCircle2 className="w-4 h-4 text-pink-400 mr-2 flex-shrink-0" />
-                                 {item}
-                              </li>
-                           ))}
-                        </ul>
-                        <div className="flex flex-col gap-3 relative z-10">
-                           <Button onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')} className="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-bold h-12">
-                              Book Consultation
-                           </Button>
-                        </div>
-                     </motion.div>
-
-                     {/* Dashboards */}
-                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.5 }}
-                        whileHover={{ y: -5 }}
-                        className="bg-slate-950/60 rounded-3xl p-8 border border-slate-800/50 hover:border-cyan-500/30 transition-colors backdrop-blur-md relative overflow-hidden group"
-                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-cyan-500/20 group-hover:scale-110 transition-transform">
-                           <BarChart className="w-9 h-9 text-white" />
-                        </div>
-                        <h3 className="text-2xl font-bold text-white mb-4">Financial Analytics</h3>
-                        <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-                           Transform your data into actionable insights with intelligent dashboards that drive informed decision-making.
-                        </p>
-                        <ul className="space-y-3 mb-8">
-                           {['Revenue Tracking', 'Expense Management', 'Profit & Loss Reports', 'Team Performance'].map((item, i) => (
-                              <li key={i} className="flex items-center text-sm text-slate-300">
-                                 <CheckCircle2 className="w-4 h-4 text-cyan-400 mr-2 flex-shrink-0" />
-                                 {item}
-                              </li>
-                           ))}
-                        </ul>
-                        <div className="flex flex-col gap-3 relative z-10">
-                           <Button onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')} className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold h-12">
-                              Book Demo
-                           </Button>
-                        </div>
-                     </motion.div>
+                              <button
+                                 onClick={() => setExpanded(!expanded)}
+                                 className="w-full mt-4 flex items-center justify-center gap-2 py-4 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-teal-500/50 text-sm font-bold text-slate-300 hover:text-white transition-all group/btn"
+                              >
+                                 {expanded ? 'Collapse Details' : 'View Full Specifications'}
+                                 <motion.span animate={{ rotate: expanded ? 180 : 0 }} className="text-teal-400 group-hover/btn:scale-125 transition-transform">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                 </motion.span>
+                              </button>
+                           </motion.div>
+                        );
+                     })}
                   </div>
                </div>
             </section>
