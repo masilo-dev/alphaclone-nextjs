@@ -90,7 +90,7 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                 {/* Mobile Nav Overlay - Block interactions behind it */}
                 {mobileMenuOpen && (
                     <div
-                        className="lg:hidden fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-xl animate-fade-in p-8 pt-24 overflow-y-auto touch-none"
+                        className="lg:hidden fixed inset-0 z-[9999] bg-slate-950/98 backdrop-blur-2xl animate-fade-in p-8 pt-24 overflow-y-auto touch-none"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="space-y-4">
@@ -99,9 +99,9 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                                     key={item.path}
                                     href={item.path}
                                     onClick={() => setMobileMenuOpen(false)}
-                                    className={`block text-2xl font-bold py-4 border-b border-slate-900 transition-colors ${isActive(item.path)
+                                    className={`block text-2xl font-bold py-4 border-b border-slate-900/50 transition-colors ${isActive(item.path)
                                         ? 'text-teal-400'
-                                        : 'text-slate-300 hover:text-white'
+                                        : 'text-white hover:text-teal-400'
                                         }`}
                                 >
                                     {item.label}

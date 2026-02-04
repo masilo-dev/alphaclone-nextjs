@@ -75,10 +75,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
    const [isLoginOpen, setIsLoginOpen] = useState(false);
    const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
 
-   // Scroll Lock Effect
+   // Scroll Lock & State Management Effect
    React.useEffect(() => {
       if (mobileMenuOpen) {
          document.body.classList.add('menu-open');
+         // Auto-close login modal if menu opens
+         setIsLoginOpen(false);
       } else {
          document.body.classList.remove('menu-open');
       }
@@ -233,42 +235,44 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                {/* Mobile Nav Drawer */}
                <AnimatePresence>
                   {mobileMenuOpen && (
-                     <>
-                        {/* Backdrop - High Blur & Opacity to hide content */}
+                     <div key="mobile-nav-container">
+                        {/* Backdrop - High Opacity to block background */}
                         <motion.div
+                           key="mobile-backdrop"
                            initial={{ opacity: 0 }}
                            animate={{ opacity: 1 }}
                            exit={{ opacity: 0 }}
                            onClick={() => setMobileMenuOpen(false)}
-                           className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-[9999] touch-none"
+                           className="fixed inset-0 bg-slate-950/98 backdrop-blur-2xl z-[9999] touch-none"
                         />
 
                         {/* Right Drawer */}
                         <motion.div
+                           key="mobile-drawer"
                            initial={{ x: '100%' }}
                            animate={{ x: 0 }}
                            exit={{ x: '100%' }}
                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                           className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-slate-950 z-[10000] shadow-2xl border-l border-slate-800 p-8 flex flex-col pt-safe overflow-y-auto"
+                           className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-slate-950 opacity-100 z-[10000] shadow-2xl border-l border-slate-800 p-8 flex flex-col pt-safe overflow-y-auto"
                            onClick={(e) => e.stopPropagation()}
                         >
                            {/* Drawer Header */}
-                           <div className="flex justify-between items-center mb-12 relative z-[110]">
+                           <div className="flex justify-between items-center mb-10 relative z-[110]">
                               <span className="text-xl font-bold text-white tracking-tight">AlphaClone</span>
                               <button
                                  onClick={() => setMobileMenuOpen(false)}
-                                 className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-900 border border-slate-700 text-white hover:text-teal-400 transition-colors shadow-lg active:scale-90"
+                                 className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-900 border border-slate-700 text-white hover:text-teal-400 transition-all active:scale-90"
                               >
                                  <X className="w-6 h-6" />
                               </button>
                            </div>
 
-                           {/* Links Container */}
-                           <div className="space-y-2 flex-1">
+                           {/* Links Container - Ensure visibility with text-white */}
+                           <div className="space-y-1 flex-1">
                               {/* Home */}
                               <button
                                  onClick={() => { scrollToSection('home'); setMobileMenuOpen(false); }}
-                                 className="block w-full text-left text-2xl font-bold text-slate-300 hover:text-white py-4 border-b border-slate-900 transition-colors"
+                                 className="block w-full text-left text-2xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
                               >
                                  Home
                               </button>
@@ -276,16 +280,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               {/* Platform */}
                               <button
                                  onClick={() => { scrollToSection('ecosystem'); setMobileMenuOpen(false); }}
-                                 className="block w-full text-left text-2xl font-bold text-slate-300 hover:text-white py-4 border-b border-slate-900 transition-colors"
+                                 className="block w-full text-left text-2xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
                               >
                                  Platform
                               </button>
 
                               {/* Services (Collapsible) */}
-                              <div className="py-4 border-b border-slate-900 transition-colors">
+                              <div className="py-4 border-b border-slate-900/50 transition-colors">
                                  <button
                                     onClick={() => setServicesDropdownOpen(!servicesDropdownOpen)}
-                                    className="flex items-center justify-between w-full text-2xl font-bold text-slate-300 hover:text-white group"
+                                    className="flex items-center justify-between w-full text-2xl font-bold text-white hover:text-teal-400 group"
                                  >
                                     Services
                                     <motion.span animate={{ rotate: servicesDropdownOpen ? 180 : 0 }}>
@@ -325,7 +329,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               <Link
                                  href="/portfolio"
                                  onClick={() => setMobileMenuOpen(false)}
-                                 className="block w-full text-left text-2xl font-bold text-slate-300 hover:text-white py-4 border-b border-slate-900 transition-colors"
+                                 className="block w-full text-left text-2xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
                               >
                                  Portfolio
                               </Link>
@@ -333,7 +337,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               {/* About */}
                               <button
                                  onClick={() => { scrollToSection('about'); setMobileMenuOpen(false); }}
-                                 className="block w-full text-left text-2xl font-bold text-slate-300 hover:text-white py-4 border-b border-slate-900 transition-colors"
+                                 className="block w-full text-left text-2xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
                               >
                                  About
                               </button>
@@ -341,7 +345,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               {/* Contact */}
                               <button
                                  onClick={() => { scrollToSection('contact'); setMobileMenuOpen(false); }}
-                                 className="block w-full text-left text-2xl font-bold text-slate-300 hover:text-white py-4 border-b border-slate-900 transition-colors"
+                                 className="block w-full text-left text-2xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
                               >
                                  Contact
                               </button>
@@ -357,7 +361,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               </Button>
                            </div>
                         </motion.div>
-                     </>
+                     </div>
                   )}
                </AnimatePresence>
             </nav>

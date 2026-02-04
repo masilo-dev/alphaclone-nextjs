@@ -1,0 +1,625 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e4]:
+      - navigation [ref=e5]:
+        - generic [ref=e7]:
+          - generic [ref=e9] [cursor=pointer]: AlphaClone
+          - button "Close menu" [active] [ref=e11]:
+            - img [ref=e12]
+        - generic [ref=e16]:
+          - generic [ref=e17]:
+            - generic [ref=e18]: AlphaClone
+            - button [ref=e19]:
+              - img [ref=e20]
+          - generic [ref=e23]:
+            - button "Home" [ref=e24]
+            - button "Platform" [ref=e25]
+            - button "Services" [ref=e27]:
+              - text: Services
+              - img [ref=e29]
+            - link "Portfolio" [ref=e31] [cursor=pointer]:
+              - /url: /portfolio
+            - button "About" [ref=e32]
+            - button "Contact" [ref=e33]
+          - generic [ref=e34]:
+            - button "Log In" [ref=e35]
+            - button "Start Today" [ref=e36]
+      - generic [ref=e39]:
+        - generic [ref=e40]: Unified Operations Intelligence
+        - heading "Run Your Business At Warp Speed" [level=1] [ref=e42]:
+          - text: Run Your Business
+          - text: At Warp Speed
+        - paragraph [ref=e43]: The only platform that combines high-performance CRM, Project Management, and AI Agents into one seamless, premium ecosystem.
+        - generic [ref=e44]:
+          - button "Start For Free" [ref=e45]
+          - button "Book a Demo" [ref=e46]
+      - generic [ref=e48]:
+        - generic [ref=e49]:
+          - heading "Who We Serve" [level=2] [ref=e50]
+          - paragraph [ref=e51]: AlphaClone is the operating system for high-growth teams who demand unified control and premium performance.
+        - generic [ref=e52]:
+          - generic [ref=e53]:
+            - generic [ref=e55]:
+              - img [ref=e57]
+              - heading "Growing Agencies" [level=3] [ref=e61]
+            - generic [ref=e62]:
+              - generic [ref=e63]:
+                - paragraph [ref=e64]: "Your Challenge:"
+                - paragraph [ref=e65]: Managing multiple clients across different tools, losing time switching contexts, and struggling with expensive per-seat pricing.
+              - generic [ref=e66]:
+                - paragraph [ref=e67]: "How We Help:"
+                - list [ref=e68]:
+                  - listitem [ref=e69]:
+                    - img [ref=e70]
+                    - generic [ref=e73]: Multi-tenant architecture for unlimited clients
+                  - listitem [ref=e74]:
+                    - img [ref=e75]
+                    - generic [ref=e78]: Unified dashboard for all client projects
+                  - listitem [ref=e79]:
+                    - img [ref=e80]
+                    - generic [ref=e83]: White-label client portals
+          - generic [ref=e84]:
+            - generic [ref=e86]:
+              - img [ref=e88]
+              - heading "SaaS Startups" [level=3] [ref=e90]
+            - generic [ref=e91]:
+              - generic [ref=e92]:
+                - paragraph [ref=e93]: "Your Challenge:"
+                - paragraph [ref=e94]: Burning cash on 10+ SaaS subscriptions while trying to reach profitability. Need enterprise features without enterprise costs.
+              - generic [ref=e95]:
+                - paragraph [ref=e96]: "How We Help:"
+                - list [ref=e97]:
+                  - listitem [ref=e98]:
+                    - img [ref=e99]
+                    - generic [ref=e102]: Replace $2,000+/mo in subscriptions
+                  - listitem [ref=e103]:
+                    - img [ref=e104]
+                    - generic [ref=e107]: Built-in CRM, video calls, and AI agents
+                  - listitem [ref=e108]:
+                    - img [ref=e109]
+                    - generic [ref=e112]: Self-hostable for data control
+          - generic [ref=e113]:
+            - generic [ref=e115]:
+              - img [ref=e117]
+              - heading "Consulting Firms" [level=3] [ref=e120]
+            - generic [ref=e121]:
+              - generic [ref=e122]:
+                - paragraph [ref=e123]: "Your Challenge:"
+                - paragraph [ref=e124]: Need professional client management, secure video meetings, and project tracking without the complexity of enterprise software.
+              - generic [ref=e125]:
+                - paragraph [ref=e126]: "How We Help:"
+                - list [ref=e127]:
+                  - listitem [ref=e128]:
+                    - img [ref=e129]
+                    - generic [ref=e132]: Professional client portals
+                  - listitem [ref=e133]:
+                    - img [ref=e134]
+                    - generic [ref=e137]: Integrated video conferencing
+                  - listitem [ref=e138]:
+                    - img [ref=e139]
+                    - generic [ref=e142]: Time tracking & invoicing
+          - generic [ref=e143]:
+            - generic [ref=e144]:
+              - img [ref=e146]
+              - heading "Emerging Market Founders" [level=3] [ref=e149]
+            - generic [ref=e150]:
+              - generic [ref=e151]:
+                - paragraph [ref=e152]: "Your Challenge:"
+                - paragraph [ref=e153]: Enterprise tools price you out. Need world-class features at prices that make sense for your market.
+              - generic [ref=e154]:
+                - paragraph [ref=e155]: "How We Help:"
+                - list [ref=e156]:
+                  - listitem [ref=e157]:
+                    - img [ref=e158]
+                    - generic [ref=e161]: Affordable all-in-one pricing
+                  - listitem [ref=e162]:
+                    - img [ref=e163]
+                    - generic [ref=e166]: No hidden fees or per-seat charges
+                  - listitem [ref=e167]:
+                    - img [ref=e168]
+                    - generic [ref=e171]: Full feature access from day one
+          - generic [ref=e172]:
+            - generic [ref=e173]:
+              - img [ref=e175]
+              - heading "Privacy-First Teams" [level=3] [ref=e178]
+            - generic [ref=e179]:
+              - generic [ref=e180]:
+                - paragraph [ref=e181]: "Your Challenge:"
+                - paragraph [ref=e182]: Can't trust third-party SaaS with sensitive data. Need full control over where your data lives.
+              - generic [ref=e183]:
+                - paragraph [ref=e184]: "How We Help:"
+                - list [ref=e185]:
+                  - listitem [ref=e186]:
+                    - img [ref=e187]
+                    - generic [ref=e190]: Self-hostable on your infrastructure
+                  - listitem [ref=e191]:
+                    - img [ref=e192]
+                    - generic [ref=e195]: Open-source transparency
+                  - listitem [ref=e196]:
+                    - img [ref=e197]
+                    - generic [ref=e200]: Complete data ownership
+          - generic [ref=e201]:
+            - generic [ref=e202]:
+              - img [ref=e204]
+              - heading "Remote Teams" [level=3] [ref=e207]
+            - generic [ref=e208]:
+              - generic [ref=e209]:
+                - paragraph [ref=e210]: "Your Challenge:"
+                - paragraph [ref=e211]: Scattered across Slack, Zoom, Trello, and email. Need everything in one place to stay aligned.
+              - generic [ref=e212]:
+                - paragraph [ref=e213]: "How We Help:"
+                - list [ref=e214]:
+                  - listitem [ref=e215]:
+                    - img [ref=e216]
+                    - generic [ref=e219]: Built-in video conferencing
+                  - listitem [ref=e220]:
+                    - img [ref=e221]
+                    - generic [ref=e224]: Real-time collaboration tools
+                  - listitem [ref=e225]:
+                    - img [ref=e226]
+                    - generic [ref=e229]: Unified communication hub
+        - generic [ref=e230]:
+          - paragraph [ref=e231]: Don't see yourself here? We work with all types of businesses.
+          - button "Book a Free Consultation" [ref=e232]
+      - generic [ref=e234]:
+        - generic [ref=e235]:
+          - heading "Introduction to AlphaClone Systems" [level=2] [ref=e236]
+          - paragraph [ref=e237]: Experience the world's most advanced Multi-Tenant Business OS through our interactive 10-minute platform tour. Unifying CRM, Projects, AI, and Security into one premium experience.
+        - generic [ref=e240]:
+          - img "The Problem & The Vision" [ref=e242]
+          - generic [ref=e245]:
+            - generic [ref=e246]:
+              - generic [ref=e247]: Vision
+              - generic [ref=e248]: Unified OS
+            - heading "The Problem & The Vision" [level=2] [ref=e249]
+            - paragraph [ref=e250]: In today's market, fragmentation is a silent productivity killer. AlphaClone unifies your entire operation.
+          - generic:
+            - generic: ">>> SYSTEM READY. STANDBY FOR MISSION BRIEF_"
+          - generic [ref=e254]:
+            - generic [ref=e255]:
+              - button [ref=e256]:
+                - img [ref=e257]
+              - button [ref=e259]:
+                - img [ref=e260]
+            - generic [ref=e263]:
+              - img [ref=e264] [cursor=pointer]
+              - img [ref=e268] [cursor=pointer]
+          - button [ref=e274]:
+            - img [ref=e275]
+        - generic [ref=e279]:
+          - generic [ref=e280]:
+            - img [ref=e282]
+            - heading "AI Studio" [level=4] [ref=e284]
+            - paragraph [ref=e285]: Autonomous agents and generative content engines integrated into every workflow.
+          - generic [ref=e286]:
+            - img [ref=e288]
+            - heading "SiteGuard" [level=4] [ref=e290]
+            - paragraph [ref=e291]: Enterprise-grade perimeter monitoring and isolated tenant data security.
+          - generic [ref=e292]:
+            - img [ref=e294]
+            - heading "Unified OS" [level=4] [ref=e297]
+            - paragraph [ref=e298]: One platform for your entire organization, globally accessible and infinitely scalable.
+      - generic [ref=e300]:
+        - generic [ref=e301]:
+          - heading "About AlphaClone Systems" [level=2] [ref=e302]
+          - paragraph [ref=e303]: We are custom development specialists who believe every business deserves technology built specifically for their unique challenges and opportunities.
+        - generic [ref=e304]:
+          - generic [ref=e305]:
+            - img [ref=e307]
+            - heading "Custom-First Approach" [level=3] [ref=e311]
+            - paragraph [ref=e312]: We reject templates and generic solutions. Every line of code is written specifically for your business requirements.
+          - generic [ref=e313]:
+            - img [ref=e315]
+            - heading "Rapid Custom Development" [level=3] [ref=e317]
+            - paragraph [ref=e318]: Our streamlined process delivers complex custom solutions in 14 days or less, faster than most companies can implement generic platforms.
+          - generic [ref=e319]:
+            - img [ref=e321]
+            - heading "Proven Track Record" [level=3] [ref=e324]
+            - paragraph [ref=e325]: Our custom solutions have helped businesses increase efficiency by 67%, reduce costs by 34%, and achieve measurable ROI within 90 days.
+      - generic [ref=e327]:
+        - generic [ref=e328]:
+          - heading "Core Platform Capabilities" [level=2] [ref=e329]
+          - paragraph [ref=e330]: Every system you need to scale, unified into one high-performance architecture.
+        - generic [ref=e331]:
+          - generic [ref=e332]:
+            - generic [ref=e333]:
+              - img [ref=e335]
+              - heading "AI Sales Agents" [level=3] [ref=e338]
+            - paragraph [ref=e339]: Capture, qualify, and convert leads 24/7 on autopilot.
+            - button "View Full Specifications" [ref=e340]:
+              - text: View Full Specifications
+              - img [ref=e342]
+          - generic [ref=e344]:
+            - generic [ref=e345]:
+              - img [ref=e347]
+              - heading "Enterprise CRM" [level=3] [ref=e351]
+            - paragraph [ref=e352]: Master your deal flow with high-performance tracking.
+            - button "View Full Specifications" [ref=e353]:
+              - text: View Full Specifications
+              - img [ref=e355]
+          - generic [ref=e357]:
+            - generic [ref=e358]:
+              - img [ref=e360]
+              - heading "Security Command" [level=3] [ref=e363]
+            - paragraph [ref=e364]: End-to-end encryption for all business operations.
+            - button "View Full Specifications" [ref=e365]:
+              - text: View Full Specifications
+              - img [ref=e367]
+          - generic [ref=e369]:
+            - generic [ref=e370]:
+              - img [ref=e372]
+              - heading "Mobile Companion" [level=3] [ref=e374]
+            - paragraph [ref=e375]: Manage your entire business from your pocket.
+            - button "View Full Specifications" [ref=e376]:
+              - text: View Full Specifications
+              - img [ref=e378]
+          - generic [ref=e380]:
+            - generic [ref=e381]:
+              - img [ref=e383]
+              - heading "Finance Hub" [level=3] [ref=e384]
+            - paragraph [ref=e385]: Automated billing and revenue reconcilliation.
+            - button "View Full Specifications" [ref=e386]:
+              - text: View Full Specifications
+              - img [ref=e388]
+          - generic [ref=e390]:
+            - generic [ref=e391]:
+              - img [ref=e393]
+              - heading "Contract Logic" [level=3] [ref=e397]
+            - paragraph [ref=e398]: Generate and sign legally sound agreements in seconds.
+            - button "View Full Specifications" [ref=e399]:
+              - text: View Full Specifications
+              - img [ref=e401]
+      - generic [ref=e405]:
+        - generic [ref=e406]:
+          - heading "Our Portfolio" [level=1] [ref=e407]
+          - paragraph [ref=e408]: Showcasing our finest work in web development, mobile apps, and AI solutions
+        - generic [ref=e409]:
+          - generic [ref=e410]:
+            - img [ref=e411]
+            - textbox "Search projects..." [ref=e414]
+          - generic [ref=e415]:
+            - button "All Projects (7)" [ref=e416]
+            - button "Websites (6)" [ref=e417]
+            - button "Mobile Apps (0)" [ref=e418]
+            - button "AI Projects (0)" [ref=e419]
+        - generic [ref=e420]:
+          - generic [ref=e421]:
+            - img "BN" [ref=e423]
+            - generic [ref=e424]:
+              - heading "BN" [level=3] [ref=e426]
+              - paragraph [ref=e427]: E\\WSZDXFGCHVJBK
+              - generic [ref=e428]:
+                - img [ref=e429]
+                - generic [ref=e432]: XFCGHVJB
+          - generic [ref=e433]:
+            - img "Movana" [ref=e435]
+            - generic [ref=e436]:
+              - generic [ref=e437]:
+                - heading "Movana" [level=3] [ref=e438]
+                - link "Visit website" [ref=e439] [cursor=pointer]:
+                  - /url: https://movana.com/
+                  - img [ref=e440]
+              - paragraph [ref=e444]: Professional corporate website with elegant design and smooth user experience.
+              - generic [ref=e445]:
+                - img [ref=e446]
+                - generic [ref=e449]: Business Website
+          - generic [ref=e450]:
+            - img "Cozy Haven" [ref=e452]
+            - generic [ref=e453]:
+              - generic [ref=e454]:
+                - heading "Cozy Haven" [level=3] [ref=e455]
+                - link "Visit website" [ref=e456] [cursor=pointer]:
+                  - /url: https://cozyhaven.co.uk/
+                  - img [ref=e457]
+              - paragraph [ref=e461]: Cozy home decor e-commerce store with intuitive product browsing and checkout.
+              - generic [ref=e462]:
+                - img [ref=e463]
+                - generic [ref=e466]: E-Commerce Website
+          - generic [ref=e467]:
+            - img "Yakazuma Store" [ref=e469]
+            - generic [ref=e470]:
+              - generic [ref=e471]:
+                - heading "Yakazuma Store" [level=3] [ref=e472]
+                - link "Visit website" [ref=e473] [cursor=pointer]:
+                  - /url: https://yakazuma.store/
+                  - img [ref=e474]
+              - paragraph [ref=e478]: Modern e-commerce platform with seamless shopping experience and secure payment integration.
+              - generic [ref=e479]:
+                - img [ref=e480]
+                - generic [ref=e483]: E-Commerce Website
+          - generic [ref=e484]:
+            - img "Szymon Masaż" [ref=e486]
+            - generic [ref=e487]:
+              - generic [ref=e488]:
+                - heading "Szymon Masaż" [level=3] [ref=e489]
+                - link "Visit website" [ref=e490] [cursor=pointer]:
+                  - /url: https://szymon-masaz.pl/
+                  - img [ref=e491]
+              - paragraph [ref=e495]: Professional massage therapy website with online booking and service showcase.
+              - generic [ref=e496]:
+                - img [ref=e497]
+                - generic [ref=e500]: Service Website
+          - generic [ref=e501]:
+            - img "Empowerement" [ref=e503]
+            - generic [ref=e504]:
+              - generic [ref=e505]:
+                - heading "Empowerement" [level=3] [ref=e506]
+                - link "Visit website" [ref=e507] [cursor=pointer]:
+                  - /url: https://empowerement.co.uk/
+                  - img [ref=e508]
+              - paragraph [ref=e512]: Empowerment coaching platform with modern design and engaging user experience.
+              - generic [ref=e513]:
+                - img [ref=e514]
+                - generic [ref=e517]: Business Website
+          - generic [ref=e518]:
+            - img "Lunar Antiques" [ref=e520]
+            - generic [ref=e521]:
+              - generic [ref=e522]:
+                - heading "Lunar Antiques" [level=3] [ref=e523]
+                - link "Visit website" [ref=e524] [cursor=pointer]:
+                  - /url: https://lunarantiques.co.uk/
+                  - img [ref=e525]
+              - paragraph [ref=e529]: Elegant antiques marketplace featuring vintage collections and secure transactions.
+              - generic [ref=e530]:
+                - img [ref=e531]
+                - generic [ref=e534]: E-Commerce Website
+      - generic [ref=e537]:
+        - generic [ref=e538]:
+          - generic:
+            - img
+          - generic [ref=e540]:
+            - generic: Poland
+          - generic [ref=e544]:
+            - generic: Zimbabwe
+          - generic [ref=e548]:
+            - generic: USA
+          - generic [ref=e552]:
+            - generic: UK
+          - generic [ref=e556]:
+            - generic: India
+          - generic [ref=e560]:
+            - generic: Singapore
+          - generic [ref=e563]:
+            - generic [ref=e564]:
+              - generic [ref=e565]: Global Infrastructure
+              - generic [ref=e566]:
+                - text: 20+
+                - generic [ref=e567]: Countries Served
+            - generic [ref=e573]: "+50"
+        - generic [ref=e574]:
+          - generic [ref=e575]:
+            - generic [ref=e576]: 18-Day
+            - generic [ref=e577]: Delivery Guarantee*
+            - generic [ref=e578]: "*18% discount if we delay"
+          - generic [ref=e579]:
+            - generic [ref=e580]: 100%
+            - generic [ref=e581]: Custom Built
+            - generic [ref=e582]: No templates used
+          - generic [ref=e583]:
+            - generic [ref=e584]: 24/7
+            - generic [ref=e585]: Support Available
+            - generic [ref=e586]: Dedicated team
+          - generic [ref=e587]:
+            - generic [ref=e588]: 90+
+            - generic [ref=e589]: PageSpeed Score
+            - generic [ref=e590]: Performance optimized
+      - generic [ref=e592]:
+        - heading "Verified Professional Team" [level=2] [ref=e593]
+        - paragraph [ref=e594]: Our developers are verified professionals on leading freelance platforms.
+        - generic [ref=e595]:
+          - generic [ref=e596]:
+            - img [ref=e597]
+            - generic [ref=e600]:
+              - generic [ref=e601]: Braintrust
+              - generic [ref=e602]: Verified Freelancers
+          - generic [ref=e603]:
+            - img [ref=e604]
+            - generic [ref=e607]:
+              - generic [ref=e608]: Arc.dev
+              - generic [ref=e609]: Top 3% Developers
+      - generic [ref=e612]:
+        - generic [ref=e613]:
+          - heading "Simple, Transparent Pricing" [level=2] [ref=e614]
+          - paragraph [ref=e615]: Scale your business with an operating system that grows with you. No hidden fees, no per-seat charges.
+        - generic [ref=e616]:
+          - generic [ref=e617]:
+            - generic [ref=e619]:
+              - heading "Starter" [level=3] [ref=e620]
+              - paragraph [ref=e621]: Best for solo founders & small teams.
+            - generic [ref=e622]:
+              - generic [ref=e623]: $16
+              - generic [ref=e624]: /mo
+            - list [ref=e625]:
+              - listitem [ref=e626]:
+                - img [ref=e627]
+                - text: 5 Multi-tenant Users
+              - listitem [ref=e630]:
+                - img [ref=e631]
+                - text: Core CRM Pipeline
+              - listitem [ref=e634]:
+                - img [ref=e635]
+                - text: 5GB Secure Storage
+              - listitem [ref=e638]:
+                - img [ref=e639]
+                - text: Standard Project MGMT
+              - listitem [ref=e642]:
+                - img [ref=e643]
+                - text: 2 Video Meetings/Mo
+            - button "Start Free Trial" [ref=e646]
+          - generic [ref=e647]:
+            - generic [ref=e648]: Most Popular
+            - generic [ref=e649]:
+              - heading "Professional" [level=3] [ref=e650]
+              - paragraph [ref=e651]: The power of AlphaClone Business OS.
+            - generic [ref=e652]:
+              - generic [ref=e653]: $48
+              - generic [ref=e654]: /mo
+            - list [ref=e655]:
+              - listitem [ref=e656]:
+                - img [ref=e657]
+                - text: 25 Multi-tenant Users
+              - listitem [ref=e660]:
+                - img [ref=e661]
+                - text: Infinite CRM Pipelines
+              - listitem [ref=e664]:
+                - img [ref=e665]
+                - text: AI Sales Automation
+              - listitem [ref=e668]:
+                - img [ref=e669]
+                - text: 25GB Secure Storage
+              - listitem [ref=e672]:
+                - img [ref=e673]
+                - text: Priority Meeting Support
+              - listitem [ref=e676]:
+                - img [ref=e677]
+                - text: Custom Branding
+            - button "Start Growth Trial" [ref=e680]
+          - generic [ref=e681]:
+            - generic [ref=e683]:
+              - heading "Enterprise" [level=3] [ref=e684]
+              - paragraph [ref=e685]: Total scale and custom infrastructure.
+            - generic [ref=e686]:
+              - generic [ref=e687]: $299
+              - generic [ref=e688]: /mo
+            - list [ref=e689]:
+              - listitem [ref=e690]:
+                - img [ref=e691]
+                - text: Unlimited Users
+              - listitem [ref=e694]:
+                - img [ref=e695]
+                - text: Dedicated DB Instance
+              - listitem [ref=e698]:
+                - img [ref=e699]
+                - text: White-labeled Ecosystem
+              - listitem [ref=e702]:
+                - img [ref=e703]
+                - text: API Access
+              - listitem [ref=e706]:
+                - img [ref=e707]
+                - text: 24/7 Priority Engineer
+              - listitem [ref=e710]:
+                - img [ref=e711]
+                - text: On-premise Options
+            - button "Contact Sales" [ref=e714]
+      - generic [ref=e717]:
+        - generic [ref=e718]:
+          - heading "Start Your Custom Project" [level=2] [ref=e719]
+          - paragraph [ref=e720]: Ready to build something extraordinary? Whether you need a complete digital transformation or a specific custom tool, our team is ready to architect your solution.
+          - generic [ref=e721]:
+            - generic [ref=e722]:
+              - img [ref=e724]
+              - generic [ref=e727]:
+                - heading "Email Us" [level=4] [ref=e728]
+                - link "info@alphaclone.tech" [ref=e729] [cursor=pointer]:
+                  - /url: mailto:info@alphaclone.tech
+            - generic [ref=e730]:
+              - img [ref=e732]
+              - generic [ref=e734]:
+                - heading "Phone" [level=4] [ref=e735]
+                - link "+48 517 809 674" [ref=e736] [cursor=pointer]:
+                  - /url: tel:+48517809674
+            - generic [ref=e737]:
+              - img [ref=e739]
+              - generic [ref=e742]:
+                - heading "Global Operations" [level=4] [ref=e743]
+                - paragraph [ref=e744]: Worldwide Remote
+        - generic [ref=e746]:
+          - heading "Book a Consultation" [level=3] [ref=e747]
+          - generic [ref=e749]:
+            - generic [ref=e750]:
+              - heading "Schedule Directly" [level=4] [ref=e751]
+              - paragraph [ref=e752]: Pick a time that works for you via Calendly.
+            - button "Book Meeting" [ref=e753]
+          - generic [ref=e758]: Or send us a message
+          - generic [ref=e759]:
+            - generic [ref=e760]:
+              - generic [ref=e761]:
+                - generic [ref=e762]: Name
+                - textbox "John Doe" [ref=e763]
+              - generic [ref=e764]:
+                - generic [ref=e765]: Email
+                - textbox "john@company.com" [ref=e766]
+            - generic [ref=e767]:
+              - generic [ref=e768]: Project Type
+              - textbox "Web Dev, AI, Mobile App..." [ref=e769]
+            - generic [ref=e770]:
+              - generic [ref=e771]: Message
+              - textbox "Tell us about your requirements..." [ref=e772]
+            - button "Send Message" [ref=e773]
+      - generic [ref=e776]:
+        - generic [ref=e777]:
+          - generic [ref=e778]: 50+ Projects Delivered
+          - generic [ref=e780]: 20+ Different Countries
+          - generic [ref=e782]: Enterprise Grade Security
+          - generic [ref=e784]: AI-Powered Solutions
+          - generic [ref=e786]: Scalable Architecture
+          - generic [ref=e788]: 24/7 Global Support
+        - generic [ref=e790]:
+          - generic [ref=e791]: 50+ Projects Delivered
+          - generic [ref=e793]: 20+ Different Countries
+          - generic [ref=e795]: Enterprise Grade Security
+          - generic [ref=e797]: AI-Powered Solutions
+          - generic [ref=e799]: Scalable Architecture
+          - generic [ref=e801]: 24/7 Global Support
+        - generic [ref=e803]:
+          - generic [ref=e804]: 50+ Projects Delivered
+          - generic [ref=e806]: 20+ Different Countries
+          - generic [ref=e808]: Enterprise Grade Security
+          - generic [ref=e810]: AI-Powered Solutions
+          - generic [ref=e812]: Scalable Architecture
+          - generic [ref=e814]: 24/7 Global Support
+      - generic [ref=e817]:
+        - generic [ref=e818]:
+          - generic [ref=e819]:
+            - generic [ref=e821]: AlphaClone
+            - paragraph [ref=e822]: Custom development solutions built for success. Specializing in high-performance web, mobile, and AI applications.
+          - generic [ref=e823]:
+            - heading "Services" [level=4] [ref=e824]
+            - list [ref=e825]:
+              - listitem [ref=e826]:
+                - button "Web Development" [ref=e827]
+              - listitem [ref=e828]:
+                - button "Mobile Apps" [ref=e829]
+              - listitem [ref=e830]:
+                - button "AI Solutions" [ref=e831]
+              - listitem [ref=e832]:
+                - button "Dashboards" [ref=e833]
+          - generic [ref=e834]:
+            - heading "Company" [level=4] [ref=e835]
+            - list [ref=e836]:
+              - listitem [ref=e837]:
+                - button "About Us" [ref=e838]
+              - listitem [ref=e839]:
+                - button "Portfolio" [ref=e840]
+              - listitem [ref=e841]:
+                - button "Contact" [ref=e842]
+              - listitem [ref=e843]:
+                - link "Platform Guide" [ref=e844] [cursor=pointer]:
+                  - /url: /guide
+          - generic [ref=e845]:
+            - heading "Legal" [level=4] [ref=e846]
+            - list [ref=e847]:
+              - listitem [ref=e848]:
+                - link "Privacy Policy" [ref=e849] [cursor=pointer]:
+                  - /url: /privacy-policy
+              - listitem [ref=e850]:
+                - link "Terms of Service" [ref=e851] [cursor=pointer]:
+                  - /url: /terms-of-service
+              - listitem [ref=e852]:
+                - link "Cookie Policy" [ref=e853] [cursor=pointer]:
+                  - /url: /cookie-policy
+        - generic [ref=e854]:
+          - generic [ref=e856]: Secure & Compliant
+          - paragraph [ref=e857]: © 2026 AlphaClone Systems. All rights reserved.
+  - button "Open Next.js Dev Tools" [ref=e863] [cursor=pointer]:
+    - generic [ref=e866]:
+      - text: Compiling
+      - generic [ref=e867]:
+        - generic [ref=e868]: .
+        - generic [ref=e869]: .
+        - generic [ref=e870]: .
+  - alert [ref=e871]
+```
