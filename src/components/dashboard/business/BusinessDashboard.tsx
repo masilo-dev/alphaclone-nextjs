@@ -45,7 +45,7 @@ interface BusinessDashboardProps {
 }
 
 const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, activeTab, setActiveTab }) => {
-    const { currentTenant } = useTenant();
+    const { currentTenant, isLoading: tenantLoading } = useTenant();
     const [sidebarOpen, setSidebarOpen] = useState(() => {
         if (typeof window !== 'undefined') {
             return window.innerWidth >= 768;
@@ -261,6 +261,37 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
         { label: 'Finance', href: '/dashboard/business/billing', icon: CreditCard },
         { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },
     ];
+
+    // Show loading state while tenant context initializes
+    if (tenantLoading) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-slate-950">
+                <div id="main-content" className="text-center">
+                    <div className="text-slate-400 text-lg">Loading your workspace...</div>
+                </div>
+            </div>
+        );
+    }
+
+    // Show error state if no tenant after loading completes
+    if (!currentTenant) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-slate-950">
+                <div id="main-content" className="text-center max-w-md p-8">
+                    <div className="text-slate-300 text-xl mb-4">No Organization Found</div>
+                    <div className="text-slate-400 mb-6">
+                        Unable to load your organization. This may be a temporary issue.
+                    </div>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex h-screen bg-slate-950 text-white overflow-hidden font-sans selection:bg-teal-500/30 w-full max-w-full">

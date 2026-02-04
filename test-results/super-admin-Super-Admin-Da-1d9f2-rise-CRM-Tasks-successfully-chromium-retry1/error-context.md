@@ -1,0 +1,495 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - heading "Welcome to AlphaClone Systems" [level=3] [ref=e7]
+        - button [ref=e8]:
+          - img [ref=e9]
+      - generic [ref=e13]:
+        - img [ref=e15]
+        - generic [ref=e18]:
+          - heading "Secure Environment Initialized" [level=3] [ref=e19]
+          - paragraph [ref=e20]: Welcome back, Alpha Admin. Your session is protected by enterprise-grade encryption.
+        - generic [ref=e21]:
+          - generic [ref=e22]:
+            - img [ref=e23]
+            - generic [ref=e26]:
+              - paragraph [ref=e27]: E2E Encrypted
+              - paragraph [ref=e28]: All data transfers are secured
+          - generic [ref=e29]:
+            - img [ref=e30]
+            - generic [ref=e32]:
+              - paragraph [ref=e33]: System Healthy
+              - paragraph [ref=e34]: Optimal performance active
+        - button "Enter Dashboard" [ref=e36]
+    - generic [ref=e39]:
+      - generic [ref=e40]:
+        - heading [level=3]
+        - button [ref=e41]:
+          - img [ref=e42]
+      - generic [ref=e46]:
+        - generic [ref=e48]:
+          - generic [ref=e49]: Step 1 of 4
+          - button "Skip onboarding" [ref=e50]:
+            - img [ref=e51]
+        - generic [ref=e56]:
+          - img [ref=e58]
+          - generic [ref=e61]:
+            - heading "Welcome, Alpha Admin!" [level=3] [ref=e62]
+            - paragraph [ref=e63]: Let's get you set up in just a few steps. This will only take 2 minutes.
+        - generic [ref=e69]:
+          - button "Skip Onboarding" [ref=e70]
+          - button "Next" [ref=e72]:
+            - text: Next
+            - img [ref=e73]
+    - complementary [ref=e75]:
+      - generic [ref=e77]:
+        - img "AlphaClone Logo" [ref=e78]
+        - generic [ref=e79]: AlphaClone
+      - navigation [ref=e80]:
+        - button "Platform Command" [ref=e82]:
+          - img [ref=e83]
+          - generic [ref=e88]: Platform Command
+        - button "Command Center" [ref=e90]:
+          - img [ref=e92]
+          - generic [ref=e97]: Command Center
+        - button "Live Operations" [ref=e99]:
+          - img [ref=e100]
+          - generic [ref=e102]: Live Operations
+        - generic [ref=e103]:
+          - button "Client Management" [ref=e104]:
+            - img [ref=e105]
+            - generic [ref=e110]: Client Management
+            - img [ref=e111]
+          - generic [ref=e113]:
+            - button "CRM / All Clients" [ref=e114]
+            - button "Sales Agent / Leads" [ref=e115]
+            - button "Active Projects" [ref=e116]
+            - button "Onboarding Pipelines" [ref=e117]
+        - generic [ref=e118]:
+          - button "Communication" [ref=e119]:
+            - img [ref=e120]
+            - generic [ref=e122]: Communication
+            - img [ref=e123]
+          - generic [ref=e125]:
+            - button "Inbox" [ref=e126]
+            - button "Meetings" [ref=e127]
+            - button "Calendar" [ref=e128]
+        - generic [ref=e129]:
+          - button "Studio Mgmt" [ref=e130]:
+            - img [ref=e131]
+            - generic [ref=e135]: Studio Mgmt
+            - img [ref=e136]
+          - generic [ref=e138]:
+            - button "SEO Articles" [ref=e139]
+            - button "Portfolio Editor" [ref=e140]
+            - button "Resource Allocation" [ref=e141]
+            - button "Improvements" [ref=e142]
+        - generic [ref=e143]:
+          - button "Enterprise CRM" [ref=e144]:
+            - img [ref=e145]
+            - generic [ref=e148]: Enterprise CRM
+            - img [ref=e149]
+          - generic [ref=e151]:
+            - button "Tasks" [ref=e152]
+            - button "Deals Pipeline" [ref=e153]
+            - button "Quotes & Proposals" [ref=e154]
+            - button "Sales Forecast" [ref=e155]
+        - button "Contracts" [ref=e157]:
+          - img [ref=e158]
+          - generic [ref=e161]: Contracts
+        - button "Financials" [ref=e163]:
+          - img [ref=e164]
+          - generic [ref=e166]: Financials
+        - button "Security (SIEM)" [ref=e168]:
+          - img [ref=e169]
+          - generic [ref=e172]: Security (SIEM)
+      - button "Log Out" [ref=e174]:
+        - img [ref=e175]
+        - generic [ref=e178]: Log Out
+    - generic [ref=e179]:
+      - banner [ref=e180]:
+        - generic [ref=e181]:
+          - button "Toggle sidebar" [ref=e183]:
+            - img [ref=e184]
+          - generic [ref=e185]:
+            - button "AlphaClone Search... ⌘K" [ref=e186]:
+              - img "AlphaClone" [ref=e187]
+              - generic [ref=e188]: Search...
+              - generic [ref=e189]: ⌘K
+            - generic [ref=e190]:
+              - button "Light mode" [ref=e191]:
+                - img [ref=e192]
+              - button "Dark mode" [ref=e198]:
+                - img [ref=e199]
+              - button "Auto (system)" [ref=e201]:
+                - img [ref=e202]
+            - button [ref=e205]:
+              - img [ref=e206]
+      - main [ref=e209]:
+        - generic [ref=e212]:
+          - generic [ref=e214]:
+            - heading "Command Center" [level=1] [ref=e215]
+            - paragraph [ref=e216]: Welcome back, Alpha Admin.
+          - generic [ref=e217]:
+            - generic [ref=e218]:
+              - img [ref=e221]
+              - generic [ref=e226]: "18"
+              - generic [ref=e227]: Total Clients
+            - generic [ref=e228]:
+              - img [ref=e231]
+              - generic [ref=e234]: "2"
+              - generic [ref=e235]: Active Projects
+            - generic [ref=e236]:
+              - img [ref=e239]
+              - generic [ref=e241]: $0
+              - generic [ref=e242]: Total Revenue
+            - generic [ref=e243]:
+              - img [ref=e246]
+              - generic [ref=e248]: "2"
+              - generic [ref=e249]: Pending Requests
+          - generic [ref=e251]:
+            - heading "Global Project Overview" [level=3] [ref=e253]
+            - table [ref=e256]:
+              - rowgroup [ref=e257]:
+                - row "Project Name Status Stage Completion" [ref=e258]:
+                  - columnheader "Project Name" [ref=e259]
+                  - columnheader "Status" [ref=e260]
+                  - columnheader "Stage" [ref=e261]
+                  - columnheader "Completion" [ref=e262]
+              - rowgroup [ref=e263]:
+                - row "ghgh ghgh shoe cleaning Pending Discovery 0%" [ref=e264] [cursor=pointer]:
+                  - cell "ghgh ghgh shoe cleaning" [ref=e265]:
+                    - generic [ref=e266]:
+                      - img "ghgh" [ref=e268]
+                      - generic [ref=e269]:
+                        - generic [ref=e270]: ghgh
+                        - generic [ref=e271]: shoe cleaning
+                  - cell "Pending" [ref=e272]:
+                    - generic [ref=e273]: Pending
+                  - cell "Discovery" [ref=e274]:
+                    - combobox [ref=e275]:
+                      - option "Discovery" [selected]
+                      - option "Design"
+                      - option "Development"
+                      - option "Testing"
+                      - option "Deployment"
+                      - option "Maintenance"
+                  - cell "0%" [ref=e276]:
+                    - generic [ref=e278]: 0%
+                - row "makreting site makreting site web Active Development 60%" [ref=e279] [cursor=pointer]:
+                  - cell "makreting site makreting site web" [ref=e280]:
+                    - generic [ref=e281]:
+                      - img "makreting site" [ref=e283]
+                      - generic [ref=e284]:
+                        - generic [ref=e285]: makreting site
+                        - generic [ref=e286]: web
+                  - cell "Active" [ref=e287]:
+                    - generic [ref=e288]: Active
+                  - cell "Development" [ref=e289]:
+                    - combobox [ref=e290]:
+                      - option "Discovery"
+                      - option "Design"
+                      - option "Development" [selected]
+                      - option "Testing"
+                      - option "Deployment"
+                      - option "Maintenance"
+                  - cell "60%" [ref=e291]:
+                    - generic [ref=e294]: 60%
+                - row "vvh vvh cgg Pending Discovery 0%" [ref=e295] [cursor=pointer]:
+                  - cell "vvh vvh cgg" [ref=e296]:
+                    - generic [ref=e297]:
+                      - img "vvh" [ref=e299]
+                      - generic [ref=e300]:
+                        - generic [ref=e301]: vvh
+                        - generic [ref=e302]: cgg
+                  - cell "Pending" [ref=e303]:
+                    - generic [ref=e304]: Pending
+                  - cell "Discovery" [ref=e305]:
+                    - combobox [ref=e306]:
+                      - option "Discovery" [selected]
+                      - option "Design"
+                      - option "Development"
+                      - option "Testing"
+                      - option "Deployment"
+                      - option "Maintenance"
+                  - cell "0%" [ref=e307]:
+                    - generic [ref=e309]: 0%
+                - row "BN BN XFCGHVJB Active Discovery 10%" [ref=e310] [cursor=pointer]:
+                  - cell "BN BN XFCGHVJB" [ref=e311]:
+                    - generic [ref=e312]:
+                      - img "BN" [ref=e314]
+                      - generic [ref=e315]:
+                        - generic [ref=e316]: BN
+                        - generic [ref=e317]: XFCGHVJB
+                  - cell "Active" [ref=e318]:
+                    - generic [ref=e319]: Active
+                  - cell "Discovery" [ref=e320]:
+                    - combobox [ref=e321]:
+                      - option "Discovery" [selected]
+                      - option "Design"
+                      - option "Development"
+                      - option "Testing"
+                      - option "Deployment"
+                      - option "Maintenance"
+                  - cell "10%" [ref=e322]:
+                    - generic [ref=e325]: 10%
+                - row "dtkhk dtkhk dghfxhfn Completed Maintenance 100%" [ref=e326] [cursor=pointer]:
+                  - cell "dtkhk dtkhk dghfxhfn" [ref=e327]:
+                    - generic [ref=e328]:
+                      - img "dtkhk" [ref=e330]
+                      - generic [ref=e331]:
+                        - generic [ref=e332]: dtkhk
+                        - generic [ref=e333]: dghfxhfn
+                  - cell "Completed" [ref=e334]:
+                    - generic [ref=e335]: Completed
+                  - cell "Maintenance" [ref=e336]:
+                    - combobox [ref=e337]:
+                      - option "Discovery"
+                      - option "Design"
+                      - option "Development"
+                      - option "Testing"
+                      - option "Deployment"
+                      - option "Maintenance" [selected]
+                  - cell "100%" [ref=e338]:
+                    - generic [ref=e341]: 100%
+                - row "Szymon Masaż Szymon Masaż Service Website Completed Deployment 100%" [ref=e342] [cursor=pointer]:
+                  - cell "Szymon Masaż Szymon Masaż Service Website" [ref=e343]:
+                    - generic [ref=e344]:
+                      - img "Szymon Masaż" [ref=e346]
+                      - generic [ref=e347]:
+                        - generic [ref=e348]: Szymon Masaż
+                        - generic [ref=e349]: Service Website
+                  - cell "Completed" [ref=e350]:
+                    - generic [ref=e351]: Completed
+                  - cell "Deployment" [ref=e352]:
+                    - combobox [ref=e353]:
+                      - option "Discovery"
+                      - option "Design"
+                      - option "Development"
+                      - option "Testing"
+                      - option "Deployment" [selected]
+                      - option "Maintenance"
+                  - cell "100%" [ref=e354]:
+                    - generic [ref=e357]: 100%
+                - row "Cozy Haven Cozy Haven E-Commerce Website Completed Maintenance 100%" [ref=e358] [cursor=pointer]:
+                  - cell "Cozy Haven Cozy Haven E-Commerce Website" [ref=e359]:
+                    - generic [ref=e360]:
+                      - img "Cozy Haven" [ref=e362]
+                      - generic [ref=e363]:
+                        - generic [ref=e364]: Cozy Haven
+                        - generic [ref=e365]: E-Commerce Website
+                  - cell "Completed" [ref=e366]:
+                    - generic [ref=e367]: Completed
+                  - cell "Maintenance" [ref=e368]:
+                    - combobox [ref=e369]:
+                      - option "Discovery"
+                      - option "Design"
+                      - option "Development"
+                      - option "Testing"
+                      - option "Deployment"
+                      - option "Maintenance" [selected]
+                  - cell "100%" [ref=e370]:
+                    - generic [ref=e373]: 100%
+                - row "Lunar Antiques Lunar Antiques E-Commerce Website Completed Deployment 100%" [ref=e374] [cursor=pointer]:
+                  - cell "Lunar Antiques Lunar Antiques E-Commerce Website" [ref=e375]:
+                    - generic [ref=e376]:
+                      - img "Lunar Antiques" [ref=e378]
+                      - generic [ref=e379]:
+                        - generic [ref=e380]: Lunar Antiques
+                        - generic [ref=e381]: E-Commerce Website
+                  - cell "Completed" [ref=e382]:
+                    - generic [ref=e383]: Completed
+                  - cell "Deployment" [ref=e384]:
+                    - combobox [ref=e385]:
+                      - option "Discovery"
+                      - option "Design"
+                      - option "Development"
+                      - option "Testing"
+                      - option "Deployment" [selected]
+                      - option "Maintenance"
+                  - cell "100%" [ref=e386]:
+                    - generic [ref=e389]: 100%
+                - row "Empowerement Empowerement Business Website Completed Deployment 100%" [ref=e390] [cursor=pointer]:
+                  - cell "Empowerement Empowerement Business Website" [ref=e391]:
+                    - generic [ref=e392]:
+                      - img "Empowerement" [ref=e394]
+                      - generic [ref=e395]:
+                        - generic [ref=e396]: Empowerement
+                        - generic [ref=e397]: Business Website
+                  - cell "Completed" [ref=e398]:
+                    - generic [ref=e399]: Completed
+                  - cell "Deployment" [ref=e400]:
+                    - combobox [ref=e401]:
+                      - option "Discovery"
+                      - option "Design"
+                      - option "Development"
+                      - option "Testing"
+                      - option "Deployment" [selected]
+                      - option "Maintenance"
+                  - cell "100%" [ref=e402]:
+                    - generic [ref=e405]: 100%
+                - row "Yakazuma Store Yakazuma Store E-Commerce Website Completed Maintenance 100%" [ref=e406] [cursor=pointer]:
+                  - cell "Yakazuma Store Yakazuma Store E-Commerce Website" [ref=e407]:
+                    - generic [ref=e408]:
+                      - img "Yakazuma Store" [ref=e410]
+                      - generic [ref=e411]:
+                        - generic [ref=e412]: Yakazuma Store
+                        - generic [ref=e413]: E-Commerce Website
+                  - cell "Completed" [ref=e414]:
+                    - generic [ref=e415]: Completed
+                  - cell "Maintenance" [ref=e416]:
+                    - combobox [ref=e417]:
+                      - option "Discovery"
+                      - option "Design"
+                      - option "Development"
+                      - option "Testing"
+                      - option "Deployment"
+                      - option "Maintenance" [selected]
+                  - cell "100%" [ref=e418]:
+                    - generic [ref=e421]: 100%
+                - row "Movana Movana Business Website Completed Maintenance 100%" [ref=e422] [cursor=pointer]:
+                  - cell "Movana Movana Business Website" [ref=e423]:
+                    - generic [ref=e424]:
+                      - img "Movana" [ref=e426]
+                      - generic [ref=e427]:
+                        - generic [ref=e428]: Movana
+                        - generic [ref=e429]: Business Website
+                  - cell "Completed" [ref=e430]:
+                    - generic [ref=e431]: Completed
+                  - cell "Maintenance" [ref=e432]:
+                    - combobox [ref=e433]:
+                      - option "Discovery"
+                      - option "Design"
+                      - option "Development"
+                      - option "Testing"
+                      - option "Deployment"
+                      - option "Maintenance" [selected]
+                  - cell "100%" [ref=e434]:
+                    - generic [ref=e437]: 100%
+                - row "CozyHaven CozyHaven Real Estate Website Completed Maintenance 100%" [ref=e438] [cursor=pointer]:
+                  - cell "CozyHaven CozyHaven Real Estate Website" [ref=e439]:
+                    - generic [ref=e440]:
+                      - img "CozyHaven" [ref=e442]
+                      - generic [ref=e443]:
+                        - generic [ref=e444]: CozyHaven
+                        - generic [ref=e445]: Real Estate Website
+                  - cell "Completed" [ref=e446]:
+                    - generic [ref=e447]: Completed
+                  - cell "Maintenance" [ref=e448]:
+                    - combobox [ref=e449]:
+                      - option "Discovery"
+                      - option "Design"
+                      - option "Development"
+                      - option "Testing"
+                      - option "Deployment"
+                      - option "Maintenance" [selected]
+                  - cell "100%" [ref=e450]:
+                    - generic [ref=e453]: 100%
+                - row "Yakazuma Store Yakazuma Store E-commerce Website Completed Maintenance 100%" [ref=e454] [cursor=pointer]:
+                  - cell "Yakazuma Store Yakazuma Store E-commerce Website" [ref=e455]:
+                    - generic [ref=e456]:
+                      - img "Yakazuma Store" [ref=e458]
+                      - generic [ref=e459]:
+                        - generic [ref=e460]: Yakazuma Store
+                        - generic [ref=e461]: E-commerce Website
+                  - cell "Completed" [ref=e462]:
+                    - generic [ref=e463]: Completed
+                  - cell "Maintenance" [ref=e464]:
+                    - combobox [ref=e465]:
+                      - option "Discovery"
+                      - option "Design"
+                      - option "Development"
+                      - option "Testing"
+                      - option "Deployment"
+                      - option "Maintenance" [selected]
+                  - cell "100%" [ref=e466]:
+                    - generic [ref=e469]: 100%
+                - row "Wellness Hub Wellness Hub Mobile App Completed Maintenance 100%" [ref=e470] [cursor=pointer]:
+                  - cell "Wellness Hub Wellness Hub Mobile App" [ref=e471]:
+                    - generic [ref=e472]:
+                      - img "Wellness Hub" [ref=e474]
+                      - generic [ref=e475]:
+                        - generic [ref=e476]: Wellness Hub
+                        - generic [ref=e477]: Mobile App
+                  - cell "Completed" [ref=e478]:
+                    - generic [ref=e479]: Completed
+                  - cell "Maintenance" [ref=e480]:
+                    - combobox [ref=e481]:
+                      - option "Discovery"
+                      - option "Design"
+                      - option "Development"
+                      - option "Testing"
+                      - option "Deployment"
+                      - option "Maintenance" [selected]
+                  - cell "100%" [ref=e482]:
+                    - generic [ref=e485]: 100%
+                - row "AI Assistant Pro AI Assistant Pro AI Application Completed Maintenance 100%" [ref=e486] [cursor=pointer]:
+                  - cell "AI Assistant Pro AI Assistant Pro AI Application" [ref=e487]:
+                    - generic [ref=e488]:
+                      - img "AI Assistant Pro" [ref=e490]
+                      - generic [ref=e491]:
+                        - generic [ref=e492]: AI Assistant Pro
+                        - generic [ref=e493]: AI Application
+                  - cell "Completed" [ref=e494]:
+                    - generic [ref=e495]: Completed
+                  - cell "Maintenance" [ref=e496]:
+                    - combobox [ref=e497]:
+                      - option "Discovery"
+                      - option "Design"
+                      - option "Development"
+                      - option "Testing"
+                      - option "Deployment"
+                      - option "Maintenance" [selected]
+                  - cell "100%" [ref=e498]:
+                    - generic [ref=e501]: 100%
+                - row "Movana Movana Corporate Website Completed Maintenance 100%" [ref=e502] [cursor=pointer]:
+                  - cell "Movana Movana Corporate Website" [ref=e503]:
+                    - generic [ref=e504]:
+                      - img "Movana" [ref=e506]
+                      - generic [ref=e507]:
+                        - generic [ref=e508]: Movana
+                        - generic [ref=e509]: Corporate Website
+                  - cell "Completed" [ref=e510]:
+                    - generic [ref=e511]: Completed
+                  - cell "Maintenance" [ref=e512]:
+                    - combobox [ref=e513]:
+                      - option "Discovery"
+                      - option "Design"
+                      - option "Development"
+                      - option "Testing"
+                      - option "Deployment"
+                      - option "Maintenance" [selected]
+                  - cell "100%" [ref=e514]:
+                    - generic [ref=e517]: 100%
+                - row "TechFlow Solutions TechFlow Solutions SaaS Platform Completed Maintenance 100%" [ref=e518] [cursor=pointer]:
+                  - cell "TechFlow Solutions TechFlow Solutions SaaS Platform" [ref=e519]:
+                    - generic [ref=e520]:
+                      - img "TechFlow Solutions" [ref=e522]
+                      - generic [ref=e523]:
+                        - generic [ref=e524]: TechFlow Solutions
+                        - generic [ref=e525]: SaaS Platform
+                  - cell "Completed" [ref=e526]:
+                    - generic [ref=e527]: Completed
+                  - cell "Maintenance" [ref=e528]:
+                    - combobox [ref=e529]:
+                      - option "Discovery"
+                      - option "Design"
+                      - option "Development"
+                      - option "Testing"
+                      - option "Deployment"
+                      - option "Maintenance" [selected]
+                  - cell "100%" [ref=e530]:
+                    - generic [ref=e533]: 100%
+  - button "Open Next.js Dev Tools" [ref=e539] [cursor=pointer]:
+    - generic [ref=e542]:
+      - text: Compiling
+      - generic [ref=e543]:
+        - generic [ref=e544]: .
+        - generic [ref=e545]: .
+        - generic [ref=e546]: .
+  - alert [ref=e547]
+```

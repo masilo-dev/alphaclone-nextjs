@@ -1,0 +1,40 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e7]:
+    - generic [ref=e8]:
+      - link "AlphaClone Logo" [ref=e9] [cursor=pointer]:
+        - /url: /
+        - img "AlphaClone Logo" [ref=e10]
+      - heading "AlphaClone Systems" [level=1] [ref=e11]
+      - paragraph [ref=e12]: Sign in to your dashboard
+    - generic [ref=e13]:
+      - generic [ref=e14]:
+        - generic [ref=e15]:
+          - generic [ref=e16]: Email Address
+          - textbox "name@company.com" [ref=e17]: info@alphaclone.tech
+        - generic [ref=e18]:
+          - generic [ref=e19]: Password
+          - textbox "••••••••" [ref=e20]: Amgseries@gmail.com
+        - button "Sign In" [disabled]:
+          - img
+          - text: Sign In
+      - generic [ref=e25]: Or continue with
+      - button "Sign in with Google" [disabled] [ref=e26]:
+        - img [ref=e27]
+        - text: Sign in with Google
+    - generic [ref=e32]:
+      - button "New Client? Create Account" [ref=e33]:
+        - img [ref=e34]
+        - text: New Client? Create Account
+      - paragraph [ref=e37]: Secured by AlphaClone 256-bit Encryption
+  - button "Open Next.js Dev Tools" [ref=e43] [cursor=pointer]:
+    - generic [ref=e46]:
+      - text: Compiling
+      - generic [ref=e47]:
+        - generic [ref=e48]: .
+        - generic [ref=e49]: .
+        - generic [ref=e50]: .
+  - alert [ref=e51]
+```

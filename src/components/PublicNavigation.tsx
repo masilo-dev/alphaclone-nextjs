@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
@@ -13,6 +13,16 @@ interface PublicNavigationProps {
 const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const pathname = usePathname();
+
+    // Scroll Lock Effect
+    useEffect(() => {
+        if (mobileMenuOpen) {
+            document.body.classList.add('menu-open');
+        } else {
+            document.body.classList.remove('menu-open');
+        }
+        return () => document.body.classList.remove('menu-open');
+    }, [mobileMenuOpen]);
 
     const navItems = [
         { label: 'Home', path: '/' },
@@ -65,8 +75,8 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                         </div>
                     </div>
 
-                    {/* Mobile Menu Button */}
-                    <div className="lg:hidden relative z-[110]">
+                    {/* Mobile Menu Button - High Z-Index to stay above overlay */}
+                    <div className="lg:hidden relative z-[10000]">
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                             className="text-white hover:text-teal-400 p-2 rounded-lg bg-slate-900/50 border border-slate-800 transition-colors"
@@ -77,9 +87,12 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                     </div>
                 </div>
 
-                {/* Mobile Nav Overlay */}
+                {/* Mobile Nav Overlay - Block interactions behind it */}
                 {mobileMenuOpen && (
-                    <div className="lg:hidden fixed inset-0 z-[100] bg-slate-950/95 backdrop-blur-xl animate-fade-in p-8 pt-24 overflow-y-auto">
+                    <div
+                        className="lg:hidden fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-xl animate-fade-in p-8 pt-24 overflow-y-auto touch-none"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <div className="space-y-4">
                             {navItems.map((item) => (
                                 <Link

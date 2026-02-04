@@ -20,12 +20,15 @@ body {
 .pt-safe {
   padding-top: max(1rem, env(safe-area-inset-top));
 }
+
 .pb-safe {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
+
 .pl-safe {
   padding-left: max(1rem, env(safe-area-inset-left));
 }
+
 .pr-safe {
   padding-right: max(1rem, env(safe-area-inset-right));
 }
@@ -94,6 +97,7 @@ html {
   from {
     transform: translateX(0);
   }
+
   to {
     transform: translateX(-33.33%);
   }
@@ -105,10 +109,21 @@ html {
 
 /* Blob Animations */
 @keyframes blob {
-  0% { transform: translate(0px, 0px) scale(1); }
-  33% { transform: translate(30px, -50px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.9); }
-  100% { transform: translate(0px, 0px) scale(1); }
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
 }
 
 .animate-blob {
@@ -116,8 +131,13 @@ html {
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .animate-fade-in {
@@ -125,8 +145,15 @@ html {
 }
 
 @keyframes slide-up {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .animate-slide-up {
@@ -142,26 +169,35 @@ html {
 }
 
 /* Touch-friendly button sizes */
-button, a[role="button"], [role="button"] {
+button,
+a[role="button"],
+[role="button"] {
   min-height: 44px;
   min-width: 44px;
   touch-action: manipulation;
 }
 
 /* Active state for touch feedback */
-button:active, a:active {
+button:active,
+a:active {
   transform: scale(0.98);
   opacity: 0.9;
   transition: transform 0.1s ease, opacity 0.1s ease;
 }
 
 /* Smooth scrolling with momentum on iOS */
-.overflow-auto, .overflow-y-auto, .overflow-x-auto {
+.overflow-auto,
+.overflow-y-auto,
+.overflow-x-auto {
   -webkit-overflow-scrolling: touch;
 }
 
 /* Prevent double-tap zoom on buttons */
-button, input, select, textarea, a {
+button,
+input,
+select,
+textarea,
+a {
   touch-action: manipulation;
 }
 
@@ -186,7 +222,8 @@ button, input, select, textarea, a {
 }
 
 /* Prevent overscroll bounce on iOS */
-html, body {
+html,
+body {
   overscroll-behavior-y: none;
 }
 
@@ -199,4 +236,14 @@ input[type="number"],
 textarea,
 select {
   font-size: 16px !important;
+}
+
+/* Mobile Menu Lock */
+.menu-open {
+  overflow: hidden !important;
+  touch-action: none !important;
+  position: fixed !important;
+  width: 100% !important;
+  height: 100% !important;
+  overscroll-behavior: none !important;
 }

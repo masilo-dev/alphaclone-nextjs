@@ -258,29 +258,41 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
             if (editingProject) {
                 // Update existing project
                 await toast.promise(
-                    projectService.updateProject(editingProject.id, projectData),
+                    new Promise(async (resolve, reject) => {
+                        const { error } = await projectService.updateProject(editingProject.id, projectData);
+                        if (error) reject(error);
+                        else resolve(true);
+                    }),
                     {
                         loading: 'Updating project...',
                         success: 'Project updated successfully!',
-                        error: 'Failed to update project'
+                        error: (err) => `Failed: ${err}`
                     }
                 );
             } else {
                 // Create new project
+                // Ensure we have a valid ownerId, or at least try to use the passed userId prop even if it fell back
+                const finalOwnerId = userId || '00000000-0000-0000-0000-000000000000';
+
                 await toast.promise(
-                    projectService.createProject({
-                        ...projectData,
-                        ownerId: userId || '00000000-0000-0000-0000-000000000000',
-                        ownerName: 'AlphaClone Portfolio',
-                        team: ['AlphaClone Team'],
-                        contractStatus: 'Signed',
-                        isPublic: true,
-                        showInPortfolio: true
-                    } as any),
+                    new Promise(async (resolve, reject) => {
+                        const { project, error } = await projectService.createProject({
+                            ...projectData,
+                            ownerId: finalOwnerId,
+                            ownerName: 'AlphaClone Portfolio',
+                            team: ['AlphaClone Team'],
+                            contractStatus: 'Signed',
+                            isPublic: true,
+                            showInPortfolio: true
+                        } as any);
+
+                        if (error) reject(error);
+                        else resolve(project);
+                    }),
                     {
                         loading: 'Creating project...',
                         success: 'Project created! Now visible on portfolio.',
-                        error: 'Failed to create project'
+                        error: (err) => `Failed: ${err}`
                     }
                 );
             }
@@ -349,8 +361,8 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                             key={cat.id}
                             onClick={() => setFilter(cat.id as any)}
                             className={`px-4 py-2 rounded-lg font-medium transition-all ${filter === cat.id
-                                    ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/50'
-                                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
+                                ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/50'
+                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
                                 }`}
                         >
                             {cat.label} ({cat.count})

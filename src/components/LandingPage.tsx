@@ -75,6 +75,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
    const [isLoginOpen, setIsLoginOpen] = useState(false);
    const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
 
+   // Scroll Lock Effect
+   React.useEffect(() => {
+      if (mobileMenuOpen) {
+         document.body.classList.add('menu-open');
+      } else {
+         document.body.classList.remove('menu-open');
+      }
+      return () => document.body.classList.remove('menu-open');
+   }, [mobileMenuOpen]);
+
    // Contact Form State
    const [contactForm, setContactForm] = useState({ name: '', email: '', subject: '', message: '' });
    const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
@@ -208,7 +218,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      </div>
 
                      {/* Mobile Menu Button */}
-                     <div className="lg:hidden relative z-[110]">
+                     <div className="lg:hidden relative z-[10000]">
                         <button
                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                            className="text-white hover:text-teal-400 p-2 rounded-lg bg-slate-900/50 border border-slate-800 transition-colors"
@@ -230,7 +240,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            animate={{ opacity: 1 }}
                            exit={{ opacity: 0 }}
                            onClick={() => setMobileMenuOpen(false)}
-                           className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-[90]"
+                           className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-[9999] touch-none"
                         />
 
                         {/* Right Drawer */}
@@ -239,7 +249,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            animate={{ x: 0 }}
                            exit={{ x: '100%' }}
                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                           className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-slate-950 z-[100] shadow-2xl border-l border-slate-800 p-8 flex flex-col pt-safe overflow-y-auto"
+                           className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-slate-950 z-[10000] shadow-2xl border-l border-slate-800 p-8 flex flex-col pt-safe overflow-y-auto"
+                           onClick={(e) => e.stopPropagation()}
                         >
                            {/* Drawer Header */}
                            <div className="flex justify-between items-center mb-12 relative z-[110]">

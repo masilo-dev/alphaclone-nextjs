@@ -48,6 +48,14 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (user?.id) {
       loadUserTenants();
+
+      // Timeout safeguard: Force loading to false after 10 seconds
+      const timeoutId = setTimeout(() => {
+        console.warn('TenantContext: Loading timeout reached, forcing isLoading to false');
+        setIsLoading(false);
+      }, 10000);
+
+      return () => clearTimeout(timeoutId);
     } else {
       setCurrentTenant(null);
       setUserTenants([]);
@@ -74,11 +82,13 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
         if (savedTenant) {
           setCurrentTenant(savedTenant);
+          setIsLoading(false); // Success path
         } else {
           // Default to first tenant
           const firstTenant = tenants[0];
           setCurrentTenant(firstTenant);
           tenantService.setCurrentTenant(firstTenant.id);
+          setIsLoading(false); // Success path
         }
       } else {
         // User has no tenants - auto-create a default one
@@ -103,17 +113,26 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           setCurrentTenant(newTenant);
           setUserTenants([{ ...newTenant, role: 'admin' }]);
           tenantService.setCurrentTenant(newTenant.id);
+          setIsLoading(false); // Success path
         } catch (error: any) {
           console.error('Failed to auto-create default tenant:', error);
+          console.error('Auto-create error details:', {
+            message: error?.message,
+            code: error?.code,
+            details: error?.details
+          });
 
-          // Fallback: set to null and show error to user
+          // CRITICAL: Set loading to false even if auto-create fails
           setCurrentTenant(null);
+          setUserTenants([]);
           tenantService.clearCurrentTenant();
+          setIsLoading(false);
 
-          // Show user-friendly error message
-          if (typeof window !== 'undefined') {
-            alert('Unable to create your organization. Please contact support or try again later.');
-          }
+          // Show user-friendly error message (non-blocking)
+          console.error('Unable to create your organization. Please contact support or try again later.');
+
+          // Early return to prevent further execution
+          return;
         }
       }
     } catch (error: any) {
@@ -124,7 +143,11 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         details: error?.details,
         hint: error?.hint
       });
-    } finally {
+
+      // CRITICAL: Always set loading to false, even on error
+      // This prevents infinite loading states
+      setCurrentTenant(null);
+      setUserTenants([]);
       setIsLoading(false);
     }
   };
