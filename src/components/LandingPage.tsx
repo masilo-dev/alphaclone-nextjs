@@ -21,7 +21,15 @@ import {
    Briefcase,
    Info,
    PhoneCall,
-   User
+   User as UserIcon,
+   ShieldCheck,
+   Menu,
+   X,
+   Mail,
+   Phone,
+   MapPin,
+   Video,
+   FileCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from './ui/UIComponents';
@@ -286,7 +294,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            onClick={() => setMobileMenuOpen(false)}
                            className="flex items-center justify-center gap-2 w-full py-4 text-center font-bold text-slate-300 border border-slate-800/50 rounded-2xl hover:bg-slate-900 transition-colors text-base"
                         >
-                           <User className="w-4 h-4" />
+                           <UserIcon className="w-4 h-4" />
                            Log In
                         </Link>
                         <Link
