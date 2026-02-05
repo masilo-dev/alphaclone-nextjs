@@ -17,8 +17,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        let isMounted = true;
+
+        // OPTIMIZATION: Immediate session check (Optimistic)
+        const initSession = async () => {
+            try {
+                // Check if we have a session immediately
+                const { user: initialUser } = await authService.getCurrentUser();
+                if (isMounted && initialUser) {
+                    console.log('AuthContext: Optimistic session found', initialUser.email);
+                    setUser(initialUser);
+                    setLoading(false);
+                }
+            } catch (e) {
+                console.warn('AuthContext: Optimistic check failed', e);
+            }
+        };
+
+        initSession();
+
         // Subscribe to auth changes
         const { data: { subscription } } = authService.onAuthStateChange((u, event) => {
+            if (!isMounted) return;
             console.log(`AuthContext: Handling ${event} event, User: ${u?.email}`);
 
             // OPTIMIZATION: Prevent unnecessary state updates (flip-flopping)
@@ -46,12 +66,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (event === 'TOKEN_REFRESHED' && user) {
                     return;
                 }
-                setUser(null);
-                setLoading(false);
+
+                // Only clear if we didn't find an optimistic user earlier or if this is an explicit no-session event
+                if (event === 'INITIAL_SESSION' && !u) {
+                    setUser(null);
+                    setLoading(false);
+                }
             }
         });
 
         return () => {
+            isMounted = false;
             subscription.unsubscribe();
         };
     }, []);

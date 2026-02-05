@@ -117,7 +117,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
                         <TrendingUp className="w-5 h-5 text-teal-400" />
                         Revenue Trend
                     </h3>
-                    <ResponsiveContainer width="100%" height={250}>
+                    <ResponsiveContainer width="100%" height={250} minWidth={0}>
                         <LineChart data={revenueData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                             <XAxis dataKey="month" stroke="#94a3b8" />

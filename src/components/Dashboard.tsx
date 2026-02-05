@@ -284,10 +284,13 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Fetch projects on mount
   // Fetch projects function
   const refreshProjects = async () => {
-    setIsLoadingProjects(true);
+    // Only show loading if no projects (initial load or empty)
+    if (projects.length === 0) setIsLoadingProjects(true);
+
     const { projects: fetchedProjects, error } = await projectService.getProjects(user.id, user.role);
     if (!error && fetchedProjects) {
       setProjects(fetchedProjects);
+      localStorage.setItem(`dashboard_projects_${user.id}`, JSON.stringify(fetchedProjects));
     }
     setIsLoadingProjects(false);
   };
@@ -315,12 +318,25 @@ const Dashboard: React.FC<DashboardProps> = ({
         description: inv.description
       })) as Invoice[];
       setInvoices(mappedInvoices);
+      localStorage.setItem(`dashboard_invoices_${user.id}`, JSON.stringify(mappedInvoices));
     }
     // setIsLoadingInvoices(false);
   };
 
-  // OPTIMIZED: Load ALL critical data in parallel for fastest loading
+  // OPTIMIZED: Load ALL critical data in parallel for fastest loading, with Caching
   useEffect(() => {
+    // 1. Load from cache immediately
+    try {
+      const cachedProjects = localStorage.getItem(`dashboard_projects_${user.id}`);
+      if (cachedProjects) setProjects(JSON.parse(cachedProjects));
+
+      const cachedInvoices = localStorage.getItem(`dashboard_invoices_${user.id}`);
+      if (cachedInvoices) setInvoices(JSON.parse(cachedInvoices));
+
+      const cachedMessages = localStorage.getItem(`dashboard_messages_${user.id}`);
+      if (cachedMessages) setMessages(JSON.parse(cachedMessages));
+    } catch (e) { console.error('Cache load error', e); }
+
     const loadAllData = async () => {
       const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
 
@@ -332,6 +348,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         messageService.getMessages(user.id, isAdmin, 30).then(({ messages: fetchedMessages, error }) => {
           if (!error && fetchedMessages) {
             setMessages(fetchedMessages);
+            localStorage.setItem(`dashboard_messages_${user.id}`, JSON.stringify(fetchedMessages));
           }
         })
       ];
@@ -339,7 +356,8 @@ const Dashboard: React.FC<DashboardProps> = ({
       if (user.role === 'admin') {
         promises.push(userService.getUsers().then(({ users, error }) => {
           if (!error && users) {
-            setTotalClientCount(users.filter(u => u.role === 'client').length);
+            const count = users.filter(u => u.role === 'client').length;
+            setTotalClientCount(count);
           }
         }));
       }

@@ -193,7 +193,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 {/* Revenue Chart */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-bold mb-4">Revenue & Expenses</h3>
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height={300} minWidth={0}>
                         <BarChart data={revenueData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                             <XAxis dataKey="month" stroke="#94a3b8" />
@@ -212,7 +212,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 {/* Client Distribution */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-bold mb-4">Client Distribution</h3>
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height={300} minWidth={0}>
                         <PieChart>
                             <Pie
                                 data={clientData}
@@ -236,7 +236,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 {/* Project Status */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-bold mb-4">Project Status</h3>
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height={300} minWidth={0}>
                         <BarChart data={projectData} layout="vertical">
                             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                             <XAxis type="number" stroke="#94a3b8" />
@@ -253,7 +253,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 {/* Revenue Trend */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-bold mb-4">Revenue Trend</h3>
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height={300} minWidth={0}>
                         <LineChart data={revenueData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                             <XAxis dataKey="month" stroke="#94a3b8" />

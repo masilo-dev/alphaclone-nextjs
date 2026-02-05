@@ -95,6 +95,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             try {
                 // Dynamically import task service to avoid circular deps if any
                 const { taskService } = await import('../../../services/taskService');
+
+                // OPTIMIZATION: Fetch in background, verify cache first
                 const { tasks } = await taskService.getUpcomingTasks(user.id);
 
                 // Filter for tasks due today or overdue
@@ -107,13 +109,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                 });
 
                 if (dueTasks.length > 0) {
-                    // Small delay to let UI settle
-                    setTimeout(() => {
-                        // Simple alert or toast - for now we use a custom toast if available, or just console
-                        // In a real app we'd use a toast library. Let's assume we can trigger a browser notification or a UI banner.
-                        // Since we don't have a global toast context visible here, I'll add a local state for a notification banner.
-                        setNotification(`You have ${dueTasks.length} tasks due today!`);
-                    }, 1000);
+                    setNotification(`You have ${dueTasks.length} tasks due today!`);
                 }
             } catch (err) {
                 console.error('Failed to checked tasks', err);
@@ -125,10 +121,18 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
         // Fetch projects for context in other tabs (CRM, etc)
         const loadProjects = async () => {
             if (!currentTenant) return;
-            setLoadingProjects(true);
+            // Don't set loading true if we have cached data to avoid flashing skeleton
+            if (projects.length === 0) {
+                setLoadingProjects(true);
+            }
+
             try {
                 const { projects: data } = await projectService.getProjects(user.id, user.role);
-                setProjects(data || []);
+                if (data) {
+                    setProjects(data);
+                    // Update cache
+                    localStorage.setItem('dashboard_projects_cache', JSON.stringify(data));
+                }
             } catch (err) {
                 console.error('Failed to load projects in BusinessDashboard', err);
             } finally {
@@ -140,7 +144,20 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
     }, [user, currentTenant]);
 
     const [notification, setNotification] = useState<string | null>(null);
-    const [projects, setProjects] = useState<Project[]>([]);
+    const [projects, setProjects] = useState<Project[]>(() => {
+        // Init from cache
+        if (typeof window !== 'undefined') {
+            const cached = localStorage.getItem('dashboard_projects_cache');
+            if (cached) {
+                try {
+                    return JSON.parse(cached);
+                } catch (e) {
+                    console.error('Failed to parse project cache', e);
+                }
+            }
+        }
+        return [];
+    });
     const [loadingProjects, setLoadingProjects] = useState(false);
 
     // Trial Logic - DISABLED as per user request for full access
