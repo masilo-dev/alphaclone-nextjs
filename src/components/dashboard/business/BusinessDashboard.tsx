@@ -237,12 +237,11 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             case '/dashboard/business/billing': return 'Invoices & Billing';
             case '/dashboard/business/reports': return 'Analytics & Reports';
             case '/dashboard/business/settings': return 'Settings';
+            case '/dashboard/business/contracts': return 'Contracts';
             case '/dashboard/crm': return 'CRM';
             case '/dashboard/tasks': return 'Tasks';
             case '/dashboard/sales-agent': return 'Sales Agent';
-            case '/dashboard/sales-agent': return 'Sales Agent';
             case '/dashboard/leads': return 'Leads & Pipelines';
-            case '/dashboard/business/contracts': return 'Contracts';
             default: return 'AlphaClone';
         }
     };
@@ -255,8 +254,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
         { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
         { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
         { label: 'Projects', href: '/dashboard/business/projects', icon: FileText },
+        { label: 'Contracts', href: '/dashboard/business/contracts', icon: FileCheck },
         { label: 'Calendar', href: '/dashboard/business/calendar', icon: Briefcase },
-        { label: 'Messages', href: '/dashboard/business/messages', icon: Bell }, // Kept Bell icon as Messages
+        { label: 'Messages', href: '/dashboard/business/messages', icon: Bell },
         { label: 'Team', href: '/dashboard/business/team', icon: Users },
         { label: 'Finance', href: '/dashboard/business/billing', icon: CreditCard },
         { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },
