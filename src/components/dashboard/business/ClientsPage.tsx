@@ -35,6 +35,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedStage, setSelectedStage] = useState<string>('all');
     const [showAddModal, setShowAddModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingClient, setEditingClient] = useState<BusinessClient | null>(null);
     const [showImportModal, setShowImportModal] = useState(false);
     const [loading, setLoading] = useState(true);
 
@@ -85,12 +87,27 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         }
     };
 
+    const handleEditClient = async (clientId: string, updates: Partial<BusinessClient>) => {
+        const { error } = await businessClientService.updateClient(clientId, updates);
+        if (!error) {
+            setClients(clients.map(c => c.id === clientId ? { ...c, ...updates } : c));
+            setShowEditModal(false);
+            setEditingClient(null);
+            toast.success('Client updated successfully!');
+        } else {
+            toast.error('Failed to update client');
+        }
+    };
+
     const handleDeleteClient = async (clientId: string) => {
         if (!confirm('Are you sure you want to delete this client?')) return;
 
         const { error } = await businessClientService.deleteClient(clientId);
         if (!error) {
             setClients(clients.filter(c => c.id !== clientId));
+            toast.success('Client deleted successfully!');
+        } else {
+            toast.error('Failed to delete client');
         }
     };
 
@@ -224,6 +241,10 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     <ClientCard
                         key={client.id}
                         client={client}
+                        onEdit={(client) => {
+                            setEditingClient(client);
+                            setShowEditModal(true);
+                        }}
                         onDelete={handleDeleteClient}
                         onCall={handleCallClient}
                     />
@@ -244,6 +265,18 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 />
             )}
 
+            {/* Edit Client Modal */}
+            {showEditModal && editingClient && (
+                <EditClientModal
+                    client={editingClient}
+                    onClose={() => {
+                        setShowEditModal(false);
+                        setEditingClient(null);
+                    }}
+                    onSave={(updates) => handleEditClient(editingClient.id, updates)}
+                />
+            )}
+
             {/* Import Modal */}
             {showImportModal && (
                 <ImportClientsModal
@@ -255,7 +288,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     );
 };
 
-const ClientCard = ({ client, onDelete, onCall }: { client: BusinessClient; onDelete: (id: string) => void; onCall: (c: BusinessClient) => void }) => {
+const ClientCard = ({ client, onEdit, onDelete, onCall }: { client: BusinessClient; onEdit: (c: BusinessClient) => void; onDelete: (id: string) => void; onCall: (c: BusinessClient) => void }) => {
     const stageColors = {
         lead: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
         prospect: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
@@ -296,12 +329,22 @@ const ClientCard = ({ client, onDelete, onCall }: { client: BusinessClient; onDe
                         {client.company && <p className="text-xs text-slate-400">{client.company}</p>}
                     </div>
                 </div>
-                <button
-                    onClick={() => onDelete(client.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/10 rounded transition-all"
-                >
-                    <Trash2 className="w-4 h-4 text-red-400" />
-                </button>
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <button
+                        onClick={() => onEdit(client)}
+                        className="p-1 hover:bg-teal-500/10 rounded transition-all"
+                        title="Edit Client"
+                    >
+                        <Edit className="w-4 h-4 text-teal-400" />
+                    </button>
+                    <button
+                        onClick={() => onDelete(client.id)}
+                        className="p-1 hover:bg-red-500/10 rounded transition-all"
+                        title="Delete Client"
+                    >
+                        <Trash2 className="w-4 h-4 text-red-400" />
+                    </button>
+                </div>
             </div>
 
             <div className="space-y-2 mb-3">
@@ -437,6 +480,129 @@ const AddClientModal = ({ onClose, onAdd }: any) => {
                             className="flex-1 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors"
                         >
                             Add Client
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+const EditClientModal = ({ client, onClose, onSave }: { client: BusinessClient; onClose: () => void; onSave: (updates: Partial<BusinessClient>) => void }) => {
+    const [formData, setFormData] = useState({
+        name: client.name,
+        email: client.email || '',
+        phone: client.phone || '',
+        company: client.company || '',
+        stage: client.stage,
+        value: client.value,
+        notes: client.notes || ''
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onSave(formData);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-2xl w-full">
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold">Edit Client</h3>
+                    <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Name *</label>
+                        <input
+                            type="text"
+                            required
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Email</label>
+                        <input
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Phone</label>
+                        <input
+                            type="tel"
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Company</label>
+                        <input
+                            type="text"
+                            value={formData.company}
+                            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Stage</label>
+                        <select
+                            value={formData.stage}
+                            onChange={(e) => setFormData({ ...formData, stage: e.target.value as any })}
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                        >
+                            <option value="lead">Lead</option>
+                            <option value="prospect">Prospect</option>
+                            <option value="customer">Customer</option>
+                            <option value="lost">Lost</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Potential Value ($)</label>
+                        <input
+                            type="number"
+                            value={formData.value}
+                            onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) || 0 })}
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Notes</label>
+                        <textarea
+                            value={formData.notes}
+                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                            rows={3}
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                        />
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            className="flex-1 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors"
+                        >
+                            Save Changes
                         </button>
                     </div>
                 </form>
