@@ -67,6 +67,12 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture }) => {
     const startListening = () => {
         if (!recognitionRef.current) return;
 
+        // Check if already listening to prevent "already started" error
+        if (isListening) {
+            console.warn('Recognition already active, skipping start');
+            return;
+        }
+
         setError(null);
         setTranscript('');
         setIsListening(true);
@@ -76,6 +82,7 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture }) => {
         } catch (e) {
             console.error('Failed to start recognition', e);
             setIsListening(false);
+            setError('Failed to start voice recognition. Please try again.');
         }
     };
 
