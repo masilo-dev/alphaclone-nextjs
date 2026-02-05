@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import { activityService } from './activityService';
 import { tenantService } from './tenancy/TenantService';
 import { projectService } from './projectService';
+import { taskDependencyService } from './taskDependencyService';
 
 export interface Task {
     id: string;
@@ -318,6 +319,30 @@ export const taskService = {
                 projectService.recalculateProjectProgress(data.related_to_project).catch(err => console.error('Failed to update project progress:', err));
             }
 
+            // --- AUTO-DEPENDENCY DATE SHIFTING ---
+            // If the due date changed, shift all dependent tasks
+            if (updates.dueDate && data.due_date) {
+                const oldDate = new Date(data.due_date);
+                const newDate = new Date(updates.dueDate);
+                const diffTime = newDate.getTime() - oldDate.getTime();
+
+                if (diffTime !== 0) {
+                    const dependentTasks = await taskDependencyService.getDependentTasks(taskId);
+                    for (const depTask of dependentTasks) {
+                        if (depTask.due_date) {
+                            const currentDepDueDate = new Date(depTask.due_date);
+                            const newDepDueDate = new Date(currentDepDueDate.getTime() + diffTime);
+
+                            // Recursively update dependent tasks
+                            await this.updateTask(depTask.id, {
+                                dueDate: newDepDueDate.toISOString().split('T')[0]
+                            });
+                        }
+                    }
+                }
+            }
+            // -------------------------------------
+
             const task: Task = {
                 id: data.id,
                 title: data.title,
@@ -584,6 +609,61 @@ export const taskService = {
             return { tasks, error: null };
         } catch (err) {
             return { tasks: [], error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * AI-Driven Project Health Assessment
+     * Analyzes tasks to determine project risk and health
+     */
+    async generateProjectHealth(projectId: string): Promise<{
+        score: number;
+        status: 'healthy' | 'at_risk' | 'critical';
+        risks: string[];
+        recommendations: string[];
+        error: string | null;
+    }> {
+        try {
+            const { tasks, error } = await this.getTasks({ relatedToProject: projectId });
+            if (error) throw new Error(error);
+            if (!tasks.length) return { score: 100, status: 'healthy', risks: [], recommendations: ['No objectives initialized.'], error: null };
+
+            const now = new Date();
+            const overdueTasks = tasks.filter(t => t.dueDate && new Date(t.dueDate) < now && t.status !== 'completed');
+            const highPriorityTasks = tasks.filter(t => (t.priority === 'urgent' || t.priority === 'high') && t.status !== 'completed');
+            const completedTasks = tasks.filter(t => t.status === 'completed');
+
+            let score = 100;
+            const risks: string[] = [];
+            const recommendations: string[] = [];
+
+            // Penalty for overdue tasks
+            if (overdueTasks.length > 0) {
+                score -= (overdueTasks.length * 15);
+                risks.push(`${overdueTasks.length} objectives are critically overdue.`);
+                recommendations.push('Immediate reallocation of resources to overdue tasks is required.');
+            }
+
+            // Penalty for high backlog
+            if (highPriorityTasks.length > 5) {
+                score -= 10;
+                risks.push('High-priority backlog is exceeding sustainable thresholds.');
+                recommendations.push('Consider de-scoping lower priority items.');
+            }
+
+            // Bonus for progress
+            const progressRatio = completedTasks.length / tasks.length;
+            if (progressRatio > 0.5) score += 5;
+
+            score = Math.max(0, Math.min(100, score));
+
+            let status: 'healthy' | 'at_risk' | 'critical' = 'healthy';
+            if (score < 40) status = 'critical';
+            else if (score < 75) status = 'at_risk';
+
+            return { score, status, risks, recommendations, error: null };
+        } catch (err) {
+            return { score: 0, status: 'critical', risks: [], recommendations: [], error: err instanceof Error ? err.message : 'Unknown error' };
         }
     },
 };

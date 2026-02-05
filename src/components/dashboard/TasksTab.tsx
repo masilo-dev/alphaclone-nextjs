@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import {
     CheckSquare,
     Plus,
@@ -21,9 +21,20 @@ import {
     CheckCircle2,
     X,
     Sparkles,
-    Loader2
+    Loader2,
+    Trash2,
+    Zap,
+    Shield,
+    TrendingUp,
+    TrendingDown,
+    Activity
 } from 'lucide-react';
-import { taskService, Task } from '../../services/taskService';
+import { supabase } from '@/lib/supabase';
+import { tenantService } from '../../services/tenancy/TenantService';
+import { taskService, Task, CreateTaskInput } from '../../services/taskService';
+import { teamService } from '../../services/teamService';
+import { projectService } from '../../services/projectService';
+import { leadService } from '../../services/leadService';
 import { Button, Modal, Input } from '../ui/UIComponents';
 import CollaborativeTaskNotes from './projects/CollaborativeTaskNotes';
 import { useAuth } from '@/contexts/AuthContext';
@@ -59,10 +70,19 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'my_tasks' | 'overdue'>('all');
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
+    const [searchQuery, setSearchQuery] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [teamMembers, setTeamMembers] = useState<any[]>([]);
+    const [projects, setProjects] = useState<any[]>([]);
+    const [leads, setLeads] = useState<any[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [notesTaskId, setNotesTaskId] = useState<string | null>(null);
+    const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
+    const [draggingGanttTask, setDraggingGanttTask] = useState<string | null>(null);
+    const [ganttDragOffset, setGanttDragOffset] = useState(0);
+    const [selectedProject, setSelectedProject] = useState<string>('all');
+    const [healthData, setHealthData] = useState<any>(null);
     const [isGeneratingOutline, setIsGeneratingOutline] = useState(false);
     const { user } = useAuth();
 
@@ -71,6 +91,9 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         title: '',
         description: '',
         priority: 'medium' as Task['priority'],
+        assignedTo: '',
+        relatedToProject: '',
+        relatedToLead: '',
         dueDate: '',
         startDate: new Date().toISOString().split('T')[0],
         estimatedHours: ''
@@ -86,7 +109,30 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
 
     useEffect(() => {
         loadTasks();
-    }, [filter, userId]);
+
+        const tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) return;
+
+        const channel = supabase
+            .channel('tasks_realtime')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'tasks',
+                    filter: `tenant_id=eq.${tenantId}`
+                },
+                () => {
+                    loadTasks();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [filter, userId, selectedProject]);
 
     const loadTasks = async () => {
         setLoading(true);
@@ -94,6 +140,9 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
             const filters: any = {};
             if (filter === 'my_tasks') {
                 filters.assignedTo = userId;
+            }
+            if (selectedProject !== 'all') {
+                filters.relatedToProject = selectedProject;
             }
 
             const { tasks: loadedTasks, error } = await taskService.getTasks(filters);
@@ -110,6 +159,12 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                     );
                 }
                 setTasks(filteredTasks);
+                if (selectedProject !== 'all') {
+                    const health = await taskService.generateProjectHealth(selectedProject);
+                    setHealthData(health);
+                } else {
+                    setHealthData(null);
+                }
             }
         } catch (err) {
             toast.error('Failed to load tasks');
@@ -119,7 +174,19 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         }
     };
 
+    const filteredAndSearchedTasks = useMemo(() => {
+        if (!searchQuery.trim()) return tasks;
+        const query = searchQuery.toLowerCase();
+        return tasks.filter(t =>
+            t.title.toLowerCase().includes(query) ||
+            t.description?.toLowerCase().includes(query)
+        );
+    }, [tasks, searchQuery]);
+
     const handleStatusChange = async (taskId: string, newStatus: Task['status']) => {
+        // Clear selection on individual update to avoid stale state
+        setSelectedTaskIds(prev => prev.filter(id => id !== taskId));
+
         try {
             const { error } = await taskService.updateTask(taskId, { status: newStatus });
             if (error) {
@@ -128,9 +195,50 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                 toast.success('Task status updated');
                 // Optimistic update for smoother experience
                 setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+                loadTasks(); // Ensure sync
             }
         } catch (err) {
             toast.error('Failed to update task');
+        }
+    };
+
+    const toggleTaskSelection = (taskId: string) => {
+        setSelectedTaskIds(prev =>
+            prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]
+        );
+    };
+
+    const handleBulkStatusChange = async (newStatus: Task['status']) => {
+        if (selectedTaskIds.length === 0) return;
+        setIsSubmitting(true);
+        try {
+            const promises = selectedTaskIds.map(id => taskService.updateTask(id, { status: newStatus }));
+            await Promise.all(promises);
+            toast.success(`Bulk updated ${selectedTaskIds.length} tasks`);
+            setSelectedTaskIds([]);
+            loadTasks();
+        } catch (err) {
+            toast.error('Bulk update failed');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedTaskIds.length === 0) return;
+        if (!confirm(`Are you sure you want to delete ${selectedTaskIds.length} tasks?`)) return;
+
+        setIsSubmitting(true);
+        try {
+            const promises = selectedTaskIds.map(id => taskService.deleteTask(id));
+            await Promise.all(promises);
+            toast.success(`Bulk eliminated ${selectedTaskIds.length} tasks`);
+            setSelectedTaskIds([]);
+            loadTasks();
+        } catch (err) {
+            toast.error('Bulk elimination failed');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -172,6 +280,42 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         }
     };
 
+    const loadModalData = async () => {
+        try {
+            const [teamRes, projectRes, leadRes] = await Promise.all([
+                teamService.getTeamMembers(),
+                projectService.getProjects(userId, userRole as any),
+                leadService.getLeads()
+            ]);
+            setTeamMembers(teamRes.team || []);
+            setProjects(projectRes.projects || []);
+            setLeads(leadRes.leads || []);
+        } catch (err) {
+            console.error('Failed to load modal data:', err);
+        }
+    };
+
+    useEffect(() => {
+        if (showCreateModal) {
+            loadModalData();
+        }
+    }, [showCreateModal]);
+
+    const handleDeleteTask = async (taskId: string) => {
+        if (!confirm('Are you sure you want to delete this task?')) return;
+        try {
+            const { success, error } = await taskService.deleteTask(taskId);
+            if (success) {
+                toast.success('Task eliminated');
+                loadTasks();
+            } else {
+                toast.error(error || 'Failed to delete task');
+            }
+        } catch (err) {
+            toast.error('Failed to eliminate task');
+        }
+    };
+
     const handleCreateTask = async () => {
         if (!taskForm.title.trim()) {
             toast.error('Task title is required');
@@ -187,6 +331,9 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                 priority: taskForm.priority,
                 dueDate: taskForm.dueDate || undefined,
                 startDate: taskForm.startDate || undefined,
+                assignedTo: (taskForm as any).assignedTo || undefined,
+                relatedToProject: (taskForm as any).relatedToProject || undefined,
+                relatedToLead: (taskForm as any).relatedToLead || undefined,
                 estimatedHours: taskForm.estimatedHours ? parseFloat(taskForm.estimatedHours) : undefined
             });
 
@@ -199,10 +346,13 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                     title: '',
                     description: '',
                     priority: 'medium',
+                    assignedTo: '',
+                    relatedToProject: '',
+                    relatedToLead: '',
                     dueDate: '',
                     startDate: new Date().toISOString().split('T')[0],
                     estimatedHours: ''
-                });
+                } as any);
                 loadTasks();
             }
         } catch (err) {
@@ -258,10 +408,16 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                 style={style}
                 {...attributes}
                 {...listeners}
-                className={`glass-panel p-4 rounded-xl border group hover:border-teal-500/40 transition-all cursor-grab active:cursor-grabbing ${isOverdue ? 'border-red-500/30 bg-red-500/5' : 'border-white/5 bg-slate-900/40'
-                    }`}
+                className={`glass-panel p-4 rounded-xl border group hover:border-teal-500/40 transition-all cursor-grab active:cursor-grabbing relative overflow-hidden ${isOverdue ? 'border-red-500/30 bg-red-500/5' : 'border-white/5 bg-slate-900/40'
+                    } ${selectedTaskIds.includes(task.id) ? 'border-teal-500/60 bg-teal-500/5' : ''}`}
             >
-                <div className="flex items-start justify-between mb-2">
+                <div className="absolute top-2 left-2 z-20" onClick={(e) => { e.stopPropagation(); toggleTaskSelection(task.id); }}>
+                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${selectedTaskIds.includes(task.id) ? 'bg-teal-500 border-teal-500' : 'border-white/20 bg-black/20 group-hover:border-white/40'}`}>
+                        {selectedTaskIds.includes(task.id) && <Check className="w-3 h-3 text-white" />}
+                    </div>
+                </div>
+
+                <div className="flex items-start justify-between mb-2 pl-6">
                     <h4 className="font-bold text-slate-100 text-sm group-hover:text-white transition-colors line-clamp-2">{task.title}</h4>
                     {isOverdue && <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />}
                 </div>
@@ -347,6 +503,9 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
     };
 
     const GanttView = () => {
+        const containerRef = useRef<HTMLDivElement>(null);
+        const [dragStartPos, setDragStartPos] = useState<number | null>(null);
+
         const sortedTasks = useMemo(() => {
             return [...tasks].sort((a, b) => {
                 const dateA = a.startDate ? new Date(a.startDate).getTime() : 0;
@@ -357,14 +516,68 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
 
         const timelineStart = new Date();
         timelineStart.setDate(timelineStart.getDate() - 7);
+        const dayWidth = 40;
+
         const days = Array.from({ length: 45 }).map((_, i) => {
             const date = new Date(timelineStart);
             date.setDate(date.getDate() + i);
             return date;
         });
 
+        const handleGanttMouseDown = (e: React.MouseEvent, taskId: string) => {
+            setDraggingGanttTask(taskId);
+            setDragStartPos(e.clientX);
+            setGanttDragOffset(0);
+        };
+
+        const handleGanttMouseMove = (e: React.MouseEvent) => {
+            if (draggingGanttTask && dragStartPos !== null) {
+                const diff = e.clientX - dragStartPos;
+                setGanttDragOffset(diff);
+            }
+        };
+
+        const handleGanttMouseUp = async () => {
+            if (draggingGanttTask && Math.abs(ganttDragOffset) > 20) {
+                const daysShifted = Math.round(ganttDragOffset / dayWidth);
+                const taskToUpdate = tasks.find(t => t.id === draggingGanttTask);
+
+                if (taskToUpdate && daysShifted !== 0) {
+                    const currentStart = taskToUpdate.startDate ? new Date(taskToUpdate.startDate) : new Date(taskToUpdate.createdAt);
+                    const currentEnd = taskToUpdate.dueDate ? new Date(taskToUpdate.dueDate) : new Date(currentStart);
+
+                    const newStart = new Date(currentStart);
+                    newStart.setDate(newStart.getDate() + daysShifted);
+
+                    const newEnd = new Date(currentEnd);
+                    newEnd.setDate(newEnd.getDate() + daysShifted);
+
+                    const { error } = await taskService.updateTask(draggingGanttTask, {
+                        startDate: newStart.toISOString(),
+                        dueDate: newEnd.toISOString()
+                    });
+
+                    if (error) {
+                        toast.error('Failed to reschedule task');
+                    } else {
+                        toast.success('Reschedule strategy updated');
+                        loadTasks();
+                    }
+                }
+            }
+            setDraggingGanttTask(null);
+            setGanttDragOffset(0);
+            setDragStartPos(null);
+        };
+
         return (
-            <div className="glass-panel overflow-hidden rounded-2xl border border-white/5 flex flex-col h-full min-h-[500px]">
+            <div
+                ref={containerRef}
+                className="glass-panel overflow-hidden rounded-2xl border border-white/5 flex flex-col h-full min-h-[500px]"
+                onMouseMove={handleGanttMouseMove}
+                onMouseUp={handleGanttMouseUp}
+                onMouseLeave={handleGanttMouseUp}
+            >
                 <div className="flex border-b border-white/5 divide-x divide-white/5 bg-slate-950/40">
                     <div className="w-64 min-w-64 p-4 font-bold text-slate-400 text-xs uppercase tracking-wider sticky left-0 z-10 bg-slate-900/80 backdrop-blur-md">Task Name</div>
                     <div className="flex-1 overflow-x-auto flex divide-x divide-white/5">
@@ -385,8 +598,10 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                         const end = task.dueDate ? new Date(task.dueDate) : new Date(start);
                         if (end < start) end.setTime(start.getTime() + 86400000);
 
-                        const startIndex = Math.max(0, Math.floor((start.getTime() - timelineStart.getTime()) / (1000 * 60 * 60 * 24)));
+                        const startIndex = Math.floor((start.getTime() - timelineStart.getTime()) / (1000 * 60 * 60 * 24));
                         const duration = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+                        const isDragging = draggingGanttTask === task.id;
 
                         return (
                             <div key={task.id} className="flex divide-x divide-white/5 hover:bg-white/5 group transition-colors">
@@ -399,12 +614,13 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                 </div>
                                 <div className="flex-1 flex relative h-12 items-center">
                                     <div
-                                        className={`absolute h-6 rounded-lg flex items-center px-2 cursor-pointer group/bar ${getStatusColor(task.status).replace('text-', 'text-white ')}`}
+                                        className={`absolute h-6 rounded-lg flex items-center px-2 cursor-pointer group/bar z-10 ${getStatusColor(task.status).replace('text-', 'text-white ')} ${isDragging ? 'shadow-[0_0_15px_rgba(20,184,166,0.5)] z-20' : ''}`}
                                         style={{
-                                            left: `${startIndex * 40}px`,
-                                            width: `${duration * 40}px`,
+                                            left: `${startIndex * dayWidth + (isDragging ? ganttDragOffset : 0)}px`,
+                                            width: `${duration * dayWidth}px`,
                                             minWidth: '12px'
                                         }}
+                                        onMouseDown={(e) => handleGanttMouseDown(e, task.id)}
                                         title={`${task.title} (${start.toLocaleDateString()} - ${end.toLocaleDateString()})`}
                                     >
                                         <div className="absolute inset-0 bg-white/10 opacity-0 group-hover/bar:opacity-100 transition-opacity rounded-lg"></div>
@@ -423,19 +639,25 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
 
     const renderGridView = () => (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 overflow-y-auto pr-2 pb-6">
-            {tasks.map((task) => (
+            {filteredAndSearchedTasks.map((task) => (
                 <div
                     key={task.id}
                     className={`glass-panel p-5 rounded-2xl border transition-all flex flex-col group relative overflow-hidden backdrop-blur-xl ${task.status === 'completed' ? 'border-green-500/20 bg-green-500/5' :
                         task.status === 'in_progress' ? 'border-blue-500/20 bg-blue-500/5' :
                             'border-white/5 bg-slate-900/40'
-                        } hover:shadow-2xl hover:shadow-teal-500/10 hover:border-teal-500/30`}
+                        } hover:shadow-2xl hover:shadow-teal-500/10 hover:border-teal-500/30 ${selectedTaskIds.includes(task.id) ? 'border-teal-500/60 bg-teal-500/5 shadow-lg shadow-teal-500/10' : ''}`}
                 >
+                    <div className="absolute top-4 left-4 z-20" onClick={() => toggleTaskSelection(task.id)}>
+                        <div className={`w-5 h-5 rounded-lg border transition-all flex items-center justify-center ${selectedTaskIds.includes(task.id) ? 'bg-teal-500 border-teal-500' : 'border-white/20 bg-black/40 group-hover:border-white/40 hover:bg-black/60 cursor-pointer'}`}>
+                            {selectedTaskIds.includes(task.id) && <Check className="w-3.5 h-3.5 text-white" />}
+                        </div>
+                    </div>
+
                     <div className={`absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 rounded-full blur-3xl opacity-10 ${task.status === 'completed' ? 'bg-green-500' :
                         task.status === 'in_progress' ? 'bg-blue-500' : 'bg-slate-500'
                         }`}></div>
 
-                    <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-start justify-between mb-4 pl-8">
                         <h3 className="font-bold text-white text-lg flex-1 group-hover:text-teal-400 transition-colors leading-tight">{task.title}</h3>
                         <div className="flex gap-1.5 opacity-60 group-hover:opacity-100 transition-all">
                             {task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'completed' && (
@@ -457,7 +679,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
 
                     {task.description && (
                         <p className="text-slate-400 text-sm mb-5 line-clamp-3 leading-relaxed flex-1 italic group-hover:text-slate-300 transition-colors">
-                            "{task.description}"
+                            &quot;{task.description}&quot;
                         </p>
                     )}
 
@@ -527,10 +749,10 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
             sensors={sensors}
         >
             <div className="flex gap-6 h-full overflow-x-auto pb-4 pr-4">
-                <KanbanColumn status="todo" title="Planning" items={tasks.filter(t => t.status === 'todo')} color="border-slate-600" />
-                <KanbanColumn status="in_progress" title="Active Construction" items={tasks.filter(t => t.status === 'in_progress')} color="border-blue-500" />
-                <KanbanColumn status="completed" title="Deployed & Finalized" items={tasks.filter(t => t.status === 'completed')} color="border-teal-400" />
-                <KanbanColumn status="cancelled" title="Archived" items={tasks.filter(t => t.status === 'cancelled')} color="border-red-500" />
+                <KanbanColumn status="todo" title="Planning" items={filteredAndSearchedTasks.filter(t => t.status === 'todo')} color="border-slate-600" />
+                <KanbanColumn status="in_progress" title="Active Construction" items={filteredAndSearchedTasks.filter(t => t.status === 'in_progress')} color="border-blue-500" />
+                <KanbanColumn status="completed" title="Deployed & Finalized" items={filteredAndSearchedTasks.filter(t => t.status === 'completed')} color="border-teal-400" />
+                <KanbanColumn status="cancelled" title="Archived" items={filteredAndSearchedTasks.filter(t => t.status === 'cancelled')} color="border-red-500" />
             </div>
 
             <DragOverlay>
@@ -542,6 +764,95 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
             </DragOverlay>
         </DndContext>
     );
+
+    const SwipeableTaskItem = ({ task, onEditStatus, onDelete }: { task: Task, onEditStatus: (t: Task) => void, onDelete: (id: string) => void }) => {
+        const [startX, setStartX] = useState(0);
+        const [offsetX, setOffsetX] = useState(0);
+        const [isSwiping, setIsSwiping] = useState(false);
+
+        const onTouchStart = (e: React.TouchEvent) => {
+            setStartX(e.targetTouches[0].clientX);
+            setIsSwiping(true);
+        };
+
+        const onTouchMove = (e: React.TouchEvent) => {
+            if (!isSwiping) return;
+            const currentX = e.targetTouches[0].clientX;
+            const diff = currentX - startX;
+            // Limit swipe range
+            setOffsetX(Math.max(-100, Math.min(100, diff)));
+        };
+
+        const onTouchEnd = () => {
+            setIsSwiping(false);
+            if (offsetX > 70) {
+                // Swipe right -> Toggle Complete
+                handleStatusChange(task.id, task.status === 'completed' ? 'todo' : 'completed');
+            } else if (offsetX < -70) {
+                // Swipe left -> Delete
+                onDelete(task.id);
+            }
+            setOffsetX(0);
+        };
+
+        return (
+            <div className="relative overflow-hidden rounded-2xl group mb-4">
+                {/* Background Actions */}
+                <div className="absolute inset-0 flex items-center justify-between px-6 z-0">
+                    <div className="flex items-center gap-2 text-green-400">
+                        <Check className="w-6 h-6" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Complete</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-red-400">
+                        <span className="text-[10px] font-black uppercase tracking-widest">Delete</span>
+                        <Trash2 className="w-6 h-6" />
+                    </div>
+                </div>
+
+                {/* Task Content */}
+                <div
+                    className="relative z-10 bg-slate-900/80 backdrop-blur-xl border border-white/5 p-4 transition-transform duration-200 ease-out"
+                    style={{ transform: `translateX(${offsetX}px)` }}
+                    onTouchStart={onTouchStart}
+                    onTouchMove={onTouchMove}
+                    onTouchEnd={onTouchEnd}
+                >
+                    <div className="flex justify-between items-start gap-4 mb-3">
+                        <div className="flex-1">
+                            <h4 className="text-white font-bold text-sm leading-snug mb-1">{task.title}</h4>
+                            <p className="text-slate-500 text-xs line-clamp-1">{task.description || "No description"}</p>
+                        </div>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onEditStatus(task); }}
+                            className={`shrink-0 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all ${getStatusColor(task.status)}`}
+                        >
+                            {task.status === 'completed' ? <Check className="w-3 h-3" /> : task.status === 'in_progress' ? <Clock className="w-3 h-3" /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
+                            {task.status.replace('_', ' ')}
+                        </button>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                        <div className="flex items-center gap-3">
+                            {task.dueDate && (
+                                <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide ${new Date(task.dueDate) < new Date() && task.status !== 'completed' ? 'text-red-400' : 'text-slate-500'}`}>
+                                    <Calendar className="w-3 h-3" />
+                                    {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                </div>
+                            )}
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest ${getPriorityColor(task.priority)}`}>
+                                {task.priority}
+                            </span>
+                        </div>
+                        <div className="flex -space-x-1.5">
+                            <div className="w-6 h-6 rounded-full bg-slate-800 border-2 border-slate-900 flex items-center justify-center text-slate-400 text-[8px] font-black">
+                                <User className="w-3 h-3" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     const StatusUpdateModal = ({ task, onClose, onUpdate }: { task: Task | null, onClose: () => void, onUpdate: (status: Task['status']) => void }) => {
         if (!task) return null;
@@ -596,66 +907,192 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
 
         return (
             <>
-                <div className="space-y-4 pb-20">
-                    {tasks.map(task => (
-                        <div key={task.id} className="bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-4 active:scale-[0.99] transition-transform duration-100">
-                            <div className="flex justify-between items-start gap-4 mb-3">
-                                <div className="flex-1">
-                                    <h4 className="text-white font-bold text-sm leading-snug mb-1">{task.title}</h4>
-                                    <p className="text-slate-500 text-xs line-clamp-1">{task.description || "No description"}</p>
-                                </div>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); setEditingStatusTask(task); }}
-                                    className={`shrink-0 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all ${getStatusColor(task.status)}`}
-                                >
-                                    {task.status === 'completed' ? <Check className="w-3 h-3" /> : task.status === 'in_progress' ? <Clock className="w-3 h-3" /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
-                                    {task.status.replace('_', ' ')}
-                                </button>
-                            </div>
-
-                            <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                                <div className="flex items-center gap-3">
-                                    {task.dueDate && (
-                                        <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide ${new Date(task.dueDate) < new Date() && task.status !== 'completed' ? 'text-red-400' : 'text-slate-500'}`}>
-                                            <Calendar className="w-3 h-3" />
-                                            {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                        </div>
-                                    )}
-                                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest ${getPriorityColor(task.priority)}`}>
-                                        {task.priority}
-                                    </span>
-                                </div>
-
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setNotesTaskId(task.id);
-                                    }}
-                                    className="p-2 -mr-2 text-slate-400 hover:text-white active:bg-white/5 rounded-full transition-colors"
-                                >
-                                    <FileText className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
+                <div className="space-y-1 pb-24 px-1">
+                    <div className="mb-4 mt-2 px-1">
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Strategic Intel: Swipe right to complete, left to eliminate</p>
+                    </div>
+                    {filteredAndSearchedTasks.map(task => (
+                        <SwipeableTaskItem
+                            key={task.id}
+                            task={task}
+                            onEditStatus={setEditingStatusTask}
+                            onDelete={handleDeleteTask}
+                        />
                     ))}
+                    {filteredAndSearchedTasks.length === 0 && <EmptyState icon={CheckSquare} title="No objectives found" description="Initialize your first task to begin operation." />}
                 </div>
 
-                <StatusUpdateModal
-                    task={editingStatusTask}
-                    onClose={() => setEditingStatusTask(null)}
-                    onUpdate={(status) => {
-                        if (editingStatusTask) {
+                {editingStatusTask && (
+                    <StatusUpdateModal
+                        task={editingStatusTask}
+                        onClose={() => setEditingStatusTask(null)}
+                        onUpdate={(status) => {
                             handleStatusChange(editingStatusTask.id, status);
                             setEditingStatusTask(null);
-                        }
-                    }}
-                />
+                        }}
+                    />
+                )}
             </>
         );
     };
 
+    const ProjectHealthDashboard = () => {
+        if (!healthData) return null;
+
+        return (
+            <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
+                <div className="glass-panel p-6 rounded-[2.5rem] border border-white/5 bg-slate-900/40 relative overflow-hidden backdrop-blur-3xl">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 blur-[100px] -mr-32 -mt-32"></div>
+                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-violet-500/5 blur-[100px] -ml-32 -mb-32"></div>
+
+                    <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+                        {/* Health Score Component */}
+                        <div className="flex items-center gap-6">
+                            <div className="relative">
+                                <svg className="w-24 h-24 transform -rotate-90">
+                                    <circle
+                                        cx="48"
+                                        cy="48"
+                                        r="40"
+                                        stroke="currentColor"
+                                        strokeWidth="8"
+                                        fill="transparent"
+                                        className="text-white/5"
+                                    />
+                                    <circle
+                                        cx="48"
+                                        cy="48"
+                                        r="40"
+                                        stroke="currentColor"
+                                        strokeWidth="8"
+                                        fill="transparent"
+                                        strokeDasharray={251.2}
+                                        strokeDashoffset={251.2 - (251.2 * healthData.score) / 100}
+                                        className={`${healthData.status === 'healthy' ? 'text-teal-500' :
+                                            healthData.status === 'at_risk' ? 'text-amber-500' : 'text-red-500'
+                                            } transition-all duration-1000 ease-out`}
+                                    />
+                                </svg>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span className="text-2xl font-black text-white">{healthData.score}</span>
+                                    <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Pulse</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Project Vitals</h3>
+                                <div className="flex items-center gap-2">
+                                    <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 ${healthData.status === 'healthy' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20' :
+                                        healthData.status === 'at_risk' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                                            'bg-red-500/10 text-red-400 border border-red-500/20'
+                                        }`}>
+                                        <Activity className="w-3 h-3" />
+                                        {healthData.status.replace('_', ' ')}
+                                    </div>
+                                    {healthData.score > 80 ? <TrendingUp className="w-4 h-4 text-teal-500" /> : <TrendingDown className="w-4 h-4 text-amber-500" />}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Risk Assessment */}
+                        <div className="lg:border-x lg:border-white/5 lg:px-8">
+                            <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+                                <Shield className="w-3 h-3" />
+                                Critical Intelligence
+                            </h3>
+                            <div className="space-y-2">
+                                {healthData.risks.length > 0 ? (
+                                    healthData.risks.map((risk: string, i: number) => (
+                                        <div key={i} className="flex items-start gap-2 text-xs text-slate-300">
+                                            <AlertCircle className="w-3.5 h-3.5 text-red-400 mt-0.5 flex-shrink-0" />
+                                            <span>{risk}</span>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="flex items-center gap-2 text-xs text-teal-400">
+                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                        <span>No immediate operational threats detected.</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* AI Recommendation */}
+                        <div>
+                            <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+                                <Zap className="w-3 h-3 text-teal-400" />
+                                Strategic Recommendation
+                            </h3>
+                            <div className="bg-slate-950/40 border border-teal-500/10 rounded-2xl p-4">
+                                <p className="text-xs text-slate-300 italic leading-relaxed">
+                                    &quot;{healthData.recommendations[0] || 'Continue current operational trajectory. Monitor high-priority milestones.'}&quot;
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const BulkActionBar = () => {
+        if (selectedTaskIds.length === 0) return null;
+
+        return (
+            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-2xl animate-in slide-in-from-bottom-10">
+                <div className="bg-slate-900 border border-teal-500/50 backdrop-blur-2xl rounded-3xl p-4 shadow-[0_0_50px_-12px_rgba(20,184,166,0.3)] flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-teal-500 text-white font-black text-xs px-3 py-1.5 rounded-xl shadow-lg shadow-teal-500/20">
+                            {selectedTaskIds.length} Objectives Selected
+                        </div>
+                        <button
+                            onClick={() => setSelectedTaskIds([])}
+                            className="text-slate-400 hover:text-white text-xs font-bold uppercase tracking-wider transition-colors"
+                        >
+                            Reset
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <div className="h-8 w-px bg-white/10 mx-2 hidden sm:block"></div>
+                        <div className="flex-1 sm:flex-none flex items-center gap-2">
+                            <select
+                                onChange={(e) => handleBulkStatusChange(e.target.value as any)}
+                                className="flex-1 sm:flex-none bg-slate-950/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-bold uppercase tracking-wider focus:outline-none focus:border-teal-500 transition-all"
+                                defaultValue=""
+                            >
+                                <option value="" disabled>Status Shift</option>
+                                <option value="todo">Planning</option>
+                                <option value="in_progress">Working</option>
+                                <option value="completed">Done</option>
+                                <option value="cancelled">Archived</option>
+                            </select>
+
+                            <button
+                                onClick={handleBulkDelete}
+                                className="p-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl transition-all group"
+                                title="Bulk Eliminate"
+                            >
+                                <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
-        <div className="space-y-6 animate-fade-in h-full flex flex-col bg-slate-950/30 p-2 md:p-6 rounded-3xl backdrop-blur-sm border border-white/5">
+        <div className="space-y-6 animate-fade-in h-full flex flex-col bg-slate-950/30 p-2 md:p-6 rounded-3xl backdrop-blur-sm border border-white/5 relative">
+            <BulkActionBar />
+            {/* Mobile FAB */}
+            {(userRole === 'admin' || userRole === 'tenant_admin') && (
+                <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="lg:hidden fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-r from-teal-500 to-teal-400 text-white rounded-full shadow-2xl shadow-teal-500/40 flex items-center justify-center active:scale-90 transition-transform"
+                >
+                    <Plus className="w-8 h-8" />
+                </button>
+            )}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-2">
                 <div>
                     <div className="flex items-center gap-3 mb-1">
@@ -669,11 +1106,34 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                 </div>
 
                 <div className="flex items-center gap-3 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
+                    <div className="relative min-w-[200px] flex-1 lg:flex-none">
+                        <Input
+                            placeholder="Find task..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="h-10 !py-2 !pl-10 !rounded-xl !bg-slate-900/60"
+                        />
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                            <Plus className="w-4 h-4 rotate-45" /> {/* Mock search icon if Search not imported */}
+                        </div>
+                    </div>
+
                     <div className="hidden lg:flex p-1 bg-slate-900/60 rounded-xl border border-white/5 backdrop-blur-md">
                         <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all flex items-center gap-2 ${viewMode === 'grid' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}><LayoutGrid className="w-4 h-4" /></button>
                         <button onClick={() => setViewMode('kanban')} className={`p-2 rounded-lg transition-all flex items-center gap-2 ${viewMode === 'kanban' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}><Trello className="w-4 h-4" /></button>
                         <button onClick={() => setViewMode('gantt')} className={`p-2 rounded-lg transition-all flex items-center gap-2 ${viewMode === 'gantt' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}><BarChart className="w-4 h-4" /></button>
                     </div>
+
+                    <select
+                        value={selectedProject}
+                        onChange={(e) => setSelectedProject(e.target.value)}
+                        className="px-4 py-2.5 bg-slate-900/80 border border-white/10 rounded-xl text-white text-xs font-bold focus:outline-none focus:border-teal-500 transition-all uppercase tracking-wider min-w-[140px]"
+                    >
+                        <option value="all">Global Fleet</option>
+                        {projects.map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                    </select>
 
                     <select value={filter} onChange={(e) => setFilter(e.target.value as any)} className="px-4 py-2.5 bg-slate-900/80 border border-white/10 rounded-xl text-white text-xs font-bold focus:outline-none focus:border-teal-500 transition-all uppercase tracking-wider min-w-[140px]">
                         <option value="all">Global Scope</option>
@@ -688,6 +1148,8 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                     )}
                 </div>
             </div>
+
+            <ProjectHealthDashboard />
 
             <div className="flex-1 overflow-hidden min-h-0">
                 {loading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">{Array.from({ length: 8 }).map((_, i) => <CardSkeleton key={i} />)}</div> : (
@@ -720,12 +1182,29 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Assign To</label>
+                                <select className="w-full bg-slate-950 border border-white/5 rounded-2xl px-4 py-3 text-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50" value={taskForm.assignedTo} onChange={(e) => setTaskForm({ ...taskForm, assignedTo: e.target.value })}>
+                                    <option value="">Unassigned</option>
+                                    {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                </select>
+                            </div>
+                            <div>
                                 <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Priority Tier</label>
                                 <select className="w-full bg-slate-950 border border-white/5 rounded-2xl px-4 py-3 text-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50" value={taskForm.priority} onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value as Task['priority'] })}>
                                     <option value="low">Low Impact</option>
                                     <option value="medium">Standard</option>
                                     <option value="high">Mission Critical</option>
                                     <option value="urgent">Immediate Action</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Related Project</label>
+                                <select className="w-full bg-slate-950 border border-white/5 rounded-2xl px-4 py-3 text-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50" value={taskForm.relatedToProject} onChange={(e) => setTaskForm({ ...taskForm, relatedToProject: e.target.value })}>
+                                    <option value="">None</option>
+                                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                 </select>
                             </div>
                             <div>
