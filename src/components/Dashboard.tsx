@@ -48,27 +48,16 @@ import HomeTab from './dashboard/HomeTab';
 import ProjectSubmitTab from './dashboard/ProjectSubmitTab';
 import ExitIntentModal from './ExitIntentModal';
 import IncomingCallModal from './dashboard/video/IncomingCallModal';
-// import { generateContract, generateArchitectSpecs } from '../services/geminiService';
-// TODO: Implement real contract and architect services
+import { generateContract as generateContractAI, generateArchitectSpecs } from '../services/geminiService';
 interface ArchitectData {
   techStack: string;
   developmentPrompt: string;
   architectureDiagram: string;
 }
 
-import { generateContract as generateContractAI } from '../services/geminiService';
 
 const generateContract = async (clientName: string, projectName: string): Promise<string> => {
   return await generateContractAI(clientName, projectName, 0);
-};
-
-const generateArchitectSpecs = async (): Promise<ArchitectData> => {
-  // TODO: Implement with geminiService
-  return {
-    techStack: "To be determined",
-    developmentPrompt: "Analysis pending",
-    architectureDiagram: "Diagram pending"
-  };
 };
 import { projectService } from '../services/projectService';
 import { messageService } from '../services/messageService';
@@ -650,7 +639,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     setSelectedProjectForTool(p);
     setArchitectModalOpen(true);
     setIsArchitecting(true);
-    const data = await generateArchitectSpecs();
+    const data = await generateArchitectSpecs(p.description || "A new custom software project", p.category || "Web Application");
     setArchitectData(data);
     setIsArchitecting(false);
   };
@@ -954,8 +943,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       case '/dashboard/onboarding':
         return <OnboardingPipelines user={user} />;
 
-      case '/dashboard/security':
-        return <SecurityDashboard user={user} />;
+
 
       case '/dashboard/tasks':
         return (

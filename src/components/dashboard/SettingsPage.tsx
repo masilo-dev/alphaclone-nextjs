@@ -404,9 +404,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                onClick={handleEnable2FA}
+                                                disabled
+                                                className="opacity-50 cursor-not-allowed"
                                             >
-                                                Enable 2FA
+                                                Enable 2FA (Coming Soon)
                                             </Button>
                                         </div>
 
@@ -564,10 +565,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 
                                 <div className="pt-4 border-t border-slate-800">
                                     <Button
-                                        onClick={handleSaveAppearance}
-                                        className="bg-teal-600 hover:bg-teal-500"
+                                        disabled
+                                        className="bg-teal-600 hover:bg-teal-500 opacity-50 cursor-not-allowed"
                                     >
-                                        Save Preferences
+                                        Save Preferences (Coming Soon)
                                     </Button>
                                 </div>
                             </div>
@@ -580,8 +581,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 
