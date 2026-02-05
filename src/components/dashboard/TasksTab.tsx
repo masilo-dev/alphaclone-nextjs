@@ -41,6 +41,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import toast from 'react-hot-toast';
+import VoiceCaptureFAB from './VoiceCaptureFAB';
 import {
     DndContext,
     DragEndEvent,
@@ -769,10 +770,12 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         const [startX, setStartX] = useState(0);
         const [offsetX, setOffsetX] = useState(0);
         const [isSwiping, setIsSwiping] = useState(false);
+        const hapticRef = useRef(false);
 
         const onTouchStart = (e: React.TouchEvent) => {
             setStartX(e.targetTouches[0].clientX);
             setIsSwiping(true);
+            hapticRef.current = false;
         };
 
         const onTouchMove = (e: React.TouchEvent) => {
@@ -780,17 +783,28 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
             const currentX = e.targetTouches[0].clientX;
             const diff = currentX - startX;
             // Limit swipe range
-            setOffsetX(Math.max(-100, Math.min(100, diff)));
+            const newOffset = Math.max(-120, Math.min(120, diff));
+            setOffsetX(newOffset);
+
+            // Simulate haptic feedback at threshold
+            if (Math.abs(newOffset) > 80 && !hapticRef.current) {
+                if ('vibrate' in navigator) navigator.vibrate(10);
+                hapticRef.current = true;
+            } else if (Math.abs(newOffset) < 80) {
+                hapticRef.current = false;
+            }
         };
 
         const onTouchEnd = () => {
             setIsSwiping(false);
-            if (offsetX > 70) {
+            if (offsetX > 80) {
                 // Swipe right -> Toggle Complete
                 handleStatusChange(task.id, task.status === 'completed' ? 'todo' : 'completed');
-            } else if (offsetX < -70) {
+                if ('vibrate' in navigator) navigator.vibrate([10, 30]);
+            } else if (offsetX < -80) {
                 // Swipe left -> Delete
                 onDelete(task.id);
+                if ('vibrate' in navigator) navigator.vibrate(50);
             }
             setOffsetX(0);
         };
@@ -798,21 +812,25 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         return (
             <div className="relative overflow-hidden rounded-2xl group mb-4">
                 {/* Background Actions */}
-                <div className="absolute inset-0 flex items-center justify-between px-6 z-0">
-                    <div className="flex items-center gap-2 text-green-400">
-                        <Check className="w-6 h-6" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Complete</span>
+                <div className="absolute inset-0 flex items-center justify-between px-8 z-0">
+                    <div className={`flex items-center gap-3 transition-all duration-300 ${offsetX > 40 ? 'opacity-100 scale-110 translate-x-2' : 'opacity-20 scale-90'} ${offsetX > 80 ? 'text-teal-400' : 'text-slate-500'}`}>
+                        <CheckCircle2 className={`w-8 h-8 transition-transform ${offsetX > 80 ? 'rotate-12' : ''}`} />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">{task.status === 'completed' ? 'Restore' : 'Complete'}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-red-400">
-                        <span className="text-[10px] font-black uppercase tracking-widest">Delete</span>
-                        <Trash2 className="w-6 h-6" />
+                    <div className={`flex items-center gap-3 transition-all duration-300 ${offsetX < -40 ? 'opacity-100 scale-110 -translate-x-2' : 'opacity-20 scale-90'} ${offsetX < -80 ? 'text-red-500' : 'text-slate-500'}`}>
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Eliminate</span>
+                        <Trash2 className={`w-8 h-8 transition-transform ${offsetX < -80 ? '-rotate-12' : ''}`} />
                     </div>
                 </div>
 
                 {/* Task Content */}
                 <div
-                    className="relative z-10 bg-slate-900/80 backdrop-blur-xl border border-white/5 p-4 transition-transform duration-200 ease-out"
-                    style={{ transform: `translateX(${offsetX}px)` }}
+                    className="relative z-10 bg-slate-900/80 backdrop-blur-3xl border border-white/10 p-5 shadow-2xl transition-transform duration-300 cubic-bezier(0.16, 1, 0.3, 1)"
+                    style={{
+                        transform: `translateX(${offsetX}px)`,
+                        borderRadius: Math.abs(offsetX) > 20 ? '2rem' : '1.5rem',
+                        borderColor: offsetX > 80 ? 'rgba(20, 184, 166, 0.5)' : offsetX < -80 ? 'rgba(239, 68, 68, 0.5)' : 'rgba(255, 255, 255, 0.1)'
+                    }}
                     onTouchStart={onTouchStart}
                     onTouchMove={onTouchMove}
                     onTouchEnd={onTouchEnd}
@@ -943,7 +961,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
             <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
                 <div className="glass-panel p-6 rounded-[2.5rem] border border-white/5 bg-slate-900/40 relative overflow-hidden backdrop-blur-3xl">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 blur-[100px] -mr-32 -mt-32"></div>
-                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-violet-500/5 blur-[100px] -ml-32 -mb-32"></div>
+                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/5 blur-[100px] -ml-32 -mb-32"></div>
 
                     <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
                         {/* Health Score Component */}
@@ -1096,11 +1114,11 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-2">
                 <div>
                     <div className="flex items-center gap-3 mb-1">
-                        <div className="p-2.5 bg-gradient-to-br from-teal-500/20 to-violet-500/20 rounded-2xl border border-white/10 shadow-lg shadow-teal-500/5">
+                        <div className="p-2.5 bg-gradient-to-br from-teal-500/20 to-blue-500/20 rounded-2xl border border-white/10 shadow-lg shadow-teal-500/5">
                             <CheckSquare className="w-6 h-6 text-teal-400" />
                         </div>
                         <h2 className="text-2xl lg:text-4xl font-black text-white tracking-tight">
-                            Project <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-violet-400">Intelligence</span>
+                            Project <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-400">Intelligence</span>
                         </h2>
                     </div>
                 </div>
@@ -1233,6 +1251,11 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                     </div>
                 </div>
             )}
+
+            <VoiceCaptureFAB onCapture={(text) => {
+                setTaskForm(prev => ({ ...prev, description: text }));
+                setShowCreateModal(true);
+            }} />
         </div>
     );
 };

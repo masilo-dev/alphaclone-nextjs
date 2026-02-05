@@ -17,10 +17,13 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
     const [selectedProjectId, setSelectedProjectId] = useState('');
+    const [selectedClientId, setSelectedClientId] = useState('');
     const [dueDate, setDueDate] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'bank' | 'mobile_money'>('stripe');
     const [manualInstructions, setManualInstructions] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [clients, setClients] = useState<any[]>([]);
+    const [loadingClients, setLoadingClients] = useState(false);
 
     // Fetch tenant defaults
     const [tenantDefaults, setTenantDefaults] = useState({ bank: '', mobile: '' });
@@ -29,25 +32,35 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         const fetchDefaults = async () => {
             const { supabase } = await import('../../lib/supabase');
             const { tenantService } = await import('../../services/tenancy/TenantService');
+            const { userService } = await import('../../services/userService');
             const tenantId = tenantService.getCurrentTenantId();
 
             if (tenantId) {
-                const { data } = await supabase
-                    .from('business_settings')
-                    .select('bank_details, mobile_payment_details')
-                    .eq('tenant_id', tenantId)
-                    .maybeSingle();
+                setLoadingClients(true);
+                const [settingsRes, clientsRes] = await Promise.all([
+                    supabase
+                        .from('business_settings')
+                        .select('bank_details, mobile_payment_details')
+                        .eq('tenant_id', tenantId)
+                        .maybeSingle(),
+                    userService.getUsers()
+                ]);
 
-                if (data) {
+                if (settingsRes.data) {
                     setTenantDefaults({
-                        bank: data.bank_details || '',
-                        mobile: data.mobile_payment_details || ''
+                        bank: settingsRes.data.bank_details || '',
+                        mobile: settingsRes.data.mobile_payment_details || ''
                     });
                 }
+
+                if (clientsRes.users) {
+                    setClients(clientsRes.users.filter(u => u.role === 'client'));
+                }
+                setLoadingClients(false);
             }
         };
-        fetchDefaults();
-    }, []);
+        if (isOpen) fetchDefaults();
+    }, [isOpen]);
 
     const handleMethodChange = (method: 'stripe' | 'bank' | 'mobile_money') => {
         setPaymentMethod(method);
@@ -61,8 +74,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     };
 
     const handleSubmit = async () => {
-        if (!amount || !description || !selectedProjectId || !dueDate) {
-            toast.error('Please fill in all fields');
+        if (!amount || !description || (!selectedProjectId && !selectedClientId) || !dueDate) {
+            toast.error('Please fill in required fields (Project or Client)');
             return;
         }
 
@@ -75,36 +88,39 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         setIsSubmitting(true);
 
         const project = projects.find(p => p.id === selectedProjectId);
-        if (!project || !project.ownerId) {
-            toast.error('Selected project has no owner!');
+        const finalClientId = project?.ownerId || selectedClientId;
+
+        if (!finalClientId) {
+            toast.error('No client identified for this invoice!');
             setIsSubmitting(false);
             return;
         }
 
         try {
-            // Create invoice with timeout
-            const invoicePromise = paymentService.createInvoice({
-                user_id: project.ownerId,
-                project_id: project.id,
-                amount: amountNum,
-                currency: 'usd',
-                description: description,
-                due_date: new Date(dueDate).toISOString(),
-                payment_method: paymentMethod,
-                manual_payment_instructions: manualInstructions,
-                items: [{
-                    description: description,
-                    quantity: 1,
-                    unit_price: amountNum,
-                    amount: amountNum
-                }]
-            });
-
-            const timeoutPromise = new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('Request timeout')), 10000)
+            const timeoutPromise = new Promise<{ error: any }>((_, reject) =>
+                setTimeout(() => reject(new Error('Transaction timed out')), 15000)
             );
 
-            const { error } = await Promise.race([invoicePromise, timeoutPromise]);
+            // Create invoice with timeout
+            const { error } = await Promise.race([
+                paymentService.createInvoice({
+                    user_id: finalClientId,
+                    project_id: project?.id || undefined,
+                    amount: amountNum,
+                    currency: 'usd',
+                    description: description,
+                    due_date: new Date(dueDate).toISOString(),
+                    payment_method: paymentMethod,
+                    manual_payment_instructions: manualInstructions,
+                    items: [{
+                        description: description,
+                        quantity: 1,
+                        unit_price: amountNum,
+                        amount: amountNum
+                    }]
+                }),
+                timeoutPromise
+            ]);
 
             if (error) {
                 console.error('Invoice creation error:', error);
@@ -134,18 +150,66 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Create New Invoice">
             <div className="space-y-4">
-                <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Project</label>
-                    <select
-                        className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        value={selectedProjectId}
-                        onChange={(e) => setSelectedProjectId(e.target.value)}
+                <div className="flex gap-4 mb-4">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-[10px] uppercase font-bold"
+                        onClick={() => {
+                            setAmount('500');
+                            setDescription('Standard Consultation');
+                            setDueDate(new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]);
+                        }}
                     >
-                        <option value="">Select a project...</option>
-                        {projects.map(p => (
-                            <option key={p.id} value={p.id}>{p.name} ({p.ownerName || 'Unknown Client'})</option>
-                        ))}
-                    </select>
+                        ⚡ Standard Template
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-[10px] uppercase font-bold"
+                        onClick={() => {
+                            setAmount('2500');
+                            setDescription('Development Milestone');
+                            setDueDate(new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0]);
+                        }}
+                    >
+                        ⚡ Dev Milestone
+                    </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Link to Project (Optional)</label>
+                        <select
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                            value={selectedProjectId}
+                            onChange={(e) => {
+                                setSelectedProjectId(e.target.value);
+                                if (e.target.value) setSelectedClientId('');
+                            }}
+                        >
+                            <option value="">Decoupled Invoice</option>
+                            {projects.map(p => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {!selectedProjectId && (
+                        <div className="animate-fade-in-down">
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Select Client</label>
+                            <select
+                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                                value={selectedClientId}
+                                onChange={(e) => setSelectedClientId(e.target.value)}
+                            >
+                                <option value="">Select a client...</option>
+                                {clients.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name} ({c.email})</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                 </div>
 
                 <Input

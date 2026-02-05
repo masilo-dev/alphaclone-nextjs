@@ -30,7 +30,6 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
     });
     const [revenueData, setRevenueData] = useState<any[]>([]);
     const [recentActivity, setRecentActivity] = useState<any[]>([]);
-    const [upcomingMeetings, setUpcomingMeetings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -62,15 +61,6 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
             setRevenueData(stats.monthlyRevenue || []);
             setRecentActivity(stats.recentActivity || []);
 
-            // [NEW] Fetch Upcoming Meetings
-            const { calls } = await dailyService.getUserVideoCall(user.id);
-            if (calls) {
-                const upcoming = calls.filter((m: any) =>
-                    (m.status === 'scheduled' || m.status === 'active') &&
-                    new Date(m.scheduled_at || m.created_at).getTime() > Date.now()
-                ).sort((a: any, b: any) => new Date(a.scheduled_at || a.created_at).getTime() - new Date(b.scheduled_at || b.created_at).getTime());
-                setUpcomingMeetings(upcoming);
-            }
 
         } catch (error) {
             console.error('Error loading dashboard data:', error);
@@ -122,7 +112,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
             {/* Charts & Upcoming Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Revenue Chart */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm lg:col-span-2">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                         <TrendingUp className="w-5 h-5 text-teal-400" />
                         Revenue Trend
@@ -141,48 +131,6 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
                     </ResponsiveContainer>
                 </div>
 
-                {/* Upcoming Bookings (New Widget) */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold flex items-center gap-2">
-                            <Calendar className="w-5 h-5 text-blue-400" />
-                            Upcoming Bookings
-                        </h3>
-                        <a href="/dashboard/business/meetings" className="text-xs font-bold text-teal-400 hover:text-teal-300 uppercase tracking-wider">View All</a>
-                    </div>
-
-                    <div className="space-y-3 flex-1 overflow-y-auto max-h-[250px] custom-scrollbar pr-2">
-                        {upcomingMeetings.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center text-center p-4 border border-slate-800/50 border-dashed rounded-xl">
-                                <p className="text-slate-500 text-sm">No bookings scheduled.</p>
-                                <a href="/dashboard/business/meetings" className="mt-2 text-xs text-teal-500 hover:text-teal-400 font-bold">Schedule Meeting</a>
-                            </div>
-                        ) : (
-                            upcomingMeetings.slice(0, 3).map((meeting: any) => (
-                                <div key={meeting.id} className="flex items-center gap-4 bg-slate-950/50 border border-slate-800/50 p-3 rounded-xl hover:border-slate-700 transition-colors group">
-                                    <div className="flex flex-col items-center justify-center w-10 h-10 bg-slate-900 rounded-lg text-slate-400 group-hover:text-white transition-colors border border-slate-800">
-                                        <span className="text-[10px] font-bold uppercase">{new Date(meeting.scheduled_at || meeting.created_at).toLocaleString('en-US', { month: 'short' })}</span>
-                                        <span className="text-sm font-bold">{new Date(meeting.scheduled_at || meeting.created_at).getDate()}</span>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h4 className="font-semibold text-sm text-white truncate">{meeting.title}</h4>
-                                        <div className="flex items-center gap-2 text-xs text-slate-500">
-                                            <Clock className="w-3 h-3" />
-                                            {new Date(meeting.scheduled_at || meeting.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                                        </div>
-                                    </div>
-                                    <a
-                                        href={`/meet/${meeting.id}`}
-                                        target="_blank"
-                                        className="px-3 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 text-xs font-bold rounded-lg transition-colors border border-teal-500/20"
-                                    >
-                                        JOIN
-                                    </a>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </div>
             </div>
 
             {/* Bottom Row: Recent Activity & Quick Actions */}

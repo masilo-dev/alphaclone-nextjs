@@ -27,7 +27,8 @@ import {
   Video,
   ListChecks,
   Share2,
-  AlertCircle
+  AlertCircle,
+  Zap
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import MilestoneManager from './dashboard/projects/MilestoneManager';
@@ -42,6 +43,7 @@ import ThemeToggle from './ThemeToggle';
 import EnhancedGlobalSearch from './dashboard/EnhancedGlobalSearch';
 import Sidebar from './dashboard/Sidebar';
 import BottomNav from './dashboard/BottomNav';
+import CommandPalette from './dashboard/CommandPalette';
 import HomeTab from './dashboard/HomeTab';
 import ProjectSubmitTab from './dashboard/ProjectSubmitTab';
 import ExitIntentModal from './ExitIntentModal';
@@ -190,6 +192,21 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal'>('card');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [createInvoiceOpen, setCreateInvoiceOpen] = useState(false);
+  const [createProjectOpen, setCreateProjectOpen] = useState(false);
+  const [createTaskOpen, setCreateTaskOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
+  // Global Command Palette Hotkey (/)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === '/' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        setCommandPaletteOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Onboarding Flow (show only once per user)
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -1510,7 +1527,40 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
       )}
-    </div >
+
+      {/* Dashboard Global Elements */}
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        onCreateInvoice={() => setCreateInvoiceOpen(true)}
+        onCreateTask={() => setCreateTaskOpen(true)}
+        onCreateProject={() => setCreateProjectOpen(true)}
+      />
+
+      {createInvoiceOpen && (
+        <CreateInvoiceModal
+          isOpen={createInvoiceOpen}
+          onClose={() => setCreateInvoiceOpen(false)}
+          projects={projects}
+          onInvoiceCreated={() => {
+            setCreateInvoiceOpen(false);
+            if (typeof refreshInvoices === 'function') refreshInvoices();
+          }}
+        />
+      )}
+
+      {createTaskOpen && (
+        <Modal isOpen={createTaskOpen} onClose={() => setCreateTaskOpen(false)} title="Intelligence Capture">
+          <div className="p-6 text-center space-y-4">
+            <div className="w-16 h-16 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto text-teal-400">
+              <Zap className="w-8 h-8 animate-pulse" />
+            </div>
+            <p className="text-slate-300 text-sm">Please navigate to the <b>Tasks</b> tab to use the full neural capture engine for new objectives.</p>
+            <Button onClick={() => { setCreateTaskOpen(false); setActiveTab('/dashboard/tasks'); router.push('/dashboard/tasks'); }} className="w-full bg-teal-500 hover:bg-teal-400">Initialize Neural Sync</Button>
+          </div>
+        </Modal>
+      )}
+    </div>
   );
 };
 

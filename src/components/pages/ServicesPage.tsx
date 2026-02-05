@@ -14,14 +14,14 @@ const ServicesPage: React.FC = () => {
             title: 'Custom Web Development',
             description: 'Full-stack web applications with modern frameworks. Responsive, fast, and scalable solutions.',
             features: ['React & Next.js', 'TypeScript', 'API Development', 'Performance Optimization'],
-            color: 'from-blue-500 to-blue-600'
+            color: 'from-blue-500 to-teal-500'
         },
         {
             icon: Smartphone,
             title: 'Mobile App Development',
             description: 'Native iOS and Android apps, plus cross-platform solutions. App store optimization included.',
             features: ['iOS Development', 'Android Development', 'React Native', 'App Store Deployment'],
-            color: 'from-purple-500 to-purple-600'
+            color: 'from-teal-500 to-blue-500'
         },
         {
             icon: Bot,
@@ -35,42 +35,42 @@ const ServicesPage: React.FC = () => {
             title: 'Enterprise CRM',
             description: 'Custom CRM systems tailored to your workflow. Client management, sales pipelines, and analytics.',
             features: ['Custom Workflows', 'Sales Pipelines', 'Client Management', 'Analytics Dashboard'],
-            color: 'from-green-500 to-green-600'
+            color: 'from-teal-400 to-blue-500'
         },
         {
             icon: Shield,
             title: 'Security & Compliance',
             description: 'Enterprise-grade security, data protection, and compliance with industry standards.',
             features: ['Data Encryption', 'Access Control', 'Compliance', 'Security Audits'],
-            color: 'from-red-500 to-red-600'
+            color: 'from-blue-600 to-teal-600'
         },
         {
             icon: Zap,
             title: 'Performance Optimization',
             description: 'Speed optimization, scalability improvements, and infrastructure upgrades.',
             features: ['Speed Optimization', 'Scalability', 'CDN Setup', 'Database Optimization'],
-            color: 'from-yellow-500 to-yellow-600'
+            color: 'from-sky-500 to-teal-500'
         },
         {
             icon: BarChart,
             title: 'Analytics & Reporting',
             description: 'Custom dashboards, business intelligence, and data visualization solutions.',
             features: ['Custom Dashboards', 'Data Visualization', 'Business Intelligence', 'Real-time Reports'],
-            color: 'from-indigo-500 to-indigo-600'
+            color: 'from-teal-600 to-blue-500'
         },
         {
             icon: Settings,
             title: 'System Integration',
             description: 'Connect your existing systems and third-party services seamlessly.',
             features: ['API Integration', 'Webhook Setup', 'Data Synchronization', 'System Migration'],
-            color: 'from-slate-500 to-slate-600'
+            color: 'from-blue-400 to-teal-500'
         },
         {
             icon: Globe,
             title: 'Cloud Infrastructure',
             description: 'Cloud migration, infrastructure setup, and DevOps solutions.',
             features: ['Cloud Migration', 'Infrastructure Setup', 'DevOps', 'Monitoring'],
-            color: 'from-cyan-500 to-cyan-600'
+            color: 'from-teal-500 to-sky-500'
         }
     ];
 

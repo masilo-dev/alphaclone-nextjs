@@ -169,7 +169,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      animate={{ opacity: 1 }}
                      exit={{ opacity: 0 }}
                      onClick={() => setMobileMenuOpen(false)}
-                     className="fixed inset-0 bg-slate-950/98 backdrop-blur-2xl z-[9999] touch-none"
+                     className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-[9999] touch-none"
                   />
 
                   {/* Right Drawer */}
@@ -179,7 +179,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      animate={{ x: 0 }}
                      exit={{ x: '100%' }}
                      transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                     className="fixed top-0 right-0 bottom-0 w-full xs:w-[85%] max-w-sm bg-slate-950 opacity-100 z-[10000] shadow-2xl border-l border-white/5 p-6 flex flex-col items-end pt-safe overflow-y-auto"
+                     className="fixed top-0 right-0 bottom-0 w-[280px] bg-slate-950 z-[10000] shadow-2xl border-l border-white/5 p-6 flex flex-col items-end pt-safe overflow-y-auto"
                      onClick={(e) => e.stopPropagation()}
                   >
                      {/* Drawer Header */}
@@ -203,29 +203,26 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <Link
                               href="/"
                               onClick={() => setMobileMenuOpen(false)}
-                              className="flex items-center justify-end gap-3 w-full text-right text-xl font-semibold text-white hover:text-teal-400 transition-colors py-1"
+                              className="flex items-center justify-end gap-3 w-full text-right text-lg font-bold text-white hover:text-teal-400 transition-colors py-1"
                            >
                               Home
-                              <Home className="w-5 h-5 text-slate-500" />
                            </Link>
 
                            <Link
                               href="/ecosystem"
                               onClick={() => setMobileMenuOpen(false)}
-                              className="flex items-center justify-end gap-3 w-full text-right text-xl font-semibold text-white hover:text-teal-400 transition-colors py-1"
+                              className="flex items-center justify-end gap-3 w-full text-right text-lg font-bold text-white hover:text-teal-400 transition-colors py-1"
                            >
                               Platform
-                              <Globe className="w-5 h-5 text-slate-500" />
                            </Link>
 
                            {/* Services Group */}
                            <div className="w-full flex flex-col items-end space-y-4">
                               <button
                                  onClick={() => setServicesDropdownOpen(!servicesDropdownOpen)}
-                                 className="flex items-center justify-end gap-3 w-full text-right text-xl font-semibold text-white hover:text-teal-400 transition-colors py-1"
+                                 className="flex items-center justify-end gap-3 w-full text-right text-lg font-bold text-white hover:text-teal-400 transition-colors py-1"
                               >
                                  Services
-                                 <Layers className="w-5 h-5 text-slate-500" />
                               </button>
 
                               <AnimatePresence>
@@ -261,28 +258,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <Link
                               href="/portfolio"
                               onClick={() => setMobileMenuOpen(false)}
-                              className="flex items-center justify-end gap-3 w-full text-right text-lg font-medium text-slate-300 hover:text-white transition-colors py-1"
+                              className="flex items-center justify-end gap-3 w-full text-right text-base font-semibold text-slate-300 hover:text-white transition-colors py-1"
                            >
                               Portfolio
-                              <Briefcase className="w-4 h-4 text-slate-600" />
                            </Link>
 
                            <Link
                               href="/about"
                               onClick={() => setMobileMenuOpen(false)}
-                              className="flex items-center justify-end gap-3 w-full text-right text-lg font-medium text-slate-300 hover:text-white transition-colors py-1"
+                              className="flex items-center justify-end gap-3 w-full text-right text-base font-semibold text-slate-300 hover:text-white transition-colors py-1"
                            >
                               About
-                              <Info className="w-4 h-4 text-slate-600" />
                            </Link>
 
                            <Link
                               href="/contact"
                               onClick={() => setMobileMenuOpen(false)}
-                              className="flex items-center justify-end gap-3 w-full text-right text-lg font-medium text-slate-300 hover:text-white transition-colors py-1"
+                              className="flex items-center justify-end gap-3 w-full text-right text-base font-semibold text-slate-300 hover:text-white transition-colors py-1"
                            >
                               Contact
-                              <PhoneCall className="w-4 h-4 text-slate-600" />
                            </Link>
                         </div>
                      </div>
@@ -292,15 +286,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         <Link
                            href="/login"
                            onClick={() => setMobileMenuOpen(false)}
-                           className="flex items-center justify-center gap-2 w-full py-4 text-center font-bold text-slate-300 border border-slate-800/50 rounded-2xl hover:bg-slate-900 transition-colors text-base"
+                           className="flex items-center justify-center gap-2 w-full py-3.5 text-center font-bold text-slate-300 border border-slate-800/50 rounded-xl hover:bg-slate-900 transition-colors text-sm"
                         >
-                           <UserIcon className="w-4 h-4" />
                            Log In
                         </Link>
                         <Link
                            href="/register"
                            onClick={() => setMobileMenuOpen(false)}
-                           className="w-full py-4 bg-teal-500 hover:bg-teal-400 text-slate-950 text-center font-bold rounded-2xl shadow-lg shadow-teal-500/20 text-base"
+                           className="w-full py-3.5 bg-teal-500 hover:bg-teal-400 text-slate-950 text-center font-bold rounded-xl shadow-lg shadow-teal-500/20 text-sm"
                         >
                            Start Today
                         </Link>
