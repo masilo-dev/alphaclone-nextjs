@@ -74,8 +74,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     };
 
     const handleSubmit = async () => {
-        if (!amount || !description || (!selectedProjectId && !selectedClientId) || !dueDate) {
-            toast.error('Please fill in required fields (Project or Client)');
+        if (!amount || !description || !dueDate) {
+            toast.error('Please fill in required fields');
             return;
         }
 
@@ -88,13 +88,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         setIsSubmitting(true);
 
         const project = projects.find(p => p.id === selectedProjectId);
-        const finalClientId = project?.ownerId || selectedClientId;
-
-        if (!finalClientId) {
-            toast.error('No client identified for this invoice!');
-            setIsSubmitting(false);
-            return;
-        }
+        const finalClientId = project?.ownerId || selectedClientId || null;
 
         try {
             const timeoutPromise = new Promise<{ error: any }>((_, reject) =>
@@ -104,8 +98,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             // Create invoice with timeout
             const { error } = await Promise.race([
                 paymentService.createInvoice({
-                    user_id: finalClientId,
-                    project_id: project?.id || undefined,
+                    user_id: finalClientId!,
+                    project_id: selectedProjectId || undefined,
                     amount: amountNum,
                     currency: 'usd',
                     description: description,

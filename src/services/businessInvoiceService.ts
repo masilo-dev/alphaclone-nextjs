@@ -297,15 +297,34 @@ export const businessInvoiceService = {
         doc.setFillColor(248, 250, 252); // slate-50
         doc.rect(0, 0, 210, 60, 'F');
 
-        doc.setFontSize(24);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(15, 23, 42); // slate-900
-        doc.text(tenant.name || 'Company Name', 20, 30);
+        // Logo Integration
+        const logoUrl = tenant.logo_url || tenant.settings?.branding?.logo;
+        if (logoUrl) {
+            try {
+                // Approximate position for logo
+                doc.addImage(logoUrl, 'PNG', 20, 10, 25, 25);
+                doc.setFontSize(24);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(15, 23, 42); // slate-900
+                doc.text(tenant.name || 'Company Name', 50, 28);
+            } catch (e) {
+                console.error('Failed to add logo to PDF:', e);
+                doc.setFontSize(24);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(15, 23, 42); // slate-900
+                doc.text(tenant.name || 'Company Name', 20, 30);
+            }
+        } else {
+            doc.setFontSize(24);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(15, 23, 42); // slate-900
+            doc.text(tenant.name || 'Company Name', 20, 30);
+        }
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(100, 116, 139); // slate-500
-        doc.text('Business Professional Services', 20, 38);
+        doc.text('Business Professional Services', logoUrl ? 50 : 20, logoUrl ? 36 : 38);
 
         // Right side - Invoice Label
         doc.setFontSize(32);
@@ -334,13 +353,20 @@ export const businessInvoiceService = {
         doc.setFont('helvetica', 'bold');
         doc.text('BILL TO:', 20, 80);
 
-        doc.setFontSize(11);
-        doc.text(client.name || 'Client Name', 20, 88);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(71, 85, 105); // slate-600
-        if (client.company) doc.text(client.company, 20, 93);
-        if (client.email) doc.text(client.email, 20, 98);
-        if (client.phone) doc.text(client.phone, 20, 103);
+        if (client && client.name) {
+            doc.setFontSize(11);
+            doc.text(client.name || 'Client Name', 20, 88);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(71, 85, 105); // slate-600
+            if (client.company) doc.text(client.company, 20, 93);
+            if (client.email) doc.text(client.email, 20, 98);
+            if (client.phone) doc.text(client.phone, 20, 103);
+        } else {
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(148, 163, 184); // slate-400
+            doc.text('Individual Standalone Client', 20, 88);
+        }
 
         // Project Info
         if (invoice.project) {

@@ -7,11 +7,14 @@ import { format } from 'date-fns';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
 
+import { useTenant } from '../../contexts/TenantContext';
+
 interface ContractDashboardProps {
     user: User;
 }
 
 const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
+    const { currentTenant } = useTenant();
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [loading, setLoading] = useState(true);
     const [showSignModal, setShowSignModal] = useState(false);
@@ -105,7 +108,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     };
 
     const handleDownload = (contract: Contract) => {
-        contractService.downloadPDF(contract);
+        contractService.downloadPDF(contract, currentTenant);
     };
 
     if (loading) {
