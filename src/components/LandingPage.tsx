@@ -21,7 +21,8 @@ import {
    MapPin,
    Video,
    FileCheck,
-   ChevronRight
+   ChevronRight,
+   ChevronLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from './ui/UIComponents';
@@ -171,47 +172,50 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      animate={{ x: 0 }}
                      exit={{ x: '100%' }}
                      transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                     className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-slate-950 opacity-100 z-[10000] shadow-2xl border-l border-slate-800 p-8 flex flex-col pt-safe overflow-y-auto"
+                     className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-slate-950 opacity-100 z-[10000] shadow-2xl border-l border-slate-800 p-8 flex flex-col items-end pt-safe overflow-y-auto"
                      onClick={(e) => e.stopPropagation()}
                   >
                      {/* Drawer Header */}
-                     <div className="flex justify-between items-center mb-10 relative z-[110]">
-                        <span className="text-xl font-bold text-white tracking-tight">AlphaClone</span>
+                     <div className="flex justify-between items-center w-full mb-10 relative z-[110]">
                         <button
                            onClick={() => setMobileMenuOpen(false)}
-                           className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-900 border border-slate-700 text-white hover:text-teal-400 transition-all active:scale-90"
+                           className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors group"
                         >
-                           <X className="w-6 h-6" />
+                           <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                           <span className="text-sm font-medium">Back</span>
                         </button>
+                        <span className="text-xl font-bold text-white tracking-tight">AlphaClone</span>
                      </div>
 
                      {/* Links Container - Ensure visibility with text-white */}
-                     <div className="space-y-1 flex-1">
+                     <div className="space-y-1 flex-1 w-full flex flex-col items-end">
                         {/* Home */}
-                        <button
-                           onClick={() => { scrollToSection('home'); setMobileMenuOpen(false); }}
-                           className="block w-full text-left text-2xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
+                        <Link
+                           href="/"
+                           onClick={() => setMobileMenuOpen(false)}
+                           className="block w-full text-right text-xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
                         >
                            Home
-                        </button>
+                        </Link>
 
                         {/* Platform */}
-                        <button
-                           onClick={() => { scrollToSection('ecosystem'); setMobileMenuOpen(false); }}
-                           className="block w-full text-left text-2xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
+                        <Link
+                           href="/ecosystem"
+                           onClick={() => setMobileMenuOpen(false)}
+                           className="block w-full text-right text-xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
                         >
                            Platform
-                        </button>
+                        </Link>
 
                         {/* Services (Collapsible) */}
-                        <div className="py-4 border-b border-slate-900/50 transition-colors">
+                        <div className="py-4 border-b border-slate-900/50 transition-colors w-full flex flex-col items-end">
                            <button
                               onClick={() => setServicesDropdownOpen(!servicesDropdownOpen)}
-                              className="flex items-center justify-between w-full text-2xl font-bold text-white hover:text-teal-400 group"
+                              className="flex items-center justify-end gap-3 w-full text-xl font-bold text-white hover:text-teal-400 group"
                            >
                               Services
-                              <motion.span animate={{ rotate: servicesDropdownOpen ? 180 : 0 }}>
-                                 <ChevronRight className="w-6 h-6 text-slate-600 group-hover:text-teal-400 transition-colors" />
+                              <motion.span animate={{ rotate: servicesDropdownOpen ? -90 : 0 }}>
+                                 <ChevronLeft className="w-5 h-5 text-slate-600 group-hover:text-teal-400 transition-colors" />
                               </motion.span>
                            </button>
 
@@ -221,21 +225,19 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden"
+                                    className="overflow-hidden w-full"
                                  >
-                                    <div className="pt-6 pb-2 pl-2 space-y-4 border-l-2 border-slate-900 ml-1">
+                                    <div className="pt-6 pb-2 pr-2 space-y-4 border-r-2 border-slate-900 mr-1 flex flex-col items-end">
                                        {['Custom Web Apps', 'Mobile Ecosystems', 'AI Automation', 'Enterprise Dashboards'].map((service, i) => (
-                                          <button
+                                          <Link
                                              key={i}
-                                             onClick={() => {
-                                                scrollToSection('services');
-                                                setMobileMenuOpen(false);
-                                             }}
-                                             className="block w-full text-left text-lg font-medium text-slate-400 hover:text-teal-400 transition-colors flex items-center gap-3 pl-4"
+                                             href="/services"
+                                             onClick={() => setMobileMenuOpen(false)}
+                                             className="block w-full text-right text-base font-medium text-slate-400 hover:text-teal-400 transition-colors flex items-center justify-end gap-3 pr-4"
                                           >
-                                             <div className="w-1.5 h-1.5 rounded-full bg-slate-700" />
                                              {service}
-                                          </button>
+                                             <div className="w-1.5 h-1.5 rounded-full bg-slate-700" />
+                                          </Link>
                                        ))}
                                     </div>
                                  </motion.div>
@@ -247,36 +249,46 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         <Link
                            href="/portfolio"
                            onClick={() => setMobileMenuOpen(false)}
-                           className="block w-full text-left text-2xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
+                           className="block w-full text-right text-xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
                         >
                            Portfolio
                         </Link>
 
                         {/* About */}
-                        <button
-                           onClick={() => { scrollToSection('about'); setMobileMenuOpen(false); }}
-                           className="block w-full text-left text-2xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
+                        <Link
+                           href="/about"
+                           onClick={() => setMobileMenuOpen(false)}
+                           className="block w-full text-right text-xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
                         >
                            About
-                        </button>
+                        </Link>
 
                         {/* Contact */}
-                        <button
-                           onClick={() => { scrollToSection('contact'); setMobileMenuOpen(false); }}
-                           className="block w-full text-left text-2xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
+                        <Link
+                           href="/contact"
+                           onClick={() => setMobileMenuOpen(false)}
+                           className="block w-full text-right text-xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
                         >
                            Contact
-                        </button>
+                        </Link>
                      </div>
 
                      {/* Auth Buttons */}
-                     <div className="pt-8 flex flex-col gap-4">
-                        <button onClick={() => setIsLoginOpen(true)} className="w-full py-4 text-center font-bold text-slate-300 border border-slate-800 rounded-2xl hover:bg-slate-900 transition-colors text-lg">
+                     <div className="pt-8 w-full flex flex-col gap-4">
+                        <Link
+                           href="/login"
+                           onClick={() => setMobileMenuOpen(false)}
+                           className="w-full py-4 text-center font-bold text-slate-300 border border-slate-800 rounded-2xl hover:bg-slate-900 transition-colors text-lg"
+                        >
                            Log In
-                        </button>
-                        <Button onClick={() => window.location.href = '/register'} className="w-full py-4 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-2xl shadow-lg shadow-teal-500/20 text-lg">
+                        </Link>
+                        <Link
+                           href="/register"
+                           onClick={() => setMobileMenuOpen(false)}
+                           className="w-full py-4 bg-teal-500 hover:bg-teal-400 text-slate-950 text-center font-bold rounded-2xl shadow-lg shadow-teal-500/20 text-lg"
+                        >
                            Start Today
-                        </Button>
+                        </Link>
                      </div>
                   </motion.div>
                </>
