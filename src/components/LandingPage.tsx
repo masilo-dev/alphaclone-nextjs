@@ -13,16 +13,15 @@ import {
    Settings,
    MessageSquare,
    TrendingUp,
-   ShieldCheck,
-   Menu,
-   X,
-   Mail,
-   Phone,
-   MapPin,
-   Video,
-   FileCheck,
    ChevronRight,
-   ChevronLeft
+   ChevronLeft,
+   Home,
+   Globe,
+   Layers,
+   Briefcase,
+   Info,
+   PhoneCall,
+   User
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from './ui/UIComponents';
@@ -172,120 +171,128 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      animate={{ x: 0 }}
                      exit={{ x: '100%' }}
                      transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                     className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-slate-950 opacity-100 z-[10000] shadow-2xl border-l border-slate-800 p-8 flex flex-col items-end pt-safe overflow-y-auto"
+                     className="fixed top-0 right-0 bottom-0 w-full xs:w-[85%] max-w-sm bg-slate-950 opacity-100 z-[10000] shadow-2xl border-l border-white/5 p-6 flex flex-col items-end pt-safe overflow-y-auto"
                      onClick={(e) => e.stopPropagation()}
                   >
                      {/* Drawer Header */}
-                     <div className="flex justify-between items-center w-full mb-10 relative z-[110]">
+                     <div className="flex justify-between items-center w-full mb-12 relative z-[110] px-2">
                         <button
                            onClick={() => setMobileMenuOpen(false)}
-                           className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors group"
+                           className="flex items-center gap-2 text-slate-500 hover:text-white transition-colors group"
                         >
                            <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
                            <span className="text-sm font-medium">Back</span>
                         </button>
-                        <span className="text-xl font-bold text-white tracking-tight">AlphaClone</span>
+                        <span className="text-lg font-bold text-white tracking-widest uppercase">AlphaClone</span>
                      </div>
 
-                     {/* Links Container - Ensure visibility with text-white */}
-                     <div className="space-y-1 flex-1 w-full flex flex-col items-end">
-                        {/* Home */}
-                        <Link
-                           href="/"
-                           onClick={() => setMobileMenuOpen(false)}
-                           className="block w-full text-right text-xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
-                        >
-                           Home
-                        </Link>
+                     {/* Main Navigation Group */}
+                     <div className="w-full space-y-10 flex-1 px-2">
+                        {/* Section: MAIN */}
+                        <div className="space-y-4 flex flex-col items-end">
+                           <span className="text-[10px] uppercase tracking-[0.2em] text-slate-600 font-bold mb-2">Explore</span>
 
-                        {/* Platform */}
-                        <Link
-                           href="/ecosystem"
-                           onClick={() => setMobileMenuOpen(false)}
-                           className="block w-full text-right text-xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
-                        >
-                           Platform
-                        </Link>
-
-                        {/* Services (Collapsible) */}
-                        <div className="py-4 border-b border-slate-900/50 transition-colors w-full flex flex-col items-end">
-                           <button
-                              onClick={() => setServicesDropdownOpen(!servicesDropdownOpen)}
-                              className="flex items-center justify-end gap-3 w-full text-xl font-bold text-white hover:text-teal-400 group"
+                           <Link
+                              href="/"
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="flex items-center justify-end gap-3 w-full text-right text-xl font-semibold text-white hover:text-teal-400 transition-colors py-1"
                            >
-                              Services
-                              <motion.span animate={{ rotate: servicesDropdownOpen ? -90 : 0 }}>
-                                 <ChevronLeft className="w-5 h-5 text-slate-600 group-hover:text-teal-400 transition-colors" />
-                              </motion.span>
-                           </button>
+                              Home
+                              <Home className="w-5 h-5 text-slate-500" />
+                           </Link>
 
-                           <AnimatePresence>
-                              {servicesDropdownOpen && (
-                                 <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden w-full"
-                                 >
-                                    <div className="pt-6 pb-2 pr-2 space-y-4 border-r-2 border-slate-900 mr-1 flex flex-col items-end">
-                                       {['Custom Web Apps', 'Mobile Ecosystems', 'AI Automation', 'Enterprise Dashboards'].map((service, i) => (
-                                          <Link
-                                             key={i}
-                                             href="/services"
-                                             onClick={() => setMobileMenuOpen(false)}
-                                             className="block w-full text-right text-base font-medium text-slate-400 hover:text-teal-400 transition-colors flex items-center justify-end gap-3 pr-4"
-                                          >
-                                             {service}
-                                             <div className="w-1.5 h-1.5 rounded-full bg-slate-700" />
-                                          </Link>
-                                       ))}
-                                    </div>
-                                 </motion.div>
-                              )}
-                           </AnimatePresence>
+                           <Link
+                              href="/ecosystem"
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="flex items-center justify-end gap-3 w-full text-right text-xl font-semibold text-white hover:text-teal-400 transition-colors py-1"
+                           >
+                              Platform
+                              <Globe className="w-5 h-5 text-slate-500" />
+                           </Link>
+
+                           {/* Services Group */}
+                           <div className="w-full flex flex-col items-end space-y-4">
+                              <button
+                                 onClick={() => setServicesDropdownOpen(!servicesDropdownOpen)}
+                                 className="flex items-center justify-end gap-3 w-full text-right text-xl font-semibold text-white hover:text-teal-400 transition-colors py-1"
+                              >
+                                 Services
+                                 <Layers className="w-5 h-5 text-slate-500" />
+                              </button>
+
+                              <AnimatePresence>
+                                 {servicesDropdownOpen && (
+                                    <motion.div
+                                       initial={{ height: 0, opacity: 0 }}
+                                       animate={{ height: 'auto', opacity: 1 }}
+                                       exit={{ height: 0, opacity: 0 }}
+                                       className="overflow-hidden w-full"
+                                    >
+                                       <div className="pb-4 pr-10 space-y-5 flex flex-col items-end">
+                                          {['Custom Web Apps', 'Mobile Ecosystems', 'AI Automation', 'Enterprise Dashboards'].map((service, i) => (
+                                             <Link
+                                                key={i}
+                                                href="/services"
+                                                onClick={() => setMobileMenuOpen(false)}
+                                                className="block w-full text-right text-[15px] font-medium text-slate-400 hover:text-white transition-colors"
+                                             >
+                                                {service}
+                                             </Link>
+                                          ))}
+                                       </div>
+                                    </motion.div>
+                                 )}
+                              </AnimatePresence>
+                           </div>
                         </div>
 
-                        {/* Portfolio */}
-                        <Link
-                           href="/portfolio"
-                           onClick={() => setMobileMenuOpen(false)}
-                           className="block w-full text-right text-xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
-                        >
-                           Portfolio
-                        </Link>
+                        {/* Section: COMPANY */}
+                        <div className="space-y-4 flex flex-col items-end">
+                           <span className="text-[10px] uppercase tracking-[0.2em] text-slate-600 font-bold mb-2">Company</span>
 
-                        {/* About */}
-                        <Link
-                           href="/about"
-                           onClick={() => setMobileMenuOpen(false)}
-                           className="block w-full text-right text-xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
-                        >
-                           About
-                        </Link>
+                           <Link
+                              href="/portfolio"
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="flex items-center justify-end gap-3 w-full text-right text-lg font-medium text-slate-300 hover:text-white transition-colors py-1"
+                           >
+                              Portfolio
+                              <Briefcase className="w-4 h-4 text-slate-600" />
+                           </Link>
 
-                        {/* Contact */}
-                        <Link
-                           href="/contact"
-                           onClick={() => setMobileMenuOpen(false)}
-                           className="block w-full text-right text-xl font-bold text-white hover:text-teal-400 py-4 border-b border-slate-900/50 transition-colors"
-                        >
-                           Contact
-                        </Link>
+                           <Link
+                              href="/about"
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="flex items-center justify-end gap-3 w-full text-right text-lg font-medium text-slate-300 hover:text-white transition-colors py-1"
+                           >
+                              About
+                              <Info className="w-4 h-4 text-slate-600" />
+                           </Link>
+
+                           <Link
+                              href="/contact"
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="flex items-center justify-end gap-3 w-full text-right text-lg font-medium text-slate-300 hover:text-white transition-colors py-1"
+                           >
+                              Contact
+                              <PhoneCall className="w-4 h-4 text-slate-600" />
+                           </Link>
+                        </div>
                      </div>
 
-                     {/* Auth Buttons */}
-                     <div className="pt-8 w-full flex flex-col gap-4">
+                     {/* Auth Buttons Group */}
+                     <div className="w-full pt-10 mt-auto flex flex-col gap-4 border-t border-white/5 px-2">
                         <Link
                            href="/login"
                            onClick={() => setMobileMenuOpen(false)}
-                           className="w-full py-4 text-center font-bold text-slate-300 border border-slate-800 rounded-2xl hover:bg-slate-900 transition-colors text-lg"
+                           className="flex items-center justify-center gap-2 w-full py-4 text-center font-bold text-slate-300 border border-slate-800/50 rounded-2xl hover:bg-slate-900 transition-colors text-base"
                         >
+                           <User className="w-4 h-4" />
                            Log In
                         </Link>
                         <Link
                            href="/register"
                            onClick={() => setMobileMenuOpen(false)}
-                           className="w-full py-4 bg-teal-500 hover:bg-teal-400 text-slate-950 text-center font-bold rounded-2xl shadow-lg shadow-teal-500/20 text-lg"
+                           className="w-full py-4 bg-teal-500 hover:bg-teal-400 text-slate-950 text-center font-bold rounded-2xl shadow-lg shadow-teal-500/20 text-base"
                         >
                            Start Today
                         </Link>
