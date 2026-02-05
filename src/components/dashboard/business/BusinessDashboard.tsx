@@ -13,7 +13,8 @@ import {
     Bot,
     TrendingUp,
     Video,
-    ShieldCheck
+    ShieldCheck,
+    FileCheck
 } from 'lucide-react';
 import { Project, User } from '../../../types';
 import { projectService } from '../../../services/projectService';
