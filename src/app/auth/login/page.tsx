@@ -77,7 +77,8 @@ export default function LoginPage() {
                 }
 
                 const { authService } = await import('@/services/authService');
-                const { user, error: signUpError } = await authService.signUp(email, password, name);
+                const role = isBusiness ? 'tenant_admin' : 'client';
+                const { user, error: signUpError } = await authService.signUp(email, password, name, role);
 
                 if (signUpError) {
                     console.error("SignUp Error:", signUpError);

@@ -83,6 +83,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
    const [isLoginOpen, setIsLoginOpen] = useState(false);
    const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
 
+   // Animated Hamburger Icon Component (internal)
+   const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
+      <div className="relative w-6 h-5 flex flex-col justify-between items-center transition-all duration-300">
+         <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 transform origin-left ${isOpen ? 'rotate-[42deg] translate-x-1' : ''}`} />
+         <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 ${isOpen ? 'opacity-0 -translate-x-2' : ''}`} />
+         <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 transform origin-left ${isOpen ? '-rotate-[42deg] translate-x-1' : ''}`} />
+      </div>
+   );
+
    // Scroll Lock & State Management Effect
    React.useEffect(() => {
       if (mobileMenuOpen) {
@@ -162,24 +171,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
          <AnimatePresence mode="wait">
             {mobileMenuOpen && (
                <>
-                  {/* Backdrop - High Opacity to block background */}
+                  {/* Backdrop - Focused darkening effect */}
                   <motion.div
                      key="mobile-backdrop"
                      initial={{ opacity: 0 }}
                      animate={{ opacity: 1 }}
                      exit={{ opacity: 0 }}
+                     transition={{ duration: 0.3, ease: "easeInOut" }}
                      onClick={() => setMobileMenuOpen(false)}
-                     className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-[9999] touch-none"
+                     className="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-[9999] touch-none"
                   />
 
-                  {/* Right Drawer */}
+                  {/* Right Drawer - Smooth 0.3s transition */}
                   <motion.div
                      key="mobile-drawer"
                      initial={{ x: '100%' }}
                      animate={{ x: 0 }}
                      exit={{ x: '100%' }}
-                     transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                     className="fixed top-0 right-0 bottom-0 w-[280px] bg-slate-950 z-[10000] shadow-2xl border-l border-white/5 p-6 flex flex-col items-end pt-safe overflow-y-auto"
+                     transition={{ duration: 0.3, ease: "easeInOut" }}
+                     className="fixed top-0 right-0 bottom-0 w-[300px] bg-slate-950 z-[10000] shadow-2xl border-l border-white/5 p-8 flex flex-col items-end pt-safe overflow-y-auto"
                      onClick={(e) => e.stopPropagation()}
                   >
                      {/* Drawer Header */}
@@ -372,14 +382,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         </div>
                      </div>
 
-                     {/* Mobile Menu Button */}
+                     {/* Mobile Menu Button - Morphing Icon */}
                      <div className="lg:hidden relative z-[10000]">
                         <button
                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                           className="text-white hover:text-teal-400 p-2 rounded-lg bg-slate-900/50 border border-slate-800 transition-colors"
+                           className={`w-12 h-12 flex items-center justify-center rounded-xl border transition-all duration-300 ${mobileMenuOpen
+                                 ? 'text-teal-400 bg-slate-900 border-teal-500/50'
+                                 : 'text-white bg-slate-900/50 border-slate-800 hover:border-slate-700'
+                              }`}
                            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
                         >
-                           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                           <HamburgerIcon isOpen={mobileMenuOpen} />
                         </button>
                      </div>
                   </div>

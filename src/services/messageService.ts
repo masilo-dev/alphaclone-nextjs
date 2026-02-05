@@ -9,9 +9,12 @@ export const messageService = {
     /**
      * Get tenant ID (required for all operations)
      */
-    getTenantId(): string {
+    getTenantId(): string | null {
         const tenantId = tenantService.getCurrentTenantId();
-        if (!tenantId) throw new Error('No active tenant. Please select an organization.');
+        if (!tenantId) {
+            console.warn('No active tenant found. Operations may be restricted.');
+            return null;
+        }
         return tenantId;
     },
     /**
@@ -25,6 +28,7 @@ export const messageService = {
     ): Promise<{ messages: ChatMessage[]; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
+            if (!tenantId) return { messages: [], error: null };
 
             let query = supabase
                 .from('messages')
@@ -78,6 +82,7 @@ export const messageService = {
     ): Promise<{ messages: ChatMessage[]; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
+            if (!tenantId) return { messages: [], error: null };
 
             const { data, error } = await supabase
                 .from('messages')
@@ -124,6 +129,7 @@ export const messageService = {
     ): Promise<{ messages: ChatMessage[]; error: string | null; hasMore: boolean }> {
         try {
             const tenantId = this.getTenantId();
+            if (!tenantId) return { messages: [], error: null, hasMore: false };
 
             let query = supabase
                 .from('messages')
@@ -182,6 +188,7 @@ export const messageService = {
     ): Promise<{ message: ChatMessage | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
+            if (!tenantId) return { message: null, error: 'No active tenant' };
 
             // Validate input
             const validated = messageSchema.parse({ text, recipientId });
@@ -246,6 +253,10 @@ export const messageService = {
         callback: (message: ChatMessage, eventType: 'INSERT' | 'UPDATE') => void
     ) {
         const tenantId = this.getTenantId();
+        if (!tenantId) {
+            console.warn('Realtime: Waiting for tenant ID...');
+            return () => { };
+        }
 
         // Create unique channel per user for better isolation
         const channel = supabase
@@ -427,6 +438,7 @@ export const messageService = {
     }> {
         try {
             const tenantId = this.getTenantId();
+            if (!tenantId) return { conversations: [], error: null };
 
             // Get all messages involving this user, sorted by most recent
             let query = supabase

@@ -90,9 +90,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           tenantService.setCurrentTenant(firstTenant.id);
           setIsLoading(false); // Success path
         }
-      } else {
-        // User has no tenants - auto-create a default one
-        console.log('No tenants found for user, creating default tenant...');
+      } else if (user.role === 'admin' || user.role === 'tenant_admin') {
+        // User has no tenants - auto-create a default one only for admins/tenant_admins
+        console.log('No tenants found for admin/tenant_admin user, creating default tenant...');
 
         try {
           // Generate a unique tenant name and slug
@@ -111,7 +111,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
           // Set as current tenant
           setCurrentTenant(newTenant);
-          setUserTenants([{ ...newTenant, role: 'admin' }]);
+          setUserTenants([{ ...newTenant, role: 'tenant_admin' }]);
           tenantService.setCurrentTenant(newTenant.id);
           setIsLoading(false); // Success path
         } catch (error: any) {

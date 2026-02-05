@@ -95,7 +95,7 @@ export interface TenantUser {
 }
 
 // Tenant Roles
-export type TenantRole = 'owner' | 'admin' | 'member' | 'guest';
+export type TenantRole = 'owner' | 'admin' | 'tenant_admin' | 'member' | 'guest' | 'super_admin' | 'client';
 
 // Tenant Subscription
 export interface TenantSubscription {

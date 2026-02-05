@@ -56,6 +56,9 @@ export const paymentService = {
     async createInvoice(invoice: Omit<Invoice, 'id' | 'created_at' | 'status'>) {
         // Check if tenant has payment processing enabled
         const tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) {
+            return { invoice: null, error: new Error('No active organization selected.') };
+        }
         const { data: tenant } = await supabase.from('tenants').select('subscription_plan').eq('id', tenantId).single();
         const { PLAN_PRICING } = await import('./tenancy/types');
         const plan = (tenant?.subscription_plan as any) || 'free';
@@ -99,14 +102,20 @@ export const paymentService = {
      * Get user invoices
      */
     async getUserInvoices(userId: string, limit: number = 50) {
-        const { data, error } = await supabase
+        const tenantId = tenantService.getCurrentTenantId();
+        let query = supabase
             .from('invoices')
             .select(`
         *,
         project:project_id (name)
       `)
-            .eq('user_id', userId)
-            .eq('tenant_id', tenantService.getCurrentTenantId())
+            .eq('user_id', userId);
+
+        if (tenantId) {
+            query = query.eq('tenant_id', tenantId);
+        }
+
+        const { data, error } = await query
             .order('created_at', { ascending: false })
             .limit(limit);
 
@@ -509,11 +518,17 @@ export const paymentService = {
      * Get payment history
      */
     async getPaymentHistory(userId: string) {
-        const { data, error } = await supabase
+        const tenantId = tenantService.getCurrentTenantId();
+        let query = supabase
             .from('payments')
             .select('*')
-            .eq('user_id', userId)
-            .eq('tenant_id', tenantService.getCurrentTenantId())
+            .eq('user_id', userId);
+
+        if (tenantId) {
+            query = query.eq('tenant_id', tenantId);
+        }
+
+        const { data, error } = await query
             .order('created_at', { ascending: false });
 
         return { payments: data, error };
