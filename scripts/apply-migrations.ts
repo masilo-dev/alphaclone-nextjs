@@ -115,6 +115,9 @@ async function executeMigration(filename: string): Promise<MigrationResult> {
                 // Try using the postgres REST API directly
                 if (error && error.message.includes('function "exec_sql" does not exist')) {
                     // Fall back to using fetch API with proper auth
+                    if (!SUPABASE_SERVICE_ROLE_KEY) {
+                        throw new Error('SUPABASE_SERVICE_ROLE_KEY is required for direct API access');
+                    }
                     const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/query`, {
                         method: 'POST',
                         headers: {
