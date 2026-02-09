@@ -1,7 +1,51 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { rateLimitMiddleware, rateLimitConfigs } from './rateLimit'
 
 export async function updateSession(request: NextRequest) {
+    // Apply rate limiting based on route
+    const pathname = request.nextUrl.pathname;
+
+    // Authentication routes - strict rate limiting
+    if (pathname.startsWith('/api/auth/login') || pathname.startsWith('/auth/login')) {
+        const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.auth.login);
+        if (rateLimitResponse && rateLimitResponse.status === 429) {
+            return rateLimitResponse;
+        }
+    }
+
+    if (pathname.startsWith('/api/auth/signup') || pathname.startsWith('/auth/signup')) {
+        const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.auth.signup);
+        if (rateLimitResponse && rateLimitResponse.status === 429) {
+            return rateLimitResponse;
+        }
+    }
+
+    if (pathname.includes('password-reset') || pathname.includes('reset-password')) {
+        const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.auth.passwordReset);
+        if (rateLimitResponse && rateLimitResponse.status === 429) {
+            return rateLimitResponse;
+        }
+    }
+
+    // API routes - moderate rate limiting
+    if (pathname.startsWith('/api/')) {
+        const isHeavyEndpoint = pathname.includes('/ai/') || pathname.includes('/export') || pathname.includes('/generate');
+        const config = isHeavyEndpoint ? rateLimitConfigs.api.heavy : rateLimitConfigs.api.standard;
+        const rateLimitResponse = await rateLimitMiddleware(request, config);
+        if (rateLimitResponse && rateLimitResponse.status === 429) {
+            return rateLimitResponse;
+        }
+    }
+
+    // Contact form - prevent spam
+    if (pathname.includes('/contact') && request.method === 'POST') {
+        const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.public.contact);
+        if (rateLimitResponse && rateLimitResponse.status === 429) {
+            return rateLimitResponse;
+        }
+    }
+
     let response = NextResponse.next({
         request: {
             headers: request.headers,

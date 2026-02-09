@@ -129,8 +129,9 @@ export async function POST(req: Request) {
             console.warn('DAILY_API_KEY missing - skipping video room');
             // Mock for dev if key missing
             if (process.env.NODE_ENV === 'development') {
+                const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN || 'alphaclone';
                 roomId = roomName;
-                dailyRoomUrl = 'https://demo.daily.co/' + roomName;
+                dailyRoomUrl = `https://${domain}.daily.co/${roomName}`;
             }
         }
 

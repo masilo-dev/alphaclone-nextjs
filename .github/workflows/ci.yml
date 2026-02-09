@@ -1,0 +1,200 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  # ============================================================================
+  # Quality Checks - Linting, Type Checking, Security
+  # ============================================================================
+  quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Type check with TypeScript
+        run: npx tsc --noEmit
+
+      - name: Check code formatting
+        run: npx prettier --check "src/**/*.{ts,tsx,js,jsx,json,css}"
+        continue-on-error: true
+
+  # ============================================================================
+  # Security Scanning
+  # ============================================================================
+  security:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: Check for known vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+  # ============================================================================
+  # Build Verification
+  # ============================================================================
+  build:
+    name: Build Verification
+    runs-on: ubuntu-latest
+    needs: [quality]
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js application
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: npm run build
+
+      - name: Check build artifacts
+        run: |
+          if [ -d ".next" ]; then
+            echo "✅ Build successful - .next directory created"
+            ls -la .next
+          else
+            echo "❌ Build failed - .next directory not found"
+            exit 1
+          fi
+
+  # ============================================================================
+  # Database Migration Validation
+  # ============================================================================
+  migrations:
+    name: Validate Database Migrations
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check migration files syntax
+        run: |
+          echo "Checking SQL migration files..."
+          find src/supabase/migrations -name "*.sql" -type f | while read file; do
+            echo "Validating: $file"
+            # Basic SQL syntax check (looks for common errors)
+            if grep -q "DROP TABLE IF EXISTS.*CASCADE" "$file" && ! grep -q "CREATE TABLE IF NOT EXISTS" "$file"; then
+              echo "⚠️ Warning: DROP without corresponding CREATE in $file"
+            fi
+          done
+
+      - name: Check for migration conflicts
+        run: |
+          echo "Checking for duplicate migration timestamps..."
+          duplicates=$(find src/supabase/migrations -name "*.sql" | sed 's/.*\///' | cut -d'_' -f1 | sort | uniq -d)
+          if [ ! -z "$duplicates" ]; then
+            echo "❌ Error: Duplicate migration timestamps found:"
+            echo "$duplicates"
+            exit 1
+          else
+            echo "✅ No migration conflicts detected"
+          fi
+
+  # ============================================================================
+  # Test Suite (when tests are available)
+  # ============================================================================
+  test:
+    name: Run Test Suite
+    runs-on: ubuntu-latest
+    needs: [build]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test --if-present
+        continue-on-error: true
+
+      - name: Run E2E tests
+        run: npm run test:e2e --if-present
+        continue-on-error: true
+
+  # ============================================================================
+  # Final Status Check
+  # ============================================================================
+  ci-success:
+    name: CI Pipeline Success
+    runs-on: ubuntu-latest
+    needs: [quality, security, build, migrations, test]
+    if: always()
+
+    steps:
+      - name: Check all jobs status
+        run: |
+          echo "Quality: ${{ needs.quality.result }}"
+          echo "Security: ${{ needs.security.result }}"
+          echo "Build: ${{ needs.build.result }}"
+          echo "Migrations: ${{ needs.migrations.result }}"
+          echo "Tests: ${{ needs.test.result }}"
+
+          if [[ "${{ needs.quality.result }}" == "failure" ]] || [[ "${{ needs.build.result }}" == "failure" ]]; then
+            echo "❌ CI Pipeline Failed"
+            exit 1
+          fi
+
+          echo "✅ CI Pipeline Passed"

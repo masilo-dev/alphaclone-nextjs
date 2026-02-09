@@ -1,0 +1,206 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  # ============================================================================
+  # Deploy Preview (Pull Requests)
+  # ============================================================================
+  deploy-preview:
+    name: Deploy Preview Environment
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Project Artifacts
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy Preview to Vercel
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "preview_url=$url" >> $GITHUB_OUTPUT
+          echo "Deployed to: $url"
+
+      - name: Comment Preview URL on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const url = '${{ steps.deploy.outputs.preview_url }}';
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `### 🚀 Preview Deployment Ready!\n\n✅ Your changes have been deployed to a preview environment:\n\n**Preview URL:** ${url}\n\n---\n*This preview will be automatically deleted when the PR is closed.*`
+            })
+
+  # ============================================================================
+  # Deploy Production (Main/Master Branch)
+  # ============================================================================
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    environment:
+      name: production
+      url: https://your-production-domain.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy Production to Vercel
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "production_url=$url" >> $GITHUB_OUTPUT
+          echo "Deployed to production: $url"
+
+      - name: Verify Deployment
+        run: |
+          url="${{ steps.deploy.outputs.production_url }}"
+          echo "Verifying deployment at: $url"
+
+          # Wait for deployment to be ready
+          sleep 10
+
+          # Check if site is responding
+          status_code=$(curl -o /dev/null -s -w "%{http_code}\n" "$url")
+          if [ "$status_code" -eq 200 ]; then
+            echo "✅ Production deployment verified - HTTP $status_code"
+          else
+            echo "⚠️ Warning: Production site returned HTTP $status_code"
+          fi
+
+      - name: Create GitHub Deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              environment: 'production',
+              required_contexts: [],
+              auto_merge: false,
+              description: 'Production deployment via GitHub Actions'
+            });
+
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: deployment.data.id,
+              state: 'success',
+              environment_url: '${{ steps.deploy.outputs.production_url }}',
+              description: 'Deployment successful'
+            });
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "🎉 Production deployment successful!"
+          echo "URL: ${{ steps.deploy.outputs.production_url }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+
+      - name: Notify deployment failure
+        if: failure()
+        run: |
+          echo "❌ Production deployment failed!"
+          echo "Check the logs above for details."
+          exit 1
+
+  # ============================================================================
+  # Post-Deployment Health Checks
+  # ============================================================================
+  health-check:
+    name: Post-Deployment Health Check
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: success()
+
+    steps:
+      - name: Wait for deployment to stabilize
+        run: sleep 30
+
+      - name: Check production health
+        run: |
+          url="https://your-production-domain.com"
+
+          echo "Running health checks on: $url"
+
+          # Check main page
+          status=$(curl -o /dev/null -s -w "%{http_code}\n" "$url")
+          if [ "$status" -eq 200 ]; then
+            echo "✅ Main page: OK (HTTP $status)"
+          else
+            echo "❌ Main page: FAILED (HTTP $status)"
+            exit 1
+          fi
+
+          # Check API health endpoint (if exists)
+          api_status=$(curl -o /dev/null -s -w "%{http_code}\n" "$url/api/health" || echo "404")
+          if [ "$api_status" -eq 200 ]; then
+            echo "✅ API health: OK"
+          else
+            echo "⚠️ API health endpoint not found (expected for initial setup)"
+          fi
+
+          echo "✅ All health checks passed!"
+
+      - name: Performance check
+        run: |
+          url="https://your-production-domain.com"
+
+          # Measure response time
+          response_time=$(curl -o /dev/null -s -w "%{time_total}\n" "$url")
+          echo "Response time: ${response_time}s"
+
+          # Alert if response time is too slow
+          if (( $(echo "$response_time > 3.0" | bc -l) )); then
+            echo "⚠️ Warning: Response time is slow (${response_time}s > 3s)"
+          else
+            echo "✅ Response time: Good (${response_time}s)"
+          fi

@@ -112,7 +112,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
             const result = await Promise.race([
                 paymentService.createInvoice({
-                    user_id: finalClientId!,
+                    user_id: finalClientId || undefined, // Allow undefined for invoices without client
                     project_id: selectedProjectId || undefined,
                     amount: amountNum,
                     currency: 'usd',

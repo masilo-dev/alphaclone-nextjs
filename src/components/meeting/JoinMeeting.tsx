@@ -23,8 +23,9 @@ const JoinMeeting: React.FC = () => {
     // Get room URL from room ID
     useEffect(() => {
         if (roomId) {
-            // Convert room ID to Daily.co URL
-            setRoomUrl(`https://${process.env.NEXT_PUBLIC_DAILY_DOMAIN || 'alphaclone'}.daily.co/${roomId}`);
+            // Convert room ID to video provider URL (abstracted - users see AlphaClone URLs)
+            const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN || 'alphaclone';
+            setRoomUrl(`https://${domain}.daily.co/${roomId}`);
         }
     }, [roomId]);
 

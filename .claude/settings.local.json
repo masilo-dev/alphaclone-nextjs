@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc:*)",
+      "Bash(find:*)",
+      "Bash(npm install:*)",
+      "Bash(ls:*)",
+      "Bash(where:*)",
+      "Bash(npx supabase link:*)"
+    ]
+  }
+}

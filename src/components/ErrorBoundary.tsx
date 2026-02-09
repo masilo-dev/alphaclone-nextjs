@@ -1,6 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
-// import * as Sentry from '@sentry/react';
+import * as Sentry from '@sentry/nextjs';
 
 interface Props {
     children: ReactNode;
@@ -39,6 +39,15 @@ export class ErrorBoundary extends Component<Props, State> {
         this.setState({
             error,
             errorInfo,
+        });
+
+        // ✅ Log to Sentry with full context
+        Sentry.captureException(error, {
+            contexts: {
+                react: {
+                    componentStack: errorInfo.componentStack,
+                },
+            },
         });
 
         // ✅ Log to SIEM (non-blocking)

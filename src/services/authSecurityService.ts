@@ -1,4 +1,6 @@
 import { supabase } from '../lib/supabase';
+import { authenticator } from 'otplib';
+import QRCode from 'qrcode';
 
 export interface TwoFactorAuth {
     enabled: boolean;
@@ -17,11 +19,12 @@ export const authSecurityService = {
     /**
      * Enable 2FA for a user
      */
-    async enable2FA(userId: string): Promise<{ secret: string; qrCode: string; error: string | null }> {
+    async enable2FA(userId: string, userEmail: string): Promise<{ secret: string; qrCode: string; backupCodes: string[]; error: string | null }> {
         try {
-            // Generate TOTP secret (in production, use a library like 'otplib')
+            // Generate TOTP secret using otplib
             const secret = this.generateSecret();
-            const qrCode = this.generateQRCode(userId, secret);
+            const qrCode = await this.generateQRCode(userEmail, secret);
+            const backupCodes = this.generateBackupCodes();
 
             // Store secret in database
             const { error } = await supabase
@@ -30,16 +33,18 @@ export const authSecurityService = {
                     user_id: userId,
                     two_factor_enabled: true,
                     two_factor_secret: secret,
-                    backup_codes: this.generateBackupCodes(),
+                    backup_codes: backupCodes,
+                    updated_at: new Date().toISOString(),
                 });
 
             if (error) throw error;
 
-            return { secret, qrCode, error: null };
+            return { secret, qrCode, backupCodes, error: null };
         } catch (error) {
             return {
                 secret: '',
                 qrCode: '',
+                backupCodes: [],
                 error: error instanceof Error ? error.message : 'Failed to enable 2FA',
             };
         }
@@ -181,40 +186,64 @@ export const authSecurityService = {
     },
 
     /**
-     * Generate TOTP secret (placeholder - use proper library in production)
+     * Generate TOTP secret using otplib
      */
     generateSecret(): string {
-        // In production, use: import { authenticator } from 'otplib';
-        // return authenticator.generateSecret();
-        return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        return authenticator.generateSecret();
     },
 
     /**
-     * Generate QR code for 2FA setup (placeholder)
+     * Generate QR code for 2FA setup
      */
-    generateQRCode(_userId: string, secret: string): string {
-        // In production, use: import { authenticator } from 'otplib';
-        // const otpauth = authenticator.keyuri(userId, 'AlphaClone Systems', secret);
-        // return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauth)}`;
-        return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${secret}`;
+    async generateQRCode(userEmail: string, secret: string): Promise<string> {
+        try {
+            // Generate otpauth URL for authenticator apps
+            const otpauth = authenticator.keyuri(userEmail, 'AlphaClone Business OS', secret);
+
+            // Generate QR code as data URL
+            const qrCodeDataUrl = await QRCode.toDataURL(otpauth);
+
+            return qrCodeDataUrl;
+        } catch (error) {
+            console.error('Error generating QR code:', error);
+            throw new Error('Failed to generate QR code');
+        }
     },
 
     /**
-     * Verify TOTP code (placeholder - use proper library in production)
+     * Verify TOTP code using otplib
      */
-    verifyTOTP(_secret: string, code: string): boolean {
-        // In production, use: import { authenticator } from 'otplib';
-        // return authenticator.verify({ token: code, secret });
-        return code.length === 6 && /^\d+$/.test(code);
+    verifyTOTP(secret: string, code: string): boolean {
+        try {
+            // Allow a 30-second window for time drift tolerance
+            return authenticator.verify({ token: code, secret });
+        } catch (error) {
+            console.error('Error verifying TOTP:', error);
+            return false;
+        }
     },
 
     /**
-     * Generate backup codes
+     * Generate cryptographically secure backup codes
      */
     generateBackupCodes(): string[] {
         const codes: string[] = [];
         for (let i = 0; i < 10; i++) {
-            codes.push(Math.random().toString(36).substring(2, 10).toUpperCase());
+            // Generate 8-character alphanumeric codes using crypto
+            const randomBytes = new Uint8Array(6);
+            if (typeof window !== 'undefined') {
+                window.crypto.getRandomValues(randomBytes);
+            } else {
+                // For Node.js environment
+                const crypto = require('crypto');
+                crypto.randomFillSync(randomBytes);
+            }
+            const code = Array.from(randomBytes)
+                .map(byte => byte.toString(36).toUpperCase())
+                .join('')
+                .substring(0, 8)
+                .padEnd(8, '0');
+            codes.push(code);
         }
         return codes;
     },

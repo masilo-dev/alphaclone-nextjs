@@ -938,7 +938,8 @@ const Dashboard: React.FC<DashboardProps> = ({
               declineProject={declineProject}
               openContractGenerator={openContractGenerator}
               openVideoCall={() => {
-                const roomUrl = `https://demo.daily.co/alphaclone-${Math.random().toString(36).substring(7)}`;
+                const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN || 'alphaclone';
+                const roomUrl = `https://${domain}.daily.co/alphaclone-${Math.random().toString(36).substring(7)}`;
                 handleJoinCall(roomUrl);
               }}
               onNavigateToMessages={(clientId: string) => {

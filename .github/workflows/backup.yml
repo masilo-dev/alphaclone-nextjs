@@ -1,0 +1,130 @@
+name: Automated Database Backup
+
+on:
+  # Run daily at 3:00 AM UTC
+  schedule:
+    - cron: '0 3 * * *'
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  backup:
+    name: Create Database Backup
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Create backup directory
+        run: mkdir -p backups
+
+      - name: Run backup script
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          chmod +x scripts/backup/daily-backup.sh
+          ./scripts/backup/daily-backup.sh
+
+      - name: Upload backup to GitHub Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-backup-${{ github.run_number }}
+          path: backups/*.sql.gz
+          retention-days: 30
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Backup failed!"
+          # Add notification here (Slack, email, etc.)
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "✅ Backup completed successfully"
+          # Add notification here (Slack, email, etc.)
+
+  # Optional: Upload to cloud storage
+  upload-to-cloud:
+    name: Upload Backup to Cloud Storage
+    runs-on: ubuntu-latest
+    needs: backup
+    if: success()
+
+    steps:
+      - name: Download backup artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: database-backup-${{ github.run_number }}
+          path: backups
+
+      # Option 1: AWS S3
+      - name: Configure AWS credentials
+        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Upload to S3
+        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' }}
+        run: |
+          aws s3 cp backups/ s3://your-backup-bucket/backups/ --recursive
+
+      # Option 2: Google Cloud Storage
+      # - name: Authenticate to Google Cloud
+      #   if: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY != '' }}
+      #   uses: google-github-actions/auth@v2
+      #   with:
+      #     credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      # - name: Upload to GCS
+      #   if: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY != '' }}
+      #   run: |
+      #     gsutil -m cp -r backups/* gs://your-backup-bucket/backups/
+
+  # Monthly backup verification
+  verify-backup:
+    name: Verify Backup Integrity
+    runs-on: ubuntu-latest
+    needs: backup
+    # Run on first day of month only
+    if: github.event.schedule == '0 3 1 * *' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Download backup artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: database-backup-${{ github.run_number }}
+          path: backups
+
+      - name: Run verification script
+        env:
+          TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+        run: |
+          chmod +x scripts/backup/verify-backup.sh
+          BACKUP_FILE=$(ls -t backups/*.sql.gz | head -1)
+          ./scripts/backup/verify-backup.sh "$BACKUP_FILE"
+
+      - name: Upload verification log
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-verification-${{ github.run_number }}
+          path: backup-verification.log
+          retention-days: 90

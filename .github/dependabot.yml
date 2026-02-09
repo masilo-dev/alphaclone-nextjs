@@ -1,0 +1,62 @@
+# Dependabot configuration for automated dependency updates
+# Keeps dependencies secure and up-to-date
+
+version: 2
+updates:
+  # NPM dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "your-github-username" # Replace with actual GitHub username
+    assignees:
+      - "your-github-username" # Replace with actual GitHub username
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "automated"
+    # Ignore specific packages if needed
+    ignore:
+      # Ignore major version updates for stable dependencies
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+    # Group related dependencies together
+    groups:
+      supabase:
+        patterns:
+          - "@supabase/*"
+      stripe:
+        patterns:
+          - "stripe"
+          - "@stripe/*"
+      upstash:
+        patterns:
+          - "@upstash/*"
+      testing:
+        patterns:
+          - "@playwright/*"
+          - "vitest"
+          - "@testing-library/*"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "ci/cd"
+      - "dependencies"
