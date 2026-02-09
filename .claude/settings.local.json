@@ -6,7 +6,10 @@
       "Bash(npm install:*)",
       "Bash(ls:*)",
       "Bash(where:*)",
-      "Bash(npx supabase link:*)"
+      "Bash(npx supabase link:*)",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
