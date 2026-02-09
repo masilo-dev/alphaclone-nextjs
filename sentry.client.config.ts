@@ -21,10 +21,13 @@ Sentry.init({
 
     // Integrations
     integrations: [
-        new Sentry.Replay({
-            maskAllText: true, // Privacy: mask all text
-            blockAllMedia: true, // Privacy: block images/videos
-        }),
+        // Session Replay (if available in your Sentry version)
+        ...(typeof Sentry.Replay !== 'undefined' ? [
+            new Sentry.Replay({
+                maskAllText: true, // Privacy: mask all text
+                blockAllMedia: true, // Privacy: block images/videos
+            })
+        ] : []),
         new Sentry.BrowserTracing({
             // Performance monitoring
             tracePropagationTargets: [
