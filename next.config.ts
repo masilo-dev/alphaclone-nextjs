@@ -88,18 +88,30 @@ const nextConfig: NextConfig = {
             value: '', // Empty value removes the header
           },
 
-          // Cross-Origin Policies
+          // Cross-Origin Policies (Allow embedding and resource sharing)
           {
             key: 'Cross-Origin-Embedder-Policy',
-            value: 'credentialless',
+            value: 'unsafe-none', // Most permissive - allows all resources
           },
           {
             key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin-allow-popups',
+            value: 'unsafe-none', // Allow popups and cross-origin windows
           },
           {
             key: 'Cross-Origin-Resource-Policy',
-            value: 'cross-origin',
+            value: 'cross-origin', // Allow cross-origin resource loading
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*', // Allow requests from any origin
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'X-Requested-With, Content-Type, Authorization',
           },
         ],
       },
