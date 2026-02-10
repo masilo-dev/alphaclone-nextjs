@@ -14,7 +14,10 @@ import {
     TrendingUp,
     Video,
     ShieldCheck,
-    FileCheck
+    FileCheck,
+    BarChart3,
+    BookOpen,
+    Receipt
 } from 'lucide-react';
 import { Project, User } from '../../../types';
 import { projectService } from '../../../services/projectService';
@@ -37,6 +40,8 @@ import SalesAgent from '../SalesAgent';
 import DealsTab from '../DealsTab';
 import AlphaCloneContractModal from '../../contracts/AlphaCloneContractModal';
 import ContractDashboard from '../../contracts/ContractDashboard';
+// Accounting Components
+import { ChartOfAccountsPage, JournalEntriesPage, FinancialReportsPage } from '../accounting';
 
 interface BusinessDashboardProps {
     user: User;
@@ -238,6 +243,14 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             case '/dashboard/business/contracts':
                 return <ContractDashboard user={user} />;
 
+            // Accounting Routes
+            case '/dashboard/accounting/chart-of-accounts':
+                return <ChartOfAccountsPage />;
+            case '/dashboard/accounting/journal-entries':
+                return <JournalEntriesPage />;
+            case '/dashboard/accounting/reports':
+                return <FinancialReportsPage />;
+
             default:
                 return <BusinessHome user={user} />;
         }
@@ -260,6 +273,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             case '/dashboard/tasks': return 'Tasks';
             case '/dashboard/sales-agent': return 'Sales Agent';
             case '/dashboard/leads': return 'Leads & Pipelines';
+            case '/dashboard/accounting/chart-of-accounts': return 'Chart of Accounts';
+            case '/dashboard/accounting/journal-entries': return 'Journal Entries';
+            case '/dashboard/accounting/reports': return 'Financial Reports';
             default: return 'AlphaClone';
         }
     };
@@ -277,6 +293,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
         { label: 'Messages', href: '/dashboard/business/messages', icon: Bell },
         { label: 'Team', href: '/dashboard/business/team', icon: Users },
         { label: 'Finance', href: '/dashboard/business/billing', icon: CreditCard },
+        { label: 'Chart of Accounts', href: '/dashboard/accounting/chart-of-accounts', icon: BookOpen },
+        { label: 'Journal Entries', href: '/dashboard/accounting/journal-entries', icon: Receipt },
+        { label: 'Financial Reports', href: '/dashboard/accounting/reports', icon: BarChart3 },
         { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },
     ];
 
