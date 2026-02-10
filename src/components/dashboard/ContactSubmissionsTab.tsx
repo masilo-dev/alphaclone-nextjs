@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Mail, Clock, CheckCircle, MessageSquare } from 'lucide-react';
-import { contactService, ContactSubmission } from '../../services/contactService';
+import { contactService, ContactSubmission } from '../../services/contactFormService';
 import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 

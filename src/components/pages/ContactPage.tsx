@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, Mail, Phone, MapPin, Send, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button, Input } from '../ui/UIComponents';
 import PublicNavigation from '../PublicNavigation';
-import { contactService } from '../../services/contactService';
+import { contactService } from '../../services/contactFormService';
 import { contactSchema } from '../../schemas/validation';
 
 const ContactPage: React.FC = () => {

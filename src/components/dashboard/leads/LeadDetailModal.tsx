@@ -5,6 +5,7 @@ import { Lead, leadService } from '../../../services/leadService';
 import { taskService, Task } from '../../../services/taskService';
 import { calendarService, CalendarEvent } from '../../../services/calendarService';
 import { dealService } from '../../../services/dealService';
+import { contactService } from '../../../services/contactService';
 import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -140,22 +141,39 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
         if (!name) return;
 
         try {
-            const { error } = await dealService.createDeal(user.id, {
-                name,
-                contactId: lead.id, // Mapping lead ID to contact info loosely
-                value: lead.value,
-                stage: 'lead',
-                metadata: { leadId: lead.id }
+            // STEP 1: Convert lead to contact
+            // This creates a proper contact record and marks the lead as converted
+            const { contactId, error: convertError } = await contactService.convertLeadToContact(lead.id, {
+                createCompany: false, // Don't auto-create company (can be added later)
             });
 
-            if (error) throw new Error(error);
+            if (convertError || !contactId) {
+                throw new Error(convertError || 'Failed to create contact from lead');
+            }
 
-            await leadService.updateLead(lead.id, { stage: 'qualified', status: 'Converted' });
-            toast.success('Converted to Deal!');
-            if (onLeadUpdate) onLeadUpdate({ ...lead, stage: 'qualified', status: 'Converted' });
+            // STEP 2: Create deal with the new contact
+            const { error: dealError } = await dealService.createDeal(user.id, {
+                name,
+                contactId: contactId, // ✅ FIXED: Now using real contact_id instead of lead.id
+                value: lead.value,
+                stage: 'qualified', // Start as qualified since lead was already qualified
+                probability: 25, // 25% for qualified stage
+                metadata: {
+                    originalLeadId: lead.id,
+                    convertedAt: new Date().toISOString()
+                }
+            });
+
+            if (dealError) throw new Error(dealError);
+
+            toast.success(`✅ Lead converted to contact and deal "${name}" created!`);
+
+            // Lead status is already updated by convert_lead_to_contact() function
+            if (onLeadUpdate) onLeadUpdate({ ...lead, status: 'converted' });
             onClose();
         } catch (error) {
-            toast.error('Failed to convert: ' + (error instanceof Error ? error.message : String(error)));
+            console.error('Lead conversion error:', error);
+            toast.error('Failed to convert lead: ' + (error instanceof Error ? error.message : String(error)));
         }
     };
 

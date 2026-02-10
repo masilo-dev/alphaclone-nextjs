@@ -25,7 +25,7 @@ import { Button, Input } from './ui/UIComponents';
 import LoginModal from './auth/LoginModal';
 import { Project, User } from '../types';
 import Link from 'next/link';
-import { contactService } from '../services/contactService';
+import { contactService } from '../services/contactFormService';
 import { projectService } from '../services/projectService';
 import InfiniteTicker from './InfiniteTicker';
 const PortfolioShowcase = React.lazy(() => import('./dashboard/PortfolioShowcase'));
