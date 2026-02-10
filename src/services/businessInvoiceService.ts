@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { jsPDF } from 'jspdf';
+import { journalEntryService } from './accounting/journalEntryService';
+import { chartOfAccountsService } from './accounting/chartOfAccountsService';
 
 export interface BusinessInvoice {
     id: string;
@@ -136,6 +138,15 @@ export const businessInvoiceService = {
      */
     async updateInvoice(invoiceId: string, updates: Partial<BusinessInvoice>): Promise<{ error: string | null }> {
         try {
+            // Get current invoice data to detect status changes
+            const { data: currentInvoice, error: fetchError } = await supabase
+                .from('business_invoices')
+                .select('*')
+                .eq('id', invoiceId)
+                .single();
+
+            if (fetchError) throw fetchError;
+
             const updateData: Record<string, any> = {};
 
             if (updates.clientId !== undefined) updateData.client_id = updates.clientId;
@@ -160,6 +171,22 @@ export const businessInvoiceService = {
                 .eq('id', invoiceId);
 
             if (error) throw error;
+
+            // GL INTEGRATION: Post to accounting when status changes
+            if (updates.status && currentInvoice) {
+                const oldStatus = currentInvoice.status;
+                const newStatus = updates.status;
+
+                // When invoice is sent: DR Accounts Receivable, CR Revenue
+                if (oldStatus === 'draft' && newStatus === 'sent') {
+                    await this.postInvoiceToGL(invoiceId, currentInvoice);
+                }
+
+                // When invoice is paid: DR Cash, CR Accounts Receivable
+                if ((oldStatus === 'sent' || oldStatus === 'overdue') && newStatus === 'paid') {
+                    await this.postPaymentToGL(invoiceId, currentInvoice);
+                }
+            }
 
             return { error: null };
         } catch (err: any) {
@@ -472,5 +499,133 @@ export const businessInvoiceService = {
         doc.text(`© ${new Date().getFullYear()} ${tenant.name}. All Rights Reserved.`, 105, pageHeight - 20, { align: 'center' });
 
         return doc;
-    }
+    },
+
+    /**
+     * Post invoice to General Ledger when sent
+     * DR Accounts Receivable (1100)
+     *   CR Revenue (4100)
+     */
+    async postInvoiceToGL(invoiceId: string, invoiceData: any): Promise<{ error: string | null }> {
+        try {
+            // Get account IDs for AR and Revenue
+            const { account: arAccount } = await chartOfAccountsService.getAccountByCode('1100');
+            const { account: revenueAccount } = await chartOfAccountsService.getAccountByCode('4100');
+
+            if (!arAccount || !revenueAccount) {
+                console.warn('Accounts Receivable (1100) or Service Revenue (4100) not found. Skipping GL post.');
+                return { error: 'Required accounts not found in Chart of Accounts' };
+            }
+
+            const total = parseFloat(invoiceData.total || '0');
+            const issueDate = invoiceData.issue_date || invoiceData.issueDate || new Date().toISOString().split('T')[0];
+            const invoiceNumber = invoiceData.invoice_number || invoiceData.invoiceNumber;
+
+            // Create journal entry
+            const { entry, error } = await journalEntryService.createEntry({
+                entryDate: issueDate,
+                description: `Invoice ${invoiceNumber} - Service Revenue`,
+                reference: invoiceNumber,
+                sourceType: 'invoice',
+                sourceId: invoiceId,
+                lines: [
+                    {
+                        accountId: arAccount.id,
+                        debitAmount: total,
+                        creditAmount: 0,
+                        description: `AR - Invoice ${invoiceNumber}`,
+                        entityType: 'invoice',
+                        entityId: invoiceId,
+                    },
+                    {
+                        accountId: revenueAccount.id,
+                        debitAmount: 0,
+                        creditAmount: total,
+                        description: `Revenue - Invoice ${invoiceNumber}`,
+                        entityType: 'invoice',
+                        entityId: invoiceId,
+                    },
+                ],
+            });
+
+            if (error) {
+                console.error('Failed to create journal entry for invoice:', error);
+                return { error };
+            }
+
+            // Auto-post the entry
+            if (entry) {
+                await journalEntryService.postEntry(entry.id);
+            }
+
+            return { error: null };
+        } catch (err: any) {
+            console.error('Error posting invoice to GL:', err);
+            return { error: err.message };
+        }
+    },
+
+    /**
+     * Post payment to General Ledger when invoice is paid
+     * DR Cash (1000)
+     *   CR Accounts Receivable (1100)
+     */
+    async postPaymentToGL(invoiceId: string, invoiceData: any): Promise<{ error: string | null }> {
+        try {
+            // Get account IDs for Cash and AR
+            const { account: cashAccount } = await chartOfAccountsService.getAccountByCode('1000');
+            const { account: arAccount } = await chartOfAccountsService.getAccountByCode('1100');
+
+            if (!cashAccount || !arAccount) {
+                console.warn('Cash (1000) or Accounts Receivable (1100) not found. Skipping GL post.');
+                return { error: 'Required accounts not found in Chart of Accounts' };
+            }
+
+            const total = parseFloat(invoiceData.total || '0');
+            const paymentDate = new Date().toISOString().split('T')[0];
+            const invoiceNumber = invoiceData.invoice_number || invoiceData.invoiceNumber;
+
+            // Create journal entry
+            const { entry, error } = await journalEntryService.createEntry({
+                entryDate: paymentDate,
+                description: `Payment received for Invoice ${invoiceNumber}`,
+                reference: invoiceNumber,
+                sourceType: 'payment',
+                sourceId: invoiceId,
+                lines: [
+                    {
+                        accountId: cashAccount.id,
+                        debitAmount: total,
+                        creditAmount: 0,
+                        description: `Cash received - Invoice ${invoiceNumber}`,
+                        entityType: 'invoice',
+                        entityId: invoiceId,
+                    },
+                    {
+                        accountId: arAccount.id,
+                        debitAmount: 0,
+                        creditAmount: total,
+                        description: `AR collected - Invoice ${invoiceNumber}`,
+                        entityType: 'invoice',
+                        entityId: invoiceId,
+                    },
+                ],
+            });
+
+            if (error) {
+                console.error('Failed to create journal entry for payment:', error);
+                return { error };
+            }
+
+            // Auto-post the entry
+            if (entry) {
+                await journalEntryService.postEntry(entry.id);
+            }
+
+            return { error: null };
+        } catch (err: any) {
+            console.error('Error posting payment to GL:', err);
+            return { error: err.message };
+        }
+    },
 };
