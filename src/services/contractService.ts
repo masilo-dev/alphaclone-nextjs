@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import { jsPDF } from 'jspdf';
 import { generateText } from './unifiedAIService';
 import { tenantService } from './tenancy/TenantService';
+import { esignatureComplianceService } from './esignatureComplianceService';
 
 export interface Contract {
     id: string;
@@ -163,14 +164,35 @@ export const contractService = {
 
     /**
      * Sign a contract
+     * ESIGN COMPLIANT: Records full audit trail, consent, and tamper seals
      */
-    async signContract(contractId: string, role: 'client' | 'admin', signatureDataUrl: string) {
+    async signContract(
+        contractId: string,
+        role: 'client' | 'admin',
+        signatureDataUrl: string,
+        signerInfo?: {
+            id: string;
+            name: string;
+            email: string;
+            consentGiven?: boolean;
+            userAgent?: string;
+        }
+    ) {
         const updates: any = {};
         const now = new Date().toISOString();
 
-        // Fetch current signatures and content for status check
-        const { data: contract } = await supabase.from('contracts').select('content, client_signature, admin_signature').eq('id', contractId).single();
-        const contentHash = contract?.content ? await this.generateHash(contract.content) : undefined;
+        // Fetch current contract data
+        const { data: contract } = await supabase
+            .from('contracts')
+            .select('content, client_signature, admin_signature, title, client_id, owner_id')
+            .eq('id', contractId)
+            .single();
+
+        if (!contract) {
+            return { contract: null, error: { message: 'Contract not found' } };
+        }
+
+        const contentHash = contract.content ? await this.generateHash(contract.content) : 'no-content';
 
         // Try to get IP address (client-side)
         let ipAddress = 'unknown';
@@ -182,16 +204,50 @@ export const contractService = {
             console.warn('Could not fetch IP for audit log');
         }
 
+        const userAgent = signerInfo?.userAgent || (typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown');
+
+        // ESIGN COMPLIANCE: Record consent if provided
+        if (signerInfo?.consentGiven && signerInfo?.id) {
+            await esignatureComplianceService.recordConsent(
+                signerInfo.id,
+                contractId,
+                ipAddress,
+                userAgent,
+                'signature_action'
+            );
+        }
+
+        // ESIGN COMPLIANCE: Log signature event with tamper seal
+        if (signerInfo) {
+            const intentStatement = esignatureComplianceService.INTENT_STATEMENT
+                .replace('[NAME]', signerInfo.name);
+
+            await esignatureComplianceService.recordSignatureEvent(
+                contractId,
+                signerInfo.id,
+                role,
+                signerInfo.name,
+                signerInfo.email,
+                'signature_completed',
+                signatureDataUrl,
+                contentHash,
+                ipAddress,
+                userAgent,
+                intentStatement
+            );
+        }
+
+        // Update contract with signature
         if (role === 'client') {
             updates.client_signature = signatureDataUrl;
             updates.client_signed_at = now;
             // If admin has already signed, it becomes fully_signed
-            updates.status = contract?.admin_signature ? 'fully_signed' : 'client_signed';
+            updates.status = contract.admin_signature ? 'fully_signed' : 'client_signed';
         } else {
             updates.admin_signature = signatureDataUrl;
             updates.admin_signed_at = now;
             // If client has already signed, it becomes fully_signed
-            updates.status = contract?.client_signature ? 'fully_signed' : 'sent';
+            updates.status = contract.client_signature ? 'fully_signed' : 'sent';
         }
 
         updates.metadata = {
@@ -208,7 +264,72 @@ export const contractService = {
             .select()
             .single();
 
-        return { contract: data, error };
+        if (error) {
+            return { contract: null, error };
+        }
+
+        // ESIGN COMPLIANCE: Log audit event
+        if (signerInfo) {
+            await esignatureComplianceService.logAuditEvent(
+                contractId,
+                `contract_signed_by_${role}`,
+                signerInfo.id,
+                role,
+                signerInfo.name,
+                signerInfo.email,
+                ipAddress,
+                userAgent,
+                { signature_status: updates.status }
+            );
+        }
+
+        // ESIGN COMPLIANCE: Create completion certificate if both parties signed
+        if (updates.status === 'fully_signed') {
+            // Get both signer details
+            const { data: clientUser } = await supabase
+                .from('users')
+                .select('full_name, email')
+                .eq('id', contract.client_id)
+                .single();
+
+            const { data: adminUser } = await supabase
+                .from('users')
+                .select('full_name, email')
+                .eq('id', contract.owner_id)
+                .single();
+
+            if (clientUser && adminUser) {
+                const signers = [
+                    {
+                        id: contract.client_id,
+                        role: 'client' as const,
+                        name: clientUser.full_name || 'Client',
+                        email: clientUser.email,
+                        signedAt: data.client_signed_at,
+                        ipAddress: ipAddress,
+                        signature: data.client_signature
+                    },
+                    {
+                        id: contract.owner_id,
+                        role: 'admin' as const,
+                        name: adminUser.full_name || 'Administrator',
+                        email: adminUser.email,
+                        signedAt: data.admin_signed_at,
+                        ipAddress: ipAddress,
+                        signature: data.admin_signature
+                    }
+                ];
+
+                await esignatureComplianceService.createCompletionCertificate(
+                    contractId,
+                    contract.title || 'Service Agreement',
+                    signers,
+                    contract.content
+                );
+            }
+        }
+
+        return { contract: data, error: null };
     },
 
     /**
