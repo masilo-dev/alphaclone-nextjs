@@ -213,19 +213,55 @@ const SalesAgent: React.FC = () => {
 
     const addToCRM = async (id: string, currentStage: string) => {
         try {
-            const { error } = await leadService.updateLead(id, {
+            // Get the lead details first
+            const lead = leads.find(l => l.id === id);
+            if (!lead) {
+                toast.error('Lead not found');
+                return;
+            }
+
+            // Step 1: Mark lead as qualified
+            const { error: updateError } = await leadService.updateLead(id, {
                 stage: 'qualified',
                 status: 'Qualified'
             });
 
-            if (error) {
-                toast.error(`Failed to qualify lead: ${error}`);
-            } else {
-                toast.success("Lead marked as Qualified");
-                // Update local state
-                setLeads(prev => prev.map(l => l.id === id ? { ...l, stage: 'qualified', status: 'Qualified' } : l));
+            if (updateError) {
+                toast.error(`Failed to qualify lead: ${updateError}`);
+                return;
             }
+
+            // Step 2: Create client record in CRM
+            const { userService } = await import('../../services/userService');
+            const { client, error: clientError } = await userService.createClient({
+                name: lead.businessName,
+                email: lead.email || '',
+                company: lead.businessName,
+                phone: lead.phone
+            });
+
+            if (clientError) {
+                toast.error(`Lead qualified but failed to create client: ${clientError}`);
+                // Still update local state to show qualified
+                setLeads(prev => prev.map(l => l.id === id ? { ...l, stage: 'qualified', status: 'Qualified' } : l));
+                return;
+            }
+
+            // Step 3: Link the lead to the client
+            if (client) {
+                await leadService.updateLead(id, {
+                    client_id: client.id
+                });
+            }
+
+            // Success!
+            toast.success(`✅ ${lead.businessName} added to CRM as client!`, { duration: 4000 });
+
+            // Update local state
+            setLeads(prev => prev.map(l => l.id === id ? { ...l, stage: 'qualified', status: 'Qualified' } : l));
+
         } catch (err) {
+            console.error('Add to CRM error:', err);
             toast.error("An unexpected error occurred");
         }
     };

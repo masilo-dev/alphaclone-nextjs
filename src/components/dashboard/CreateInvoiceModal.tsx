@@ -31,7 +31,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
 
     // Fetch tenant defaults
-    const [tenantDefaults, setTenantDefaults] = useState({ bank: '', mobile: '' });
+    const [tenantDefaults, setTenantDefaults] = useState({ bank: '', mobile: '', organizationName: '' });
 
     React.useEffect(() => {
         const fetchDefaults = async () => {
@@ -45,7 +45,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 const [settingsRes, clientsRes] = await Promise.all([
                     supabase
                         .from('business_settings')
-                        .select('bank_details, mobile_payment_details')
+                        .select('bank_details, mobile_payment_details, organization_name')
                         .eq('tenant_id', tenantId)
                         .maybeSingle(),
                     userService.getUsers()
@@ -54,7 +54,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 if (settingsRes.data) {
                     setTenantDefaults({
                         bank: settingsRes.data.bank_details || '',
-                        mobile: settingsRes.data.mobile_payment_details || ''
+                        mobile: settingsRes.data.mobile_payment_details || '',
+                        organizationName: settingsRes.data.organization_name || ''
                     });
                 }
 
@@ -408,7 +409,12 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
                                 {/* Business Info */}
                                 <div className="mb-8">
-                                    <h2 className="font-bold text-base sm:text-lg">{currentTenant?.name || 'Your Business'}</h2>
+                                    <h2 className="font-bold text-base sm:text-lg">
+                                        {currentTenant?.name || tenantDefaults?.organizationName || 'Organization Name Missing'}
+                                    </h2>
+                                    {(!currentTenant?.name && !tenantDefaults?.organizationName) && (
+                                        <p className="text-red-500 text-xs mt-1">⚠️ Please set your organization name in Settings</p>
+                                    )}
                                     <p className="text-gray-600 text-sm">Professional Services</p>
                                 </div>
 

@@ -4,6 +4,7 @@ import { tenantService } from './tenancy/TenantService';
 export interface Lead {
     id: string;
     owner_id?: string;
+    client_id?: string; // Link to CRM client record
     businessName: string; // mapped from business_name
     industry?: string;
     location?: string;
@@ -273,6 +274,7 @@ export const leadService = {
         if (updates.stage !== undefined) dbPayload.stage = updates.stage;
         if (updates.value !== undefined) dbPayload.value = updates.value;
         if (updates.notes !== undefined) dbPayload.notes = updates.notes;
+        if (updates.client_id !== undefined) dbPayload.client_id = updates.client_id;
         if (updates.outreachMessage !== undefined) dbPayload.outreach_message = updates.outreachMessage;
         if (updates.outreachStatus !== undefined) dbPayload.outreach_status = updates.outreachStatus;
 

@@ -162,7 +162,8 @@ Date: ${variables.contractDate}
 export function generateContractFromTemplate(
     clientName: string,
     projectName: string,
-    projectDescription: string
+    projectDescription: string,
+    providerName: string = 'Authorized Service Provider'
 ): string {
     const today = new Date().toLocaleDateString('en-US', {
         year: 'numeric',
@@ -176,7 +177,7 @@ export function generateContractFromTemplate(
 **Date:** ${today}
 
 **Between:**
-- **Authorized Service Provider** ("Service Provider")
+- **${providerName}** ("Service Provider")
 - **${clientName}** ("Client")
 
 **Project:** ${projectName}
@@ -372,7 +373,7 @@ Neither party is liable for delays due to circumstances beyond reasonable contro
 
 By signing below, both parties agree to the terms of this Professional Services Agreement.
 
-**AlphaClone Systems:**
+**${providerName}:**
 
 Signature: (Digital Signature)
 Name: (Print Name)

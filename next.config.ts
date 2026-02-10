@@ -18,11 +18,11 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://challenges.cloudflare.com",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://challenges.cloudflare.com https://c.daily.co",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https: http:",
               "font-src 'self' data: https://fonts.gstatic.com",
-              "connect-src 'self' https://*.supabase.co https://api.stripe.com https://api.daily.co https://ipapi.co https://api.calendly.com https://generativelanguage.googleapis.com wss://*.supabase.co wss://*.daily.co",
+              "connect-src 'self' https://*.supabase.co https://api.stripe.com https://api.daily.co https://c.daily.co https://ipapi.co https://api.calendly.com https://generativelanguage.googleapis.com wss://*.supabase.co wss://*.daily.co",
               "frame-src 'self' https://js.stripe.com https://daily.co https://calendly.com",
               "worker-src 'self' blob:",
               "media-src 'self' blob: data: https:",

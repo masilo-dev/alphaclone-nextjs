@@ -36,6 +36,7 @@ import { Button, Card, Input, Modal } from './ui/UIComponents';
 import { CLIENT_NAV_ITEMS, ADMIN_NAV_ITEMS, TENANT_ADMIN_NAV_ITEMS, LOGO_URL } from '../constants';
 import { User, Project, ChatMessage, DashboardStat, GalleryItem, Invoice, ProjectStage, UserRole } from '../types';
 import BusinessDashboard from './dashboard/business/BusinessDashboard';
+import { useTenant } from '../contexts/TenantContext';
 
 import AIStudio from './dashboard/AIStudio';
 import NotificationCenter from './dashboard/NotificationCenter';
@@ -124,6 +125,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const location = usePathname();
   const router = useRouter();
+  const { currentTenant } = useTenant();
 
   // -- CRITICAL FIX: ISOLATED TENANT DASHBOARD --
   // Return early for Tenant Admins to avoid double-shell layout collisions
@@ -689,7 +691,12 @@ const Dashboard: React.FC<DashboardProps> = ({
           // Fallback to template
           console.warn('AI generation returned empty, using template');
           const template = await import('../services/alphacloneContractTemplate').then(m =>
-            m.generateContractFromTemplate(p.ownerName || 'Client', p.name, p.description || '')
+            m.generateContractFromTemplate(
+              p.ownerName || 'Client',
+              p.name,
+              p.description || '',
+              currentTenant?.name || 'Authorized Service Provider'
+            )
           );
           setGeneratedContract(template);
         }
@@ -702,7 +709,12 @@ const Dashboard: React.FC<DashboardProps> = ({
         });
 
         const template = await import('../services/alphacloneContractTemplate').then(m =>
-          m.generateContractFromTemplate(p.ownerName || 'Client', p.name, p.description || '')
+          m.generateContractFromTemplate(
+            p.ownerName || 'Client',
+            p.name,
+            p.description || '',
+            currentTenant?.name || 'Authorized Service Provider'
+          )
         );
         setGeneratedContract(template);
       } finally {
