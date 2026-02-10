@@ -502,7 +502,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                                 </div>
                                             )}
 
-                                            {userRole === 'admin' && (
+                                            {(userRole === 'admin' || userRole === 'tenant_admin') && (
                                                 <select
                                                     value={deal.stage}
                                                     onChange={(e) => handleStageChange(deal.id, e.target.value as DealStage)}

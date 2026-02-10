@@ -203,7 +203,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                         <option value="sent">Sent</option>
                         <option value="accepted">Accepted</option>
                     </select>
-                    {userRole === 'admin' && (
+                    {(userRole === 'admin' || userRole === 'tenant_admin') && (
                         <Button onClick={() => setShowCreateModal(true)}>
                             <Plus className="w-5 h-5 mr-2" /> Create Quote
                         </Button>
