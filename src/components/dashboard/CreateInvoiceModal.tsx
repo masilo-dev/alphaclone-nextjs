@@ -253,7 +253,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
 
                             {/* Quick Templates */}
-                            <div className="flex gap-4">
+                            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -380,9 +380,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 )}
                             </div>
 
-                            <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
-                                <Button variant="outline" onClick={handleClose}>Cancel</Button>
-                                <Button onClick={handleGeneratePreview} className="bg-teal-600 hover:bg-teal-500">
+                            <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-slate-800">
+                                <Button variant="outline" onClick={handleClose} className="w-full sm:w-auto">Cancel</Button>
+                                <Button onClick={handleGeneratePreview} className="bg-teal-600 hover:bg-teal-500 w-full sm:w-auto">
                                     <Save className="w-4 h-4 mr-2" />
                                     Generate Preview
                                 </Button>
@@ -394,21 +394,21 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     {step === 'preview' && (
                         <div className="space-y-6">
                             {/* Invoice Preview */}
-                            <div className="bg-white text-black p-8 rounded-lg max-h-[500px] overflow-y-auto border-4 border-slate-700">
+                            <div className="bg-white text-black p-4 sm:p-6 md:p-8 rounded-lg max-h-[500px] overflow-y-auto border-4 border-slate-700">
                                 {/* Header */}
-                                <div className="flex justify-between items-start mb-8">
+                                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-8">
                                     {currentTenant?.logo_url && (
-                                        <img src={currentTenant.logo_url} alt="Logo" className="h-16 object-contain" />
+                                        <img src={currentTenant.logo_url} alt="Logo" className="h-12 sm:h-16 object-contain" />
                                     )}
-                                    <div className="text-right">
-                                        <h1 className="text-3xl font-bold">INVOICE</h1>
+                                    <div className="text-left sm:text-right">
+                                        <h1 className="text-2xl sm:text-3xl font-bold">INVOICE</h1>
                                         <p className="text-gray-600 text-sm">#{createdInvoiceId || 'DRAFT'}</p>
                                     </div>
                                 </div>
 
                                 {/* Business Info */}
                                 <div className="mb-8">
-                                    <h2 className="font-bold text-lg">{currentTenant?.name || 'Your Business'}</h2>
+                                    <h2 className="font-bold text-base sm:text-lg">{currentTenant?.name || 'Your Business'}</h2>
                                     <p className="text-gray-600 text-sm">Professional Services</p>
                                 </div>
 
@@ -423,7 +423,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 )}
 
                                 {/* Invoice Details */}
-                                <div className="grid grid-cols-2 gap-4 mb-8 text-sm">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 text-sm">
                                     <div>
                                         <p className="text-gray-600">Issue Date:</p>
                                         <p className="font-semibold">{new Date().toLocaleDateString()}</p>
@@ -435,29 +435,31 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 </div>
 
                                 {/* Line Items */}
-                                <table className="w-full mb-8 text-sm">
-                                    <thead className="border-b-2 border-gray-300">
-                                        <tr>
-                                            <th className="text-left py-2">Description</th>
-                                            <th className="text-right py-2">Amount</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr className="border-b border-gray-200">
-                                            <td className="py-3">{description}</td>
-                                            <td className="text-right py-3">${parseFloat(amount).toFixed(2)}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                <div className="overflow-x-auto mb-8">
+                                    <table className="w-full text-sm">
+                                        <thead className="border-b-2 border-gray-300">
+                                            <tr>
+                                                <th className="text-left py-2">Description</th>
+                                                <th className="text-right py-2">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr className="border-b border-gray-200">
+                                                <td className="py-3">{description}</td>
+                                                <td className="text-right py-3">${parseFloat(amount).toFixed(2)}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
 
                                 {/* Total */}
                                 <div className="flex justify-end mb-8">
-                                    <div className="w-64">
+                                    <div className="w-full sm:w-64">
                                         <div className="flex justify-between py-2 text-sm">
                                             <span className="text-gray-600">Subtotal:</span>
                                             <span>${parseFloat(amount).toFixed(2)}</span>
                                         </div>
-                                        <div className="flex justify-between py-2 border-t-2 border-gray-800 font-bold text-lg">
+                                        <div className="flex justify-between py-2 border-t-2 border-gray-800 font-bold text-base sm:text-lg">
                                             <span>Total:</span>
                                             <span>${parseFloat(amount).toFixed(2)} USD</span>
                                         </div>
@@ -482,20 +484,20 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
 
                             {/* Actions */}
-                            <div className="flex justify-between items-center pt-4 border-t border-slate-800">
-                                <div className="flex gap-3">
-                                    <Button variant="outline" onClick={() => setStep('edit')}>
+                            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center pt-4 border-t border-slate-800 gap-3">
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <Button variant="outline" onClick={() => setStep('edit')} className="w-full sm:w-auto">
                                         <Edit3 className="w-4 h-4 mr-2" />
                                         Edit Details
                                     </Button>
-                                    <Button variant="outline" onClick={handleDownloadPDF}>
+                                    <Button variant="outline" onClick={handleDownloadPDF} className="w-full sm:w-auto">
                                         <Download className="w-4 h-4 mr-2" />
                                         Download Draft
                                     </Button>
                                 </div>
-                                <div className="flex gap-3">
-                                    <Button variant="outline" onClick={handleClose}>Cancel</Button>
-                                    <Button onClick={handleSaveInvoice} disabled={isSubmitting} className="bg-green-600 hover:bg-green-500">
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <Button variant="outline" onClick={handleClose} className="w-full sm:w-auto">Cancel</Button>
+                                    <Button onClick={handleSaveInvoice} disabled={isSubmitting} className="bg-green-600 hover:bg-green-500 w-full sm:w-auto">
                                         <CheckCircle className="w-4 h-4 mr-2" />
                                         {isSubmitting ? 'Saving...' : 'Save & Finalize'}
                                     </Button>
@@ -515,12 +517,12 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 Your invoice has been saved and is ready to send to your client.
                             </p>
 
-                            <div className="flex gap-4">
-                                <Button variant="outline" onClick={handleDownloadPDF}>
+                            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                                <Button variant="outline" onClick={handleDownloadPDF} className="w-full sm:w-auto">
                                     <Download className="w-4 h-4 mr-2" />
                                     Download PDF
                                 </Button>
-                                <Button onClick={handleClose} className="bg-teal-600 hover:bg-teal-500">
+                                <Button onClick={handleClose} className="bg-teal-600 hover:bg-teal-500 w-full sm:w-auto">
                                     Close Window
                                 </Button>
                             </div>

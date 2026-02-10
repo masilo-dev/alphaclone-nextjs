@@ -369,8 +369,8 @@ const CreateInvoiceModal = ({ clients, projects, contracts, onClose, onCreate }:
     };
 
     return (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-900 border border-white/10 rounded-3xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-slate-900 border border-white/10 rounded-3xl p-4 md:p-6 max-w-2xl w-full my-auto max-h-[calc(100vh-2rem)] overflow-y-auto shadow-2xl">
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-bold">Create Invoice</h3>
                     <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded">
@@ -379,7 +379,7 @@ const CreateInvoiceModal = ({ clients, projects, contracts, onClose, onCreate }:
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium mb-2">Client *</label>
                             <select
@@ -464,7 +464,7 @@ const CreateInvoiceModal = ({ clients, projects, contracts, onClose, onCreate }:
                         ))}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium mb-2">Discount Amount ($)</label>
                             <input

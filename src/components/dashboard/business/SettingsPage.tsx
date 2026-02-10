@@ -170,9 +170,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     }
 
     return (
-        <div className="flex flex-col md:flex-row gap-6 h-full">
+        <div className="flex flex-col md:flex-row gap-6 h-full p-4 md:p-6">
             {/* Sidebar / Tabs */}
-            <div className="w-full md:w-64 bg-slate-900/50 border border-slate-800 rounded-2xl p-5 h-fit shrink-0">
+            <div className="w-full md:w-64 bg-slate-900/50 border border-slate-700 rounded-2xl p-4 md:p-5 h-fit shrink-0">
                 <h3 className="text-lg font-semibold mb-4 hidden md:block">Settings</h3>
                 <div className="flex md:flex-col overflow-x-auto md:overflow-visible gap-2 pb-2 md:pb-0 scrollbar-hide">
                     {tabs.map(tab => (
@@ -192,7 +192,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
             </div>
 
             {/* Content */}
-            <div className="flex-1 bg-slate-900/50 border border-slate-800 rounded-2xl p-6 overflow-y-auto">
+            <div className="flex-1 bg-slate-900/50 border border-slate-700 rounded-2xl p-4 md:p-6 overflow-y-auto">
                 {activeTab === 'business' && (
                     <div className="space-y-6">
                         <div>
@@ -241,7 +241,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                 />
                             </div>
 
-                            <div className="pt-4 border-t border-slate-800">
+                            <div className="pt-4 border-t border-slate-700">
                                 <h4 className="text-md font-bold mb-4 text-teal-400">Payment Instructions (Manual)</h4>
                                 <div className="space-y-4">
                                     <div>
@@ -287,7 +287,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                 { title: 'Billing Alerts', desc: 'Invoice payments and due dates' },
                                 { title: 'Security Alerts', desc: 'New login attempts' }
                             ].map((item, i) => (
-                                <div key={i} className="flex items-center justify-between p-4 bg-slate-900/50 rounded-lg border border-slate-800">
+                                <div key={i} className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 p-4 bg-slate-800 rounded-xl border border-slate-700">
                                     <div>
                                         <h4 className="font-medium text-white">{item.title}</h4>
                                         <p className="text-sm text-slate-400">{item.desc}</p>
@@ -309,8 +309,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             <p className="text-slate-400 mb-6">Configure tenant security policies</p>
                         </div>
                         <div className="space-y-4">
-                            <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-800">
-                                <div className="flex items-center justify-between mb-4">
+                            <div className="p-4 bg-slate-800 rounded-xl border border-slate-700">
+                                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-4">
                                     <div>
                                         <h4 className="font-medium text-white">Two-Factor Authentication (2FA)</h4>
                                         <p className="text-sm text-slate-400">Require all team members to use 2FA</p>
@@ -321,14 +321,14 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                     </label>
                                 </div>
                             </div>
-                            <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-800">
+                            <div className="p-4 bg-slate-800 rounded-xl border border-slate-700">
                                 <h4 className="font-medium text-white mb-2">Login History</h4>
                                 <div className="text-sm text-slate-400">
-                                    <div className="flex justify-between py-2 border-b border-slate-800">
+                                    <div className="flex flex-col md:flex-row justify-between gap-2 py-2 border-b border-slate-700">
                                         <span>Admin User (You)</span>
                                         <span>Just now • 127.0.0.1</span>
                                     </div>
-                                    <div className="flex justify-between py-2 border-b border-slate-800">
+                                    <div className="flex flex-col md:flex-row justify-between gap-2 py-2 border-b border-slate-700">
                                         <span>Manager User</span>
                                         <span>2 hours ago • 192.168.1.1</span>
                                     </div>
@@ -345,11 +345,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 
                 {/* Save Button for Forms */}
                 {(activeTab === 'business') && (
-                    <div className="mt-8 pt-6 border-t border-slate-800">
+                    <div className="mt-8 pt-6 border-t border-slate-700">
                         <button
                             onClick={handleSave}
                             disabled={saving}
-                            className="flex items-center gap-2 px-6 py-3 bg-teal-500 hover:bg-teal-600 disabled:bg-slate-700 disabled:cursor-not-allowed rounded-xl transition-colors"
+                            className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-teal-500 hover:bg-teal-600 disabled:bg-slate-700 disabled:cursor-not-allowed rounded-xl transition-colors"
                         >
                             <Save className="w-5 h-5" />
                             {saving ? 'Saving...' : 'Save Changes'}

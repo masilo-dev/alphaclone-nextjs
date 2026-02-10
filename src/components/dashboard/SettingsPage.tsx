@@ -308,7 +308,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                             { key: 'messageAlerts', label: 'Message Alerts', description: 'Receive alerts for new messages' },
                                             { key: 'weeklyReports', label: 'Weekly Reports', description: 'Get a weekly summary of your activity' },
                                         ].map((setting) => (
-                                            <div key={setting.key} className="flex items-center justify-between p-4 bg-slate-900 rounded-lg">
+                                            <div key={setting.key} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-slate-900 rounded-xl border border-slate-800">
                                                 <div>
                                                     <h4 className="text-white font-medium">{setting.label}</h4>
                                                     <p className="text-sm text-slate-400">{setting.description}</p>
@@ -336,7 +336,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                     <Button
                                         onClick={handleSaveNotifications}
                                         disabled={isSaving}
-                                        className="bg-teal-600 hover:bg-teal-500"
+                                        className="bg-teal-600 hover:bg-teal-500 w-full sm:w-auto"
                                     >
                                         {isSaving ? (
                                             <>
@@ -356,7 +356,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                 <div>
                                     <h3 className="text-lg font-bold text-white mb-4">Security Settings</h3>
                                     <div className="space-y-4">
-                                        <div className="p-4 bg-slate-900 rounded-lg">
+                                        <div className="p-4 bg-slate-900 rounded-xl border border-slate-800">
                                             <h4 className="text-white font-medium mb-2">Change Password</h4>
                                             <div className="space-y-3">
                                                 <Input
@@ -398,32 +398,32 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                             </div>
                                         </div>
 
-                                        <div className="p-4 bg-slate-900 rounded-lg">
+                                        <div className="p-4 bg-slate-900 rounded-xl border border-slate-800">
                                             <h4 className="text-white font-medium mb-2">Two-Factor Authentication</h4>
                                             <p className="text-sm text-slate-400 mb-3">Add an extra layer of security to your account</p>
                                             <Button
                                                 variant="outline"
                                                 size="sm"
                                                 disabled
-                                                className="opacity-50 cursor-not-allowed"
+                                                className="opacity-50 cursor-not-allowed w-full sm:w-auto"
                                             >
                                                 Enable 2FA (Coming Soon)
                                             </Button>
                                         </div>
 
-                                        <div className="p-4 bg-slate-900 rounded-lg">
+                                        <div className="p-4 bg-slate-900 rounded-xl border border-slate-800">
                                             <h4 className="text-white font-medium mb-2">Active Sessions</h4>
                                             <p className="text-sm text-slate-400 mb-3">Manage devices where you're currently logged in</p>
                                             <div className="space-y-2">
-                                                <div className="flex items-center justify-between p-3 bg-slate-800 rounded">
-                                                    <div className="flex items-center gap-3">
-                                                        <Globe className="w-5 h-5 text-teal-400" />
-                                                        <div>
+                                                <div className="flex items-start sm:items-center justify-between gap-3 p-3 bg-slate-800 rounded-lg border border-slate-700">
+                                                    <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+                                                        <Globe className="w-5 h-5 text-teal-400 flex-shrink-0 mt-0.5 sm:mt-0" />
+                                                        <div className="min-w-0 flex-1">
                                                             <p className="text-sm text-white font-medium">Current Session</p>
-                                                            <p className="text-xs text-slate-400">Windows • Chrome • Active now</p>
+                                                            <p className="text-xs text-slate-400 break-words">Windows • Chrome • Active now</p>
                                                         </div>
                                                     </div>
-                                                    <span className="text-xs text-green-400">Active</span>
+                                                    <span className="text-xs text-green-400 flex-shrink-0">Active</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -517,15 +517,15 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 
                                 <div className="pt-6 border-t border-slate-800">
                                     <h3 className="text-lg font-bold text-white mb-4">Payment Methods</h3>
-                                    <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-8 bg-slate-800 rounded flex items-center justify-center font-bold text-[10px] text-slate-500 border border-slate-700">VISA</div>
-                                            <div>
+                                    <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                                            <div className="w-12 h-8 bg-slate-800 rounded flex items-center justify-center font-bold text-[10px] text-slate-500 border border-slate-700 flex-shrink-0">VISA</div>
+                                            <div className="min-w-0">
                                                 <p className="text-white text-sm font-medium">•••• •••• •••• 4242</p>
                                                 <p className="text-xs text-slate-500">Expires 12/26</p>
                                             </div>
                                         </div>
-                                        <Button variant="ghost" size="sm" className="text-teal-400 hover:text-teal-300">Edit</Button>
+                                        <Button variant="ghost" size="sm" className="text-teal-400 hover:text-teal-300 w-full sm:w-auto">Edit</Button>
                                     </div>
                                 </div>
                             </div>
@@ -535,9 +535,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                 <div>
                                     <h3 className="text-lg font-bold text-white mb-4">Appearance Settings</h3>
                                     <div className="space-y-4">
-                                        <div className="p-4 bg-slate-900 rounded-lg">
+                                        <div className="p-4 bg-slate-900 rounded-xl border border-slate-800">
                                             <h4 className="text-white font-medium mb-3">Theme</h4>
-                                            <div className="grid grid-cols-3 gap-3">
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                                 {['Dark', 'Light', 'Auto'].map((theme) => (
                                                     <button
                                                         key={theme}
@@ -552,7 +552,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                             </div>
                                         </div>
 
-                                        <div className="p-4 bg-slate-900 rounded-lg">
+                                        <div className="p-4 bg-slate-900 rounded-xl border border-slate-800">
                                             <h4 className="text-white font-medium mb-2">Compact Mode</h4>
                                             <p className="text-sm text-slate-400 mb-3">Reduce spacing for a more compact interface</p>
                                             <label className="relative inline-flex items-center cursor-pointer">
@@ -566,7 +566,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                 <div className="pt-4 border-t border-slate-800">
                                     <Button
                                         disabled
-                                        className="bg-teal-600 hover:bg-teal-500 opacity-50 cursor-not-allowed"
+                                        className="bg-teal-600 hover:bg-teal-500 opacity-50 cursor-not-allowed w-full sm:w-auto"
                                     >
                                         Save Preferences (Coming Soon)
                                     </Button>

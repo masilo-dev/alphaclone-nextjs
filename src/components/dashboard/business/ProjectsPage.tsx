@@ -596,7 +596,7 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
                             {clients.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <label className="text-sm font-semibold text-slate-300 ml-1">Start Date</label>
                             <input type="date" value={formData.startDate} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}

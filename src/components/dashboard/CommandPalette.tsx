@@ -123,28 +123,28 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4">
+        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] sm:pt-[15vh] px-4">
             <div className="fixed inset-0 bg-black/80 backdrop-blur-md animate-in fade-in duration-300" onClick={onClose} />
 
-            <div className="relative w-full max-w-2xl bg-slate-900/90 border border-teal-500/30 rounded-3xl shadow-[0_0_80px_-20px_rgba(20,184,166,0.5)] overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="relative w-full max-w-2xl bg-slate-900/95 border border-teal-500/30 rounded-2xl sm:rounded-3xl shadow-[0_0_80px_-20px_rgba(20,184,166,0.5)] overflow-hidden animate-in zoom-in-95 duration-200">
                 {/* Search Header */}
-                <div className="flex items-center gap-4 p-6 border-b border-white/5 bg-slate-950/40">
-                    <Command className="w-6 h-6 text-teal-400 animate-pulse" />
+                <div className="flex items-center gap-3 sm:gap-4 p-4 sm:p-6 border-b border-white/5 bg-slate-950/40">
+                    <Command className="w-5 h-5 sm:w-6 sm:h-6 text-teal-400 animate-pulse flex-shrink-0" />
                     <input
                         autoFocus
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Specify protocol or destination..."
-                        className="flex-1 bg-transparent border-none text-xl text-white outline-none placeholder-slate-600 font-bold tracking-tight"
+                        placeholder="Specify protocol..."
+                        className="flex-1 bg-transparent border-none text-base sm:text-xl text-white outline-none placeholder-slate-600 font-bold tracking-tight min-w-0"
                     />
-                    <div className="flex items-center gap-2 px-2 py-1 bg-slate-800 rounded-lg border border-white/5">
+                    <div className="flex items-center gap-2 px-2 py-1 bg-slate-800 rounded-lg border border-white/5 flex-shrink-0">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ESC</span>
                     </div>
                 </div>
 
                 {/* Command List */}
-                <div className="max-h-[60vh] overflow-y-auto p-4 custom-scrollbar">
+                <div className="max-h-[60vh] overflow-y-auto p-3 sm:p-4 custom-scrollbar">
                     {filteredCommands.length > 0 ? (
                         <div className="space-y-1">
                             {filteredCommands.map((cmd, idx) => {
@@ -154,26 +154,26 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                         key={cmd.id}
                                         onMouseEnter={() => setSelectedIndex(idx)}
                                         onClick={cmd.action}
-                                        className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all duration-200 group ${isSelected
+                                        className={`w-full flex items-center justify-between p-3 sm:p-4 rounded-xl sm:rounded-2xl transition-all duration-200 group ${isSelected
                                                 ? 'bg-gradient-to-r from-teal-500/20 to-teal-500/5 border border-teal-500/30 shadow-lg shadow-teal-500/10'
                                                 : 'border border-transparent hover:bg-white/5'
                                             }`}
                                     >
-                                        <div className="flex items-center gap-4">
-                                            <div className={`p-3 rounded-xl transition-all ${isSelected ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/40 translate-x-1' : 'bg-slate-800 text-slate-400 group-hover:bg-slate-700'
+                                        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                                            <div className={`p-2 sm:p-3 rounded-lg sm:rounded-xl transition-all flex-shrink-0 ${isSelected ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/40 translate-x-1' : 'bg-slate-800 text-slate-400 group-hover:bg-slate-700'
                                                 }`}>
-                                                <cmd.icon className="w-6 h-6" />
+                                                <cmd.icon className="w-5 h-5 sm:w-6 sm:h-6" />
                                             </div>
-                                            <div className="text-left">
-                                                <div className={`text-sm font-black uppercase tracking-widest ${isSelected ? 'text-white' : 'text-slate-200'}`}>
+                                            <div className="text-left min-w-0 flex-1">
+                                                <div className={`text-xs sm:text-sm font-black uppercase tracking-wider sm:tracking-widest ${isSelected ? 'text-white' : 'text-slate-200'} truncate`}>
                                                     {cmd.label}
                                                 </div>
-                                                <div className={`text-xs ${isSelected ? 'text-teal-400/80' : 'text-slate-500'}`}>
+                                                <div className={`text-[10px] sm:text-xs ${isSelected ? 'text-teal-400/80' : 'text-slate-500'} truncate`}>
                                                     {cmd.description}
                                                 </div>
                                             </div>
                                         </div>
-                                        <ChevronRight className={`w-5 h-5 transition-all ${isSelected ? 'text-teal-400 translate-x-1 opacity-100' : 'text-slate-700 opacity-0'}`} />
+                                        <ChevronRight className={`w-4 h-4 sm:w-5 sm:h-5 transition-all flex-shrink-0 ${isSelected ? 'text-teal-400 translate-x-1 opacity-100' : 'text-slate-700 opacity-0'}`} />
                                     </button>
                                 );
                             })}
@@ -188,8 +188,8 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                 </div>
 
                 {/* Keyboard Footer */}
-                <div className="p-4 bg-slate-950/60 border-t border-white/5 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                <div className="p-3 sm:p-4 bg-slate-950/60 border-t border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
                         <div className="flex items-center gap-1.5">
                             <kbd className="px-2 py-1 bg-slate-800 border border-white/10 rounded-md text-[10px] text-slate-400 font-black">↑↓</kbd>
                             <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Navigate</span>
@@ -199,7 +199,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                             <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Execute</span>
                         </div>
                     </div>
-                    <div className="text-[10px] font-black text-teal-500/40 uppercase tracking-[0.3em]">AlphaClone Systems OS</div>
+                    <div className="text-[9px] sm:text-[10px] font-black text-teal-500/40 uppercase tracking-[0.2em] sm:tracking-[0.3em]">AlphaClone Systems OS</div>
                 </div>
             </div>
         </div>

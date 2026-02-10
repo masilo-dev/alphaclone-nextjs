@@ -156,31 +156,31 @@ export function ChartOfAccountsPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
-                <div className="text-gray-600">Loading accounts...</div>
+                <div className="text-slate-300">Loading accounts...</div>
             </div>
         );
     }
 
     return (
-        <div className="p-6">
+        <div className="p-4 md:p-6">
             {/* Header */}
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Chart of Accounts</h1>
-                    <p className="text-gray-600 mt-1">Manage your accounting accounts</p>
+                    <h1 className="text-2xl font-bold text-white">Chart of Accounts</h1>
+                    <p className="text-slate-300 mt-1">Manage your accounting accounts</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3">
                     {accounts.length === 0 && (
                         <button
                             onClick={handleInitializeDefaults}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
                             Initialize Default Accounts
                         </button>
                     )}
                     <button
                         onClick={() => setShowCreateModal(true)}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                     >
                         + New Account
                     </button>
@@ -188,13 +188,13 @@ export function ChartOfAccountsPage() {
             </div>
 
             {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+                <div className="bg-red-900/20 border border-red-500 text-red-400 px-4 py-3 rounded-lg mb-4">
                     {error}
                 </div>
             )}
 
             {/* Filters */}
-            <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+            <div className="bg-slate-800 rounded-lg shadow-sm p-4 mb-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <input
@@ -202,14 +202,14 @@ export function ChartOfAccountsPage() {
                             placeholder="Search accounts..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-2 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         />
                     </div>
                     <div>
                         <select
                             value={filterType}
                             onChange={(e) => setFilterType(e.target.value as AccountType | 'all')}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         >
                             <option value="all">All Types</option>
                             <option value="asset">Assets</option>
@@ -227,9 +227,9 @@ export function ChartOfAccountsPage() {
                             id="showInactive"
                             checked={showInactive}
                             onChange={(e) => setShowInactive(e.target.checked)}
-                            className="mr-2"
+                            className="mr-2 rounded border-slate-600"
                         />
-                        <label htmlFor="showInactive" className="text-gray-700">
+                        <label htmlFor="showInactive" className="text-slate-300">
                             Show inactive accounts
                         </label>
                     </div>
@@ -239,45 +239,45 @@ export function ChartOfAccountsPage() {
             {/* Accounts List */}
             <div className="space-y-6">
                 {Object.entries(groupedAccounts).map(([type, accountList]) => (
-                    <div key={type} className="bg-white rounded-lg shadow-sm overflow-hidden">
-                        <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
-                            <h2 className="text-lg font-semibold text-gray-900">
+                    <div key={type} className="bg-slate-800 rounded-lg shadow-sm overflow-hidden">
+                        <div className="bg-slate-900 px-6 py-3 border-b border-slate-700">
+                            <h2 className="text-lg font-semibold text-white">
                                 {accountTypeLabels[type as AccountType]}
                             </h2>
                         </div>
                         <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
+                            <table className="min-w-full divide-y divide-slate-700">
+                                <thead className="bg-slate-900">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Account Name</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Balance</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Code</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Account Name</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Type</th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase">Balance</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Status</th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
+                                <tbody className="bg-slate-800 divide-y divide-slate-700">
                                     {accountList.map((account) => (
-                                        <tr key={account.id} className={!account.isActive ? 'bg-gray-50 opacity-60' : ''}>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        <tr key={account.id} className={!account.isActive ? 'bg-slate-900/50 opacity-60' : ''}>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                                                 {account.accountCode}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-200">
                                                 {account.accountName}
                                                 {account.isSystemAccount && (
-                                                    <span className="ml-2 text-xs text-blue-600">(System)</span>
+                                                    <span className="ml-2 text-xs text-blue-400">(System)</span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
                                                 {account.normalBalance === 'debit' ? 'DR' : 'CR'}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 font-mono">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white font-mono">
                                                 ${account.currentBalance.toFixed(2)}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                    account.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                                    account.isActive ? 'bg-green-900/50 text-green-300' : 'bg-slate-700 text-slate-400'
                                                 }`}>
                                                     {account.isActive ? 'Active' : 'Inactive'}
                                                 </span>
@@ -285,14 +285,14 @@ export function ChartOfAccountsPage() {
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <button
                                                     onClick={() => openEditModal(account)}
-                                                    className="text-blue-600 hover:text-blue-900 mr-3"
+                                                    className="text-blue-400 hover:text-blue-300 mr-3 transition-colors"
                                                 >
                                                     Edit
                                                 </button>
                                                 {!account.isSystemAccount && (
                                                     <button
                                                         onClick={() => handleDelete(account.id)}
-                                                        className="text-red-600 hover:text-red-900"
+                                                        className="text-red-400 hover:text-red-300 transition-colors"
                                                     >
                                                         Delete
                                                     </button>
@@ -308,12 +308,12 @@ export function ChartOfAccountsPage() {
             </div>
 
             {filteredAccounts.length === 0 && (
-                <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-                    <p className="text-gray-500">No accounts found</p>
+                <div className="text-center py-12 bg-slate-800 rounded-lg shadow-sm">
+                    <p className="text-slate-300">No accounts found</p>
                     {accounts.length === 0 && (
                         <button
                             onClick={handleInitializeDefaults}
-                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
                             Initialize Default Accounts
                         </button>
@@ -323,48 +323,48 @@ export function ChartOfAccountsPage() {
 
             {/* Create/Edit Modal */}
             {(showCreateModal || editingAccount) && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-                        <h2 className="text-xl font-bold text-gray-900 mb-4">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+                        <h2 className="text-xl font-bold text-white mb-4">
                             {editingAccount ? 'Edit Account' : 'Create New Account'}
                         </h2>
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-slate-300 mb-1">
                                     Account Code *
                                 </label>
                                 <input
                                     type="text"
                                     value={formData.accountCode}
                                     onChange={(e) => setFormData({ ...formData, accountCode: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                                     placeholder="e.g., 1000"
                                     disabled={editingAccount?.isSystemAccount}
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-slate-300 mb-1">
                                     Account Name *
                                 </label>
                                 <input
                                     type="text"
                                     value={formData.accountName}
                                     onChange={(e) => setFormData({ ...formData, accountName: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                     placeholder="e.g., Cash"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-slate-300 mb-1">
                                     Account Type *
                                 </label>
                                 <select
                                     value={formData.accountType}
                                     onChange={(e) => setFormData({ ...formData, accountType: e.target.value as AccountType })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 >
                                     <option value="asset">Asset</option>
                                     <option value="liability">Liability</option>
@@ -377,30 +377,30 @@ export function ChartOfAccountsPage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-slate-300 mb-1">
                                     Normal Balance *
                                 </label>
                                 <select
                                     value={formData.normalBalance}
                                     onChange={(e) => setFormData({ ...formData, normalBalance: e.target.value as 'debit' | 'credit' })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 >
                                     <option value="debit">Debit</option>
                                     <option value="credit">Credit</option>
                                 </select>
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-xs text-slate-400 mt-1">
                                     Assets, Expenses: Debit | Liabilities, Equity, Revenue: Credit
                                 </p>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-slate-300 mb-1">
                                     Description
                                 </label>
                                 <textarea
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                     rows={3}
                                     placeholder="Optional description..."
                                 />
@@ -414,13 +414,13 @@ export function ChartOfAccountsPage() {
                                     setEditingAccount(null);
                                     resetForm();
                                 }}
-                                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                                className="flex-1 px-4 py-2 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={editingAccount ? handleUpdate : handleCreate}
-                                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                             >
                                 {editingAccount ? 'Update' : 'Create'}
                             </button>

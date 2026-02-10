@@ -66,7 +66,7 @@ const SuperAdminTenantsTab: React.FC = () => {
     }
 
     return (
-        <div className="space-y-6 p-6 animate-fade-in">
+        <div className="space-y-6 p-4 md:p-6 animate-fade-in">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -188,13 +188,13 @@ const SuperAdminTenantsTab: React.FC = () => {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-xl font-bold flex items-center gap-2">
+                            <h3 className="text-xl font-bold flex items-center gap-2 text-white">
                                 <ShieldAlert className="w-6 h-6 text-teal-400" />
                                 Security Logs & IP Tracking
                             </h3>
                             <button
                                 onClick={() => setSelectedTenant(null)}
-                                className="p-2 hover:bg-slate-800 rounded-lg"
+                                className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
                             >
                                 <XCircle className="w-5 h-5" />
                             </button>

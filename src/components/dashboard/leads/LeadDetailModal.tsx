@@ -214,13 +214,13 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
         >
             <div className="flex flex-col h-[80vh] -m-6">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-start bg-slate-900">
-                    <div>
-                        <div className="flex items-center gap-3 mb-1">
-                            <h2 className="text-2xl font-bold text-white">{lead.businessName}</h2>
+                <div className="px-4 sm:px-6 py-4 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start gap-4 bg-slate-900">
+                    <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-3 mb-1">
+                            <h2 className="text-xl sm:text-2xl font-bold text-white truncate">{lead.businessName}</h2>
                             <StatusBadge status={lead.status || 'New'} />
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-slate-400">
+                        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-slate-400">
                             {lead.industry && <span className="flex items-center gap-1"><FileText className="w-3 h-3" /> {lead.industry}</span>}
                             {lead.location && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {lead.location}</span>}
                             {lead.website && (
@@ -232,28 +232,30 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                         {lead.email && (
-                            <Button variant="outline" size="sm" onClick={() => window.open(`mailto:${lead.email}`)}>
-                                <Mail className="w-4 h-4 mr-2" /> Email
+                            <Button variant="outline" size="sm" onClick={() => window.open(`mailto:${lead.email}`)} className="flex-1 sm:flex-none">
+                                <Mail className="w-4 h-4 sm:mr-2" />
+                                <span className="hidden sm:inline">Email</span>
                             </Button>
                         )}
-                        <Button variant="outline" className="border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10" size="sm" onClick={() => toast('Quote management coming soon!', { icon: '📄' })}>
-                            <FileText className="w-4 h-4 mr-2" /> Create Quote
+                        <Button variant="outline" className="border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10 flex-1 sm:flex-none" size="sm" onClick={() => toast('Quote management coming soon!', { icon: '📄' })}>
+                            <FileText className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Create Quote</span>
                         </Button>
-                        <Button className="bg-teal-600 hover:bg-teal-500" size="sm" onClick={handleConvert}>
+                        <Button className="bg-teal-600 hover:bg-teal-500 flex-1 sm:flex-none" size="sm" onClick={handleConvert}>
                             Convert to Deal
                         </Button>
                     </div>
                 </div>
 
                 {/* Tabs */}
-                <div className="px-6 border-b border-slate-800 bg-slate-900/50 flex gap-6">
+                <div className="px-4 sm:px-6 border-b border-slate-800 bg-slate-900/50 flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide">
                     {['overview', 'tasks', 'meetings', 'notes'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab as any)}
-                            className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab
+                            className={`py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab
                                 ? 'border-teal-500 text-white'
                                 : 'border-transparent text-slate-400 hover:text-slate-300'
                                 }`}
@@ -264,7 +266,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6 bg-slate-950">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-950">
 
                     {activeTab === 'overview' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -305,9 +307,9 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
 
                     {activeTab === 'tasks' && (
                         <div className="space-y-4">
-                            <div className="flex justify-between items-center mb-4">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                                 <h3 className="text-lg font-semibold text-white">Tasks</h3>
-                                <Button size="sm" onClick={() => setShowTaskForm(true)} className="bg-teal-600">
+                                <Button size="sm" onClick={() => setShowTaskForm(true)} className="bg-teal-600 w-full sm:w-auto">
                                     <Plus className="w-4 h-4 mr-2" /> Add Task
                                 </Button>
                             </div>
@@ -372,9 +374,9 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
 
                     {activeTab === 'meetings' && (
                         <div className="space-y-4">
-                            <div className="flex justify-between items-center mb-4">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                                 <h3 className="text-lg font-semibold text-white">Meetings</h3>
-                                <Button size="sm" onClick={() => setShowMeetingForm(true)} className="bg-teal-600">
+                                <Button size="sm" onClick={() => setShowMeetingForm(true)} className="bg-teal-600 w-full sm:w-auto">
                                     <Plus className="w-4 h-4 mr-2" /> Schedule Meeting
                                 </Button>
                             </div>
@@ -420,9 +422,9 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
 
                     {activeTab === 'notes' && (
                         <div className="space-y-4">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-semibold text-white">Lead Intelligence & Notes</h3>
-                                <Button size="sm" onClick={handleSaveNotes} isLoading={isSavingNotes} className="bg-teal-600">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                                <h3 className="text-base sm:text-lg font-semibold text-white">Lead Intelligence & Notes</h3>
+                                <Button size="sm" onClick={handleSaveNotes} isLoading={isSavingNotes} className="bg-teal-600 w-full sm:w-auto">
                                     Save Changes
                                 </Button>
                             </div>

@@ -459,7 +459,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                         <div className="relative">
                             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                             <input
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-teal-500"
+                                className="w-full bg-slate-800 border border-slate-600 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-teal-500"
                                 placeholder="Search clients..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -471,7 +471,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                             <div
                                 key={client.id}
                                 onClick={() => setSelectedClient(client)}
-                                className={`p-4 flex items-center gap-3 cursor-pointer transition-all border-b border-white/5 hover:bg-slate-800/50 ${selectedClient?.id === client.id ? 'bg-teal-500/10 border-l-2 border-l-teal-500' : 'border-l-2 border-l-transparent'}`}
+                                className={`p-3 md:p-4 flex items-center gap-3 cursor-pointer transition-all border-b border-slate-700 hover:bg-slate-800/50 ${selectedClient?.id === client.id ? 'bg-teal-500/10 border-l-2 border-l-teal-500' : 'border-l-2 border-l-transparent'}`}
                             >
                                 <div className="relative">
                                     <img src={client.avatar} alt={client.name} className="w-10 h-10 rounded-full" />
@@ -491,7 +491,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <h4 className={`text-sm font-medium truncate ${selectedClient?.id === client.id ? 'text-white' : 'text-slate-300'}`}>{client.name}</h4>
-                                    <p className="text-xs text-slate-500 truncate">{client.email}</p>
+                                    <p className="text-xs text-slate-400 truncate">{client.email}</p>
                                 </div>
                             </div>
                         ))}
@@ -503,7 +503,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
             {showChat && (
                 <div className="flex-1 flex flex-col z-10 bg-slate-900/20 min-w-0 overflow-hidden h-full">
                     {/* Chat Header */}
-                    <div className="p-3 sm:p-5 border-b border-white/5 flex justify-between items-center bg-white/5 backdrop-blur-md flex-shrink-0 h-[60px] md:h-auto">
+                    <div className="p-3 md:p-5 border-b border-slate-700 flex justify-between items-center bg-slate-900/50 backdrop-blur-md flex-shrink-0 h-[60px] md:h-auto">
                         <div className="flex items-center gap-3">
                             {/* Mobile Back Button */}
                             {isMobile && isAdmin && selectedClient && (
@@ -628,13 +628,13 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
 
                     {/* Input Area */}
                     {(!isAdmin || selectedClient) && (
-                        <div className="p-3 sm:p-5 border-t border-white/5 relative bg-black/20 backdrop-blur-md flex-shrink-0">
+                        <div className="p-3 md:p-5 border-t border-slate-700 relative bg-slate-900/40 backdrop-blur-md flex-shrink-0">
                             {/* Pending Attachments Preview */}
                             {pendingAttachments.length > 0 && (
                                 <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
                                     {pendingAttachments.map((att, idx) => (
                                         <div key={idx} className="relative group/preview">
-                                            <div className="w-16 h-16 rounded-lg border border-white/10 overflow-hidden bg-slate-800 flex items-center justify-center">
+                                            <div className="w-16 h-16 rounded-lg border border-slate-600 overflow-hidden bg-slate-800 flex items-center justify-center">
                                                 {att.type === 'image' ? (
                                                     <img src={att.url} className="w-full h-full object-cover" />
                                                 ) : (
@@ -657,21 +657,21 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                 </div>
                             )}
 
-                            <div className="flex gap-2 sm:gap-3 relative items-end w-full">
-                                <div className="relative flex items-end gap-1 sm:gap-2 flex-shrink-0">
+                            <div className="flex gap-2 md:gap-3 relative items-end w-full">
+                                <div className="relative flex items-end gap-1 md:gap-2 flex-shrink-0">
                                     <button
                                         onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                        className="p-2 sm:p-3 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-teal-400 rounded-xl transition-colors border border-white/10 flex-shrink-0"
+                                        className="p-2 md:p-3 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-teal-400 rounded-xl transition-colors border border-slate-600 flex-shrink-0"
                                         aria-label="Add emoji"
                                     >
-                                        <Smile className="w-4 h-4 sm:w-5 sm:h-5" />
+                                        <Smile className="w-4 h-4 md:w-5 md:h-5" />
                                     </button>
 
                                     <button
                                         onClick={() => setPriority(prev => prev === 'normal' ? 'high' : prev === 'high' ? 'urgent' : 'normal')}
-                                        className={`p-2 sm:p-3 rounded-xl transition-all border border-white/10 flex items-center justify-center flex-shrink-0 ${priority === 'urgent' ? 'bg-red-500/20 text-red-400 border-red-500/50' :
+                                        className={`p-2 md:p-3 rounded-xl transition-all border flex items-center justify-center flex-shrink-0 ${priority === 'urgent' ? 'bg-red-500/20 text-red-400 border-red-500/50' :
                                             priority === 'high' ? 'bg-orange-500/20 text-orange-400 border-orange-500/50' :
-                                                'bg-white/5 text-slate-400 hover:text-teal-400 hover:bg-white/10'
+                                                'bg-slate-800 text-slate-400 hover:text-teal-400 hover:bg-slate-700 border-slate-600'
                                             }`}
                                         title={`Priority: ${priority.toUpperCase()}`}
                                         aria-label={`Set priority (current: ${priority})`}
@@ -688,10 +688,10 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                     />
                                     <button
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="p-2 sm:p-3 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-teal-400 rounded-xl transition-colors border border-white/10 flex-shrink-0"
+                                        className="p-2 md:p-3 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-teal-400 rounded-xl transition-colors border border-slate-600 flex-shrink-0"
                                         aria-label="Attach file"
                                     >
-                                        <Paperclip className="w-4 h-4 sm:w-5 sm:h-5" />
+                                        <Paperclip className="w-4 h-4 md:w-5 md:h-5" />
                                     </button>
 
                                     {showEmojiPicker && (
@@ -702,7 +702,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                 </div>
 
                                 <textarea
-                                    className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-teal-500/50 focus:bg-white/10 transition-all hover:bg-white/10 resize-none h-[44px] sm:h-[50px] min-h-[44px] sm:min-h-[50px] max-h-[120px] sm:max-h-[150px]"
+                                    className="flex-1 min-w-0 bg-slate-800 border border-slate-600 rounded-xl px-3 md:px-4 py-2 md:py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:bg-slate-700 transition-all hover:bg-slate-700 resize-none h-[44px] md:h-[50px] min-h-[44px] md:min-h-[50px] max-h-[120px] md:max-h-[150px]"
                                     placeholder="Type your message..."
                                     rows={1}
                                     value={newMessage}
@@ -731,10 +731,10 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                 <button
                                     onClick={handleSend}
                                     disabled={(!newMessage.trim() && pendingAttachments.length === 0) || isUploading}
-                                    className="p-2 sm:p-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-xl shadow-lg shadow-teal-500/20 hover:shadow-teal-500/40 hover:scale-105 disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all duration-300 h-[44px] sm:h-[50px] w-[44px] sm:w-[50px] flex items-center justify-center flex-shrink-0"
+                                    className="p-2 md:p-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-xl shadow-lg shadow-teal-500/20 hover:shadow-teal-500/40 hover:scale-105 disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all duration-300 h-[44px] md:h-[50px] w-[44px] md:w-[50px] flex items-center justify-center flex-shrink-0"
                                     aria-label="Send message"
                                 >
-                                    <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+                                    <Send className="w-4 h-4 md:w-5 md:h-5" />
                                 </button>
                             </div>
                         </div>

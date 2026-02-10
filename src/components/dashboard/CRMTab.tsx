@@ -504,16 +504,16 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
             {/* Add Client Modal */}
             {showAddClient && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-slate-800 flex justify-between items-center">
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+                        <div className="p-4 md:p-6 border-b border-slate-800 flex justify-between items-center">
                             <h3 className="text-xl font-bold text-white">Add New Client</h3>
                             <button onClick={() => setShowAddClient(false)} className="text-slate-400 hover:text-white transition-colors">
                                 <XCircle className="w-6 h-6" />
                             </button>
                         </div>
-                        <div className="p-6 space-y-4">
+                        <div className="p-4 md:p-6 space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Full Name</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Full Name</label>
                                 <input
                                     type="text"
                                     value={newClient.name}
@@ -523,7 +523,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Email Address</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Email Address</label>
                                 <input
                                     type="email"
                                     value={newClient.email}
@@ -533,7 +533,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Company (Optional)</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Company (Optional)</label>
                                 <input
                                     type="text"
                                     value={newClient.company}
@@ -543,7 +543,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ projects, declineProject, openVideoCall
                                 />
                             </div>
                         </div>
-                        <div className="p-6 border-t border-slate-800 flex gap-3">
+                        <div className="p-4 md:p-6 border-t border-slate-800 flex gap-3">
                             <button
                                 onClick={() => setShowAddClient(false)}
                                 className="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-medium transition-all"

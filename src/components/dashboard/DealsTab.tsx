@@ -355,7 +355,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
             {/* Sales Analytics Section */}
             {(userRole === 'admin' || userRole === 'tenant_admin') && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    <div className="glass-panel p-6 rounded-2xl border border-white/5 bg-slate-900/50">
+                    <div className="glass-panel p-4 md:p-6 rounded-2xl border border-white/5 bg-slate-900/50">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-bold text-white flex items-center gap-2">
                                 <BarChart2 className="w-4 h-4 text-teal-400" /> Sales Forecast
@@ -391,7 +391,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                         </div>
                     </div>
 
-                    <div className="glass-panel p-6 rounded-2xl border border-white/5 bg-slate-900/50">
+                    <div className="glass-panel p-4 md:p-6 rounded-2xl border border-white/5 bg-slate-900/50">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-bold text-white flex items-center gap-2">
                                 <TrendingUp className="w-4 h-4 text-violet-400" /> Win/Loss Trends

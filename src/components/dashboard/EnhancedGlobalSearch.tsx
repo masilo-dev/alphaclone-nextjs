@@ -146,11 +146,11 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
         return (
             <button
                 onClick={() => setIsOpen(true)}
-                className="flex items-center gap-2 px-3 py-2 bg-slate-800 text-slate-400 rounded-lg hover:bg-slate-700 transition-colors group"
+                className="flex items-center gap-2 px-3 py-2 bg-slate-800 text-slate-400 rounded-lg hover:bg-slate-700 transition-colors group w-full sm:w-auto"
             >
                 <img src="/logo.png" alt="AlphaClone" className="w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity" />
                 <span className="text-sm">Search...</span>
-                <kbd className="hidden sm:inline-block px-2 py-0.5 text-xs bg-slate-900 border border-slate-700 rounded">
+                <kbd className="hidden sm:inline-block px-2 py-0.5 text-xs bg-slate-900 border border-slate-700 rounded ml-auto">
                     ⌘K
                 </kbd>
             </button>
@@ -160,11 +160,11 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
     return (
         <>
             <div
-                className="fixed inset-0 bg-black/50 z-50"
+                className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm"
                 onClick={() => setIsOpen(false)}
             />
-            <div className="fixed inset-0 z-50 flex items-start justify-center pt-20">
-                <Card className="w-full max-w-3xl max-h-[80vh] flex flex-col overflow-hidden">
+            <div className="fixed inset-0 z-50 flex items-start justify-center pt-10 sm:pt-20 px-4">
+                <Card className="w-full max-w-3xl max-h-[85vh] sm:max-h-[80vh] flex flex-col overflow-hidden">
                     {/* Search Input */}
                     <div className="flex items-center gap-3 p-4 border-b border-slate-800">
                         <Search className="w-5 h-5 text-slate-400" />
@@ -198,7 +198,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                     {/* Filters Panel */}
                     {showFilters && (
                         <div className="p-4 border-b border-slate-800 bg-slate-900/50">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-xs text-slate-400 mb-2 block">Type</label>
                                     <select
@@ -208,7 +208,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                                             const values = Array.from(e.target.selectedOptions, opt => opt.value);
                                             setFilters({ ...filters, type: values as any });
                                         }}
-                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm"
+                                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                                     >
                                         <option value="project">Projects</option>
                                         <option value="message">Messages</option>
@@ -222,7 +222,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                                     <input
                                         type="text"
                                         placeholder="Filter by status..."
-                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm"
+                                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                                         onChange={(e) => {
                                             const newFilters = { ...filters };
                                             if (e.target.value) {
@@ -344,13 +344,13 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                     </div>
 
                     {/* Footer */}
-                    <div className="p-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 bg-slate-900/50">
-                        <div className="flex gap-4">
-                            <span><kbd className="px-1.5 py-0.5 bg-slate-800 rounded">↑↓</kbd> Navigate</span>
-                            <span><kbd className="px-1.5 py-0.5 bg-slate-800 rounded">Enter</kbd> Select</span>
-                            <span><kbd className="px-1.5 py-0.5 bg-slate-800 rounded">Esc</kbd> Close</span>
+                    <div className="p-3 border-t border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-slate-400 bg-slate-900/50">
+                        <div className="flex flex-wrap gap-3 sm:gap-4">
+                            <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded">↑↓</kbd> Navigate</span>
+                            <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded">Enter</kbd> Select</span>
+                            <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded">Esc</kbd> Close</span>
                         </div>
-                        <span>{results.length} result{results.length !== 1 ? 's' : ''}</span>
+                        <span className="text-teal-400">{results.length} result{results.length !== 1 ? 's' : ''}</span>
                     </div>
                 </Card>
             </div>
