@@ -10,6 +10,7 @@ interface TenantContextType {
   currentTenant: Tenant | null;
   userTenants: Array<Tenant & { role: string }>;
   isLoading: boolean;
+  error: string | null;
   switchTenant: (tenantId: string) => Promise<void>;
   refreshTenants: () => Promise<void>;
   createTenant: (data: CreateTenantData) => Promise<Tenant>;
@@ -28,6 +29,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [userTenants, setUserTenants] = useState<Array<Tenant & { role: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load user's tenants when user logs in
   // Load user's tenants when user logs in
@@ -47,31 +49,37 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (user?.id) {
-      loadUserTenants();
-
-      // Timeout safeguard: Force loading to false after 10 seconds
+      // Timeout safeguard: Force loading to false after 5 seconds (reduced from 10s)
       const timeoutId = setTimeout(() => {
         console.warn('TenantContext: Loading timeout reached, forcing isLoading to false');
+        setError('Loading timeout - please refresh the page');
         setIsLoading(false);
-      }, 10000);
+      }, 5000);
+
+      loadUserTenants(timeoutId);
 
       return () => clearTimeout(timeoutId);
     } else {
       setCurrentTenant(null);
       setUserTenants([]);
       setIsLoading(false);
+      setError(null);
     }
   }, [user?.id]);
 
-  const loadUserTenants = async () => {
+  const loadUserTenants = async (timeoutId?: NodeJS.Timeout) => {
     if (!user?.id) return;
 
     try {
       setIsLoading(true);
+      setError(null); // Clear previous errors
 
       // Get all tenants user belongs to
       const tenants = await tenantService.getUserTenants(user.id);
       setUserTenants(tenants);
+
+      // Clear timeout on successful load
+      if (timeoutId) clearTimeout(timeoutId);
 
       if (tenants.length > 0) {
         // Try to load saved tenant from localStorage
@@ -82,13 +90,13 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
         if (savedTenant) {
           setCurrentTenant(savedTenant);
-          setIsLoading(false); // Success path
+          setIsLoading(false);
         } else {
           // Default to first tenant
           const firstTenant = tenants[0];
           setCurrentTenant(firstTenant);
           tenantService.setCurrentTenant(firstTenant.id);
-          setIsLoading(false); // Success path
+          setIsLoading(false);
         }
       } else if (user.role === 'admin' || user.role === 'tenant_admin') {
         // User has no tenants - auto-create a default one only for admins/tenant_admins
@@ -117,7 +125,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           setCurrentTenant(newTenant);
           setUserTenants([{ ...newTenant, role: 'tenant_admin' }]);
           tenantService.setCurrentTenant(newTenant.id);
-          setIsLoading(false); // Success path
+          if (timeoutId) clearTimeout(timeoutId);
+          setIsLoading(false);
         } catch (error: any) {
           console.error('Failed to auto-create default tenant:', error);
           console.error('Auto-create error details:', {
@@ -126,14 +135,13 @@ export function TenantProvider({ children }: { children: ReactNode }) {
             details: error?.details
           });
 
-          // CRITICAL: Set loading to false even if auto-create fails
+          // CRITICAL: Set loading to false and error immediately
           setCurrentTenant(null);
           setUserTenants([]);
           tenantService.clearCurrentTenant();
+          setError('Unable to create your organization. Please contact support.');
+          if (timeoutId) clearTimeout(timeoutId);
           setIsLoading(false);
-
-          // Show user-friendly error message (non-blocking)
-          console.error('Unable to create your organization. Please contact support or try again later.');
 
           // Early return to prevent further execution
           return;
@@ -148,10 +156,15 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         hint: error?.hint
       });
 
-      // CRITICAL: Always set loading to false, even on error
-      // This prevents infinite loading states
+      // CRITICAL: Set error and stop loading immediately
+      const errorMessage = error?.code === 'PGRST301' || error?.message?.includes('403')
+        ? 'Permission denied. Please contact support.'
+        : error?.message || 'Failed to load tenants';
+      
+      setError(errorMessage);
       setCurrentTenant(null);
       setUserTenants([]);
+      if (timeoutId) clearTimeout(timeoutId);
       setIsLoading(false);
     }
   };
@@ -207,6 +220,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     currentTenant,
     userTenants,
     isLoading,
+    error,
     switchTenant,
     refreshTenants,
     createTenant

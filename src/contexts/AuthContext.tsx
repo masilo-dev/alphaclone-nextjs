@@ -7,6 +7,7 @@ import { User } from '../types';
 interface AuthContextType {
     user: User | null;
     loading: boolean;
+    error: string | null;
     signOut: () => Promise<void>;
 }
 
@@ -15,6 +16,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         let isMounted = true;
@@ -23,14 +25,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const initSession = async () => {
             try {
                 // Check if we have a session immediately
-                const { user: initialUser } = await authService.getCurrentUser();
+                const { user: initialUser, error: authError } = await authService.getCurrentUser();
+
+                if (authError) {
+                    console.error('AuthContext: Session init error', authError);
+                    setError(authError);
+                    setLoading(false);
+                    return;
+                }
+
                 if (isMounted && initialUser) {
                     console.log('AuthContext: Optimistic session found', initialUser.email);
                     setUser(initialUser);
+                    setError(null);
                     setLoading(false);
                 }
             } catch (e) {
                 console.warn('AuthContext: Optimistic check failed', e);
+                setError(e instanceof Error ? e.message : 'Authentication failed');
+                setLoading(false);
             }
         };
 
@@ -51,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (u) {
                 // User is authenticated and profile is loaded
                 setUser(u);
+                setError(null);
                 setLoading(false);
             } else if (event === 'SIGNED_OUT') {
                 // Explicit sign out
@@ -90,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const value = {
         user,
         loading,
+        error,
         signOut
     };
 

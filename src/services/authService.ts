@@ -285,6 +285,20 @@ export const authService = {
                     }
 
                     lastError = profileError;
+
+                    // Check for 403 Forbidden errors specifically
+                    if (profileError?.code === 'PGRST301' || profileError?.message?.includes('403')) {
+                        console.error('AuthService: 403 Forbidden - RLS policy blocking profile access', {
+                            code: profileError.code,
+                            message: profileError.message,
+                            userId: session.user.id
+                        });
+                        return {
+                            user: null,
+                            error: 'Permission denied: Unable to access your profile. Please contact support.'
+                        };
+                    }
+
                     console.log(`AuthService: Profile not found, retry ${i + 1}/${maxRetries} in ${retryDelay}ms... (Error: ${profileError?.message || 'Not Found'})`);
                     await new Promise(resolve => setTimeout(resolve, retryDelay));
                 }
