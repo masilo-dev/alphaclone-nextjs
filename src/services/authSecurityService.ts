@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { authenticator } from 'otplib';
+import { TOTP } from 'otplib';
 import QRCode from 'qrcode';
 
 export interface TwoFactorAuth {
@@ -66,7 +66,7 @@ export const authSecurityService = {
             }
 
             // Verify TOTP code (in production, use 'otplib')
-            const isValid = this.verifyTOTP(data.two_factor_secret, code);
+            const isValid = await this.verifyTOTP(data.two_factor_secret, code);
 
             // Check backup codes if TOTP fails
             if (!isValid && data.backup_codes?.includes(code)) {
@@ -189,7 +189,8 @@ export const authSecurityService = {
      * Generate TOTP secret using otplib
      */
     generateSecret(): string {
-        return authenticator.generateSecret();
+        const totp = new TOTP();
+        return totp.generateSecret();
     },
 
     /**
@@ -198,7 +199,12 @@ export const authSecurityService = {
     async generateQRCode(userEmail: string, secret: string): Promise<string> {
         try {
             // Generate otpauth URL for authenticator apps
-            const otpauth = authenticator.keyuri(userEmail, 'AlphaClone Business OS', secret);
+            const totp = new TOTP({
+                secret,
+                issuer: 'AlphaClone Business OS',
+                label: userEmail,
+            });
+            const otpauth = totp.toURI();
 
             // Generate QR code as data URL
             const qrCodeDataUrl = await QRCode.toDataURL(otpauth);
@@ -213,10 +219,12 @@ export const authSecurityService = {
     /**
      * Verify TOTP code using otplib
      */
-    verifyTOTP(secret: string, code: string): boolean {
+    async verifyTOTP(secret: string, code: string): Promise<boolean> {
         try {
             // Allow a 30-second window for time drift tolerance
-            return authenticator.verify({ token: code, secret });
+            const totp = new TOTP({ secret });
+            const result = await totp.verify(code);
+            return result.valid;
         } catch (error) {
             console.error('Error verifying TOTP:', error);
             return false;

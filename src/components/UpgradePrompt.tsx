@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, Zap, Check, TrendingUp } from 'lucide-react';
 import { subscriptionService, TIER_PRICING } from '../services/subscriptionService';
 import { useAuth } from '../contexts/AuthContext';
+import { useTenant } from '../contexts/TenantContext';
 
 export interface UpgradePromptProps {
     currentTier: string;
@@ -59,7 +60,8 @@ export function UpgradePrompt({
     onClose,
     onUpgrade,
 }: UpgradePromptProps) {
-    const { user, tenant } = useAuth();
+    const { user } = useAuth();
+    const { currentTenant: tenant } = useTenant();
     const [promptId, setPromptId] = useState<string | null>(null);
     const [isVisible, setIsVisible] = useState(true);
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');

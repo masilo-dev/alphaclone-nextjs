@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Check, ChevronRight, Users, FolderPlus, Settings, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTenant } from '../../contexts/TenantContext';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 
@@ -17,7 +18,8 @@ interface OnboardingStep {
 
 export function OnboardingWizard() {
     const router = useRouter();
-    const { user, tenant } = useAuth();
+    const { user } = useAuth();
+    const { currentTenant: tenant } = useTenant();
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
 

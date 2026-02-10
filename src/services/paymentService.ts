@@ -11,7 +11,7 @@ export const stripePromise = STRIPE_PUBLIC_KEY ? loadStripe(STRIPE_PUBLIC_KEY) :
 
 export interface Invoice {
     id: string;
-    user_id: string;
+    user_id?: string; // Optional - for standalone invoices without client
     project_id?: string;
     amount: number;
     currency: string;
@@ -78,12 +78,14 @@ export const paymentService = {
 
         // Log activity and audit
         if (!error && data) {
-            activityService.logActivity(invoice.user_id, 'Invoice Created', {
-                invoiceId: data.id,
-                amount: invoice.amount,
-                currency: invoice.currency,
-                projectId: invoice.project_id
-            }).catch(err => console.error('Failed to log activity:', err));
+            if (invoice.user_id) {
+                activityService.logActivity(invoice.user_id, 'Invoice Created', {
+                    invoiceId: data.id,
+                    amount: invoice.amount,
+                    currency: invoice.currency,
+                    projectId: invoice.project_id
+                }).catch(err => console.error('Failed to log activity:', err));
+            }
 
             // Audit log
             auditLoggingService.logAction(

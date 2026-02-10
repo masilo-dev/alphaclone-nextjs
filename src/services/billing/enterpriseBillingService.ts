@@ -304,7 +304,7 @@ export const enterpriseBillingService = {
     /**
      * Get enterprise pricing tiers
      */
-    getEnterpriseT iers() {
+    getEnterpriseTiers() {
         return {
             enterprise_basic: {
                 name: 'Enterprise Basic',

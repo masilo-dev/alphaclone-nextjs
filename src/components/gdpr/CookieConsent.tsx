@@ -5,6 +5,13 @@ import { X, Cookie, Shield, BarChart, Target } from 'lucide-react';
 import { consentService, ConsentType } from '../../services/gdpr/consentService';
 import { useAuth } from '../../contexts/AuthContext';
 
+// Extend Window interface for Google Analytics
+declare global {
+    interface Window {
+        gtag?: (...args: any[]) => void;
+    }
+}
+
 export function CookieConsent() {
     const { user } = useAuth();
     const [isVisible, setIsVisible] = useState(false);

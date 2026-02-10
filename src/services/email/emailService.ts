@@ -190,9 +190,12 @@ class EmailService {
     /**
      * Send email using AWS SES
      */
-    private async sendWithSES(options: EmailOptions) {
+    private async sendWithSES(options: EmailOptions): Promise<{ success: boolean; error?: string }> {
         // Would use AWS SDK here
-        throw new Error('AWS SES implementation pending');
+        return {
+            success: false,
+            error: 'AWS SES implementation pending',
+        };
     }
 
     /**

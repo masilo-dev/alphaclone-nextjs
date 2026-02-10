@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Database, Zap, Video, Users, Activity, Check, ShoppingCart } from 'lucide-react';
 import { subscriptionService, ADDON_PRICING } from '../services/subscriptionService';
-import { useAuth } from '../contexts/AuthContext';
+import { useTenant } from '../contexts/TenantContext';
 import { toast } from 'react-hot-toast';
 
 const ADDON_ICONS = {
@@ -15,7 +15,7 @@ const ADDON_ICONS = {
 };
 
 export function AddonsMarketplace() {
-    const { tenant } = useAuth();
+    const { currentTenant: tenant } = useTenant();
     const [activeAddons, setActiveAddons] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [purchasing, setPurchasing] = useState<string | null>(null);
@@ -53,7 +53,7 @@ export function AddonsMarketplace() {
                     addonName: addonConfig.name,
                     quantity: addonConfig.quantity,
                     priceCents: addonConfig.priceCents,
-                    billingCycle: addonConfig.billingCycle,
+                    billingCycle: 'billingCycle' in addonConfig ? addonConfig.billingCycle : 'one_time',
                 }
             );
 
@@ -181,7 +181,7 @@ export function AddonsMarketplace() {
                             {/* Price */}
                             <div className="text-sm text-gray-600 mb-4">
                                 {subscriptionService.formatPrice(addon.priceCents)}
-                                {addon.billingCycle && addon.billingCycle !== 'one_time' && ` / ${addon.billingCycle}`}
+                                {('billingCycle' in addon && addon.billingCycle === 'monthly') && ` / monthly`}
                             </div>
 
                             {/* CTA */}

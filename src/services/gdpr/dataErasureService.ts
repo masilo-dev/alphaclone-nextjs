@@ -30,7 +30,7 @@ export const dataErasureService = {
     async eraseUserData(userId: string, reason: string): Promise<ErasureResult> {
         try {
             const erasedTables: string[] = [];
-            const anonymized Tables: string[] = [];
+            const anonymizedTables: string[] = [];
             const retainedTables: string[] = [];
 
             // Log erasure request BEFORE deletion

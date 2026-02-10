@@ -1,4 +1,4 @@
-import { Ratelimit } from '@upstash/ratelimit';
+import { Ratelimit, Duration } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from './supabase';
@@ -21,32 +21,47 @@ const inMemoryStore = new Map<string, { count: number; resetAt: number }>();
 /**
  * Rate Limiting Configuration
  */
-export const rateLimitConfigs = {
+export const rateLimitConfigs: {
+    auth: {
+        login: { limit: number; window: Duration };
+        signup: { limit: number; window: Duration };
+        passwordReset: { limit: number; window: Duration };
+        verifyEmail: { limit: number; window: Duration };
+    };
+    api: {
+        standard: { limit: number; window: Duration };
+        heavy: { limit: number; window: Duration };
+    };
+    public: {
+        contact: { limit: number; window: Duration };
+        general: { limit: number; window: Duration };
+    };
+} = {
     // Authentication endpoints - strict limits
     auth: {
-        login: { limit: 5, window: '15 m' }, // 5 attempts per 15 minutes
-        signup: { limit: 3, window: '1 h' }, // 3 signups per hour
-        passwordReset: { limit: 3, window: '1 h' }, // 3 resets per hour
-        verifyEmail: { limit: 10, window: '1 h' }, // 10 verifications per hour
+        login: { limit: 5, window: '15m' }, // 5 attempts per 15 minutes
+        signup: { limit: 3, window: '1h' }, // 3 signups per hour
+        passwordReset: { limit: 3, window: '1h' }, // 3 resets per hour
+        verifyEmail: { limit: 10, window: '1h' }, // 10 verifications per hour
     },
 
     // API endpoints - moderate limits
     api: {
-        standard: { limit: 100, window: '1 m' }, // 100 requests per minute
-        heavy: { limit: 20, window: '1 m' }, // 20 requests per minute (AI, exports)
+        standard: { limit: 100, window: '1m' }, // 100 requests per minute
+        heavy: { limit: 20, window: '1m' }, // 20 requests per minute (AI, exports)
     },
 
     // Public endpoints - lenient limits
     public: {
-        contact: { limit: 5, window: '1 h' }, // 5 contact form submissions per hour
-        general: { limit: 300, window: '1 m' }, // 300 requests per minute
+        contact: { limit: 5, window: '1h' }, // 5 contact form submissions per hour
+        general: { limit: 300, window: '1m' }, // 300 requests per minute
     },
 };
 
 /**
  * Create a rate limiter with specific configuration
  */
-function createRateLimiter(limit: number, window: string) {
+function createRateLimiter(limit: number, window: Duration) {
     if (redis) {
         return new Ratelimit({
             redis,
@@ -122,7 +137,7 @@ function parseWindow(window: string): number {
  */
 export async function rateLimit(
     request: NextRequest,
-    config: { limit: number; window: string },
+    config: { limit: number; window: Duration },
     identifier?: string
 ): Promise<{
     success: boolean;
@@ -229,7 +244,7 @@ async function logRateLimitViolation(identifier: string, ipAddress: string, path
  */
 export async function rateLimitMiddleware(
     request: NextRequest,
-    config: { limit: number; window: string },
+    config: { limit: number; window: Duration },
     identifier?: string
 ): Promise<NextResponse | null> {
     const result = await rateLimit(request, config, identifier);

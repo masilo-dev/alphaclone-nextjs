@@ -13,10 +13,8 @@ Sentry.init({
     tracesSampleRate: ENVIRONMENT === 'production' ? 0.1 : 1.0,
 
     // Integrations
-    integrations: [
-        // Automatically instrument Node.js libraries
-        ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
-    ],
+    // Integrations - using defaults for maximum compatibility
+    // Custom integrations can be added when needed
 
     // Before sending to Sentry, scrub sensitive data
     beforeSend(event, hint) {
@@ -33,16 +31,16 @@ Sentry.init({
             }
 
             // Redact sensitive query parameters
-            if (event.request.query_string) {
+            if (event.request?.query_string && typeof event.request.query_string === 'string') {
                 const sensitiveParams = ['token', 'api_key', 'password', 'secret'];
+                let queryString = event.request.query_string;
                 sensitiveParams.forEach(param => {
-                    if (event.request?.query_string) {
-                        event.request.query_string = event.request.query_string.replace(
-                            new RegExp(`${param}=[^&]*`, 'gi'),
-                            `${param}=[REDACTED]`
-                        );
-                    }
+                    queryString = queryString.replace(
+                        new RegExp(`${param}=[^&]*`, 'gi'),
+                        `${param}=[REDACTED]`
+                    );
                 });
+                event.request.query_string = queryString as any;
             }
         }
 

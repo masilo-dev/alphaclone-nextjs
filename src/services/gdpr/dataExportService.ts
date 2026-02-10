@@ -53,7 +53,7 @@ export const dataExportService = {
                 .eq('user_id', userId);
 
             // Get all tenant IDs user belongs to
-            const tenantIds = tenantMemberships?.map(tm => tm.tenant_id) || [];
+            const tenantIds = tenantMemberships?.map((tm: any) => tm.tenant_id) || [];
 
             // Get projects (user is member of)
             const { data: projects } = await supabase

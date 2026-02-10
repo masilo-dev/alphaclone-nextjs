@@ -14,29 +14,8 @@ Sentry.init({
     // Lower in production to reduce costs
     tracesSampleRate: ENVIRONMENT === 'production' ? 0.1 : 1.0,
 
-    // Session Replay
-    // Records user sessions for debugging
-    replaysSessionSampleRate: 0.1, // 10% of sessions
-    replaysOnErrorSampleRate: 1.0, // 100% of sessions with errors
-
-    // Integrations
-    integrations: [
-        // Session Replay (if available in your Sentry version)
-        ...(typeof Sentry.Replay !== 'undefined' ? [
-            new Sentry.Replay({
-                maskAllText: true, // Privacy: mask all text
-                blockAllMedia: true, // Privacy: block images/videos
-            })
-        ] : []),
-        new Sentry.BrowserTracing({
-            // Performance monitoring
-            tracePropagationTargets: [
-                'localhost',
-                /^https:\/\/[^/]*\.vercel\.app/,
-                /^https:\/\/your-domain\.com/,
-            ],
-        }),
-    ],
+    // Integrations - using defaults for maximum compatibility
+    // Custom integrations can be added when needed
 
     // Before sending to Sentry, scrub sensitive data
     beforeSend(event, hint) {
@@ -86,11 +65,6 @@ Sentry.init({
         'AbortError',
         'The operation was aborted',
     ],
-
-    // Performance monitoring
-    tracingOptions: {
-        trackComponents: true, // Track React component performance
-    },
 
     // Debugging (only in development)
     debug: ENVIRONMENT === 'development',
