@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { tenantService } from './tenancy/TenantService';
 
 export interface Permission {
     id: string;
@@ -28,6 +29,7 @@ export interface UserRole {
 export const permissionsService = {
     /**
      * Check if user has permission
+     * SECURITY: Always checks within tenant context
      */
     async hasPermission(
         userId: string,
@@ -35,11 +37,19 @@ export const permissionsService = {
         action: 'create' | 'read' | 'update' | 'delete' | 'manage'
     ): Promise<boolean> {
         try {
-            // Get user roles
+            // SECURITY: Get current tenant context
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) {
+                console.warn('Permission check without tenant context');
+                return false;
+            }
+
+            // Get user roles (with tenant filter)
             const { data: userRoles } = await supabase
                 .from('user_roles')
                 .select('role_id')
-                .eq('user_id', userId);
+                .eq('user_id', userId)
+                .eq('tenant_id', tenantId); // ← TENANT ISOLATION
 
             if (!userRoles || userRoles.length === 0) {
                 return false;
@@ -47,11 +57,12 @@ export const permissionsService = {
 
             const roleIds = userRoles.map((ur: any) => ur.role_id);
 
-            // Get permissions for these roles
+            // Get permissions for these roles (with tenant filter)
             const { data: roles } = await supabase
                 .from('roles')
                 .select('permissions')
-                .in('id', roleIds);
+                .in('id', roleIds)
+                .eq('tenant_id', tenantId); // ← TENANT ISOLATION
 
             if (!roles) {
                 return false;
@@ -83,12 +94,20 @@ export const permissionsService = {
 
     /**
      * Create a new role
+     * SECURITY: Creates role in current tenant context
      */
     async createRole(role: Omit<Role, 'id' | 'createdAt'>): Promise<{ role: Role | null; error: string | null }> {
         try {
+            // SECURITY: Get current tenant context
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) {
+                return { role: null, error: 'No tenant context available' };
+            }
+
             const { data, error } = await supabase
                 .from('roles')
                 .insert({
+                    tenant_id: tenantId, // ← TENANT ISOLATION
                     name: role.name,
                     description: role.description,
                     permissions: role.permissions,
@@ -120,6 +139,7 @@ export const permissionsService = {
 
     /**
      * Assign role to user
+     * SECURITY: Assigns role within current tenant context
      */
     async assignRole(
         userId: string,
@@ -128,7 +148,14 @@ export const permissionsService = {
         projectId?: string
     ): Promise<{ success: boolean; error: string | null }> {
         try {
+            // SECURITY: Get current tenant context
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) {
+                return { success: false, error: 'No tenant context available' };
+            }
+
             const { error } = await supabase.from('user_roles').insert({
+                tenant_id: tenantId, // ← TENANT ISOLATION
                 user_id: userId,
                 role_id: roleId,
                 project_id: projectId,
@@ -148,13 +175,21 @@ export const permissionsService = {
 
     /**
      * Get user roles
+     * SECURITY: Returns roles within current tenant context
      */
     async getUserRoles(userId: string, projectId?: string): Promise<{ roles: Role[]; error: string | null }> {
         try {
+            // SECURITY: Get current tenant context
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) {
+                return { roles: [], error: 'No tenant context available' };
+            }
+
             let query = supabase
                 .from('user_roles')
                 .select('role_id, roles(*)')
-                .eq('user_id', userId);
+                .eq('user_id', userId)
+                .eq('tenant_id', tenantId); // ← TENANT ISOLATION
 
             if (projectId) {
                 query = query.or(`project_id.eq.${projectId},project_id.is.null`);
@@ -217,12 +252,20 @@ export const permissionsService = {
 
     /**
      * Get all roles
+     * SECURITY: Returns roles within current tenant context
      */
     async getRoles(): Promise<{ roles: Role[]; error: string | null }> {
         try {
+            // SECURITY: Get current tenant context
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) {
+                return { roles: [], error: 'No tenant context available' };
+            }
+
             const { data, error } = await supabase
                 .from('roles')
                 .select('*')
+                .eq('tenant_id', tenantId) // ← TENANT ISOLATION
                 .order('name', { ascending: true });
 
             if (error) throw error;
@@ -248,13 +291,21 @@ export const permissionsService = {
 
     /**
      * Update role permissions
+     * SECURITY: Updates role within current tenant context
      */
     async updateRolePermissions(roleId: string, permissions: string[]): Promise<{ success: boolean; error: string | null }> {
         try {
+            // SECURITY: Get current tenant context
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) {
+                return { success: false, error: 'No tenant context available' };
+            }
+
             const { error } = await supabase
                 .from('roles')
                 .update({ permissions })
-                .eq('id', roleId);
+                .eq('id', roleId)
+                .eq('tenant_id', tenantId); // ← TENANT ISOLATION
 
             if (error) throw error;
 
@@ -269,14 +320,22 @@ export const permissionsService = {
 
     /**
      * Remove role from user
+     * SECURITY: Removes role within current tenant context
      */
     async removeRole(userId: string, roleId: string, projectId?: string): Promise<{ success: boolean; error: string | null }> {
         try {
+            // SECURITY: Get current tenant context
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) {
+                return { success: false, error: 'No tenant context available' };
+            }
+
             let query = supabase
                 .from('user_roles')
                 .delete()
                 .eq('user_id', userId)
-                .eq('role_id', roleId);
+                .eq('role_id', roleId)
+                .eq('tenant_id', tenantId); // ← TENANT ISOLATION
 
             if (projectId) {
                 query = query.eq('project_id', projectId);

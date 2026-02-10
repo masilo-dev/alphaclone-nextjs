@@ -170,9 +170,30 @@ export const businessInvoiceService = {
 
     /**
      * Delete an invoice
+     * ACCOUNTING COMPLIANCE: Only draft invoices can be deleted
+     * Posted invoices (sent/paid/overdue) must be voided, not deleted
      */
     async deleteInvoice(invoiceId: string): Promise<{ error: string | null }> {
         try {
+            // CRITICAL: Check invoice status before deletion
+            const { data: existing, error: fetchError } = await supabase
+                .from('business_invoices')
+                .select('status, invoice_number')
+                .eq('id', invoiceId)
+                .single();
+
+            if (fetchError) {
+                return { error: fetchError.message };
+            }
+
+            // ACCOUNTING PROTECTION: Prevent deletion of posted invoices
+            if (existing?.status !== 'draft') {
+                return {
+                    error: `Cannot delete ${existing?.status} invoice ${existing?.invoice_number}. Posted invoices must be voided/cancelled to maintain audit trail.`
+                };
+            }
+
+            // Only draft invoices can be permanently deleted
             const { error } = await supabase
                 .from('business_invoices')
                 .delete()

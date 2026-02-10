@@ -98,7 +98,7 @@ async function completeWithAnthropic(options: AIRequestOptions): Promise<AIRespo
   }
 
   const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514', // Latest Claude Sonnet
+    model: 'claude-sonnet-4-5-20250929', // Latest Claude Sonnet 4.5
     max_tokens: options.maxTokens || 4096,
     temperature: options.temperature || 0.7,
     system: options.systemPrompt,
@@ -257,7 +257,7 @@ async function chatWithAnthropic(
   ];
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-5-20250929',
     max_tokens: 4096,
     messages,
   });

@@ -66,9 +66,41 @@ export const contractService = {
 
     /**
      * Update contract content/status
+     * LEGAL COMPLIANCE: Signed contracts cannot be edited
      */
     async updateContract(id: string, updates: Partial<Contract>) {
         const tenantId = this.getTenantId();
+
+        // CRITICAL: Check if contract is signed
+        const { data: existing, error: fetchError } = await supabase
+            .from('contracts')
+            .select('status')
+            .eq('id', id)
+            .eq('tenant_id', tenantId)
+            .single();
+
+        if (fetchError) {
+            return { contract: null, error: fetchError };
+        }
+
+        // LEGAL PROTECTION: Prevent editing signed contracts
+        if (existing?.status === 'fully_signed' || existing?.status === 'client_signed') {
+            // Only allow payment status updates on signed contracts
+            const allowedFields = ['payment_status', 'payment_due_date'];
+            const hasDisallowedUpdates = Object.keys(updates).some(
+                key => !allowedFields.includes(key)
+            );
+
+            if (hasDisallowedUpdates) {
+                return {
+                    contract: null,
+                    error: {
+                        message: 'Cannot modify signed contracts. Create a new version or amendment instead.',
+                        code: 'SIGNED_CONTRACT_IMMUTABLE'
+                    } as any
+                };
+            }
+        }
 
         const { data, error } = await supabase
             .from('contracts')
