@@ -272,7 +272,7 @@ const SalesAgent: React.FC = () => {
                         <span className="truncate">AlphaClone Growth Agent</span>
                     </h2>
                     <p className="text-slate-400 mt-1 text-xs sm:text-sm flex items-center gap-2">
-                        <span>Lead Generation Powered by Gemini AI</span>
+                        <span>Lead Generation Powered by Advanced AI</span>
                         <Zap className="w-3 h-3 text-teal-400 animate-pulse" />
                     </p>
                 </div>

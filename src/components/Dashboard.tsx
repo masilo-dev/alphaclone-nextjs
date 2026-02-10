@@ -1321,7 +1321,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         {isArchitecting ? (
           <div className="py-12 flex flex-col items-center justify-center text-center">
             <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4" />
-            <p className="text-slate-400">Gemini is designing system architecture...</p>
+            <p className="text-slate-400">AI is designing system architecture...</p>
           </div>
         ) : architectData ? (
           <div className="space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar pr-2">
