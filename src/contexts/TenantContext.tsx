@@ -95,10 +95,14 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         console.log('No tenants found for admin/tenant_admin user, creating default tenant...');
 
         try {
-          // Generate a unique tenant name and slug
-          const userName = user.name || user.email?.split('@')[0] || 'User';
-          const tenantName = `${userName}'s Organization`;
-          const tenantSlug = `org-${user.id.substring(0, 8)}`;
+          // Generate tenant name based on role
+          // Super admin gets "ALPHACLONE SYSTEMS" as default organization
+          const tenantName = user.role === 'admin'
+            ? 'ALPHACLONE SYSTEMS'
+            : `${user.name || user.email?.split('@')[0] || 'User'}'s Organization`;
+          const tenantSlug = user.role === 'admin'
+            ? 'alphaclone-systems'
+            : `org-${user.id.substring(0, 8)}`;
 
           const newTenant = await tenantService.createTenant({
             name: tenantName,

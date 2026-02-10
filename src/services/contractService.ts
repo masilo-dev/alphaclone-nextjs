@@ -114,11 +114,53 @@ export const contractService = {
     },
 
     /**
+     * Clean markdown formatting from AI-generated text
+     * Removes **, ~~, ####, -, *, and other markdown symbols
+     */
+    cleanMarkdown(text: string): string {
+        if (!text) return '';
+
+        return text
+            // Remove markdown headers (####, ###, ##, #)
+            .replace(/^#{1,6}\s+/gm, '')
+            // Remove bold (**text** or __text__)
+            .replace(/\*\*(.+?)\*\*/g, '$1')
+            .replace(/__(.+?)__/g, '$1')
+            // Remove italic (*text* or _text_)
+            .replace(/\*(.+?)\*/g, '$1')
+            .replace(/_(.+?)_/g, '$1')
+            // Remove strikethrough (~~text~~)
+            .replace(/~~(.+?)~~/g, '$1')
+            // Remove code blocks (```text```)
+            .replace(/```[\s\S]*?```/g, '')
+            .replace(/`(.+?)`/g, '$1')
+            // Remove markdown links [text](url)
+            .replace(/\[(.+?)\]\(.+?\)/g, '$1')
+            // Remove markdown images ![alt](url)
+            .replace(/!\[.*?\]\(.+?\)/g, '')
+            // Remove horizontal rules (---, ***, ___)
+            .replace(/^[-*_]{3,}$/gm, '')
+            // Remove bullet points and list markers (-, *, +)
+            .replace(/^[\s]*[-*+]\s+/gm, '')
+            // Remove numbered lists (1., 2., etc.)
+            .replace(/^[\s]*\d+\.\s+/gm, '')
+            // Remove blockquotes (>)
+            .replace(/^>\s+/gm, '')
+            // Remove extra asterisks, tildes, hashes
+            .replace(/[*~#]+/g, '')
+            // Clean up multiple spaces
+            .replace(/\s{2,}/g, ' ')
+            // Clean up multiple newlines (keep max 2)
+            .replace(/\n{3,}/g, '\n\n')
+            .trim();
+    },
+
+    /**
      * Generate Draft with AI
      */
     async generateDraft(type: string, clientName: string, projectDetails: string) {
         const prompt = `Act as an elite corporate legal counsel. Write a comprehensive, high-stakes professional ${type} for "${clientName}".
-        
+
         Project Scope: ${projectDetails}
 
         STRUCTURE TO FOLLOW:
@@ -131,14 +173,26 @@ export const contractService = {
         7. TERMINATION & DISPUTE RESOLUTION.
 
         CRITICAL STYLING:
+        - Output PLAIN TEXT ONLY - NO markdown formatting (no **, ~~, ####, ---, etc.)
         - DO NOT use placeholders like "__________" or "[INSERT HERE]". Populate with realistic, high-end defaults if specific data is missing.
         - Use sophisticated legal terminology (e.g., "Force Majeure", "Governing Law").
         - Ensure the tone is authoritative yet partnership-oriented.
         - Format with clear numbered sections (Section 1.0, 1.1, etc.).
-        - Explicitly state current date as the execution date.`;
+        - Use proper spacing and line breaks only.
+        - Explicitly state current date as the execution date.
+        - Write as if this is a final printed legal document.`;
 
         // Use unified AI service (supports Claude, Gemini, OpenAI)
-        return await generateText(prompt, 3000);
+        const { text, error } = await generateText(prompt, 3000);
+
+        if (error || !text) {
+            return { text: null, error };
+        }
+
+        // Clean any markdown formatting that AI might have added
+        const cleanedText = this.cleanMarkdown(text);
+
+        return { text: cleanedText, error: null };
     },
 
     /**
