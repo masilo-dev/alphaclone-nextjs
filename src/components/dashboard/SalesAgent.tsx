@@ -98,6 +98,10 @@ const SalesAgent: React.FC = () => {
         }
 
         setIsSearching(true);
+
+        // Show progress indicator
+        const progressToast = toast.loading('🤖 AI is searching for leads... This may take 30-60 seconds.');
+
         try {
             console.log('🚀 Starting AI lead generation...');
             // Pass API key if available
@@ -105,6 +109,9 @@ const SalesAgent: React.FC = () => {
 
             if (results && results.length > 0) {
                 console.log(`✅ Generated ${results.length} leads, saving to database...`);
+
+                // Update progress
+                toast.loading('💾 Saving leads to database...', { id: progressToast });
 
                 // Bulk add to DB
                 const leadsToAdd = results.map((r: any) => ({
@@ -120,18 +127,18 @@ const SalesAgent: React.FC = () => {
                 const { count, error } = await leadService.addBulkLeads(leadsToAdd);
                 if (error) {
                     console.error('❌ Database error:', error);
-                    toast.error(`AI found leads but failed to save them: ${error}`);
+                    toast.error(`AI found leads but failed to save them: ${error}`, { id: progressToast });
                 } else {
-                    toast.success(`🎉 AI discovered and saved ${count} new leads!`);
+                    toast.success(`🎉 AI discovered and saved ${count} new leads!`, { id: progressToast, duration: 4000 });
                     loadLeads(); // Reload from DB
                 }
             } else {
-                toast.error("No leads found. Try different search criteria.");
+                toast.error("No leads found. Try different search criteria.", { id: progressToast });
             }
         } catch (error: any) {
             console.error('❌ Lead generation error:', error);
             const errorMessage = error?.message || 'AI Generation failed. Please try again.';
-            toast.error(errorMessage, { duration: 5000 });
+            toast.error(errorMessage, { id: progressToast, duration: 5000 });
 
             // Show helpful message if it's an API key issue
             if (errorMessage.includes('API key') || errorMessage.includes('not configured')) {

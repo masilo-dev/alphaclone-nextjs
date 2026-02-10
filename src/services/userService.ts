@@ -10,24 +10,28 @@ export const userService = {
         try {
             const tenantId = tenantService.getCurrentTenantId();
 
-            let query = supabase.from('profiles').select('*');
-
-            if (tenantId) {
-                // Get users linked to this tenant
-                const { data: tenantUsers, error: tenantError } = await supabase
-                    .from('tenant_users')
-                    .select('user_id')
-                    .eq('tenant_id', tenantId);
-
-                if (tenantError) return { users: [], error: tenantError.message };
-
-                const userIds = tenantUsers.map((tu: any) => tu.user_id);
-                if (userIds.length === 0) return { users: [], error: null };
-
-                query = query.in('id', userIds);
+            // If no tenant, return empty (avoid querying all profiles)
+            if (!tenantId) {
+                return { users: [], error: null };
             }
 
-            const { data, error } = await query.order('created_at', { ascending: false });
+            // Get users linked to this tenant FIRST (avoid RLS 403)
+            const { data: tenantUsers, error: tenantError } = await supabase
+                .from('tenant_users')
+                .select('user_id')
+                .eq('tenant_id', tenantId);
+
+            if (tenantError) return { users: [], error: tenantError.message };
+
+            const userIds = tenantUsers.map((tu: any) => tu.user_id);
+            if (userIds.length === 0) return { users: [], error: null };
+
+            // Now query profiles with filtered IDs (RLS-safe)
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .in('id', userIds)
+                .order('created_at', { ascending: false });
 
             if (error) {
                 return { users: [], error: error.message };
