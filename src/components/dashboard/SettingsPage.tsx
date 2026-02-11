@@ -579,6 +579,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                     {activeSection === 'booking' && (
                         <div className="space-y-12">
                             <div className="border-b border-slate-800 pb-12">
+                                <span className="text-xs text-slate-600 font-mono mb-4 block">v2.1 - Gmail Enabled</span>
                                 <GmailIntegration user={user} />
                             </div>
                             <CalendlySettings />
