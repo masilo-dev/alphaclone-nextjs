@@ -18,7 +18,10 @@ const GmailIntegration: React.FC = () => {
     }, [user]);
 
     const checkConnection = async () => {
-        if (!user) return;
+        if (!user) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         try {
             const connected = await gmailService.checkIntegration(user.id);
