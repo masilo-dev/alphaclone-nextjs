@@ -98,7 +98,7 @@ async function completeWithAnthropic(options: AIRequestOptions): Promise<AIRespo
   }
 
   const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-5-20250929', // Latest Claude Sonnet 4.5
+    model: 'claude-3-5-sonnet-20241022', // Correct latest Claude 3.5 Sonnet
     max_tokens: options.maxTokens || 4096,
     temperature: options.temperature || 0.7,
     system: options.systemPrompt,
@@ -115,7 +115,7 @@ async function completeWithAnthropic(options: AIRequestOptions): Promise<AIRespo
   return {
     content,
     provider: 'anthropic',
-    model: 'claude-sonnet-4',
+    model: 'claude-3-5-sonnet',
     success: true,
   };
 }
@@ -211,9 +211,9 @@ export async function routeAIChat(
     try {
       console.log('[AI Router] Attempting Gemini chat...');
       // Convert history format: content → text
-      const geminiHistory = history.map(msg => ({
-        role: msg.role,
-        text: msg.content
+      const geminiHistory = history.map((msg: any) => ({
+        role: msg.role === 'model' ? 'model' : 'user',
+        text: msg.content || msg.text || ''
       }));
       // Note: Gemini implementation might need update to support system instruction if not already there
       const result = await chatWithGemini(geminiHistory, message, image);
@@ -249,18 +249,18 @@ async function chatWithAnthropic(
 
   // Convert history to Anthropic format
   const messages = [
-    ...history.map(msg => ({
+    ...history.map((msg: any) => ({
       role: msg.role === 'user' ? ('user' as const) : ('assistant' as const),
-      content: msg.content,
+      content: msg.content || msg.text || '',
     })),
     {
       role: 'user' as const,
-      content: message,
+      content: message || '',
     },
   ];
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-5-20250929',
+    model: 'claude-3-5-sonnet-20241022',
     max_tokens: 4096,
     system: systemPrompt,
     messages,
@@ -271,7 +271,7 @@ async function chatWithAnthropic(
   return {
     content,
     provider: 'anthropic',
-    model: 'claude-sonnet-4',
+    model: 'claude-3-5-sonnet',
     success: true,
   };
 }
@@ -293,9 +293,9 @@ async function chatWithOpenAI(
     messages.push({ role: 'system', content: systemPrompt });
   }
 
-  messages.push(...history.map(msg => ({
+  messages.push(...history.map((msg: any) => ({
     role: (msg.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
-    content: msg.content,
+    content: msg.content || msg.text || '',
   })));
 
   messages.push({

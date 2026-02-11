@@ -83,7 +83,7 @@ CRITICAL INSTRUCTIONS:
             modelResponse,
             ...history.map((h: any) => ({
                 role: h.role === 'model' ? 'model' : 'user',
-                parts: [{ text: h.text }]
+                parts: [{ text: h.text || h.content || '' }]
             }))
         ];
 
@@ -103,8 +103,8 @@ CRITICAL INSTRUCTIONS:
             // or use a multimodal model. For simplicity, we'll try to use the model's chat capability if supported,
             // but often single-turn with image is safer effectively.
             // Converting base64 image to part
-            const base64Data = image.split(',')[1];
-            const mimeType = image.split(';')[0]?.split(':')[1] || 'image/png';
+            const base64Data = image.includes(',') ? image.split(',')[1] : image;
+            const mimeType = image.includes(';') ? (image.split(';')[0]?.split(':')[1] || 'image/png') : 'image/png';
             const imagePart = {
                 inlineData: {
                     data: base64Data,
