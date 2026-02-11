@@ -46,6 +46,7 @@ import AlphaCloneContractModal from '../../contracts/AlphaCloneContractModal';
 import ContractDashboard from '../../contracts/ContractDashboard';
 // Accounting Components
 import { ChartOfAccountsPage, JournalEntriesPage, FinancialReportsPage } from '../accounting';
+const GmailTab = React.lazy(() => import('../GmailTab'));
 import Sidebar from '@/components/dashboard/Sidebar';
 import { TENANT_ADMIN_NAV_ITEMS } from '@/constants';
 
@@ -304,6 +305,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             case '/dashboard/business/contracts':
                 return <ContractDashboard user={user} />;
 
+            case '/dashboard/gmail':
+                return (
+                    <React.Suspense fallback={<div>Loading Gmail...</div>}>
+                        <GmailTab />
+                    </React.Suspense>
+                );
+
             // Accounting Routes
             case '/dashboard/accounting/chart-of-accounts':
                 return <ChartOfAccountsPage />;
@@ -337,6 +345,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             case '/dashboard/accounting/chart-of-accounts': return 'Chart of Accounts';
             case '/dashboard/accounting/journal-entries': return 'Journal Entries';
             case '/dashboard/accounting/reports': return 'Financial Reports';
+            case '/dashboard/gmail': return 'Gmail Integration';
             default: return 'AlphaClone';
         }
     };

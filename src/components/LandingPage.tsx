@@ -1207,6 +1207,35 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            Custom development solutions built for success. Specializing in high-performance web, mobile, and AI applications.
                         </p>
                      </div>
+                     <div className="col-span-2 md:col-span-1">
+                        <h4 className="text-white font-bold mb-6">Integrations</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                           <div className="group flex flex-col items-center gap-2">
+                              <div className="w-10 h-10 bg-slate-900/50 rounded-xl border border-slate-800 flex items-center justify-center p-2 group-hover:border-teal-500/50 transition-all grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100">
+                                 <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" alt="Gmail" className="w-full h-full object-contain" />
+                              </div>
+                              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Gmail</span>
+                           </div>
+                           <div className="group flex flex-col items-center gap-2">
+                              <div className="w-10 h-10 bg-slate-900/50 rounded-xl border border-slate-800 flex items-center justify-center p-2 group-hover:border-[#635BFF]/50 transition-all grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100">
+                                 <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" className="w-full h-full object-contain" />
+                              </div>
+                              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Stripe</span>
+                           </div>
+                           <div className="group flex flex-col items-center gap-2">
+                              <div className="w-10 h-10 bg-slate-900/50 rounded-xl border border-slate-800 flex items-center justify-center p-2 group-hover:border-[#003087]/50 transition-all grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100">
+                                 <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" className="w-full h-full object-contain" />
+                              </div>
+                              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">PayPal</span>
+                           </div>
+                           <div className="group flex flex-col items-center gap-2">
+                              <div className="w-10 h-10 bg-slate-900/50 rounded-xl border border-slate-800 flex items-center justify-center p-2 group-hover:border-[#332FF2]/50 transition-all grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100">
+                                 <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Calendly_logo.svg" alt="Calendly" className="w-full h-full object-contain" />
+                              </div>
+                              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Calendly</span>
+                           </div>
+                        </div>
+                     </div>
                      <div>
                         <h4 className="text-white font-bold mb-6">Services</h4>
                         <ul className="space-y-4 text-sm text-slate-400">

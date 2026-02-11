@@ -93,6 +93,7 @@ const DealsTab = React.lazy(() => import('./dashboard/DealsTab'));
 const QuotesTab = React.lazy(() => import('./dashboard/QuotesTab'));
 const SalesForecastTab = React.lazy(() => import('./dashboard/SalesForecastTab'));
 const UserLocationTable = React.lazy(() => import('./dashboard/admin/UserLocationTable'));
+const GmailTab = React.lazy(() => import('./dashboard/GmailTab'));
 
 // Import UI components
 import { TableSkeleton } from './ui/Skeleton';
@@ -905,6 +906,13 @@ const Dashboard: React.FC<DashboardProps> = ({
               setNewMessage={setNewMessage}
               handleSendMessage={handleSendMessage}
             />
+          </React.Suspense>
+        );
+
+      case '/dashboard/gmail':
+        return (
+          <React.Suspense fallback={<div>Loading Gmail...</div>}>
+            <GmailTab />
           </React.Suspense>
         );
 

@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { useTenant } from '../../contexts/TenantContext';
 import { SubscriptionPlan, PLAN_PRICING } from '../../services/tenancy/types';
 import CalendlySettings from './business/CalendlySettings';
+import GmailIntegration from './business/GmailIntegration';
 
 interface SettingsPageProps {
     user: UserType;
@@ -576,8 +577,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                     </Card>
 
                     {activeSection === 'booking' && (
-                        <div className="space-y-6">
+                        <div className="space-y-12">
                             <CalendlySettings />
+                            <div className="border-t border-slate-800 pt-12">
+                                <GmailIntegration />
+                            </div>
                         </div>
                     )}
                 </div>
