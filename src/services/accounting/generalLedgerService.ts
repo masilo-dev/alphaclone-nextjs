@@ -184,45 +184,41 @@ export const generalLedgerService = {
      * Get trial balance
      * Shows all accounts with their debit and credit balances
      */
+    /**
+     * Get trial balance
+     * Optimized to use single RPC call
+     */
     async getTrialBalance(asOfDate?: string): Promise<{ trialBalance: TrialBalance | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
 
-            // Get all active accounts
-            const { data: accounts, error: accountsError } = await supabase
-                .from('chart_of_accounts')
-                .select('id, account_code, account_name, account_type, normal_balance')
-                .eq('tenant_id', tenantId)
-                .eq('is_active', true)
-                .is('deleted_at', null)
-                .order('account_code', { ascending: true });
+            // Use the new RPC to get all balances in one go
+            const { data: accountBalances, error } = await supabase.rpc('get_account_balances', {
+                p_tenant_id: tenantId,
+                p_start_date: null, // From beginning
+                p_end_date: asOfDate || null
+            });
 
-            if (accountsError) throw accountsError;
+            if (error) throw error;
 
-            // Get balances for each account
-            const accountBalances = await Promise.all(
-                (accounts || []).map(async (account: any) => {
-                    const { balance } = await this.getAccountBalance(account.id, asOfDate);
+            // Map RPC result to internal structure
+            const accounts = (accountBalances || []).map((acc: any) => ({
+                accountCode: acc.account_code,
+                accountName: acc.account_name,
+                accountType: acc.account_type,
+                debitBalance: acc.debit_total,
+                creditBalance: acc.credit_total
+            }));
 
-                    const debitBalance = account.normal_balance === 'debit' && balance > 0 ? balance : 0;
-                    const creditBalance = account.normal_balance === 'credit' && balance > 0 ? balance : 0;
-
-                    return {
-                        accountCode: account.account_code,
-                        accountName: account.account_name,
-                        accountType: account.account_type,
-                        debitBalance,
-                        creditBalance,
-                    };
-                })
-            );
+            // Filter for non-zero balances
+            const activeAccounts = accounts.filter((acc: any) => acc.debitBalance > 0 || acc.creditBalance > 0);
 
             // Calculate totals
-            const totalDebits = accountBalances.reduce((sum, acc) => sum + acc.debitBalance, 0);
-            const totalCredits = accountBalances.reduce((sum, acc) => sum + acc.creditBalance, 0);
+            const totalDebits = activeAccounts.reduce((sum: number, acc: any) => sum + acc.debitBalance, 0);
+            const totalCredits = activeAccounts.reduce((sum: number, acc: any) => sum + acc.creditBalance, 0);
 
             const trialBalance: TrialBalance = {
-                accounts: accountBalances.filter(acc => acc.debitBalance > 0 || acc.creditBalance > 0),
+                accounts: activeAccounts,
                 totalDebits,
                 totalCredits,
                 isBalanced: Math.abs(totalDebits - totalCredits) < 0.01,
@@ -243,46 +239,35 @@ export const generalLedgerService = {
         try {
             const tenantId = this.getTenantId();
 
-            // Get all accounts with balances
-            const { data: accounts, error: accountsError } = await supabase
-                .from('chart_of_accounts')
-                .select('id, account_code, account_name, account_type, normal_balance')
-                .eq('tenant_id', tenantId)
-                .eq('is_active', true)
-                .is('deleted_at', null)
-                .order('account_code', { ascending: true });
+            // Use RPC
+            const { data: accountBalances, error } = await supabase.rpc('get_account_balances', {
+                p_tenant_id: tenantId,
+                p_start_date: null,
+                p_end_date: asOfDate || null
+            });
 
-            if (accountsError) throw accountsError;
+            if (error) throw error;
 
-            // Get balances
-            const accountBalances = await Promise.all(
-                (accounts || []).map(async (account: any) => {
-                    const { balance } = await this.getAccountBalance(account.id, asOfDate);
-
-                    const debitTotal = balance > 0 && account.normal_balance === 'debit' ? balance : 0;
-                    const creditTotal = balance > 0 && account.normal_balance === 'credit' ? balance : 0;
-
-                    return {
-                        accountId: account.id,
-                        accountCode: account.account_code,
-                        accountName: account.account_name,
-                        accountType: account.account_type,
-                        normalBalance: account.normal_balance,
-                        debitTotal,
-                        creditTotal,
-                        balance,
-                    };
-                })
-            );
+            // Map to AccountBalance interface
+            const balances: AccountBalance[] = (accountBalances || []).map((acc: any) => ({
+                accountId: acc.account_id,
+                accountCode: acc.account_code,
+                accountName: acc.account_name,
+                accountType: acc.account_type,
+                normalBalance: acc.normal_balance,
+                debitTotal: acc.debit_total,
+                creditTotal: acc.credit_total,
+                balance: acc.balance
+            }));
 
             // Group by account type
-            const assets = accountBalances.filter(acc => acc.accountType === 'asset');
-            const liabilities = accountBalances.filter(acc => acc.accountType === 'liability');
-            const equity = accountBalances.filter(acc => acc.accountType === 'equity');
-            const revenue = accountBalances.filter(acc => acc.accountType === 'revenue');
-            const expenses = accountBalances.filter(acc => acc.accountType === 'expense');
-            const otherIncome = accountBalances.filter(acc => acc.accountType === 'other_income');
-            const otherExpense = accountBalances.filter(acc => acc.accountType === 'other_expense');
+            const assets = balances.filter(acc => acc.accountType === 'asset');
+            const liabilities = balances.filter(acc => acc.accountType === 'liability');
+            const equity = balances.filter(acc => acc.accountType === 'equity');
+            const revenue = balances.filter(acc => acc.accountType === 'revenue');
+            const expenses = balances.filter(acc => acc.accountType === 'expense');
+            const otherIncome = balances.filter(acc => acc.accountType === 'other_income');
+            const otherExpense = balances.filter(acc => acc.accountType === 'other_expense');
 
             // Calculate totals
             const totalAssets = assets.reduce((sum, acc) => sum + acc.balance, 0);
@@ -326,52 +311,28 @@ export const generalLedgerService = {
         endDate: string
     ): Promise<{ statement: FinancialStatement | null; error: string | null }> {
         try {
-            // For P&L, we need entries within the period
-            const { entries, error } = await this.getEntriesForPeriod(startDate, endDate);
+            const tenantId = this.getTenantId();
 
-            if (error) return { statement: null, error };
-
-            // Group by account
-            const accountTotals = new Map<string, {
-                accountId: string;
-                accountCode: string;
-                accountName: string;
-                accountType: AccountType;
-                debitTotal: number;
-                creditTotal: number;
-            }>();
-
-            entries.forEach(entry => {
-                const key = entry.accountId;
-                const existing = accountTotals.get(key) || {
-                    accountId: entry.accountId,
-                    accountCode: entry.accountCode,
-                    accountName: entry.accountName,
-                    accountType: entry.accountType,
-                    debitTotal: 0,
-                    creditTotal: 0,
-                };
-
-                existing.debitTotal += entry.debitAmount;
-                existing.creditTotal += entry.creditAmount;
-
-                accountTotals.set(key, existing);
+            // Use RPC with date range
+            const { data: accountBalances, error } = await supabase.rpc('get_account_balances', {
+                p_tenant_id: tenantId,
+                p_start_date: startDate,
+                p_end_date: endDate
             });
 
-            // Calculate balances based on normal balance
-            const balances: AccountBalance[] = Array.from(accountTotals.values()).map(acc => {
-                // Revenue and other income have credit normal balance
-                const isCredit = acc.accountType === 'revenue' || acc.accountType === 'other_income';
-                const balance = isCredit
-                    ? acc.creditTotal - acc.debitTotal
-                    : acc.debitTotal - acc.creditTotal;
+            if (error) throw error;
 
-                return {
-                    ...acc,
-                    normalBalance: isCredit ? ('credit' as const) : ('debit' as const),
-                    balance,
-                };
-            });
+            // Map to AccountBalance interface
+            const balances: AccountBalance[] = (accountBalances || []).map((acc: any) => ({
+                accountId: acc.account_id,
+                accountCode: acc.account_code,
+                accountName: acc.account_name,
+                accountType: acc.account_type,
+                normalBalance: acc.normal_balance,
+                debitTotal: acc.debit_total,
+                creditTotal: acc.credit_total,
+                balance: acc.balance
+            }));
 
             // Group by type
             const revenue = balances.filter(acc => acc.accountType === 'revenue');

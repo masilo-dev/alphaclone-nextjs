@@ -22,9 +22,13 @@ import {
 import { Project, User } from '../../../types';
 import { projectService } from '../../../services/projectService';
 import { useTenant } from '../../../contexts/TenantContext';
+import { dailyService } from '../../../services/dailyService';
+import { callSignalingService } from '../../../services/video/CallSignalingService';
+import { supabase } from '../../../lib/supabase';
+import toast from 'react-hot-toast';
+
 // Components
 import BusinessHome from './BusinessHome';
-import ClientsPage from './ClientsPage';
 import ProjectsPage from './ProjectsPage';
 import TeamPage from './TeamPage';
 import MessagesPage from './MessagesPage';
@@ -42,6 +46,8 @@ import AlphaCloneContractModal from '../../contracts/AlphaCloneContractModal';
 import ContractDashboard from '../../contracts/ContractDashboard';
 // Accounting Components
 import { ChartOfAccountsPage, JournalEntriesPage, FinancialReportsPage } from '../accounting';
+import Sidebar from '@/components/dashboard/Sidebar';
+import { TENANT_ADMIN_NAV_ITEMS } from '@/constants';
 
 interface BusinessDashboardProps {
     user: User;
@@ -68,6 +74,60 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
         if (!url) return;
         setActiveCallUrl(url);
         setIsCallMinimized(false);
+    };
+
+    const handleInitiateCallToClient = async (clientId: string) => {
+        const toastId = toast.loading('Initiating secure call...');
+        try {
+            // 1. Fetch Client Details
+            const { client, error: clientError } = await (await import('../../../services/businessClientService')).businessClientService.getClient(clientId);
+            if (clientError || !client) throw new Error(clientError || 'Client not found');
+
+            if (!client.email) {
+                toast.error('Client has no email address. Cannot initiate call.', { id: toastId });
+                return;
+            }
+
+            // 2. Find Recipient User ID by Email
+            const { data: users, error: userError } = await supabase
+                .from('users')
+                .select('id')
+                .eq('email', client.email)
+                .single();
+
+            if (userError || !users) {
+                toast.error('Client is not a registered user on the platform.', { id: toastId });
+                return;
+            }
+
+            // 3. Create Video Room
+            const { call, error: roomError } = await dailyService.createVideoCall({
+                hostId: user.id,
+                title: `Call with ${client.name}`,
+                isPublic: false
+            });
+
+            if (roomError || !call || !call.daily_room_url) {
+                throw new Error(roomError || 'Failed to create room');
+            }
+
+            // 4. Send Signal
+            await callSignalingService.sendCallSignal(users.id, {
+                callerId: user.id,
+                callerName: user.name,
+                roomUrl: call.daily_room_url,
+                roomId: call.id
+            });
+
+            toast.success('Calling client...', { id: toastId });
+
+            // 5. Join Room
+            handleJoinCall(call.daily_room_url);
+
+        } catch (error) {
+            console.error('Call failed:', error);
+            toast.error(error instanceof Error ? error.message : 'Failed to start call.', { id: toastId });
+        }
     };
 
     const handleLeaveCall = () => {
@@ -207,8 +267,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
         switch (activeTab) {
             case '/dashboard':
                 return <BusinessHome user={user} />;
-            case '/dashboard/business/clients':
-                return <ClientsPage user={user} />;
             case '/dashboard/business/projects':
                 return <ProjectsPage user={user} />;
             case '/dashboard/business/team':
@@ -228,17 +286,20 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
 
             // New Routes
             case '/dashboard/crm':
+            case '/dashboard/business/clients':
                 return <CRMTab
+                    user={user}
                     projects={projects}
                     declineProject={() => { }}
                     openContractGenerator={handleOpenContract}
-                    openVideoCall={handleJoinCall}
+                    openVideoCall={handleInitiateCallToClient}
                 />;
             case '/dashboard/tasks':
                 return <TasksTab userId={user.id} userRole={user.role} />;
             case '/dashboard/sales-agent':
                 return <SalesAgent />;
             case '/dashboard/leads':
+            case '/dashboard/business/leads': // Fallback
                 return <DealsTab userId={user.id} userRole={user.role} />;
             case '/dashboard/business/contracts':
                 return <ContractDashboard user={user} />;
@@ -280,25 +341,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
         }
     };
 
-    const navItems = [
-        { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
-        { label: 'CRM', href: '/dashboard/crm', icon: Users },
-        { label: 'Leads', href: '/dashboard/leads', icon: TrendingUp },
-        { label: 'Sales Agent', href: '/dashboard/sales-agent', icon: Bot },
-        { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
-        { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
-        { label: 'Projects', href: '/dashboard/business/projects', icon: FileText },
-        { label: 'Contracts', href: '/dashboard/business/contracts', icon: FileCheck },
-        { label: 'Calendar', href: '/dashboard/business/calendar', icon: Briefcase },
-        { label: 'Messages', href: '/dashboard/business/messages', icon: Bell },
-        { label: 'Team', href: '/dashboard/business/team', icon: Users },
-        { label: 'Finance', href: '/dashboard/business/billing', icon: CreditCard },
-        { label: 'Chart of Accounts', href: '/dashboard/accounting/chart-of-accounts', icon: BookOpen },
-        { label: 'Journal Entries', href: '/dashboard/accounting/journal-entries', icon: Receipt },
-        { label: 'Financial Reports', href: '/dashboard/accounting/reports', icon: BarChart3 },
-        { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },
-    ];
-
     // Show loading state while tenant context initializes
     if (tenantLoading) {
         return (
@@ -330,68 +372,23 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
         );
     }
 
+    // Use external nav items instead of local redundant array
+    const { TENANT_ADMIN_NAV_ITEMS } = require('../../../constants');
+
     return (
         <div className="flex h-screen bg-slate-950 text-white overflow-hidden font-sans selection:bg-teal-500/30 w-full max-w-full">
-            {/* Mobile Overlay */}
-            {sidebarOpen && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
-                    onClick={() => setSidebarOpen(false)}
-                />
-            )}
-
-            {/* Sidebar */}
-            <aside className={`${sidebarOpen
-                ? 'w-72 translate-x-0 pb-24 md:pb-0'
-                : 'w-0 -translate-x-full md:w-16 md:translate-x-0'
-                } bg-slate-900 border-r border-slate-800 flex flex-col fixed md:relative z-50 h-full transition-all duration-300 shadow-2xl overflow-hidden`}>
-                <div className="h-16 flex items-center px-6 border-b border-slate-800 bg-slate-900">
-                    <div className="flex items-center gap-3 overflow-hidden">
-                        <div className="w-8 h-8 bg-teal-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                            {/* Replaced Icon with Logo Placeholder if needed, sticking to Briefcase for now but title is AlphaClone */}
-                            <Briefcase className="w-5 h-5 text-teal-400" />
-                        </div>
-                        <span className={`font-bold text-white text-lg tracking-tight transition-opacity duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
-                            AlphaClone
-                        </span>
-                    </div>
-                </div>
-
-                <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1.5 custom-scrollbar">
-                    {navItems.map((item, idx) => (
-                        <button
-                            key={idx}
-                            onClick={() => {
-                                setActiveTab(item.href);
-                                // Auto-close sidebar on mobile after navigation
-                                if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                                    setSidebarOpen(false);
-                                }
-                            }}
-                            title={!sidebarOpen ? item.label : undefined}
-                            className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-2'} py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden active:scale-95
-                         ${activeTab === item.href
-                                    ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/20'
-                                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                                }`}
-                        >
-                            {activeTab === item.href && <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent" />}
-                            <item.icon className={`w-5 h-5 flex-shrink-0 ${activeTab === item.href ? 'text-white' : 'group-hover:text-teal-400 transition-colors'}`} />
-                            <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden md:block'} flex-1 text-left whitespace-nowrap text-sm font-medium`}>{item.label}</span>
-                        </button>
-                    ))}
-                </nav>
-
-                <div className="p-4 border-t border-slate-800 bg-slate-900 mt-auto">
-                    <button
-                        onClick={onLogout}
-                        className={`flex items-center gap-3 text-slate-400 hover:text-red-400 w-full ${sidebarOpen ? 'px-4' : 'justify-center px-2'} py-3 rounded-xl hover:bg-red-500/10 transition-colors group active:scale-95`}
-                    >
-                        <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                        <span className={`${sidebarOpen ? 'block' : 'hidden md:hidden'} text-sm font-medium`}>Log Out</span>
-                    </button>
-                </div>
-            </aside>
+            <Sidebar
+                sidebarOpen={sidebarOpen}
+                setSidebarOpen={setSidebarOpen}
+                isInCall={!!activeCallUrl}
+                showSidebarDuringCall={true}
+                user={user}
+                navItems={TENANT_ADMIN_NAV_ITEMS}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                unreadMessageCount={0}
+                onLogout={onLogout}
+            />
 
             {/* Main Content */}
             {/* Removed radial gradient for strict mobile view cleanliness as requested to avoid 'motion' feel if any */}

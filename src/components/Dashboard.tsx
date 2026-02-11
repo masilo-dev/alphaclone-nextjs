@@ -946,6 +946,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         return (
           <React.Suspense fallback={<div>Loading CRM...</div>}>
             <CRMTab
+              user={user}
               projects={projects}
               declineProject={declineProject}
               openContractGenerator={openContractGenerator}

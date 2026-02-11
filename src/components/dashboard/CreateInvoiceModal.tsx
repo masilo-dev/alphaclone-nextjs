@@ -37,7 +37,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         const fetchDefaults = async () => {
             const { supabase } = await import('../../lib/supabase');
             const { tenantService } = await import('../../services/tenancy/TenantService');
-            const { userService } = await import('../../services/userService');
+            // Use businessClientService instead of userService
+            const { businessClientService } = await import('../../services/businessClientService');
             const tenantId = tenantService.getCurrentTenantId();
 
             if (tenantId) {
@@ -48,7 +49,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                         .select('bank_details, mobile_payment_details, organization_name')
                         .eq('tenant_id', tenantId)
                         .maybeSingle(),
-                    userService.getUsers()
+                    // Fetch Business Clients
+                    businessClientService.getClients(tenantId)
                 ]);
 
                 if (settingsRes.data) {
@@ -59,8 +61,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     });
                 }
 
-                if (clientsRes.users) {
-                    setClients(clientsRes.users.filter(u => u.role === 'client'));
+                if (clientsRes.clients) {
+                    setClients(clientsRes.clients);
                 }
                 setLoadingClients(false);
             }
@@ -100,53 +102,58 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     };
 
     const handleSaveInvoice = async () => {
+        if (!currentTenant?.id) {
+            toast.error('No active organization session');
+            return;
+        }
+
         const amountNum = parseFloat(amount);
         setIsSubmitting(true);
 
         const project = projects.find(p => p.id === selectedProjectId);
-        const finalClientId = project?.ownerId || selectedClientId || null;
+        // Use selected client, or project's linked client. 
+        // Do NOT use project.ownerId as it is a User ID, not a Business Client ID.
+        const finalClientId = selectedClientId || project?.clientId || undefined;
 
         try {
-            const timeoutPromise = new Promise<{ error: any }>((_, reject) =>
-                setTimeout(() => reject(new Error('Transaction timed out')), 15000)
-            );
+            const { businessInvoiceService } = await import('../../services/businessInvoiceService');
 
-            const result = await Promise.race([
-                paymentService.createInvoice({
-                    user_id: finalClientId || undefined, // Allow undefined for invoices without client
-                    project_id: selectedProjectId || undefined,
-                    amount: amountNum,
-                    currency: 'usd',
+            // Map to BusinessInvoice schema
+            const invoiceData = {
+                clientId: finalClientId,
+                projectId: selectedProjectId || undefined,
+                issueDate: new Date().toISOString().split('T')[0],
+                dueDate: dueDate,
+                status: 'draft' as const, // Always start as draft, user can send/finalize later
+                subtotal: amountNum,
+                taxRate: 0,
+                tax: 0,
+                discountAmount: 0,
+                total: amountNum,
+                lineItems: [{
                     description: description,
-                    due_date: new Date(dueDate).toISOString(),
-                    payment_method: paymentMethod,
-                    manual_payment_instructions: manualInstructions,
-                    items: [{
-                        description: description,
-                        quantity: 1,
-                        unit_price: amountNum,
-                        amount: amountNum
-                    }]
-                }),
-                timeoutPromise
-            ]);
+                    quantity: 1,
+                    rate: amountNum,
+                    amount: amountNum
+                }],
+                notes: paymentMethod !== 'stripe' ? manualInstructions : undefined,
+                isPublic: false
+            };
 
-            if ('error' in result && result.error) {
-                console.error('Invoice creation error:', result.error);
-                toast.error(`Failed to create invoice: ${result.error.message || 'Unknown error'}`);
-            } else if ('invoice' in result) {
-                setCreatedInvoiceId(result.invoice?.id || null);
+            const { invoice, error } = await businessInvoiceService.createInvoice(currentTenant.id, invoiceData);
+
+            if (error) {
+                console.error('Invoice creation error:', error);
+                toast.error(`Failed to create invoice: ${error}`);
+            } else if (invoice) {
+                setCreatedInvoiceId(invoice.id);
                 setStep('success');
                 toast.success('Invoice created successfully!');
                 onInvoiceCreated();
             }
         } catch (err) {
             console.error('Invoice submission error:', err);
-            if (err instanceof Error && err.message === 'Request timeout') {
-                toast.error('Request took too long. Please try again.');
-            } else {
-                toast.error('Failed to create invoice. Please try again.');
-            }
+            toast.error('Failed to create invoice. Please try again.');
         } finally {
             setIsSubmitting(false);
         }

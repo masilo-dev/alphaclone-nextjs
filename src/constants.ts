@@ -99,14 +99,23 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
 // --- TENANT ADMIN NAVIGATION (Business Dashboard) ---
 export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Business Home', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'My Clients', href: '/dashboard/business/clients', icon: Users },
+  { label: 'CRM Directory', href: '/dashboard/crm', icon: Users },
+  { label: 'Leads & Deals', href: '/dashboard/leads', icon: TrendingUp },
+  { label: 'Growth Agent', href: '/dashboard/sales-agent', icon: Zap },
+  { label: 'Task Center', href: '/dashboard/tasks', icon: CheckSquare },
   { label: 'Projects', href: '/dashboard/business/projects', icon: Briefcase },
-  { label: 'Team', href: '/dashboard/business/team', icon: Users },
-  { label: 'Messages', href: '/dashboard/business/messages', icon: MessageSquare },
-  { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
-  { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
-  { label: 'Invoices & Billing', href: '/dashboard/business/billing', icon: DollarSign },
-  { label: 'Reports', href: '/dashboard/business/reports', icon: BarChart3 },
+  { label: 'Active Meetings', href: '/dashboard/business/meetings', icon: Video },
+  { label: 'Financials', href: '/dashboard/business/billing', icon: DollarSign },
+  {
+    label: 'Accounting',
+    href: '#',
+    icon: BarChart3,
+    subItems: [
+      { label: 'Chart of Accounts', href: '/dashboard/accounting/chart-of-accounts' },
+      { label: 'Journal Entries', href: '/dashboard/accounting/journal-entries' },
+      { label: 'Financial Reports', href: '/dashboard/accounting/reports' },
+    ]
+  },
   { label: 'Contracts', href: '/dashboard/business/contracts', icon: FileText },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];

@@ -22,7 +22,7 @@ class ClientLifecycleService {
                 supabase
                     .from('projects')
                     .select('id, status, budget')
-                    .eq('owner_id', clientId)
+                    .eq('client_id', clientId)
                     .eq('tenant_id', tenantId),
                 supabase
                     .from('business_invoices')
@@ -76,8 +76,8 @@ class ClientLifecycleService {
         const [projectsRes, invoicesRes] = await Promise.all([
             supabase
                 .from('projects')
-                .select('id, owner_id, status, budget')
-                .in('owner_id', clientIds)
+                .select('id, client_id, status, budget')
+                .in('client_id', clientIds)
                 .eq('tenant_id', tenantId),
             supabase
                 .from('business_invoices')
@@ -90,7 +90,7 @@ class ClientLifecycleService {
         const allInvoices = invoicesRes.data || [];
 
         clientIds.forEach(clientId => {
-            const clientProjects = allProjects.filter((p: any) => p.owner_id === clientId);
+            const clientProjects = allProjects.filter((p: any) => p.client_id === clientId);
             const clientInvoices = allInvoices.filter((inv: any) => inv.client_id === clientId);
 
             results[clientId] = {

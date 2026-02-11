@@ -60,17 +60,8 @@ export function FinancialReportsPage() {
         }
     };
 
-    const handleRefreshGL = async () => {
-        if (!confirm('Refresh General Ledger materialized view? This may take a few moments.')) return;
-
-        const { success, error: err } = await generalLedgerService.refreshGeneralLedger();
-
-        if (err) {
-            alert(`Error refreshing GL: ${err}`);
-        } else {
-            alert('General Ledger refreshed successfully!');
-            loadReport();
-        }
+    const handleRefresh = async () => {
+        await loadReport();
     };
 
     const renderTrialBalance = () => {
@@ -375,10 +366,10 @@ export function FinancialReportsPage() {
                     <p className="text-slate-300 mt-1">View accounting reports and financial statements</p>
                 </div>
                 <button
-                    onClick={handleRefreshGL}
+                    onClick={handleRefresh}
                     className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
                 >
-                    Refresh GL
+                    Reload Data
                 </button>
             </div>
 
@@ -393,31 +384,28 @@ export function FinancialReportsPage() {
                 <div className="flex flex-wrap gap-4">
                     <button
                         onClick={() => setSelectedReport('trial_balance')}
-                        className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-                            selectedReport === 'trial_balance'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                        }`}
+                        className={`px-6 py-3 rounded-lg font-semibold transition-colors ${selectedReport === 'trial_balance'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                            }`}
                     >
                         Trial Balance
                     </button>
                     <button
                         onClick={() => setSelectedReport('balance_sheet')}
-                        className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-                            selectedReport === 'balance_sheet'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                        }`}
+                        className={`px-6 py-3 rounded-lg font-semibold transition-colors ${selectedReport === 'balance_sheet'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                            }`}
                     >
                         Balance Sheet
                     </button>
                     <button
                         onClick={() => setSelectedReport('profit_loss')}
-                        className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-                            selectedReport === 'profit_loss'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                        }`}
+                        className={`px-6 py-3 rounded-lg font-semibold transition-colors ${selectedReport === 'profit_loss'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                            }`}
                     >
                         Profit & Loss
                     </button>

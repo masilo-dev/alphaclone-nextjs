@@ -34,7 +34,7 @@ class ClientActivityService {
         try {
             // Get client info
             const { data: client } = await supabase
-                .from('users')
+                .from('business_clients')
                 .select('name')
                 .eq('id', clientId)
                 .single();

@@ -239,12 +239,21 @@ const SalesAgent: React.FC = () => {
             }
 
             // Step 2: Create client record in CRM
-            const { userService } = await import('../../services/userService');
-            const { client, error: clientError } = await userService.createClient({
+            const { businessClientService } = await import('../../services/businessClientService');
+            const { tenantService } = await import('../../services/tenancy/TenantService');
+            const tenantId = tenantService.getCurrentTenantId();
+
+            if (!tenantId) {
+                toast.error('No active organization session');
+                return;
+            }
+
+            const { client, error: clientError } = await businessClientService.createClient(tenantId, {
                 name: lead.businessName,
                 email: lead.email || '',
                 company: lead.businessName,
-                phone: lead.phone
+                phone: lead.phone,
+                stage: 'customer' // Qualified leads become customers in CRM
             });
 
             if (clientError) {

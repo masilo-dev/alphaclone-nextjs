@@ -52,6 +52,41 @@ export const businessClientService = {
     },
 
     /**
+     * Get a single client by ID
+     */
+    async getClient(clientId: string): Promise<{ client: BusinessClient | null; error: string | null }> {
+        try {
+            const { data, error } = await supabase
+                .from('business_clients')
+                .select('*')
+                .eq('id', clientId)
+                .single();
+
+            if (error) throw error;
+
+            const client: BusinessClient = {
+                id: data.id,
+                tenantId: data.tenant_id,
+                name: data.name,
+                email: data.email,
+                phone: data.phone,
+                company: data.company,
+                stage: data.stage,
+                value: parseFloat(data.value || 0),
+                notes: data.notes,
+                customFields: data.custom_fields,
+                createdAt: data.created_at,
+                updatedAt: data.updated_at
+            };
+
+            return { client, error: null };
+        } catch (err: any) {
+            console.error('Error fetching client details:', err);
+            return { client: null, error: err.message };
+        }
+    },
+
+    /**
      * Create a new client
      */
     async createClient(tenantId: string, client: Partial<BusinessClient>): Promise<{ client: BusinessClient | null; error: string | null }> {

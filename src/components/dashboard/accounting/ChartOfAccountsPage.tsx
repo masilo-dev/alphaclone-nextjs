@@ -170,14 +170,12 @@ export function ChartOfAccountsPage() {
                     <p className="text-slate-300 mt-1">Manage your accounting accounts</p>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                    {accounts.length === 0 && (
-                        <button
-                            onClick={handleInitializeDefaults}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                            Initialize Default Accounts
-                        </button>
-                    )}
+                    <button
+                        onClick={handleInitializeDefaults}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                        Initialize Default Accounts
+                    </button>
                     <button
                         onClick={() => setShowCreateModal(true)}
                         className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -276,9 +274,8 @@ export function ChartOfAccountsPage() {
                                                 ${account.currentBalance.toFixed(2)}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                    account.isActive ? 'bg-green-900/50 text-green-300' : 'bg-slate-700 text-slate-400'
-                                                }`}>
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${account.isActive ? 'bg-green-900/50 text-green-300' : 'bg-slate-700 text-slate-400'
+                                                    }`}>
                                                     {account.isActive ? 'Active' : 'Inactive'}
                                                 </span>
                                             </td>
