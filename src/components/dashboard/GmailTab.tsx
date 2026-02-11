@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Search, Filter, RefreshCw, Send, Trash2, Inbox, Star, Archive, AlertCircle, Sparkles, ChevronDown } from 'lucide-react'; // Added ChevronDown
+import { Mail, Search, Filter, RefreshCw, Send, Trash2, Inbox, Star, Archive, AlertCircle, Sparkles, ChevronDown, Menu, ArrowLeft } from 'lucide-react'; // Added ChevronDown, Menu, ArrowLeft
 import { gmailService, GmailMessage } from '../../services/gmailService';
 import { generateText } from '../../services/unifiedAIService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -30,6 +30,9 @@ const GmailTab: React.FC = () => {
     const [showAIPrompt, setShowAIPrompt] = useState(false);
     const [aiPrompt, setAiPrompt] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
+
+    // Mobile State
+    const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -217,12 +220,28 @@ const GmailTab: React.FC = () => {
 
     return (
         <div className="flex h-full bg-slate-950 rounded-3xl border border-slate-900 overflow-hidden">
+            {/* Mobile Sidebar Overlay */}
+            {showMobileSidebar && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-40 md:hidden"
+                    onClick={() => setShowMobileSidebar(false)}
+                />
+            )}
+
             {/* Sidebar */}
-            <div className="w-64 border-r border-slate-900 flex flex-col p-4 space-y-2">
+            <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-950 border-r border-slate-900 flex flex-col p-4 space-y-2 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${showMobileSidebar ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className="flex justify-between items-center md:hidden mb-4 px-2">
+                    <span className="font-bold text-white">Mailbox</span>
+                    <button onClick={() => setShowMobileSidebar(false)} className="text-slate-400">
+                        <ArrowLeft className="w-5 h-5" />
+                    </button>
+                </div>
+
                 <button
                     onClick={() => {
                         setComposeData({ to: '', subject: '', body: '', threadId: undefined });
                         setIsComposeOpen(true);
+                        setShowMobileSidebar(false);
                     }}
                     className="flex items-center gap-3 px-4 py-3 bg-teal-500 hover:bg-teal-600 text-slate-900 font-bold rounded-xl mb-6 transition-all"
                 >
@@ -238,7 +257,10 @@ const GmailTab: React.FC = () => {
                 ].map((item) => (
                     <button
                         key={item.id}
-                        onClick={() => setActiveFolder(item.id)}
+                        onClick={() => {
+                            setActiveFolder(item.id);
+                            setShowMobileSidebar(false);
+                        }}
                         className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${activeFolder === item.id ? 'bg-slate-900 text-teal-400 font-bold' : 'text-slate-500 hover:bg-slate-900/50 hover:text-slate-300'
                             }`}
                     >
@@ -249,9 +271,15 @@ const GmailTab: React.FC = () => {
             </div>
 
             {/* Thread List */}
-            <div className={`w-96 border-r border-slate-900 flex flex-col ${selectedThreadId ? 'hidden md:flex' : 'flex'}`}>
-                <div className="p-4 border-bottom border-slate-900">
-                    <div className="relative">
+            <div className={`w-full md:w-96 border-r border-slate-900 flex flex-col ${selectedThreadId ? 'hidden md:flex' : 'flex'}`}>
+                <div className="p-4 border-bottom border-slate-900 flex gap-2">
+                    <button
+                        onClick={() => setShowMobileSidebar(true)}
+                        className="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+                    >
+                        <Menu className="w-5 h-5" />
+                    </button>
+                    <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                         <input
                             type="text"
@@ -314,19 +342,27 @@ const GmailTab: React.FC = () => {
             </div>
 
             {/* Conversation Content */}
-            <div className="flex-1 flex flex-col bg-slate-950">
+            <div className={`flex-1 flex flex-col bg-slate-950 ${!selectedThreadId ? 'hidden md:flex' : 'flex'}`}>
                 {selectedThreadId ? (
                     <>
                         {/* Header */}
                         <div className="p-4 border-b border-slate-900 flex justify-between items-center bg-slate-900/30">
-                            <div>
-                                <h1 className="text-lg font-bold text-white mb-1">
-                                    {conversation[0]?.subject || 'Conversation'}
-                                </h1>
-                                <div className="text-xs text-slate-500 gap-2 flex">
-                                    <span className="bg-slate-800 px-2 py-0.5 rounded text-slate-300">
-                                        {activeFolder.toUpperCase()}
-                                    </span>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => setSelectedThreadId(null)}
+                                    className="md:hidden p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+                                >
+                                    <ArrowLeft className="w-5 h-5" />
+                                </button>
+                                <div>
+                                    <h1 className="text-lg font-bold text-white mb-1 line-clamp-1">
+                                        {conversation[0]?.subject || 'Conversation'}
+                                    </h1>
+                                    <div className="text-xs text-slate-500 gap-2 flex">
+                                        <span className="bg-slate-800 px-2 py-0.5 rounded text-slate-300">
+                                            {activeFolder.toUpperCase()}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                             <div className="flex gap-2 text-slate-500">
