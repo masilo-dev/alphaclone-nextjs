@@ -341,20 +341,7 @@ const CreateInvoiceModal = ({ clients, projects, contracts, onClose, onCreate }:
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        // ENFORCEMENT: Block invoice if no contract
-        if (formData.clientId) {
-            // @ts-ignore - contracts passed via parent props but not clearly typed on modal yet (quick fix)
-            const hasContract = (props.contracts || []).some((c: any) =>
-                c.client_id === formData.clientId &&
-                (c.status === 'fully_signed' || c.status === 'client_signed')
-            );
-
-            if (!hasContract) {
-                alert('Action Blocked: You cannot bill a client without a signed contract.');
-                return;
-            }
-        }
-
+        // Contract enforcement removed per user request
         const totals = businessInvoiceService.calculateTotals(
             formData.lineItems,
             formData.taxRate,
@@ -447,14 +434,14 @@ const CreateInvoiceModal = ({ clients, projects, contracts, onClose, onCreate }:
                                     type="number"
                                     placeholder="Qty"
                                     value={item.quantity}
-                                    onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                                    onChange={(e) => updateLineItem(index, 'quantity', e.target.value === '' ? '' : parseFloat(e.target.value))}
                                     className="col-span-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500 text-sm"
                                 />
                                 <input
                                     type="number"
                                     placeholder="Rate"
                                     value={item.rate}
-                                    onChange={(e) => updateLineItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                                    onChange={(e) => updateLineItem(index, 'rate', e.target.value === '' ? '' : parseFloat(e.target.value))}
                                     className="col-span-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500 text-sm"
                                 />
                                 <div className="col-span-2 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm flex items-center">

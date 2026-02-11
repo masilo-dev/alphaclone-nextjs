@@ -98,6 +98,13 @@ const SalesAgent: React.FC = () => {
             return;
         }
 
+        // CHECK LEAD LIMIT BEFORE GENERATING
+        const limitCheck = await leadService.checkLeadLimit();
+        if (!limitCheck.allowed) {
+            toast.error(limitCheck.error || 'Daily lead limit reached.');
+            return;
+        }
+
         setIsSearching(true);
 
         // Show progress indicator

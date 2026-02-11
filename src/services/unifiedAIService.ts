@@ -87,6 +87,17 @@ export const chatWithAI = async (
         return await response.json();
     } catch (error: any) {
         console.error('❌ AI Chat failed:', error);
+
+        // Check for rate limits or overload errors
+        const errorMsg = error?.message || '';
+        if (errorMsg.includes('429') || errorMsg.includes('quota') || errorMsg.includes('capacity')) {
+            // Mask the technical error with a friendly "busy" message
+            return {
+                text: "I apologize, but I'm experiencing very high traffic right now and my response capacity is temporarily limited. Please try asking your question again in about a minute.",
+                grounding: {}
+            };
+        }
+
         throw error;
     }
 };

@@ -341,5 +341,46 @@ export const leadService = {
             .eq('id', id)
             .eq('tenant_id', tenantId); // ← VERIFY OWNERSHIP
         return { error: error ? error.message : null };
+    },
+
+    /**
+     * Check if the tenant has reached the lead generation limit
+     * Limit: 30 leads per sliding 12-hour window
+     */
+    async checkLeadLimit(): Promise<{ allowed: boolean; error: string | null; remaining: number }> {
+        try {
+            const tenantId = this.getTenantId();
+            const MAX_LEADS_12H = 30; // 30 leads per 12 hours
+
+            // Calculate 12 hours ago
+            const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+
+            const { count, error } = await supabase
+                .from('leads')
+                .select('*', { count: 'exact', head: true })
+                .eq('tenant_id', tenantId)
+                .gte('created_at', twelveHoursAgo);
+
+            if (error) throw error;
+
+            const currentCount = count || 0;
+            const remaining = Math.max(0, MAX_LEADS_12H - currentCount);
+
+            if (currentCount >= MAX_LEADS_12H) {
+                return {
+                    allowed: false,
+                    error: `You have reached the limit of ${MAX_LEADS_12H} leads in the last 12 hours. Please try again later.`,
+                    remaining: 0
+                };
+            }
+
+            return { allowed: true, error: null, remaining };
+        } catch (err) {
+            console.error('Error checking lead limit:', err);
+            // Fail open if check fails (allow generation but log error), or fail closed? 
+            // Better to fail open for UX unless strict strict, but user wants limit. 
+            // Let's return error so UI can decide.
+            return { allowed: false, error: 'Unable to verify lead limit.', remaining: 0 };
+        }
     }
 };
