@@ -41,7 +41,7 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// Fetch event - serve from cache when offline
+// Fetch event - serve from cache when offline with optimized strategies
 self.addEventListener('fetch', (event) => {
     // Skip cross-origin requests
     if (!event.request.url.startsWith(self.location.origin)) {
@@ -53,13 +53,72 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    const url = new URL(event.request.url);
+
+    // API requests - Stale-while-revalidate for fast responses
+    if (url.pathname.startsWith('/api/')) {
+        event.respondWith(
+            caches.open(CACHE_NAME).then((cache) => {
+                return cache.match(event.request).then((cachedResponse) => {
+                    const fetchPromise = fetch(event.request).then((networkResponse) => {
+                        // Only cache successful responses
+                        if (networkResponse && networkResponse.status === 200) {
+                            cache.put(event.request, networkResponse.clone());
+                        }
+                        return networkResponse;
+                    }).catch(() => {
+                        // Network failed, return cached version if available
+                        return cachedResponse || new Response(JSON.stringify({ error: 'Offline' }), {
+                            status: 503,
+                            headers: { 'Content-Type': 'application/json' },
+                        });
+                    });
+
+                    // Return cached version immediately if available, update in background
+                    return cachedResponse || fetchPromise;
+                });
+            })
+        );
+        return;
+    }
+
+    // Static assets - Cache first with background update
+    if (url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|gif|woff|woff2|ttf|eot|ico)$/)) {
+        event.respondWith(
+            caches.match(event.request).then((cachedResponse) => {
+                // Return cached version immediately
+                if (cachedResponse) {
+                    // Update cache in background
+                    fetch(event.request).then((response) => {
+                        if (response && response.status === 200) {
+                            caches.open(CACHE_NAME).then((cache) => {
+                                cache.put(event.request, response);
+                            });
+                        }
+                    }).catch(() => {
+                        // Ignore network errors in background update
+                    });
+                    return cachedResponse;
+                }
+
+                // Not in cache, fetch from network
+                return fetch(event.request).then((response) => {
+                    if (response && response.status === 200) {
+                        return caches.open(CACHE_NAME).then((cache) => {
+                            cache.put(event.request, response.clone());
+                            return response;
+                        });
+                    }
+                    return response;
+                });
+            })
+        );
+        return;
+    }
+
+    // Default strategy - Network first, then cache
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-                // Return cached version
-                return cachedResponse;
-            }
-
             // Try to fetch from network
             return fetch(event.request)
                 .then((response) => {
@@ -79,7 +138,11 @@ self.addEventListener('fetch', (event) => {
                     return response;
                 })
                 .catch(() => {
-                    // Network failed, return offline page for navigation requests
+                    // Network failed, return cached version if available
+                    if (cachedResponse) {
+                        return cachedResponse;
+                    }
+                    // Return offline page for navigation requests
                     if (event.request.mode === 'navigate') {
                         return caches.match(OFFLINE_URL);
                     }

@@ -1,6 +1,7 @@
 import { supabase } from '../../lib/supabase';
 import { tenantService } from '../tenancy/TenantService';
 import { AccountType } from './chartOfAccountsService';
+import { cacheService } from '../cacheService';
 
 export interface GeneralLedgerEntry {
     tenantId: string;
@@ -186,43 +187,51 @@ export const generalLedgerService = {
      */
     /**
      * Get trial balance
-     * Optimized to use single RPC call
+     * Optimized to use single RPC call with caching
      */
     async getTrialBalance(asOfDate?: string): Promise<{ trialBalance: TrialBalance | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
+            const cacheKey = `trial_balance:${tenantId}:${asOfDate || 'current'}`;
 
-            // Use the new RPC to get all balances in one go
-            const { data: accountBalances, error } = await supabase.rpc('get_account_balances', {
-                p_tenant_id: tenantId,
-                p_start_date: null, // From beginning
-                p_end_date: asOfDate || null
-            });
+            // Use cache with 2-minute TTL
+            const trialBalance = await cacheService.get(
+                cacheKey,
+                async () => {
+                    // Use the new RPC to get all balances in one go
+                    const { data: accountBalances, error } = await supabase.rpc('get_account_balances', {
+                        p_tenant_id: tenantId,
+                        p_start_date: null, // From beginning
+                        p_end_date: asOfDate || null
+                    });
 
-            if (error) throw error;
+                    if (error) throw error;
 
-            // Map RPC result to internal structure
-            const accounts = (accountBalances || []).map((acc: any) => ({
-                accountCode: acc.account_code,
-                accountName: acc.account_name,
-                accountType: acc.account_type,
-                debitBalance: acc.debit_total,
-                creditBalance: acc.credit_total
-            }));
+                    // Map RPC result to internal structure
+                    const accounts = (accountBalances || []).map((acc: any) => ({
+                        accountCode: acc.account_code,
+                        accountName: acc.account_name,
+                        accountType: acc.account_type,
+                        debitBalance: acc.debit_total,
+                        creditBalance: acc.credit_total
+                    }));
 
-            // Filter for non-zero balances
-            const activeAccounts = accounts.filter((acc: any) => acc.debitBalance > 0 || acc.creditBalance > 0);
+                    // Filter for non-zero balances
+                    const activeAccounts = accounts.filter((acc: any) => acc.debitBalance > 0 || acc.creditBalance > 0);
 
-            // Calculate totals
-            const totalDebits = activeAccounts.reduce((sum: number, acc: any) => sum + acc.debitBalance, 0);
-            const totalCredits = activeAccounts.reduce((sum: number, acc: any) => sum + acc.creditBalance, 0);
+                    // Calculate totals
+                    const totalDebits = activeAccounts.reduce((sum: number, acc: any) => sum + acc.debitBalance, 0);
+                    const totalCredits = activeAccounts.reduce((sum: number, acc: any) => sum + acc.creditBalance, 0);
 
-            const trialBalance: TrialBalance = {
-                accounts: activeAccounts,
-                totalDebits,
-                totalCredits,
-                isBalanced: Math.abs(totalDebits - totalCredits) < 0.01,
-            };
+                    return {
+                        accounts: activeAccounts,
+                        totalDebits,
+                        totalCredits,
+                        isBalanced: Math.abs(totalDebits - totalCredits) < 0.01,
+                    };
+                },
+                { ttl: 2 * 60 * 1000, staleTime: 5 * 60 * 1000 } // 2min fresh, 5min stale
+            );
 
             return { trialBalance, error: null };
         } catch (err: any) {
@@ -238,62 +247,70 @@ export const generalLedgerService = {
     async getBalanceSheetData(asOfDate?: string): Promise<{ statement: FinancialStatement | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
+            const cacheKey = `balance_sheet:${tenantId}:${asOfDate || 'current'}`;
 
-            // Use RPC
-            const { data: accountBalances, error } = await supabase.rpc('get_account_balances', {
-                p_tenant_id: tenantId,
-                p_start_date: null,
-                p_end_date: asOfDate || null
-            });
+            // Use cache with 2-minute TTL
+            const statement = await cacheService.get(
+                cacheKey,
+                async () => {
+                    // Use RPC
+                    const { data: accountBalances, error } = await supabase.rpc('get_account_balances', {
+                        p_tenant_id: tenantId,
+                        p_start_date: null,
+                        p_end_date: asOfDate || null
+                    });
 
-            if (error) throw error;
+                    if (error) throw error;
 
-            // Map to AccountBalance interface
-            const balances: AccountBalance[] = (accountBalances || []).map((acc: any) => ({
-                accountId: acc.account_id,
-                accountCode: acc.account_code,
-                accountName: acc.account_name,
-                accountType: acc.account_type,
-                normalBalance: acc.normal_balance,
-                debitTotal: acc.debit_total,
-                creditTotal: acc.credit_total,
-                balance: acc.balance
-            }));
+                    // Map to AccountBalance interface
+                    const balances: AccountBalance[] = (accountBalances || []).map((acc: any) => ({
+                        accountId: acc.account_id,
+                        accountCode: acc.account_code,
+                        accountName: acc.account_name,
+                        accountType: acc.account_type,
+                        normalBalance: acc.normal_balance,
+                        debitTotal: acc.debit_total,
+                        creditTotal: acc.credit_total,
+                        balance: acc.balance
+                    }));
 
-            // Group by account type
-            const assets = balances.filter(acc => acc.accountType === 'asset');
-            const liabilities = balances.filter(acc => acc.accountType === 'liability');
-            const equity = balances.filter(acc => acc.accountType === 'equity');
-            const revenue = balances.filter(acc => acc.accountType === 'revenue');
-            const expenses = balances.filter(acc => acc.accountType === 'expense');
-            const otherIncome = balances.filter(acc => acc.accountType === 'other_income');
-            const otherExpense = balances.filter(acc => acc.accountType === 'other_expense');
+                    // Group by account type
+                    const assets = balances.filter(acc => acc.accountType === 'asset');
+                    const liabilities = balances.filter(acc => acc.accountType === 'liability');
+                    const equity = balances.filter(acc => acc.accountType === 'equity');
+                    const revenue = balances.filter(acc => acc.accountType === 'revenue');
+                    const expenses = balances.filter(acc => acc.accountType === 'expense');
+                    const otherIncome = balances.filter(acc => acc.accountType === 'other_income');
+                    const otherExpense = balances.filter(acc => acc.accountType === 'other_expense');
 
-            // Calculate totals
-            const totalAssets = assets.reduce((sum, acc) => sum + acc.balance, 0);
-            const totalLiabilities = liabilities.reduce((sum, acc) => sum + acc.balance, 0);
-            const totalEquity = equity.reduce((sum, acc) => sum + acc.balance, 0);
-            const totalRevenue = revenue.reduce((sum, acc) => sum + acc.balance, 0) +
-                otherIncome.reduce((sum, acc) => sum + acc.balance, 0);
-            const totalExpenses = expenses.reduce((sum, acc) => sum + acc.balance, 0) +
-                otherExpense.reduce((sum, acc) => sum + acc.balance, 0);
-            const netIncome = totalRevenue - totalExpenses;
+                    // Calculate totals
+                    const totalAssets = assets.reduce((sum, acc) => sum + acc.balance, 0);
+                    const totalLiabilities = liabilities.reduce((sum, acc) => sum + acc.balance, 0);
+                    const totalEquity = equity.reduce((sum, acc) => sum + acc.balance, 0);
+                    const totalRevenue = revenue.reduce((sum, acc) => sum + acc.balance, 0) +
+                        otherIncome.reduce((sum, acc) => sum + acc.balance, 0);
+                    const totalExpenses = expenses.reduce((sum, acc) => sum + acc.balance, 0) +
+                        otherExpense.reduce((sum, acc) => sum + acc.balance, 0);
+                    const netIncome = totalRevenue - totalExpenses;
 
-            const statement: FinancialStatement = {
-                assets,
-                liabilities,
-                equity,
-                revenue,
-                expenses,
-                otherIncome,
-                otherExpense,
-                totalAssets,
-                totalLiabilities,
-                totalEquity: totalEquity + netIncome, // Equity includes net income
-                totalRevenue,
-                totalExpenses,
-                netIncome,
-            };
+                    return {
+                        assets,
+                        liabilities,
+                        equity,
+                        revenue,
+                        expenses,
+                        otherIncome,
+                        otherExpense,
+                        totalAssets,
+                        totalLiabilities,
+                        totalEquity: totalEquity + netIncome, // Equity includes net income
+                        totalRevenue,
+                        totalExpenses,
+                        netIncome,
+                    };
+                },
+                { ttl: 2 * 60 * 1000, staleTime: 5 * 60 * 1000 }
+            );
 
             return { statement, error: null };
         } catch (err: any) {

@@ -346,8 +346,8 @@ const Dashboard: React.FC<DashboardProps> = ({
       const promises: Promise<any>[] = [
         refreshProjects(),
         refreshInvoices(),
-        // Load fewer messages initially (30 instead of 100) for faster load
-        messageService.getMessages(user.id, isAdmin, 30).then(({ messages: fetchedMessages, error }) => {
+        // Load fewer messages initially (10 instead of 30) for faster load
+        messageService.getMessages(user.id, isAdmin, 10).then(({ messages: fetchedMessages, error }) => {
           if (!error && fetchedMessages) {
             setMessages(fetchedMessages);
             localStorage.setItem(`dashboard_messages_${user.id}`, JSON.stringify(fetchedMessages));

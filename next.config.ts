@@ -126,6 +126,20 @@ const nextConfig: NextConfig = {
 
   // Compression
   compress: true,
+
+  // Image optimization
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60,
+  },
+
+  // Experimental optimizations
+  experimental: {
+    optimizeCss: true, // Enable CSS optimization
+  },
+
+  // Production optimizations
+  productionBrowserSourceMaps: false, // Disable source maps in production for smaller bundles
 };
 
 export default nextConfig;
