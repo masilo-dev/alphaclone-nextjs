@@ -91,9 +91,9 @@ export async function updateSession(request: NextRequest) {
             data: { user },
         } = await supabase.auth.getUser()
 
-        if (request.nextUrl.pathname.startsWith('/dashboard') && !user) {
-            return NextResponse.redirect(new URL('/', request.url))
-        }
+        // if (request.nextUrl.pathname.startsWith('/dashboard') && !user) {
+        //     return NextResponse.redirect(new URL('/', request.url))
+        // }
     } catch (e) {
         // Catch any other errors (e.g. Supabase connection issues) to prevent 500s
         console.error('Middleware Logic Error:', e);
