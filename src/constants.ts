@@ -117,7 +117,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     ]
   },
   { label: 'Contracts', href: '/dashboard/business/contracts', icon: FileText },
-  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },
 ];
 
 export const ADMIN_STATS: DashboardStat[] = [

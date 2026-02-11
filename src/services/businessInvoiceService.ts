@@ -20,6 +20,7 @@ export interface BusinessInvoice {
     lineItems: InvoiceLineItem[];
     notes?: string;
     isPublic: boolean;
+    senderName?: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -62,6 +63,7 @@ export const businessInvoiceService = {
                 lineItems: inv.line_items || [],
                 notes: inv.notes,
                 isPublic: inv.is_public || false,
+                senderName: inv.sender_name,
                 createdAt: inv.created_at,
                 updatedAt: inv.updated_at
             }));
@@ -81,13 +83,17 @@ export const businessInvoiceService = {
             // Generate invoice number if not provided
             const invoiceNumber = invoice.invoiceNumber || await this.generateInvoiceNumber(tenantId);
 
+            // Calculate default due date (14 days from issue date or today)
+            const issueDateObj = invoice.issueDate ? new Date(invoice.issueDate) : new Date();
+            const defaultDueDate = new Date(issueDateObj.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
             const payload = {
                 tenant_id: tenantId,
                 client_id: invoice.clientId || null,
                 project_id: invoice.projectId || null,
                 invoice_number: invoiceNumber,
                 issue_date: invoice.issueDate || new Date().toISOString().split('T')[0],
-                due_date: invoice.dueDate || null, // Fix: Ensure empty string becomes null
+                due_date: invoice.dueDate || defaultDueDate, // Fix: Use default instead of null
                 status: invoice.status || 'draft',
                 subtotal: invoice.subtotal || 0,
                 tax_rate: invoice.taxRate || 0,
@@ -96,7 +102,8 @@ export const businessInvoiceService = {
                 total: invoice.total || 0,
                 line_items: invoice.lineItems || [],
                 notes: invoice.notes,
-                is_public: invoice.isPublic || false
+                is_public: invoice.isPublic || false,
+                sender_name: invoice.senderName
             };
 
             // Debug logging
@@ -130,6 +137,7 @@ export const businessInvoiceService = {
                 lineItems: data.line_items || [],
                 notes: data.notes,
                 isPublic: data.is_public || false,
+                senderName: data.sender_name,
                 createdAt: data.created_at,
                 updatedAt: data.updated_at
             };
@@ -160,7 +168,14 @@ export const businessInvoiceService = {
             if (updates.clientId !== undefined) updateData.client_id = updates.clientId || null;
             if (updates.projectId !== undefined) updateData.project_id = updates.projectId || null;
             if (updates.issueDate !== undefined) updateData.issue_date = updates.issueDate;
-            if (updates.dueDate !== undefined) updateData.due_date = updates.dueDate || null;
+
+            // Fix: due_date is NOT NULL, so fallback to calculated date if cleared
+            if (updates.dueDate !== undefined) {
+                const baseDate = updates.issueDate ? new Date(updates.issueDate) : new Date();
+                const defaultDue = new Date(baseDate.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                updateData.due_date = updates.dueDate || defaultDue;
+            }
+
             if (updates.status !== undefined) updateData.status = updates.status;
             if (updates.subtotal !== undefined) updateData.subtotal = updates.subtotal;
             if (updates.taxRate !== undefined) updateData.tax_rate = updates.taxRate;
@@ -170,6 +185,7 @@ export const businessInvoiceService = {
             if (updates.lineItems !== undefined) updateData.line_items = updates.lineItems;
             if (updates.notes !== undefined) updateData.notes = updates.notes;
             if (updates.isPublic !== undefined) updateData.is_public = updates.isPublic;
+            if (updates.senderName !== undefined) updateData.sender_name = updates.senderName;
 
             updateData.updated_at = new Date().toISOString();
 
@@ -355,6 +371,8 @@ export const businessInvoiceService = {
 
         // Logo Integration
         const logoUrl = tenant.logo_url || tenant.settings?.branding?.logo;
+        const senderName = invoice.senderName || tenant.name || 'Company Name';
+
         if (logoUrl) {
             try {
                 // Approximate position for logo
@@ -362,19 +380,19 @@ export const businessInvoiceService = {
                 doc.setFontSize(24);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor(15, 23, 42); // slate-900
-                doc.text(tenant.name || 'Company Name', 50, 28);
+                doc.text(senderName, 50, 28);
             } catch (e) {
                 console.error('Failed to add logo to PDF:', e);
                 doc.setFontSize(24);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor(15, 23, 42); // slate-900
-                doc.text(tenant.name || 'Company Name', 20, 30);
+                doc.text(senderName, 20, 30);
             }
         } else {
             doc.setFontSize(24);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(15, 23, 42); // slate-900
-            doc.text(tenant.name || 'Company Name', 20, 30);
+            doc.text(senderName, 20, 30);
         }
 
         doc.setFontSize(10);

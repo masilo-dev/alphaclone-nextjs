@@ -322,19 +322,27 @@ const InvoiceCard = ({ invoice, clients, onDownload, onDelete }: any) => {
     );
 };
 
-const CreateInvoiceModal = ({ clients, projects, contracts, onClose, onCreate }: any) => {
+const CreateInvoiceModal = ({ clients, projects, contracts, isOpen, onClose, onInvoiceCreated }: any) => {
+    const { currentTenant } = useTenant();
     const props = { contracts }; // Capture for logic usage
     const [formData, setFormData] = useState({
         clientId: '',
         projectId: '',
         issueDate: new Date().toISOString().split('T')[0],
-        dueDate: '',
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Default to 14 days
+        senderName: currentTenant?.name || '',
         lineItems: [{ description: '', quantity: 1, rate: 0, amount: 0 }],
         taxRate: 0,
         discountAmount: 0,
         notes: '',
         isPublic: true
     });
+
+    useEffect(() => {
+        if (isOpen && currentTenant && !formData.senderName) {
+            setFormData(prev => ({ ...prev, senderName: currentTenant.name }));
+        }
+    }, [isOpen, currentTenant]);
 
     const addLineItem = () => {
         setFormData({
@@ -364,7 +372,7 @@ const CreateInvoiceModal = ({ clients, projects, contracts, onClose, onCreate }:
             formData.discountAmount
         );
 
-        onCreate({
+        onInvoiceCreated({
             ...formData,
             ...totals,
             status: 'draft'
@@ -382,6 +390,17 @@ const CreateInvoiceModal = ({ clients, projects, contracts, onClose, onCreate }:
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium mb-1 text-slate-400">Organization Name (Sender)</label>
+                        <input
+                            type="text"
+                            value={formData.senderName}
+                            onChange={(e) => setFormData({ ...formData, senderName: e.target.value })}
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            placeholder="Your Business Name"
+                        />
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium mb-2">Client *</label>
