@@ -64,13 +64,14 @@ const GmailIntegration: React.FC<GmailIntegrationProps> = ({ user }) => {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center p-8 bg-slate-900/50 rounded-2xl border border-slate-800">
-                <RefreshCw className="w-5 h-5 animate-spin text-teal-500" />
-            </div>
-        );
-    }
+    // Non-blocking loading
+    // if (loading) {
+    //     return (
+    //         <div className="flex items-center justify-center p-8 bg-slate-900/50 rounded-2xl border border-slate-800">
+    //             <RefreshCw className="w-5 h-5 animate-spin text-teal-500" />
+    //         </div>
+    //     );
+    // }
 
     return (
         <div className="space-y-6">
