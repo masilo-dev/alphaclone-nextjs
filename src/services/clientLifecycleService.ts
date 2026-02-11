@@ -70,6 +70,8 @@ class ClientLifecycleService {
      * Bulk fetch summaries for multiple clients to avoid N+1 issues in directory views
      */
     async bulkGetClientLifecycleSummaries(clientIds: string[], tenantId: string): Promise<Record<string, ClientLifecycleSummary>> {
+        if (!clientIds || clientIds.length === 0) return {};
+
         const results: Record<string, ClientLifecycleSummary> = {};
 
         // For directory performance, we fetch all relevant data in chunks and aggregate in memory

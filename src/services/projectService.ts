@@ -222,6 +222,8 @@ export const projectService = {
                 externalUrl: data.external_url,
                 isPublic: data.is_public,
                 showInPortfolio: data.show_in_portfolio,
+                clientId: data.client_id,
+                createdAt: data.created_at,
             };
 
             // Log activity
@@ -403,6 +405,8 @@ export const projectService = {
                         externalUrl: p.external_url,
                         isPublic: p.is_public,
                         showInPortfolio: p.show_in_portfolio,
+                        clientId: p.client_id,
+                        createdAt: p.created_at,
                     };
                     callback(project);
                 }

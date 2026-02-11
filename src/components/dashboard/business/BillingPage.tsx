@@ -244,7 +244,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
                     projects={projects}
                     contracts={contracts}
                     onClose={() => setShowCreateModal(false)}
-                    onCreate={handleCreateInvoice}
+                    onInvoiceCreated={handleCreateInvoice}
                 />
             )}
         </div>
