@@ -9,12 +9,21 @@ import { SubscriptionPlan, PLAN_PRICING } from '../../services/tenancy/types';
 import CalendlySettings from './business/CalendlySettings';
 import GmailIntegration from './business/GmailIntegration';
 
+import { useSearchParams } from 'next/navigation'; // Add import
+
 interface SettingsPageProps {
     user: UserType;
 }
 
 const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
-    const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'security' | 'appearance' | 'billing' | 'booking'>('profile');
+    const searchParams = useSearchParams(); // Get params
+    const initialSection = searchParams.get('section') as any;
+
+    // Check if initialSection is valid, otherwise default to 'profile'
+    const validSections = ['profile', 'notifications', 'security', 'appearance', 'billing', 'booking'];
+    const defaultSection = validSections.includes(initialSection) ? initialSection : 'profile';
+
+    const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'security' | 'appearance' | 'billing' | 'booking'>(defaultSection);
     const [isSaving, setIsSaving] = useState(false);
     const { currentTenant } = useTenant();
 
@@ -579,7 +588,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                     {activeSection === 'booking' && (
                         <div className="space-y-12">
                             <div className="border-b border-slate-800 pb-12">
-                                <span className="text-xs text-slate-600 font-mono mb-4 block">v2.1 - Gmail Enabled</span>
                                 <GmailIntegration user={user} />
                             </div>
                             <CalendlySettings />

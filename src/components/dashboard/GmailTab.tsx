@@ -209,10 +209,10 @@ const GmailTab: React.FC = () => {
                     Connect your individual Gmail account in Settings to read and send emails directly from AlphaClone.
                 </p>
                 <button
-                    onClick={() => window.location.href = '/dashboard/settings'}
+                    onClick={() => window.location.href = '/dashboard/settings?section=booking'}
                     className="px-8 py-3 bg-teal-500 hover:bg-teal-600 text-slate-900 font-black tracking-widest uppercase rounded-xl transition-all"
                 >
-                    GO TO SETTINGS
+                    GO TO SETTINGS (INTEGRATIONS)
                 </button>
             </div>
         );
