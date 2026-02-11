@@ -15,17 +15,32 @@ export interface BusinessClient {
     updatedAt: string;
 }
 
+export interface ClientsResponse {
+    clients: BusinessClient[];
+    count: number;
+    error: string | null;
+}
+
 export const businessClientService = {
     /**
-     * Get all clients for a tenant
+     * Get all clients for a tenant with pagination
      */
-    async getClients(tenantId: string): Promise<{ clients: BusinessClient[]; error: string | null }> {
+    async getClients(tenantId: string, page: number = 1, limit: number = 50, searchTerm: string = ''): Promise<ClientsResponse> {
         try {
-            const { data, error } = await supabase
+            const offset = (page - 1) * limit;
+
+            let query = supabase
                 .from('business_clients')
-                .select('*')
-                .eq('tenant_id', tenantId)
-                .order('created_at', { ascending: false });
+                .select('*', { count: 'exact' })
+                .eq('tenant_id', tenantId);
+
+            if (searchTerm) {
+                query = query.or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,company.ilike.%${searchTerm}%`);
+            }
+
+            const { data, count, error } = await query
+                .order('created_at', { ascending: false })
+                .range(offset, offset + limit - 1);
 
             if (error) throw error;
 
@@ -44,10 +59,10 @@ export const businessClientService = {
                 updatedAt: c.updated_at
             }));
 
-            return { clients, error: null };
+            return { clients, count: count || 0, error: null };
         } catch (err: any) {
             console.error('Error fetching clients:', err);
-            return { clients: [], error: err.message };
+            return { clients: [], count: 0, error: err.message };
         }
     },
 

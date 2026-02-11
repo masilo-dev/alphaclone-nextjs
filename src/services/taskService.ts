@@ -60,6 +60,12 @@ export interface CreateTaskInput {
     metadata?: any;
 }
 
+export interface TasksResponse {
+    tasks: Task[];
+    count: number;
+    error: string | null;
+}
+
 export const taskService = {
     /**
      * Get tenant ID (required for all operations)
@@ -71,7 +77,7 @@ export const taskService = {
     },
 
     /**
-     * Get tasks with optional filters
+     * Get tasks with optional filters and pagination
      */
     async getTasks(filters?: {
         assignedTo?: string;
@@ -81,14 +87,19 @@ export const taskService = {
         relatedToDeal?: string;
         relatedToLead?: string;
         limit?: number;
-    }): Promise<{ tasks: Task[]; error: string | null }> {
+        page?: number;     // NEW
+        offset?: number;   // NEW
+    }): Promise<TasksResponse> {
         try {
             const tenantId = this.getTenantId();
+            const page = filters?.page || 1;
+            const pageSize = filters?.limit || 50;
+            const offset = filters?.offset ?? (page - 1) * pageSize;
 
             let query = supabase
                 .from('tasks')
-                .select('*')
-                .eq('tenant_id', tenantId); // ← TENANT FILTER
+                .select('*', { count: 'exact' }) // Request exact count for pagination
+                .eq('tenant_id', tenantId);
 
             if (filters?.assignedTo) {
                 query = query.eq('assigned_to', filters.assignedTo);
@@ -109,10 +120,11 @@ export const taskService = {
                 query = query.eq('related_to_lead', filters.relatedToLead);
             }
 
-            const { data, error } = await query
+            // Apply pagination
+            const { data, count, error } = await query
                 .order('due_date', { ascending: true, nullsFirst: false })
                 .order('created_at', { ascending: false })
-                .limit(filters?.limit || 100);
+                .range(offset, offset + pageSize - 1); // Supabase range is inclusive
 
             if (error) throw error;
 
@@ -143,9 +155,9 @@ export const taskService = {
                 updatedAt: t.updated_at,
             }));
 
-            return { tasks, error: null };
+            return { tasks, count: count || 0, error: null };
         } catch (err) {
-            return { tasks: [], error: err instanceof Error ? err.message : 'Unknown error' };
+            return { tasks: [], count: 0, error: err instanceof Error ? err.message : 'Unknown error' };
         }
     },
 
@@ -160,7 +172,7 @@ export const taskService = {
                 .from('tasks')
                 .select('*')
                 .eq('id', taskId)
-                .eq('tenant_id', tenantId) // ← VERIFY TENANT OWNERSHIP
+                .eq('tenant_id', tenantId)
                 .single();
 
             if (error) throw error;
@@ -208,7 +220,7 @@ export const taskService = {
             const { data, error } = await supabase
                 .from('tasks')
                 .insert({
-                    tenant_id: tenantId, // ← ASSIGN TO TENANT
+                    tenant_id: tenantId,
                     title: taskData.title,
                     description: taskData.description,
                     assigned_to: taskData.assignedTo,
@@ -308,7 +320,7 @@ export const taskService = {
                 .from('tasks')
                 .update(updateData)
                 .eq('id', taskId)
-                .eq('tenant_id', tenantId) // ← VERIFY OWNERSHIP
+                .eq('tenant_id', tenantId)
                 .select()
                 .single();
 
@@ -395,7 +407,7 @@ export const taskService = {
                 .from('tasks')
                 .delete()
                 .eq('id', taskId)
-                .eq('tenant_id', tenantId); // ← VERIFY OWNERSHIP
+                .eq('tenant_id', tenantId);
 
             if (error) throw error;
 
@@ -414,10 +426,7 @@ export const taskService = {
      * AI-powered task outline generation (Placeholder for MVP)
      */
     async generateTaskOutline(title: string): Promise<{ outline: string; error: string | null }> {
-        // This is a placeholder for a real AI call.
-        // In the future, this would call Gemini.
         const mockOutline = `Strategy for: ${title}\n\n1. Define core objectives\n2. Identify key stakeholders\n3. Establish timeline and milestones\n4. Allocate necessary resources\n5. Execute initial phase\n6. Review and optimize progress`;
-
         return { outline: mockOutline, error: null };
     },
 
@@ -508,7 +517,7 @@ export const taskService = {
             let query = supabase
                 .from('tasks')
                 .select('*')
-                .eq('tenant_id', tenantId) // ← TENANT FILTER
+                .eq('tenant_id', tenantId)
                 .gte('due_date', today.toISOString())
                 .lte('due_date', nextWeek.toISOString())
                 .neq('status', 'completed')
@@ -566,7 +575,7 @@ export const taskService = {
             let query = supabase
                 .from('tasks')
                 .select('*')
-                .eq('tenant_id', tenantId) // ← TENANT FILTER
+                .eq('tenant_id', tenantId)
                 .lt('due_date', today.toISOString())
                 .neq('status', 'completed')
                 .neq('status', 'cancelled');
@@ -614,7 +623,6 @@ export const taskService = {
 
     /**
      * AI-Driven Project Health Assessment
-     * Analyzes tasks to determine project risk and health
      */
     async generateProjectHealth(projectId: string): Promise<{
         score: number;
