@@ -427,13 +427,20 @@ const MeetingPage: React.FC<MeetingPageProps> = ({ user }) => {
                         setCameraOff(newState);
                         callObjectRef.current?.setLocalVideo(!newState);
                     }}
-                    onToggleScreenShare={() => {
-                        if (screenShareOn) {
-                            callObjectRef.current?.stopScreenShare();
+                    onToggleScreenShare={async () => {
+                        try {
+                            if (screenShareOn) {
+                                await callObjectRef.current?.stopScreenShare();
+                                setScreenShareOn(false);
+                            } else {
+                                // Mobile browsers may throw errors here if not supported
+                                await callObjectRef.current?.startScreenShare();
+                                setScreenShareOn(true);
+                            }
+                        } catch (err: any) {
+                            console.error('Screen share error:', err);
+                            toast.error('Screen sharing failed. It may not be supported on this browser.');
                             setScreenShareOn(false);
-                        } else {
-                            callObjectRef.current?.startScreenShare();
-                            setScreenShareOn(true);
                         }
                     }}
                     onToggleChat={() => setChatOpen(!chatOpen)}

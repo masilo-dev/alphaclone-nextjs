@@ -14,7 +14,13 @@ export const VideoLayout: React.FC<VideoLayoutProps> = ({ callObject, participan
     const [pipPosition, setPipPosition] = useState({ x: 16, y: 16 }); // top-right offset
 
     // Filter for screen shares
-    const screenShares = participantIds.filter(id => participants[id]?.tracks?.screenVideo?.persistentTrack);
+    const screenShares = participantIds.filter(id => {
+        const p = participants[id];
+        // More robust check for screen share
+        return p?.tracks?.screenVideo?.state === 'playable' ||
+            p?.tracks?.screenVideo?.persistentTrack ||
+            p?.tracks?.screenVideo?.track;
+    });
 
     return (
         <div className="flex-1 bg-black relative overflow-hidden flex items-center justify-center">

@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https: http:",
               "font-src 'self' data: https://fonts.gstatic.com",
-              "connect-src 'self' https://*.supabase.co https://api.stripe.com https://api.daily.co https://gs.daily.co https://c.daily.co https://ipapi.co https://api.calendly.com https://generativelanguage.googleapis.com https://o77906.ingest.sentry.io wss://*.supabase.co wss://*.daily.co",
+              "connect-src 'self' https://www.alphaclone.tech https://*.supabase.co https://api.stripe.com https://api.daily.co https://gs.daily.co https://c.daily.co https://ipapi.co https://api.calendly.com https://generativelanguage.googleapis.com https://o77906.ingest.sentry.io wss://*.supabase.co wss://*.daily.co",
               "frame-src 'self' https://js.stripe.com https://daily.co https://calendly.com",
               "worker-src 'self' blob:",
               "media-src 'self' blob: data: https:",
