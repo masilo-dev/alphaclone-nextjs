@@ -20,7 +20,7 @@ export const gmailService = {
             .from('gmail_sync_tokens')
             .select('*')
             .eq('user_id', userId)
-            .single();
+            .maybeSingle();
 
         if (error || !tokenData) return null;
 
@@ -344,7 +344,7 @@ export const gmailService = {
             .from('gmail_sync_tokens')
             .select('id')
             .eq('user_id', userId)
-            .single();
+            .maybeSingle();
 
         return !!data && !error;
     }

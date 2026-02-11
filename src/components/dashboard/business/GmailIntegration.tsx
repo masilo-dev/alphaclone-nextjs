@@ -5,8 +5,12 @@ import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
 
-const GmailIntegration: React.FC = () => {
-    const { user } = useAuth();
+interface GmailIntegrationProps {
+    user: any; // Using any to avoid import cycles for now, or import UserType
+}
+
+const GmailIntegration: React.FC<GmailIntegrationProps> = ({ user }) => {
+    // const { user } = useAuth(); // Removed useAuth usage for user
     const [isConnected, setIsConnected] = useState(false);
     const [loading, setLoading] = useState(true);
     const [connecting, setConnecting] = useState(false);
@@ -14,6 +18,8 @@ const GmailIntegration: React.FC = () => {
     useEffect(() => {
         if (user) {
             checkConnection();
+        } else {
+            setLoading(false); // Stop loading if no user
         }
     }, [user]);
 

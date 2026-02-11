@@ -578,10 +578,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 
                     {activeSection === 'booking' && (
                         <div className="space-y-12">
-                            <CalendlySettings />
-                            <div className="border-t border-slate-800 pt-12">
-                                <GmailIntegration />
+                            <div className="border-b border-slate-800 pb-12">
+                                <GmailIntegration user={user} />
                             </div>
+                            <CalendlySettings />
                         </div>
                     )}
                 </div>
