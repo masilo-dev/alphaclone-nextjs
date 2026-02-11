@@ -39,8 +39,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     setUser(initialUser);
                     setError(null);
                     setLoading(false);
+                } else if (isMounted && !initialUser) {
+                    // No user found, but no error either - user is not logged in
+                    console.log('AuthContext: No session found');
+                    setLoading(false);
                 }
             } catch (e) {
+                // Ignore AbortErrors - these happen during navigation/unmounting
+                if (e instanceof Error && e.name === 'AbortError') {
+                    console.log('AuthContext: Session check aborted (component unmounting)');
+                    return;
+                }
+
                 console.warn('AuthContext: Optimistic check failed', e);
                 setError(e instanceof Error ? e.message : 'Authentication failed');
                 setLoading(false);
