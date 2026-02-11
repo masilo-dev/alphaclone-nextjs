@@ -120,11 +120,20 @@ export const leadService = {
             }
             */
 
-            const { data: userData } = await supabase.auth.getUser();
+            const { data: userData, error: authError } = await supabase.auth.getUser();
+
+            if (authError || !userData.user) {
+                console.error('LeadService: Session auth error before insert', authError);
+                // Try to refresh
+                const { data: refreshData } = await supabase.auth.refreshSession();
+                if (!refreshData.user) {
+                    return { lead: null, error: 'Authentication session expired. Please refresh the page.' };
+                }
+            }
 
             const dbPayload = {
                 tenant_id: tenantId, // ← ASSIGN TO TENANT
-                owner_id: userData.user?.id,
+                owner_id: userData.user?.id || (await supabase.auth.getUser()).data.user?.id,
                 business_name: lead.businessName,
                 industry: lead.industry,
                 location: lead.location,
@@ -145,7 +154,11 @@ export const leadService = {
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error('LeadService: Insert error', error);
+                if (error.code === '42501') return { lead: null, error: 'Permission denied. Please refresh.' };
+                throw error;
+            }
 
             const newLead: Lead = {
                 id: data.id,
@@ -224,8 +237,18 @@ export const leadService = {
             }
             */
 
-            const { data: userData } = await supabase.auth.getUser();
-            const ownerId = userData.user?.id;
+            const { data: userData, error: authError } = await supabase.auth.getUser();
+
+            if (authError || !userData.user) {
+                console.error('LeadService: Session auth error before bulk insert', authError);
+                // Try to refresh session if it's a 401
+                const { data: refreshData } = await supabase.auth.refreshSession();
+                if (!refreshData.user) {
+                    return { count: 0, error: 'Authentication session expired. Please refresh the page and try again.' };
+                }
+            }
+
+            const ownerId = userData.user?.id || (await supabase.auth.getUser()).data.user?.id;
 
             const dbPayloads = leads.map((l: any) => ({
                 tenant_id: tenantId, // ← ASSIGN TO TENANT
@@ -249,10 +272,17 @@ export const leadService = {
                 .insert(dbPayloads)
                 .select();
 
-            if (error) throw error;
+            if (error) {
+                console.error('LeadService: Bulk insert error', error);
+                if (error.code === '42501' || error.message.includes('JWT')) {
+                    return { count: 0, error: 'Permission denied or session expired. Please refresh.' };
+                }
+                throw error;
+            }
 
             return { count: data?.length || 0, error: null };
         } catch (err) {
+            console.error('LeadService: Bulk insert exception', err);
             return { count: 0, error: err instanceof Error ? err.message : 'Unknown error' };
         }
     },

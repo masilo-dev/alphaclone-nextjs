@@ -173,6 +173,7 @@ async function completeWithGemini(options: AIRequestOptions): Promise<AIResponse
 export async function routeAIChat(
   history: Array<{ role: string; content: string }>,
   message: string,
+  systemPrompt?: string,
   image?: string
 ): Promise<AIResponse> {
   const errors: string[] = [];
@@ -181,7 +182,7 @@ export async function routeAIChat(
   if (anthropic) {
     try {
       console.log('[AI Router] Attempting Anthropic chat...');
-      const response = await chatWithAnthropic(history, message);
+      const response = await chatWithAnthropic(history, message, systemPrompt);
       console.log('[AI Router] ✓ Anthropic chat succeeded');
       return response;
     } catch (error: any) {
@@ -195,7 +196,7 @@ export async function routeAIChat(
   if (openai) {
     try {
       console.log('[AI Router] Attempting OpenAI chat...');
-      const response = await chatWithOpenAI(history, message);
+      const response = await chatWithOpenAI(history, message, systemPrompt);
       console.log('[AI Router] ✓ OpenAI chat succeeded');
       return response;
     } catch (error: any) {
@@ -214,6 +215,7 @@ export async function routeAIChat(
         role: msg.role,
         text: msg.content
       }));
+      // Note: Gemini implementation might need update to support system instruction if not already there
       const result = await chatWithGemini(geminiHistory, message, image);
       console.log('[AI Router] ✓ Gemini chat succeeded');
 
@@ -238,7 +240,8 @@ export async function routeAIChat(
  */
 async function chatWithAnthropic(
   history: Array<{ role: string; content: string }>,
-  message: string
+  message: string,
+  systemPrompt?: string
 ): Promise<AIResponse> {
   if (!anthropic) {
     throw new Error('Anthropic API key not configured');
@@ -259,6 +262,7 @@ async function chatWithAnthropic(
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-5-20250929',
     max_tokens: 4096,
+    system: systemPrompt,
     messages,
   });
 
@@ -277,22 +281,27 @@ async function chatWithAnthropic(
  */
 async function chatWithOpenAI(
   history: Array<{ role: string; content: string }>,
-  message: string
+  message: string,
+  systemPrompt?: string
 ): Promise<AIResponse> {
   if (!openai) {
     throw new Error('OpenAI API key not configured');
   }
 
-  const messages = [
-    ...history.map(msg => ({
-      role: (msg.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
-      content: msg.content,
-    })),
-    {
-      role: 'user' as const,
-      content: message,
-    },
-  ];
+  const messages: any[] = [];
+  if (systemPrompt) {
+    messages.push({ role: 'system', content: systemPrompt });
+  }
+
+  messages.push(...history.map(msg => ({
+    role: (msg.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
+    content: msg.content,
+  })));
+
+  messages.push({
+    role: 'user' as const,
+    content: message,
+  });
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4-turbo',

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, UserPlus, Phone, CheckCircle2, Bot, Send, Trash2, Upload, FileSpreadsheet, X, Mail, Settings, ExternalLink, FileText, Zap } from 'lucide-react';
-import { generateLeads, chatWithAI, isAnyAIConfigured } from '../../services/unifiedAIService';
+import { generateLeads, chatWithGrowthAgent, isAnyAIConfigured } from '../../services/unifiedAIService';
 import { leadService, Lead } from '../../services/leadService';
 import { fileImportService } from '../../services/fileImportService';
 import LeadDetailModal from './leads/LeadDetailModal';
@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 
 const SalesAgent: React.FC = () => {
     const aiConfigured = isAnyAIConfigured();
-    const [activeTab, setActiveTab] = useState<'leads' | 'agent'>('leads');
+    const [activeTab, setActiveTab] = useState<'leads' | 'agent'>('agent'); // Default to agent chat for "Manus" experience
     const [searchParams, setSearchParams] = useState({ industry: '', location: '' });
     const [leads, setLeads] = useState<Lead[]>([]);
     const [isSearching, setIsSearching] = useState(false);
@@ -128,7 +128,11 @@ const SalesAgent: React.FC = () => {
                     location: r.location,
                     phone: r.phone,
                     email: r.email,
-                    value: r.value,
+                    website: r.website,
+                    fb: r.facebook || r.fb,
+                    notes: r.notes || r.aiAnalysis || r.description,
+                    outreachMessage: r.outreachMessage || r.emailDraft,
+                    value: r.estimatedValue || r.value,
                     source: r.leadSource || 'AI Agent'
                 }));
 
@@ -305,14 +309,43 @@ const SalesAgent: React.FC = () => {
                 text: m.text
             }));
 
-            // Get AI response
-            const { text } = await chatWithAI(history, userMessage);
+            // Get specialized Growth Agent response
+            const { text } = await chatWithGrowthAgent(history, userMessage);
+
+            if (!text) throw new Error("No response from AI");
+
+            // --- Intent Extraction (Manus AI Style) ---
+            const commandMatch = text.match(/\[SEARCH_COMMAND:\s*({.*?})\]/);
 
             setMessages(prev => [...prev, {
                 id: prev.length + 1,
                 sender: 'agent',
-                text: text || 'I apologize, but I encountered an issue processing your request. Please try again.'
+                text: text.replace(/\[SEARCH_COMMAND:.*?\]/, '').trim() // Hide command from user
             }]);
+
+            if (commandMatch) {
+                try {
+                    const searchData = JSON.parse(commandMatch[1]);
+                    if (searchData.industry && searchData.location) {
+                        toast.success(`🤖 Intent detected: Searching for ${searchData.industry} in ${searchData.location}...`);
+
+                        // Switch to leads tab briefly or just trigger search
+                        // Actually, let's just trigger the search logic
+                        setSearchParams({
+                            industry: searchData.industry,
+                            location: searchData.location
+                        });
+
+                        // Small delay to let state update
+                        setTimeout(() => {
+                            setActiveTab('leads');
+                            handleAutoSearch(searchData.industry, searchData.location);
+                        }, 500);
+                    }
+                } catch (e) {
+                    console.error("Failed to parse search command", e);
+                }
+            }
         } catch (error) {
             console.error('❌ AI Chat Error:', error);
             setMessages(prev => [...prev, {
@@ -320,6 +353,66 @@ const SalesAgent: React.FC = () => {
                 sender: 'agent',
                 text: 'I apologize, but I encountered a technical issue. Please try again or contact support if the problem persists.'
             }]);
+        }
+    };
+
+    // Specialized auto-search that bypasses toast.loading if needed or just reuses handleSearch
+    const handleAutoSearch = async (industry: string, location: string) => {
+        // Validate inputs
+        if (!industry.trim() || !location.trim()) return;
+
+        // CHECK LEAD LIMIT BEFORE GENERATING
+        const limitCheck = await leadService.checkLeadLimit();
+        if (!limitCheck.allowed) {
+            toast.error(limitCheck.error || 'Daily lead limit reached.');
+            return;
+        }
+
+        setIsSearching(true);
+        const progressToast = toast.loading(`🤖 AI is searching for ${industry} in ${location}...`);
+
+        try {
+            const results = await generateLeads(industry, location, '', 'tenant');
+
+            if (results && results.length > 0) {
+                toast.loading('💾 Saving leads...', { id: progressToast });
+
+                const leadsToAdd = results.map((r: any) => ({
+                    businessName: r.businessName,
+                    industry: r.industry,
+                    location: r.location,
+                    phone: r.phone,
+                    email: r.email,
+                    website: r.website,
+                    fb: r.facebook || r.fb,
+                    notes: r.notes || r.aiAnalysis || r.description,
+                    outreachMessage: r.outreachMessage || r.emailDraft,
+                    value: r.estimatedValue || r.value,
+                    source: r.leadSource || 'AI Agent'
+                }));
+
+                const { count, error } = await leadService.addBulkLeads(leadsToAdd);
+                if (error) {
+                    toast.error(`AI found leads but failed to save them: ${error}`, { id: progressToast });
+                } else {
+                    toast.success(`🎉 Discovered and saved ${count} new leads!`, { id: progressToast, duration: 4000 });
+                    loadLeads();
+
+                    // Conversational Follow-up
+                    setMessages(prev => [...prev, {
+                        id: prev.length + 1,
+                        sender: 'agent',
+                        text: `Done! I've discovered ${count} high-quality leads for ${industry} in ${location} and added them to your Lead Finder. Would you like me to analyze any of them or draft a specific outreach?`
+                    }]);
+                }
+            } else {
+                toast.error("No leads found. Try different criteria.", { id: progressToast });
+            }
+        } catch (error: any) {
+            console.error('❌ Lead generation error:', error);
+            toast.error(error?.message || 'AI Generation failed.', { id: progressToast });
+        } finally {
+            setIsSearching(false);
         }
     };
 

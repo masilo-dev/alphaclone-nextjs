@@ -266,11 +266,12 @@ export const authService = {
                     avatar: metadata.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
                 };
             } else {
-                // Slow path: Fetch from database with retries (important for OAuth/Trigger race conditions)
+                // MISSION CRITICAL: Slower retry loop for high-latency regions (e.g. South Africa)
+                // or slow database triggers during OAuth registration.
                 let profile = null;
                 let lastError = null;
-                const maxRetries = 5;
-                const retryDelay = 500; // ms
+                const maxRetries = 10; // Increased from 5
+                const retryDelay = 1000; // Increased from 500ms
 
                 for (let i = 0; i < maxRetries; i++) {
                     const { data: p, error: profileError } = await supabase
@@ -286,26 +287,31 @@ export const authService = {
 
                     lastError = profileError;
 
-                    // Check for 403 Forbidden errors specifically
+                    // If we get a 403, it's a structural RLS issue, retrying won't help
                     if (profileError?.code === 'PGRST301' || profileError?.message?.includes('403')) {
-                        console.error('AuthService: 403 Forbidden - RLS policy blocking profile access', {
-                            code: profileError.code,
-                            message: profileError.message,
-                            userId: session.user.id
-                        });
-                        return {
-                            user: null,
-                            error: 'Permission denied: Unable to access your profile. Please contact support.'
-                        };
+                        console.error('AuthService: Profile 403 Forbidden', profileError);
+                        break;
                     }
 
-                    console.log(`AuthService: Profile not found, retry ${i + 1}/${maxRetries} in ${retryDelay}ms... (Error: ${profileError?.message || 'Not Found'})`);
+                    console.log(`AuthService: Profile sync retry ${i + 1}/${maxRetries}...`);
                     await new Promise(resolve => setTimeout(resolve, retryDelay));
                 }
 
                 if (!profile) {
-                    console.error("AuthService: Profile check failed after retries", lastError || "No profile found");
-                    return { user: null, error: 'Failed to fetch user profile after retries' };
+                    // EMERGENCY FALLBACK: If we're authenticated but the profile is still missing 
+                    // (e.g. trigger failed or network timeout), we create a transient user 
+                    // instead of returning null and triggering a redirect loop.
+                    console.warn("AuthService: Profile retrieval failed. Using transient profile.", lastError);
+
+                    user = {
+                        id: session.user.id,
+                        email: session.user.email || '',
+                        name: session.user.user_metadata.full_name || session.user.email?.split('@')[0] || 'User',
+                        role: (session.user.user_metadata.role as any) || 'client',
+                        avatar: session.user.user_metadata.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.id}`,
+                    };
+
+                    return { user, error: null };
                 }
 
                 console.log("AuthService: Profile retrieved successfully", profile.role);

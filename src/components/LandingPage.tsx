@@ -83,6 +83,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
    const [isLoginOpen, setIsLoginOpen] = useState(false);
    const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
 
+
    // Animated Hamburger Icon Component (internal)
    const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
       <div className="relative w-6 h-5 flex flex-col justify-between items-center transition-all duration-300">
@@ -387,8 +388,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         <button
                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                            className={`w-12 h-12 flex items-center justify-center rounded-xl border transition-all duration-300 ${mobileMenuOpen
-                                 ? 'text-teal-400 bg-slate-900 border-teal-500/50'
-                                 : 'text-white bg-slate-900/50 border-slate-800 hover:border-slate-700'
+                              ? 'text-teal-400 bg-slate-900 border-teal-500/50'
+                              : 'text-white bg-slate-900/50 border-slate-800 hover:border-slate-700'
                               }`}
                            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
                         >
@@ -411,20 +412,20 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/50 backdrop-blur border border-slate-700/50 text-teal-400 text-sm font-medium mb-8 shadow-lg shadow-teal-900/20"
                   >
                      <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
-                     Unified Operations Intelligence
+                     The Future of Business Infrastructure
                   </motion.div>
 
-                  <motion.h1
+                  <motion.div
                      initial={{ opacity: 0, y: 20 }}
                      animate={{ opacity: 1, y: 0 }}
                      transition={{ delay: 0.1 }}
                      className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-white mb-6 md:mb-8 leading-[1.1]"
                   >
-                     Run Your Business<br />
+                     One Platform.<br />
                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 via-blue-400 to-violet-400">
-                        At Warp Speed
+                        Total Control.
                      </span>
-                  </motion.h1>
+                  </motion.div>
 
                   <motion.p
                      initial={{ opacity: 0, y: 20 }}
@@ -432,7 +433,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      transition={{ delay: 0.2 }}
                      className="text-lg sm:text-xl md:text-2xl text-slate-400 mb-8 md:mb-12 leading-relaxed max-w-3xl mx-auto"
                   >
-                     The only platform that combines high-performance CRM, Project Management, and AI Agents into one seamless, premium ecosystem.
+                     Replace your fragmented tech stack with AlphaClone. The high-performance Business OS that unifies your CRM, projects, and finances.
                   </motion.p>
 
                   <motion.div
@@ -446,7 +447,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         size="lg"
                         className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-10 h-14 w-full sm:w-auto text-lg shadow-xl shadow-teal-500/20 hover:scale-105 transition-transform"
                      >
-                        Start For Free
+                        Get Started Free
                      </Button>
                      <Button
                         size="lg"
@@ -471,6 +472,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                   </motion.div>
                </div>
             </section>
+
             {/* Who We Serve Section */}
             <section id="who-we-serve" className="py-24 bg-slate-950/80 backdrop-blur-sm border-y border-slate-800/50">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -779,8 +781,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            id: 'crm',
                            icon: Database,
                            color: 'blue',
-                           title: 'Enterprise CRM',
-                           summary: 'Master your deal flow with high-performance tracking.',
+                           title: 'Unified CRM',
+                           summary: 'Close Deals Faster. Your client data, communication history, and contracts in one place. No more hunting for info.',
                            details: [
                               'Visual Kanban Sales Pipelines',
                               'Client Lifecycle Automation & Notifications',
@@ -818,26 +820,26 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            id: 'finance',
                            icon: BarChart,
                            color: 'emerald',
-                           title: 'Finance Hub',
-                           summary: 'Automated billing and revenue reconcilliation.',
+                           title: 'Unified Finance',
+                           summary: 'Complete financial oversight. Manage invoices, track subscriptions, and monitor your revenue streams in one secure, unified module.',
                            details: [
-                              'Automated Stripe Invoice Generation',
-                              'Subscription Management & Pro-rating',
-                              'Real-time Profit & Loss Reporting',
-                              'Multi-Currency Support & Tax Compliance'
+                              'Stripe integration ready',
+                              'Subscription management',
+                              'Revenue analytics',
+                              'Automated tax compliance'
                            ]
                         },
                         {
-                           id: 'contracts',
-                           icon: FileCheck,
+                           id: 'tasks',
+                           icon: CheckCircle2,
                            color: 'cyan',
                            title: 'Contract Logic',
-                           summary: 'Generate and sign legally sound agreements in seconds.',
+                           summary: 'Technical contract management simplified. Deploy, track, and manage complex agreements with built-in validation and team signatures.',
                            details: [
-                              'AI-Powered Contract Drafting',
-                              'Dynamic Milestone-Based Agreements',
-                              'Secure Digital Signatures',
-                              'Integrated Version Control'
+                              'Cryptographic validation',
+                              'Multi-party signing',
+                              'Version control history',
+                              'Automated milestone triggers'
                            ]
                         }
                      ].map((service, i) => {
@@ -1078,7 +1080,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         </ul>
                         <Button
                            variant="outline"
-                           onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
+                           onClick={() => scrollToSection('contact')}
                            className="w-full h-12 border-slate-700 bg-slate-900/50 hover:bg-slate-800 text-white font-bold"
                         >
                            Contact Sales
@@ -1141,77 +1143,49 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               <p className="text-slate-400">We'll be in touch with you shortly to discuss your project.</p>
                            </div>
                         ) : (
-                           <div className="space-y-6">
-                              <h3 className="text-xl font-bold text-white mb-6">Book a Consultation</h3>
-
-                              <div className="p-4 bg-teal-500/10 border border-teal-500/30 rounded-xl mb-6">
-                                 <div className="flex items-center justify-between flex-wrap gap-4">
-                                    <div>
-                                       <h4 className="text-teal-400 font-bold mb-1">Schedule Directly</h4>
-                                       <p className="text-sm text-slate-400">Pick a time that works for you via Calendly.</p>
-                                    </div>
-                                    <Button
-                                       onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
-                                       className="bg-teal-600 hover:bg-teal-500 text-white"
-                                    >
-                                       Book Meeting
-                                    </Button>
-                                 </div>
-                              </div>
-
-                              <div className="relative mb-6">
-                                 <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-slate-700"></div>
-                                 </div>
-                                 <div className="relative flex justify-center text-sm">
-                                    <span className="px-2 bg-slate-900 text-slate-500">Or send us a message</span>
-                                 </div>
-                              </div>
-
-                              <form onSubmit={handleContactSubmit} className="space-y-6">
-                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <Input
-                                       label="Name"
-                                       placeholder="John Doe"
-                                       required
-                                       value={contactForm.name}
-                                       onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                                    />
-                                    <Input
-                                       label="Email"
-                                       type="email"
-                                       placeholder="john@company.com"
-                                       required
-                                       value={contactForm.email}
-                                       onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                                    />
-                                 </div>
+                           <form onSubmit={handleContactSubmit} className="space-y-6">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                  <Input
-                                    label="Project Type"
-                                    placeholder="Web Dev, AI, Mobile App..."
+                                    label="Name"
+                                    placeholder="John Doe"
                                     required
-                                    value={contactForm.subject}
-                                    onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
+                                    value={contactForm.name}
+                                    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
                                  />
-                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Message</label>
-                                    <textarea
-                                       className="w-full bg-slate-950/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50 min-h-[120px]"
-                                       placeholder="Tell us about your requirements..."
-                                       required
-                                       value={contactForm.message}
-                                       onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                                    />
-                                 </div>
-                                 <Button
-                                    type="submit"
-                                    className="w-full h-12 bg-slate-800 hover:bg-slate-700 text-lg font-semibold border border-slate-700"
-                                    isLoading={formStatus === 'sending'}
-                                 >
-                                    Send Message
-                                 </Button>
-                              </form>
-                           </div>
+                                 <Input
+                                    label="Email"
+                                    type="email"
+                                    placeholder="john@company.com"
+                                    required
+                                    value={contactForm.email}
+                                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                                 />
+                              </div>
+                              <Input
+                                 label="Project Type"
+                                 placeholder="Web Dev, AI, Mobile App..."
+                                 required
+                                 value={contactForm.subject}
+                                 onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
+                              />
+                              <div>
+                                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Message</label>
+                                 <textarea
+                                    className="w-full bg-slate-950/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50 min-h-[120px]"
+                                    placeholder="Tell us about your requirements..."
+                                    required
+                                    value={contactForm.message}
+                                    onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                                 />
+                              </div>
+                              <Button
+                                 type="submit"
+                                 disabled={formStatus === 'sending'}
+                                 className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold h-12 text-lg shadow-lg shadow-teal-500/20"
+                              >
+                                 {formStatus === 'sending' ? 'Sending...' : 'Send Message'}
+                              </Button>
+                           </form>
                         )}
                      </div>
                   </div>

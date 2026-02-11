@@ -23,29 +23,31 @@ export async function POST(req: Request) {
         console.log(`[Lead Gen] Generating leads for: ${industry} in ${location}`);
 
         // Create lead generation prompt
-        const prompt = `Generate EXACTLY 5 realistic and professional business leads for the "${industry}" industry in "${location}".
+        const prompt = `Generate EXACTLY 5 high-quality, realistic business leads for the following specification:
+Target Service/Industry: "${industry}"
+Location: "${location}"
 
 CRITICAL REQUIREMENTS:
-- All data must be plausible and realistic for ${location}
-- Business names must be appropriate for ${industry} industry
-- Phone numbers must follow standard ${location} format
-- Email addresses must be professional and realistic
-- Facebook handles should be lowercase, no spaces
-- DO NOT fabricate real companies - create plausible fictional ones
-- DO NOT use placeholder data like "example.com" or "123-456-7890"
+- Match the SPECIFIC service description if provided (e.g., if industry is "Emergency Plumber", don't just return general contractors).
+- All data must be plausible and realistic for ${location}.
+- Business names must be creative and professional (fictional, but sounding like real local businesses).
+- Phone numbers must follow standard ${location} format.
+- Email addresses must be professional (e.g., info@businessname.com or contact@...).
+- Facebook handles should be lowercase, simple, and relevant to the business name.
+- DO NOT use placeholder names like "Company A" or "John Doe Inc".
+- Return ONLY valid JSON.
 
-Return ONLY a valid JSON array (no markdown, no explanation) where each object has:
-- id: random 8-character alphanumeric string
-- businessName: realistic business name (not a real company)
+Return a JSON array of objects with these keys:
+- id: random 8-character string
+- businessName: string
 - industry: "${industry}"
 - location: "${location}"
-- phone: realistic phone number for ${location}
-- email: professional email (firstname@businessname.com format)
-- facebook: lowercase handle
-- estimatedValue: number between 5000-50000
-
-Example format (DO NOT copy these exact values):
-[{"id":"abc12345","businessName":"Tech Innovations LLC","industry":"${industry}","location":"${location}","phone":"(555) 123-4567","email":"contact@techinnovations.com","facebook":"techinnovations","estimatedValue":25000}]`;
+- phone: string
+- email: string
+- website: plausible website URL (fictional)
+- facebook: string (handle only)
+- estimatedValue: number (5000-50000)
+- notes: A brief 1-sentence AI analysis of why this lead is a good fit for ${industry}.`;
 
         // Use smart router with fallback chain
         const response = await routeAIRequest({

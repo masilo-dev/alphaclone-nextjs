@@ -48,29 +48,32 @@ export const geminiService = {
 export const chatWithGemini = async (
     history: { role: string; text: string }[],
     message: string,
-    image?: string
+    image?: string,
+    systemPromptText?: string
 ) => {
     try {
         const model = getModel('gemini-1.5-pro-latest');
 
-        // Add system prompt to prevent hallucination
-        const systemPrompt = {
-            role: 'user',
-            parts: [{
-                text: `You are a professional business assistant for AlphaClone Systems.
+        // Use custom system prompt if provided, otherwise default to the professional assistant one
+        const finalSystemPrompt = systemPromptText || `You are a professional business assistant for AlphaClone Systems.
 CRITICAL INSTRUCTIONS:
 - Only provide accurate, factual information based on context provided
 - If you don't know something, say "I don't have that information"
 - Never make up or fabricate data, numbers, or details
 - Stay professional and concise
 - Focus on the user's actual query
-- Do not hallucinate features, capabilities, or information that wasn't explicitly provided`
+- Do not hallucinate features, capabilities, or information that wasn't explicitly provided`;
+
+        const systemPrompt = {
+            role: 'user',
+            parts: [{
+                text: finalSystemPrompt
             }]
         };
 
         const modelResponse = {
             role: 'model',
-            parts: [{ text: 'Understood. I will provide only accurate, factual responses without fabricating information.' }]
+            parts: [{ text: 'Understood. I will follow these instructions.' }]
         };
 
         // Transform history to parts format if needed,

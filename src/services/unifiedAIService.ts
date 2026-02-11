@@ -58,6 +58,55 @@ export const generateText = async (prompt: string, maxTokens: number = 2048): Pr
 };
 
 /**
+ * Specialized chat for the Growth Agent (Sales Agent)
+ * Includes system instructions for lead discovery intent detection
+ */
+export const chatWithGrowthAgent = async (
+    history: { role: string; text: string }[],
+    message: string
+): Promise<{ text: string; grounding: any }> => {
+    const systemPrompt = `You are the AlphaClone Growth Agent. Your goal is to help users find high-quality leads and grow their business.
+    
+    INTENT DETECTION:
+    If a user asks to "find", "search", "get", or "discover" leads/businesses for a specific service/industry in a specific location, you MUST respond with a specialized command at the end of your text.
+    
+    COMMAND FORMAT: [SEARCH_COMMAND: {"industry": "precise service name", "location": "city or country"}]
+    
+    EXAMPLES:
+    - User: "Find me plumbers in London" 
+      AI: "Certainly! I'll search for plumbers in London for you right now. [SEARCH_COMMAND: {"industry": "Plumbing Services", "location": "London"}]"
+    - User: "I need graphic designers in NY"
+      AI: "Great choice. Searching for graphic designers in New York... [SEARCH_COMMAND: {"industry": "Graphic Design", "location": "New York"}]"
+    
+    If information is missing (like location), ask the user for it first.
+    Be proactive, premium, and concise.`;
+
+    try {
+        const response = await fetch('/api/ai/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                history,
+                message,
+                systemPrompt
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to get response from Growth Agent');
+        }
+
+        return await response.json();
+    } catch (error: any) {
+        console.error('❌ Growth Agent Chat failed:', error);
+        throw error;
+    }
+};
+
+/**
  * Start a chat session (proxied through server-side route for security and reliability)
  */
 export const chatWithAI = async (

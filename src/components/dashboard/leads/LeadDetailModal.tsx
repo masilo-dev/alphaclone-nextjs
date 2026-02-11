@@ -295,19 +295,67 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                         <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center">
                                             <Globe className="w-4 h-4 text-slate-400" />
                                         </div>
-                                        <span>{lead.website || 'No website'}</span>
+                                        <div className="flex-1 overflow-hidden truncate">
+                                            {lead.website ? (
+                                                <a href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" className="text-teal-400 hover:text-teal-300 transition-colors">
+                                                    {lead.website}
+                                                </a>
+                                            ) : (
+                                                <span className="text-slate-500 italic text-sm">No website available</span>
+                                            )}
+                                        </div>
                                     </div>
+                                    {lead.location && (
+                                        <div className="flex items-center gap-3 text-slate-300">
+                                            <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center">
+                                                <MapPin className="w-4 h-4 text-slate-400" />
+                                            </div>
+                                            <span>{lead.location}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </Card>
 
-                            <Card className="p-6">
-                                <h3 className="text-lg font-semibold text-white mb-4">AI Insights</h3>
-                                <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
-                                    <p className="text-purple-200 text-sm leading-relaxed">
-                                        {lead.notes || "No AI analysis available yet. Generate insights from the Sales Agent."}
-                                    </p>
-                                </div>
-                            </Card>
+                            <div className="space-y-6">
+                                <Card className="p-6">
+                                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                        <Bot className="w-5 h-5 text-teal-400" />
+                                        AI Insights
+                                    </h3>
+                                    <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                                        <p className="text-purple-200 text-sm leading-relaxed">
+                                            {lead.notes || "No AI analysis available yet. Generate insights from the Sales Agent."}
+                                        </p>
+                                    </div>
+                                </Card>
+
+                                {lead.outreachMessage && (
+                                    <Card className="p-6 bg-slate-900/40 border-slate-800">
+                                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                            <Send className="w-5 h-5 text-teal-400" />
+                                            Outreach Draft
+                                        </h3>
+                                        <div className="p-4 bg-slate-950 border border-slate-700/50 rounded-lg">
+                                            <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap italic">
+                                                "{lead.outreachMessage}"
+                                            </p>
+                                        </div>
+                                        <div className="mt-4 flex justify-end">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="text-xs border-slate-700 hover:bg-slate-800"
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(lead.outreachMessage || '');
+                                                    toast.success('Draft copied to clipboard');
+                                                }}
+                                            >
+                                                Copy Draft
+                                            </Button>
+                                        </div>
+                                    </Card>
+                                )}
+                            </div>
                         </div>
                     )}
 

@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AlphaClone Business OS",
-  description: "The All-In-One Business Operating System",
+  title: "AlphaClone | Enterprise Business Operating System",
+  description: "The all-in-one platform for modern businesses. CRM, Finance, Tasks, and Team Management unified in one high-performance dashboard.",
 };
 
 export const viewport: Viewport = {
