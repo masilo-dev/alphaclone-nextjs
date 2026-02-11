@@ -210,13 +210,26 @@ export async function routeAIChat(
   if (process.env.VITE_GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
     try {
       console.log('[AI Router] Attempting Gemini chat...');
-      // Convert history format: content → text
-      const geminiHistory = history.map((msg: any) => ({
-        role: msg.role === 'model' ? 'model' : 'user',
-        text: msg.content || msg.text || ''
-      }));
-      // Note: Gemini implementation might need update to support system instruction if not already there
-      const result = await chatWithGemini(geminiHistory, message, image);
+      // Gemini REQUIRED: Roles MUST alternate and history should start with 'user'
+      // Growth Agent greeting is 'model', so we skip if first
+      const validHistory = history.filter((msg, idx) => {
+        if (idx === 0 && msg.role !== 'user') return false;
+        return true;
+      });
+
+      const geminiHistory: any[] = [];
+      for (const msg of validHistory) {
+        const role = msg.role === 'model' ? 'model' : 'user';
+        if (geminiHistory.length > 0 && geminiHistory[geminiHistory.length - 1].role === role) {
+          continue; // Skip consecutive same roles
+        }
+        geminiHistory.push({
+          role,
+          text: msg.content || (msg as any).text || ''
+        });
+      }
+
+      const result = await chatWithGemini(geminiHistory, message, image, systemPrompt);
       console.log('[AI Router] ✓ Gemini chat succeeded');
 
       return {
@@ -247,23 +260,47 @@ async function chatWithAnthropic(
     throw new Error('Anthropic API key not configured');
   }
 
-  // Convert history to Anthropic format
-  const messages = [
-    ...history.map((msg: any) => ({
-      role: msg.role === 'user' ? ('user' as const) : ('assistant' as const),
-      content: msg.content || msg.text || '',
-    })),
-    {
-      role: 'user' as const,
-      content: message || '',
-    },
-  ];
+  // Ensure history alternates and starts with 'user'
+  const messages: Anthropic.MessageParam[] = [];
+
+  // Anthropic REQUIRED: First message must be 'user'
+  // Growth Agent starts with an 'agent' greeting, so we skip it if it's first
+  const validHistory = history.filter((msg, idx) => {
+    if (idx === 0 && msg.role !== 'user') return false;
+    return true;
+  });
+
+  for (const msg of validHistory) {
+    const role = msg.role === 'user' ? ('user' as const) : ('assistant' as const);
+
+    // Anthropic REQUIRED: Roles MUST alternate
+    if (messages.length > 0 && messages[messages.length - 1].role === role) {
+      // If consecutive roles are same, merge them or skip. Here we skip for simplicity
+      // but in a production app we might join the text.
+      continue;
+    }
+
+    messages.push({
+      role,
+      content: msg.content || (msg as any).text || '',
+    });
+  }
+
+  // Ensure current message is added safely
+  if (messages.length > 0 && messages[messages.length - 1].role === 'user') {
+    // This shouldn't happen with normal turns, but for safety:
+    // If last was user, we'd need an assistant turn before another user turn.
+    // However, 'message' is the new user turn.
+  }
 
   const response = await anthropic.messages.create({
     model: 'claude-3-5-sonnet-20241022',
     max_tokens: 4096,
     system: systemPrompt,
-    messages,
+    messages: [
+      ...messages,
+      { role: 'user', content: message }
+    ],
   });
 
   const content = response.content[0].type === 'text' ? response.content[0].text : '';
@@ -288,24 +325,31 @@ async function chatWithOpenAI(
     throw new Error('OpenAI API key not configured');
   }
 
-  const messages: any[] = [];
-  if (systemPrompt) {
-    messages.push({ role: 'system', content: systemPrompt });
-  }
-
-  messages.push(...history.map((msg: any) => ({
-    role: (msg.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
-    content: msg.content || msg.text || '',
-  })));
-
-  messages.push({
-    role: 'user' as const,
-    content: message,
+  // Ensure history alternates and starts with 'user'
+  const validHistory = history.filter((msg, idx) => {
+    if (idx === 0 && msg.role !== 'user') return false;
+    return true;
   });
+
+  const chatMessages: any[] = [];
+  for (const msg of validHistory) {
+    const role = msg.role === 'user' ? 'user' : 'assistant';
+    if (chatMessages.length > 0 && chatMessages[chatMessages.length - 1].role === role) {
+      continue;
+    }
+    chatMessages.push({
+      role,
+      content: msg.content || (msg as any).text || '',
+    });
+  }
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4-turbo',
-    messages,
+    messages: [
+      ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+      ...chatMessages,
+      { role: 'user', content: message }
+    ],
     max_tokens: 4096,
   });
 

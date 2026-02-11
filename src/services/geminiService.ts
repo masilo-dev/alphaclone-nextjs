@@ -51,9 +51,10 @@ export const chatWithGemini = async (
     image?: string,
     systemPromptText?: string
 ) => {
+    if (!genAI) {
+        throw new Error('Gemini AI is not initialized. Check your API key.');
+    }
     try {
-        const model = getModel('gemini-1.5-pro-latest');
-
         // Use custom system prompt if provided, otherwise default to the professional assistant one
         const finalSystemPrompt = systemPromptText || `You are a professional business assistant for AlphaClone Systems.
 CRITICAL INSTRUCTIONS:
@@ -64,28 +65,17 @@ CRITICAL INSTRUCTIONS:
 - Focus on the user's actual query
 - Do not hallucinate features, capabilities, or information that wasn't explicitly provided`;
 
-        const systemPrompt = {
-            role: 'user',
-            parts: [{
-                text: finalSystemPrompt
-            }]
-        };
-
-        const modelResponse = {
-            role: 'model',
-            parts: [{ text: 'Understood. I will follow these instructions.' }]
-        };
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-1.5-pro-latest',
+            systemInstruction: finalSystemPrompt
+        });
 
         // Transform history to parts format if needed,
         // but simple SDK chat history expects { role, parts: [{ text }] }
-        const chatHistory = [
-            systemPrompt,
-            modelResponse,
-            ...history.map((h: any) => ({
-                role: h.role === 'model' ? 'model' : 'user',
-                parts: [{ text: h.text || h.content || '' }]
-            }))
-        ];
+        const chatHistory = history.map((h: any) => ({
+            role: h.role === 'model' ? 'model' : 'user',
+            parts: [{ text: h.text || h.content || '' }]
+        }));
 
         const chat = model.startChat({
             history: chatHistory,

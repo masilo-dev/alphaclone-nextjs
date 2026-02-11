@@ -240,6 +240,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
             {/* Create Invoice Modal */}
             {showCreateModal && (
                 <CreateInvoiceModal
+                    isOpen={showCreateModal}
                     clients={clients}
                     projects={projects}
                     contracts={contracts}
