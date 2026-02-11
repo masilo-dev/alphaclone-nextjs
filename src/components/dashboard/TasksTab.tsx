@@ -42,8 +42,8 @@ import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import toast from 'react-hot-toast';
 import { useTasks } from '@/hooks/useTasks';
-// @ts-ignore
-const { FixedSizeGrid } = require('react-window');
+const rw = require('react-window');
+const FixedSizeGrid = rw.FixedSizeGrid || (rw.default && rw.default.FixedSizeGrid);
 // @ts-ignore
 const AutoSizer = require('react-virtualized-auto-sizer').default || require('react-virtualized-auto-sizer');
 import {

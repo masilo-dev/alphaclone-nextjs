@@ -32,8 +32,8 @@ import { Button, Input, Modal } from '../ui/UIComponents';
 import toast from 'react-hot-toast';
 import { EmptyState } from '../ui/EmptyState';
 import { useClients } from '@/hooks/useClients';
-// @ts-ignore
-const { FixedSizeList } = require('react-window');
+const rw = require('react-window');
+const FixedSizeList = rw.FixedSizeList || (rw.default && rw.default.FixedSizeList);
 // @ts-ignore
 const AutoSizer = require('react-virtualized-auto-sizer').default || require('react-virtualized-auto-sizer');
 import * as ClientImport from './crm/ClientImport';
