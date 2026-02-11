@@ -239,7 +239,13 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                 <span className="hidden sm:inline">Email</span>
                             </Button>
                         )}
-                        <Button variant="outline" className="border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10 flex-1 sm:flex-none" size="sm" onClick={() => toast('Quote management coming soon!', { icon: '📄' })}>
+                        <Button
+                            variant="outline"
+                            className="border-slate-600 text-slate-500 cursor-not-allowed flex-1 sm:flex-none"
+                            size="sm"
+                            disabled
+                            title="Quote creation will be available in a future update"
+                        >
                             <FileText className="w-4 h-4 sm:mr-2" />
                             <span className="hidden sm:inline">Create Quote</span>
                         </Button>

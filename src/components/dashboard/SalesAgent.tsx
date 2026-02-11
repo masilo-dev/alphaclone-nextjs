@@ -17,6 +17,7 @@ const SalesAgent: React.FC = () => {
     const [isSearching, setIsSearching] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
+    const [filters, setFilters] = useState({ businessSize: '', employeeCount: '' });
 
     const [showUpload, setShowUpload] = useState(false);
 
@@ -368,6 +369,38 @@ const SalesAgent: React.FC = () => {
                                 </div>
                             </div>
 
+                            {/* Filter Row */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="w-full">
+                                    <label className="block text-xs font-medium text-slate-400 mb-2">Business Size</label>
+                                    <select
+                                        className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        value={filters.businessSize}
+                                        onChange={e => setFilters({ ...filters, businessSize: e.target.value })}
+                                    >
+                                        <option value="">All Sizes</option>
+                                        <option value="very_small">Very Small (1-10)</option>
+                                        <option value="small_medium">Small-Medium (11-100)</option>
+                                        <option value="enterprise">Enterprise (100+)</option>
+                                    </select>
+                                </div>
+                                <div className="w-full">
+                                    <label className="block text-xs font-medium text-slate-400 mb-2">Employee Count</label>
+                                    <select
+                                        className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        value={filters.employeeCount}
+                                        onChange={e => setFilters({ ...filters, employeeCount: e.target.value })}
+                                    >
+                                        <option value="">All Counts</option>
+                                        <option value="1-10">1-10 employees</option>
+                                        <option value="11-50">11-50 employees</option>
+                                        <option value="51-100">51-100 employees</option>
+                                        <option value="101-500">101-500 employees</option>
+                                        <option value="500+">500+ employees</option>
+                                    </select>
+                                </div>
+                            </div>
+
 
 
                             <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -440,14 +473,35 @@ const SalesAgent: React.FC = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-800">
-                                        {leads.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
-                                                    No leads found. Try searching or uploading a file.
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            leads.map((lead) => (
+                                        {(() => {
+                                            // Apply filters
+                                            let filteredLeads = leads;
+
+                                            if (filters.businessSize) {
+                                                filteredLeads = filteredLeads.filter(lead => {
+                                                    const size = (lead as any).businessSize || (lead as any).metadata?.businessSize;
+                                                    return size === filters.businessSize;
+                                                });
+                                            }
+
+                                            if (filters.employeeCount) {
+                                                filteredLeads = filteredLeads.filter(lead => {
+                                                    const count = (lead as any).employeeCount || (lead as any).metadata?.employeeCount;
+                                                    return count === filters.employeeCount;
+                                                });
+                                            }
+
+                                            if (filteredLeads.length === 0) {
+                                                return (
+                                                    <tr>
+                                                        <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
+                                                            {leads.length === 0 ? 'No leads found. Try searching or uploading a file.' : 'No leads match the selected filters.'}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            }
+
+                                            return filteredLeads.map((lead) => (
                                                 <tr key={lead.id} className="hover:bg-slate-800/40 transition-colors">
                                                     <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
                                                         <input
@@ -534,12 +588,11 @@ const SalesAgent: React.FC = () => {
                                                                             Manage Lead
                                                                         </button>
                                                                         <button
-                                                                            onClick={() => {
-                                                                                toast('Quote creation coming soon!', { icon: 'ℹ️' });
-                                                                            }}
-                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
+                                                                            disabled
+                                                                            className="w-full text-left px-3 py-2 text-xs text-slate-500 cursor-not-allowed rounded flex items-center gap-2"
+                                                                            title="Quote creation available from lead detail view"
                                                                         >
-                                                                            <FileText className="w-3 h-3 text-yellow-400" />
+                                                                            <FileText className="w-3 h-3 text-slate-600" />
                                                                             Create Quote
                                                                         </button>
                                                                     </div>
@@ -548,8 +601,8 @@ const SalesAgent: React.FC = () => {
                                                         )}
                                                     </td>
                                                 </tr>
-                                            ))
-                                        )}
+                                            ));
+                                        })()}
                                     </tbody>
                                 </table>
                             </div>

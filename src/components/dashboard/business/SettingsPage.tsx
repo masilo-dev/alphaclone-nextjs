@@ -316,10 +316,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                         <p className="text-sm text-slate-400">Require all team members to use 2FA</p>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" className="sr-only peer" />
-                                        <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
+                                        <input type="checkbox" className="sr-only peer" disabled />
+                                        <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500 opacity-50 cursor-not-allowed"></div>
                                     </label>
                                 </div>
+                                <p className="text-xs text-slate-500 italic">⚠️ 2FA will be available in a future update</p>
                             </div>
                             <div className="p-4 bg-slate-800 rounded-xl border border-slate-700">
                                 <h4 className="font-medium text-white mb-2">Login History</h4>

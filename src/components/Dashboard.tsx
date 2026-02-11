@@ -1066,7 +1066,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </h2>
               {user.role === 'client' && <Button onClick={() => router.push('/dashboard/submit')} variant="secondary">Add New Item</Button>}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredProjects.map(p => (
                 <div key={p.id} className={`group relative bg-slate-900 rounded-xl overflow-hidden border transition-all flex flex-col ${p.status === 'Declined' ? 'border-red-900 opacity-60' : 'border-slate-800 hover:border-teal-500/50'}`}>
                   <div className="aspect-video relative">
@@ -1075,13 +1075,13 @@ const Dashboard: React.FC<DashboardProps> = ({
                       {p.status}
                     </div>
                   </div>
-                  <div className="p-4 flex-1 flex flex-col">
+                  <div className="p-3 flex-1 flex flex-col">
                     <div className="flex justify-between items-start">
-                      <h4 className="font-bold text-white text-lg">{p.name}</h4>
+                      <h4 className="font-bold text-white text-sm leading-tight">{p.name}</h4>
                       {user.role === 'admin' && (
                         <div className="flex gap-1">
-                          <button onClick={() => openArchitectTool(p)} className="text-slate-500 hover:text-teal-400 p-1" title="AI Architect"><Cpu className="w-4 h-4" /></button>
-                          <button onClick={() => startEditProject(p)} className="text-slate-500 hover:text-white p-1" title="Edit"><Edit2 className="w-4 h-4" /></button>
+                          <button onClick={() => openArchitectTool(p)} className="text-slate-500 hover:text-teal-400 p-1" title="AI Architect"><Cpu className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => startEditProject(p)} className="text-slate-500 hover:text-white p-1" title="Edit"><Edit2 className="w-3.5 h-3.5" /></button>
                         </div>
                       )}
                     </div>
@@ -1112,7 +1112,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                         {user.role === 'admin' ? (
                           <button
                             onClick={() => router.push(`/dashboard/messages?selectedClientId=${p.ownerId}`)}
-                            className="flex-1 px-3 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 text-xs rounded-lg border border-teal-500/20 transition-colors flex items-center justify-center gap-1"
+                            className="flex-1 px-2 py-1 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 text-[10px] rounded-lg border border-teal-500/20 transition-colors flex items-center justify-center gap-1"
                             title="Message client about this project"
                           >
                             <MessageSquare className="w-3 h-3" />
@@ -1121,7 +1121,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                         ) : (
                           <button
                             onClick={() => router.push('/dashboard/messages')}
-                            className="flex-1 px-3 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 text-xs rounded-lg border border-teal-500/20 transition-colors flex items-center justify-center gap-1"
+                            className="flex-1 px-2 py-1 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 text-[10px] rounded-lg border border-teal-500/20 transition-colors flex items-center justify-center gap-1"
                             title="Message admin about this project"
                           >
                             <MessageSquare className="w-3 h-3" />
@@ -1130,7 +1130,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                         )}
                         <button
                           onClick={() => router.push('/dashboard/conference')}
-                          className="flex-1 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs rounded-lg border border-blue-500/20 transition-colors flex items-center justify-center gap-1"
+                          className="flex-1 px-2 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-[10px] rounded-lg border border-blue-500/20 transition-colors flex items-center justify-center gap-1"
                           title="Start video call"
                         >
                           <Video className="w-3 h-3" />

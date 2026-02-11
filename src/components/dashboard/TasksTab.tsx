@@ -41,7 +41,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import toast from 'react-hot-toast';
-import VoiceCaptureFAB from './VoiceCaptureFAB';
+
 import {
     DndContext,
     DragEndEvent,
@@ -1251,11 +1251,6 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                     </div>
                 </div>
             )}
-
-            <VoiceCaptureFAB onCapture={(text) => {
-                setTaskForm(prev => ({ ...prev, description: text }));
-                setShowCreateModal(true);
-            }} />
         </div>
     );
 };
