@@ -81,29 +81,37 @@ export const businessInvoiceService = {
             // Generate invoice number if not provided
             const invoiceNumber = invoice.invoiceNumber || await this.generateInvoiceNumber(tenantId);
 
+            const payload = {
+                tenant_id: tenantId,
+                client_id: invoice.clientId || null,
+                project_id: invoice.projectId || null,
+                invoice_number: invoiceNumber,
+                issue_date: invoice.issueDate || new Date().toISOString().split('T')[0],
+                due_date: invoice.dueDate || null, // Fix: Ensure empty string becomes null
+                status: invoice.status || 'draft',
+                subtotal: invoice.subtotal || 0,
+                tax_rate: invoice.taxRate || 0,
+                tax: invoice.tax || 0,
+                discount_amount: invoice.discountAmount || 0,
+                total: invoice.total || 0,
+                line_items: invoice.lineItems || [],
+                notes: invoice.notes,
+                is_public: invoice.isPublic || false
+            };
+
+            // Debug logging
+            console.log('Creating invoice with payload:', payload);
+
             const { data, error } = await supabase
                 .from('business_invoices')
-                .insert({
-                    tenant_id: tenantId,
-                    client_id: invoice.clientId || null,
-                    project_id: invoice.projectId || null,
-                    invoice_number: invoiceNumber,
-                    issue_date: invoice.issueDate || new Date().toISOString().split('T')[0],
-                    due_date: invoice.dueDate,
-                    status: invoice.status || 'draft',
-                    subtotal: invoice.subtotal || 0,
-                    tax_rate: invoice.taxRate || 0,
-                    tax: invoice.tax || 0,
-                    discount_amount: invoice.discountAmount || 0,
-                    total: invoice.total || 0,
-                    line_items: invoice.lineItems || [],
-                    notes: invoice.notes,
-                    is_public: invoice.isPublic || false
-                })
+                .insert(payload)
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase Error creating invoice:', error);
+                throw error;
+            }
 
             const newInvoice: BusinessInvoice = {
                 id: data.id,
@@ -149,10 +157,10 @@ export const businessInvoiceService = {
 
             const updateData: Record<string, any> = {};
 
-            if (updates.clientId !== undefined) updateData.client_id = updates.clientId;
-            if (updates.projectId !== undefined) updateData.project_id = updates.projectId;
+            if (updates.clientId !== undefined) updateData.client_id = updates.clientId || null;
+            if (updates.projectId !== undefined) updateData.project_id = updates.projectId || null;
             if (updates.issueDate !== undefined) updateData.issue_date = updates.issueDate;
-            if (updates.dueDate !== undefined) updateData.due_date = updates.dueDate;
+            if (updates.dueDate !== undefined) updateData.due_date = updates.dueDate || null;
             if (updates.status !== undefined) updateData.status = updates.status;
             if (updates.subtotal !== undefined) updateData.subtotal = updates.subtotal;
             if (updates.taxRate !== undefined) updateData.tax_rate = updates.taxRate;

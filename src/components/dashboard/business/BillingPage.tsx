@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import toast from 'react-hot-toast';
 
 interface BillingPageProps {
     user: User;
@@ -62,9 +63,15 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
         if (!currentTenant) return;
 
         const { invoice, error } = await businessInvoiceService.createInvoice(currentTenant.id, invoiceData);
-        if (!error && invoice) {
+        if (error) {
+            toast.error(`Failed to create invoice: ${error}`);
+            return;
+        }
+
+        if (invoice) {
             setInvoices([invoice, ...invoices]);
             setShowCreateModal(false);
+            toast.success('Invoice created successfully');
         }
     };
 
@@ -72,16 +79,25 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
         const client = clients.find(c => c.id === invoice.clientId) || {};
         const tenant = currentTenant || { name: 'AlphaClone Business' };
 
-        const doc = businessInvoiceService.generatePDF(invoice, tenant, client);
-        doc.save(`invoice-${invoice.invoiceNumber}.pdf`);
+        try {
+            const doc = businessInvoiceService.generatePDF(invoice, tenant, client);
+            doc.save(`invoice-${invoice.invoiceNumber}.pdf`);
+            toast.success('Invoice downloaded');
+        } catch (e) {
+            console.error('PDF Generation Error:', e);
+            toast.error('Failed to generate PDF');
+        }
     };
 
     const handleDeleteInvoice = async (invoiceId: string) => {
         if (!confirm('Are you sure you want to delete this invoice?')) return;
 
         const { error } = await businessInvoiceService.deleteInvoice(invoiceId);
-        if (!error) {
+        if (error) {
+            toast.error(`Failed to delete invoice: ${error}`);
+        } else {
             setInvoices(invoices.filter(inv => inv.id !== invoiceId));
+            toast.success('Invoice deleted');
         }
     };
 
