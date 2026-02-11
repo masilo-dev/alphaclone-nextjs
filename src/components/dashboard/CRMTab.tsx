@@ -45,7 +45,7 @@ interface CRMTabProps {
 
 const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
     const { user } = useAuth();
-    const { tenant } = useTenant();
+    const { currentTenant: tenant } = useTenant();
     const [searchTerm, setSearchQuery] = useState('');
     const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
@@ -229,7 +229,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                             <div className="p-8 text-center text-slate-500">No clients found</div>
                         ) : (
                             <AutoSizer>
-                                {({ height, width }) => (
+                                {({ height, width }: { height: number; width: number }) => (
                                     <FixedSizeList
                                         height={height}
                                         width={width}

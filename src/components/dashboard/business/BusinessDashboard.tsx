@@ -289,11 +289,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             case '/dashboard/crm':
             case '/dashboard/business/clients':
                 return <CRMTab
-                    user={user}
-                    projects={projects}
-                    declineProject={() => { }}
-                    openContractGenerator={handleOpenContract}
-                    openVideoCall={handleInitiateCallToClient}
+                    userId={user.id}
+                    userRole={user.role}
                 />;
             case '/dashboard/tasks':
                 return <TasksTab userId={user.id} userRole={user.role} />;

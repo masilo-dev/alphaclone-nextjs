@@ -954,18 +954,8 @@ const Dashboard: React.FC<DashboardProps> = ({
         return (
           <React.Suspense fallback={<div>Loading CRM...</div>}>
             <CRMTab
-              user={user}
-              projects={projects}
-              declineProject={declineProject}
-              openContractGenerator={openContractGenerator}
-              openVideoCall={() => {
-                const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN || 'alphaclone';
-                const roomUrl = `https://${domain}.daily.co/alphaclone-${Math.random().toString(36).substring(7)}`;
-                handleJoinCall(roomUrl);
-              }}
-              onNavigateToMessages={(clientId: string) => {
-                router.push(`/dashboard/messages?selectedClientId=${clientId}`);
-              }}
+              userId={user.id}
+              userRole={user.role}
             />
           </React.Suspense>
         );
