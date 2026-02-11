@@ -110,7 +110,7 @@ const AnalyticsDashboard: React.FC = () => {
                         <TrendingUp className="w-5 h-5 text-teal-400" /> Revenue & Projects Trend
                     </h3>
                     <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height={300} minWidth={0}>
+                        <ResponsiveContainer width="99%" height={300}>
                             <AreaChart data={chartData}>
                                 <defs>
                                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -143,7 +143,7 @@ const AnalyticsDashboard: React.FC = () => {
                         <Activity className="w-5 h-5 text-violet-500" /> Project Status Distribution
                     </h3>
                     <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height={300} minWidth={0}>
+                        <ResponsiveContainer width="99%" height={300}>
                             <PieChart>
                                 <Pie
                                     data={pieData}

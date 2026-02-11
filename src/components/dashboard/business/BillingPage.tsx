@@ -152,7 +152,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
                         <TrendingUp className="w-5 h-5 text-teal-400" /> Revenue Performance
                     </h3>
                     <div className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="99%" height="100%">
                             <AreaChart data={[
                                 { name: 'Jan', revenue: stats.paid * 0.1, expenses: stats.paid * 0.05 },
                                 { name: 'Feb', revenue: stats.paid * 0.2, expenses: stats.paid * 0.08 },

@@ -85,8 +85,8 @@ export const businessInvoiceService = {
                 .from('business_invoices')
                 .insert({
                     tenant_id: tenantId,
-                    client_id: invoice.clientId,
-                    project_id: invoice.projectId,
+                    client_id: invoice.clientId || null,
+                    project_id: invoice.projectId || null,
                     invoice_number: invoiceNumber,
                     issue_date: invoice.issueDate || new Date().toISOString().split('T')[0],
                     due_date: invoice.dueDate,
