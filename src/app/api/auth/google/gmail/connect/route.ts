@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ENV } from '@/config/env';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
@@ -8,8 +9,9 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/google/gmail/callback`;
+    const clientId = ENV.GOOGLE_CLIENT_ID;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech';
+    const redirectUri = `${appUrl}/api/auth/google/gmail/callback`;
 
     const scopes = [
         'https://www.googleapis.com/auth/gmail.readonly',

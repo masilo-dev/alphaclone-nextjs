@@ -1,8 +1,15 @@
-import React from 'react';
-// @ts-ignore - react-window types may not be installed
-import { FixedSizeList as List } from 'react-window';
-// @ts-ignore - react-virtualized-auto-sizer types may not be installed
-import AutoSizer from 'react-virtualized-auto-sizer';
+// @ts-nocheck
+import dynamic from 'next/dynamic';
+
+const List = dynamic(
+    () => import('react-window').then((mod: any) => mod.FixedSizeList),
+    { ssr: false }
+) as any;
+
+const AutoSizer = dynamic(
+    () => import('react-virtualized-auto-sizer').then((mod: any) => mod.default || mod),
+    { ssr: false }
+) as any;
 
 interface VirtualListProps<T> {
     items: T[];

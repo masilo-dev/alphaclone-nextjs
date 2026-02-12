@@ -135,7 +135,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         try {
             // 1. Find User ID by Email (to signal them)
             const { data: users, error: userError } = await supabase
-                .from('users')
+                .from('profiles')
                 .select('id')
                 .eq('email', client.email)
                 .single();

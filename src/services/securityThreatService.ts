@@ -274,7 +274,7 @@ class SecurityThreatService {
         // If user account involved, lock it
         if (userId) {
             await supabase
-                .from('users')
+                .from('profiles')
                 .update({ account_locked: true, locked_reason: threat.description })
                 .eq('id', userId);
 
@@ -294,7 +294,7 @@ class SecurityThreatService {
 
             // Create admin notification
             const { data: admins } = await supabase
-                .from('users')
+                .from('profiles')
                 .select('id')
                 .eq('role', 'admin');
 
@@ -384,7 +384,7 @@ class SecurityThreatService {
     async enforce2FA(userId: string): Promise<{ success: boolean }> {
         try {
             await supabase
-                .from('users')
+                .from('profiles')
                 .update({ require_2fa: true })
                 .eq('id', userId);
 

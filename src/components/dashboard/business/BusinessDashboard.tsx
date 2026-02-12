@@ -91,7 +91,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
 
             // 2. Find Recipient User ID by Email
             const { data: users, error: userError } = await supabase
-                .from('users')
+                .from('profiles')
                 .select('id')
                 .eq('email', client.email)
                 .single();

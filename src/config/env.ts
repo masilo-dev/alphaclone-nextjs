@@ -36,6 +36,13 @@ const envSchema = z.object({
     CALENDLY_CLIENT_SECRET: z.string().optional(),
     VITE_CALENDLY_REDIRECT_URI: z.string().url().optional(),
     CALENDLY_WEBHOOK_SIGNING_KEY: z.string().optional(),
+
+    // Google OAuth (Gmail)
+    GOOGLE_CLIENT_ID: z.string().min(1, 'Google Client ID is required'),
+    GOOGLE_CLIENT_SECRET: z.string().min(1, 'Google Client Secret is required'),
+
+    // Supabase Admin
+    SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'Supabase service role key is required'),
 });
 
 /**
@@ -61,6 +68,13 @@ function validateEnv() {
         CALENDLY_CLIENT_SECRET: process.env.CALENDLY_CLIENT_SECRET || process.env.VITE_CALENDLY_CLIENT_SECRET || process.env.NEXT_PUBLIC_CALENDLY_CLIENT_SECRET,
         VITE_CALENDLY_REDIRECT_URI: process.env.NEXT_PUBLIC_CALENDLY_REDIRECT_URI || process.env.VITE_CALENDLY_REDIRECT_URI || process.env.CALENDLY_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech'}/api/auth/calendly/callback`,
         CALENDLY_WEBHOOK_SIGNING_KEY: process.env.CALENDLY_WEBHOOK_SIGNING_KEY || process.env.VITE_CALENDLY_WEBHOOK_SIGNING_KEY || process.env.NEXT_PUBLIC_CALENDLY_WEBHOOK_SIGNING_KEY,
+
+        // Google OAuth
+        GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET,
+
+        // Supabase Admin
+        SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     };
 
     // Helper to treat empty strings or whitespace-only as undefined, and trim all strings
@@ -116,6 +130,9 @@ function validateEnv() {
                 CALENDLY_CLIENT_SECRET: env.CALENDLY_CLIENT_SECRET,
                 VITE_CALENDLY_REDIRECT_URI: env.VITE_CALENDLY_REDIRECT_URI,
                 CALENDLY_WEBHOOK_SIGNING_KEY: env.CALENDLY_WEBHOOK_SIGNING_KEY,
+                GOOGLE_CLIENT_ID: env.GOOGLE_CLIENT_ID,
+                GOOGLE_CLIENT_SECRET: env.GOOGLE_CLIENT_SECRET,
+                SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY,
             } as any;
         }
         throw error;

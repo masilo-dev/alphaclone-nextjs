@@ -341,13 +341,13 @@ export const contractService = {
         if (updates.status === 'fully_signed') {
             // Get both signer details
             const { data: clientUser } = await supabase
-                .from('users')
+                .from('profiles')
                 .select('full_name, email')
                 .eq('id', contract.client_id)
                 .single();
 
             const { data: adminUser } = await supabase
-                .from('users')
+                .from('profiles')
                 .select('full_name, email')
                 .eq('id', contract.owner_id)
                 .single();

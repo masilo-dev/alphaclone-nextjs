@@ -124,7 +124,7 @@ class LeadAutoAssignmentService {
     private async getAvailableSalesReps(): Promise<string[]> {
         try {
             const { data: reps } = await supabase
-                .from('users')
+                .from('profiles')
                 .select('id')
                 .eq('role', 'sales')
                 .eq('active', true);
@@ -305,7 +305,7 @@ class LeadAutoAssignmentService {
             for (const lead of violations) {
                 // Notify admin
                 const { data: admins } = await supabase
-                    .from('users')
+                    .from('profiles')
                     .select('id')
                     .eq('role', 'admin');
 

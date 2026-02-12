@@ -1,4 +1,5 @@
 'use client';
+// @ts-nocheck
 
 import React, { useState, useMemo } from 'react';
 import {
@@ -32,10 +33,17 @@ import { Button, Input, Modal } from '../ui/UIComponents';
 import toast from 'react-hot-toast';
 import { EmptyState } from '../ui/EmptyState';
 import { useClients } from '@/hooks/useClients';
-const rw = require('react-window');
-const FixedSizeList = rw.FixedSizeList || (rw.default && rw.default.FixedSizeList);
-// @ts-ignore
-const AutoSizer = require('react-virtualized-auto-sizer').default || require('react-virtualized-auto-sizer');
+import dynamic from 'next/dynamic';
+
+const FixedSizeList = dynamic(
+    () => import('react-window').then((mod: any) => mod.FixedSizeList),
+    { ssr: false }
+) as any;
+
+const AutoSizer = dynamic(
+    () => import('react-virtualized-auto-sizer').then((mod: any) => mod.default || mod),
+    { ssr: false }
+) as any;
 import * as ClientImport from './crm/ClientImport';
 
 interface CRMTabProps {

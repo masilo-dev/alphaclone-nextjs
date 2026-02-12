@@ -153,7 +153,7 @@ export const markUserAsCompleted = async (userId: string, submitted: boolean = f
         }
 
         const { error } = await supabase
-            .from('users')
+            .from('profiles')
             .update(updates)
             .eq('id', userId);
 

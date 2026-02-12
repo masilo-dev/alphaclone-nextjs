@@ -99,7 +99,7 @@ async function handleInviteeCreated(payload: any, supabase: any) {
         // Also sync to video_calls so it shows in Meetings dashboard
         // We'll use the tenant's primary user or the host if we can find them
         const { data: userData } = await supabase
-            .from('users')
+            .from('profiles')
             .select('id')
             .eq('tenant_id', tenantId)
             .eq('role', 'tenant')
