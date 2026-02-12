@@ -10,6 +10,16 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
+    // Check for critical environment variables
+    if (!ENV.SUPABASE_SERVICE_ROLE_KEY) {
+        console.error('Missing SUPABASE_SERVICE_ROLE_KEY');
+        return NextResponse.json({ error: 'Server configuration error: Missing Service Role Key' }, { status: 500 });
+    }
+    if (!ENV.GOOGLE_CLIENT_ID) {
+        console.error('Missing GOOGLE_CLIENT_ID');
+        return NextResponse.json({ error: 'Server configuration error: Missing Google Client ID' }, { status: 500 });
+    }
+
     try {
         const supabaseAdmin = createAdminClient();
 

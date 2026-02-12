@@ -62,12 +62,14 @@ interface BusinessDashboardProps {
 
 const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, activeTab, setActiveTab }) => {
     const { currentTenant, isLoading: tenantLoading } = useTenant();
-    const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+
+    // Sync sidebar on mount to avoid hydration mismatch
+    React.useEffect(() => {
         if (typeof window !== 'undefined') {
-            return window.innerWidth >= 768;
+            setSidebarOpen(window.innerWidth >= 768);
         }
-        return true;
-    });
+    }, []);
 
     // -- PERSISTENT VIDEO CALL STATE --
     const [activeCallUrl, setActiveCallUrl] = useState<string | null>(null);
@@ -213,21 +215,22 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
     }, [user, currentTenant]);
 
     const [notification, setNotification] = useState<string | null>(null);
-    const [projects, setProjects] = useState<Project[]>(() => {
-        // Init from cache
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [loadingProjects, setLoadingProjects] = useState(true);
+
+    // Load from cache on mount
+    React.useEffect(() => {
         if (typeof window !== 'undefined') {
             const cached = localStorage.getItem('dashboard_projects_cache');
             if (cached) {
                 try {
-                    return JSON.parse(cached);
+                    setProjects(JSON.parse(cached));
                 } catch (e) {
                     console.error('Failed to parse project cache', e);
                 }
             }
         }
-        return [];
-    });
-    const [loadingProjects, setLoadingProjects] = useState(false);
+    }, []);
 
     // Trial Logic - DISABLED as per user request for full access
     const isTrialExpired = React.useMemo(() => {

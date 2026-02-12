@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { User, Project } from '../../types';
 
 import { useTenant } from '../../contexts/TenantContext';
+import { PLAN_PRICING } from '../../services/tenancy/types';
 
 interface Props {
     isOpen: boolean;
@@ -166,7 +167,6 @@ const AlphaCloneContractModal: React.FC<Props> = ({
 
     // Check feature flag
     const plan = currentTenant?.subscription_plan || 'free';
-    const { PLAN_PRICING } = require('../../services/tenancy/types');
     const planFeatures = PLAN_PRICING[plan as keyof typeof PLAN_PRICING]?.features;
 
     if (planFeatures && !planFeatures.contractGeneration && user.role === 'admin') {

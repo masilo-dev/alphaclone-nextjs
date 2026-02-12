@@ -143,13 +143,14 @@ const Dashboard: React.FC<DashboardProps> = ({
     );
   }
 
-  // Detect if mobile on initial load
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Sync sidebar on mount to avoid hydration mismatch
+  useEffect(() => {
     if (typeof window !== 'undefined') {
-      return window.innerWidth >= 768; // md breakpoint
+      setSidebarOpen(window.innerWidth >= 768);
     }
-    return true;
-  });
+  }, []);
   const [activeTab, setActiveTab] = useState(location || '/dashboard');
 
   // -- PERSISTENT VIDEO CALL STATE --

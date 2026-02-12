@@ -16,6 +16,7 @@ import {
     Calendar
 } from 'lucide-react';
 import { fileUploadService } from '../../../services/fileUploadService';
+import GmailIntegration from './GmailIntegration';
 
 interface SettingsPageProps {
     user: User;
@@ -123,7 +124,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                     bank_details: settings.bankDetails,
                     mobile_payment_details: settings.mobilePaymentDetails,
                     updated_at: new Date().toISOString()
-                });
+                }, { onConflict: 'tenant_id' });
 
             if (!error) {
                 alert('Settings saved successfully!');
@@ -341,7 +342,12 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 
                 {/* Booking System Tab */}
                 {activeTab === 'booking' && (
-                    <CalendlySettings />
+                    <div className="space-y-12">
+                        <div className="border-b border-slate-700 pb-12">
+                            <GmailIntegration user={user} />
+                        </div>
+                        <CalendlySettings />
+                    </div>
                 )}
 
                 {/* Save Button for Forms */}

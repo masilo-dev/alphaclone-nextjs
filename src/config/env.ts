@@ -4,10 +4,18 @@ import { z } from 'zod';
  * Environment variable validation schema
  * Ensures all required environment variables are present and valid
  */
+/**
+ * Environment variable validation schema
+ * Ensures all required environment variables are present and valid
+ */
 const envSchema = z.object({
     // Supabase (required)
-    VITE_SUPABASE_URL: z.string().url('Invalid Supabase URL'),
-    VITE_SUPABASE_ANON_KEY: z.string().min(1, 'Supabase anon key is required'),
+    // Accept either VITE_ or NEXT_PUBLIC_ prefixes, or raw
+    NEXT_PUBLIC_SUPABASE_URL: z.string().url('Invalid Supabase URL').optional(),
+    VITE_SUPABASE_URL: z.string().url('Invalid Supabase URL').optional(),
+
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1, 'Supabase anon key is required').optional(),
+    VITE_SUPABASE_ANON_KEY: z.string().min(1, 'Supabase anon key is required').optional(),
 
     // AI Services (priority: Anthropic → OpenAI → Gemini)
     // Anthropic Claude (recommended primary)
@@ -38,11 +46,11 @@ const envSchema = z.object({
     CALENDLY_WEBHOOK_SIGNING_KEY: z.string().optional(),
 
     // Google OAuth (Gmail)
-    GOOGLE_CLIENT_ID: z.string().min(1, 'Google Client ID is required'),
-    GOOGLE_CLIENT_SECRET: z.string().min(1, 'Google Client Secret is required'),
+    GOOGLE_CLIENT_ID: z.string().min(1, 'Google Client ID is required').optional(),
+    GOOGLE_CLIENT_SECRET: z.string().min(1, 'Google Client Secret is required').optional(),
 
     // Supabase Admin
-    SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'Supabase service role key is required'),
+    SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'Supabase service role key is required').optional(),
 });
 
 /**
@@ -50,9 +58,12 @@ const envSchema = z.object({
  * Throws error if validation fails
  */
 function validateEnv() {
-    const env = {
+    const rawEnv = {
         // Explicitly check NEXT_PUBLIC_* first for Next.js, then VITE_* for legacy/Vite
+        NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.superbase_url,
         VITE_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.superbase_url,
+
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.superbase_anon_public_key,
         VITE_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.superbase_anon_public_key,
 
         // AI Service API Keys (priority order)
@@ -78,8 +89,8 @@ function validateEnv() {
     };
 
     // Helper to treat empty strings or whitespace-only as undefined, and trim all strings
-    Object.keys(env).forEach(key => {
-        let val = (env as any)[key];
+    Object.keys(rawEnv).forEach(key => {
+        let val = (rawEnv as any)[key];
         if (typeof val === 'string') {
             val = val.trim();
 
@@ -91,17 +102,23 @@ function validateEnv() {
                 val = val.substring(0, val.length - 1).trim();
             }
 
-            (env as any)[key] = val === '' ? undefined : val;
+            (rawEnv as any)[key] = val === '' ? undefined : val;
         }
     });
 
     try {
-        const parsed = envSchema.parse(env);
+        const parsed = envSchema.parse(rawEnv);
         // Special case: if Stripe key is empty string, make it undefined for consistency
         if (parsed.VITE_STRIPE_PUBLIC_KEY === '') {
             parsed.VITE_STRIPE_PUBLIC_KEY = undefined;
         }
-        return parsed;
+
+        // Return a Normalized object that prioritizes Next.js but supports legacy
+        return {
+            ...parsed,
+            VITE_SUPABASE_URL: parsed.NEXT_PUBLIC_SUPABASE_URL || parsed.VITE_SUPABASE_URL,
+            VITE_SUPABASE_ANON_KEY: parsed.NEXT_PUBLIC_SUPABASE_ANON_KEY || parsed.VITE_SUPABASE_ANON_KEY
+        };
     } catch (error) {
         if (error instanceof z.ZodError) {
             const missingVars = error.issues.map(err => `  • ${err.path.join('.')}: ${err.message}`).join('\n');
@@ -110,29 +127,11 @@ function validateEnv() {
                 `Returning fallback configuration to allow build to proceed.\n`
             );
 
-            // Return a fallback object that satisfies the schema via casting, 
-            // allowing the build to proceed even if keys are missing.
-            // Runtime usage will still fail if critical keys are truly missing.
-            // Return safe defaults or undefined where acceptable.
-            // Critical keys will cause runtime failures if missing, which is safer than hardcoding production keys.
-
+            // Safer fallback: undefined for critical keys so they fail loudly at runtime if missing
             return {
-                VITE_SUPABASE_URL: env.VITE_SUPABASE_URL,
-                VITE_SUPABASE_ANON_KEY: env.VITE_SUPABASE_ANON_KEY,
-                ANTHROPIC_API_KEY: env.ANTHROPIC_API_KEY,
-                OPENAI_API_KEY: env.OPENAI_API_KEY,
-                VITE_GEMINI_API_KEY: env.VITE_GEMINI_API_KEY,
-                VITE_DAILY_DOMAIN: env.VITE_DAILY_DOMAIN,
-                DAILY_API_KEY: env.DAILY_API_KEY,
-                VITE_STRIPE_PUBLIC_KEY: env.VITE_STRIPE_PUBLIC_KEY,
-                VITE_SENTRY_DSN: env.VITE_SENTRY_DSN,
-                VITE_CALENDLY_CLIENT_ID: env.VITE_CALENDLY_CLIENT_ID,
-                CALENDLY_CLIENT_SECRET: env.CALENDLY_CLIENT_SECRET,
-                VITE_CALENDLY_REDIRECT_URI: env.VITE_CALENDLY_REDIRECT_URI,
-                CALENDLY_WEBHOOK_SIGNING_KEY: env.CALENDLY_WEBHOOK_SIGNING_KEY,
-                GOOGLE_CLIENT_ID: env.GOOGLE_CLIENT_ID,
-                GOOGLE_CLIENT_SECRET: env.GOOGLE_CLIENT_SECRET,
-                SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY,
+                ...rawEnv,
+                VITE_SUPABASE_URL: rawEnv.NEXT_PUBLIC_SUPABASE_URL || rawEnv.VITE_SUPABASE_URL,
+                VITE_SUPABASE_ANON_KEY: rawEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY || rawEnv.VITE_SUPABASE_ANON_KEY
             } as any;
         }
         throw error;

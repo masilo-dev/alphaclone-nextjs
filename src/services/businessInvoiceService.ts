@@ -21,6 +21,8 @@ export interface BusinessInvoice {
     notes?: string;
     isPublic: boolean;
     senderName?: string;
+    bankDetails?: string;
+    mobilePaymentDetails?: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -145,7 +147,11 @@ export const businessInvoiceService = {
             return { invoice: newInvoice, error: null };
         } catch (err: any) {
             console.error('Error creating invoice:', err);
-            return { invoice: null, error: err.message };
+            // Enhanced logging for non-enumerable properties (like Error objects)
+            if (typeof err === 'object' && err !== null) {
+                console.error('Error details (JSON):', JSON.stringify(err, Object.getOwnPropertyNames(err)));
+            }
+            return { invoice: null, error: err.message || 'Unknown error occurred during invoice creation' };
         }
     },
 
@@ -335,6 +341,10 @@ export const businessInvoiceService = {
 
             return { invoice: data, error: null };
         } catch (err: any) {
+            // Ignore AbortError (common during navigation)
+            if (err.name === 'AbortError' || err.message?.includes('AbortError')) {
+                return { invoice: null, error: null }; // Return null error to suppress UI alerts
+            }
             console.error('Error fetching invoice details:', err);
             return { invoice: null, error: err.message };
         }

@@ -28,6 +28,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const { user: initialUser, error: authError } = await authService.getCurrentUser();
 
                 if (authError) {
+                    // Ignore abort errors (common during HMR or navigation)
+                    if (authError.includes('aborted') || authError.includes('AbortError')) {
+                        console.log('AuthContext: Session check aborted (ignoring)');
+                        return;
+                    }
+
                     console.error('AuthContext: Session init error', authError);
                     setError(authError);
                     setLoading(false);
