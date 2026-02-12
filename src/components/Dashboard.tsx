@@ -95,6 +95,8 @@ const SalesForecastTab = React.lazy(() => import('./dashboard/SalesForecastTab')
 const UserLocationTable = React.lazy(() => import('./dashboard/admin/UserLocationTable'));
 const GmailTab = React.lazy(() => import('./dashboard/GmailTab'));
 
+const CustomVideoRoom = React.lazy(() => import('./dashboard/video/CustomVideoRoom'));
+
 // Import UI components
 import { TableSkeleton } from './ui/Skeleton';
 import { EmptyState } from './ui/EmptyState';
@@ -1527,20 +1529,15 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div className={isCallMinimized ? 'pointer-events-none fixed inset-0 z-[200]' : 'fixed inset-0 z-[100]'}>
           <div className={isCallMinimized ? 'pointer-events-auto' : 'h-full w-full'}>
             <React.Suspense fallback={null}>
-              {(() => {
-                const CustomVideoRoom = React.lazy(() => import('./dashboard/video/CustomVideoRoom'));
-                return (
-                  <CustomVideoRoom
-                    user={user}
-                    roomUrl={activeCallUrl}
-                    onLeave={handleLeaveCall}
-                    onToggleSidebar={() => setShowSidebarDuringCall(!showSidebarDuringCall)}
-                    showSidebar={showSidebarDuringCall}
-                    isMinimized={isCallMinimized}
-                    onToggleMinimize={() => setIsCallMinimized(!isCallMinimized)}
-                  />
-                );
-              })()}
+              <CustomVideoRoom
+                user={user}
+                roomUrl={activeCallUrl}
+                onLeave={handleLeaveCall}
+                onToggleSidebar={() => setShowSidebarDuringCall(!showSidebarDuringCall)}
+                showSidebar={showSidebarDuringCall}
+                isMinimized={isCallMinimized}
+                onToggleMinimize={() => setIsCallMinimized(!isCallMinimized)}
+              />
             </React.Suspense>
           </div>
         </div>

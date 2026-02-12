@@ -49,12 +49,12 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (user?.id) {
-      // Timeout safeguard: Force loading to false after 5 seconds (reduced from 10s)
+      // Timeout safeguard: Force loading to false after 15 seconds (increased from 5s for high-latency regions)
       const timeoutId = setTimeout(() => {
         console.warn('TenantContext: Loading timeout reached, forcing isLoading to false');
-        setError('Loading timeout - please refresh the page');
+        setError('Loading timeout - please check your connection and refresh');
         setIsLoading(false);
-      }, 5000);
+      }, 15000);
 
       loadUserTenants(timeoutId);
 
@@ -160,7 +160,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       const errorMessage = error?.code === 'PGRST301' || error?.message?.includes('403')
         ? 'Permission denied. Please contact support.'
         : error?.message || 'Failed to load tenants';
-      
+
       setError(errorMessage);
       setCurrentTenant(null);
       setUserTenants([]);

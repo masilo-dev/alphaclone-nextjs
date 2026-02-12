@@ -47,8 +47,11 @@ import ContractDashboard from '../../contracts/ContractDashboard';
 // Accounting Components
 import { ChartOfAccountsPage, JournalEntriesPage, FinancialReportsPage } from '../accounting';
 const GmailTab = React.lazy(() => import('../GmailTab'));
+const CustomVideoRoom = React.lazy(() => import('../video/CustomVideoRoom'));
+
 import Sidebar from '@/components/dashboard/Sidebar';
 import { TENANT_ADMIN_NAV_ITEMS } from '@/constants';
+import { PLAN_PRICING } from '../../../services/tenancy/types';
 
 interface BusinessDashboardProps {
     user: User;
@@ -242,7 +245,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
     // Map routes to display content
     const renderBusinessContent = () => {
         const plan = currentTenant?.subscription_plan || 'free';
-        const { PLAN_PRICING } = require('../../../services/tenancy/types');
         const planFeatures = PLAN_PRICING[plan as keyof typeof PLAN_PRICING]?.features;
 
         const LockedFeature = ({ feature }: { feature: string }) => (
@@ -379,7 +381,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
     }
 
     // Use external nav items instead of local redundant array
-    const { TENANT_ADMIN_NAV_ITEMS } = require('../../../constants');
 
     return (
         <div className="flex h-screen bg-slate-950 text-white overflow-hidden font-sans selection:bg-teal-500/30 w-full max-w-full">
@@ -477,20 +478,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                 <div className={isCallMinimized ? 'pointer-events-none fixed inset-0 z-[200]' : 'fixed inset-0 z-[100]'}>
                     <div className={isCallMinimized ? 'pointer-events-auto' : 'h-full w-full'}>
                         <React.Suspense fallback={null}>
-                            {(() => {
-                                // Dynamic import
-                                const CustomVideoRoom = React.lazy(() => import('../video/CustomVideoRoom'));
-                                return (
-                                    <CustomVideoRoom
-                                        user={user}
-                                        roomUrl={activeCallUrl}
-                                        onLeave={handleLeaveCall}
-                                        // Business Dashboard has simpler sidebar, but we can pass dummy toggles if needed or implement sidebar toggle
-                                        isMinimized={isCallMinimized}
-                                        onToggleMinimize={() => setIsCallMinimized(!isCallMinimized)}
-                                    />
-                                );
-                            })()}
+                            <CustomVideoRoom
+                                user={user}
+                                roomUrl={activeCallUrl}
+                                onLeave={handleLeaveCall}
+                                isMinimized={isCallMinimized}
+                                onToggleMinimize={() => setIsCallMinimized(!isCallMinimized)}
+                            />
                         </React.Suspense>
                     </div>
                 </div>
