@@ -24,10 +24,10 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [selectedClientId, setSelectedClientId] = useState('');
     const [dueDate, setDueDate] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'bank' | 'mobile_money'>('stripe');
-    const [manualInstructions, setManualInstructions] = useState('');
+    const [bankDetails, setBankDetails] = useState('');
+    const [mobileDetails, setMobileDetails] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [clients, setClients] = useState<any[]>([]);
-    const [loadingClients, setLoadingClients] = useState(false);
     const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
 
     // Fetch tenant defaults
@@ -42,7 +42,6 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             const tenantId = tenantService.getCurrentTenantId();
 
             if (tenantId) {
-                setLoadingClients(true);
                 const [settingsRes, clientsRes] = await Promise.all([
                     supabase
                         .from('business_settings')
@@ -54,17 +53,21 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 ]);
 
                 if (settingsRes.data) {
-                    setTenantDefaults({
+                    const defaults = {
                         bank: settingsRes.data.bank_details || '',
                         mobile: settingsRes.data.mobile_payment_details || '',
                         organizationName: settingsRes.data.organization_name || ''
-                    });
+                    };
+                    setTenantDefaults(defaults);
+
+                    // Pre-fill editable fields
+                    setBankDetails(defaults.bank);
+                    setMobileDetails(defaults.mobile);
                 }
 
                 if (clientsRes.clients) {
                     setClients(clientsRes.clients);
                 }
-                setLoadingClients(false);
             }
         };
         if (isOpen) {
@@ -76,13 +79,6 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
     const handleMethodChange = (method: 'stripe' | 'bank' | 'mobile_money') => {
         setPaymentMethod(method);
-        if (method === 'bank') {
-            setManualInstructions(tenantDefaults.bank);
-        } else if (method === 'mobile_money') {
-            setManualInstructions(tenantDefaults.mobile);
-        } else {
-            setManualInstructions('');
-        }
     };
 
     const handleGeneratePreview = () => {
@@ -136,7 +132,11 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     rate: amountNum,
                     amount: amountNum
                 }],
-                notes: paymentMethod !== 'stripe' ? manualInstructions : undefined,
+                // Send specific details
+                bankDetails: bankDetails,
+                mobilePaymentDetails: mobileDetails,
+                // Legacy support / fallback logic handled in service/PDF
+                notes: undefined,
                 isPublic: false
             };
 
@@ -184,7 +184,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     rate: parseFloat(amount),
                     amount: parseFloat(amount)
                 }],
-                notes: paymentMethod !== 'stripe' ? manualInstructions : undefined,
+                bankDetails: bankDetails,
+                mobilePaymentDetails: mobileDetails,
                 client: client ? {
                     name: client.name,
                     email: client.email
@@ -210,7 +211,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         setSelectedClientId('');
         setDueDate('');
         setPaymentMethod('stripe');
-        setManualInstructions('');
+        setBankDetails(tenantDefaults.bank);
+        setMobileDetails(tenantDefaults.mobile);
         setCreatedInvoiceId(null);
         setStep('edit');
     };
@@ -374,15 +376,34 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     <option value="mobile_money">Mobile Payment (Manual)</option>
                                 </select>
 
-                                {paymentMethod !== 'stripe' && (
+                                {paymentMethod === 'bank' && (
                                     <div className="mt-4 animate-fade-in">
-                                        <label className="block text-sm font-medium text-slate-300 mb-1">Payment Instructions</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">
+                                            Bank Transfer Details
+                                            <span className="text-xs text-slate-500 ml-2 font-normal">(Editable for this invoice)</span>
+                                        </label>
                                         <textarea
-                                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono"
+                                            rows={4}
+                                            value={bankDetails}
+                                            onChange={(e) => setBankDetails(e.target.value)}
+                                            placeholder="Bank Name, Account Number, SWIFT Code..."
+                                        />
+                                    </div>
+                                )}
+
+                                {paymentMethod === 'mobile_money' && (
+                                    <div className="mt-4 animate-fade-in">
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">
+                                            Mobile Money Details
+                                            <span className="text-xs text-slate-500 ml-2 font-normal">(Editable for this invoice)</span>
+                                        </label>
+                                        <textarea
+                                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono"
                                             rows={3}
-                                            value={manualInstructions}
-                                            onChange={(e) => setManualInstructions(e.target.value)}
-                                            placeholder="Enter payment instructions for the client..."
+                                            value={mobileDetails}
+                                            onChange={(e) => setMobileDetails(e.target.value)}
+                                            placeholder="Provider Name, Phone Number, Name..."
                                         />
                                     </div>
                                 )}
@@ -480,10 +501,23 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 </div>
 
                                 {/* Payment Instructions */}
-                                {paymentMethod !== 'stripe' && manualInstructions && (
+                                {(paymentMethod !== 'stripe' || bankDetails || mobileDetails) && (
                                     <div className="bg-gray-100 p-4 rounded-lg">
                                         <h3 className="font-bold text-sm mb-2">Payment Instructions:</h3>
-                                        <p className="text-gray-700 text-sm whitespace-pre-wrap">{manualInstructions}</p>
+
+                                        {bankDetails && (
+                                            <div className="mb-3">
+                                                <p className="text-xs font-bold text-gray-500 uppercase">Bank Transfer</p>
+                                                <p className="text-gray-700 text-sm whitespace-pre-wrap font-mono">{bankDetails}</p>
+                                            </div>
+                                        )}
+
+                                        {mobileDetails && (
+                                            <div className="mb-3">
+                                                <p className="text-xs font-bold text-gray-500 uppercase">Mobile Money</p>
+                                                <p className="text-gray-700 text-sm whitespace-pre-wrap font-mono">{mobileDetails}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
@@ -543,7 +577,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

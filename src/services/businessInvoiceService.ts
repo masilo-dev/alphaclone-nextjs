@@ -66,6 +66,8 @@ export const businessInvoiceService = {
                 notes: inv.notes,
                 isPublic: inv.is_public || false,
                 senderName: inv.sender_name,
+                bankDetails: inv.bank_details,
+                mobilePaymentDetails: inv.mobile_payment_details,
                 createdAt: inv.created_at,
                 updatedAt: inv.updated_at
             }));
@@ -105,7 +107,9 @@ export const businessInvoiceService = {
                 line_items: invoice.lineItems || [],
                 notes: invoice.notes,
                 is_public: invoice.isPublic || false,
-                sender_name: invoice.senderName
+                sender_name: invoice.senderName,
+                bank_details: invoice.bankDetails,
+                mobile_payment_details: invoice.mobilePaymentDetails
             };
 
             // Debug logging
@@ -140,6 +144,8 @@ export const businessInvoiceService = {
                 notes: data.notes,
                 isPublic: data.is_public || false,
                 senderName: data.sender_name,
+                bankDetails: data.bank_details,
+                mobilePaymentDetails: data.mobile_payment_details,
                 createdAt: data.created_at,
                 updatedAt: data.updated_at
             };
@@ -192,6 +198,8 @@ export const businessInvoiceService = {
             if (updates.notes !== undefined) updateData.notes = updates.notes;
             if (updates.isPublic !== undefined) updateData.is_public = updates.isPublic;
             if (updates.senderName !== undefined) updateData.sender_name = updates.senderName;
+            if (updates.bankDetails !== undefined) updateData.bank_details = updates.bankDetails;
+            if (updates.mobilePaymentDetails !== undefined) updateData.mobile_payment_details = updates.mobilePaymentDetails;
 
             updateData.updated_at = new Date().toISOString();
 
@@ -533,6 +541,60 @@ export const businessInvoiceService = {
         doc.text('Thank you for your business!', 105, pageHeight - 30, { align: 'center' });
         doc.text('This invoice was generated electronically by AlphaClone Finance Engine.', 105, pageHeight - 25, { align: 'center' });
         doc.text(`© ${new Date().getFullYear()} ${tenant.name}. All Rights Reserved.`, 105, pageHeight - 20, { align: 'center' });
+
+        // Payment Instructions
+        // Check for specific bank/mobile details first
+        const bankDetails = invoice.bank_details || invoice.bankDetails;
+        const mobileDetails = invoice.mobile_payment_details || invoice.mobilePaymentDetails;
+
+        let yPos = Math.max(y, 230); // Ensure we don't overwrite if table is long (basic handling)
+
+        if (bankDetails || mobileDetails) {
+            doc.setFillColor(248, 250, 252);
+            doc.rect(20, yPos, 170, 40, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.setTextColor(15, 23, 42);
+            doc.text('Payment Instructions:', 25, yPos + 8);
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+
+            let currentY = yPos + 16;
+
+            if (bankDetails) {
+                doc.setFont('helvetica', 'bold');
+                doc.text('Bank Transfer:', 25, currentY);
+                doc.setFont('helvetica', 'normal');
+
+                // Split text to fit
+                const splitBank = doc.splitTextToSize(bankDetails, 160);
+                doc.text(splitBank, 25, currentY + 5);
+                currentY += 5 + (splitBank.length * 4) + 5;
+            }
+
+            if (mobileDetails) {
+                doc.setFont('helvetica', 'bold');
+                doc.text('Mobile Money:', 25, currentY);
+                doc.setFont('helvetica', 'normal');
+
+                const splitMobile = doc.splitTextToSize(mobileDetails, 160);
+                doc.text(splitMobile, 25, currentY + 5);
+            }
+        } else if (invoice.notes) {
+            // Fallback to legacy notes
+            doc.setFillColor(248, 250, 252);
+            doc.rect(20, yPos, 170, 25, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.setTextColor(15, 23, 42);
+            doc.text('Notes / Payment Instructions:', 25, yPos + 8);
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            const splitNotes = doc.splitTextToSize(invoice.notes, 160);
+            doc.text(splitNotes, 25, yPos + 16);
+        }
 
         return doc;
     },
