@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
+import toast from 'react-hot-toast';
 import { businessClientService } from '../../../services/businessClientService';
 import { projectService } from '../../../services/projectService';
 import { businessInvoiceService } from '../../../services/businessInvoiceService';
@@ -31,6 +32,38 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
         completedProjects: 0
     });
     const [loading, setLoading] = useState(true);
+    const [isExporting, setIsExporting] = useState(false);
+    const [exportCategory, setExportCategory] = useState<'revenue' | 'clients' | 'activity'>('revenue');
+
+    const handleExport = async (type: 'pdf' | 'xlsx', category: string) => {
+        if (!currentTenant?.id) {
+            toast.error("Tenant information unavailable");
+            return;
+        }
+
+        setIsExporting(true);
+        try {
+            const url = `/api/reports/export?type=${type}&category=${category}&tenantId=${currentTenant.id}`;
+            const response = await fetch(url);
+
+            if (!response.ok) throw new Error("Export failed");
+
+            const blob = await response.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = `report_${category}_${new Date().toISOString().split('T')[0]}.${type}`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            toast.success(`${category.charAt(0).toUpperCase() + category.slice(1)} report exported`);
+        } catch (err) {
+            console.error("Export error:", err);
+            toast.error("Failed to export report");
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     useEffect(() => {
         if (currentTenant) {
@@ -109,11 +142,11 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
     };
 
     const handleExportPDF = () => {
-        alert('Export to PDF functionality - In production, generate comprehensive PDF report');
+        handleExport('pdf', 'revenue');
     };
 
     const handleExportExcel = () => {
-        alert('Export to Excel functionality - In production, generate Excel spreadsheet');
+        handleExport('xlsx', 'revenue');
     };
 
     const COLORS = ['#2dd4bf', '#8b5cf6', '#3b82f6', '#f59e0b', '#ef4444'];
@@ -132,6 +165,15 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 </div>
                 <div className="flex gap-3">
                     <select
+                        value={exportCategory}
+                        onChange={(e) => setExportCategory(e.target.value as any)}
+                        className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                    >
+                        <option value="revenue">Revenue Data</option>
+                        <option value="clients">Client List</option>
+                        <option value="activity">Activity Logs</option>
+                    </select>
+                    <select
                         value={dateRange}
                         onChange={(e) => setDateRange(e.target.value)}
                         className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
@@ -142,17 +184,19 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                         <option value="365">Last year</option>
                     </select>
                     <button
-                        onClick={handleExportPDF}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors"
+                        onClick={() => handleExport('pdf', exportCategory)}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors disabled:opacity-50"
                         title="Export PDF"
+                        disabled={isExporting}
                     >
                         <Download className="w-4 h-4" />
                         <span className="hidden sm:inline">Export PDF</span>
                     </button>
                     <button
-                        onClick={handleExportExcel}
-                        className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors"
+                        onClick={() => handleExport('xlsx', exportCategory)}
+                        className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors disabled:opacity-50"
                         title="Export Excel"
+                        disabled={isExporting}
                     >
                         <Download className="w-4 h-4" />
                         <span className="hidden sm:inline">Export Excel</span>

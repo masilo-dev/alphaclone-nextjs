@@ -5,15 +5,34 @@ import { createAdminClient } from '../../../../../../lib/supabaseServer';
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get('code');
-    const userId = searchParams.get('state');
+    const stateNonce = searchParams.get('state');
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech';
 
-    if (!code || !userId) {
-        return NextResponse.redirect(`${appUrl}/dashboard/settings?gmail=error`);
+    if (!code || !stateNonce) {
+        console.error('Gmail Callback: Missing code or state');
+        return NextResponse.redirect(`${appUrl}/dashboard/settings?gmail=error&reason=missing_params`);
     }
 
     try {
+        const supabaseAdmin = createAdminClient();
+
+        // 1. Verify and consume the state nonce
+        const { data: stateData, error: stateError } = await supabaseAdmin
+            .from('oauth_states')
+            .delete()
+            .eq('id', stateNonce)
+            .select('user_id')
+            .single();
+
+        if (stateError || !stateData) {
+            console.error('Gmail Callback: Invalid or expired state', stateError);
+            return NextResponse.redirect(`${appUrl}/dashboard/settings?gmail=error&reason=invalid_state`);
+        }
+
+        const userId = stateData.user_id;
+
+        // 2. Exchange authorization code for tokens
         const clientId = ENV.GOOGLE_CLIENT_ID;
         const clientSecret = ENV.GOOGLE_CLIENT_SECRET;
         const redirectUri = `${appUrl}/api/auth/google/gmail/callback`;
@@ -40,9 +59,8 @@ export async function GET(req: NextRequest) {
         const { access_token, refresh_token, expires_in } = tokens;
         const expiresAt = new Date(Date.now() + expires_in * 1000).toISOString();
 
-        const supabaseAdmin = createAdminClient();
-
-        const { error } = await supabaseAdmin
+        // 3. Upsert tokens into the database
+        const { error: upsertError } = await supabaseAdmin
             .from('gmail_sync_tokens')
             .upsert({
                 user_id: userId,
@@ -54,11 +72,14 @@ export async function GET(req: NextRequest) {
                 onConflict: 'user_id',
             });
 
-        if (error) throw error;
+        if (upsertError) {
+            console.error('Supabase Upsert Error:', upsertError);
+            throw upsertError;
+        }
 
         return NextResponse.redirect(`${appUrl}/dashboard/settings?gmail=connected`);
     } catch (err) {
         console.error('Gmail Callback Error:', err);
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?gmail=error`);
+        return NextResponse.redirect(`${appUrl}/dashboard/settings?gmail=error`);
     }
 }

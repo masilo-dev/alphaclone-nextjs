@@ -44,19 +44,28 @@ export default function PublicInvoicePage() {
         doc.save(`invoice-${invoice.invoice_number || invoice.invoiceNumber}.pdf`);
     };
 
-    const handleMockPayment = async () => {
+    const handlePayment = async () => {
         setProcessing(true);
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 2500));
+        try {
+            const response = await fetch('/api/stripe/create-invoice-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    invoiceId: invoice.id,
+                }),
+            });
 
-        const { error } = await businessInvoiceService.markAsPaid(invoiceId);
-
-        if (!error) {
-            setInvoice({ ...invoice, status: 'paid' });
-        } else {
-            alert('Payment failed: ' + error);
+            const data = await response.json();
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                throw new Error(data.error || 'Failed to create payment session');
+            }
+        } catch (error: any) {
+            console.error('Payment Error:', error);
+            alert(error.message || 'Payment service unavailable');
+            setProcessing(false);
         }
-        setProcessing(false);
     };
 
     if (loading) {
@@ -210,7 +219,7 @@ export default function PublicInvoicePage() {
                                         </div>
 
                                         <button
-                                            onClick={handleMockPayment}
+                                            onClick={handlePayment}
                                             disabled={processing}
                                             className="w-full py-4 bg-teal-500 hover:bg-teal-400 disabled:bg-teal-900 disabled:text-teal-500 text-black font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_10px_30px_rgba(20,184,166,0.3)] hover:-translate-y-1"
                                         >

@@ -4,12 +4,48 @@ import { Activity, Users, DollarSign, Server, Cpu, TrendingUp, TrendingDown } fr
 import { analyticsService, AnalyticsData } from '../../services/analyticsService';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { format } from 'date-fns';
+import { useTenant } from '@/contexts/TenantContext';
+import { Button } from '../ui/UIComponents';
+import { Download, FileDown } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const AnalyticsTab: React.FC = () => {
+    const { currentTenant: tenant } = useTenant();
     const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
     const [loading, setLoading] = useState(true);
     const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
     const [error, setError] = useState<string | null>(null);
+    const [isExporting, setIsExporting] = useState(false);
+
+    const handleExport = async (type: 'pdf' | 'xlsx', category: string) => {
+        if (!tenant?.id) {
+            toast.error("Tenant information unavailable");
+            return;
+        }
+
+        setIsExporting(true);
+        try {
+            const url = `/api/reports/export?type=${type}&category=${category}&tenantId=${tenant.id}`;
+            const response = await fetch(url);
+
+            if (!response.ok) throw new Error("Export failed");
+
+            const blob = await response.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = `report_${category}_${new Date().toISOString().split('T')[0]}.${type}`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            toast.success(`${category.charAt(0).toUpperCase() + category.slice(1)} report exported`);
+        } catch (err) {
+            console.error("Export error:", err);
+            toast.error("Failed to export report");
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     useEffect(() => {
         const fetchAnalytics = async () => {
@@ -77,19 +113,42 @@ const AnalyticsTab: React.FC = () => {
                 <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white flex items-center gap-2">
                     <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-teal-400" /> Live Operations
                 </h2>
-                <div className="flex gap-2 bg-slate-900/50 p-1.5 rounded-xl border border-slate-800">
-                    {(['7d', '30d', '90d', '1y'] as const).map((range) => (
-                        <button
-                            key={range}
-                            onClick={() => setDateRange(range)}
-                            className={`px-4 py-2 rounded-lg text-sm transition-all ${dateRange === range
-                                ? 'bg-teal-600 text-white shadow-lg shadow-teal-500/20'
-                                : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                                }`}
+                <div className="flex flex-wrap gap-2 items-center">
+                    <div className="flex gap-2 bg-slate-900/50 p-1.5 rounded-xl border border-slate-800">
+                        {(['7d', '30d', '90d', '1y'] as const).map((range) => (
+                            <button
+                                key={range}
+                                onClick={() => setDateRange(range)}
+                                className={`px-4 py-2 rounded-lg text-sm transition-all ${dateRange === range
+                                    ? 'bg-teal-600 text-white shadow-lg shadow-teal-500/20'
+                                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                                    }`}
+                            >
+                                {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : range === '90d' ? '90 Days' : '1 Year'}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="flex gap-2">
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleExport('pdf', 'revenue')}
+                            isLoading={isExporting}
+                            icon={<FileDown className="w-4 h-4" />}
                         >
-                            {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : range === '90d' ? '90 Days' : '1 Year'}
-                        </button>
-                    ))}
+                            PDF
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleExport('xlsx', 'revenue')}
+                            isLoading={isExporting}
+                            icon={<Download className="w-4 h-4" />}
+                        >
+                            Excel
+                        </Button>
+                    </div>
                 </div>
             </div>
 

@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { ENV } from '@/config/env';
 
-const DAILY_API_KEY = process.env.DAILY_API_KEY;
 const DAILY_API_URL = 'https://api.daily.co/v1';
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export async function POST(req: Request) {
+    const DAILY_API_KEY = ENV.DAILY_API_KEY;
+
     if (!DAILY_API_KEY) {
         return NextResponse.json({ error: 'Daily API key not configured' }, { status: 500 });
     }
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
         }
 
-        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
 
         // 1. Check if user already has a permanent room
         const { data: existingRoom } = await supabase

@@ -232,158 +232,30 @@ export const contractService = {
             userAgent?: string;
         }
     ) {
-        const updates: any = {};
-        const now = new Date().toISOString();
-
-        // Fetch current contract data
-        const { data: contract } = await supabase
-            .from('contracts')
-            .select('content, client_signature, admin_signature, title, client_id, owner_id')
-            .eq('id', contractId)
-            .single();
-
-        if (!contract) {
-            return { contract: null, error: { message: 'Contract not found' } };
-        }
-
-        const contentHash = contract.content ? await this.generateHash(contract.content) : 'no-content';
-
-        // Try to get IP address (client-side)
-        let ipAddress = 'unknown';
         try {
-            const response = await fetch('https://api.ipify.org?format=json');
-            const data = await response.json();
-            ipAddress = data.ip;
-        } catch (e) {
-            console.warn('Could not fetch IP for audit log');
-        }
-
-        const userAgent = signerInfo?.userAgent || (typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown');
-
-        // ESIGN COMPLIANCE: Record consent if provided
-        if (signerInfo?.consentGiven && signerInfo?.id) {
-            await esignatureComplianceService.recordConsent(
-                signerInfo.id,
-                contractId,
-                ipAddress,
-                userAgent,
-                'signature_action'
-            );
-        }
-
-        // ESIGN COMPLIANCE: Log signature event with tamper seal
-        if (signerInfo) {
-            const intentStatement = esignatureComplianceService.INTENT_STATEMENT
-                .replace('[NAME]', signerInfo.name);
-
-            await esignatureComplianceService.recordSignatureEvent(
-                contractId,
-                signerInfo.id,
-                role,
-                signerInfo.name,
-                signerInfo.email,
-                'signature_completed',
-                signatureDataUrl,
-                contentHash,
-                ipAddress,
-                userAgent,
-                intentStatement
-            );
-        }
-
-        // Update contract with signature
-        if (role === 'client') {
-            updates.client_signature = signatureDataUrl;
-            updates.client_signed_at = now;
-            // If admin has already signed, it becomes fully_signed
-            updates.status = contract.admin_signature ? 'fully_signed' : 'client_signed';
-        } else {
-            updates.admin_signature = signatureDataUrl;
-            updates.admin_signed_at = now;
-            // If client has already signed, it becomes fully_signed
-            updates.status = contract.client_signature ? 'fully_signed' : 'sent';
-        }
-
-        updates.metadata = {
-            signer_ip: ipAddress,
-            content_hash: contentHash,
-            signed_by_role: role,
-            timestamp: now
-        };
-
-        const { data, error } = await supabase
-            .from('contracts')
-            .update(updates)
-            .eq('id', contractId)
-            .select()
-            .single();
-
-        if (error) {
-            return { contract: null, error };
-        }
-
-        // ESIGN COMPLIANCE: Log audit event
-        if (signerInfo) {
-            await esignatureComplianceService.logAuditEvent(
-                contractId,
-                `contract_signed_by_${role}`,
-                signerInfo.id,
-                role,
-                signerInfo.name,
-                signerInfo.email,
-                ipAddress,
-                userAgent,
-                { signature_status: updates.status }
-            );
-        }
-
-        // ESIGN COMPLIANCE: Create completion certificate if both parties signed
-        if (updates.status === 'fully_signed') {
-            // Get both signer details
-            const { data: clientUser } = await supabase
-                .from('profiles')
-                .select('full_name, email')
-                .eq('id', contract.client_id)
-                .single();
-
-            const { data: adminUser } = await supabase
-                .from('profiles')
-                .select('full_name, email')
-                .eq('id', contract.owner_id)
-                .single();
-
-            if (clientUser && adminUser) {
-                const signers = [
-                    {
-                        id: contract.client_id,
-                        role: 'client' as const,
-                        name: clientUser.full_name || 'Client',
-                        email: clientUser.email,
-                        signedAt: data.client_signed_at,
-                        ipAddress: ipAddress,
-                        signature: data.client_signature
-                    },
-                    {
-                        id: contract.owner_id,
-                        role: 'admin' as const,
-                        name: adminUser.full_name || 'Administrator',
-                        email: adminUser.email,
-                        signedAt: data.admin_signed_at,
-                        ipAddress: ipAddress,
-                        signature: data.admin_signature
-                    }
-                ];
-
-                await esignatureComplianceService.createCompletionCertificate(
+            const response = await fetch('/api/contracts/sign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
                     contractId,
-                    contract.title || 'Service Agreement',
-                    signers,
-                    contract.content
-                );
-            }
-        }
+                    role,
+                    signatureDataUrl,
+                    signerName: signerInfo?.name || (role === 'admin' ? 'Administrator' : 'Client'),
+                    signerEmail: signerInfo?.email || '',
+                }),
+            });
 
-        return { contract: data, error: null };
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to sign contract');
+            }
+
+            const { contract } = await response.json();
+            return { contract, error: null };
+        } catch (error: any) {
+            console.error('Sign contract error:', error);
+            return { contract: null, error: { message: error.message || 'Failed to sign contract' } as any };
+        }
     },
 
     /**

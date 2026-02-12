@@ -3,6 +3,8 @@ import { Upload, X, FileText, Check, AlertCircle } from 'lucide-react';
 import { Button, Modal } from '../../ui/UIComponents';
 import { toast } from 'react-hot-toast';
 
+import { useTenant } from '@/contexts/TenantContext';
+
 interface ClientImportModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -10,6 +12,7 @@ interface ClientImportModalProps {
 }
 
 export const ClientImportModal: React.FC<ClientImportModalProps> = ({ isOpen, onClose, onImportComplete }) => {
+    const { currentTenant: tenant } = useTenant();
     const [dragActive, setDragActive] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -49,18 +52,38 @@ export const ClientImportModal: React.FC<ClientImportModalProps> = ({ isOpen, on
     };
 
     const handleUpload = async () => {
-        if (!file) return;
-        setIsUploading(true);
+        if (!file || !tenant?.id) {
+            toast.error("Missing file or tenant information");
+            return;
+        }
 
-        // Simulating upload for now as the backend endpoint might not exist
-        // In a real implementation, you would post the file to an API endpoint
-        setTimeout(() => {
-            setIsUploading(false);
-            toast.success("Clients imported successfully (Simulation)");
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('tenantId', tenant.id);
+
+        try {
+            const response = await fetch('/api/crm/import', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to import clients');
+            }
+
+            toast.success(result.message || "Clients imported successfully");
             onImportComplete();
             onClose();
             setFile(null);
-        }, 1500);
+        } catch (error: any) {
+            console.error('Upload error:', error);
+            toast.error(error.message || "Error uploading file");
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     return (

@@ -1,8 +1,10 @@
 import React from 'react';
 import { Button, Badge } from '../ui/UIComponents';
-import { CreditCard, CheckCircle, Download, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { CreditCard, CheckCircle, Download, TrendingUp, TrendingDown, DollarSign, FileDown } from 'lucide-react';
 import { User, Invoice } from '../../types';
 import { paymentService } from '../../services/paymentService';
+import { useTenant } from '@/contexts/TenantContext';
+import toast from 'react-hot-toast';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface FinanceTabProps {
@@ -13,6 +15,39 @@ interface FinanceTabProps {
 }
 
 const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handlePayClick, onCreateInvoice }) => {
+    const { currentTenant: tenant } = useTenant();
+    const [isExporting, setIsExporting] = React.useState(false);
+
+    const handleExport = async (type: 'pdf' | 'xlsx', category: string) => {
+        if (!tenant?.id) {
+            toast.error("Tenant information unavailable");
+            return;
+        }
+
+        setIsExporting(true);
+        try {
+            const url = `/api/reports/export?type=${type}&category=${category}&tenantId=${tenant.id}`;
+            const response = await fetch(url);
+
+            if (!response.ok) throw new Error("Export failed");
+
+            const blob = await response.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = `report_${category}_${new Date().toISOString().split('T')[0]}.${type}`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            toast.success(`${category.charAt(0).toUpperCase() + category.slice(1)} report exported`);
+        } catch (err) {
+            console.error("Export error:", err);
+            toast.error("Failed to export report");
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
     const totalRevenue = filteredInvoices.filter(i => i.status === 'Paid').reduce((acc, curr) => acc + curr.amount, 0);
     const outstanding = filteredInvoices.filter(i => i.status !== 'Paid').reduce((acc, curr) => acc + curr.amount, 0);
     const paidCount = filteredInvoices.filter(i => i.status === 'Paid').length;
@@ -42,7 +77,25 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                     <CreditCard className="w-6 h-6 text-teal-400" /> Financial Center
                 </h2>
-                {(user.role === 'admin' || user.role === 'tenant_admin') && <Button onClick={onCreateInvoice}>Create Invoice</Button>}
+                <div className="flex gap-2">
+                    <Button
+                        variant="secondary"
+                        onClick={() => handleExport('pdf', 'revenue')}
+                        isLoading={isExporting}
+                        icon={<FileDown className="w-4 h-4" />}
+                    >
+                        Export PDF
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        onClick={() => handleExport('xlsx', 'revenue')}
+                        isLoading={isExporting}
+                        icon={<Download className="w-4 h-4" />}
+                    >
+                        Export Excel
+                    </Button>
+                    {(user.role === 'admin' || user.role === 'tenant_admin') && <Button onClick={onCreateInvoice}>Create Invoice</Button>}
+                </div>
             </div>
 
 

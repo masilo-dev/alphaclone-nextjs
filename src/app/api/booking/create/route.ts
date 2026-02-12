@@ -6,15 +6,16 @@ import { Resend } from 'resend';
 // Initialize Clients inside handler to avoid build-time errors if env vars missing
 // const supabase = createClient(...);
 
-const DAILY_API_KEY = process.env.DAILY_API_KEY;
+import { ENV } from '@/config/env';
 
 export async function POST(req: Request) {
+    const DAILY_API_KEY = ENV.DAILY_API_KEY;
+
     try {
         // Initialize Supabase Client
-        // Must be inside handler to avoid build-time error if key is missing during static generation
         const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
+            ENV.VITE_SUPABASE_URL,
+            ENV.SUPABASE_SERVICE_ROLE_KEY
         );
 
         const body = await req.json();

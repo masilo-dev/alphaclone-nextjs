@@ -3,6 +3,7 @@ import { stripe } from '@/lib/stripe';
 import { supabase } from '@/lib/supabase';
 import { headers } from 'next/headers';
 import { emailProviderService } from '@/services/EmailProviderService';
+import { invoiceServerService } from '@/services/server/invoiceServerService';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -121,6 +122,19 @@ export async function POST(req: Request) {
     try {
         switch (event.type) {
             case 'checkout.session.completed': {
+                if (session.metadata?.type === 'business_invoice') {
+                    const invoiceId = session.metadata.invoiceId;
+                    if (invoiceId) {
+                        const { success, error } = await invoiceServerService.markAsPaid(invoiceId);
+                        if (!success) {
+                            console.error(`Failed to mark invoice ${invoiceId} as paid: ${error}`);
+                            throw new Error(error || 'Failed to process invoice payment');
+                        }
+                        console.log(`Invoice ${invoiceId} marked as paid via webhook.`);
+                    }
+                    break;
+                }
+
                 tenantId = session.metadata?.tenantId;
                 if (tenantId) {
                     const subscription = await stripe.subscriptions.retrieve(session.subscription);
