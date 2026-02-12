@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 interface MeetingValidationResult {
@@ -11,34 +11,30 @@ interface MeetingValidationResult {
 }
 
 /**
- * GET /api/meetings/:token/validate
- *
- * Validate meeting link before showing join UI
- * Checks if link is:
- * - Not expired
- * - Not already used
- * - Exists in database
+ * GET /api/meetings/by-token/[token]/validate
+ * 
+ * App Router implementation of meeting link validation
  */
-export default async function handler(
-    req: VercelRequest,
-    res: VercelResponse
+export async function GET(
+    req: NextRequest,
+    { params }: { params: { token: string } }
 ) {
-    if (req.method !== 'GET') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
-
     try {
-        const { token } = req.query;
+        const { token } = params;
 
-        if (!token || typeof token !== 'string') {
-            return res.status(400).json({ error: 'Token is required' });
+        if (!token) {
+            return NextResponse.json({ error: 'Token is required' }, { status: 400 });
         }
 
         // Initialize Supabase client
-        const supabase = createClient(
-            process.env.VITE_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
+        const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
+
+        if (!supabaseUrl || !supabaseKey) {
+            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+        }
+
+        const supabase = createClient(supabaseUrl, supabaseKey);
 
         // Call database function to validate link
         const { data, error } = await supabase
@@ -47,19 +43,19 @@ export default async function handler(
 
         if (error) {
             console.error('Error validating meeting link:', error);
-            return res.status(500).json({ error: 'Failed to validate meeting link' });
+            return NextResponse.json({ error: 'Failed to validate meeting link' }, { status: 500 });
         }
 
         if (!data) {
-            return res.status(404).json({
+            return NextResponse.json({
                 valid: false,
                 reason: 'not_found'
-            });
+            }, { status: 404 });
         }
 
         // Return validation result
         if (data.valid) {
-            return res.status(200).json({
+            return NextResponse.json({
                 valid: true,
                 meeting: {
                     id: data.meeting_id,
@@ -79,7 +75,7 @@ export default async function handler(
                 reasonCode = 'not_found';
             }
 
-            return res.status(200).json({
+            return NextResponse.json({
                 valid: false,
                 reason: reasonCode,
                 message: data.reason
@@ -87,9 +83,9 @@ export default async function handler(
         }
 
     } catch (error) {
-        console.error('Error in validate endpoint:', error);
-        return res.status(500).json({
+        console.error('Error in validation route:', error);
+        return NextResponse.json({
             error: error instanceof Error ? error.message : 'Failed to validate meeting link'
-        });
+        }, { status: 500 });
     }
 }

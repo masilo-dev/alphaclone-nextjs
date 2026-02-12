@@ -1,22 +1,15 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
 /**
  * POST /api/meetings/create
- *
- * Create a new meeting with single-use link and 40-minute time limit
- * Returns AlphaClone URL (/meet/:token), NOT Daily.co URL
+ * 
+ * App Router implementation of meeting creation
  */
-export default async function handler(
-    req: VercelRequest,
-    res: VercelResponse
-) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
-
+export async function POST(req: NextRequest) {
     try {
+        const body = await req.json();
         const {
             title,
             hostId,
@@ -24,30 +17,39 @@ export default async function handler(
             durationMinutes = 40,
             calendarEventId,
             participants = []
-        } = req.body;
+        } = body;
 
         // Validation
         if (!title || !hostId) {
-            return res.status(400).json({ error: 'Title and hostId are required' });
+            return NextResponse.json({ error: 'Title and hostId are required' }, { status: 400 });
         }
 
         // Enforce 40-minute maximum
         const actualDuration = Math.min(durationMinutes, 40);
 
         // Initialize Supabase client
-        const supabase = createClient(
-            process.env.VITE_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
+        const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
+
+        if (!supabaseUrl || !supabaseKey) {
+            return NextResponse.json({ error: 'Server configuration error: Missing Supabase credentials' }, { status: 500 });
+        }
+
+        const supabase = createClient(supabaseUrl, supabaseKey);
 
         // Step 1: Create Daily.co room
         const roomName = `room-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+        const DAILY_API_KEY = process.env.DAILY_API_KEY;
+
+        if (!DAILY_API_KEY) {
+            return NextResponse.json({ error: 'Server configuration error: Missing Daily API Key' }, { status: 500 });
+        }
 
         const dailyResponse = await fetch('https://api.daily.co/v1/rooms', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.DAILY_API_KEY}`
+                'Authorization': `Bearer ${DAILY_API_KEY}`
             },
             body: JSON.stringify({
                 name: roomName,
@@ -60,7 +62,7 @@ export default async function handler(
                     enable_prejoin_ui: true,
                     enable_network_ui: true,
                     enable_advanced_chat: true,
-                    // Set expiry for 40 minutes from now
+                    // Set expiry for X minutes from now
                     exp: Math.floor(Date.now() / 1000) + (actualDuration * 60)
                 }
             })
@@ -68,9 +70,9 @@ export default async function handler(
 
         if (!dailyResponse.ok) {
             const errorData = await dailyResponse.json();
-            return res.status(dailyResponse.status).json({
+            return NextResponse.json({
                 error: errorData.error || 'Failed to create Daily.co room'
-            });
+            }, { status: dailyResponse.status });
         }
 
         const dailyRoom = await dailyResponse.json();
@@ -99,7 +101,7 @@ export default async function handler(
             .single();
 
         if (videoCallError || !videoCall) {
-            return res.status(500).json({ error: videoCallError?.message || 'Failed to create video call' });
+            return NextResponse.json({ error: videoCallError?.message || 'Failed to create video call' }, { status: 500 });
         }
 
         // Step 3: Generate secure token for meeting link
@@ -122,14 +124,14 @@ export default async function handler(
             .single();
 
         if (linkError || !meetingLink) {
-            return res.status(500).json({ error: linkError?.message || 'Failed to create meeting link' });
+            return NextResponse.json({ error: linkError?.message || 'Failed to create meeting link' }, { status: 500 });
         }
 
         // Step 5: Return AlphaClone URL (not Daily.co URL)
-        const baseUrl = process.env.VITE_APP_URL || 'http://localhost:5173';
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech';
         const meetingUrl = `${baseUrl}/meet/${linkToken}`;
 
-        return res.status(200).json({
+        return NextResponse.json({
             meetingId: videoCall.id,
             meetingUrl: meetingUrl,
             token: linkToken,
@@ -141,8 +143,8 @@ export default async function handler(
 
     } catch (error) {
         console.error('Error creating meeting:', error);
-        return res.status(500).json({
+        return NextResponse.json({
             error: error instanceof Error ? error.message : 'Failed to create meeting'
-        });
+        }, { status: 500 });
     }
 }

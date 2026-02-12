@@ -51,7 +51,7 @@ const FixedSizeGrid = dynamic(
 ) as any;
 
 const AutoSizer = dynamic(
-    () => import('react-virtualized-auto-sizer').then((mod: any) => mod.default || mod),
+    () => import('react-virtualized-auto-sizer').then((mod: any) => mod.default),
     { ssr: false }
 ) as any;
 import {

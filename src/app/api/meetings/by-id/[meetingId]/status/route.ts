@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 interface TimeLimitResult {
@@ -8,31 +8,31 @@ interface TimeLimitResult {
 }
 
 /**
- * GET /api/meetings/:meetingId/status
- *
- * Check meeting status and time remaining
+ * GET /api/meetings/by-id/[meetingId]/status
+ * 
+ * App Router implementation of meeting status check
  * Used by frontend to monitor 40-minute timer
  */
-export default async function handler(
-    req: VercelRequest,
-    res: VercelResponse
+export async function GET(
+    req: NextRequest,
+    { params }: { params: { meetingId: string } }
 ) {
-    if (req.method !== 'GET') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
-
     try {
-        const { meetingId } = req.query;
+        const { meetingId } = params;
 
-        if (!meetingId || typeof meetingId !== 'string') {
-            return res.status(400).json({ error: 'Meeting ID is required' });
+        if (!meetingId) {
+            return NextResponse.json({ error: 'Meeting ID is required' }, { status: 400 });
         }
 
         // Initialize Supabase client
-        const supabase = createClient(
-            process.env.VITE_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
+        const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
+
+        if (!supabaseUrl || !supabaseKey) {
+            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+        }
+
+        const supabase = createClient(supabaseUrl, supabaseKey);
 
         // Call database function to check time limit
         const { data, error } = await supabase
@@ -41,7 +41,7 @@ export default async function handler(
 
         if (error) {
             console.error('Error checking meeting time limit:', error);
-            return res.status(500).json({ error: 'Failed to check meeting status' });
+            return NextResponse.json({ error: 'Failed to check meeting status' }, { status: 500 });
         }
 
         // Get meeting status
@@ -52,10 +52,10 @@ export default async function handler(
             .single();
 
         if (meetingError || !meeting) {
-            return res.status(404).json({ error: 'Meeting not found' });
+            return NextResponse.json({ error: 'Meeting not found' }, { status: 404 });
         }
 
-        return res.status(200).json({
+        return NextResponse.json({
             meetingId: meetingId,
             title: meeting.title,
             status: meeting.status,
@@ -68,9 +68,9 @@ export default async function handler(
         });
 
     } catch (error) {
-        console.error('Error in status endpoint:', error);
-        return res.status(500).json({
+        console.error('Error in status route:', error);
+        return NextResponse.json({
             error: error instanceof Error ? error.message : 'Failed to get meeting status'
-        });
+        }, { status: 500 });
     }
 }

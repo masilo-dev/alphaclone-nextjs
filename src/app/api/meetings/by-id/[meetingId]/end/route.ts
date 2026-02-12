@@ -1,41 +1,44 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 /**
- * POST /api/meetings/:meetingId/end
- *
- * End meeting (admin/host only, or auto-end on timer)
- * Updates status to 'ended' and invalidates all meeting links
+ * POST /api/meetings/by-id/[meetingId]/end
+ * 
+ * App Router implementation of ending a meeting
+ * - Updates status to 'ended'
+ * - Invalidates all meeting links
+ * - Cleans up Daily.co room
  */
-export default async function handler(
-    req: VercelRequest,
-    res: VercelResponse
+export async function POST(
+    req: NextRequest,
+    { params }: { params: { meetingId: string } }
 ) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
-
     try {
-        const { meetingId } = req.query;
-        const { userId, reason = 'manual', durationSeconds } = req.body;
+        const { meetingId } = params;
+        const body = await req.json();
+        const { userId, reason = 'manual', durationSeconds } = body;
 
-        if (!meetingId || typeof meetingId !== 'string') {
-            return res.status(400).json({ error: 'Meeting ID is required' });
+        if (!meetingId) {
+            return NextResponse.json({ error: 'Meeting ID is required' }, { status: 400 });
         }
 
         if (!userId) {
-            return res.status(400).json({ error: 'User ID is required' });
+            return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
         }
 
         if (!['manual', 'time_limit', 'all_left'].includes(reason)) {
-            return res.status(400).json({ error: 'Invalid reason' });
+            return NextResponse.json({ error: 'Invalid reason' }, { status: 400 });
         }
 
         // Initialize Supabase client
-        const supabase = createClient(
-            process.env.VITE_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
+        const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
+
+        if (!supabaseUrl || !supabaseKey) {
+            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+        }
+
+        const supabase = createClient(supabaseUrl, supabaseKey);
 
         // Step 1: Get meeting details and verify permissions
         const { data: meeting, error: meetingError } = await supabase
@@ -45,12 +48,12 @@ export default async function handler(
             .single();
 
         if (meetingError || !meeting) {
-            return res.status(404).json({ error: 'Meeting not found' });
+            return NextResponse.json({ error: 'Meeting not found' }, { status: 404 });
         }
 
         // Check if meeting is already ended
         if (meeting.status === 'ended') {
-            return res.status(200).json({
+            return NextResponse.json({
                 success: true,
                 message: 'Meeting already ended'
             });
@@ -67,7 +70,7 @@ export default async function handler(
         const isAdmin = userProfile?.role === 'admin';
 
         if (!isHost && !isAdmin && reason !== 'time_limit') {
-            return res.status(403).json({ error: 'You do not have permission to end this meeting' });
+            return NextResponse.json({ error: 'You do not have permission to end this meeting' }, { status: 403 });
         }
 
         // Step 3: Update meeting status to ended
@@ -86,14 +89,14 @@ export default async function handler(
 
         if (updateError) {
             console.error('Error updating meeting:', updateError);
-            return res.status(500).json({ error: 'Failed to end meeting' });
+            return NextResponse.json({ error: 'Failed to end meeting' }, { status: 500 });
         }
 
         // Step 4: Expire all meeting links for this meeting
         const { error: expireLinkError } = await supabase
             .from('meeting_links')
             .update({
-                expires_at: now, // Set expiry to now
+                expires_at: now,
                 used: true
             })
             .eq('meeting_id', meetingId)
@@ -101,33 +104,29 @@ export default async function handler(
 
         if (expireLinkError) {
             console.error('Error expiring meeting links:', expireLinkError);
-            // Non-fatal, continue
         }
 
-        // Step 5: Optionally delete Daily.co room (to prevent further joins)
+        // Step 5: Optionally delete Daily.co room
         if (meeting.daily_room_name) {
-            try {
-                const deleteRoomResponse = await fetch(
-                    `https://api.daily.co/v1/rooms/${meeting.daily_room_name}`,
-                    {
-                        method: 'DELETE',
-                        headers: {
-                            'Authorization': `Bearer ${process.env.DAILY_API_KEY}`
+            const DAILY_API_KEY = process.env.DAILY_API_KEY;
+            if (DAILY_API_KEY) {
+                try {
+                    await fetch(
+                        `https://api.daily.co/v1/rooms/${meeting.daily_room_name}`,
+                        {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${DAILY_API_KEY}`
+                            }
                         }
-                    }
-                );
-
-                if (!deleteRoomResponse.ok) {
-                    console.error('Failed to delete Daily.co room:', await deleteRoomResponse.text());
-                    // Non-fatal, continue
+                    );
+                } catch (deleteError) {
+                    console.error('Error deleting Daily.co room:', deleteError);
                 }
-            } catch (deleteError) {
-                console.error('Error deleting Daily.co room:', deleteError);
-                // Non-fatal, continue
             }
         }
 
-        return res.status(200).json({
+        return NextResponse.json({
             success: true,
             message: 'Meeting ended successfully',
             endedAt: now,
@@ -136,8 +135,8 @@ export default async function handler(
 
     } catch (error) {
         console.error('Error ending meeting:', error);
-        return res.status(500).json({
+        return NextResponse.json({
             error: error instanceof Error ? error.message : 'Failed to end meeting'
-        });
+        }, { status: 500 });
     }
 }

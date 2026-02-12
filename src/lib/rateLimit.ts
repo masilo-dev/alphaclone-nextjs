@@ -1,7 +1,7 @@
 import { Ratelimit, Duration } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from './supabase';
+import { createServerClient } from '@supabase/ssr';
 
 // Initialize Redis client from environment variables
 // Add these to your .env:
@@ -9,9 +9,9 @@ import { supabase } from './supabase';
 // UPSTASH_REDIS_REST_TOKEN=your_token
 const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
     ? new Redis({
-          url: process.env.UPSTASH_REDIS_REST_URL!,
-          token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-      })
+        url: process.env.UPSTASH_REDIS_REST_URL!,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    })
     : null;
 
 // Fallback to in-memory rate limiting if Redis is not configured
@@ -176,7 +176,7 @@ export async function rateLimit(
             };
         } else {
             // Use in-memory fallback
-            console.warn('Redis not configured, using in-memory rate limiting (not recommended for production)');
+            console.warn('Redis not configured, using in-memory rate limiting');
             const windowMs = parseWindow(config.window);
             const result = checkInMemoryRateLimit(key, config.limit, windowMs);
 
@@ -204,10 +204,25 @@ export async function rateLimit(
 
 /**
  * Log rate limit violation to Supabase audit logs
+ * Uses an isolated client to be safe in Edge/Middleware
  */
 async function logRateLimitViolation(identifier: string, ipAddress: string, path: string) {
     try {
-        await supabase.from('audit_logs').insert({
+        const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+        if (!supabaseUrl || !supabaseKey) return;
+
+        // Use createServerClient which is safe for Edge Runtime
+        const client = createServerClient(supabaseUrl, supabaseKey, {
+            cookies: {
+                get(name: string) { return undefined },
+                set(name: string, value: string, options: any) { },
+                remove(name: string, options: any) { },
+            }
+        });
+
+        await client.from('audit_logs').insert({
             user_id: null,
             action: 'rate_limit_exceeded',
             resource_type: 'api',
@@ -222,19 +237,18 @@ async function logRateLimitViolation(identifier: string, ipAddress: string, path
             created_at: new Date().toISOString(),
         });
 
-        // Also log as security threat for monitoring
-        await supabase.from('security_threats').insert({
+        // Also log as security threat
+        await client.from('security_threats').insert({
             type: 'rate_limit_exceeded',
             severity: 'medium',
             ip_address: ipAddress,
-            user_agent: '', // Would need to pass from request
+            user_agent: 'Edge Runtime',
             description: `Rate limit exceeded for ${path}`,
             metadata: { identifier, path },
             status: 'detected',
             created_at: new Date().toISOString(),
         });
     } catch (error) {
-        // Silent fail - don't block request if logging fails
         console.error('Failed to log rate limit violation:', error);
     }
 }
