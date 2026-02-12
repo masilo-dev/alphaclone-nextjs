@@ -66,7 +66,7 @@ CRITICAL INSTRUCTIONS:
 - Do not hallucinate features, capabilities, or information that wasn't explicitly provided`;
 
         const model = genAI.getGenerativeModel({
-            model: 'gemini-1.5-pro-latest',
+            model: 'gemini-1.5-pro',
             systemInstruction: finalSystemPrompt
         });
 

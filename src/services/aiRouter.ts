@@ -11,14 +11,15 @@
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import { geminiService, chatWithGemini } from './geminiService';
+import { ENV } from '@/config/env';
 
-// Initialize clients
-const anthropic = process.env.ANTHROPIC_API_KEY
-  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+// Initialize clients using validated ENV
+const anthropic = ENV.ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: ENV.ANTHROPIC_API_KEY })
   : null;
 
-const openai = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const openai = ENV.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: ENV.OPENAI_API_KEY })
   : null;
 
 export interface AIRequestOptions {
@@ -72,7 +73,7 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
   }
 
   // Priority 3: Try Gemini (fallback)
-  if (process.env.VITE_GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
+  if (ENV.VITE_GEMINI_API_KEY) {
     try {
       console.log('[AI Router] Attempting Gemini (fallback)...');
       const response = await completeWithGemini(options);
@@ -207,7 +208,7 @@ export async function routeAIChat(
   }
 
   // Priority 3: Try Gemini (supports vision)
-  if (process.env.VITE_GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
+  if (ENV.VITE_GEMINI_API_KEY) {
     try {
       console.log('[AI Router] Attempting Gemini chat...');
       // Gemini REQUIRED: Roles MUST alternate and history should start with 'user'
@@ -368,7 +369,7 @@ export function getAvailableProviders() {
   return {
     anthropic: !!anthropic,
     openai: !!openai,
-    gemini: !!(process.env.VITE_GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY),
+    gemini: !!ENV.VITE_GEMINI_API_KEY,
   };
 }
 
@@ -378,7 +379,7 @@ export function getAvailableProviders() {
 export function getPrimaryProvider(): string {
   if (anthropic) return 'Claude (Anthropic)';
   if (openai) return 'GPT-4 (OpenAI)';
-  if (process.env.VITE_GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
+  if (ENV.VITE_GEMINI_API_KEY) {
     return 'Gemini (Google)';
   }
   return 'No AI provider configured';

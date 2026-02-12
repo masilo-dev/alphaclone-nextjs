@@ -1,5 +1,7 @@
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
+import { ENV } from '@/config/env';
+import { geminiService } from '../geminiService';
 
 /**
  * Unified AI Service
@@ -61,12 +63,12 @@ class AIService {
     constructor() {
         // Initialize OpenAI
         this.openai = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY || '',
+            apiKey: ENV.OPENAI_API_KEY || '',
         });
 
         // Initialize Anthropic
         this.anthropic = new Anthropic({
-            apiKey: process.env.ANTHROPIC_API_KEY || '',
+            apiKey: ENV.ANTHROPIC_API_KEY || '',
         });
     }
 
@@ -83,15 +85,45 @@ class AIService {
                 return await this.completeWithAnthropic(request);
             }
         } catch (error) {
-            // Fallback to other provider if primary fails
-            console.error(`${provider} failed, falling back...`, error);
+            // Fallback chain: OpenAI -> Anthropic -> Gemini OR Anthropic -> OpenAI -> Gemini
+            console.error(`${provider} failed, trying secondary provider...`, error);
 
-            if (provider === 'openai') {
-                return await this.completeWithAnthropic(request);
-            } else {
-                return await this.completeWithOpenAI(request);
+            try {
+                if (provider === 'openai') {
+                    if (ENV.ANTHROPIC_API_KEY) return await this.completeWithAnthropic(request);
+                } else {
+                    if (ENV.OPENAI_API_KEY) return await this.completeWithOpenAI(request);
+                }
+            } catch (secondaryError) {
+                console.error(`Secondary provider also failed, falling back to Gemini...`, secondaryError);
             }
+
+            // Tertiary fallback: Gemini
+            if (ENV.VITE_GEMINI_API_KEY) {
+                return await this.completeWithGemini(request);
+            }
+
+            throw error;
         }
+    }
+
+    /**
+     * Gemini completion (tertiary fallback)
+     */
+    private async completeWithGemini(request: AIRequest): Promise<AIResponse> {
+        const result = await geminiService.generateContent(request.prompt);
+
+        if (result.error || !result.text) {
+            throw new Error((result.error as any)?.message || 'Gemini generation failed');
+        }
+
+        return {
+            content: result.text,
+            provider: 'openai', // Mapping it to openai for compatibility with shared types, but specifically labeled in metadata
+            model: 'gemini-1.5-flash',
+            tokens: { prompt: 0, completion: 0, total: 0 },
+            cost: 0
+        } as any;
     }
 
     /**

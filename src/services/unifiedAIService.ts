@@ -2,16 +2,11 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { googlePlacesService } from './googlePlacesService';
 import { ENV } from '@/config/env';
 
-// API Keys
+// API Keys from validated ENV
 const GEMINI_API_KEY = ENV.VITE_GEMINI_API_KEY || '';
-const ANTHROPIC_API_KEY = ENV.VITE_ANTHROPIC_API_KEY || process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY || process.env.VITE_ANTHROPIC_API_KEY || '';
-const OPENAI_API_KEY = ENV.VITE_OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || '';
-const MANUS_API_KEY = process.env.NEXT_PUBLIC_MANUS_API_KEY || process.env.MANUS_API_KEY || '';
-
-// Initialize providers
-// Note: Client-side SDK initialization is disabled to prevent API key exposure and configuration errors.
-// All AI calls should be proxied through server routes.
-const geminiAI = null;
+const ANTHROPIC_API_KEY = ENV.ANTHROPIC_API_KEY || '';
+const OPENAI_API_KEY = ENV.OPENAI_API_KEY || '';
+const MANUS_API_KEY = process.env.NEXT_PUBLIC_MANUS_API_KEY || process.env.MANUS_API_KEY || ''; // Not in ENV schema yet
 
 // Check which providers are available
 export const getAvailableProviders = () => {

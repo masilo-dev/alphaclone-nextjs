@@ -346,12 +346,15 @@ const SalesAgent: React.FC = () => {
                     console.error("Failed to parse search command", e);
                 }
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('❌ AI Chat Error:', error);
+            const errorMessage = error?.message || 'I apologize, but I encountered a technical issue. Please try again or contact support if the problem persists.';
             setMessages(prev => [...prev, {
                 id: prev.length + 1,
                 sender: 'agent',
-                text: 'I apologize, but I encountered a technical issue. Please try again or contact support if the problem persists.'
+                text: errorMessage.includes('Failed to fetch')
+                    ? 'I am having trouble connecting to the AI core. Please check your internet connection or try again later.'
+                    : errorMessage
             }]);
         }
     };
