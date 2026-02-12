@@ -37,7 +37,7 @@ import { teamService } from '../../services/teamService';
 import { projectService } from '../../services/projectService';
 import { leadService } from '../../services/leadService';
 import { Button, Modal, Input } from '../ui/UIComponents';
-import CollaborativeTaskNotes from './projects/CollaborativeTaskNotes';
+import { CollaborativeTaskNotes } from './projects/CollaborativeTaskNotes';
 import { useAuth } from '@/contexts/AuthContext';
 import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';

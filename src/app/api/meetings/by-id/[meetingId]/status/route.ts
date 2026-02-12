@@ -15,10 +15,10 @@ interface TimeLimitResult {
  */
 export async function GET(
     req: NextRequest,
-    { params }: { params: { meetingId: string } }
+    { params }: { params: Promise<{ meetingId: string }> }
 ) {
     try {
-        const { meetingId } = params;
+        const { meetingId } = await params;
 
         if (!meetingId) {
             return NextResponse.json({ error: 'Meeting ID is required' }, { status: 400 });

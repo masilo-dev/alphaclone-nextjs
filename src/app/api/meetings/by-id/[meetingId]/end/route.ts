@@ -11,10 +11,10 @@ import { createClient } from '@supabase/supabase-js';
  */
 export async function POST(
     req: NextRequest,
-    { params }: { params: { meetingId: string } }
+    { params }: { params: Promise<{ meetingId: string }> }
 ) {
     try {
-        const { meetingId } = params;
+        const { meetingId } = await params;
         const body = await req.json();
         const { userId, reason = 'manual', durationSeconds } = body;
 

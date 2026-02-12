@@ -44,7 +44,7 @@ const AutoSizer = dynamic(
     () => import('react-virtualized-auto-sizer').then((mod: any) => mod.default),
     { ssr: false }
 ) as any;
-import * as ClientImport from './crm/ClientImport';
+import { ClientImportModal } from './crm/ClientImport';
 
 interface CRMTabProps {
     userId: string;
@@ -402,7 +402,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
             </Modal>
 
             {/* Import Modal */}
-            <ClientImport.ClientImportModal
+            <ClientImportModal
                 isOpen={showImportModal}
                 onClose={() => setShowImportModal(false)}
                 onImportComplete={() => {

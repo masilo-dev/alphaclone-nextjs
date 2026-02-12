@@ -223,5 +223,4 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
         </div>
     );
 };
-
-export default CollaborativeTaskNotes;
+export { CollaborativeTaskNotes };
