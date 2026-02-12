@@ -17,7 +17,27 @@ export const createClient = () => {
             );
         } catch (e) {
             console.warn('Supabase client initialization skipped during build due to missing env vars');
-            return null as any;
+            // Return a dummy client to prevent "Cannot read properties of null" errors
+            return {
+                auth: {
+                    getSession: async () => ({ data: { session: null }, error: null }),
+                    getUser: async () => ({ data: { user: null }, error: null }),
+                    signInWithPassword: async () => ({ data: { user: null, session: null }, error: { message: 'Supabase client not initialized (missing env vars)' } }),
+                    signOut: async () => ({ error: null }),
+                    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } }),
+                },
+                from: () => ({
+                    select: () => ({
+                        eq: () => ({
+                            single: async () => ({ data: null, error: { message: 'Supabase client not initialized' } }),
+                            maybeSingle: async () => ({ data: null, error: { message: 'Supabase client not initialized' } }),
+                        }),
+                        insert: async () => ({ data: null, error: { message: 'Supabase client not initialized' } }),
+                        update: async () => ({ data: null, error: { message: 'Supabase client not initialized' } }),
+                        delete: async () => ({ data: null, error: { message: 'Supabase client not initialized' } }),
+                    })
+                })
+            } as any;
         }
     }
 
