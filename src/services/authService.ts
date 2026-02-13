@@ -2,6 +2,7 @@ import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { User, UserRole } from '../types';
 import { signInSchema, signUpSchema } from '../schemas/validation';
+import { z } from 'zod';
 
 export const authService = {
     /**
@@ -105,7 +106,10 @@ export const authService = {
 
             // Return user immediately without waiting for activity tracking
             return { user, error: null };
-        } catch (err) {
+        } catch (err: any) {
+            if (err.name === 'ZodError') {
+                return { user: null, error: err.errors[0]?.message || 'Validation failed' };
+            }
             return { user: null, error: err instanceof Error ? err.message : 'Unknown error' };
         }
     },
@@ -168,8 +172,62 @@ export const authService = {
             });
 
             return { user, error: null };
-        } catch (err) {
+        } catch (err: any) {
+            if (err.name === 'ZodError') {
+                return { user: null, error: err.errors[0]?.message || 'Validation failed' };
+            }
             return { user: null, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * Send password reset email
+     */
+    async resetPassword(email: string): Promise<{ error: string | null }> {
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/auth/reset-password`,
+            });
+
+            if (error) {
+                console.error("Reset Password Error:", error);
+                return { error: error.message };
+            }
+
+            return { error: null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * Update password (used after reset or in settings)
+     */
+    async updatePassword(password: string): Promise<{ error: string | null }> {
+        try {
+            // Use the same validation as sign up for consistency
+            const passwordSchema = z.string()
+                .min(8, 'Password must be at least 8 characters')
+                .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+                .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+                .regex(/[0-9]/, 'Password must contain at least one number')
+                .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character');
+
+            passwordSchema.parse(password);
+
+            const { error } = await supabase.auth.updateUser({ password });
+
+            if (error) {
+                console.error("Update Password Error:", error);
+                return { error: error.message };
+            }
+
+            return { error: null };
+        } catch (err: any) {
+            if (err.name === 'ZodError') {
+                return { error: err.errors[0]?.message || 'Validation failed' };
+            }
+            return { error: err instanceof Error ? err.message : 'Unknown error' };
         }
     },
 

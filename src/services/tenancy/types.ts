@@ -17,6 +17,8 @@ export interface Tenant {
     current_period_end?: Date;
     deletion_pending_at?: Date;
     stripe_customer_id?: string;
+    stripe_connect_id?: string;
+    stripe_connect_onboarded?: boolean;
     admin_user_id?: string;
     cancel_at_period_end?: boolean;
     created_at: Date;
@@ -166,10 +168,27 @@ export interface PlanFeatures {
 }
 
 // Plan Pricing
-export const PLAN_PRICING: Record<SubscriptionPlan, { monthly: number; yearly: number; features: PlanFeatures; stripePriceId?: string }> = {
+export const PLAN_PRICING: Record<SubscriptionPlan, {
+    monthly: number;
+    yearly: number;
+    description?: string;
+    isDiscountable?: boolean;
+    featureList: string[];
+    features: PlanFeatures;
+    stripePriceId?: string
+}> = {
     free: {
         monthly: 0,
         yearly: 0,
+        description: 'Perfect for exploring the platform and basic video conferencing.',
+        featureList: [
+            '1 Team Member',
+            '3 Active Projects',
+            '1GB Cloud Storage',
+            '2 Video Meetings/mo',
+            '30 mins per meeting',
+            'Basic Video Conferencing'
+        ],
         features: {
             maxUsers: 1,
             maxProjects: 3,
@@ -189,11 +208,23 @@ export const PLAN_PRICING: Record<SubscriptionPlan, { monthly: number; yearly: n
         }
     },
     starter: {
-        monthly: 25,
-        yearly: 250,
-        stripePriceId: 'price_starter_monthly',
+        monthly: 15,
+        yearly: 144,
+        description: 'Ideal for small businesses starting their automation journey.',
+        isDiscountable: true, // Eligible for START35 (35% off for 3 months)
+        stripePriceId: 'price_1T0PCcCCIq5cPz4Hvazdrvtb',
+        featureList: [
+            '10 Team Members',
+            '25 Active Projects',
+            '10GB Cloud Storage',
+            '10 Video Meetings/mo',
+            '60 mins per meeting',
+            'Advanced Booking System',
+            'Payment Processing',
+            'Automated Workflows'
+        ],
         features: {
-            maxUsers: 5,
+            maxUsers: 10,
             maxProjects: 25,
             maxStorage: 10,
             maxVideoMeetingsPerMonth: 10,
@@ -211,11 +242,24 @@ export const PLAN_PRICING: Record<SubscriptionPlan, { monthly: number; yearly: n
         }
     },
     pro: {
-        monthly: 89,
-        yearly: 890,
-        stripePriceId: 'price_pro_monthly',
+        monthly: 45,
+        yearly: 432,
+        description: 'Comprehensive tools for growing teams and advanced AI features.',
+        stripePriceId: 'price_1T0PChCCIq5cPz4HiD85RMtD',
+        featureList: [
+            '50 Team Members',
+            '100 Active Projects',
+            '50GB Cloud Storage',
+            '50 Video Meetings/mo',
+            '90 mins per meeting',
+            'AI Sales Assistant',
+            'Contract Generation',
+            'Full CRM & Automation',
+            'Custom API Access',
+            'Priority Support'
+        ],
         features: {
-            maxUsers: 20,
+            maxUsers: 50,
             maxProjects: 100,
             maxStorage: 50,
             maxVideoMeetingsPerMonth: 50,
@@ -233,9 +277,21 @@ export const PLAN_PRICING: Record<SubscriptionPlan, { monthly: number; yearly: n
         }
     },
     enterprise: {
-        monthly: 200,
-        yearly: 2000,
-        stripePriceId: 'price_enterprise_monthly',
+        monthly: 80,
+        yearly: 768,
+        description: 'Maximum scale, full CRM, and priority infrastructure.',
+        stripePriceId: 'price_1T0PCqCCIq5cPz4HtjeFQZSG',
+        featureList: [
+            'Unlimited Team Members',
+            'Unlimited Projects',
+            '500GB Cloud Storage',
+            '200 Video Meetings/mo',
+            '180 mins per meeting',
+            'Full CRM & Automation',
+            'Advanced AI Features',
+            'Custom Domain',
+            'Priority Infrastructure'
+        ],
         features: {
             maxUsers: -1,
             maxProjects: -1,
@@ -257,6 +313,14 @@ export const PLAN_PRICING: Record<SubscriptionPlan, { monthly: number; yearly: n
     custom: {
         monthly: 0, // Quote based
         yearly: 0,
+        featureList: [
+            'Unrestricted Scale',
+            'Custom Storage Tiers',
+            'Unlimited Video Duration',
+            'Dedicated Migration Support',
+            'Custom API Development',
+            'White-label Branding'
+        ],
         features: {
             maxUsers: -1,
             maxProjects: -1,

@@ -177,28 +177,34 @@ class DailyService {
                 planFeatures.maxVideoMinutesPerMeeting = -1;
             }
 
-            // Meeting count limits removed - unlimited meetings allowed
-            // Only duration per meeting is limited (25 minutes for non-admin users)
-            /*
-            // 1. Check Monthly Meeting Limit
-            if (planFeatures.maxVideoMeetingsPerMonth !== -1) {
-                const now = new Date();
-                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+            // 1. Enforce Video Teaser Limit for New Users
+            // For NEW users (created on or after Feb 13, 2026) on FREE plan:
+            // Cap at 2 videos total to tease subscription due to "high volume".
+            const NEW_USER_CUTOFF = new Date('2026-02-13T00:00:00Z');
 
-                const { count } = await supabase
-                    .from('video_calls')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('host_id', data.hostId)
-                    .gte('created_at', startOfMonth);
+            if (plan === 'free' && !isSuperAdminTenant && !isUnlimitedUser) {
+                const { data: tenant } = await supabase
+                    .from('tenants')
+                    .select('created_at')
+                    .eq('id', tenantId)
+                    .single();
 
-                if (count !== null && count >= planFeatures.maxVideoMeetingsPerMonth) {
-                    return {
-                        call: null,
-                        error: `Monthly limit reached: Your ${plan} plan allows ${planFeatures.maxVideoMeetingsPerMonth} meetings per month. Please upgrade to host more.`
-                    };
+                const createdAt = new Date(tenant?.created_at || '');
+
+                if (createdAt >= NEW_USER_CUTOFF) {
+                    const { count } = await supabase
+                        .from('video_calls')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('host_id', data.hostId);
+
+                    if (count !== null && count >= 2) {
+                        return {
+                            call: null,
+                            error: 'LIMIT_EXCEEDED_TEASER'
+                        };
+                    }
                 }
             }
-            */
 
             // 2. Determine Duration Limit
             const durationLimit = planFeatures.maxVideoMinutesPerMeeting === -1

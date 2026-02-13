@@ -309,6 +309,29 @@ export async function POST(req: Request) {
                 break;
             }
 
+            case 'account.updated': {
+                const account = session;
+                const tenantId = account.metadata?.tenantId;
+
+                if (tenantId && account.details_submitted) {
+                    await supabase
+                        .from('tenants')
+                        .update({
+                            stripe_connect_onboarded: true,
+                        })
+                        .eq('id', tenantId);
+
+                    console.log(`Tenant ${tenantId} Stripe Connect account verified.`);
+                }
+                break;
+            }
+
+            case 'capability.updated': {
+                const capability = session;
+                // You could handle specific capability updates like card_payments here
+                break;
+            }
+
             case 'charge.refunded': {
                 // Handle refunds
                 const charge = session;

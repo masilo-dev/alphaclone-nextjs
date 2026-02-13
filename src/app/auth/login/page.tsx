@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Input, Button } from '@/components/ui/UIComponents';
 import { LOGO_URL } from '@/constants';
 import { AlertCircle, LogIn, UserPlus, FileText, CheckCircle2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { usePWA } from '@/contexts/PWAContext';
 import { SubscriptionPlan } from '@/services/tenancy/types';
@@ -136,7 +137,7 @@ export default function LoginPage() {
             const { user, error: signInError } = await authService.signIn(email, password);
 
             if (signInError) {
-                setError('Invalid credentials. Please verify your email and password.');
+                setError(signInError);
                 setIsLoading(false);
                 return;
             }
@@ -408,15 +409,65 @@ export default function LoginPage() {
                             autoComplete="email"
                         />
 
-                        <Input
-                            label="Password"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="••••••••"
-                            required
-                            autoComplete={isRegistering ? "new-password" : "current-password"}
-                        />
+                        <div className="relative">
+                            <Input
+                                label="Password"
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••"
+                                required
+                                autoComplete={isRegistering ? "new-password" : "current-password"}
+                            />
+                            {!isRegistering && (
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        if (!email) {
+                                            setError('Please enter your email address first to reset your password.');
+                                            return;
+                                        }
+                                        setIsLoading(true);
+                                        const { authService } = await import('@/services/authService');
+                                        const { error: resetErr } = await authService.resetPassword(email);
+                                        if (resetErr) {
+                                            setError(resetErr);
+                                        } else {
+                                            setError('');
+                                            toast.success('Password reset link sent to your email!');
+                                        }
+                                        setIsLoading(false);
+                                    }}
+                                    className="absolute right-0 top-0 text-[10px] text-teal-500 hover:text-teal-400 font-bold uppercase tracking-wider"
+                                >
+                                    Forgot?
+                                </button>
+                            )}
+                        </div>
+
+                        {isRegistering && (
+                            <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-3 space-y-2">
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Security Requirements</p>
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                                    <div className={`flex items-center gap-2 text-[10px] ${password.length >= 8 ? 'text-teal-400' : 'text-slate-500'}`}>
+                                        <div className={`w-1 h-1 rounded-full ${password.length >= 8 ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                                        8+ Characters
+                                    </div>
+                                    <div className={`flex items-center gap-2 text-[10px] ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                                        <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                                        Uppercase
+                                    </div>
+                                    <div className={`flex items-center gap-2 text-[10px] ${/[0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                                        <div className={`w-1 h-1 rounded-full ${/[0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                                        Number
+                                    </div>
+                                    <div className={`flex items-center gap-2 text-[10px] ${/[^A-Za-z0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                                        <div className={`w-1 h-1 rounded-full ${/[^A-Za-z0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                                        Special Char
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {error && (
                             <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm flex items-start gap-2 animate-fade-in">

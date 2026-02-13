@@ -1,5 +1,25 @@
 import React, { useState } from 'react';
-import { User as UserIcon, Bell, Lock, Palette, Globe, Loader2 } from 'lucide-react';
+import {
+    CreditCard,
+    Settings,
+    User,
+    Shield,
+    Bell,
+    Database,
+    Lock,
+    Layout,
+    Sparkles,
+    Loader2,
+    CheckCircle2,
+    AlertCircle,
+    ExternalLink,
+    RefreshCw,
+    XCircle,
+    ShieldCheck,
+    User as UserIcon,
+    Palette,
+    Globe
+} from 'lucide-react';
 import { Button, Card, Input } from '../ui/UIComponents';
 import { User as UserType } from '../../types';
 import { userService } from '../../services/userService';
@@ -8,18 +28,18 @@ import { useTenant } from '../../contexts/TenantContext';
 import { SubscriptionPlan, PLAN_PRICING } from '../../services/tenancy/types';
 import CalendlySettings from './business/CalendlySettings';
 import GmailIntegration from './business/GmailIntegration';
+import StripeConnectSettings from './business/StripeConnectSettings';
 
-import { useSearchParams } from 'next/navigation'; // Add import
+import { useSearchParams } from 'next/navigation';
 
 interface SettingsPageProps {
     user: UserType;
 }
 
 const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
-    const searchParams = useSearchParams(); // Get params
+    const searchParams = useSearchParams();
     const initialSection = searchParams.get('section') as any;
 
-    // Check if initialSection is valid, otherwise default to 'profile'
     const validSections = ['profile', 'notifications', 'security', 'appearance', 'billing', 'booking'];
     const defaultSection = validSections.includes(initialSection) ? initialSection : 'profile';
 
@@ -156,7 +176,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     };
 
     const handleEnable2FA = () => {
-        // toast('2FA feature coming soon!', { icon: '🔒' });
         toast.success('2FA verification email sent');
     };
 
@@ -164,49 +183,26 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         toast.success('Appearance preferences saved!');
     };
 
+    const [isToppingUp, setIsToppingUp] = useState(false);
+
+    const handleTopUp = async () => {
+        if (!currentTenant?.id) return;
+        setIsToppingUp(true);
+        // During Beta (until March), we'll just show a notification
+        toast("AI Credit purchasing will be available in March. Beta users currently have expanded limits.", { icon: 'ℹ️' });
+        setIsToppingUp(false);
+    };
+
     const handleUpgrade = async (planId: string) => {
         if (!currentTenant) return;
 
-        const planPricing = PLAN_PRICING[planId as SubscriptionPlan];
-        if (!planPricing?.stripePriceId) {
-            toast.error('This plan cannot be upgraded online.');
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/stripe/create-checkout-session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    priceId: planPricing.stripePriceId,
-                    tenantId: currentTenant.id,
-                    adminEmail: user.email,
-                })
-            });
-            const { url } = await response.json();
-            if (url) window.location.href = url;
-        } catch (err) {
-            toast.error('Failed to initiate checkout');
-        }
+        // During Beta (until March), we don't charge
+        toast("Subscriptions will begin in March. Your account is currently in Beta mode.", { icon: 'ℹ️' });
     };
 
     const handleManageBilling = async () => {
-        if (!currentTenant?.stripe_customer_id) {
-            toast.error('No active billing found. Upgrade first!');
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/stripe/create-portal-session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tenantId: currentTenant.id })
-            });
-            const { url } = await response.json();
-            if (url) window.location.href = url;
-        } catch (err) {
-            toast.error('Failed to open billing portal');
-        }
+        // Portal disabled during Beta
+        toast("Billing management will be available in March.", { icon: 'ℹ️' });
     };
 
     return (
@@ -217,14 +213,14 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                {/* Sidebar - Horizontal scroll on mobile, vertical list on desktop */}
+                {/* Sidebar */}
                 <div className="lg:col-span-1">
                     <div className="flex lg:flex-col overflow-x-auto lg:overflow-x-visible gap-2 pb-4 lg:pb-0 scrollbar-hide">
                         {sections.map((section) => (
                             <button
                                 key={section.id}
                                 onClick={() => setActiveSection(section.id)}
-                                className={`flex-shrink-0 lg:w-full flex items-center justify-center lg:justify-start gap-3 px-4 py-3 rounded-2xl text-[10px] lg:text-xs font-black uppercase tracking-widest transition-all duration-300 border ${activeSection === section.id
+                                className={`flex shrink-0 lg:w-full items-center justify-center lg:justify-start gap-3 px-4 py-3 rounded-2xl text-[10px] lg:text-xs font-black uppercase tracking-widest transition-all duration-300 border ${activeSection === section.id
                                     ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-600/20'
                                     : 'bg-white/5 border-white/5 text-slate-400 hover:text-white hover:bg-white/10'
                                     }`}
@@ -247,27 +243,27 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                         <Input
                                             label="Full Name *"
                                             value={profileData.name}
-                                            onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                                            onChange={(e: any) => setProfileData({ ...profileData, name: e.target.value })}
                                             required
                                         />
                                         <Input
                                             label="Email Address"
                                             type="email"
                                             value={profileData.email}
-                                            onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                                            onChange={(e: any) => setProfileData({ ...profileData, email: e.target.value })}
                                             disabled
                                         />
                                         <Input
                                             label="Phone Number"
                                             type="tel"
                                             value={profileData.phone}
-                                            onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                                            onChange={(e: any) => setProfileData({ ...profileData, phone: e.target.value })}
                                             placeholder="+1 (555) 000-0000"
                                         />
                                         <Input
                                             label="Company"
                                             value={profileData.company}
-                                            onChange={(e) => setProfileData({ ...profileData, company: e.target.value })}
+                                            onChange={(e: any) => setProfileData({ ...profileData, company: e.target.value })}
                                             placeholder="Your company name"
                                         />
                                         <div>
@@ -374,21 +370,21 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                                     type="password"
                                                     placeholder="Enter current password"
                                                     value={passwordData.currentPassword}
-                                                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                                                    onChange={(e: any) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                                                 />
                                                 <Input
                                                     label="New Password"
                                                     type="password"
                                                     placeholder="Enter new password (min 8 characters)"
                                                     value={passwordData.newPassword}
-                                                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                                    onChange={(e: any) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                                                 />
                                                 <Input
                                                     label="Confirm New Password"
                                                     type="password"
                                                     placeholder="Confirm new password"
                                                     value={passwordData.confirmPassword}
-                                                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                                    onChange={(e: any) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                                                 />
                                                 <Button
                                                     size="sm"
@@ -445,7 +441,13 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                         {activeSection === 'billing' && (
                             <div className="space-y-6">
                                 <div>
-                                    <h3 className="text-lg font-bold text-white mb-4">Subscription Plan</h3>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-lg font-bold text-white">Subscription Plan</h3>
+                                        <div className="px-3 py-1 bg-amber-500/20 border border-amber-500/30 rounded-full text-[10px] font-black text-amber-400 uppercase tracking-widest">
+                                            BETA ACCESS ENABLED
+                                        </div>
+                                    </div>
+
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         {(['starter', 'pro', 'enterprise'] as SubscriptionPlan[]).map((planId) => {
                                             const plan = PLAN_PRICING[planId];
@@ -466,80 +468,92 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                                     )}
                                                     <div className="mb-6">
                                                         <h4 className="text-white text-lg font-black tracking-tighter capitalize">{planId}</h4>
-                                                        <p className="text-3xl font-black text-white mt-1">
-                                                            ${plan.monthly}
-                                                            <span className="text-[10px] font-bold text-slate-500 ml-1">/MO</span>
+                                                        <div className="flex items-baseline gap-1 mb-1">
+                                                            <span className="text-3xl font-black text-white">${plan.monthly}</span>
+                                                            <span className="text-slate-500 font-bold text-sm uppercase tracking-widest">/mo</span>
+                                                        </div>
+                                                        <p className="text-xs text-slate-400 mt-2 min-h-[40px]">
+                                                            {plan.description}
                                                         </p>
+                                                        {plan.isDiscountable && (
+                                                            <div className="mt-2 py-1 px-2 bg-amber-500/20 border border-amber-500/30 rounded text-[10px] font-bold text-amber-400 uppercase tracking-tighter w-fit">
+                                                                35% OFF FOR 3 MONTHS
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    <ul className="space-y-3 mb-8">
-                                                        <li className="text-[10px] font-bold text-slate-400 flex items-center gap-2 uppercase tracking-tighter">
-                                                            <div className="w-1 h-1 bg-teal-500 rounded-full" /> {plan.features.maxUsers === -1 ? 'Unlimited' : plan.features.maxUsers} Users
-                                                        </li>
-                                                        <li className="text-[10px] font-bold text-slate-400 flex items-center gap-2 uppercase tracking-tighter">
-                                                            <div className="w-1 h-1 bg-teal-500 rounded-full" /> {plan.features.maxProjects === -1 ? 'Unlimited' : plan.features.maxProjects} Projects
-                                                        </li>
-                                                        <li className="text-[10px] font-bold text-slate-400 flex items-center gap-2 uppercase tracking-tighter">
-                                                            <div className="w-1 h-1 bg-teal-500 rounded-full" /> {plan.features.maxVideoMeetingsPerMonth === -1 ? 'Unlimited' : plan.features.maxVideoMeetingsPerMonth} Video Meetings/mo
-                                                        </li>
-                                                        <li className="text-[10px] font-bold text-slate-400 flex items-center gap-2 uppercase tracking-tighter">
-                                                            <div className="w-1 h-1 bg-teal-500 rounded-full" /> {plan.features.maxVideoMinutesPerMeeting === -1 ? 'Unlimited' : plan.features.maxVideoMinutesPerMeeting} mins per meeting
-                                                        </li>
-                                                        {plan.features.aiAssistant && (
-                                                            <li className="text-[10px] font-bold text-slate-400 flex items-center gap-2 uppercase tracking-tighter">
-                                                                <div className="w-1 h-1 bg-teal-500 rounded-full" /> AI Sales Agent
+                                                    <ul className="space-y-2 mb-8 min-h-[160px]">
+                                                        {plan.featureList.map((feature, idx) => (
+                                                            <li key={idx} className="text-[10px] font-bold text-slate-400 flex items-start gap-2 uppercase tracking-tighter">
+                                                                <div className="w-1 h-1 bg-teal-500 rounded-full mt-1 flex-shrink-0" />
+                                                                <span>{feature}</span>
                                                             </li>
-                                                        )}
-                                                        {plan.features.contractGeneration && (
-                                                            <li className="text-[10px] font-bold text-slate-400 flex items-center gap-2 uppercase tracking-tighter">
-                                                                <div className="w-1 h-1 bg-teal-500 rounded-full" /> Contract Generation
-                                                            </li>
-                                                        )}
-                                                        {plan.features.fullCRM && (
-                                                            <li className="text-[10px] font-bold text-slate-400 flex items-center gap-2 uppercase tracking-tighter">
-                                                                <div className="w-1 h-1 bg-teal-500 rounded-full" /> Full CRM & Processing
-                                                            </li>
-                                                        )}
+                                                        ))}
                                                     </ul>
                                                     <button
                                                         className={`w-full py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${isCurrent
                                                             ? 'bg-white/5 text-slate-500 border border-white/5'
-                                                            : 'bg-teal-500 text-slate-900 shadow-lg shadow-teal-500/20 hover:scale-105 active:scale-95'}`}
+                                                            : 'bg-teal-500 text-slate-900 shadow-lg shadow-teal-500/20 hover:scale-105 active:scale-95'
+                                                            }`}
                                                         onClick={() => !isCurrent && handleUpgrade(planId)}
                                                     >
-                                                        {isCurrent ? 'CURRENT PROTOCOL' : 'UPGRADE UPLINK'}
+                                                        {isCurrent ? 'ACTIVE PROTOCOL' : 'SELECT PLAN'}
                                                     </button>
                                                 </div>
                                             );
                                         })}
                                     </div>
-                                    {currentTenant?.stripe_customer_id && (
-                                        <div className="mt-4">
+
+                                    <div className="mt-8 p-4 bg-slate-900/50 border border-slate-700 rounded-xl">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-amber-500/10 rounded-lg">
+                                                    <Sparkles className="w-5 h-5 text-amber-500" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-sm font-bold text-white uppercase tracking-wider">AI Quota Status</h4>
+                                                    <p className="text-[10px] text-slate-400">Beta tier includes expanded limits</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-xs font-bold text-teal-400 uppercase">System Optimal</span>
+                                        </div>
+                                        <div className="w-full bg-slate-700 h-2 rounded-full mb-3">
+                                            <div className="bg-teal-500 w-[45%] h-full rounded-full shadow-[0_0_10px_rgba(20,184,166,0.3)]" />
+                                        </div>
+                                        <div className="flex justify-between items-center text-[10px]">
+                                            <p className="text-slate-400">
+                                                Automatic reset in approximately <span className="text-white font-bold">12 hours</span>.
+                                            </p>
                                             <Button
-                                                variant="outline"
-                                                onClick={handleManageBilling}
-                                                className="w-full text-[10px] font-black uppercase tracking-widest"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={handleTopUp}
+                                                className="text-teal-400 hover:text-teal-300 h-auto py-1 px-2 font-black"
                                             >
-                                                Manage Subscriptions & Invoices
+                                                BOOST QUOTA
                                             </Button>
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
 
                                 <div className="pt-6 border-t border-slate-800">
-                                    <h3 className="text-lg font-bold text-white mb-4">Payment Methods</h3>
-                                    <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                    <h3 className="text-lg font-bold text-white mb-4">Payment Infrastructure</h3>
+                                    <p className="text-xs text-slate-400 mb-6">
+                                        Official billing systems will be activated in **March**. No payment details are required during the Beta phase.
+                                    </p>
+                                    <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 opacity-50 grayscale">
                                         <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                                            <div className="w-12 h-8 bg-slate-800 rounded flex items-center justify-center font-bold text-[10px] text-slate-500 border border-slate-700 flex-shrink-0">VISA</div>
+                                            <div className="w-12 h-8 bg-slate-800 rounded flex items-center justify-center font-bold text-[10px] text-slate-500 border border-slate-700 flex-shrink-0">CARD</div>
                                             <div className="min-w-0">
-                                                <p className="text-white text-sm font-medium">•••• •••• •••• 4242</p>
-                                                <p className="text-xs text-slate-500">Expires 12/26</p>
+                                                <p className="text-white text-sm font-medium">PAYMENT UPLINK OFFLINE</p>
+                                                <p className="text-[10px] text-slate-500 uppercase tracking-widest">Activation scheduled for March</p>
                                             </div>
                                         </div>
-                                        <Button variant="ghost" size="sm" className="text-teal-400 hover:text-teal-300 w-full sm:w-auto">Edit</Button>
+                                        <Button disabled className="w-full sm:w-auto">Link Card</Button>
                                     </div>
                                 </div>
                             </div>
                         )}
+
                         {activeSection === 'appearance' && (
                             <div className="space-y-6">
                                 <div>
@@ -590,12 +604,15 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             <div className="border-b border-slate-800 pb-12">
                                 <GmailIntegration user={user} />
                             </div>
+                            <div className="border-b border-slate-800 pb-12">
+                                <StripeConnectSettings />
+                            </div>
                             <CalendlySettings />
                         </div>
                     )}
                 </div>
-            </div >
-        </div >
+            </div>
+        </div>
     );
 };
 

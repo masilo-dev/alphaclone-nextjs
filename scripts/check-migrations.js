@@ -47,6 +47,11 @@ const EXPECTED_TABLES = [
     'data_processing_log',
     'privacy_policy_versions',
     'terms_of_service_versions',
+    'upgrade_prompts',
+    'subscription_addons',
+    'tenant_subscriptions',
+    'conversion_events',
+    'pricing_experiments',
 ];
 
 // Expected functions from migrations
@@ -58,6 +63,10 @@ const EXPECTED_FUNCTIONS = [
     'request_data_export',
     'request_data_deletion',
     'anonymize_user_data',
+    'track_upgrade_prompt',
+    'record_prompt_click',
+    'record_conversion',
+    'purchase_addon',
 ];
 
 async function checkMigrations() {

@@ -39,16 +39,22 @@ export const TIER_PRICING = {
         annual: 0,
     },
     starter: {
-        monthly: 2900, // $29
-        annual: 27840, // $232/year (20% discount from $348)
+        monthly: 1500, // $15
+        annual: 14400, // $144/year (20% discount from $180)
+        monthlyPriceId: 'price_1T0PCcCCIq5cPz4Hvazdrvtb',
+        annualPriceId: 'price_1T0PCcCCIq5cPz4HF47biusi',
     },
     pro: {
-        monthly: 9900, // $99
-        annual: 95040, // $792/year (20% discount from $1188)
+        monthly: 4500, // $45
+        annual: 43200, // $432/year (20% discount from $540)
+        monthlyPriceId: 'price_1T0PChCCIq5cPz4HiD85RMtD',
+        annualPriceId: 'price_1T0PChCCIq5cPz4HVpwBieMq',
     },
     enterprise: {
-        monthly: 29900, // $299
-        annual: 287040, // $2392/year (20% discount from $3588)
+        monthly: 8000, // $80
+        annual: 76800, // $768/year (20% discount from $960)
+        monthlyPriceId: 'price_1T0PCqCCIq5cPz4HtjeFQZSG',
+        annualPriceId: 'price_1T0PCqCCIq5cPz4HNiqbW1Sp',
     },
 };
 

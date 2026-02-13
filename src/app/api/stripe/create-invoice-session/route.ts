@@ -24,8 +24,19 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
         }
 
-        // 2. Create Stripe Checkout Session
-        const session = await stripe.checkout.sessions.create({
+        // 2. Check if tenant has a connected Stripe account for Direct Charges
+        const { data: tenantData, error: tenantError } = await supabaseAdmin
+            .from('tenants')
+            .select('stripe_connect_id, stripe_connect_onboarded')
+            .eq('id', invoice.tenant_id)
+            .single();
+
+        const stripeConnectId = (tenantData?.stripe_connect_onboarded && tenantData?.stripe_connect_id)
+            ? tenantData.stripe_connect_id
+            : null;
+
+        // 3. Create Stripe Checkout Session
+        const sessionOptions: any = {
             payment_method_types: ['card'],
             line_items: [
                 {
@@ -48,7 +59,18 @@ export async function POST(req: Request) {
                 tenantId: invoice.tenant_id,
                 type: 'business_invoice'
             },
-        });
+        };
+
+        // If using Stripe Connect (Direct Charge)
+        if (stripeConnectId) {
+            console.log(`Using Direct Charge for Connect Account: ${stripeConnectId}`);
+            // No platform fee for now as requested
+        }
+
+        const session = await stripe.checkout.sessions.create(
+            sessionOptions,
+            stripeConnectId ? { stripeAccount: stripeConnectId } : undefined
+        );
 
         return NextResponse.json({ url: session.url });
     } catch (err: any) {

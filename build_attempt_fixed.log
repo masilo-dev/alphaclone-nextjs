@@ -1,0 +1,150 @@
+﻿
+> alphaclone-nextjs@0.1.0 build
+> next build
+
+Ôû▓ Next.js 16.1.3 (Turbopack)
+- Experiments (use with caution):
+  Ô£ô scrollRestoration
+
+node.exe : ÔÜá The 
+"middleware" file 
+convention is 
+deprecated. Please 
+use "proxy" instead. 
+Learn more: https://ne
+xtjs.org/docs/messages
+/middleware-to-proxy
+At line:1 char:1
++ & "C:\Program Files\
+nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (ÔÜá The "m   
+ iddle...leware-to    
+-proxy:String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 117s
+  Running TypeScript ...
+  Collecting page data using 3 workers ...
+[Upstash Redis] The 
+'url' property is 
+missing or undefined 
+in your Redis config.
+[Upstash Redis] The 
+'token' property is 
+missing or undefined 
+in your Redis config.
+ÔÜá´©Å 
+STRIPE_SECRET_KEY is 
+missing. Stripe 
+functionality will 
+not work.
+ÔÜá´©Å 
+STRIPE_SECRET_KEY is 
+missing. Stripe 
+functionality will 
+not work.
+  Generating static pages using 3 workers (0/54) ...
+  Generating static pages using 3 workers (13/54) 
+  Generating static pages using 3 workers (26/54) 
+  Generating static pages using 3 workers (40/54) 
+Ô£ô Generating static pages using 3 workers (54/54) in 4.2s
+  Finalizing page optimization ...
+
+Route (app)
+Ôöî Ôùï /
+Ôö£ Ôùï /_not-found
+Ôö£ Ôùï /about
+Ôö£ ãÆ /api/ai/chat
+Ôö£ ãÆ /api/ai/complete
+Ôö£ ãÆ /api/ai/generate
+Ôö£ ãÆ /api/ai/leads
+Ôö£ ãÆ /api/ai/stream
+Ôö£ ãÆ /api/auth/calendly/callback
+Ôö£ ãÆ /api/auth/calendly/connect
+Ôö£ ãÆ /api/auth/google/gmail/callback
+Ôö£ ãÆ /api/auth/google/gmail/connect
+Ôö£ ãÆ /api/booking
+Ôö£ ãÆ /api/booking/create
+Ôö£ ãÆ /api/booking/slots
+Ôö£ ãÆ /api/contracts/sign
+Ôö£ ãÆ /api/crm/import
+Ôö£ ãÆ /api/cron/daily
+Ôö£ ãÆ /api/cron/workflows
+Ôö£ ãÆ /api/daily/create-permanent-room
+Ôö£ ãÆ /api/daily/create-room
+Ôö£ ãÆ /api/daily/token
+Ôö£ ãÆ /api/debug-ai
+Ôö£ ãÆ /api/docs
+Ôö£ ãÆ /api/gmail/messages/send
+Ôö£ ãÆ /api/gmail/threads
+Ôö£ ãÆ /api/gmail/threads/[id]
+Ôö£ ãÆ /api/gmail/threads/[id]/modify
+Ôö£ ãÆ /api/health
+Ôö£ ãÆ /api/ip-location
+Ôö£ ãÆ /api/meetings/by-id/[meetingId]/end
+Ôö£ ãÆ /api/meetings/by-id/[meetingId]/status
+Ôö£ ãÆ /api/meetings/by-token/[token]/join
+Ôö£ ãÆ /api/meetings/by-token/[token]/validate
+Ôö£ ãÆ /api/meetings/create
+Ôö£ ãÆ /api/notifications/push
+Ôö£ ãÆ /api/reports/export
+Ôö£ ãÆ /api/stripe/connect/login
+Ôö£ ãÆ /api/stripe/connect/onboarding
+Ôö£ ãÆ /api/stripe/create-checkout-session
+Ôö£ ãÆ /api/stripe/create-invoice-session
+Ôö£ ãÆ /api/stripe/create-payment-intent
+Ôö£ ãÆ /api/stripe/create-portal-session
+Ôö£ ãÆ /api/stripe/create-topup-session
+Ôö£ ãÆ /api/stripe/manage-subscription
+Ôö£ ãÆ /api/stripe/reconcile-payment
+Ôö£ ãÆ /api/stripe/send-receipt
+Ôö£ ãÆ /api/stripe/webhook
+Ôö£ ãÆ /api/webhooks/calendly
+Ôö£ ãÆ /auth/callback
+Ôö£ Ôùï /auth/login
+Ôö£ Ôùï /auth/reset-password
+Ôö£ Ôùï /blog
+Ôö£ ãÆ /blog/[slug]
+Ôö£ Ôùï /book
+Ôö£ ãÆ /book/[slug]
+Ôö£ ãÆ /book/[slug]/[service_slug]
+Ôö£ ãÆ /bp/[id]
+Ôö£ ãÆ /call/[roomId]
+Ôö£ Ôùï /contact
+Ôö£ ãÆ /contract/[id]
+Ôö£ Ôùï /cookie-policy
+Ôö£ ãÆ /dashboard/[[...slug]]
+Ôö£ Ôùï /ecosystem
+Ôö£ Ôùï /guide
+Ôö£ ãÆ /invoice/[id]
+Ôö£ Ôùï /login
+Ôö£ ãÆ /meet/[id]
+Ôö£ ãÆ /p/[id]
+Ôö£ Ôùï /portfolio
+Ôö£ Ôùï /privacy-policy
+Ôö£ ãÆ /project/[id]
+Ôö£ Ôùï /register
+Ôö£ Ôùï /services
+Ôö£ Ôùï /sitemap.xml
+Ôö£ Ôùï /terms-of-service
+Ôöö Ôùï /who-we-serve
+
+
+ãÆ Proxy (Middleware)
+
+Ôùï  (Static)   prerendered as static content
+ãÆ  (Dynamic)  server-rendered on demand
+

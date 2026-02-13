@@ -15,51 +15,14 @@ interface PlanOption {
   popular?: boolean;
 }
 
-const plans: PlanOption[] = [
-  {
-    id: 'starter',
-    name: 'Starter',
-    price: 25,
-    period: 'per month',
-    popular: true,
-    features: [
-      '5 team members',
-      '25 projects',
-      '10 Video Meetings/mo',
-      '60 mins per meeting',
-      'Advanced Booking System',
-      'Payment Processing'
-    ]
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    price: 89,
-    period: 'per month',
-    features: [
-      '20 team members',
-      '100 projects',
-      '50 Video Meetings/mo',
-      '90 mins per meeting',
-      'AI Sales Assistant',
-      'Contract Generation'
-    ]
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: 200,
-    period: 'per month',
-    features: [
-      'Unlimited team members',
-      'Unlimited projects',
-      '200 Video Meetings/mo',
-      '180 mins per meeting',
-      'Full CRM & Automation',
-      'Custom API Access'
-    ]
-  }
-];
+const plans: PlanOption[] = (['starter', 'pro', 'enterprise'] as const).map(id => ({
+  id,
+  name: id.charAt(0).toUpperCase() + id.slice(1),
+  price: PLAN_PRICING[id].monthly,
+  period: 'per month',
+  popular: id === 'starter',
+  features: PLAN_PRICING[id].featureList
+}));
 
 export default function CreateBusinessOnboarding() {
   const { user } = useAuth();
@@ -116,49 +79,19 @@ export default function CreateBusinessOnboarding() {
     try {
       setIsCreating(true);
 
-      // Create tenant
+      // Create tenant using the hook
+      // Note: createTenant in context returns Tenant directly or throws
       const tenant = await createTenant({
         name: businessName.trim(),
         slug: businessSlug.trim(),
         plan: selectedPlan
       });
 
-      // If it's a paid plan, redirect to Stripe Checkout
-      if (selectedPlan !== 'free') {
-        const planPricing = PLAN_PRICING[selectedPlan];
-        if (planPricing.stripePriceId) {
-          try {
-            const response = await fetch('/api/stripe/create-checkout-session', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                priceId: planPricing.stripePriceId,
-                tenantId: tenant.id,
-                adminEmail: user?.email,
-                successUrl: window.location.origin + '/dashboard?checkout=success',
-                cancelUrl: window.location.origin + '/dashboard?checkout=cancelled',
-              })
-            });
+      if (!tenant) throw new Error('Failed to create tenant');
 
-            const { url, error: stripeError } = await response.json();
-            if (url) {
-              window.location.href = url;
-              return;
-            }
-            if (stripeError) throw new Error(stripeError);
-          } catch (checkoutErr: any) {
-            console.error('Checkout redirect failed:', checkoutErr);
-            // Fallback: just go to dashboard if Stripe fails
-            router.push('/dashboard');
-          }
-        }
-      }
-
-      // Success! Redirect to dashboard (if not already handled by Stripe)
+      // Success! During Beta, we redirect directly to dashboard
+      // The context already handles switching to the new tenant
       router.push('/dashboard');
-
     } catch (err: any) {
       console.error('Failed to create business:', err);
 
@@ -167,7 +100,7 @@ export default function CreateBusinessOnboarding() {
       } else {
         setError(err.message || 'Failed to create business. Please try again.');
       }
-
+    } finally {
       setIsCreating(false);
     }
   };
@@ -322,6 +255,14 @@ export default function CreateBusinessOnboarding() {
                         </span>
                         <span className="text-slate-400 text-sm">/{plan.period}</span>
                       </div>
+                      <p className="text-xs text-slate-500 mt-2 min-h-[40px]">
+                        {PLAN_PRICING[plan.id]?.description}
+                      </p>
+                      {PLAN_PRICING[plan.id]?.isDiscountable && (
+                        <div className="mt-2 py-1 px-2 bg-amber-500/20 border border-amber-500/30 rounded text-[10px] font-bold text-amber-400 uppercase tracking-tighter">
+                          35% OFF FOR NEXT 3 MONTHS
+                        </div>
+                      )}
                     </div>
 
                     <ul className="space-y-2">
