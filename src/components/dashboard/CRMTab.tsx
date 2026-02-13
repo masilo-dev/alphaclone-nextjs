@@ -233,7 +233,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
 
             <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Client List */}
-                <div className="lg:col-span-1 glass-panel rounded-2xl border border-white/5 overflow-hidden flex flex-col">
+                <div className="lg:col-span-1 glass-panel rounded-2xl border border-white/5 overflow-hidden flex flex-col" style={{ minHeight: '600px' }}>
                     <div className="p-4 border-b border-white/5 bg-slate-900/50 flex justify-between items-center">
                         <h2 className="font-bold text-slate-200">Directory</h2>
                         <div className="flex gap-1">
@@ -242,7 +242,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                         </div>
                     </div>
 
-                    <div className="flex-1 relative">
+                    <div className="flex-1 relative min-h-0">
                         {loading && clients.length === 0 ? (
                             <div className="flex items-center justify-center h-40">
                                 <Loader2 className="w-6 h-6 text-violet-500 animate-spin" />

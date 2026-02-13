@@ -471,7 +471,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 min-h-0 relative">
+            <div className="flex-1 min-h-0 relative" style={{ minHeight: '600px' }}>
                 {loading && tasks.length === 0 ? (
                     <div className="flex justify-center items-center h-64">
                         <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
