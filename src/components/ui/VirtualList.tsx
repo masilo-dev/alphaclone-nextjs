@@ -1,14 +1,29 @@
 // @ts-nocheck
 import dynamic from 'next/dynamic';
+import React from 'react';
 
 const List = dynamic(
     () => import('react-window').then((mod: any) => mod.FixedSizeList),
-    { ssr: false }
+    {
+        ssr: false,
+        loading: () => (
+            <div className="flex items-center justify-center h-64 text-slate-400">
+                <div className="w-6 h-6 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div>
+            </div>
+        )
+    }
 ) as any;
 
 const AutoSizer = dynamic(
     () => import('react-virtualized-auto-sizer').then((mod: any) => mod.default),
-    { ssr: false }
+    {
+        ssr: false,
+        loading: () => (
+            <div className="flex items-center justify-center h-64 text-slate-400">
+                <div className="w-6 h-6 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div>
+            </div>
+        )
+    }
 ) as any;
 
 interface VirtualListProps<T> {

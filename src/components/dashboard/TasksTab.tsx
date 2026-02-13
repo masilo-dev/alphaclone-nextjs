@@ -47,12 +47,26 @@ import dynamic from 'next/dynamic';
 
 const FixedSizeGrid = dynamic(
     () => import('react-window').then((mod: any) => mod.FixedSizeGrid),
-    { ssr: false }
+    {
+        ssr: false,
+        loading: () => (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
+            </div>
+        )
+    }
 ) as any;
 
 const AutoSizer = dynamic(
     () => import('react-virtualized-auto-sizer').then((mod: any) => mod.default),
-    { ssr: false }
+    {
+        ssr: false,
+        loading: () => (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
+            </div>
+        )
+    }
 ) as any;
 import {
     DndContext,
