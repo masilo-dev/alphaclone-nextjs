@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { Card } from '../ui/UIComponents';
 import { Activity, Users, DollarSign, Server, Cpu, TrendingUp, TrendingDown } from 'lucide-react';

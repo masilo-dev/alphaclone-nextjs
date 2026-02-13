@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { Button, Badge } from '../ui/UIComponents';
 import { CreditCard, CheckCircle, Download, TrendingUp, TrendingDown, DollarSign, FileDown } from 'lucide-react';
