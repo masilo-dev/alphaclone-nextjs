@@ -37,9 +37,9 @@ import BillingPage from './BillingPage';
 import ReportsPage from './ReportsPage';
 import SettingsPage from './SettingsPage';
 import MeetingsPage from './MeetingsPage';
-// New CRM Components
-import CRMTab from '../CRMTab';
-import TasksTab from '../TasksTab';
+// New CRM Components - Lazy loaded to prevent Error #306
+const CRMTab = React.lazy(() => import('../CRMTab'));
+const TasksTab = React.lazy(() => import('../TasksTab'));
 import SalesAgent from '../SalesAgent';
 import DealsTab from '../DealsTab';
 import AlphaCloneContractModal from '../../contracts/AlphaCloneContractModal';
@@ -293,12 +293,20 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             // New Routes
             case '/dashboard/crm':
             case '/dashboard/business/clients':
-                return <CRMTab
-                    userId={user.id}
-                    userRole={user.role}
-                />;
+                return (
+                    <React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div></div>}>
+                        <CRMTab
+                            userId={user.id}
+                            userRole={user.role}
+                        />
+                    </React.Suspense>
+                );
             case '/dashboard/tasks':
-                return <TasksTab userId={user.id} userRole={user.role} />;
+                return (
+                    <React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div></div>}>
+                        <TasksTab userId={user.id} userRole={user.role} />
+                    </React.Suspense>
+                );
             case '/dashboard/sales-agent':
                 return <SalesAgent />;
             case '/dashboard/leads':
