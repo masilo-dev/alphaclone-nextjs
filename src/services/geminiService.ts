@@ -21,7 +21,7 @@ const getModel = (modelName: string) => {
 export const geminiService = {
     async generateContent(prompt: string) {
         try {
-            const model = getModel('gemini-1.5-flash-latest');
+            const model = getModel('gemini-1.5-flash');
             const result = await model.generateContent(prompt);
             const response = await result.response;
             return { text: response.text(), error: null };
@@ -33,7 +33,7 @@ export const geminiService = {
 
     async generateContentWithImage(prompt: string, imageParts: any[]) {
         try {
-            const model = getModel('gemini-1.5-flash-latest');
+            const model = getModel('gemini-1.5-flash');
             const result = await model.generateContent([prompt, ...imageParts]);
             const response = await result.response;
             return { text: response.text(), error: null };
@@ -66,7 +66,7 @@ CRITICAL INSTRUCTIONS:
 - Do not hallucinate features, capabilities, or information that wasn't explicitly provided`;
 
         const model = genAI.getGenerativeModel({
-            model: 'gemini-1.5-pro-latest',
+            model: 'gemini-1.5-pro',
             systemInstruction: finalSystemPrompt
         });
 
@@ -121,7 +121,7 @@ CRITICAL INSTRUCTIONS:
 
 export const editImage = async (image: string, prompt: string) => {
     try {
-        const model = getModel('gemini-1.5-flash-latest');
+        const model = getModel('gemini-1.5-flash');
         const base64Data = image.split(',')[1];
         const mimeType = image.split(';')[0]?.split(':')[1] || 'image/png';
         const imagePart = {
