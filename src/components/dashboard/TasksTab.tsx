@@ -372,72 +372,37 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
     };
 
     const renderLazyGrid = () => (
-        <div className="h-full w-full min-h-[500px]">
-            <AutoSizer>
-                {({ height, width }: { height: number; width: number }) => {
-                    const columnWidth = 320;
-                    const columnCount = Math.max(1, Math.floor(width / columnWidth));
-                    const rowCount = Math.ceil(filteredAndSearchedTasks.length / columnCount);
-
-                    return (
-                        <React.Fragment>
-                            {filteredAndSearchedTasks.length === 0 && !loading ? (
-                                <div className="flex items-center justify-center h-full text-slate-500">No tasks found</div>
-                            ) : (
-                                <FixedSizeGrid
-                                    columnCount={columnCount}
-                                    columnWidth={width / columnCount}
-                                    height={height}
-                                    rowCount={rowCount}
-                                    rowHeight={240}
-                                    width={width}
-                                    itemData={{
-                                        tasks: filteredAndSearchedTasks
+        <div className="h-full w-full overflow-y-auto p-4">
+            {filteredAndSearchedTasks.length === 0 && !loading ? (
+                <div className="flex items-center justify-center h-full text-slate-500">No tasks found</div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {filteredAndSearchedTasks.map((task) => (
+                        <div key={task.id} className="glass-panel p-4 rounded-xl border border-white/5 bg-slate-900/40 relative group overflow-hidden hover:border-teal-500/30 transition-all flex flex-col h-56">
+                            <div className="flex justify-between items-start mb-2">
+                                <h4 className="font-bold text-white text-sm line-clamp-2">{task.title}</h4>
+                                <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold ${task.status === 'completed' ? 'bg-green-500/20 text-green-400' : 'bg-slate-700 text-slate-400'}`}>
+                                    {task.status.replace('_', ' ')}
+                                </span>
+                            </div>
+                            <p className="text-xs text-slate-500 line-clamp-3 mb-4 flex-1">{task.description}</p>
+                            <div className="mt-auto flex justify-between items-center text-xs text-slate-500 border-t border-white/5 pt-2">
+                                <span>{task.estimatedHours ? `${task.estimatedHours}h` : '-'}</span>
+                                {task.dueDate && <span>{new Date(task.dueDate).toLocaleDateString()}</span>}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setNotesTaskId(task.id);
                                     }}
-                                    onScroll={({ scrollTop, scrollHeight, clientHeight }: any) => {
-                                        if (scrollHeight - scrollTop - clientHeight < 200 && hasNextPage && !loading) {
-                                            fetchNextPage();
-                                        }
-                                    }}
+                                    className="p-1 hover:bg-teal-500/10 text-slate-400 hover:text-teal-400 rounded-md transition-colors"
                                 >
-                                    {({ columnIndex, rowIndex, style, data }: any) => {
-                                        const index = rowIndex * columnCount + columnIndex;
-                                        const task = data.tasks[index];
-                                        if (!task) return null;
-
-                                        return (
-                                            <div style={{ ...style, padding: 8 }}>
-                                                <div className="glass-panel p-4 h-full rounded-xl border border-white/5 bg-slate-900/40 relative group overflow-hidden hover:border-teal-500/30 transition-all flex flex-col">
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <h4 className="font-bold text-white text-sm line-clamp-2">{task.title}</h4>
-                                                        <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold ${task.status === 'completed' ? 'bg-green-500/20 text-green-400' : 'bg-slate-700 text-slate-400'}`}>
-                                                            {task.status.replace('_', ' ')}
-                                                        </span>
-                                                    </div>
-                                                    <p className="text-xs text-slate-500 line-clamp-3 mb-4 flex-1">{task.description}</p>
-                                                    <div className="mt-auto flex justify-between items-center text-xs text-slate-500 border-t border-white/5 pt-2">
-                                                        <span>{task.estimatedHours ? `${task.estimatedHours}h` : '-'}</span>
-                                                        {task.dueDate && <span>{new Date(task.dueDate).toLocaleDateString()}</span>}
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setNotesTaskId(task.id);
-                                                            }}
-                                                            className="p-1 hover:bg-teal-500/10 text-slate-400 hover:text-teal-400 rounded-md transition-colors"
-                                                        >
-                                                            <FileText className="w-3.5 h-3.5" />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    }}
-                                </FixedSizeGrid>
-                            )}
-                        </React.Fragment>
-                    );
-                }}
-            </AutoSizer>
+                                    <FileText className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 

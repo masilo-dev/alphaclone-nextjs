@@ -71,6 +71,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
     const [searchTerm, setSearchQuery] = useState('');
     const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
@@ -99,6 +100,46 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
         value: 0,
         notes: ''
     });
+
+    const handleEditClient = (client: BusinessClient) => {
+        setFormData({
+            name: client.name,
+            email: client.email || '',
+            phone: client.phone || '',
+            company: client.company || '',
+            stage: client.stage,
+            value: client.value || 0,
+            notes: client.notes || ''
+        });
+        setShowEditModal(true);
+    };
+
+    const handleUpdateClient = async () => {
+        if (!formData.name || !selectedClient) {
+            toast.error('Name is required');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            await updateClientMutation.mutateAsync({ id: selectedClient.id, updates: formData });
+            toast.success('Client updated successfully');
+            setShowEditModal(false);
+            setFormData({
+                name: '',
+                email: '',
+                phone: '',
+                company: '',
+                stage: 'lead',
+                value: 0,
+                notes: ''
+            });
+        } catch (err) {
+            toast.error('Failed to update client');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const handleCreateClient = async () => {
         if (!formData.name) {
@@ -298,7 +339,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                                 </div>
                                 <div className="absolute top-4 right-4 flex gap-2">
                                     <Button size="sm" variant="danger" onClick={() => handleDeleteClient(selectedClient.id)} icon={<Trash2 className="w-3 h-3" />}>Delete</Button>
-                                    <Button size="sm" variant="secondary" icon={<Edit2 className="w-3 h-3" />}>Edit</Button>
+                                    <Button size="sm" variant="secondary" onClick={() => handleEditClient(selectedClient)} icon={<Edit2 className="w-3 h-3" />}>Edit</Button>
                                 </div>
                             </div>
 
@@ -318,7 +359,18 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                                     </div>
                                     <div className="p-4 rounded-xl bg-slate-900/40 border border-white/5">
                                         <div className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Contact</div>
-                                        <div className="text-sm text-slate-300 truncate">{selectedClient.email || 'N/A'}</div>
+                                        {selectedClient.email ? (
+                                            <a
+                                                href={`mailto:${selectedClient.email}`}
+                                                className="text-sm text-teal-400 hover:text-teal-300 truncate block transition-colors flex items-center gap-2"
+                                                title="Send email"
+                                            >
+                                                <Mail className="w-4 h-4" />
+                                                {selectedClient.email}
+                                            </a>
+                                        ) : (
+                                            <div className="text-sm text-slate-300 truncate">N/A</div>
+                                        )}
                                     </div>
                                     <div className="p-4 rounded-xl bg-slate-900/40 border border-white/5">
                                         <div className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Phone</div>
@@ -413,6 +465,69 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                         <Button variant="secondary" onClick={() => setShowAddModal(false)}>Cancel</Button>
                         <Button variant="primary" onClick={handleCreateClient} disabled={isSubmitting}>
                             {isSubmitting ? 'Adding...' : 'Add Client'}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Edit Client Modal */}
+            <Modal
+                isOpen={showEditModal}
+                onClose={() => setShowEditModal(false)}
+                title="Edit Client"
+            >
+                <div className="space-y-4">
+                    <Input
+                        label="Name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="John Doe"
+                    />
+                    <Input
+                        label="Company"
+                        value={formData.company}
+                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                        placeholder="Acme Corp"
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input
+                            label="Email"
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            placeholder="john@example.com"
+                        />
+                        <Input
+                            label="Phone"
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            placeholder="+1 (555) 000-0000"
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Stage</label>
+                            <select
+                                value={formData.stage}
+                                onChange={(e) => setFormData({ ...formData, stage: e.target.value as any })}
+                                className="w-full px-4 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm text-slate-300 focus:outline-none focus:border-violet-500"
+                            >
+                                <option value="lead">Lead</option>
+                                <option value="prospect">Prospect</option>
+                                <option value="customer">Customer</option>
+                                <option value="lost">Lost</option>
+                            </select>
+                        </div>
+                        <Input
+                            label="Value ($)"
+                            type="number"
+                            value={formData.value}
+                            onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) })}
+                        />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                        <Button variant="secondary" onClick={() => setShowEditModal(false)}>Cancel</Button>
+                        <Button variant="primary" onClick={handleUpdateClient} disabled={isSubmitting}>
+                            {isSubmitting ? 'Updating...' : 'Update Client'}
                         </Button>
                     </div>
                 </div>
