@@ -12,7 +12,8 @@
       "Bash(git commit:*)",
       "Bash(npm run build:*)",
       "Bash(grep:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(done)"
     ]
   }
 }

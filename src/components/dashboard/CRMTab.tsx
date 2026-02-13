@@ -122,7 +122,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
 
         setIsSubmitting(true);
         try {
-            await updateClientMutation.mutateAsync({ id: selectedClient.id, updates: formData });
+            await updateClientMutation.mutateAsync({ clientId: selectedClient.id, updates: formData });
             toast.success('Client updated successfully');
             setShowEditModal(false);
             setFormData({
@@ -311,7 +311,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <div className={`text-xs px-2 py-1 rounded-full font-semibold ${client.stage === 'client' ? 'bg-green-500/20 text-green-400' :
+                                                <div className={`text-xs px-2 py-1 rounded-full font-semibold ${client.stage === 'customer' ? 'bg-green-500/20 text-green-400' :
                                                     client.stage === 'prospect' ? 'bg-blue-500/20 text-blue-400' :
                                                         'bg-slate-700 text-slate-400'
                                                     }`}>
