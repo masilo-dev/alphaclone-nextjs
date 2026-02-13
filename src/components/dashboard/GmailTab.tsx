@@ -220,36 +220,7 @@ const GmailTab: React.FC = () => {
 
     return (
         <div className="relative h-full">
-            {/* Coming Soon Overlay */}
-            <div className="absolute inset-0 z-[100] bg-slate-950/60 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 rounded-3xl border border-white/5 shadow-2xl">
-                <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mb-6 border border-teal-500/20 shadow-[0_0_30px_rgba(20,184,166,0.2)]">
-                    <Mail className="w-10 h-10 text-teal-400" />
-                </div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 mb-4">
-                    <Sparkles className="w-4 h-4 text-teal-400" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-teal-400">Under Construction</span>
-                </div>
-                <h2 className="text-2xl md:text-3xl font-black text-white mb-4 tracking-tight">Gmail Integration Coming Soon</h2>
-                <p className="text-slate-400 max-w-md text-sm leading-relaxed mb-8">
-                    We're currently perfecting the Gmail integration to ensure maximum security and AI-powered efficiency for your workflow. Hang tight—it's arriving very soon.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                    <button
-                        onClick={() => window.location.href = '/dashboard'}
-                        className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-sm rounded-xl border border-white/5 transition-all"
-                    >
-                        Back to Dashboard
-                    </button>
-                    <button
-                        onClick={() => toast.success("You'll be notified when Gmail is live!")}
-                        className="px-6 py-2.5 bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold text-sm rounded-xl transition-all shadow-lg shadow-teal-500/20"
-                    >
-                        Notify Me
-                    </button>
-                </div>
-            </div>
-
-            <div className="flex h-full bg-slate-950 rounded-3xl border border-slate-900 overflow-hidden opacity-30 grayscale pointer-events-none select-none">
+            <div className="flex h-full bg-slate-950 rounded-3xl border border-slate-900 overflow-hidden">
                 {/* Mobile Sidebar Overlay */}
                 {showMobileSidebar && (
                     <div

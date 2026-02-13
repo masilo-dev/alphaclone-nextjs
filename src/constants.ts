@@ -37,7 +37,7 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
   { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
   { label: 'AI Studio', href: '/dashboard/ai-studio', icon: Palette },
   { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
-  { label: 'Gmail', href: '/dashboard/gmail', icon: Mail, comingSoon: true },
+  { label: 'Gmail', href: '/dashboard/gmail', icon: Mail },
   { label: 'Conferencing', href: '/dashboard/conference', icon: Video },
   { label: 'Submit Request', href: '/dashboard/submit', icon: FileText },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
@@ -66,7 +66,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     icon: MessageSquare,
     subItems: [
       { label: 'Inbox', href: '/dashboard/messages' },
-      { label: 'Gmail', href: '/dashboard/gmail', comingSoon: true },
+      { label: 'Gmail', href: '/dashboard/gmail' },
       { label: 'Meetings', href: '/dashboard/meetings' },
       { label: 'Calendar', href: '/dashboard/calendar' },
     ]
@@ -106,7 +106,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Growth Agent', href: '/dashboard/sales-agent', icon: Zap },
   { label: 'Task Center', href: '/dashboard/tasks', icon: CheckSquare },
   { label: 'Projects', href: '/dashboard/business/projects', icon: Briefcase },
-  { label: 'Gmail', href: '/dashboard/gmail', icon: Mail, comingSoon: true },
+  { label: 'Gmail', href: '/dashboard/gmail', icon: Mail },
   { label: 'Active Meetings', href: '/dashboard/business/meetings', icon: Video },
   { label: 'Financials', href: '/dashboard/business/billing', icon: DollarSign },
   {
