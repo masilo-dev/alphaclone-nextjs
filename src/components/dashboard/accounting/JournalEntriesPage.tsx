@@ -331,3 +331,5 @@ export function JournalEntriesPage() {
         </div>
     );
 }
+
+export default JournalEntriesPage;

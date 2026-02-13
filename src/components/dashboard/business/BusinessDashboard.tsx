@@ -45,9 +45,9 @@ import DealsTab from '../DealsTab';
 import AlphaCloneContractModal from '../../contracts/AlphaCloneContractModal';
 import ContractDashboard from '../../contracts/ContractDashboard';
 // Accounting Components - Lazy loaded to prevent module resolution issues
-const ChartOfAccountsPage = React.lazy(() => import('../accounting/ChartOfAccountsPage').then(m => ({ default: m.ChartOfAccountsPage })));
-const JournalEntriesPage = React.lazy(() => import('../accounting/JournalEntriesPage').then(m => ({ default: m.JournalEntriesPage })));
-const FinancialReportsPage = React.lazy(() => import('../accounting/FinancialReportsPage').then(m => ({ default: m.FinancialReportsPage })));
+const ChartOfAccountsPage = React.lazy(() => import('../accounting/ChartOfAccountsPage'));
+const JournalEntriesPage = React.lazy(() => import('../accounting/JournalEntriesPage'));
+const FinancialReportsPage = React.lazy(() => import('../accounting/FinancialReportsPage'));
 const GmailTab = React.lazy(() => import('../GmailTab'));
 const CustomVideoRoom = React.lazy(() => import('../video/CustomVideoRoom'));
 

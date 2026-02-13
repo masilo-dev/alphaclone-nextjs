@@ -430,3 +430,5 @@ export function FinancialReportsPage() {
         </div>
     );
 }
+
+export default FinancialReportsPage;

@@ -428,3 +428,5 @@ export function ChartOfAccountsPage() {
         </div>
     );
 }
+
+export default ChartOfAccountsPage;
