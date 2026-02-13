@@ -99,7 +99,7 @@ async function completeWithAnthropic(options: AIRequestOptions): Promise<AIRespo
   }
 
   const message = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022', // Correct latest Claude 3.5 Sonnet
+    model: 'claude-3-5-sonnet-latest', // Use latest stable alias
     max_tokens: options.maxTokens || 4096,
     temperature: options.temperature || 0.7,
     system: options.systemPrompt,
@@ -163,7 +163,7 @@ async function completeWithGemini(options: AIRequestOptions): Promise<AIResponse
   return {
     content: result.text,
     provider: 'gemini',
-    model: 'gemini-1.5-flash',
+    model: 'gemini-1.5-flash-latest',
     success: true,
   };
 }
@@ -236,7 +236,7 @@ export async function routeAIChat(
       return {
         content: result.text || '',
         provider: 'gemini',
-        model: 'gemini-1.5-pro',
+        model: 'gemini-1.5-pro-latest',
         success: true,
       };
     } catch (error: any) {
@@ -295,7 +295,7 @@ async function chatWithAnthropic(
   }
 
   const response = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
+    model: 'claude-3-5-sonnet-latest',
     max_tokens: 4096,
     system: systemPrompt,
     messages: [
