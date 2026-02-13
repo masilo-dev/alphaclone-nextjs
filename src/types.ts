@@ -17,6 +17,7 @@ export interface NavItem {
   href: string;
   icon?: React.ComponentType<any>;
   subItems?: NavItem[];
+  comingSoon?: boolean;
 }
 
 export interface ServiceItem {

@@ -82,8 +82,11 @@ const GmailIntegration: React.FC<GmailIntegrationProps> = ({ user }) => {
                 </p>
             </div>
 
-            <div className={`p-6 rounded-2xl border ${isConnected ? 'bg-teal-500/5 border-teal-500/20' : 'bg-slate-900/50 border-slate-800'}`}>
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className={`p-6 rounded-2xl border ${isConnected ? 'bg-teal-500/5 border-teal-500/20' : 'bg-slate-900/50 border-slate-800'} relative overflow-hidden`}>
+                <div className="absolute top-0 right-0 px-3 py-1 bg-slate-800 text-teal-400 text-[8px] font-black uppercase tracking-widest rounded-bl-xl border-l border-b border-white/5">
+                    Coming Soon
+                </div>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 opacity-60">
                     <div className="flex items-start gap-4">
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${isConnected ? 'bg-teal-500/10 text-teal-400' : 'bg-slate-800 text-slate-500'}`}>
                             <Mail className="w-6 h-6" />
@@ -91,7 +94,7 @@ const GmailIntegration: React.FC<GmailIntegrationProps> = ({ user }) => {
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <h4 className="font-bold text-white">
-                                    {isConnected ? 'Gmail Connected' : 'Gmail Not Connected'}
+                                    Gmail Integration (Coming Soon)
                                 </h4>
                                 {isConnected ? (
                                     <CheckCircle2 className="w-4 h-4 text-teal-400" />
@@ -100,45 +103,19 @@ const GmailIntegration: React.FC<GmailIntegrationProps> = ({ user }) => {
                                 )}
                             </div>
                             <p className="text-sm text-slate-400 max-w-md">
-                                {isConnected
-                                    ? `Successfully linked to your Gmail account. You can now access your Inbox and send emails from the Gmail tab.`
-                                    : 'Connect your account to allow AlphaClone to list and send emails on your behalf.'}
+                                This feature is currently in final testing. You'll be able to link your account and manage communications very soon.
                             </p>
                         </div>
                     </div>
 
                     <div className="flex flex-wrap gap-3">
-                        {isConnected ? (
-                            <>
-                                <button
-                                    onClick={handleConnect}
-                                    className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-lg transition-all"
-                                >
-                                    <RefreshCw className="w-4 h-4" />
-                                    Reconnect
-                                </button>
-                                <button
-                                    onClick={handleDisconnect}
-                                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-bold rounded-lg transition-all"
-                                >
-                                    <XCircle className="w-4 h-4" />
-                                    Disconnect
-                                </button>
-                            </>
-                        ) : (
-                            <button
-                                onClick={handleConnect}
-                                disabled={connecting}
-                                className="flex items-center gap-2 px-6 py-2.5 bg-teal-500 hover:bg-teal-600 text-slate-900 font-black text-sm uppercase tracking-widest rounded-xl shadow-lg shadow-teal-500/20 transition-all active:scale-95 disabled:opacity-50"
-                            >
-                                {connecting ? (
-                                    <RefreshCw className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    <Mail className="w-4 h-4" />
-                                )}
-                                {connecting ? 'CONNECTING...' : 'CONNECT GMAIL'}
-                            </button>
-                        )}
+                        <button
+                            disabled
+                            className="flex items-center gap-2 px-6 py-2.5 bg-slate-800 text-slate-500 font-black text-sm uppercase tracking-widest rounded-xl border border-white/5 cursor-not-allowed transition-all"
+                        >
+                            <Mail className="w-4 h-4" />
+                            LOCKED
+                        </button>
                     </div>
                 </div>
             </div>

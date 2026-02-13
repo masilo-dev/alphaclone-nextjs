@@ -219,317 +219,348 @@ const GmailTab: React.FC = () => {
     }
 
     return (
-        <div className="flex h-full bg-slate-950 rounded-3xl border border-slate-900 overflow-hidden">
-            {/* Mobile Sidebar Overlay */}
-            {showMobileSidebar && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-40 md:hidden"
-                    onClick={() => setShowMobileSidebar(false)}
-                />
-            )}
-
-            {/* Sidebar */}
-            <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-950 border-r border-slate-900 flex flex-col p-4 space-y-2 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${showMobileSidebar ? 'translate-x-0' : '-translate-x-full'}`}>
-                <div className="flex justify-between items-center md:hidden mb-4 px-2">
-                    <span className="font-bold text-white">Mailbox</span>
-                    <button onClick={() => setShowMobileSidebar(false)} className="text-slate-400">
-                        <ArrowLeft className="w-5 h-5" />
+        <div className="relative h-full">
+            {/* Coming Soon Overlay */}
+            <div className="absolute inset-0 z-[100] bg-slate-950/60 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 rounded-3xl border border-white/5 shadow-2xl">
+                <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mb-6 border border-teal-500/20 shadow-[0_0_30px_rgba(20,184,166,0.2)]">
+                    <Mail className="w-10 h-10 text-teal-400" />
+                </div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 mb-4">
+                    <Sparkles className="w-4 h-4 text-teal-400" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-teal-400">Under Construction</span>
+                </div>
+                <h2 className="text-2xl md:text-3xl font-black text-white mb-4 tracking-tight">Gmail Integration Coming Soon</h2>
+                <p className="text-slate-400 max-w-md text-sm leading-relaxed mb-8">
+                    We're currently perfecting the Gmail integration to ensure maximum security and AI-powered efficiency for your workflow. Hang tight—it's arriving very soon.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                        onClick={() => window.location.href = '/dashboard'}
+                        className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-sm rounded-xl border border-white/5 transition-all"
+                    >
+                        Back to Dashboard
+                    </button>
+                    <button
+                        onClick={() => toast.success("You'll be notified when Gmail is live!")}
+                        className="px-6 py-2.5 bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold text-sm rounded-xl transition-all shadow-lg shadow-teal-500/20"
+                    >
+                        Notify Me
                     </button>
                 </div>
-
-                <button
-                    onClick={() => {
-                        setComposeData({ to: '', subject: '', body: '', threadId: undefined });
-                        setIsComposeOpen(true);
-                        setShowMobileSidebar(false);
-                    }}
-                    className="flex items-center gap-3 px-4 py-3 bg-teal-500 hover:bg-teal-600 text-slate-900 font-bold rounded-xl mb-6 transition-all"
-                >
-                    <Send className="w-4 h-4" />
-                    Compose
-                </button>
-
-                {[
-                    { id: 'inbox', icon: Inbox, label: 'Inbox' },
-                    { id: 'starred', icon: Star, label: 'Starred' },
-                    { id: 'sent', icon: Send, label: 'Sent' },
-                    { id: 'trash', icon: Trash2, label: 'Trash' },
-                ].map((item) => (
-                    <button
-                        key={item.id}
-                        onClick={() => {
-                            setActiveFolder(item.id);
-                            setShowMobileSidebar(false);
-                        }}
-                        className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${activeFolder === item.id ? 'bg-slate-900 text-teal-400 font-bold' : 'text-slate-500 hover:bg-slate-900/50 hover:text-slate-300'
-                            }`}
-                    >
-                        <item.icon className="w-4 h-4" />
-                        {item.label}
-                    </button>
-                ))}
             </div>
 
-            {/* Thread List */}
-            <div className={`w-full md:w-96 border-r border-slate-900 flex flex-col ${selectedThreadId ? 'hidden md:flex' : 'flex'}`}>
-                <div className="p-4 border-bottom border-slate-900 flex gap-2">
+            <div className="flex h-full bg-slate-950 rounded-3xl border border-slate-900 overflow-hidden opacity-30 grayscale pointer-events-none select-none">
+                {/* Mobile Sidebar Overlay */}
+                {showMobileSidebar && (
+                    <div
+                        className="fixed inset-0 bg-black/50 z-40 md:hidden"
+                        onClick={() => setShowMobileSidebar(false)}
+                    />
+                )}
+
+                {/* Sidebar */}
+                <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-950 border-r border-slate-900 flex flex-col p-4 space-y-2 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${showMobileSidebar ? 'translate-x-0' : '-translate-x-full'}`}>
+                    <div className="flex justify-between items-center md:hidden mb-4 px-2">
+                        <span className="font-bold text-white">Mailbox</span>
+                        <button onClick={() => setShowMobileSidebar(false)} className="text-slate-400">
+                            <ArrowLeft className="w-5 h-5" />
+                        </button>
+                    </div>
+
                     <button
-                        onClick={() => setShowMobileSidebar(true)}
-                        className="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+                        onClick={() => {
+                            setComposeData({ to: '', subject: '', body: '', threadId: undefined });
+                            setIsComposeOpen(true);
+                            setShowMobileSidebar(false);
+                        }}
+                        className="flex items-center gap-3 px-4 py-3 bg-teal-500 hover:bg-teal-600 text-slate-900 font-bold rounded-xl mb-6 transition-all"
                     >
-                        <Menu className="w-5 h-5" />
+                        <Send className="w-4 h-4" />
+                        Compose
                     </button>
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                        <input
-                            type="text"
-                            placeholder="Search mail..."
-                            className="w-full bg-slate-900 border border-slate-800 rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-teal-500/50 transition-all text-white"
-                        />
+
+                    {[
+                        { id: 'inbox', icon: Inbox, label: 'Inbox' },
+                        { id: 'starred', icon: Star, label: 'Starred' },
+                        { id: 'sent', icon: Send, label: 'Sent' },
+                        { id: 'trash', icon: Trash2, label: 'Trash' },
+                    ].map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => {
+                                setActiveFolder(item.id);
+                                setShowMobileSidebar(false);
+                            }}
+                            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${activeFolder === item.id ? 'bg-slate-900 text-teal-400 font-bold' : 'text-slate-500 hover:bg-slate-900/50 hover:text-slate-300'
+                                }`}
+                        >
+                            <item.icon className="w-4 h-4" />
+                            {item.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Thread List */}
+                <div className={`w-full md:w-96 border-r border-slate-900 flex flex-col ${selectedThreadId ? 'hidden md:flex' : 'flex'}`}>
+                    <div className="p-4 border-bottom border-slate-900 flex gap-2">
+                        <button
+                            onClick={() => setShowMobileSidebar(true)}
+                            className="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+                        >
+                            <Menu className="w-5 h-5" />
+                        </button>
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                            <input
+                                type="text"
+                                placeholder="Search mail..."
+                                className="w-full bg-slate-900 border border-slate-800 rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-teal-500/50 transition-all text-white"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto message-list-scrollbar">
+                        {loading && threads.length === 0 ? (
+                            <div className="p-8 text-center">
+                                <RefreshCw className="w-6 h-6 animate-spin text-teal-500 mx-auto" />
+                            </div>
+                        ) : threads.length === 0 ? (
+                            <div className="p-8 text-center text-slate-500 italic text-sm">
+                                No conversations found.
+                            </div>
+                        ) : (
+                            <>
+                                {threads.map((thread) => (
+                                    <button
+                                        key={thread.id}
+                                        onClick={() => handleSelectThread(thread.id)}
+                                        className={`w-full text-left p-4 border-b border-slate-900/50 transition-all hover:bg-slate-900/30 ${selectedThreadId === thread.id ? 'bg-slate-900/50 border-l-2 border-l-teal-500' : ''
+                                            }`}
+                                    >
+                                        <div className="flex justify-between items-start mb-1">
+                                            <span className={`font-bold text-sm text-slate-200 truncate pr-2 ${selectedThreadId === thread.id ? 'text-teal-400' : ''}`}>
+                                                {thread.from?.split('<')[0] || thread.from}
+                                                {thread.messageCount && thread.messageCount > 1 && (
+                                                    <span className="text-slate-500 text-xs font-normal ml-1">({thread.messageCount})</span>
+                                                )}
+                                            </span>
+                                            <span className="text-[10px] text-slate-500 shrink-0">
+                                                {thread.date ? new Date(thread.date).toLocaleDateString() : ''}
+                                            </span>
+                                        </div>
+                                        <div className="text-xs font-semibold text-slate-300 mb-1 truncate">
+                                            {thread.subject}
+                                        </div>
+                                        <div className="text-xs text-slate-500 line-clamp-2">
+                                            {thread.snippet}
+                                        </div>
+                                    </button>
+                                ))}
+                                {nextPageToken && (
+                                    <button
+                                        onClick={loadMore}
+                                        disabled={loadingMore}
+                                        className="w-full p-4 text-sm text-center text-teal-500 hover:text-teal-400 font-medium hover:bg-slate-900/30 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        {loadingMore ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ChevronDown className="w-4 h-4" />}
+                                        Load More
+                                    </button>
+                                )}
+                            </>
+                        )}
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto message-list-scrollbar">
-                    {loading && threads.length === 0 ? (
-                        <div className="p-8 text-center">
-                            <RefreshCw className="w-6 h-6 animate-spin text-teal-500 mx-auto" />
-                        </div>
-                    ) : threads.length === 0 ? (
-                        <div className="p-8 text-center text-slate-500 italic text-sm">
-                            No conversations found.
-                        </div>
-                    ) : (
+                {/* Conversation Content */}
+                <div className={`flex-1 flex flex-col bg-slate-950 ${!selectedThreadId ? 'hidden md:flex' : 'flex'}`}>
+                    {selectedThreadId ? (
                         <>
-                            {threads.map((thread) => (
-                                <button
-                                    key={thread.id}
-                                    onClick={() => handleSelectThread(thread.id)}
-                                    className={`w-full text-left p-4 border-b border-slate-900/50 transition-all hover:bg-slate-900/30 ${selectedThreadId === thread.id ? 'bg-slate-900/50 border-l-2 border-l-teal-500' : ''
-                                        }`}
-                                >
-                                    <div className="flex justify-between items-start mb-1">
-                                        <span className={`font-bold text-sm text-slate-200 truncate pr-2 ${selectedThreadId === thread.id ? 'text-teal-400' : ''}`}>
-                                            {thread.from?.split('<')[0] || thread.from}
-                                            {thread.messageCount && thread.messageCount > 1 && (
-                                                <span className="text-slate-500 text-xs font-normal ml-1">({thread.messageCount})</span>
-                                            )}
-                                        </span>
-                                        <span className="text-[10px] text-slate-500 shrink-0">
-                                            {thread.date ? new Date(thread.date).toLocaleDateString() : ''}
-                                        </span>
+                            {/* Header */}
+                            <div className="p-4 border-b border-slate-900 flex justify-between items-center bg-slate-900/30">
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => setSelectedThreadId(null)}
+                                        className="md:hidden p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+                                    >
+                                        <ArrowLeft className="w-5 h-5" />
+                                    </button>
+                                    <div>
+                                        <h1 className="text-lg font-bold text-white mb-1 line-clamp-1">
+                                            {conversation[0]?.subject || 'Conversation'}
+                                        </h1>
+                                        <div className="text-xs text-slate-500 gap-2 flex">
+                                            <span className="bg-slate-800 px-2 py-0.5 rounded text-slate-300">
+                                                {activeFolder.toUpperCase()}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="text-xs font-semibold text-slate-300 mb-1 truncate">
-                                        {thread.subject}
+                                </div>
+                                <div className="flex gap-2 text-slate-500">
+                                    <button onClick={() => handleAction('archive')} className="p-2 hover:bg-slate-900 rounded-lg transition-all text-slate-400 hover:text-white" title="Archive">
+                                        <Archive className="w-4 h-4" />
+                                    </button>
+                                    <button onClick={() => handleAction('trash')} className="p-2 hover:bg-slate-900 rounded-lg transition-all text-red-400/50 hover:text-red-400" title="Delete">
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Messages Area */}
+                            <div className="flex-1 overflow-y-auto bg-slate-100/5 flex flex-col p-4 space-y-4">
+                                {loadingConversation ? (
+                                    <div className="flex justify-center p-12">
+                                        <RefreshCw className="w-8 h-8 animate-spin text-teal-500" />
                                     </div>
-                                    <div className="text-xs text-slate-500 line-clamp-2">
-                                        {thread.snippet}
-                                    </div>
-                                </button>
-                            ))}
-                            {nextPageToken && (
-                                <button
-                                    onClick={loadMore}
-                                    disabled={loadingMore}
-                                    className="w-full p-4 text-sm text-center text-teal-500 hover:text-teal-400 font-medium hover:bg-slate-900/30 transition-all flex items-center justify-center gap-2"
-                                >
-                                    {loadingMore ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ChevronDown className="w-4 h-4" />}
-                                    Load More
-                                </button>
-                            )}
+                                ) : (
+                                    conversation.map((msg, idx) => (
+                                        <div key={msg.id} className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200">
+                                            <div className="p-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                                                        {msg.from?.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-bold text-slate-700">{msg.from?.split('<')[0]}</span>
+                                                        <span className="text-[10px] text-slate-400">{new Date(msg.date!).toLocaleString()}</span>
+                                                    </div>
+                                                </div>
+                                                {idx === conversation.length - 1 && (
+                                                    <button onClick={openReply} className="text-xs text-teal-600 font-bold hover:underline">
+                                                        Reply
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div
+                                                className="p-4 text-slate-800 prose prose-sm max-w-none"
+                                                dangerouslySetInnerHTML={{
+                                                    __html: DOMPurify.sanitize(msg.body || '')
+                                                }}
+                                            />
+                                        </div>
+                                    ))
+                                )}
+
+                                {/* Quick Reply Button at Bottom */}
+                                {!loadingConversation && conversation.length > 0 && (
+                                    <button
+                                        onClick={openReply}
+                                        className="flex items-center gap-2 text-slate-400 hover:text-teal-400 p-4 border border-dashed border-slate-800 rounded-xl justify-center transition-all hover:bg-slate-900/30 group"
+                                    >
+                                        <Send className="w-4 h-4 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
+                                        <span>Click here to Reply</span>
+                                    </button>
+                                )}
+                            </div>
                         </>
+                    ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-slate-500">
+                            <div className="w-16 h-16 bg-slate-900/50 rounded-full flex items-center justify-center mb-4">
+                                <Mail className="w-8 h-8 opacity-20" />
+                            </div>
+                            <p>Select a conversation to read</p>
+                        </div>
                     )}
                 </div>
-            </div>
 
-            {/* Conversation Content */}
-            <div className={`flex-1 flex flex-col bg-slate-950 ${!selectedThreadId ? 'hidden md:flex' : 'flex'}`}>
-                {selectedThreadId ? (
-                    <>
-                        {/* Header */}
-                        <div className="p-4 border-b border-slate-900 flex justify-between items-center bg-slate-900/30">
-                            <div className="flex items-center gap-3">
-                                <button
-                                    onClick={() => setSelectedThreadId(null)}
-                                    className="md:hidden p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
-                                >
-                                    <ArrowLeft className="w-5 h-5" />
-                                </button>
-                                <div>
-                                    <h1 className="text-lg font-bold text-white mb-1 line-clamp-1">
-                                        {conversation[0]?.subject || 'Conversation'}
-                                    </h1>
-                                    <div className="text-xs text-slate-500 gap-2 flex">
-                                        <span className="bg-slate-800 px-2 py-0.5 rounded text-slate-300">
-                                            {activeFolder.toUpperCase()}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex gap-2 text-slate-500">
-                                <button onClick={() => handleAction('archive')} className="p-2 hover:bg-slate-900 rounded-lg transition-all text-slate-400 hover:text-white" title="Archive">
-                                    <Archive className="w-4 h-4" />
-                                </button>
-                                <button onClick={() => handleAction('trash')} className="p-2 hover:bg-slate-900 rounded-lg transition-all text-red-400/50 hover:text-red-400" title="Delete">
-                                    <Trash2 className="w-4 h-4" />
+                {/* Compose Modal (Shared for New & Reply) */}
+                {isComposeOpen && (
+                    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                        <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh]">
+                            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 rounded-t-2xl">
+                                <h3 className="text-white font-bold flex items-center gap-2">
+                                    <Send className="w-4 h-4 text-teal-500" />
+                                    {composeData.threadId ? 'Reply to Conversation' : 'New Message'}
+                                </h3>
+                                <button onClick={() => setIsComposeOpen(false)} className="text-slate-500 hover:text-white transition-colors">
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                 </button>
                             </div>
-                        </div>
-
-                        {/* Messages Area */}
-                        <div className="flex-1 overflow-y-auto bg-slate-100/5 flex flex-col p-4 space-y-4">
-                            {loadingConversation ? (
-                                <div className="flex justify-center p-12">
-                                    <RefreshCw className="w-8 h-8 animate-spin text-teal-500" />
-                                </div>
-                            ) : (
-                                conversation.map((msg, idx) => (
-                                    <div key={msg.id} className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200">
-                                        <div className="p-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                                                    {msg.from?.charAt(0).toUpperCase()}
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <span className="text-sm font-bold text-slate-700">{msg.from?.split('<')[0]}</span>
-                                                    <span className="text-[10px] text-slate-400">{new Date(msg.date!).toLocaleString()}</span>
-                                                </div>
-                                            </div>
-                                            {idx === conversation.length - 1 && (
-                                                <button onClick={openReply} className="text-xs text-teal-600 font-bold hover:underline">
-                                                    Reply
-                                                </button>
-                                            )}
-                                        </div>
-                                        <div
-                                            className="p-4 text-slate-800 prose prose-sm max-w-none"
-                                            dangerouslySetInnerHTML={{
-                                                __html: DOMPurify.sanitize(msg.body || '')
-                                            }}
+                            <div className="p-6 space-y-4 flex-1 overflow-y-auto">
+                                {!composeData.threadId && (
+                                    <>
+                                        <input
+                                            type="text"
+                                            placeholder="To"
+                                            value={composeData.to}
+                                            onChange={(e) => setComposeData({ ...composeData, to: e.target.value })}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-teal-500/50 transition-all"
                                         />
+                                        <input
+                                            type="text"
+                                            placeholder="Subject"
+                                            value={composeData.subject}
+                                            onChange={(e) => setComposeData({ ...composeData, subject: e.target.value })}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-teal-500/50 transition-all font-medium"
+                                        />
+                                    </>
+                                )}
+                                {composeData.threadId && (
+                                    <div className="text-sm text-slate-400 bg-slate-950 p-3 rounded border border-slate-800">
+                                        Replying to: <span className="text-white font-bold">{conversation[0]?.subject}</span>
                                     </div>
-                                ))
-                            )}
+                                )}
 
-                            {/* Quick Reply Button at Bottom */}
-                            {!loadingConversation && conversation.length > 0 && (
+                                {/* AI Assistant */}
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setShowAIPrompt(!showAIPrompt)}
+                                        className="flex items-center gap-2 text-xs font-bold text-teal-400 hover:text-teal-300 transition-colors bg-teal-500/10 px-3 py-1.5 rounded-lg border border-teal-500/20"
+                                    >
+                                        <Sparkles className="w-3 h-3" />
+                                        {showAIPrompt ? 'Close AI Assistant' : 'Write with AI'}
+                                    </button>
+                                </div>
+
+                                {showAIPrompt && (
+                                    <div className="bg-slate-950/50 p-4 rounded-xl border border-teal-500/20 space-y-3">
+                                        <label className="text-xs font-bold text-teal-400 block">Tell AI what to write:</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={aiPrompt}
+                                                onChange={(e) => setAiPrompt(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleAIGenerate()}
+                                                placeholder="e.g., Polite refusal..."
+                                                className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200"
+                                            />
+                                            <button
+                                                onClick={handleAIGenerate}
+                                                disabled={isGenerating || !aiPrompt.trim()}
+                                                className="bg-teal-500 hover:bg-teal-400 text-slate-900 px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 type-button"
+                                            >
+                                                {isGenerating ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                                                Generate
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <textarea
+                                    placeholder="Message body..."
+                                    value={composeData.body}
+                                    onChange={(e) => setComposeData({ ...composeData, body: e.target.value })}
+                                    className="w-full h-64 bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-slate-300 focus:outline-none focus:border-teal-500/50 transition-all font-mono text-sm leading-relaxed resize-none"
+                                />
+                            </div>
+                            <div className="p-4 border-t border-slate-800 flex justify-end gap-3 bg-slate-900/50 rounded-b-2xl">
                                 <button
-                                    onClick={openReply}
-                                    className="flex items-center gap-2 text-slate-400 hover:text-teal-400 p-4 border border-dashed border-slate-800 rounded-xl justify-center transition-all hover:bg-slate-900/30 group"
+                                    onClick={() => setIsComposeOpen(false)}
+                                    className="px-4 py-2 text-slate-400 hover:text-white font-medium text-sm transition-colors type-button"
                                 >
-                                    <Send className="w-4 h-4 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
-                                    <span>Click here to Reply</span>
+                                    Discard
                                 </button>
-                            )}
+                                <button
+                                    onClick={handleSendEmail}
+                                    disabled={sending || !composeData.body}
+                                    className="px-6 py-2 bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold rounded-lg text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 type-button"
+                                >
+                                    {sending ? 'Sending...' : 'Send Message'}
+                                </button>
+                            </div>
                         </div>
-                    </>
-                ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-slate-500">
-                        <div className="w-16 h-16 bg-slate-900/50 rounded-full flex items-center justify-center mb-4">
-                            <Mail className="w-8 h-8 opacity-20" />
-                        </div>
-                        <p>Select a conversation to read</p>
                     </div>
                 )}
             </div>
-
-            {/* Compose Modal (Shared for New & Reply) */}
-            {isComposeOpen && (
-                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh]">
-                        <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 rounded-t-2xl">
-                            <h3 className="text-white font-bold flex items-center gap-2">
-                                <Send className="w-4 h-4 text-teal-500" />
-                                {composeData.threadId ? 'Reply to Conversation' : 'New Message'}
-                            </h3>
-                            <button onClick={() => setIsComposeOpen(false)} className="text-slate-500 hover:text-white transition-colors">
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                            </button>
-                        </div>
-                        <div className="p-6 space-y-4 flex-1 overflow-y-auto">
-                            {!composeData.threadId && (
-                                <>
-                                    <input
-                                        type="text"
-                                        placeholder="To"
-                                        value={composeData.to}
-                                        onChange={(e) => setComposeData({ ...composeData, to: e.target.value })}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-teal-500/50 transition-all"
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="Subject"
-                                        value={composeData.subject}
-                                        onChange={(e) => setComposeData({ ...composeData, subject: e.target.value })}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-teal-500/50 transition-all font-medium"
-                                    />
-                                </>
-                            )}
-                            {composeData.threadId && (
-                                <div className="text-sm text-slate-400 bg-slate-950 p-3 rounded border border-slate-800">
-                                    Replying to: <span className="text-white font-bold">{conversation[0]?.subject}</span>
-                                </div>
-                            )}
-
-                            {/* AI Assistant */}
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setShowAIPrompt(!showAIPrompt)}
-                                    className="flex items-center gap-2 text-xs font-bold text-teal-400 hover:text-teal-300 transition-colors bg-teal-500/10 px-3 py-1.5 rounded-lg border border-teal-500/20"
-                                >
-                                    <Sparkles className="w-3 h-3" />
-                                    {showAIPrompt ? 'Close AI Assistant' : 'Write with AI'}
-                                </button>
-                            </div>
-
-                            {showAIPrompt && (
-                                <div className="bg-slate-950/50 p-4 rounded-xl border border-teal-500/20 space-y-3">
-                                    <label className="text-xs font-bold text-teal-400 block">Tell AI what to write:</label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            value={aiPrompt}
-                                            onChange={(e) => setAiPrompt(e.target.value)}
-                                            onKeyDown={(e) => e.key === 'Enter' && handleAIGenerate()}
-                                            placeholder="e.g., Polite refusal..."
-                                            className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200"
-                                        />
-                                        <button
-                                            onClick={handleAIGenerate}
-                                            disabled={isGenerating || !aiPrompt.trim()}
-                                            className="bg-teal-500 hover:bg-teal-400 text-slate-900 px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 type-button"
-                                        >
-                                            {isGenerating ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                                            Generate
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            <textarea
-                                placeholder="Message body..."
-                                value={composeData.body}
-                                onChange={(e) => setComposeData({ ...composeData, body: e.target.value })}
-                                className="w-full h-64 bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-slate-300 focus:outline-none focus:border-teal-500/50 transition-all font-mono text-sm leading-relaxed resize-none"
-                            />
-                        </div>
-                        <div className="p-4 border-t border-slate-800 flex justify-end gap-3 bg-slate-900/50 rounded-b-2xl">
-                            <button
-                                onClick={() => setIsComposeOpen(false)}
-                                className="px-4 py-2 text-slate-400 hover:text-white font-medium text-sm transition-colors type-button"
-                            >
-                                Discard
-                            </button>
-                            <button
-                                onClick={handleSendEmail}
-                                disabled={sending || !composeData.body}
-                                className="px-6 py-2 bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold rounded-lg text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 type-button"
-                            >
-                                {sending ? 'Sending...' : 'Send Message'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

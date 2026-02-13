@@ -94,7 +94,14 @@ const Sidebar = React.memo<SidebarProps>(({
                             >
                                 {activeTab === item.href && <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent" />}
                                 {item.icon && <item.icon className={`w-5 h-5 flex-shrink-0 ${activeTab === item.href ? 'text-white' : 'group-hover:text-teal-400 transition-colors'}`} />}
-                                <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden md:block'} flex-1 text-left whitespace-nowrap`}>{item.label}</span>
+                                <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden md:block'} flex-1 text-left whitespace-nowrap`}>
+                                    {item.label}
+                                    {item.comingSoon && sidebarOpen && (
+                                        <span className="ml-2 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter bg-slate-800 text-teal-400 border border-teal-500/30 rounded-md">
+                                            Soon
+                                        </span>
+                                    )}
+                                </span>
                                 {/* Message counter badge */}
                                 {item.href === '/dashboard/messages' && unreadMessageCount > 0 && (
                                     <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-500 rounded-full animate-pulse">
