@@ -94,7 +94,7 @@ type ViewMode = 'grid' | 'kanban' | 'gantt';
 
 const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
     const [filter, setFilter] = useState<'all' | 'my_tasks' | 'overdue'>('all');
-    const [viewMode, setViewMode] = useState<ViewMode>('grid');
+    const [viewMode, setViewMode] = useState<ViewMode>('kanban');
     const [searchQuery, setSearchQuery] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [teamMembers, setTeamMembers] = useState<any[]>([]);
