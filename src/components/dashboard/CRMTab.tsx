@@ -242,7 +242,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                         </div>
                     </div>
 
-                    <div className="flex-1 relative min-h-0">
+                    <div className="flex-1 relative min-h-0 overflow-y-auto">
                         {loading && clients.length === 0 ? (
                             <div className="flex items-center justify-center h-40">
                                 <Loader2 className="w-6 h-6 text-violet-500 animate-spin" />
@@ -250,34 +250,37 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                         ) : clients.length === 0 ? (
                             <div className="p-8 text-center text-slate-500">No clients found</div>
                         ) : (
-                            <AutoSizer>
-                                {({ height, width }: { height: number; width: number }) => (
-                                    <FixedSizeList
-                                        height={height}
-                                        width={width}
-                                        itemCount={clients.length}
-                                        itemSize={88} // Height of each row
-                                        itemData={{ clients }}
-                                        onScroll={({ scrollOffset, scrollUpdateWasRequested }: any) => {
-                                            // Ideally calculate based on item size and count
-                                            // Simplistic infinite scroll trigger
-                                            if (!loading && hasNextPage) {
-                                                // Trigger when closer to bottom. Hard to detect perfectly in FixedSizeList without ref checks
-                                                // We can check if (scrollOffset + height) > (itemCount * itemSize - threshold)
-                                                // For now, load on demand or stick to pagination if this is tricky.
-                                                // Let's implement a simple button at bottom if needed, or rely on aggressive prefetching?
-                                                // Actually let's just use a simple threshold check here:
-                                                const totalHeight = clients.length * 88;
-                                                if (scrollOffset + height > totalHeight - 200) {
-                                                    fetchNextPage();
-                                                }
-                                            }
-                                        }}
-                                    >
-                                        {ClientRow}
-                                    </FixedSizeList>
-                                )}
-                            </AutoSizer>
+                            <div className="p-2 space-y-2">
+                                {clients.map((client, index) => (
+                                    <div key={client.id} className="px-2 py-1">
+                                        <div
+                                            onClick={() => setSelectedClient(client)}
+                                            className={`p-4 rounded-xl border transition-all cursor-pointer group flex items-center justify-between ${selectedClient?.id === client.id
+                                                ? 'bg-teal-500/10 border-teal-500/50 shadow-lg shadow-teal-500/10'
+                                                : 'bg-slate-900/40 border-white/5 hover:border-white/10 hover:bg-slate-800/60'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold ${selectedClient?.id === client.id ? 'bg-teal-500 text-white' : 'bg-slate-800 text-slate-300'}`}>
+                                                    {client.name.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <div className="font-semibold text-white group-hover:text-teal-400 transition-colors">{client.name}</div>
+                                                    <div className="text-xs text-slate-500">{client.company || 'No company'}</div>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className={`text-xs px-2 py-1 rounded-full font-semibold ${client.stage === 'client' ? 'bg-green-500/20 text-green-400' :
+                                                    client.stage === 'prospect' ? 'bg-blue-500/20 text-blue-400' :
+                                                        'bg-slate-700 text-slate-400'
+                                                    }`}>
+                                                    {client.stage}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </div>
                 </div>
