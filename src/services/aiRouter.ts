@@ -22,6 +22,19 @@ const openai = ENV.OPENAI_API_KEY
   ? new OpenAI({ apiKey: ENV.OPENAI_API_KEY })
   : null;
 
+// Model pricing (per 1M tokens)
+export const MODEL_PRICING = {
+  // OpenAI (per 1M tokens)
+  'gpt-4-turbo': { input: 10, output: 30 },
+  'gpt-4': { input: 30, output: 60 },
+  'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
+
+  // Anthropic (per 1M tokens)
+  'claude-3-5-sonnet': { input: 3, output: 15 },
+  'claude-3-opus': { input: 15, output: 75 },
+  'claude-3-haiku': { input: 0.25, output: 1.25 },
+};
+
 export interface AIRequestOptions {
   prompt: string;
   systemPrompt?: string;
@@ -383,4 +396,34 @@ export function getPrimaryProvider(): string {
     return 'Gemini (Google)';
   }
   return 'No AI provider configured';
+}
+
+/**
+ * Get model recommendations based on task
+ */
+export function getRecommendedModel(taskType: string): { provider: 'anthropic' | 'openai' | 'gemini'; model: string } {
+  const recommendations: Record<string, { provider: 'anthropic' | 'openai' | 'gemini'; model: string }> = {
+    'contract_generation': { provider: 'anthropic', model: 'claude-3-5-sonnet' },
+    'document_analysis': { provider: 'anthropic', model: 'claude-3-5-sonnet' },
+    'code_generation': { provider: 'anthropic', model: 'claude-3-5-sonnet' },
+    'email_drafting': { provider: 'openai', model: 'gpt-4-turbo' },
+    'summarization': { provider: 'openai', model: 'gpt-4-turbo' },
+    'chat': { provider: 'anthropic', model: 'claude-3-5-sonnet' },
+    'quick_task': { provider: 'anthropic', model: 'claude-3-5-haiku' },
+    'translation': { provider: 'openai', model: 'gpt-4-turbo' },
+  };
+
+  return recommendations[taskType] || { provider: 'anthropic', model: 'claude-3-5-sonnet' };
+}
+
+/**
+ * Estimate cost before making request
+ */
+export function estimateCost(prompt: string, model: string): number {
+  // Rough token estimation (1 token ≈ 4 characters)
+  const promptTokens = Math.ceil(prompt.length / 4);
+  const completionTokens = 500; // Assume 500 token response
+
+  const pricing = (MODEL_PRICING as any)[model] || MODEL_PRICING['claude-3-5-sonnet'];
+  return (promptTokens * pricing.input + completionTokens * pricing.output) / 1_000_000;
 }

@@ -11,16 +11,16 @@ const MANUS_API_KEY = process.env.NEXT_PUBLIC_MANUS_API_KEY || process.env.MANUS
 // Check which providers are available
 export const getAvailableProviders = () => {
     return {
-        gemini: !!GEMINI_API_KEY,
         claude: !!ANTHROPIC_API_KEY,
         openai: !!OPENAI_API_KEY,
+        gemini: !!GEMINI_API_KEY,
         manus: !!MANUS_API_KEY
     };
 };
 
 export const isAnyAIConfigured = () => {
     const providers = getAvailableProviders();
-    return providers.gemini || providers.claude || providers.openai || providers.manus;
+    return providers.claude || providers.openai || providers.gemini || providers.manus;
 };
 
 /**

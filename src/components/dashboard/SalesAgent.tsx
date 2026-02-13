@@ -154,7 +154,7 @@ const SalesAgent: React.FC = () => {
 
             // Show helpful message if it's an API key issue
             if (errorMessage.includes('API key') || errorMessage.includes('not configured')) {
-                toast.error('Please check your Gemini API key in Vercel settings.', { duration: 7000 });
+                toast.error('AI configuration is incomplete. Please check your API keys in the dashboard settings.', { duration: 7000 });
             }
         }
         setIsSearching(false);
@@ -428,7 +428,7 @@ const SalesAgent: React.FC = () => {
                         <span className="truncate">AlphaClone Growth Agent</span>
                     </h2>
                     <p className="text-slate-400 mt-1 text-xs sm:text-sm flex items-center gap-2">
-                        <span>Lead Generation Powered by Advanced AI</span>
+                        <span>Intelligent Lead Discovery Powered by Claude & GPT-4</span>
                         <Zap className="w-3 h-3 text-teal-400 animate-pulse" />
                     </p>
                 </div>

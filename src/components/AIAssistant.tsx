@@ -18,7 +18,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
     {
       id: '1',
       role: 'model',
-      text: "Hello, I'm Alpha. I'm powered by advanced AI (Claude, GPT-4, and Gemini). How can I assist you?",
+      text: "Hello, I'm Alpha. I'm powered by advanced AI (Claude & GPT-4). How can I assist you?",
       timestamp: new Date()
     }
   ]);
@@ -132,7 +132,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
           </div>
           <div>
             <h3 className="font-semibold text-slate-100 text-sm">Alpha Assistant</h3>
-            <p className="text-[10px] text-slate-400">Powered by Claude, GPT-4 & Gemini AI</p>
+            <p className="text-[10px] text-slate-400">Powered by Claude & GPT-4</p>
           </div>
         </div>
         {!embedded && (
