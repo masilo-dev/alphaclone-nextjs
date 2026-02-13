@@ -44,8 +44,10 @@ import SalesAgent from '../SalesAgent';
 import DealsTab from '../DealsTab';
 import AlphaCloneContractModal from '../../contracts/AlphaCloneContractModal';
 import ContractDashboard from '../../contracts/ContractDashboard';
-// Accounting Components
-import { ChartOfAccountsPage, JournalEntriesPage, FinancialReportsPage } from '../accounting';
+// Accounting Components - Lazy loaded to prevent module resolution issues
+const ChartOfAccountsPage = React.lazy(() => import('../accounting/ChartOfAccountsPage').then(m => ({ default: m.ChartOfAccountsPage })));
+const JournalEntriesPage = React.lazy(() => import('../accounting/JournalEntriesPage').then(m => ({ default: m.JournalEntriesPage })));
+const FinancialReportsPage = React.lazy(() => import('../accounting/FinancialReportsPage').then(m => ({ default: m.FinancialReportsPage })));
 const GmailTab = React.lazy(() => import('../GmailTab'));
 const CustomVideoRoom = React.lazy(() => import('../video/CustomVideoRoom'));
 
@@ -324,11 +326,23 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
 
             // Accounting Routes
             case '/dashboard/accounting/chart-of-accounts':
-                return <ChartOfAccountsPage />;
+                return (
+                    <React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div></div>}>
+                        <ChartOfAccountsPage />
+                    </React.Suspense>
+                );
             case '/dashboard/accounting/journal-entries':
-                return <JournalEntriesPage />;
+                return (
+                    <React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div></div>}>
+                        <JournalEntriesPage />
+                    </React.Suspense>
+                );
             case '/dashboard/accounting/reports':
-                return <FinancialReportsPage />;
+                return (
+                    <React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div></div>}>
+                        <FinancialReportsPage />
+                    </React.Suspense>
+                );
 
             default:
                 return <BusinessHome user={user} />;
