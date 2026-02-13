@@ -249,9 +249,15 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
           )}
         </button>
 
-        <p className="text-[10px] text-slate-600 uppercase tracking-wider">
+        <p className="text-[10px] text-slate-600 uppercase tracking-wider mb-3">
           Secured by AlphaClone 256-bit Encryption
         </p>
+
+        <div className="flex justify-center gap-4 text-[10px] text-slate-500">
+          <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:text-teal-400 transition-colors">Privacy Policy</a>
+          <span>•</span>
+          <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="hover:text-teal-400 transition-colors">Terms of Service</a>
+        </div>
       </div>
     </Modal>
   );

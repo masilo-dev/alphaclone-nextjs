@@ -102,12 +102,28 @@ export const PrivacyPolicy = () => (
       </section>
 
       <section>
-         <h3 className="text-xl font-bold text-white mb-4">6. Data Protection Officer</h3>
+         <h3 className="text-xl font-bold text-white mb-4">6. Google User Data & Limited Use Policy</h3>
+         <div className="bg-slate-900/50 border border-teal-500/20 p-4 rounded-lg mb-4">
+            <p className="mb-4 text-slate-300">
+               AlphaClone's use and transfer to any other app of information received from Google APIs will adhere to <a href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes" target="_blank" rel="noopener noreferrer" className="text-teal-400 hover:underline">Google API Services User Data Policy</a>, including the Limited Use requirements.
+            </p>
+         </div>
+         <p className="mb-4">
+            Our application requests access to your Gmail data (via the <code>https://www.googleapis.com/auth/gmail.readonly</code> and <code>https://www.googleapis.com/auth/gmail.send</code> scopes) solely for the purpose of enabling you to view and send emails directly from the AlphaClone dashboard.
+         </p>
+         <ul className="list-disc pl-5 space-y-2 mb-4 text-slate-400">
+            <li>We do not use this Google User Data for serving advertisements.</li>
+            <li>We do not allow humans to read this data unless you have explicitly agreed to it for specific messages (e.g., for technical support), or where necessary for security purposes or to comply with applicable laws.</li>
+         </ul>
+      </section>
+
+      <section>
+         <h3 className="text-xl font-bold text-white mb-4">7. Data Protection Officer</h3>
          <p className="mb-4">We have appointed a Data Protection Officer (DPO) to oversee our data protection strategy. If you have any questions about this policy or your data rights, please contact:</p>
          <div className="mt-2 p-4 bg-slate-900 border border-slate-800 rounded-lg inline-block">
             <p className="font-bold text-white">Data Protection Officer</p>
             <p>AlphaClone Systems</p>
-            <p><a href="mailto:dpo@alphaclone.tech" className="text-teal-400 hover:underline">dpo@alphaclone.tech</a></p>
+            <p><a href="mailto:info@alphaclone.tech" className="text-teal-400 hover:underline">info@alphaclone.tech</a></p>
          </div>
       </section>
    </LegalLayout>

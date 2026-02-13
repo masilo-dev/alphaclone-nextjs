@@ -751,6 +751,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                </div>
             </section>
 
+
+
+
             {/* Services Grid (Detailed) */}
             <section id="services" className="py-24 bg-slate-900/50 backdrop-blur-sm">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
