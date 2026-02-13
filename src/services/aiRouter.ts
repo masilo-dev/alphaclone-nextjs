@@ -29,7 +29,13 @@ export const MODEL_PRICING = {
   'gpt-4': { input: 30, output: 60 },
   'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
 
-  // Anthropic (per 1M tokens)
+  // Anthropic Claude 4.5/4.6 (per 1M tokens)
+  'claude-sonnet-4.5': { input: 3, output: 15 },
+  'claude-sonnet-4-5-20250929': { input: 3, output: 15 },
+  'claude-opus-4-6': { input: 15, output: 75 },
+  'claude-haiku-4.5': { input: 0.8, output: 4 },
+
+  // Legacy Claude 3.x (for backwards compatibility)
   'claude-3-5-sonnet': { input: 3, output: 15 },
   'claude-3-opus': { input: 15, output: 75 },
   'claude-3-haiku': { input: 0.25, output: 1.25 },
@@ -112,8 +118,8 @@ async function completeWithAnthropic(options: AIRequestOptions): Promise<AIRespo
   }
 
   const message = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-latest', // Use latest stable alias
-    max_tokens: options.maxTokens || 4096,
+    model: 'claude-sonnet-4-5-20250929', // Latest Claude Sonnet 4.5
+    max_tokens: options.maxTokens || 8192,
     temperature: options.temperature || 0.7,
     system: options.systemPrompt,
     messages: [
@@ -129,7 +135,7 @@ async function completeWithAnthropic(options: AIRequestOptions): Promise<AIRespo
   return {
     content,
     provider: 'anthropic',
-    model: 'claude-3-5-sonnet',
+    model: 'claude-sonnet-4.5',
     success: true,
   };
 }
@@ -176,7 +182,7 @@ async function completeWithGemini(options: AIRequestOptions): Promise<AIResponse
   return {
     content: result.text,
     provider: 'gemini',
-    model: 'gemini-1.5-flash-latest',
+    model: 'gemini-1.5-flash',
     success: true,
   };
 }
@@ -249,7 +255,7 @@ export async function routeAIChat(
       return {
         content: result.text || '',
         provider: 'gemini',
-        model: 'gemini-1.5-pro-latest',
+        model: 'gemini-1.5-pro',
         success: true,
       };
     } catch (error: any) {
@@ -308,8 +314,8 @@ async function chatWithAnthropic(
   }
 
   const response = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-latest',
-    max_tokens: 4096,
+    model: 'claude-sonnet-4-5-20250929', // Latest Claude Sonnet 4.5
+    max_tokens: 8192,
     system: systemPrompt,
     messages: [
       ...messages,
@@ -322,7 +328,7 @@ async function chatWithAnthropic(
   return {
     content,
     provider: 'anthropic',
-    model: 'claude-3-5-sonnet',
+    model: 'claude-sonnet-4.5',
     success: true,
   };
 }
@@ -403,17 +409,17 @@ export function getPrimaryProvider(): string {
  */
 export function getRecommendedModel(taskType: string): { provider: 'anthropic' | 'openai' | 'gemini'; model: string } {
   const recommendations: Record<string, { provider: 'anthropic' | 'openai' | 'gemini'; model: string }> = {
-    'contract_generation': { provider: 'anthropic', model: 'claude-3-5-sonnet' },
-    'document_analysis': { provider: 'anthropic', model: 'claude-3-5-sonnet' },
-    'code_generation': { provider: 'anthropic', model: 'claude-3-5-sonnet' },
+    'contract_generation': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
+    'document_analysis': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
+    'code_generation': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
     'email_drafting': { provider: 'openai', model: 'gpt-4-turbo' },
     'summarization': { provider: 'openai', model: 'gpt-4-turbo' },
-    'chat': { provider: 'anthropic', model: 'claude-3-5-sonnet' },
-    'quick_task': { provider: 'anthropic', model: 'claude-3-5-haiku' },
+    'chat': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
+    'quick_task': { provider: 'anthropic', model: 'claude-haiku-4.5' },
     'translation': { provider: 'openai', model: 'gpt-4-turbo' },
   };
 
-  return recommendations[taskType] || { provider: 'anthropic', model: 'claude-3-5-sonnet' };
+  return recommendations[taskType] || { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' };
 }
 
 /**

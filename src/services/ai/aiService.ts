@@ -93,7 +93,7 @@ Include all standard legal clauses and make it ready to sign.`;
             prompt,
             systemPrompt: 'You are a legal contract expert. Generate professional, legally sound contracts.',
             provider: 'anthropic',
-            model: 'claude-opus-4',
+            model: 'claude-opus-4-6',
             maxTokens: 4000,
         });
 
@@ -124,7 +124,7 @@ Return as JSON with keys: summary, keyPoints, entities, sentiment`;
             prompt,
             systemPrompt: 'You are a document analysis expert. Extract structured information from documents.',
             provider: 'anthropic',
-            model: 'claude-sonnet-3.5',
+            model: 'claude-sonnet-4-5-20250929',
             temperature: 0.3,
         });
 
@@ -229,7 +229,7 @@ Return as JSON with keys: summary, decisions, actionItems, nextSteps`;
             prompt,
             systemPrompt: 'You are a meeting facilitator. Extract structured information from meeting notes.',
             provider: 'anthropic',
-            model: 'claude-sonnet-3.5',
+            model: 'claude-sonnet-4-5-20250929',
             temperature: 0.3,
         });
 
@@ -303,7 +303,7 @@ ${text}`;
             prompt,
             systemPrompt: 'You are a helpful business assistant. Provide clear, actionable advice.',
             provider: 'anthropic',
-            model: 'claude-sonnet-3.5',
+            model: 'claude-sonnet-4-5-20250929',
         });
 
         return response.content;
