@@ -48,7 +48,7 @@ const FixedSizeList = dynamic(
 ) as any;
 
 const AutoSizer = dynamic(
-    () => import('react-virtualized-auto-sizer').then((mod: any) => mod.default),
+    () => import('react-virtualized-auto-sizer').then((mod: any) => mod.AutoSizer),
     {
         ssr: false,
         loading: () => (
