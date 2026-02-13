@@ -219,8 +219,8 @@ const GmailTab: React.FC = () => {
     }
 
     return (
-        <div className="relative h-full">
-            <div className="flex h-full bg-slate-950 rounded-3xl border border-slate-900 overflow-hidden">
+        <div className="relative h-full flex flex-col min-h-0">
+            <div className="flex flex-1 min-h-0 bg-slate-950 rounded-3xl border border-slate-900 overflow-hidden">
                 {/* Mobile Sidebar Overlay */}
                 {showMobileSidebar && (
                     <div
@@ -272,7 +272,7 @@ const GmailTab: React.FC = () => {
                 </div>
 
                 {/* Thread List */}
-                <div className={`w-full md:w-96 border-r border-slate-900 flex flex-col ${selectedThreadId ? 'hidden md:flex' : 'flex'}`}>
+                <div className={`w-full md:w-96 border-r border-slate-900 flex flex-col min-h-0 ${selectedThreadId ? 'hidden md:flex' : 'flex'}`}>
                     <div className="p-4 border-bottom border-slate-900 flex gap-2">
                         <button
                             onClick={() => setShowMobileSidebar(true)}
@@ -343,7 +343,7 @@ const GmailTab: React.FC = () => {
                 </div>
 
                 {/* Conversation Content */}
-                <div className={`flex-1 flex flex-col bg-slate-950 ${!selectedThreadId ? 'hidden md:flex' : 'flex'}`}>
+                <div className={`flex-1 flex flex-col bg-slate-950 min-h-0 ${!selectedThreadId ? 'hidden md:flex' : 'flex'}`}>
                     {selectedThreadId ? (
                         <>
                             {/* Header */}

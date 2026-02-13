@@ -1513,7 +1513,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         )}
 
         {/* Main Content Area */}
-        <main id="main-content" className="flex-1 overflow-y-auto w-full bg-slate-950 scroll-smooth relative pb-safe md:pb-0" role="main">
+        <main id="main-content" className={`flex-1 ${activeTab === '/dashboard/gmail' ? 'overflow-hidden' : 'overflow-y-auto'} w-full bg-slate-950 scroll-smooth relative pb-safe md:pb-0`} role="main">
           {/* Content Wrapper for Max Width & Padding */}
           <div className="max-w-[1240px] mx-auto p-4 md:p-8 pb-24 md:pb-8 min-h-full">
             {/* Background decorative elements */}

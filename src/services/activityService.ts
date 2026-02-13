@@ -38,24 +38,13 @@ import { ipTrackingService } from './ipTrackingService';
 
 // Get IP and location data
 const getLocationData = async () => {
-    try {
-        const data = await ipTrackingService.getClientIP();
-        if (!data) throw new Error('No location data');
-
-        return {
-            ip: data.ip,
-            country: data.country_name,
-            city: data.city,
-            countryCode: data.country,
-        };
-    } catch (e) {
-        return {
-            ip: null,
-            country: 'Unknown',
-            city: 'Unknown',
-            countryCode: 'XX',
-        };
-    }
+    // IP and location tracking disabled per privacy policy
+    return {
+        ip: null,
+        country: 'Private',
+        city: 'Private',
+        countryCode: 'XX',
+    };
 };
 
 export const activityService = {

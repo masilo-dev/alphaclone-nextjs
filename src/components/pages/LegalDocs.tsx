@@ -30,7 +30,7 @@ const LegalLayout: React.FC<{ title: string, lastUpdated: string, children: Reac
 );
 
 export const PrivacyPolicy = () => (
-   <LegalLayout title="Privacy Policy" lastUpdated="January 28, 2026">
+   <LegalLayout title="Privacy Policy" lastUpdated="February 13, 2026">
       <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-lg mb-6">
          <p className="text-sm">This Privacy Policy applies to AlphaClone Systems ("AlphaClone", "we", "us", or "our") and is fully compliant with the General Data Protection Regulation (GDPR).</p>
       </div>
@@ -40,7 +40,7 @@ export const PrivacyPolicy = () => (
          <p className="mb-4">We collect personal data that you voluntarily provide to us when you register on the Platform, express an interest in obtaining information about us or our products and Services, when you participate in activities on the Platform, or otherwise when you contact us.</p>
          <ul className="list-disc pl-5 space-y-2 mb-4 text-slate-400">
             <li><strong>Personal Identity Information:</strong> Name, email address, phone number, and business name.</li>
-            <li><strong>Technical Data:</strong> IP address, browser type and version, time zone setting, browser plug-in types, operating system, and platform.</li>
+            <li><strong>Technical Data:</strong> Browser type and version, time zone setting, browser plug-in types, operating system, and platform. <em>Note: AlphaClone does not collect or store your IP address.</em></li>
             <li><strong>Payment Information:</strong> Credit card details and billing address (processed securely by our third-party payment processors).</li>
             <li><strong>Usage Data:</strong> Information about how you use our website, products, and services.</li>
          </ul>
