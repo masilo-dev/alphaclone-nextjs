@@ -493,7 +493,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                 </header>
 
                 {/* Dynamic Content Area */}
-                <div className={`flex-1 ${activeTab === '/dashboard/gmail' ? 'overflow-hidden' : 'overflow-y-auto'} p-4 md:p-8`}>
+                <div className={`flex-1 ${activeTab === '/dashboard/gmail' ? 'overflow-hidden p-0' : 'overflow-y-auto p-4 md:p-8'}`}>
                     {renderBusinessContent()}
                 </div>
             </main>

@@ -290,7 +290,7 @@ const GmailTab: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto message-list-scrollbar">
+                    <div className="flex-1 overflow-y-auto message-list-scrollbar overscroll-contain touch-pan-y ios-scroll">
                         {loading && threads.length === 0 ? (
                             <div className="p-8 text-center">
                                 <RefreshCw className="w-6 h-6 animate-spin text-teal-500 mx-auto" />
@@ -377,7 +377,7 @@ const GmailTab: React.FC = () => {
                             </div>
 
                             {/* Messages Area */}
-                            <div className="flex-1 overflow-y-auto bg-slate-100/5 flex flex-col p-4 space-y-4">
+                            <div className="flex-1 overflow-y-auto bg-slate-100/5 flex flex-col p-4 space-y-4 overscroll-contain touch-pan-y ios-scroll">
                                 {loadingConversation ? (
                                     <div className="flex justify-center p-12">
                                         <RefreshCw className="w-8 h-8 animate-spin text-teal-500" />

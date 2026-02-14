@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+.ios-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
 @theme {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -15,7 +19,8 @@ body {
   background: var(--background);
   color: var(--foreground);
   scroll-behavior: smooth;
-  font-size: 14px; /* Gmail standard */
+  font-size: 14px;
+  /* Gmail standard */
   line-height: 1.5;
 }
 
@@ -232,6 +237,7 @@ body {
 
 /* Fix for iOS input zoom - Mobile Only */
 @media (max-width: 640px) {
+
   input[type="text"],
   input[type="email"],
   input[type="password"],
@@ -245,6 +251,7 @@ body {
 
 /* Desktop Inputs - Match base font size */
 @media (min-width: 641px) {
+
   input[type="text"],
   input[type="email"],
   input[type="password"],
@@ -252,7 +259,8 @@ body {
   input[type="number"],
   textarea,
   select {
-    font-size: 14px !important; /* Matches base font */
+    font-size: 14px !important;
+    /* Matches base font */
   }
 }
 
