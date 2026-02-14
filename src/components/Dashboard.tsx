@@ -1515,7 +1515,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         {/* Main Content Area */}
         <main id="main-content" className={`flex-1 ${activeTab === '/dashboard/gmail' ? 'overflow-hidden' : 'overflow-y-auto'} w-full bg-slate-950 scroll-smooth relative pb-safe md:pb-0`} role="main">
           {/* Content Wrapper for Max Width & Padding */}
-          <div className="max-w-[1240px] mx-auto p-4 md:p-8 pb-24 md:pb-8 min-h-full">
+          <div className={`max-w-[1240px] mx-auto p-4 md:p-8 pb-24 md:pb-8 ${activeTab === '/dashboard/gmail' || activeTab === '/dashboard/messages' ? 'h-full flex flex-col' : 'min-h-full'}`}>
             {/* Background decorative elements */}
             <div className="fixed top-20 left-1/3 w-96 h-96 bg-teal-600/5 rounded-full blur-3xl pointer-events-none" />
             <div className="relative z-10 max-w-7xl mx-auto h-full">
