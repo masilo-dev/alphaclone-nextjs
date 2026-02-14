@@ -946,7 +946,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <p className="text-slate-400 text-sm">Best for solo founders & small teams.</p>
                         </div>
                         <div className="relative mb-8 flex items-baseline gap-1">
-                           <span className="text-4xl font-bold text-white">$16</span>
+                           <span className="text-4xl font-bold text-white">$15</span>
                            <span className="text-slate-500">/mo</span>
                         </div>
                         <ul className="space-y-4 mb-10 flex-grow">
@@ -978,7 +978,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <p className="text-slate-400 text-sm">The power of AlphaClone Business OS.</p>
                         </div>
                         <div className="relative mb-8 flex items-baseline gap-1">
-                           <span className="text-5xl font-bold text-white">$48</span>
+                           <span className="text-5xl font-bold text-white">$45</span>
                            <span className="text-slate-500">/mo</span>
                         </div>
                         <ul className="space-y-4 mb-10 flex-grow">
