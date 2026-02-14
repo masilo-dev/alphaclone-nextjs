@@ -66,7 +66,7 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
       return response;
     } catch (error: any) {
       const errorMsg = `Anthropic failed: ${error.message}`;
-      console.error(`[AI Router] ✗ ${errorMsg}`);
+      console.error(`[AI Router] ✗ Anthropic Error:`, error);
       errors.push(errorMsg);
     }
   }
@@ -80,7 +80,7 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
       return response;
     } catch (error: any) {
       const errorMsg = `OpenAI failed: ${error.message}`;
-      console.error(`[AI Router] ✗ ${errorMsg}`);
+      console.error(`[AI Router] ✗ OpenAI Error:`, error);
       errors.push(errorMsg);
     }
   }
@@ -94,13 +94,17 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
       return response;
     } catch (error: any) {
       const errorMsg = `Gemini failed: ${error.message}`;
-      console.error(`[AI Router] ✗ ${errorMsg}`);
+      console.error(`[AI Router] ✗ Gemini Error:`, error);
       errors.push(errorMsg);
     }
   }
 
   // All providers failed
-  throw new Error(`All AI providers failed:\n${errors.join('\n')}`);
+  const finalError = errors.length > 0
+    ? `All AI providers failed:\n${errors.join('\n')}`
+    : "No AI providers are configured. Please check your .env file for ANTHROPIC_API_KEY, OPENAI_API_KEY, or VITE_GEMINI_API_KEY.";
+
+  throw new Error(finalError);
 }
 
 /**
@@ -254,12 +258,16 @@ export async function routeAIChat(
       };
     } catch (error: any) {
       const errorMsg = `Gemini chat failed: ${error.message}`;
-      console.error(`[AI Router] ✗ ${errorMsg}`);
+      console.error(`[AI Router] ✗ Gemini Chat Error:`, error);
       errors.push(errorMsg);
     }
   }
 
-  throw new Error(`All AI chat providers failed:\n${errors.join('\n')}`);
+  const finalError = errors.length > 0
+    ? `All AI chat providers failed:\n${errors.join('\n')}`
+    : "No AI chat providers are configured. Please check your .env file for ANTHROPIC_API_KEY, OPENAI_API_KEY, or VITE_GEMINI_API_KEY.";
+
+  throw new Error(finalError);
 }
 
 /**
@@ -403,14 +411,14 @@ export function getPrimaryProvider(): string {
  */
 export function getRecommendedModel(taskType: string): { provider: 'anthropic' | 'openai' | 'gemini'; model: string } {
   const recommendations: Record<string, { provider: 'anthropic' | 'openai' | 'gemini'; model: string }> = {
-    'contract_generation': { provider: 'anthropic', model: 'claude-3-5-sonnet' },
-    'document_analysis': { provider: 'anthropic', model: 'claude-3-5-sonnet' },
-    'code_generation': { provider: 'anthropic', model: 'claude-3-5-sonnet' },
-    'email_drafting': { provider: 'openai', model: 'gpt-4-turbo' },
-    'summarization': { provider: 'openai', model: 'gpt-4-turbo' },
-    'chat': { provider: 'anthropic', model: 'claude-3-5-sonnet' },
-    'quick_task': { provider: 'anthropic', model: 'claude-3-5-haiku' },
-    'translation': { provider: 'openai', model: 'gpt-4-turbo' },
+    'contract_generation': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
+    'document_analysis': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
+    'code_generation': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
+    'email_drafting': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
+    'summarization': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
+    'chat': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
+    'quick_task': { provider: 'anthropic', model: 'claude-haiku-4.5' },
+    'translation': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
   };
 
   return recommendations[taskType] || { provider: 'anthropic', model: 'claude-3-5-sonnet' };

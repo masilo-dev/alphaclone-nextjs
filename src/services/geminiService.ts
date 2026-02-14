@@ -13,7 +13,9 @@ const genAI = isGeminiConfigured() && API_KEY ? new GoogleGenerativeAI(API_KEY) 
 // Helper to get model safely
 const getModel = (modelName: string) => {
     if (!genAI || !isGeminiConfigured()) {
-        throw new Error('Gemini API key is not configured. Please set NEXT_PUBLIC_GEMINI_API_KEY environment variable.');
+        const keyStatus = isGeminiConfigured() ? "Initialized but null" : "API KEY MISSING (VITE_GEMINI_API_KEY)";
+        console.error(`[GeminiService] Model access failed: ${keyStatus}`);
+        throw new Error(`Gemini AI is not configured correctly. ${keyStatus}. Please check your .env file.`);
     }
     return genAI.getGenerativeModel({ model: modelName });
 };

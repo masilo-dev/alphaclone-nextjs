@@ -310,6 +310,14 @@ const MeetingPage: React.FC<MeetingPageProps> = ({ user }) => {
         return 'text-white';
     };
 
+    // Initial media state sync
+    useEffect(() => {
+        if (localParticipant) {
+            setMuted(!localParticipant.audio);
+            setCameraOff(!localParticipant.video);
+        }
+    }, [localParticipant]);
+
     // Error state
     if (error) {
         return (
@@ -365,14 +373,6 @@ const MeetingPage: React.FC<MeetingPageProps> = ({ user }) => {
             </div>
         );
     }
-
-    // Initial media state sync
-    useEffect(() => {
-        if (localParticipant) {
-            setMuted(!localParticipant.audio);
-            setCameraOff(!localParticipant.video);
-        }
-    }, [localParticipant]);
 
     // Meeting in progress
 

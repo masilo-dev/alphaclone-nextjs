@@ -13,12 +13,6 @@ export function useUpgradePrompt(metric: string) {
     const [suggestedTier, setSuggestedTier] = useState('starter');
     const [usagePercent, setUsagePercent] = useState(0);
 
-    useEffect(() => {
-        if (!tenant) return;
-
-        checkQuota();
-    }, [tenant, metric]);
-
     async function checkQuota() {
         if (!tenant) return;
 
@@ -46,6 +40,12 @@ export function useUpgradePrompt(metric: string) {
         }
     }
 
+    useEffect(() => {
+        if (!tenant) return;
+
+        checkQuota();
+    }, [tenant, metric]);
+
     function hidePrompt() {
         setShowPrompt(false);
     }
@@ -66,10 +66,6 @@ export function useFeatureAvailable(feature: string) {
     const { currentTenant: tenant } = useTenant();
     const [isAvailable, setIsAvailable] = useState(true);
     const [requiresTier, setRequiresTier] = useState<string | null>(null);
-
-    useEffect(() => {
-        checkFeatureAvailability();
-    }, [tenant, feature]);
 
     function checkFeatureAvailability() {
         if (!tenant) {
@@ -106,6 +102,10 @@ export function useFeatureAvailable(feature: string) {
         setRequiresTier(requiredTier);
     }
 
+    useEffect(() => {
+        checkFeatureAvailability();
+    }, [tenant, feature]);
+
     return {
         isAvailable,
         requiresTier,
@@ -122,12 +122,6 @@ export function useQuotaWarning(metric: string, warningThreshold: number = 80) {
     const [currentUsage, setCurrentUsage] = useState(0);
     const [limit, setLimit] = useState(0);
 
-    useEffect(() => {
-        if (!tenant) return;
-
-        loadUsage();
-    }, [tenant, metric]);
-
     async function loadUsage() {
         if (!tenant) return;
 
@@ -141,6 +135,12 @@ export function useQuotaWarning(metric: string, warningThreshold: number = 80) {
             setShowWarning(metricUsage.percentage_used >= warningThreshold);
         }
     }
+
+    useEffect(() => {
+        if (!tenant) return;
+
+        loadUsage();
+    }, [tenant, metric]);
 
     return {
         showWarning,

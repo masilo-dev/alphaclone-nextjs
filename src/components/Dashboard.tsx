@@ -130,19 +130,6 @@ const Dashboard: React.FC<DashboardProps> = ({
   const router = useRouter();
   const { currentTenant } = useTenant();
 
-  // -- CRITICAL FIX: ISOLATED TENANT DASHBOARD --
-  // Return early for Tenant Admins to avoid double-shell layout collisions
-  if (user.role === 'tenant_admin') {
-    return (
-      <BusinessDashboard
-        user={user}
-        onLogout={onLogout}
-        activeTab={location || '/dashboard'}
-        setActiveTab={(tab) => router.push(tab)}
-      />
-    );
-  }
-
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Sync sidebar on mount to avoid hydration mismatch
@@ -1218,6 +1205,19 @@ const Dashboard: React.FC<DashboardProps> = ({
         );
     }
   };
+
+  // -- CRITICAL FIX: ISOLATED TENANT DASHBOARD --
+  // Return early for Tenant Admins to avoid double-shell layout collisions
+  if (user.role === 'tenant_admin') {
+    return (
+      <BusinessDashboard
+        user={user}
+        onLogout={onLogout}
+        activeTab={location || '/dashboard'}
+        setActiveTab={(tab) => router.push(tab)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 flex overflow-hidden font-sans selection:bg-teal-500/30">

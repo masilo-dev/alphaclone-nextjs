@@ -34,8 +34,8 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
             onClick={toggleFavorite}
             disabled={isLoading}
             className={`p-2 rounded-lg transition-colors ${isFavorite
-                    ? 'text-yellow-400 hover:text-yellow-300 bg-yellow-400/10'
-                    : 'text-slate-400 hover:text-yellow-400 hover:bg-slate-800'
+                ? 'text-yellow-400 hover:text-yellow-300 bg-yellow-400/10'
+                : 'text-slate-400 hover:text-yellow-400 hover:bg-slate-800'
                 } ${className}`}
             title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
         >
@@ -59,16 +59,16 @@ export const FavoritesList: React.FC<FavoritesListProps> = ({ userId }) => {
     const [isLoading, setIsLoading] = useState(true);
     const toast = useToast();
 
-    useEffect(() => {
-        loadFavorites();
-    }, [userId]);
-
     const loadFavorites = async () => {
         setIsLoading(true);
         // Mock data - replace with actual service call
         setFavorites([]);
         setIsLoading(false);
     };
+
+    useEffect(() => {
+        loadFavorites();
+    }, [userId]);
 
     const removeFavorite = async (favoriteId: string) => {
         setFavorites(favorites.filter(f => f.id !== favoriteId));

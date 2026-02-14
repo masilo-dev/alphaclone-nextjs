@@ -26,10 +26,6 @@ const SEOArticle: React.FC = () => {
     const [article, setArticle] = useState<Article | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        loadArticle();
-    }, [slug]);
-
     const loadArticle = async () => {
         if (!slug) return;
 
@@ -52,6 +48,10 @@ const SEOArticle: React.FC = () => {
 
         setLoading(false);
     };
+
+    useEffect(() => {
+        loadArticle();
+    }, [slug]);
 
     if (loading) {
         return (

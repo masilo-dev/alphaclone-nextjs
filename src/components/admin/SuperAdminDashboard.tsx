@@ -32,10 +32,6 @@ export default function SuperAdminDashboard() {
     totalMessages: 0
   });
 
-  useEffect(() => {
-    loadStats();
-  }, []);
-
   const loadStats = async () => {
     try {
       // Load system-wide statistics
@@ -58,6 +54,10 @@ export default function SuperAdminDashboard() {
       console.error('Failed to load stats:', error);
     }
   };
+
+  useEffect(() => {
+    loadStats();
+  }, []);
 
   const tabs = [
     { id: 'overview' as Tab, label: 'Overview', icon: Activity },
