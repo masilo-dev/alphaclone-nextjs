@@ -15,6 +15,8 @@ body {
   background: var(--background);
   color: var(--foreground);
   scroll-behavior: smooth;
+  font-size: 14px; /* Gmail standard */
+  line-height: 1.5;
 }
 
 /* iPhone Safe Area Support */
@@ -228,15 +230,30 @@ body {
   overscroll-behavior-y: none;
 }
 
-/* Fix for iOS input zoom */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="tel"],
-input[type="number"],
-textarea,
-select {
-  font-size: 16px !important;
+/* Fix for iOS input zoom - Mobile Only */
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Desktop Inputs - Match base font size */
+@media (min-width: 641px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  textarea,
+  select {
+    font-size: 14px !important; /* Matches base font */
+  }
 }
 
 /* Mobile Menu Lock */

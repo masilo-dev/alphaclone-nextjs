@@ -41,8 +41,8 @@ export default {
             // STRICT APP TYPOGRAPHY SCALE
             fontSize: {
                 xs: ['12px', '16px'],
-                sm: ['13px', '18px'], // App-like small
-                base: ['14px', '20px'], // Standard body
+                sm: ['12.5px', '18px'], // Gmail-like small
+                base: ['14px', '21px'], // Gmail standard body (1.5 line-height)
                 md: ['16px', '24px'],
                 lg: ['18px', '28px'],
                 xl: ['22px', '30px'], // Section headers
