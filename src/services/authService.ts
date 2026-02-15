@@ -324,12 +324,12 @@ export const authService = {
                     avatar: metadata.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
                 };
             } else {
-                // MISSION CRITICAL: Slower retry loop for high-latency regions (e.g. South Africa)
-                // or slow database triggers during OAuth registration.
+                // OPTIMIZATION: Reduced retry loop with transient fallback
+                // We want to fail fast and show the UI, rather than blocking for 10s.
                 let profile = null;
                 let lastError = null;
-                const maxRetries = 10; // Increased from 5
-                const retryDelay = 1000; // Increased from 500ms
+                const maxRetries = 3; // Reduced from 10 to 3 for faster load
+                const retryDelay = 500; // Reduced from 1000ms to 500ms
 
                 for (let i = 0; i < maxRetries; i++) {
                     const { data: p, error: profileError } = await supabase
@@ -351,8 +351,11 @@ export const authService = {
                         break;
                     }
 
-                    console.log(`AuthService: Profile sync retry ${i + 1}/${maxRetries}...`);
-                    await new Promise(resolve => setTimeout(resolve, retryDelay));
+                    // Only log if it's not the last retry
+                    if (i < maxRetries - 1) {
+                        console.log(`AuthService: Profile sync retry ${i + 1}/${maxRetries}...`);
+                        await new Promise(resolve => setTimeout(resolve, retryDelay));
+                    }
                 }
 
                 if (!profile) {

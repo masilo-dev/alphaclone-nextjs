@@ -100,6 +100,10 @@ export const projectService = {
                 .limit(20);
 
             if (error) {
+                // Ignore AbortErrors or cancellations (common during navigation)
+                if (error.message?.includes('AbortError') || error.message?.includes('aborted') || error.code === '20') {
+                    return { projects: [], error: null };
+                }
                 console.warn("Error fetching public projects (non-critical):", error);
                 return { projects: [], error: error.message };
             }
