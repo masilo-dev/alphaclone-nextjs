@@ -8,7 +8,7 @@ import { routeAIRequest } from '@/services/aiRouter';
  */
 export async function POST(req: Request) {
     try {
-        const { prompt, maxTokens, systemPrompt, temperature } = await req.json();
+        const { prompt, maxTokens, systemPrompt, temperature, model } = await req.json();
 
         if (!prompt) {
             return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
@@ -20,6 +20,7 @@ export async function POST(req: Request) {
             maxTokens,
             systemPrompt,
             temperature,
+            model,
         });
 
         return NextResponse.json({

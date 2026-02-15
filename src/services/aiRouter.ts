@@ -41,6 +41,7 @@ export interface AIRequestOptions {
   maxTokens?: number;
   temperature?: number;
   image?: string; // Base64 image for vision tasks
+  model?: string; // Optional specific model
 }
 
 export interface AIResponse {
@@ -57,7 +58,23 @@ export interface AIResponse {
 export async function routeAIRequest(options: AIRequestOptions): Promise<AIResponse> {
   const errors: string[] = [];
 
-  // Priority 1: Try Anthropic (Claude)
+  // Detect provider preference from model name
+  const requestedModel = options.model?.toLowerCase();
+
+  // Specific Provider Routing
+  if (requestedModel) {
+    if (requestedModel.startsWith('claude') && anthropic) {
+      return await completeWithAnthropic(options);
+    }
+    if (requestedModel.startsWith('gpt') && openai) {
+      return await completeWithOpenAI(options);
+    }
+    if (requestedModel.startsWith('gemini') && ENV.VITE_GEMINI_API_KEY) {
+      return await completeWithGemini(options);
+    }
+  }
+
+  // Fallback Chain (Priority 1: Anthropic)
   if (anthropic) {
     try {
       console.log('[AI Router] Attempting Anthropic (Claude)...');
@@ -115,8 +132,10 @@ async function completeWithAnthropic(options: AIRequestOptions): Promise<AIRespo
     throw new Error('Anthropic API key not configured');
   }
 
+  const model = options.model || 'claude-3-5-sonnet-20241022';
+
   const message = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022', // Use stable date-based version
+    model: model,
     max_tokens: options.maxTokens || 8192,
     temperature: options.temperature || 0.7,
     system: options.systemPrompt,
@@ -133,7 +152,7 @@ async function completeWithAnthropic(options: AIRequestOptions): Promise<AIRespo
   return {
     content,
     provider: 'anthropic',
-    model: 'claude-3-5-sonnet',
+    model: model,
     success: true,
   };
 }
@@ -146,6 +165,8 @@ async function completeWithOpenAI(options: AIRequestOptions): Promise<AIResponse
     throw new Error('OpenAI API key not configured');
   }
 
+  const model = options.model || 'gpt-4-turbo';
+
   const messages: any[] = [];
   if (options.systemPrompt) {
     messages.push({ role: 'system', content: options.systemPrompt });
@@ -153,7 +174,7 @@ async function completeWithOpenAI(options: AIRequestOptions): Promise<AIResponse
   messages.push({ role: 'user', content: options.prompt });
 
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4-turbo',
+    model: model,
     messages,
     max_tokens: options.maxTokens || 4096,
     temperature: options.temperature || 0.7,
@@ -162,7 +183,7 @@ async function completeWithOpenAI(options: AIRequestOptions): Promise<AIResponse
   return {
     content: completion.choices[0]?.message?.content || '',
     provider: 'openai',
-    model: 'gpt-4-turbo',
+    model: model,
     success: true,
   };
 }
@@ -192,9 +213,25 @@ export async function routeAIChat(
   history: Array<{ role: string; content: string }>,
   message: string,
   systemPrompt?: string,
-  image?: string
+  image?: string,
+  model?: string
 ): Promise<AIResponse> {
   const errors: string[] = [];
+
+  // Specific Provider Routing
+  if (model) {
+    const requestedModel = model.toLowerCase();
+    if (requestedModel.startsWith('claude') && anthropic) {
+      return await chatWithAnthropic(history, message, systemPrompt, model);
+    }
+    if (requestedModel.startsWith('gpt') && openai) {
+      return await chatWithOpenAI(history, message, systemPrompt, model);
+    }
+    if (requestedModel.startsWith('gemini') && ENV.VITE_GEMINI_API_KEY) {
+      // Gemini chat is fallback-only in this simplified router, but we can call it directly
+      // Note: chatWithGemini handles its own model logic usually, but we should pass it if possible
+    }
+  }
 
   // Priority 1: Try Anthropic
   if (anthropic) {
@@ -276,11 +313,14 @@ export async function routeAIChat(
 async function chatWithAnthropic(
   history: Array<{ role: string; content: string }>,
   message: string,
-  systemPrompt?: string
+  systemPrompt?: string,
+  model?: string
 ): Promise<AIResponse> {
   if (!anthropic) {
     throw new Error('Anthropic API key not configured');
   }
+
+  const selectedModel = model || 'claude-3-5-sonnet-20241022';
 
   // Ensure history alternates and starts with 'user'
   const messages: Anthropic.MessageParam[] = [];
@@ -316,7 +356,7 @@ async function chatWithAnthropic(
   }
 
   const response = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
+    model: selectedModel,
     max_tokens: 8192,
     system: systemPrompt,
     messages: [
@@ -330,7 +370,7 @@ async function chatWithAnthropic(
   return {
     content,
     provider: 'anthropic',
-    model: 'claude-3-5-sonnet',
+    model: selectedModel,
     success: true,
   };
 }
@@ -341,11 +381,14 @@ async function chatWithAnthropic(
 async function chatWithOpenAI(
   history: Array<{ role: string; content: string }>,
   message: string,
-  systemPrompt?: string
+  systemPrompt?: string,
+  model?: string
 ): Promise<AIResponse> {
   if (!openai) {
     throw new Error('OpenAI API key not configured');
   }
+
+  const selectedModel = model || 'gpt-4-turbo';
 
   // Ensure history alternates and starts with 'user'
   const validHistory = history.filter((msg, idx) => {
@@ -366,7 +409,7 @@ async function chatWithOpenAI(
   }
 
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4-turbo',
+    model: selectedModel,
     messages: [
       ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
       ...chatMessages,
@@ -378,7 +421,7 @@ async function chatWithOpenAI(
   return {
     content: completion.choices[0]?.message?.content || '',
     provider: 'openai',
-    model: 'gpt-4-turbo',
+    model: selectedModel,
     success: true,
   };
 }

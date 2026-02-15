@@ -8,14 +8,14 @@ import { routeAIChat } from '@/services/aiRouter';
  */
 export async function POST(req: Request) {
     try {
-        const { history, message, systemPrompt, image } = await req.json();
+        const { history, message, systemPrompt, image, model } = await req.json();
 
         if (!message) {
             return NextResponse.json({ error: 'Message is required' }, { status: 400 });
         }
 
         // Use smart router with fallback chain
-        const response = await routeAIChat(history || [], message, systemPrompt, image);
+        const response = await routeAIChat(history || [], message, systemPrompt, image, model);
 
         return NextResponse.json({
             text: response.content,

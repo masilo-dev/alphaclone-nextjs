@@ -53,11 +53,31 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
     setIsLoading(true);
 
     try {
+      // Map mode to model
+      let modelMatch: string | undefined = undefined;
+      switch (mode) {
+        case 'default':
+          // Leave undefined to use backend fallback chain (Anthropic -> OpenAI -> Gemini)
+          modelMatch = undefined;
+          break;
+        case 'thinking':
+          modelMatch = 'gpt-4-turbo'; // Strong reasoning
+          break;
+        case 'fast':
+          modelMatch = 'gpt-4o-mini';
+          break;
+        // search and maps might utilize tools but we can default to a smart model
+        case 'search':
+        case 'maps':
+          modelMatch = 'gpt-4-turbo';
+          break;
+      }
 
       const response = await chatWithAI(
         messages.map(m => ({ role: m.role, text: m.text })),
         userMsg.text,
-        currentImage || undefined
+        currentImage || undefined,
+        modelMatch
       );
 
       let text = response.text;

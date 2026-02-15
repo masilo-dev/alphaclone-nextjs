@@ -26,7 +26,7 @@ export const isAnyAIConfigured = () => {
 /**
  * Generate text content using the first available AI provider (proxied through server-side route)
  */
-export const generateText = async (prompt: string, maxTokens: number = 2048): Promise<{ text: string | null; error: any }> => {
+export const generateText = async (prompt: string, maxTokens: number = 2048, model?: string): Promise<{ text: string | null; error: any }> => {
     try {
         console.log('🔄 Calling Server-side AI Generate Proxy...');
         const response = await fetch('/api/ai/generate', {
@@ -36,7 +36,8 @@ export const generateText = async (prompt: string, maxTokens: number = 2048): Pr
             },
             body: JSON.stringify({
                 prompt,
-                maxTokens
+                maxTokens,
+                model
             })
         });
 
@@ -107,7 +108,8 @@ export const chatWithGrowthAgent = async (
 export const chatWithAI = async (
     history: { role: string; text: string }[],
     message: string,
-    image?: string
+    image?: string,
+    model?: string
 ): Promise<{ text: string; grounding: any }> => {
     try {
         console.log('🔄 Calling Server-side AI Proxy...');
@@ -119,7 +121,8 @@ export const chatWithAI = async (
             body: JSON.stringify({
                 history,
                 message,
-                image
+                image,
+                model
             })
         });
 
