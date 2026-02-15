@@ -82,8 +82,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         { id: 'notifications' as const, label: 'Notifications', icon: Bell },
         { id: 'security' as const, label: 'Security', icon: Lock },
         { id: 'appearance' as const, label: 'Appearance', icon: Palette },
-        // HIDE BILLING FOR SUPER ADMINS (They don't subscribe)
-        ...(user.role !== 'admin' ? [{ id: 'billing' as const, label: 'Plans & Billing', icon: CreditCardIcon }] : []),
+        // SHOW BILLING ONLY FOR TENANT ADMINS (They are the ones who subscribe)
+        ...(user.role === 'tenant_admin' ? [{ id: 'billing' as const, label: 'Plans & Billing', icon: CreditCardIcon }] : []),
         { id: 'booking' as const, label: 'Booking & Integrations', icon: CalendarIcon }
     ];
 

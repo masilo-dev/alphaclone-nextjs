@@ -265,8 +265,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Determine Navigation Items based on Role
   const NAV_ITEMS = React.useMemo(() => {
     if (user.role === 'admin') return ADMIN_NAV_ITEMS;
-    // Client role now sees the Business Dashboard (same as Tenant Admin)
-    if (user.role === 'tenant_admin' || user.role === 'client') return TENANT_ADMIN_NAV_ITEMS;
+    if (user.role === 'tenant_admin') return TENANT_ADMIN_NAV_ITEMS;
     return CLIENT_NAV_ITEMS;
   }, [user.role]);
 
@@ -293,7 +292,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     // setIsLoadingInvoices(true);
     let result;
     // Client/TenantAdmin fetches all invoices relevant to their tenant/business view
-    if (user.role === 'admin' || user.role === 'tenant_admin' || user.role === 'client') {
+    if (user.role === 'admin' || user.role === 'tenant_admin') {
       result = await paymentService.getAllInvoices(user.role); // Pass role for filtering
     } else {
       result = await paymentService.getUserInvoices(user.id);
@@ -332,7 +331,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     } catch (e) { console.error('Cache load error', e); }
 
     const loadAllData = async () => {
-      const isAdmin = user.role === 'admin' || user.role === 'tenant_admin' || user.role === 'client';
+      const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
 
       // Load everything in parallel - don't wait for one to finish before starting another
       const promises: Promise<any>[] = [
@@ -370,7 +369,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // Subscribe to real-time messages with filtering for performance
   useEffect(() => {
-    const isAdmin = user.role === 'admin' || user.role === 'tenant_admin' || user.role === 'client';
+    const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
     // ✅ Now uses filtered subscription - gets INSERT + UPDATE for instant read receipts
     const unsubscribe = messageService.subscribeToMessages(
       user.id,

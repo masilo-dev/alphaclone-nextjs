@@ -23,7 +23,8 @@ import {
     Trash2,
     Edit2,
     Upload,
-    CheckCircle2
+    CheckCircle2,
+    MessageCircle
 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -401,47 +402,67 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                                             <Phone className="w-3 h-3 text-teal-400" />
                                             Phone Number
                                         </div>
-                                        <div className="text-sm text-slate-300">{selectedClient.phone || 'No phone provided'}</div>
+                                        {selectedClient.phone ? (
+                                            <div className="flex items-center gap-3">
+                                                <a
+                                                    href={`tel:${selectedClient.phone}`}
+                                                    className="text-sm text-slate-300 hover:text-teal-400 transition-colors flex items-center gap-2"
+                                                >
+                                                    {selectedClient.phone}
+                                                </a>
+                                                <a
+                                                    href={`https://wa.me/${selectedClient.phone.replace(/\D/g, '')}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-1.5 bg-green-500/10 hover:bg-green-500/20 rounded-lg transition-colors border border-green-500/20 group/wa"
+                                                    title="Open in WhatsApp"
+                                                >
+                                                    <MessageCircle className="w-3.5 h-3.5 text-green-400 group-hover/wa:scale-110 transition-transform" />
+                                                </a>
+                                            </div>
+                                        ) : (
+                                            <div className="text-sm text-slate-500 italic">No phone provided</div>
+                                        )}
                                     </div>
                                 </div>
-
-                                {/* Activity Timeline */}
-                                <div className="pt-6 border-t border-white/5">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
-                                            <TrendingUp className="w-4 h-4 text-teal-400" />
-                                            Activity History
-                                        </h3>
-                                        <Button size="sm" variant="ghost" className="text-[10px] h-7 px-2">View Full History</Button>
-                                    </div>
-                                    <div className="space-y-6 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-px before:bg-slate-800">
-                                        <div className="flex gap-6 relative">
-                                            <div className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/20 flex items-center justify-center flex-shrink-0 z-10 bg-slate-950">
-                                                <CheckCircle2 className="w-4 h-4 text-teal-400" />
-                                            </div>
-                                            <div className="pt-1">
-                                                <div className="text-sm font-bold text-white">Client profile established</div>
-                                                <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
-                                                    <Calendar className="w-3 h-3" />
-                                                    {new Date(selectedClient.createdAt).toLocaleString()}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {selectedClient.notes && (
-                                    <div className="pt-6 border-t border-white/5">
-                                        <h3 className="text-sm font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2">
-                                            <FileText className="w-4 h-4 text-teal-400" />
-                                            Account Notes
-                                        </h3>
-                                        <div className="p-4 rounded-xl bg-slate-950/40 border border-white/5 text-sm text-slate-400 leading-relaxed italic">
-                                            "{selectedClient.notes}"
-                                        </div>
-                                    </div>
-                                )}
                             </div>
+
+                            {/* Activity Timeline */}
+                            <div className="pt-6 border-t border-white/5">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
+                                        <TrendingUp className="w-4 h-4 text-teal-400" />
+                                        Activity History
+                                    </h3>
+                                    <Button size="sm" variant="ghost" className="text-[10px] h-7 px-2">View Full History</Button>
+                                </div>
+                                <div className="space-y-6 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-px before:bg-slate-800">
+                                    <div className="flex gap-6 relative">
+                                        <div className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/20 flex items-center justify-center flex-shrink-0 z-10 bg-slate-950">
+                                            <CheckCircle2 className="w-4 h-4 text-teal-400" />
+                                        </div>
+                                        <div className="pt-1">
+                                            <div className="text-sm font-bold text-white">Client profile established</div>
+                                            <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
+                                                <Calendar className="w-3 h-3" />
+                                                {new Date(selectedClient.createdAt).toLocaleString()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {selectedClient.notes && (
+                                <div className="pt-6 border-t border-white/5">
+                                    <h3 className="text-sm font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        <FileText className="w-4 h-4 text-teal-400" />
+                                        Account Notes
+                                    </h3>
+                                    <div className="p-4 rounded-xl bg-slate-950/40 border border-white/5 text-sm text-slate-400 leading-relaxed italic">
+                                        "{selectedClient.notes}"
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-slate-500 p-12 text-center">

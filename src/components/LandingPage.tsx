@@ -332,6 +332,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      <div className="hidden lg:flex items-center gap-8">
                         <button onClick={() => scrollToSection('home')} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Home</button>
                         <button onClick={() => scrollToSection('ecosystem')} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Platform</button>
+                        <button onClick={() => scrollToSection('pricing')} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Pricing</button>
+                        <Link href="/docs" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Docs</Link>
 
                         {/* Services Dropdown */}
                         <div className="relative" onMouseEnter={() => setServicesDropdownOpen(true)} onMouseLeave={() => setServicesDropdownOpen(false)}>
@@ -1008,7 +1010,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <p className="text-slate-400 text-sm">Total scale and custom infrastructure.</p>
                         </div>
                         <div className="relative mb-8 flex items-baseline gap-1">
-                           <span className="text-4xl font-bold text-white">$299</span>
+                           <span className="text-4xl font-bold text-white">$80</span>
                            <span className="text-slate-500">/mo</span>
                         </div>
                         <ul className="space-y-4 mb-10 flex-grow">
@@ -1165,9 +1167,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            </div>
                            <div className="group flex flex-col items-center gap-2">
                               <div className="w-10 h-10 bg-slate-900/50 rounded-xl border border-slate-800 flex items-center justify-center p-2 group-hover:border-[#003087]/50 transition-all grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100">
-                                 <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" className="w-full h-full object-contain" />
+                                 <Database className="w-6 h-6 text-teal-400" />
                               </div>
-                              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">PayPal</span>
+                              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Supabase</span>
                            </div>
                            <div className="group flex flex-col items-center gap-2">
                               <div className="w-10 h-10 bg-slate-900/50 rounded-xl border border-slate-800 flex items-center justify-center p-2 group-hover:border-[#332FF2]/50 transition-all grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100">

@@ -16,8 +16,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AlphaClone | Enterprise Business Operating System",
-  description: "The all-in-one platform for modern businesses. CRM, Finance, Tasks, and Team Management unified in one high-performance dashboard.",
+  title: "AlphaClone Systems | AI-Powered Enterprise OS & Custom Software",
+  description: "Premier custom software development firm specialized in AI integration, enterprise CRM architectures, and high-performance web applications. The all-in-one business operating system.",
+  keywords: ["AI automation", "enterprise CRM", "custom software development", "business operating system", "Next.js development", "scalable architecture", "AlphaClone"],
+  authors: [{ name: "AlphaClone Systems" }],
+  openGraph: {
+    title: "AlphaClone Systems | AI-Powered Enterprise OS",
+    description: "The all-in-one platform for modern businesses. CRM, Finance, Tasks, and Team Management unified.",
+    type: "website",
+  },
 };
 
 export const viewport: Viewport = {
