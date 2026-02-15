@@ -33,20 +33,20 @@ export default function LoginPage() {
         {
             id: 'starter',
             name: 'Starter',
-            price: '$25/mo',
-            features: ['5 Users', '10 Video Mtgs/mo', '60m/meeting', 'Full CRM Access']
+            price: '$15/mo',
+            features: ['5 Multi-tenant Users', 'Core CRM Pipeline', '5GB Secure Storage', 'Standard Project MGMT']
         },
         {
             id: 'pro',
             name: 'Pro',
-            price: '$89/mo',
-            features: ['20 Users', '50 Video Mtgs/mo', '90m/meeting', 'Contract Gen.']
+            price: '$45/mo',
+            features: ['25 Multi-tenant Users', 'AI Sales Automation', '25GB Secure Storage', 'Contract Logic']
         },
         {
             id: 'enterprise',
             name: 'Enterprise',
-            price: '$200/mo',
-            features: ['Unlimited Users', '200 Video Mtgs/mo', '180m/meeting', 'Custom API']
+            price: '$80/mo',
+            features: ['Unlimited Users', 'Perimeter Guard', 'Custom Branding', 'SIEM Monitoring']
         }
     ];
 
@@ -160,7 +160,7 @@ export default function LoginPage() {
         try {
             const { paymentService } = await import('@/services/paymentService');
             // 1. Create a setup/first invoice for the subscription
-            const amount = selectedPlan === 'starter' ? 25 : selectedPlan === 'pro' ? 89 : 200;
+            const amount = selectedPlan === 'starter' ? 15 : selectedPlan === 'pro' ? 45 : 80;
 
             const { invoice, error: invoiceErr } = await paymentService.createInvoice({
                 user_id: 'pending', // Will be linked during processing or use current user
@@ -221,7 +221,7 @@ export default function LoginPage() {
                         <div className="flex justify-between items-center">
                             <span className="text-white font-bold">Total Due</span>
                             <span className="text-2xl font-black text-teal-400">
-                                {selectedPlan === 'starter' ? '$25' : selectedPlan === 'pro' ? '$89' : '$200'}
+                                {selectedPlan === 'starter' ? '$15' : selectedPlan === 'pro' ? '$45' : '$80'}
                             </span>
                         </div>
                     </div>

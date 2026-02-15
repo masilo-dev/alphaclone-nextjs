@@ -714,11 +714,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                </div>
             </section>
 
-            {/* Video Explainer (Replacing Ecosystem) */}
-            <React.Suspense fallback={<div className="h-[600px] w-full bg-slate-900/50 animate-pulse" />}>
-               <VideoExplainer />
-            </React.Suspense>
-
             {/* About Section */}
             <section id="about" className="py-24 bg-slate-950/50 backdrop-blur-sm">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

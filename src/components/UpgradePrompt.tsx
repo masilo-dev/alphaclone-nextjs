@@ -17,29 +17,27 @@ export interface UpgradePromptProps {
 
 const TIER_FEATURES = {
     starter: [
-        '10 users',
-        '25 projects',
-        '5GB storage',
-        'Email support',
-        'Basic analytics',
+        '5 Multi-tenant Users',
+        'Core CRM Pipeline',
+        '5GB Secure Storage',
+        'Standard Project MGMT',
+        'Basic Analytics',
     ],
     pro: [
-        '50 users',
-        '100 projects',
-        '25GB storage',
-        'Priority support',
-        'Advanced analytics',
-        'AI features',
-        'White-label',
+        '25 Multi-tenant Users',
+        'AI Sales Automation',
+        '25GB Secure Storage',
+        'Contract Logic',
+        'Advanced Analytics',
+        'Priority Support',
     ],
     enterprise: [
-        'Unlimited users',
-        'Unlimited projects',
-        'Unlimited storage',
-        '24/7 phone support',
-        'Custom integrations',
-        'Dedicated account manager',
-        'SLA guarantee',
+        'Unlimited Users',
+        'Perimeter Guard',
+        'Custom Branding',
+        'SIEM Monitoring',
+        'Dedicated Support',
+        'Unlimited Storage',
     ],
 };
 
@@ -204,21 +202,19 @@ export function UpgradePrompt({
                     <div className="flex items-center justify-center mb-6 bg-gray-100 rounded-lg p-1">
                         <button
                             onClick={() => setBillingCycle('monthly')}
-                            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                                billingCycle === 'monthly'
+                            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${billingCycle === 'monthly'
                                     ? 'bg-white text-blue-600 shadow'
                                     : 'text-gray-600 hover:text-gray-900'
-                            }`}
+                                }`}
                         >
                             Monthly
                         </button>
                         <button
                             onClick={() => setBillingCycle('annual')}
-                            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                                billingCycle === 'annual'
+                            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${billingCycle === 'annual'
                                     ? 'bg-white text-blue-600 shadow'
                                     : 'text-gray-600 hover:text-gray-900'
-                            }`}
+                                }`}
                         >
                             Annual
                             <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
