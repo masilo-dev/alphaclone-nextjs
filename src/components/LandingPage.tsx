@@ -450,7 +450,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         size="lg"
                         className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-10 h-14 w-full sm:w-auto text-lg shadow-xl shadow-teal-500/20 hover:scale-105 transition-transform"
                      >
-                        Get Started Free
+                        Start Free Trial
                      </Button>
                      <Button
                         size="lg"
@@ -990,7 +990,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            onClick={() => window.location.href = '/register'}
                            className="w-full h-14 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-lg shadow-lg shadow-teal-500/20"
                         >
-                           Start Growth Trial
+                           Start Free Trial
                         </Button>
                      </motion.div>
 

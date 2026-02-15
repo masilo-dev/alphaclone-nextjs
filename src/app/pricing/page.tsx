@@ -21,7 +21,7 @@ const plans = [
         popular: true,
         desc: 'Full power for growing teams.',
         features: ['25 Multi-tenant Users', 'Infinite CRM Pipelines', 'AI Sales Automation', '25GB Secure Storage', 'Priority Support'],
-        cta: 'Start Growth Trial',
+        cta: 'Start Free Trial',
         color: 'teal'
     },
     {
