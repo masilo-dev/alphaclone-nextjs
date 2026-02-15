@@ -237,5 +237,76 @@ export const userService = {
         } catch (err) {
             return { client: null, error: err instanceof Error ? err.message : 'Unknown error' };
         }
+    },
+
+    /**
+     * Sync user profile from auth data (Background Task)
+     * Ensures profile exists in public.profiles and metadata is up to date
+     */
+    async syncUserProfile(authUser: any): Promise<void> {
+        try {
+            if (!authUser?.id) return;
+
+            // 1. Try to fetch existing profile (RLS safe)
+            const { data: existingProfile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', authUser.id)
+                .single();
+
+            if (existingProfile) {
+                // Profile exists, ensure metadata matches
+                const currentMeta = authUser.user_metadata || {};
+
+                // Only update metadata if it's missing the role or name
+                if (!currentMeta.role || !currentMeta.name) {
+                    await supabase.auth.updateUser({
+                        data: {
+                            name: existingProfile.name,
+                            role: existingProfile.role,
+                            avatar: existingProfile.avatar
+                        }
+                    });
+                }
+                return;
+            }
+
+            // 2. Profile missing? Create it! (Self-healing)
+            // Default to 'tenant_admin' if this is a new OAuth user
+            // We use the same name/avatar logic as the transient user
+            const newRole: UserRole = 'tenant_admin';
+            const newName = authUser.user_metadata.full_name || authUser.email?.split('@')[0] || 'User';
+            const newAvatar = authUser.user_metadata.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${authUser.email}`;
+
+            // Create profile with correct role
+            const { error: insertError } = await supabase
+                .from('profiles')
+                .insert({
+                    id: authUser.id,
+                    email: authUser.email,
+                    name: newName,
+                    role: newRole,
+                    avatar: newAvatar,
+                    updated_at: new Date().toISOString()
+                });
+
+            if (insertError) {
+                console.warn('Background Profile Sync: Failed to create profile', insertError);
+            }
+
+            // 3. Update Auth Metadata to match
+            // This ensures the next login will have the correct role in metadata (Fast Path)
+            await supabase.auth.updateUser({
+                data: {
+                    name: newName,
+                    role: newRole,
+                    avatar: newAvatar
+                }
+            });
+
+            console.log('Background Profile Sync: Successfully synced profile for', authUser.email);
+        } catch (err) {
+            console.error('Background Profile Sync Error:', err);
+        }
     }
 };

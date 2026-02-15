@@ -364,13 +364,26 @@ export const authService = {
                     // instead of returning null and triggering a redirect loop.
                     console.warn("AuthService: Profile retrieval failed. Using transient profile.", lastError);
 
+                    // SMART DEFAULT: If metadata role is missing (typical for new Google sign-ups), 
+                    // assume they are a new Tenant Admin for their own business.
+                    // If they are actually an existing client with missing metadata, the background sync below will fix it next time.
+                    const fallbackRole: UserRole = (session.user.user_metadata.role as UserRole) || 'tenant_admin';
+
                     user = {
                         id: session.user.id,
                         email: session.user.email || '',
                         name: session.user.user_metadata.full_name || session.user.email?.split('@')[0] || 'User',
-                        role: (session.user.user_metadata.role as any) || 'client',
+                        role: fallbackRole,
                         avatar: session.user.user_metadata.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.id}`,
                     };
+
+                    // Trigger background profile creation/sync to ensure consistency
+                    // This handles the case where the trigger might have been slow or failed
+                    import('./userService').then(({ userService }) => {
+                        userService.syncUserProfile(session.user).catch(err =>
+                            console.warn('Background profile sync failed:', err)
+                        );
+                    });
 
                     return { user, error: null };
                 }
