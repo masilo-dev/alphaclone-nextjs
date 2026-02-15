@@ -21,19 +21,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         let isMounted = true;
 
-        // OPTIMIZATION: Immediate session check (Optimistic)
+        // OPTIMIZATION: Immediate session check with Grace Period
         const initSession = async () => {
             try {
                 // Check if we have a session immediately
                 const { user: initialUser, error: authError } = await authService.getCurrentUser();
 
                 if (authError) {
-                    // Ignore abort errors (common during HMR or navigation)
+                    // Ignore abort errors
                     if (authError.includes('aborted') || authError.includes('AbortError')) {
-                        console.log('AuthContext: Session check aborted (ignoring)');
                         return;
                     }
-
                     console.error('AuthContext: Session init error', authError);
                     setError(authError);
                     setLoading(false);
@@ -46,16 +44,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     setError(null);
                     setLoading(false);
                 } else if (isMounted && !initialUser) {
-                    // No user found, but no error either - user is not logged in
-                    console.log('AuthContext: No session found');
-                    setLoading(false);
+                    // DOUBLE CHECK: If no user found, wait a moment and check again
+                    // This handles race conditions where the storage sync is slightly slower than the render
+                    console.log('AuthContext: No initial session, checking again in 500ms...');
+                    setTimeout(async () => {
+                        if (!isMounted) return;
+
+                        // Re-check
+                        const { data: { session } } = await import('../lib/supabase').then(m => m.supabase.auth.getSession());
+                        if (session?.user) {
+                            console.log('AuthContext: Session found on second attempt!');
+                            const { user: retryUser } = await authService.getCurrentUser();
+                            if (retryUser) {
+                                setUser(retryUser);
+                                setError(null);
+                            }
+                        } else {
+                            console.log('AuthContext: Confirmed no session.');
+                        }
+                        setLoading(false);
+                    }, 500);
                 }
             } catch (e) {
-                // Ignore AbortErrors - these happen during navigation/unmounting
-                if (e instanceof Error && e.name === 'AbortError') {
-                    console.log('AuthContext: Session check aborted (component unmounting)');
-                    return;
-                }
+                // Ignore AbortErrors
+                if (e instanceof Error && e.name === 'AbortError') return;
 
                 console.warn('AuthContext: Optimistic check failed', e);
                 setError(e instanceof Error ? e.message : 'Authentication failed');

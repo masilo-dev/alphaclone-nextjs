@@ -156,18 +156,11 @@ class OfflineService {
 
     /**
      * Register service worker
+     * @deprecated Use pwaService.registerServiceWorker() instead
      */
     async registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
-        if ('serviceWorker' in navigator) {
-            try {
-                const registration = await navigator.serviceWorker.register('/service-worker.js');
-                console.log('Service Worker registered successfully:', registration);
-                return registration;
-            } catch (error) {
-                console.error('Service Worker registration failed:', error);
-                return null;
-            }
-        }
+        // Delegating to PWA service or returning null to avoid double registration
+        console.warn('offlineService.registerServiceWorker is deprecated. Use pwaService instead.');
         return null;
     }
 

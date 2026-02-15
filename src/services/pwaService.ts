@@ -48,7 +48,7 @@ export const pwaService = {
         }
 
         try {
-            const registration = await navigator.serviceWorker.register('/sw-improved.js', {
+            const registration = await navigator.serviceWorker.register('/sw.js', {
                 scope: '/',
             });
 

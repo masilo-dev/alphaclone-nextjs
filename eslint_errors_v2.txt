@@ -1,0 +1,1482 @@
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\app\auth\login\page.tsx
+  273:29  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  281:29  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\app\auth\reset-password\page.tsx
+  75:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\app\book\[slug]\[service_slug]\page.tsx
+  233:33  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  233:33  warning  img elements must have an alt prop, either with meaningful text, or an empty string for decorative images                                                                                                                                                                                jsx-a11y/alt-text
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\app\book\[slug]\page.tsx
+  64:29  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\app\meet\[id]\page.tsx
+  125:38  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\app\meet\[id]\page.tsx:125:38
+  123 |                 <CustomVideoRoom
+  124 |                     user={user || {
+> 125 |                         id: `guest-${Date.now()}`,
+      |                                      ^^^^^^^^^^ Cannot call impure function
+  126 |                         name: 'Guest',
+  127 |                         email: '',
+  128 |                         role: 'client',  react-hooks/purity
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\AIAssistant.tsx
+  200:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\Dashboard.tsx
+   146:41  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   149:3   error    React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                             react-hooks/rules-of-hooks
+   154:37  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   157:45  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   158:49  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   159:35  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   160:61  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   175:3   error    React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                             react-hooks/rules-of-hooks
+   181:35  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   182:53  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   185:51  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   186:49  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   187:45  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   188:57  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   189:53  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   190:53  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   191:47  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   192:55  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   195:3   error    React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                             react-hooks/rules-of-hooks
+   207:47  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   208:51  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   211:41  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   213:3   error    React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                             react-hooks/rules-of-hooks
+   221:53  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   222:53  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   223:59  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   225:55  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   226:45  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   227:47  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   228:63  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   231:55  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   232:75  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                                                                                                              react-hooks/rules-of-hooks
+   252:23  error    React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?                                                                                                react-hooks/rules-of-hooks
+   271:39  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?                                                                                               react-hooks/rules-of-hooks
+   272:39  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?                                                                                               react-hooks/rules-of-hooks
+   275:47  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?                                                                                               react-hooks/rules-of-hooks
+   276:35  error    React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?                                                                                               react-hooks/rules-of-hooks
+   279:21  error    React Hook "React.useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?                                                                                          react-hooks/rules-of-hooks
+   333:3   error    React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?                                                                                              react-hooks/rules-of-hooks
+   378:24  error    React Hook "useRef" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?                                                                                                 react-hooks/rules-of-hooks
+   379:3   error    React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?                                                                                              react-hooks/rules-of-hooks
+   384:3   error    React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?                                                                                              react-hooks/rules-of-hooks
+   421:3   error    React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?                                                                                              react-hooks/rules-of-hooks
+   439:3   error    React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?                                                                                              react-hooks/rules-of-hooks
+   849:3   error    React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?                                                                                              react-hooks/rules-of-hooks
+  1074:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  1074:21  warning  img elements must have an alt prop, either with meaningful text, or an empty string for decorative images                                                                                                                                                                                jsx-a11y/alt-text
+  1498:19  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\LandingPage.tsx
+   397:29  error    Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\LandingPage.tsx:397:29
+  395 |                            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+  396 |                         >
+> 397 |                            <HamburgerIcon isOpen={mobileMenuOpen} />
+      |                             ^^^^^^^^^^^^^ This component is created during render
+  398 |                         </button>
+  399 |                      </div>
+  400 |                   </div>
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\LandingPage.tsx:89:26
+  87 |
+  88 |    // Animated Hamburger Icon Component (internal)
+> 89 |    const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
+     |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 90 |       <div className="relative w-6 h-5 flex flex-col justify-between items-center transition-all duration-300">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 91 |          <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 transform origin-left ${isOpen ? 'rotate-[42deg] translate-x-1' : ''}`} />
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 92 |          <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 ${isOpen ? 'opacity-0 -translate-x-2' : ''}`} />
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 93 |          <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 transform origin-left ${isOpen ? '-rotate-[42deg] translate-x-1' : ''}`} />
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 94 |       </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 95 |    );
+     | ^^^^^ The component is created during render here
+  96 |
+  97 |    // Scroll Lock & State Management Effect
+  98 |    React.useEffect(() => {  react-hooks/static-components
+  1156:34  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @next/next/no-img-element
+  1162:34  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @next/next/no-img-element
+  1168:34  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @next/next/no-img-element
+  1174:34  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\PortfolioShowcase.tsx
+  115:37  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\SEOArticlePage.tsx
+  27:9  error  Error: Cannot access variable before it is declared
+
+`loadArticle` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\SEOArticlePage.tsx:27:9
+  25 |
+  26 |     useEffect(() => {
+> 27 |         loadArticle();
+     |         ^^^^^^^^^^^ `loadArticle` accessed before it is declared
+  28 |     }, [slug]);
+  29 |
+  30 |     const loadArticle = async () => {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\SEOArticlePage.tsx:30:5
+  28 |     }, [slug]);
+  29 |
+> 30 |     const loadArticle = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 31 |         if (!slug) return;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 32 |
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 51 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 52 |     };
+     | ^^^^^^^ `loadArticle` is declared here
+  53 |
+  54 |     if (loading) {
+  55 |         return (  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\ThemeToggle.tsx
+  13:9  error  Error: Cannot access variable before it is declared
+
+`loadTheme` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\ThemeToggle.tsx:13:9
+  11 |
+  12 |     useEffect(() => {
+> 13 |         loadTheme();
+     |         ^^^^^^^^^ `loadTheme` accessed before it is declared
+  14 |     }, [userId]);
+  15 |
+  16 |     const loadTheme = async () => {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\ThemeToggle.tsx:16:5
+  14 |     }, [userId]);
+  15 |
+> 16 |     const loadTheme = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 17 |         const { preferences } = await preferencesService.getPreferences(userId);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 18 |         if (preferences?.theme) {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 19 |             setTheme(preferences.theme);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |             applyTheme(preferences.theme);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |         }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |     };
+     | ^^^^^^^ `loadTheme` is declared here
+  23 |
+  24 |     const applyTheme = (newTheme: 'light' | 'dark' | 'auto') => {
+  25 |         const root = document.documentElement;  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\UpgradePrompt.tsx
+  72:13  error  Error: Cannot access variable before it is declared
+
+`trackPromptShown` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\UpgradePrompt.tsx:72:13
+  70 |         // Track that prompt was shown
+  71 |         if (user && tenant) {
+> 72 |             trackPromptShown();
+     |             ^^^^^^^^^^^^^^^^ `trackPromptShown` accessed before it is declared
+  73 |         }
+  74 |     }, []);
+  75 |
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\UpgradePrompt.tsx:76:5
+  74 |     }, []);
+  75 |
+> 76 |     async function trackPromptShown() {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 77 |         const result = await subscriptionService.trackUpgradePrompt(
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 78 |             tenant!.id,
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 91 |         }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 92 |     }
+     | ^^^^^^ `trackPromptShown` is declared here
+  93 |
+  94 |     async function handleUpgradeClick() {
+  95 |         if (promptId) {  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\UsageDashboard.tsx
+  17:9  error  Error: Cannot access variable before it is declared
+
+`loadUsageData` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\UsageDashboard.tsx:17:9
+  15 |
+  16 |     useEffect(() => {
+> 17 |         loadUsageData();
+     |         ^^^^^^^^^^^^^ `loadUsageData` accessed before it is declared
+  18 |     }, [tenantId]);
+  19 |
+  20 |     async function loadUsageData() {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\UsageDashboard.tsx:20:5
+  18 |     }, [tenantId]);
+  19 |
+> 20 |     async function loadUsageData() {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |         setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |         const [usageData, alertsData] = await Promise.all([
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 29 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 30 |     }
+     | ^^^^^^ `loadUsageData` is declared here
+  31 |
+  32 |     function getStatusColor(status: string): string {
+  33 |         switch (status) {  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\auth\LoginModal.tsx
+  96:11  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\client\ClientPortal.tsx
+  39:9   error  Error: Cannot access variable before it is declared
+
+`loadProjects` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\client\ClientPortal.tsx:39:9
+  37 |
+  38 |     useEffect(() => {
+> 39 |         loadProjects();
+     |         ^^^^^^^^^^^^ `loadProjects` accessed before it is declared
+  40 |     }, [user.id]);
+  41 |
+  42 |     useEffect(() => {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\client\ClientPortal.tsx:48:5
+  46 |     }, [selectedProject]);
+  47 |
+> 48 |     const loadProjects = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 49 |         setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 50 |         const { projects: userProjects } = await projectService.getProjects(user.id, user.role);
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 57 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 58 |     };
+     | ^^^^^^^ `loadProjects` is declared here
+  59 |
+  60 |     const loadProjectDetails = async () => {
+  61 |         // Load milestones and deliverables for the project                                                                                                                        react-hooks/immutability
+  44:13  error  Error: Cannot access variable before it is declared
+
+`loadProjectDetails` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\client\ClientPortal.tsx:44:13
+  42 |     useEffect(() => {
+  43 |         if (selectedProject) {
+> 44 |             loadProjectDetails();
+     |             ^^^^^^^^^^^^^^^^^^ `loadProjectDetails` accessed before it is declared
+  45 |         }
+  46 |     }, [selectedProject]);
+  47 |
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\client\ClientPortal.tsx:60:5
+  58 |     };
+  59 |
+> 60 |     const loadProjectDetails = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 61 |         // Load milestones and deliverables for the project
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 62 |         // This would come from a project details API
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 90 |         ]);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 91 |     };
+     | ^^^^^^^ `loadProjectDetails` is declared here
+  92 |
+  93 |     const handleDownload = (deliverable: Deliverable) => {
+  94 |         // Trigger download  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\collaboration\CollaborativeEditor.tsx
+  24:9  error  Error: Cannot access variable before it is declared
+
+`loadDocument` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\collaboration\CollaborativeEditor.tsx:24:9
+  22 |
+  23 |     useEffect(() => {
+> 24 |         loadDocument();
+     |         ^^^^^^^^^^^^ `loadDocument` accessed before it is declared
+  25 |         subscribeToDocument();
+  26 |
+  27 |         return () => {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\collaboration\CollaborativeEditor.tsx:37:5
+  35 |     }, [documentId]);
+  36 |
+> 37 |     const loadDocument = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 38 |         const { document: doc, error } = await collaborationService.getDocument(documentId);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 39 |         if (doc && !error) {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 40 |             setDocument(doc);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 41 |             setContent(doc.content);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 42 |             setParticipants(doc.participants);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 43 |         }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 44 |     };
+     | ^^^^^^^ `loadDocument` is declared here
+  45 |
+  46 |     const subscribeToDocument = () => {
+  47 |         const subscription = collaborationService.subscribeToDocument(  react-hooks/immutability
+  25:9  error  Error: Cannot access variable before it is declared
+
+`subscribeToDocument` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\collaboration\CollaborativeEditor.tsx:25:9
+  23 |     useEffect(() => {
+  24 |         loadDocument();
+> 25 |         subscribeToDocument();
+     |         ^^^^^^^^^^^^^^^^^^^ `subscribeToDocument` accessed before it is declared
+  26 |
+  27 |         return () => {
+  28 |             if (subscriptionRef.current) {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\collaboration\CollaborativeEditor.tsx:46:5
+  44 |     };
+  45 |
+> 46 |     const subscribeToDocument = () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 47 |         const subscription = collaborationService.subscribeToDocument(
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 48 |             documentId,
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 59 |         subscriptionRef.current = subscription;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 60 |     };
+     | ^^^^^^^ `subscribeToDocument` is declared here
+  61 |
+  62 |     const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  63 |         const newContent = e.target.value;                                                                                                                                                                                                                                                                                                                                                                                                                              react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\common\LeadSelector.tsx
+  25:9  error  Error: Cannot access variable before it is declared
+
+`loadLeads` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\common\LeadSelector.tsx:25:9
+  23 |
+  24 |     useEffect(() => {
+> 25 |         loadLeads();
+     |         ^^^^^^^^^ `loadLeads` accessed before it is declared
+  26 |     }, [filter]);
+  27 |
+  28 |     const loadLeads = async () => {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\common\LeadSelector.tsx:28:5
+  26 |     }, [filter]);
+  27 |
+> 28 |     const loadLeads = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 29 |         setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 30 |         const { leads: data, error } = await leadService.getLeads();
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 40 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 41 |     };
+     | ^^^^^^^ `loadLeads` is declared here
+  42 |
+  43 |     const filteredLeads = leads.filter(lead =>
+  44 |         lead.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\contracts\ContractDashboard.tsx
+  47:9  error  Error: Cannot access variable before it is declared
+
+`loadContracts` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\contracts\ContractDashboard.tsx:47:9
+  45 |
+  46 |     useEffect(() => {
+> 47 |         loadContracts();
+     |         ^^^^^^^^^^^^^ `loadContracts` accessed before it is declared
+  48 |     }, [user.id]);
+  49 |
+  50 |     const loadContracts = async () => {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\contracts\ContractDashboard.tsx:50:5
+  48 |     }, [user.id]);
+  49 |
+> 50 |     const loadContracts = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 51 |         setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 52 |         const { contracts: data } = await contractService.getUserContracts(user.id, user.role);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 53 |         if (data) setContracts(data);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 54 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 55 |     };
+     | ^^^^^^^ `loadContracts` is declared here
+  56 |
+  57 |     const handleCreateDraft = async () => {
+  58 |         if (!draftTitle || !draftContent) {  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\AIStudio.tsx
+  174:25  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  174:25  warning  img elements must have an alt prop, either with meaningful text, or an empty string for decorative images                                                                                                                                                                                jsx-a11y/alt-text
+  207:25  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  207:25  warning  img elements must have an alt prop, either with meaningful text, or an empty string for decorative images                                                                                                                                                                                jsx-a11y/alt-text
+  243:28  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  243:28  warning  img elements must have an alt prop, either with meaningful text, or an empty string for decorative images                                                                                                                                                                                jsx-a11y/alt-text
+  318:34  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  318:34  warning  img elements must have an alt prop, either with meaningful text, or an empty string for decorative images                                                                                                                                                                                jsx-a11y/alt-text
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\AIStudioTab.tsx
+  329:37  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  372:41  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  436:25  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\ActivityFeed.tsx
+  16:9  error  Error: Cannot access variable before it is declared
+
+`loadActivities` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\ActivityFeed.tsx:16:9
+  14 |
+  15 |     useEffect(() => {
+> 16 |         loadActivities();
+     |         ^^^^^^^^^^^^^^ `loadActivities` accessed before it is declared
+  17 |     }, [userId]);
+  18 |
+  19 |     const loadActivities = async () => {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\ActivityFeed.tsx:19:5
+  17 |     }, [userId]);
+  18 |
+> 19 |     const loadActivities = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |         setIsLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |         const { logs } = await activityService.getActivityLogs(userId, limit);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |         if (logs) setActivities(logs);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |         setIsLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 24 |     };
+     | ^^^^^^^ `loadActivities` is declared here
+  25 |
+  26 |     const getActivityIcon = (entityType?: string) => {
+  27 |         switch (entityType) {  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\AnalyticsDashboard.tsx
+  15:9  error  Error: Cannot access variable before it is declared
+
+`loadData` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\AnalyticsDashboard.tsx:15:9
+  13 |
+  14 |     useEffect(() => {
+> 15 |         loadData();
+     |         ^^^^^^^^ `loadData` accessed before it is declared
+  16 |     }, [dateRange]);
+  17 |
+  18 |     const loadData = async () => {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\AnalyticsDashboard.tsx:18:5
+  16 |     }, [dateRange]);
+  17 |
+> 18 |     const loadData = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 19 |         setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |         const { data, error } = await analyticsService.getAnalytics(dateRange);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |         if (data) {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |             setStats(data);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |         } else {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 24 |             console.error('Failed to load analytics:', error);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 25 |         }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 26 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 27 |     };
+     | ^^^^^^^ `loadData` is declared here
+  28 |
+  29 |     if (loading) {
+  30 |         return (  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\ArticleEditor.tsx
+  37:9  error  Error: Cannot access variable before it is declared
+
+`loadArticles` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\ArticleEditor.tsx:37:9
+  35 |
+  36 |     useEffect(() => {
+> 37 |         loadArticles();
+     |         ^^^^^^^^^^^^ `loadArticles` accessed before it is declared
+  38 |     }, []);
+  39 |
+  40 |     const loadArticles = async () => {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\ArticleEditor.tsx:40:5
+  38 |     }, []);
+  39 |
+> 40 |     const loadArticles = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 41 |         const { data, error } = await supabase
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 42 |             .from('seo_articles')
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 49 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 50 |     };
+     | ^^^^^^^ `loadArticles` is declared here
+  51 |
+  52 |     const handleSave = async () => {
+  53 |         if (!editing) return;  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\ContactSubmissionsTab.tsx
+  13:9  error  Error: Cannot access variable before it is declared
+
+`loadSubmissions` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\ContactSubmissionsTab.tsx:13:9
+  11 |
+  12 |     useEffect(() => {
+> 13 |         loadSubmissions();
+     |         ^^^^^^^^^^^^^^^ `loadSubmissions` accessed before it is declared
+  14 |     }, []);
+  15 |
+  16 |     const loadSubmissions = async () => {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\ContactSubmissionsTab.tsx:16:5
+  14 |     }, []);
+  15 |
+> 16 |     const loadSubmissions = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 17 |         setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 18 |         const { submissions: data } = await contactService.getContactSubmissions();
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 19 |         setSubmissions(data);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |     };
+     | ^^^^^^^ `loadSubmissions` is declared here
+  22 |
+  23 |     const handleStatusChange = async (id: string, status: 'New' | 'Read' | 'Replied') => {
+  24 |         await contactService.updateSubmissionStatus(id, status);  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\CreateInvoiceModal.tsx
+  430:41  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\DynamicVideoSimulation.tsx
+  132:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\EnhancedGlobalSearch.tsx
+   38:9   error    Error: Cannot access variable before it is declared
+
+`loadSearchHistory` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\EnhancedGlobalSearch.tsx:38:9
+  36 |
+  37 |         window.addEventListener('keydown', handleKeyDown);
+> 38 |         loadSearchHistory();
+     |         ^^^^^^^^^^^^^^^^^ `loadSearchHistory` accessed before it is declared
+  39 |
+  40 |         return () => window.removeEventListener('keydown', handleKeyDown);
+  41 |     }, []);
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\EnhancedGlobalSearch.tsx:58:5
+  56 |     }, [query, filters]);
+  57 |
+> 58 |     const loadSearchHistory = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 59 |         const historyData = await searchService.getSearchHistory(user.id, 5);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 60 |         setHistory(historyData);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 61 |     };
+     | ^^^^^^^ `loadSearchHistory` is declared here
+  62 |
+  63 |     const loadSuggestions = async () => {
+  64 |         const role = user.role === 'admin' ? 'admin' : 'client';                                                                                 react-hooks/immutability
+   46:17  error    Error: Cannot access variable before it is declared
+
+`performSearch` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\EnhancedGlobalSearch.tsx:46:17
+  44 |         if (query.length >= 2) {
+  45 |             const debounceTimer = setTimeout(() => {
+> 46 |                 performSearch();
+     |                 ^^^^^^^^^^^^^ `performSearch` accessed before it is declared
+  47 |                 loadSuggestions();
+  48 |             }, 300);
+  49 |
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\EnhancedGlobalSearch.tsx:69:5
+  67 |     };
+  68 |
+> 69 |     const performSearch = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 70 |         if (!query.trim()) {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 71 |             setResults([]);
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 88 |         setIsSearching(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 89 |     };
+     | ^^^^^^^ `performSearch` is declared here
+  90 |
+  91 |     const handleKeyDown = (e: React.KeyboardEvent) => {
+  92 |         if (e.key === 'ArrowDown') {                                                                                                                                                                                                        react-hooks/immutability
+   47:17  error    Error: Cannot access variable before it is declared
+
+`loadSuggestions` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\EnhancedGlobalSearch.tsx:47:17
+  45 |             const debounceTimer = setTimeout(() => {
+  46 |                 performSearch();
+> 47 |                 loadSuggestions();
+     |                 ^^^^^^^^^^^^^^^ `loadSuggestions` accessed before it is declared
+  48 |             }, 300);
+  49 |
+  50 |             return () => clearTimeout(debounceTimer);
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\EnhancedGlobalSearch.tsx:63:5
+  61 |     };
+  62 |
+> 63 |     const loadSuggestions = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 64 |         const role = user.role === 'admin' ? 'admin' : 'client';
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 65 |         const suggs = await searchService.getSuggestions(query, user.id, role);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 66 |         setSuggestions(suggs);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 67 |     };
+     | ^^^^^^^ `loadSuggestions` is declared here
+  68 |
+  69 |     const performSearch = async () => {
+  70 |         if (!query.trim()) {  react-hooks/immutability
+  151:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\HomeTab.tsx
+  97:73  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\MessageBubble.tsx
+  63:49  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\MessagesTab.tsx
+  477:37  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  532:45  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  639:53  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  639:53  warning  img elements must have an alt prop, either with meaningful text, or an empty string for decorative images                                                                                                                                                                                jsx-a11y/alt-text
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\MissedCallsNotification.tsx
+   22:9   error    Error: Cannot access variable before it is declared
+
+`loadUnseenCount` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\MissedCallsNotification.tsx:22:9
+  20 |
+  21 |     useEffect(() => {
+> 22 |         loadUnseenCount();
+     |         ^^^^^^^^^^^^^^^ `loadUnseenCount` accessed before it is declared
+  23 |
+  24 |         // Subscribe to new missed calls
+  25 |         const unsubscribe = missedCallsService.subscribeToMissedCalls(
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\MissedCallsNotification.tsx:60:5
+  58 |     }, [userId]);
+  59 |
+> 60 |     const loadUnseenCount = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 61 |         const { count } = await missedCallsService.getUnseenMissedCallsCount(userId);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 62 |         setUnseenCount(count);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 63 |     };
+     | ^^^^^^^ `loadUnseenCount` is declared here
+  64 |
+  65 |     const loadMissedCalls = async () => {
+  66 |         setLoading(true);  react-hooks/immutability
+  132:45  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\NotificationCenter.tsx
+  21:9  error  Error: Cannot access variable before it is declared
+
+`loadNotifications` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\NotificationCenter.tsx:21:9
+  19 |         if (!userId) return;
+  20 |
+> 21 |         loadNotifications();
+     |         ^^^^^^^^^^^^^^^^^ `loadNotifications` accessed before it is declared
+  22 |
+  23 |         // Realtime subscription
+  24 |         const channel = notificationService.subscribe(userId, (newNotification) => {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\NotificationCenter.tsx:38:5
+  36 |     }, [notifications]);
+  37 |
+> 38 |     const loadNotifications = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 39 |         const { notifications: loaded, error } = await notificationService.getNotifications(userId);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 40 |         if (loaded) {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 41 |             setNotifications(loaded);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 42 |         }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 43 |     };
+     | ^^^^^^^ `loadNotifications` is declared here
+  44 |
+  45 |     const handleMarkAsRead = async (notificationId: string) => {
+  46 |         // Optimistic update  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\PortfolioShowcase.tsx
+  384:33  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  468:41  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\ResourceAllocationView.tsx
+  289:33  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\SalesForecastTab.tsx
+  20:9  error  Error: Cannot access variable before it is declared
+
+`loadData` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\SalesForecastTab.tsx:20:9
+  18 |
+  19 |     useEffect(() => {
+> 20 |         loadData();
+     |         ^^^^^^^^ `loadData` accessed before it is declared
+  21 |     }, [user]);
+  22 |
+  23 |     const loadData = async () => {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\SalesForecastTab.tsx:23:5
+  21 |     }, [user]);
+  22 |
+> 23 |     const loadData = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 24 |         setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 25 |         try {
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 55 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 56 |     };
+     | ^^^^^^^ `loadData` is declared here
+  57 |
+  58 |     if (loading) {
+  59 |         return <div className="p-12 text-center text-slate-500">Loading forecast data...</div>;  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\Sidebar.tsx
+  72:25  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\accounting\ChartOfAccountsPage.tsx
+  31:13  error  Error: Cannot access variable before it is declared
+
+`loadAccounts` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\accounting\ChartOfAccountsPage.tsx:31:13
+  29 |     useEffect(() => {
+  30 |         if (currentTenant) {
+> 31 |             loadAccounts();
+     |             ^^^^^^^^^^^^ `loadAccounts` accessed before it is declared
+  32 |         }
+  33 |     }, [currentTenant, filterType, showInactive]);
+  34 |
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\accounting\ChartOfAccountsPage.tsx:35:5
+  33 |     }, [currentTenant, filterType, showInactive]);
+  34 |
+> 35 |     const loadAccounts = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 36 |         setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 37 |         setError(null);
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 55 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 56 |     };
+     | ^^^^^^^ `loadAccounts` is declared here
+  57 |
+  58 |     const handleCreate = async () => {
+  59 |         const { account, error: err } = await chartOfAccountsService.createAccount(formData);  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\accounting\JournalEntriesPage.tsx
+  28:13  error  Error: Cannot access variable before it is declared
+
+`loadEntries` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\accounting\JournalEntriesPage.tsx:28:13
+  26 |     useEffect(() => {
+  27 |         if (currentTenant) {
+> 28 |             loadEntries();
+     |             ^^^^^^^^^^^ `loadEntries` accessed before it is declared
+  29 |             loadAccounts();
+  30 |         }
+  31 |     }, [currentTenant, filterStatus]);
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\accounting\JournalEntriesPage.tsx:33:5
+  31 |     }, [currentTenant, filterStatus]);
+  32 |
+> 33 |     const loadEntries = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 34 |         setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 35 |         setError(null);
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 50 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 51 |     };
+     | ^^^^^^^ `loadEntries` is declared here
+  52 |
+  53 |     const loadAccounts = async () => {
+  54 |         const { accounts: data } = await chartOfAccountsService.getAccounts({ isActive: true });                                                                                                    react-hooks/immutability
+  29:13  error  Error: Cannot access variable before it is declared
+
+`loadAccounts` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\accounting\JournalEntriesPage.tsx:29:13
+  27 |         if (currentTenant) {
+  28 |             loadEntries();
+> 29 |             loadAccounts();
+     |             ^^^^^^^^^^^^ `loadAccounts` accessed before it is declared
+  30 |         }
+  31 |     }, [currentTenant, filterStatus]);
+  32 |
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\accounting\JournalEntriesPage.tsx:53:5
+  51 |     };
+  52 |
+> 53 |     const loadAccounts = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 54 |         const { accounts: data } = await chartOfAccountsService.getAccounts({ isActive: true });
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 55 |         setAccounts(data);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 56 |     };
+     | ^^^^^^^ `loadAccounts` is declared here
+  57 |
+  58 |     const handleViewEntry = async (entryId: string) => {
+  59 |         const { entry, error: err } = await journalEntryService.getEntry(entryId);  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\admin\ImprovementsPage.tsx
+  35:9  error  Error: Cannot access variable before it is declared
+
+`loadImprovements` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\admin\ImprovementsPage.tsx:35:9
+  33 |     // Load improvements
+  34 |     useEffect(() => {
+> 35 |         loadImprovements();
+     |         ^^^^^^^^^^^^^^^^ `loadImprovements` accessed before it is declared
+  36 |     }, [filters]);
+  37 |
+  38 |     const loadImprovements = async () => {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\admin\ImprovementsPage.tsx:38:5
+  36 |     }, [filters]);
+  37 |
+> 38 |     const loadImprovements = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 39 |         setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 40 |         const { improvements: data, error } = await improvementService.getImprovements(filters);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 41 |
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 42 |         if (!error && data) {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 43 |             setImprovements(data);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 44 |         }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 45 |
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 46 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 47 |     };
+     | ^^^^^^^ `loadImprovements` is declared here
+  48 |
+  49 |     const handleSearch = () => {
+  50 |         setFilters({ ...filters, search: searchQuery });  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\admin\SuperAdminTenantsTab.tsx
+  26:9  error  Error: Cannot access variable before it is declared
+
+`loadTenants` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\admin\SuperAdminTenantsTab.tsx:26:9
+  24 |
+  25 |     useEffect(() => {
+> 26 |         loadTenants();
+     |         ^^^^^^^^^^^ `loadTenants` accessed before it is declared
+  27 |     }, []);
+  28 |
+  29 |     const loadTenants = async () => {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\admin\SuperAdminTenantsTab.tsx:29:5
+  27 |     }, []);
+  28 |
+> 29 |     const loadTenants = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 30 |         setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 31 |         const { tenants: data } = await tenantManagementService.getAllTenants();
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 32 |         setTenants(data);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 33 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 34 |     };
+     | ^^^^^^^ `loadTenants` is declared here
+  35 |
+  36 |     const handleViewLogs = async (tenantId: string) => {
+  37 |         setSelectedTenant(tenantId);  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\business\BillingPage.tsx
+   42:13  error  Error: Cannot access variable before it is declared
+
+`loadData` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\business\BillingPage.tsx:42:13
+  40 |     useEffect(() => {
+  41 |         if (currentTenant) {
+> 42 |             loadData();
+     |             ^^^^^^^^ `loadData` accessed before it is declared
+  43 |         }
+  44 |     }, [currentTenant]);
+  45 |
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\business\BillingPage.tsx:46:5
+  44 |     }, [currentTenant]);
+  45 |
+> 46 |     const loadData = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 47 |         if (!currentTenant) return;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 48 |
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 59 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 60 |     };
+     | ^^^^^^^ `loadData` is declared here
+  61 |
+  62 |     const handleCreateInvoice = async (invoiceData: Partial<BusinessInvoice>) => {
+  63 |         if (!currentTenant) return;  react-hooks/immutability
+  333:27  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\business\BillingPage.tsx:333:27
+  331 |         projectId: '',
+  332 |         issueDate: new Date().toISOString().split('T')[0],
+> 333 |         dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Default to 14 days
+      |                           ^^^^^^^^^^ Cannot call impure function
+  334 |         senderName: currentTenant?.name || '',
+  335 |         lineItems: [{ description: '', quantity: 1, rate: 0, amount: 0 }],
+  336 |         taxRate: 0,                                                                                                                                                                                                                                                                        react-hooks/purity
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\business\BusinessDashboard.tsx
+  486:29  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\business\CalendarPage.tsx
+  30:13  error  Error: Cannot access variable before it is declared
+
+`loadEvents` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\business\CalendarPage.tsx:30:13
+  28 |     useEffect(() => {
+  29 |         if (currentTenant) {
+> 30 |             loadEvents();
+     |             ^^^^^^^^^^ `loadEvents` accessed before it is declared
+  31 |         }
+  32 |     }, [currentTenant]);
+  33 |
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\business\CalendarPage.tsx:34:5
+  32 |     }, [currentTenant]);
+  33 |
+> 34 |     const loadEvents = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 35 |         if (!currentTenant) return;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 36 |
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 37 |         setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 38 |         const { events: data } = await businessEventService.getEvents(currentTenant.id);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 39 |         setEvents(data);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 40 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 41 |     };
+     | ^^^^^^^ `loadEvents` is declared here
+  42 |
+  43 |     const handleAddEvent = async (eventData: Partial<BusinessEvent>) => {
+  44 |         if (!currentTenant) return;  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\business\MessagesPage.tsx
+  29:13  error  Error: Cannot access variable before it is declared
+
+`loadConversations` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\business\MessagesPage.tsx:29:13
+  27 |     useEffect(() => {
+  28 |         if (currentTenant) {
+> 29 |             loadConversations();
+     |             ^^^^^^^^^^^^^^^^^ `loadConversations` accessed before it is declared
+  30 |         }
+  31 |     }, [currentTenant]);
+  32 |
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\business\MessagesPage.tsx:39:5
+  37 |     }, [selectedConversation]);
+  38 |
+> 39 |     const loadConversations = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 40 |         setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 41 |         // Load conversations from messageService
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 58 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 59 |     };
+     | ^^^^^^^ `loadConversations` is declared here
+  60 |
+  61 |     const loadMessages = async (conversationId: string) => {
+  62 |         // Load messages for conversation                                                                                                                                                                                                                                                      react-hooks/immutability
+  35:13  error  Error: Cannot access variable before it is declared
+
+`loadMessages` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\business\MessagesPage.tsx:35:13
+  33 |     useEffect(() => {
+  34 |         if (selectedConversation) {
+> 35 |             loadMessages(selectedConversation.id);
+     |             ^^^^^^^^^^^^ `loadMessages` accessed before it is declared
+  36 |         }
+  37 |     }, [selectedConversation]);
+  38 |
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\business\MessagesPage.tsx:61:5
+  59 |     };
+  60 |
+> 61 |     const loadMessages = async (conversationId: string) => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 62 |         // Load messages for conversation
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 63 |         const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 64 |         const { messages: msgs } = await messageService.getMessages(user.id, isAdmin);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 65 |         setMessages(msgs.slice(0, 10));
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 66 |     };
+     | ^^^^^^^ `loadMessages` is declared here
+  67 |
+  68 |     const handleSendMessage = async () => {
+  69 |         if (!newMessage.trim()) return;  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\business\ProjectsPage.tsx
+  74:13  error  Error: Cannot access variable before it is declared
+
+`loadData` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\business\ProjectsPage.tsx:74:13
+  72 |     useEffect(() => {
+  73 |         if (currentTenant) {
+> 74 |             loadData();
+     |             ^^^^^^^^ `loadData` accessed before it is declared
+  75 |         }
+  76 |     }, [currentTenant]);
+  77 |
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\business\ProjectsPage.tsx:78:5
+  76 |     }, [currentTenant]);
+  77 |
+> 78 |     const loadData = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 79 |         if (!currentTenant) return;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 80 |         setLoading(true);
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 87 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 88 |     };
+     | ^^^^^^^ `loadData` is declared here
+  89 |
+  90 |     const handleDragStart = (event: DragStartEvent) => {
+  91 |         setActiveId(event.active.id as string);  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\client\ClientMeetingsView.tsx
+   22:13  error  Error: Cannot access variable before it is declared
+
+`loadMeetings` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\client\ClientMeetingsView.tsx:22:13
+  20 |     useEffect(() => {
+  21 |         if (user) {
+> 22 |             loadMeetings();
+     |             ^^^^^^^^^^^^ `loadMeetings` accessed before it is declared
+  23 |         }
+  24 |     }, [user]);
+  25 |
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\client\ClientMeetingsView.tsx:26:5
+  24 |     }, [user]);
+  25 |
+> 26 |     const loadMeetings = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 27 |         if (!user) return;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 28 |         setLoading(true);
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 56 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 57 |     };
+     | ^^^^^^^ `loadMeetings` is declared here
+  58 |
+  59 |     const upcomingMeetings = meetings.filter(m =>
+  60 |         (m.status === 'scheduled' || m.status === 'active' || (m.status as any) === 'confirmed') &&  react-hooks/immutability
+  159:84  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\client\ClientMeetingsView.tsx:159:84
+  157 |                                                 className="gap-2"
+  158 |                                                 // Allow joining 10 mins early
+> 159 |                                                 disabled={dateToFormat.getTime() - Date.now() > 10 * 60 * 1000}
+      |                                                                                    ^^^^^^^^^^ Cannot call impure function
+  160 |                                             >
+  161 |                                                 <Video className="w-4 h-4" />
+  162 |                                                 {dateToFormat.getTime() - Date.now() > 10 * 60 * 1000 ? 'Join (Too Early)' : 'Join Link'}                                                       react-hooks/purity
+  162:75  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\client\ClientMeetingsView.tsx:162:75
+  160 |                                             >
+  161 |                                                 <Video className="w-4 h-4" />
+> 162 |                                                 {dateToFormat.getTime() - Date.now() > 10 * 60 * 1000 ? 'Join (Too Early)' : 'Join Link'}
+      |                                                                           ^^^^^^^^^^ Cannot call impure function
+  163 |                                             </Button>
+  164 |                                         )}
+  165 |                                     </div>                                                                                                                                                                                     react-hooks/purity
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\projects\MilestoneManager.tsx
+  18:9  error  Error: Cannot access variable before it is declared
+
+`loadMilestones` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\projects\MilestoneManager.tsx:18:9
+  16 |
+  17 |     useEffect(() => {
+> 18 |         loadMilestones();
+     |         ^^^^^^^^^^^^^^ `loadMilestones` accessed before it is declared
+  19 |     }, [projectId]);
+  20 |
+  21 |     const loadMilestones = async () => {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\projects\MilestoneManager.tsx:21:5
+  19 |     }, [projectId]);
+  20 |
+> 21 |     const loadMilestones = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |         setIsLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |         const { milestones, error } = await milestoneService.getMilestones(projectId);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 24 |         if (error) {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 25 |             toast.error('Failed to load milestones');
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 26 |         } else {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 27 |             setMilestones(milestones);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 28 |         }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 29 |         setIsLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 30 |     };
+     | ^^^^^^^ `loadMilestones` is declared here
+  31 |
+  32 |     const handleCreate = async () => {
+  33 |         if (!newMilestone.name.trim()) return;  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\video\CustomVideoRoom.tsx
+  161:17  error  Error: Cannot access variable before it is declared
+
+`handleLeave` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\video\CustomVideoRoom.tsx:161:17
+  159 |         return () => {
+  160 |             if (isJoinedRef.current) {
+> 161 |                 handleLeave();
+      |                 ^^^^^^^^^^^ `handleLeave` accessed before it is declared
+  162 |             }
+  163 |         };
+  164 |     }, []);
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\video\CustomVideoRoom.tsx:300:5
+  298 |
+  299 |     // Handle leaving the meeting
+> 300 |     const handleLeave = async () => {
+      |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 301 |         try {
+      | ^^^^^^^^^^^^^
+> 302 |             // Calculate duration
+      …
+      | ^^^^^^^^^^^^^
+> 319 |         }
+      | ^^^^^^^^^^^^^
+> 320 |     };
+      | ^^^^^^^ `handleLeave` is declared here
+  321 |
+  322 |     // Handle audio toggle
+  323 |     const handleToggleAudio = async () => {  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\gdpr\CookieConsent.tsx
+  26:9  error  Error: Cannot access variable before it is declared
+
+`checkConsentStatus` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\gdpr\CookieConsent.tsx:26:9
+  24 |
+  25 |     useEffect(() => {
+> 26 |         checkConsentStatus();
+     |         ^^^^^^^^^^^^^^^^^^ `checkConsentStatus` accessed before it is declared
+  27 |     }, [user]);
+  28 |
+  29 |     async function checkConsentStatus() {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\gdpr\CookieConsent.tsx:29:5
+  27 |     }, [user]);
+  28 |
+> 29 |     async function checkConsentStatus() {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 30 |         if (!user) {
+     | ^^^^^^^^^^^^^^^^^^^^
+> 31 |             // Check localStorage for anonymous users
+     …
+     | ^^^^^^^^^^^^^^^^^^^^
+> 47 |         }
+     | ^^^^^^^^^^^^^^^^^^^^
+> 48 |     }
+     | ^^^^^^ `checkConsentStatus` is declared here
+  49 |
+  50 |     async function handleAcceptAll() {
+  51 |         const newConsents = {  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\meeting\MeetingPage.tsx
+   62:9   error  Error: Cannot access variable before it is declared
+
+`validateAndJoin` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\meeting\MeetingPage.tsx:62:9
+  60 |         }
+  61 |
+> 62 |         validateAndJoin();
+     |         ^^^^^^^^^^^^^^^ `validateAndJoin` accessed before it is declared
+  63 |
+  64 |         // Cleanup on unmount
+  65 |         return () => {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\meeting\MeetingPage.tsx:70:5
+   68 |     }, [token]);
+   69 |
+>  70 |     const validateAndJoin = async () => {
+      |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  71 |         try {
+      | ^^^^^^^^^^^^^
+>  72 |             // Step 1: Validate token
+      …
+      | ^^^^^^^^^^^^^
+> 189 |         }
+      | ^^^^^^^^^^^^^
+> 190 |     };
+      | ^^^^^^^ `validateAndJoin` is declared here
+  191 |
+  192 |     // Helper to sync Daily participants to React state
+  193 |     const [participants, setParticipants] = useState<Record<string, any>>({});  react-hooks/immutability
+   66:13  error  Error: Cannot access variable before it is declared
+
+`cleanup` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\meeting\MeetingPage.tsx:66:13
+  64 |         // Cleanup on unmount
+  65 |         return () => {
+> 66 |             cleanup();
+     |             ^^^^^^^ `cleanup` accessed before it is declared
+  67 |         };
+  68 |     }, [token]);
+  69 |
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\meeting\MeetingPage.tsx:283:5
+  281 |     };
+  282 |
+> 283 |     const cleanup = () => {
+      |     ^^^^^^^^^^^^^^^^^^^^^^^
+> 284 |         // Stop timer
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 285 |         if (timerIntervalRef.current) {
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 298 |         }
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 299 |     };
+      | ^^^^^^^ `cleanup` is declared here
+  300 |
+  301 |     const formatTime = (seconds: number): string => {
+  302 |         const mins = Math.floor(seconds / 60);                                                    react-hooks/immutability
+  228:27  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\meeting\MeetingPage.tsx:228:27
+  226 |         // Calculate duration
+  227 |         const durationSeconds = startTimeRef.current
+> 228 |             ? Math.floor((Date.now() - startTimeRef.current.getTime()) / 1000)
+      |                           ^^^^^^^^^^ Cannot call impure function
+  229 |             : undefined;
+  230 |
+  231 |         // End meeting in database                                                                                                                                                                                                                                                                                                                                                         react-hooks/purity
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\pages\PublicPortfolio.tsx
+  159:41  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\payments\PaymentPage.tsx
+  29:9  error  Error: Cannot access variable before it is declared
+
+`loadData` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\payments\PaymentPage.tsx:29:9
+  27 |
+  28 |     useEffect(() => {
+> 29 |         loadData();
+     |         ^^^^^^^^ `loadData` accessed before it is declared
+  30 |     }, [user.id]);
+  31 |
+  32 |     const loadData = async () => {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\payments\PaymentPage.tsx:32:5
+  30 |     }, [user.id]);
+  31 |
+> 32 |     const loadData = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 33 |         setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 34 |         const { invoices: invData } = await paymentService.getUserInvoices(user.id);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 35 |         const { payments: payData } = await paymentService.getPaymentHistory(user.id);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 36 |
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 37 |         if (invData) setInvoices(invData);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 38 |         if (payData) setPayments(payData);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 39 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 40 |     };
+     | ^^^^^^^ `loadData` is declared here
+  41 |
+  42 |     const handlePayClick = async (invoice: Invoice) => {
+  43 |         if (!isStripeConfigured) {  react-hooks/immutability
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\pwa\Splash.tsx
+  8:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\ui\OptimizedImage.tsx
+  92:7  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\ui\UIComponents.tsx
+  161:3  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  161:3  warning  img elements must have an alt prop, either with meaningful text, or an empty string for decorative images                                                                                                                                                                                jsx-a11y/alt-text
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\contexts\TenantContext.tsx
+  59:7  error  Error: Cannot access variable before it is declared
+
+`loadUserTenants` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\contexts\TenantContext.tsx:59:7
+  57 |       }, 15000);
+  58 |
+> 59 |       loadUserTenants(timeoutId);
+     |       ^^^^^^^^^^^^^^^ `loadUserTenants` accessed before it is declared
+  60 |
+  61 |       return () => clearTimeout(timeoutId);
+  62 |     } else {
+
+C:\Users\Alphacone IO\alphaclone-nextjs-6\src\contexts\TenantContext.tsx:70:3
+   68 |   }, [user?.id]);
+   69 |
+>  70 |   const loadUserTenants = async (timeoutId?: NodeJS.Timeout) => {
+      |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  71 |     if (!user?.id) return;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  72 |
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 169 |     }
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 170 |   };
+      | ^^^^^ `loadUserTenants` is declared here
+  171 |
+  172 |   const switchTenant = async (tenantId: string) => {
+  173 |     const tenant = userTenants.find(t => t.id === tenantId);  react-hooks/immutability
+
+✖ 136 problems (89 errors, 47 warnings)
