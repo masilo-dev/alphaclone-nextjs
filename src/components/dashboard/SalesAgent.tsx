@@ -241,8 +241,7 @@ const SalesAgent: React.FC = () => {
 
             // Step 1: Mark lead as qualified
             const { error: updateError } = await leadService.updateLead(id, {
-                stage: 'qualified',
-                status: 'Qualified'
+                stage: 'qualified'
             });
 
             if (updateError) {
@@ -273,7 +272,7 @@ const SalesAgent: React.FC = () => {
             if (clientError) {
                 toast.error(`Lead qualified but failed to create client: ${clientError}`);
                 // Still update local state to show qualified
-                setLeads(prev => prev.map(l => l.id === id ? { ...l, stage: 'qualified', status: 'Qualified' } : l));
+                setLeads(prev => prev.map(l => l.id === id ? { ...l, stage: 'qualified' } : l));
                 return;
             }
 
@@ -288,7 +287,7 @@ const SalesAgent: React.FC = () => {
             toast.success(`✅ ${lead.businessName} added to CRM as client!`, { duration: 4000 });
 
             // Update local state
-            setLeads(prev => prev.map(l => l.id === id ? { ...l, stage: 'qualified', status: 'Qualified' } : l));
+            setLeads(prev => prev.map(l => l.id === id ? { ...l, stage: 'qualified' } : l));
 
         } catch (err) {
             console.error('Add to CRM error:', err);
