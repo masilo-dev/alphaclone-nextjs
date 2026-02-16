@@ -216,7 +216,7 @@ class AIGenerationService {
                     'anthropic-version': '2023-06-01'
                 },
                 body: JSON.stringify({
-                    model: 'claude-3-5-sonnet-20241022',
+                    model: 'claude-sonnet-4-5-20250929',
                     max_tokens: 4096,
                     system: systemPrompts[type],
                     messages: [{
@@ -242,7 +242,7 @@ class AIGenerationService {
                 user_id: userId,
                 asset_type: 'content',
                 prompt: prompt,
-                metadata: { type, model: 'claude-3-5-sonnet', content },
+                metadata: { type, model: 'claude-4.5-sonnet', content },
                 tenant_id: tenantService.getCurrentTenantId()
             });
 

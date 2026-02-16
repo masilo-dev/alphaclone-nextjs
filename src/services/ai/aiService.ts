@@ -93,7 +93,7 @@ Include all standard legal clauses and make it ready to sign.`;
             prompt,
             systemPrompt: 'You are a legal contract expert. Generate professional, legally sound contracts.',
             provider: 'anthropic',
-            model: 'claude-opus-4-6',
+            model: 'claude-sonnet-4-5-20250929',
             maxTokens: 4000,
         });
 

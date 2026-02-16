@@ -29,7 +29,9 @@ export const MODEL_PRICING = {
   'gpt-4': { input: 30, output: 60 },
   'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
 
-  // Anthropic (per 1M tokens)
+  // Anthropic (per 1M tokens) - Updated for 4.5
+  'claude-4-5-sonnet': { input: 3, output: 15 },
+  'claude-4-5-haiku': { input: 0.25, output: 1.25 },
   'claude-3-5-sonnet': { input: 3, output: 15 },
   'claude-3-opus': { input: 15, output: 75 },
   'claude-3-haiku': { input: 0.25, output: 1.25 },
@@ -132,7 +134,7 @@ async function completeWithAnthropic(options: AIRequestOptions): Promise<AIRespo
     throw new Error('Anthropic API key not configured');
   }
 
-  const model = options.model || 'claude-3-5-sonnet-20241022';
+  const model = options.model || 'claude-sonnet-4-5-20250929';
 
   const message = await anthropic.messages.create({
     model: model,
@@ -320,7 +322,7 @@ async function chatWithAnthropic(
     throw new Error('Anthropic API key not configured');
   }
 
-  const selectedModel = model || 'claude-3-5-sonnet-20241022';
+  const selectedModel = model || 'claude-sonnet-4-5-20250929';
 
   // Ensure history alternates and starts with 'user'
   const messages: Anthropic.MessageParam[] = [];
@@ -464,7 +466,7 @@ export function getRecommendedModel(taskType: string): { provider: 'anthropic' |
     'translation': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
   };
 
-  return recommendations[taskType] || { provider: 'anthropic', model: 'claude-3-5-sonnet' };
+  return recommendations[taskType] || { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' };
 }
 
 /**
