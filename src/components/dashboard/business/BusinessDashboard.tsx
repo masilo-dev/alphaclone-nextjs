@@ -41,7 +41,8 @@ import MeetingsPage from './MeetingsPage';
 const CRMTab = React.lazy(() => import('../CRMTab'));
 const TasksTab = React.lazy(() => import('../TasksTab'));
 import SalesAgent from '../SalesAgent';
-import DealsTab from '../DealsTab';
+const DealsTab = React.lazy(() => import('../DealsTab'));
+const QuotesTab = React.lazy(() => import('../QuotesTab'));
 import AlphaCloneContractModal from '../../contracts/AlphaCloneContractModal';
 import ContractDashboard from '../../contracts/ContractDashboard';
 // Accounting Components - Lazy loaded to prevent module resolution issues
@@ -315,7 +316,15 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             case '/dashboard/business/leads': // Fallback
                 return <DealsTab userId={user.id} userRole={user.role} />;
             case '/dashboard/business/contracts':
-                return <ContractDashboard user={user} />;
+                return <ContractDashboard user={user} initialTab="details" />;
+            case '/dashboard/business/documents':
+                return <ContractDashboard user={user} initialTab="hub" />;
+            case '/dashboard/business/quotes':
+                return (
+                    <React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div></div>}>
+                        <QuotesTab userId={user.id} userRole={user.role} />
+                    </React.Suspense>
+                );
 
             case '/dashboard/gmail':
                 return (
@@ -362,6 +371,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             case '/dashboard/business/reports': return 'Analytics & Reports';
             case '/dashboard/business/settings': return 'Settings';
             case '/dashboard/business/contracts': return 'Contracts';
+            case '/dashboard/business/documents': return 'Documents';
+            case '/dashboard/business/quotes': return 'Quotes & Proposals';
             case '/dashboard/crm': return 'CRM';
             case '/dashboard/tasks': return 'Tasks';
             case '/dashboard/sales-agent': return 'Sales Agent';

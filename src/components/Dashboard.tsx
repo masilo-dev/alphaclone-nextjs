@@ -907,7 +907,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         );
 
       case '/dashboard/ai-studio':
-        return <AIStudio user={user} galleryItems={galleryItems} setGalleryItems={setGalleryItems} />;
+        return <AIStudio />;
 
       // New Enterprise Views
       case '/dashboard/admin/tenants':

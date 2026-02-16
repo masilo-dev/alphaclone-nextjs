@@ -63,9 +63,9 @@ const Sidebar = React.memo<SidebarProps>(({
             )}
 
             <aside className={`
-                fixed md:relative z-50 h-full bg-slate-900 border-r border-slate-800 flex flex-col transition-all duration-300 shadow-2xl overflow-hidden will-change-transform
-                ${sidebarOpen ? 'translate-x-0 w-64 pb-24 md:pb-0' : '-translate-x-full w-0 md:translate-x-0 md:w-16'}
-                ${isInCall ? 'z-[110]' : 'z-50'}
+                fixed md:relative z-[60] h-full bg-slate-900 border-r border-slate-800 flex flex-col transition-all duration-300 shadow-2xl overflow-hidden will-change-transform
+                ${sidebarOpen ? 'translate-x-0 w-64 pb-safe md:pb-0' : '-translate-x-full w-0 md:translate-x-0 md:w-16'}
+                ${isInCall ? 'z-[110]' : 'z-[60]'}
             `}>
                 <div className="h-20 flex items-center px-6 border-b border-slate-800 bg-slate-900">
                     <div className="flex items-center gap-3 overflow-hidden">
@@ -84,7 +84,10 @@ const Sidebar = React.memo<SidebarProps>(({
                     {navItems.map((item, idx) => (
                         <div key={idx}>
                             <button
-                                onClick={() => item.href === '#' ? handleSubNavigation('/dashboard/settings') : handleNavigation(item.href)}
+                                onClick={() => {
+                                    if (item.comingSoon) return;
+                                    item.href === '#' ? handleSubNavigation('/dashboard/settings') : handleNavigation(item.href);
+                                }}
                                 title={!sidebarOpen ? item.label : undefined}
                                 className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-2'} py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden active:scale-95 touch-manipulation
                    ${activeTab === item.href

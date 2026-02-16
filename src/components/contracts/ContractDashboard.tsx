@@ -37,16 +37,17 @@ import { useTenant } from '../../contexts/TenantContext';
 
 interface ContractDashboardProps {
     user: User;
+    initialTab?: 'details' | 'document' | 'hub';
 }
 
-const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
+const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab = 'details' }) => {
     const { currentTenant } = useTenant();
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [loading, setLoading] = useState(true);
     const [showSignModal, setShowSignModal] = useState(false);
     const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
     const [isUploading, setIsUploading] = useState(false);
-    const [activeTab, setActiveTab] = useState<'details' | 'document' | 'hub'>('details');
+    const [activeTab, setActiveTab] = useState<'details' | 'document' | 'hub'>(initialTab);
     const [storageUsage, setStorageUsage] = useState<number>(0);
     const [allFiles, setAllFiles] = useState<any[]>([]);
     const [isFilesLoading, setIsFilesLoading] = useState(false);

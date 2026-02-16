@@ -1,4 +1,16 @@
+
 import * as XLSX from 'xlsx';
+// Import PDFJS
+import * as pdfjsLib from 'pdfjs-dist';
+
+// Configure PDFJS worker
+// In a Next.js environment, we need to ensure the worker is loaded correctly
+// This often requires setting the workerSrc to a public URL or a local file
+// For simplicity in this environment, we'll try to use the CDN if global worker isn't set
+if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+}
+
 
 export interface ParsedContact {
     name?: string;
@@ -56,8 +68,6 @@ export const fileImportService = {
      */
     async importFromPDF(file: File): Promise<{ contacts: ParsedContact[]; error: string | null }> {
         try {
-            // For PDF parsing, we'll use a simple approach
-            // In production, you'd use pdf.js or similar
             const text = await this.extractTextFromPDF(file);
             const contacts = this.parseContactsFromText(text);
 
@@ -85,17 +95,31 @@ export const fileImportService = {
     },
 
     /**
-     * Extract text from PDF (simplified version)
+     * Extract text from PDF using pdfjs-dist
      */
     async extractTextFromPDF(file: File): Promise<string> {
-        // This is a placeholder - in production use pdf.js
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const text = e.target?.result as string;
-                resolve(text);
-            };
-            reader.readAsText(file);
+        return new Promise(async (resolve, reject) => {
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                const pdf = await loadingTask.promise;
+
+                let fullText = '';
+
+                // Iterate through all pages
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items
+                        .map((item: any) => item.str)
+                        .join(' ');
+                    fullText += pageText + '\n';
+                }
+
+                resolve(fullText);
+            } catch (error) {
+                reject(error);
+            }
         });
     },
 
