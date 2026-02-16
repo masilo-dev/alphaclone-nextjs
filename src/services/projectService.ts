@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import { Project, UserRole } from '../types';
 import { activityService } from './activityService';
 import { tenantService } from './tenancy/TenantService';
+import { fileUploadService } from './fileUploadService';
 
 export const projectService = {
     /**
@@ -326,6 +327,9 @@ export const projectService = {
             if (tenantId) {
                 deleteQuery = deleteQuery.eq('tenant_id', tenantId);
             }
+
+            // Reclaim storage space
+            await fileUploadService.deleteFileByEntity('project', projectId);
 
             const { error } = await deleteQuery;
 

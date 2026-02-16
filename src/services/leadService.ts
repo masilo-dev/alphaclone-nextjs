@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
+import { fileUploadService } from './fileUploadService';
 
 export interface Lead {
     id: string;
@@ -364,6 +365,9 @@ export const leadService = {
      */
     async deleteLead(id: string): Promise<{ error: string | null }> {
         const tenantId = this.getTenantId();
+
+        // Reclaim storage space
+        await fileUploadService.deleteFileByEntity('lead', id);
 
         const { error } = await supabase
             .from('leads')

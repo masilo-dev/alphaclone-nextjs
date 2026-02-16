@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { activityService } from './activityService';
 import { tenantService } from './tenancy/TenantService';
+import { fileUploadService } from './fileUploadService';
 
 export type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
 export type DealSource = 'referral' | 'website' | 'cold_outreach' | 'social_media' | 'event' | 'partner' | 'organic' | 'other';
@@ -411,6 +412,9 @@ export const dealService: DealService = {
     async deleteDeal(dealId: string): Promise<{ success: boolean; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
+
+            // Reclaim storage space
+            await fileUploadService.deleteFileByEntity('deal', dealId);
 
             const { error } = await supabase
                 .from('deals')

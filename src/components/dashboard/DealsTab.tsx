@@ -1,5 +1,7 @@
 'use client';
 
+import { supabase } from '../../lib/supabase';
+
 import React, { useEffect, useState } from 'react';
 import { TrendingUp, Plus, DollarSign, Calendar, User, Target, UserPlus, BarChart2, PieChart as PieChartIcon } from 'lucide-react';
 import { dealService, Deal, DealStage } from '../../services/dealService';
@@ -9,7 +11,9 @@ import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import LeadSelector from '../common/LeadSelector';
 import LeadDetailModal from './leads/LeadDetailModal';
+import { fileUploadService } from '../../services/fileUploadService';
 import toast from 'react-hot-toast';
+import { FileText, Download, Trash2, Eye } from 'lucide-react';
 import {
     BarChart,
     Bar,
@@ -43,6 +47,11 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
     const [selectedLeadForDetail, setSelectedLeadForDetail] = useState<Lead | null>(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [dealToDelete, setDealToDelete] = useState<Deal | null>(null);
+    const [showDocumentsModal, setShowDocumentsModal] = useState(false);
+    const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+    const [dealDocuments, setDealDocuments] = useState<any[]>([]);
 
     // Create deal form state
     const [dealForm, setDealForm] = useState({
@@ -124,15 +133,49 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
     const handleStageChange = async (dealId: string, newStage: DealStage) => {
         try {
             const { error } = await dealService.updateDeal(dealId, { stage: newStage });
-            if (error) {
-                toast.error(`Error updating deal: ${error}`);
-            } else {
-                toast.success('Deal stage updated');
+            if (!error) {
+                toast.success(`Deal stage updated to ${stageLabels[newStage]}`);
                 loadDeals();
                 loadPipelineStats();
+            } else {
+                toast.error(`Error updating stage: ${error}`);
             }
         } catch (err) {
-            toast.error('Failed to update deal');
+            toast.error('Failed to update deal stage');
+        }
+    };
+
+    const handleDeleteDeal = async () => {
+        if (!dealToDelete) return;
+
+        setIsSubmitting(true);
+        try {
+            const { success, error } = await dealService.deleteDeal(dealToDelete.id);
+            if (success) {
+                toast.success('Deal and associated storage deleted successfully');
+                setShowDeleteModal(false);
+                setDealToDelete(null);
+                loadDeals();
+            } else {
+                toast.error(`Error deleting deal: ${error}`);
+            }
+        } catch (err) {
+            toast.error('Failed to delete deal');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleViewDocuments = async (deal: Deal) => {
+        setSelectedDeal(deal);
+        setShowDocumentsModal(true);
+        try {
+            const { files, error } = await fileUploadService.getEntityFiles('deal', deal.id);
+            if (!error) {
+                setDealDocuments(files || []);
+            }
+        } catch (err) {
+            toast.error('Failed to load documents');
         }
     };
 
@@ -468,8 +511,29 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
 
                                 <div className="space-y-3 max-h-[600px] overflow-y-auto">
                                     {stageDeals.map((deal) => (
-                                        <div key={deal.id} className="glass-panel p-4 rounded-xl border border-white/5 hover:border-teal-500/30 transition-all">
-                                            <h4 className="font-bold text-white mb-2">{deal.name}</h4>
+                                        <div key={deal.id} className="glass-panel p-4 rounded-xl border border-white/5 hover:border-teal-500/30 transition-all group relative">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h4 className="font-bold text-white pr-6">{deal.name}</h4>
+                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 absolute top-3 right-3">
+                                                    <button
+                                                        onClick={() => handleViewDocuments(deal)}
+                                                        className="p-1 text-slate-400 hover:text-teal-400"
+                                                        title="Documents"
+                                                    >
+                                                        <FileText className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setDealToDelete(deal);
+                                                            setShowDeleteModal(true);
+                                                        }}
+                                                        className="p-1 text-slate-400 hover:text-red-400"
+                                                        title="Delete Deal"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
 
                                             {deal.value && (
                                                 <div className="flex items-center gap-2 text-teal-400 text-sm mb-2">
@@ -681,16 +745,94 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                 )
             }
 
-            {/* Lead Detail Modal */}
-            {
-                selectedLeadForDetail && (
-                    <LeadDetailModal
-                        isOpen={!!selectedLeadForDetail}
-                        onClose={() => setSelectedLeadForDetail(null)}
-                        lead={selectedLeadForDetail}
-                    />
-                )
-            }
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Delete Deal">
+                    <div className="p-4 space-y-4">
+                        <div className="flex items-center gap-3 text-red-400 bg-red-400/10 p-4 rounded-xl border border-red-400/20">
+                            <Trash2 className="w-6 h-6 shrink-0" />
+                            <div>
+                                <p className="font-bold">Are you sure?</p>
+                                <p className="text-sm opacity-80">This will permanently delete "{dealToDelete?.name}" and all associated documents. This action cannot be undone.</p>
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-3">
+                            <Button variant="outline" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+                            <Button variant="danger" onClick={handleDeleteDeal} disabled={isSubmitting}>
+                                {isSubmitting ? 'Deleting...' : 'Delete Permanently'}
+                            </Button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
+
+            {/* Documents Modal */}
+            {showDocumentsModal && selectedDeal && (
+                <Modal
+                    isOpen={showDocumentsModal}
+                    onClose={() => setShowDocumentsModal(false)}
+                    title={`Documents: ${selectedDeal.name}`}
+                >
+                    <div className="space-y-4">
+                        {dealDocuments.length === 0 ? (
+                            <div className="text-center py-8 bg-slate-900/50 rounded-xl border border-white/5">
+                                <FileText className="w-12 h-12 text-slate-600 mx-auto mb-3 opacity-20" />
+                                <p className="text-slate-400 text-sm font-medium">No documents attached to this deal</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {dealDocuments.map((doc) => (
+                                    <div key={doc.id} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-white/5 hover:bg-slate-900 transition-colors">
+                                        <div className="flex items-center gap-3 overflow-hidden">
+                                            <div className="w-10 h-10 bg-teal-500/10 rounded-lg flex items-center justify-center shrink-0">
+                                                <FileText className="w-5 h-5 text-teal-400" />
+                                            </div>
+                                            <div className="overflow-hidden">
+                                                <p className="text-white text-sm font-medium truncate">{doc.original_filename}</p>
+                                                <p className="text-slate-500 text-[10px] uppercase">{(doc.file_size / 1024).toFixed(1)} KB</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-1 shrink-0">
+                                            <button
+                                                onClick={() => {
+                                                    const { data } = supabase.storage.from('uploads').getPublicUrl(doc.storage_path);
+                                                    window.open(data.publicUrl, '_blank');
+                                                }}
+                                                className="p-2 text-slate-400 hover:text-teal-400 transition-colors"
+                                                title="View"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={async () => {
+                                                    try {
+                                                        const { success, error } = await fileUploadService.deleteFile(doc.id);
+                                                        if (success) {
+                                                            toast.success('File deleted');
+                                                            if (selectedDeal) handleViewDocuments(selectedDeal);
+                                                        } else {
+                                                            toast.error(`Delete failed: ${error}`);
+                                                        }
+                                                    } catch (err) {
+                                                        toast.error('Error deleting file');
+                                                    }
+                                                }}
+                                                className="p-2 text-slate-400 hover:text-red-400 transition-colors"
+                                                title="Delete"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <div className="pt-4 border-t border-white/5 flex justify-end">
+                            <Button variant="outline" onClick={() => setShowDocumentsModal(false)}>Close</Button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
         </div >
     );
 };

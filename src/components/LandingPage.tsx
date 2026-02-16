@@ -355,7 +355,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                                     {[
                                        { title: 'Custom Web Apps', desc: 'High-performance Next.js builds' },
                                        { title: 'Mobile Ecosystems', desc: 'iOS & Android native solutions' },
-                                       { title: 'AI Automation', desc: 'Custom LLMs & Sales Agents' },
+                                       { title: 'AI Automation', desc: 'Custom LLMs & Sales Agents', isComingSoon: true },
                                        { title: 'Enterprise Dashboards', desc: 'Unified business control' }
                                     ].map((s, i) => (
                                        <button key={i} onClick={() => scrollToSection('services')} className="w-full text-left p-3 rounded-xl hover:bg-slate-800 transition-colors group mb-1">
@@ -769,11 +769,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            icon: Bot,
                            color: 'teal',
                            title: 'AI Sales Agents',
+                           isComingSoon: true,
                            summary: 'Capture, qualify, and convert leads 24/7 on autopilot.',
                            details: [
                               'Automated Lead Qualification using GPT-4o',
                               'Instant Response across WhatsApp, Email & Web',
-                              'Seamless CRM Integration for Lead Tracking',
+                              'Unified CRM Lead Tracking',
                               'Advanced Knowledge Base Customization'
                            ],
                            showExtra: <AITerminal />
@@ -824,7 +825,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            title: 'Unified Finance',
                            summary: 'Complete financial oversight. Manage invoices, track subscriptions, and monitor your revenue streams in one secure, unified module.',
                            details: [
-                              'Stripe integration ready',
+                              'Unified Billing Readiness',
                               'Subscription management',
                               'Revenue analytics',
                               'Automated tax compliance'
@@ -1145,35 +1146,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            Custom development solutions built for success. Specializing in high-performance web, mobile, and AI applications.
                         </p>
                      </div>
-                     <div className="col-span-2 md:col-span-1">
-                        <h4 className="text-white font-bold mb-6">Integrations</h4>
-                        <div className="grid grid-cols-2 gap-4">
-                           <div className="group flex flex-col items-center gap-2">
-                              <div className="w-10 h-10 bg-slate-900/50 rounded-xl border border-slate-800 flex items-center justify-center p-2 group-hover:border-teal-500/50 transition-all grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100">
-                                 <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" alt="Gmail" className="w-full h-full object-contain" />
-                              </div>
-                              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Gmail</span>
-                           </div>
-                           <div className="group flex flex-col items-center gap-2">
-                              <div className="w-10 h-10 bg-slate-900/50 rounded-xl border border-slate-800 flex items-center justify-center p-2 group-hover:border-[#635BFF]/50 transition-all grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100">
-                                 <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" className="w-full h-full object-contain" />
-                              </div>
-                              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Stripe</span>
-                           </div>
-                           <div className="group flex flex-col items-center gap-2">
-                              <div className="w-10 h-10 bg-slate-900/50 rounded-xl border border-slate-800 flex items-center justify-center p-2 group-hover:border-[#003087]/50 transition-all grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100">
-                                 <Database className="w-6 h-6 text-teal-400" />
-                              </div>
-                              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Supabase</span>
-                           </div>
-                           <div className="group flex flex-col items-center gap-2">
-                              <div className="w-10 h-10 bg-slate-900/50 rounded-xl border border-slate-800 flex items-center justify-center p-2 group-hover:border-[#332FF2]/50 transition-all grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100">
-                                 <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Calendly_logo.svg" alt="Calendly" className="w-full h-full object-contain" />
-                              </div>
-                              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Calendly</span>
-                           </div>
-                        </div>
-                     </div>
+                     {/* Integrations Column Removed */}
                      <div>
                         <h4 className="text-white font-bold mb-6">Services</h4>
                         <ul className="space-y-4 text-sm text-slate-400">

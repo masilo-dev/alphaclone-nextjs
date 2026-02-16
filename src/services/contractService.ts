@@ -3,6 +3,7 @@ import { jsPDF } from 'jspdf';
 import { generateText } from './unifiedAIService';
 import { tenantService } from './tenancy/TenantService';
 import { esignatureComplianceService } from './esignatureComplianceService';
+import { fileUploadService } from './fileUploadService';
 
 export interface Contract {
     id: string;
@@ -13,6 +14,7 @@ export interface Contract {
     type: string; // 'NDA', 'Service', etc.
     status: 'draft' | 'sent' | 'client_signed' | 'fully_signed' | 'rejected';
     content: string; // HTML/Text
+    document_url?: string; // Uploaded PDF URL
     client_signature?: string;
     client_signed_at?: string;
     admin_signature?: string;
@@ -214,6 +216,24 @@ export const contractService = {
         const { data, error } = await query.order('created_at', { ascending: false });
 
         return { contracts: data, error };
+    },
+
+    /**
+     * Delete a contract
+     */
+    async deleteContract(id: string) {
+        const tenantId = this.getTenantId();
+
+        // Reclaim storage space
+        await fileUploadService.deleteFileByEntity('contract', id);
+
+        const { error } = await supabase
+            .from('contracts')
+            .delete()
+            .eq('id', id)
+            .eq('tenant_id', tenantId);
+
+        return { error };
     },
 
     /**

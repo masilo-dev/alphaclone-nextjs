@@ -107,12 +107,14 @@ export const ClientImportModal: React.FC<ClientImportModalProps> = ({ isOpen, on
 
                     {!file ? (
                         <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center">
-                                <Upload className="w-6 h-6 text-slate-400" />
-                            </div>
-                            <div>
-                                <p className="font-medium text-slate-300">Click to upload or drag and drop</p>
-                                <p className="text-xs text-slate-500 mt-1">CSV or Excel files only</p>
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                <Upload className="w-10 h-10 text-teal-400 mb-3" />
+                                <p className="mb-2 text-sm text-slate-300">
+                                    <span className="font-semibold text-teal-400">Click to upload</span> or drag and drop
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                    CSV, XLS or XLSX (Max 100MB)
+                                </p>
                             </div>
                         </label>
                     ) : (

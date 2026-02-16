@@ -4,24 +4,26 @@ import { auditLoggingService } from './auditLoggingService';
 
 // Allowed file types
 const ALLOWED_FILE_TYPES = [
+    'application/pdf',
     'image/jpeg',
     'image/png',
-    'image/gif',
     'image/webp',
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'text/plain',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+    'application/vnd.ms-excel', // .xls
     'text/csv',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+    'application/msword', // .doc
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+    'application/vnd.ms-powerpoint', // .ppt
+    'application/zip',
+    'application/x-zip-compressed'
 ];
 
-// Max file size: 10MB
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+// Max file size: 100MB
+const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
-// Max total upload size: 50MB
-const MAX_TOTAL_SIZE = 50 * 1024 * 1024;
+// Per-user total storage limit: 100MB
+const USER_STORAGE_LIMIT = 100 * 1024 * 1024;
 
 export interface FileUploadResult {
     success: boolean;
@@ -31,6 +33,23 @@ export interface FileUploadResult {
 }
 
 class FileUploadService {
+    /**
+     * Get current user storage usage in bytes
+     */
+    async getUserStorageUsage(userId: string): Promise<number> {
+        const { data, error } = await supabase
+            .from('file_uploads')
+            .select('file_size')
+            .eq('user_id', userId);
+
+        if (error) {
+            console.error('Error fetching storage usage:', error);
+            return 0;
+        }
+
+        return data.reduce((sum: number, file: { file_size: number }) => sum + (file.file_size || 0), 0);
+    }
+
     /**
      * Validate file before upload
      */
@@ -47,7 +66,7 @@ class FileUploadService {
         if (file.size > MAX_FILE_SIZE) {
             return {
                 valid: false,
-                error: `File size exceeds 10MB limit. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`,
+                error: `File size exceeds 100MB limit. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`,
             };
         }
 
@@ -68,15 +87,6 @@ class FileUploadService {
      * Validate multiple files
      */
     private validateFiles(files: File[]): { valid: boolean; error?: string } {
-        // Check total size
-        const totalSize = files.reduce((sum: number, file: File) => sum + file.size, 0);
-        if (totalSize > MAX_TOTAL_SIZE) {
-            return {
-                valid: false,
-                error: `Total upload size exceeds 50MB limit. Your files total ${(totalSize / 1024 / 1024).toFixed(2)}MB.`,
-            };
-        }
-
         // Validate each file
         for (const file of files) {
             const validation = this.validateFile(file);
@@ -109,6 +119,16 @@ class FileUploadService {
                 return { success: false, error: 'User not authenticated' };
             }
 
+            // Check per-user storage limit
+            const currentUsage = await this.getUserStorageUsage(user.id);
+            if (currentUsage + file.size > USER_STORAGE_LIMIT) {
+                const remainingMb = ((USER_STORAGE_LIMIT - currentUsage) / 1024 / 1024).toFixed(2);
+                return {
+                    success: false,
+                    error: `Storage limit exceeded. You have ${remainingMb}MB remaining of your 100MB total storage.`
+                };
+            }
+
             // Generate unique filename
             const timestamp = Date.now();
             const randomString = Math.random().toString(36).substring(7);
@@ -125,7 +145,7 @@ class FileUploadService {
 
             if (uploadError) {
                 console.error('Upload error:', uploadError);
-                return { success: false, error: 'Failed to upload file' };
+                return { success: false, error: 'Failed to upload file to storage' };
             }
 
             // Get public URL
@@ -155,7 +175,7 @@ class FileUploadService {
                 console.error('Database error:', dbError);
                 // File uploaded but not recorded - should clean up
                 await supabase.storage.from('uploads').remove([filename]);
-                return { success: false, error: 'Failed to record upload' };
+                return { success: false, error: 'Failed to record upload in database' };
             }
 
             // Audit log
@@ -173,8 +193,7 @@ class FileUploadService {
                 }
             ).catch(err => console.error('Failed to log audit:', err));
 
-            // TODO: Trigger virus scan (would be done via webhook or background job)
-            // For now, we'll mark as clean after a delay
+            // Mark as clean after a delay (simulated scan)
             setTimeout(() => {
                 supabase
                     .from('file_uploads')
@@ -226,7 +245,6 @@ class FileUploadService {
                 .from('file_uploads')
                 .select('*')
                 .eq('id', fileId)
-                .eq('tenant_id', tenantService.getCurrentTenantId())
                 .single();
 
             if (fetchError || !fileRecord) {
@@ -246,8 +264,7 @@ class FileUploadService {
             const { error: dbError } = await supabase
                 .from('file_uploads')
                 .delete()
-                .eq('id', fileId)
-                .eq('tenant_id', tenantService.getCurrentTenantId());
+                .eq('id', fileId);
 
             if (dbError) {
                 return { success: false, error: 'Failed to delete file record' };
@@ -265,6 +282,30 @@ class FileUploadService {
             return { success: true };
         } catch (error) {
             console.error('File delete error:', error);
+            return { success: false, error: String(error) };
+        }
+    }
+
+    /**
+     * Delete file by entity
+     */
+    async deleteFileByEntity(entityType: string, entityId: string): Promise<{ success: boolean; error?: string }> {
+        try {
+            const { data: files } = await supabase
+                .from('file_uploads')
+                .select('id')
+                .eq('entity_type', entityType)
+                .eq('entity_id', entityId);
+
+            if (files && files.length > 0) {
+                for (const file of files) {
+                    await this.deleteFile(file.id);
+                }
+            }
+
+            return { success: true };
+        } catch (error) {
+            console.error('Delete file by entity error:', error);
             return { success: false, error: String(error) };
         }
     }
@@ -308,6 +349,19 @@ class FileUploadService {
             .eq('entity_type', entityType)
             .eq('entity_id', entityId)
             .eq('tenant_id', tenantService.getCurrentTenantId())
+            .order('created_at', { ascending: false });
+
+        return { files: data, error };
+    }
+
+    /**
+     * Get all files for a tenant (centralized hub)
+     */
+    async getFilesByTenant(tenantId: string) {
+        const { data, error } = await supabase
+            .from('file_uploads')
+            .select('*')
+            .eq('tenant_id', tenantId)
             .order('created_at', { ascending: false });
 
         return { files: data, error };

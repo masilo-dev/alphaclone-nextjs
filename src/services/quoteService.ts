@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
+import { fileUploadService } from './fileUploadService';
 
 export type QuoteStatus = 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired' | 'converted';
 
@@ -456,6 +457,9 @@ export const quoteService = {
      */
     async deleteQuote(quoteId: string): Promise<{ success: boolean; error: string | null }> {
         try {
+            // Reclaim storage space
+            await fileUploadService.deleteFileByEntity('quote', quoteId);
+
             const { error } = await supabase.from('quotes').delete().eq('id', quoteId).in('status', ['draft']);
 
             if (error) throw error;

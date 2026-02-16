@@ -89,7 +89,6 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'Tasks', href: '/dashboard/tasks' },
       { label: 'Deals Pipeline', href: '/dashboard/deals' },
-      { label: 'Quotes & Proposals', href: '/dashboard/quotes' },
       { label: 'Sales Forecast', href: '/dashboard/forecast' },
     ]
   },
