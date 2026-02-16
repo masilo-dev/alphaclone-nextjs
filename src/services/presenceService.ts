@@ -209,7 +209,7 @@ class PresenceService {
             .subscribe();
 
         return () => {
-            subscription.unsubscribe();
+            supabase.removeChannel(subscription);
         };
     }
 
@@ -239,7 +239,7 @@ class PresenceService {
             .subscribe();
 
         return () => {
-            subscription.unsubscribe();
+            supabase.removeChannel(subscription);
         };
     }
 

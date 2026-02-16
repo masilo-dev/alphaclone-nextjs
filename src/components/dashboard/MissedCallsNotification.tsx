@@ -65,7 +65,7 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
         );
 
         return () => {
-            unsubscribe();
+            missedCallsService.unsubscribe(unsubscribe);
         };
     }, [userId, loadUnseenCount, onCallBack]);
 
@@ -122,8 +122,8 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
                                 <div
                                     key={call.id}
                                     className={`p-4 rounded-lg border transition-all ${call.seen_at
-                                            ? 'bg-slate-800/30 border-slate-700/30'
-                                            : 'bg-red-500/10 border-red-500/20'
+                                        ? 'bg-slate-800/30 border-slate-700/30'
+                                        : 'bg-red-500/10 border-red-500/20'
                                         }`}
                                 >
                                     <div className="flex items-start justify-between">

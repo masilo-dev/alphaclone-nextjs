@@ -66,5 +66,9 @@ export const notificationService = {
                 }
             )
             .subscribe();
+    },
+
+    unsubscribe(channel: any) {
+        supabase.removeChannel(channel);
     }
 };

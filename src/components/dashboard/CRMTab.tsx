@@ -249,7 +249,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                                 {clients.map((client) => (
                                     <div key={client.id} className="px-1">
                                         <div
-                                            onClick={() => setSelectedClient(client)}
+                                            onClick={() => typeof setSelectedClient === 'function' && setSelectedClient(client)}
                                             className={`p-3 md:p-4 rounded-xl border transition-all cursor-pointer group flex items-center justify-between ${selectedClient?.id === client.id
                                                 ? 'bg-teal-500/10 border-teal-500/50 shadow-lg shadow-teal-500/10'
                                                 : 'bg-slate-900/40 border-white/5 hover:border-white/10 hover:bg-slate-800/60'
@@ -288,7 +288,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                             <div className="h-24 md:h-32 bg-gradient-to-r from-teal-500/20 to-emerald-500/20 relative">
                                 {/* Mobile Back Button */}
                                 <button
-                                    onClick={() => setSelectedClient(null)}
+                                    onClick={() => typeof setSelectedClient === 'function' && setSelectedClient(null)}
                                     className="lg:hidden absolute top-4 left-4 p-2 bg-slate-950/50 rounded-lg text-white hover:bg-slate-950 transition-colors z-10"
                                 >
                                     <X className="w-5 h-5" />

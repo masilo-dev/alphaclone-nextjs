@@ -332,6 +332,10 @@ export const calendarService = {
             .subscribe();
     },
 
+    unsubscribe(channel: any) {
+        supabase.removeChannel(channel);
+    },
+
     /**
      * Check for event conflicts (legacy method)
      */

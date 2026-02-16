@@ -247,8 +247,12 @@ class MissedCallsService {
             .subscribe();
 
         return () => {
-            subscription.unsubscribe();
+            supabase.removeChannel(subscription);
         };
+    }
+
+    unsubscribe(channel: any) {
+        supabase.removeChannel(channel);
     }
 
     /**

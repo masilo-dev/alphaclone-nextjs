@@ -57,7 +57,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
         });
 
         return () => {
-            channel.unsubscribe();
+            notificationService.unsubscribe(channel);
         };
     }, [userId, loadNotifications]);
 

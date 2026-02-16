@@ -409,8 +409,8 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                             </h3>
                             <div className="text-[10px] text-slate-500">Weighted value by month</div>
                         </div>
-                        <div className="h-64 w-full">
-                            <ResponsiveContainer width="100%" height="100%" minHeight={256} minWidth={0}>
+                        <div className="h-64 w-full relative" style={{ minHeight: '256px' }}>
+                            <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={forecastData}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                                     <XAxis
@@ -445,8 +445,8 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                             </h3>
                             <div className="text-[10px] text-slate-500">Historical performance</div>
                         </div>
-                        <div className="h-64 w-full">
-                            <ResponsiveContainer width="100%" height="100%" minHeight={256} minWidth={0}>
+                        <div className="h-64 w-full relative" style={{ minHeight: '256px' }}>
+                            <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={trendData}>
                                     <defs>
                                         <linearGradient id="colorWon" x1="0" y1="0" x2="0" y2="1">
@@ -515,7 +515,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                     {stageDeals.map((deal) => (
                                         <div
                                             key={deal.id}
-                                            onClick={() => setSelectedDealForDetail(deal)}
+                                            onClick={() => typeof setSelectedDealForDetail === 'function' && setSelectedDealForDetail(deal)}
                                             className="glass-panel p-4 rounded-xl border border-white/5 hover:border-teal-500/30 transition-all group relative cursor-pointer"
                                         >
                                             <div className="flex justify-between items-start mb-2">
@@ -548,6 +548,11 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                                 </div>
                                             )}
 
+                                            <div className="flex items-center gap-2 text-slate-400 text-xs mb-3">
+                                                <Target className="w-4 h-4" />
+                                                <span>Probability: {deal.probability}%</span>
+                                            </div>
+
                                             {deal.expectedCloseDate && (
                                                 <div className="flex items-center gap-2 text-slate-400 text-xs mb-2">
                                                     <Calendar className="w-4 h-4" />
@@ -555,10 +560,6 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                                 </div>
                                             )}
 
-                                            <div className="flex items-center gap-2 text-slate-400 text-xs mb-3">
-                                                <Target className="w-4 h-4" />
-                                                <span>Probability: {deal.probability}%</span>
-                                            </div>
 
                                             {deal.metadata?.leadId && (
                                                 <div className="mb-3 pt-2 border-t border-white/5">

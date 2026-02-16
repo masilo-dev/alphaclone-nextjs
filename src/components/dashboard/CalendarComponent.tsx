@@ -83,7 +83,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         });
 
         return () => {
-            subscription.unsubscribe();
+            calendarService.unsubscribe(subscription);
         };
     }, [user.id]);
 
