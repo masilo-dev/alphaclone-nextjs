@@ -286,9 +286,9 @@ export const contactService = {
     ): Promise<{ contactId: string | null; error: string | null }> {
         try {
             const { data, error } = await supabase.rpc('convert_lead_to_contact', {
-                p_lead_id: leadId,
-                p_create_company: options?.createCompany || false,
-                p_company_name: options?.companyName || null,
+                lead_id: leadId,
+                create_company: options?.createCompany || false,
+                company_name: options?.companyName || null,
             });
 
             if (error) throw error;
