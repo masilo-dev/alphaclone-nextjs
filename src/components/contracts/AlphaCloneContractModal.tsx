@@ -83,9 +83,9 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                 setVariables(prev => ({
                     ...prev,
                     clientName: client.name,
-                    clientCompany: client.company || '',
+                    clientCompany: client.name || '',
                     clientEmail: client.email || prev.clientEmail,
-                    clientAddress: client.address || ''
+                    clientAddress: client.location || ''
                 }));
             }
         }
@@ -277,7 +277,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                     >
                                         <option value="">-- Manual Entry --</option>
                                         {clients.map(c => (
-                                            <option key={c.id} value={c.id}>{c.name} ({c.company || 'Private'})</option>
+                                            <option key={c.id} value={c.id}>{c.name}</option>
                                         ))}
                                     </select>
                                 </div>

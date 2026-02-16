@@ -1,0 +1,5 @@
+src/components/contracts/AlphaCloneContractModal.tsx(86,43): error TS2339: Property 'company' does not exist on type 'BusinessClient'.
+src/components/contracts/AlphaCloneContractModal.tsx(88,43): error TS2339: Property 'address' does not exist on type 'BusinessClient'.
+src/components/contracts/AlphaCloneContractModal.tsx(280,90): error TS2339: Property 'company' does not exist on type 'BusinessClient'.
+src/components/contracts/ContractDashboard.tsx(490,94): error TS2339: Property 'company' does not exist on type 'BusinessClient'.
+src/components/dashboard/business/ReportsPage.tsx(127,46): error TS2339: Property 'stage' does not exist on type 'BusinessClient'.

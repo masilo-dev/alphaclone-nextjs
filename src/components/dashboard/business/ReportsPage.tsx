@@ -124,7 +124,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
             const stages = ['lead', 'prospect', 'customer', 'lost'];
             const clientStages = stages.map(stage => ({
                 name: stage.charAt(0).toUpperCase() + stage.slice(1),
-                value: clients.filter(c => c.stage === stage).length
+                value: clients.filter(c => c.salesStage === stage).length
             }));
             setClientData(clientStages);
 

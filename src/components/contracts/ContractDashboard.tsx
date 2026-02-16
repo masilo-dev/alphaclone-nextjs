@@ -487,7 +487,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                         >
                                             <option value="">-- No Client Linked --</option>
                                             {clients.map(c => (
-                                                <option key={c.id} value={c.id}>{c.name} ({c.company || 'Private'})</option>
+                                                <option key={c.id} value={c.id}>{c.name}</option>
                                             ))}
                                         </select>
                                     </div>
