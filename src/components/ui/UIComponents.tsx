@@ -91,19 +91,27 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', cla
 };
 
 // --- Input ---
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLTextAreaElement> {
   label?: string;
   error?: string;
+  textarea?: boolean;
 }
 
-export const Input: React.FC<InputProps> = ({ label, error, className = '', ...props }) => {
+export const Input: React.FC<InputProps> = ({ label, error, className = '', textarea = false, ...props }) => {
   return (
     <div className="w-full">
       {label && <label className="block text-sm font-medium text-slate-300 mb-1.5">{label}</label>}
-      <input
-        className={`w-full bg-slate-900 border ${error ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all ${className}`}
-        {...props}
-      />
+      {textarea ? (
+        <textarea
+          className={`w-full bg-slate-900 border ${error ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all min-h-[100px] resize-y ${className}`}
+          {...(props as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
+        />
+      ) : (
+        <input
+          className={`w-full bg-slate-900 border ${error ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all ${className}`}
+          {...(props as React.InputHTMLAttributes<HTMLInputElement>)}
+        />
+      )}
       {error && <p className="mt-1 text-xs text-red-400">{error}</p>}
     </div>
   );

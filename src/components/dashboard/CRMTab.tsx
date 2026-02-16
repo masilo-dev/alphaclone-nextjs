@@ -90,10 +90,11 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
         name: '',
         email: '',
         phone: '',
-        company: '',
-        stage: 'lead',
+        salesStage: 'lead',
         value: 0,
-        notes: ''
+        description: '',
+        industry: '',
+        location: ''
     });
 
     const handleEditClient = (client: BusinessClient) => {
@@ -101,10 +102,11 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
             name: client.name,
             email: client.email || '',
             phone: client.phone || '',
-            company: client.company || '',
-            stage: client.stage,
+            salesStage: client.salesStage,
             value: client.value || 0,
-            notes: client.notes || ''
+            description: client.description || '',
+            industry: client.industry || '',
+            location: client.location || ''
         });
         setShowEditModal(true);
     };
@@ -124,10 +126,11 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                 name: '',
                 email: '',
                 phone: '',
-                company: '',
-                stage: 'lead',
+                salesStage: 'lead',
                 value: 0,
-                notes: ''
+                description: '',
+                industry: '',
+                location: ''
             });
         } catch (err) {
             toast.error('Failed to update client');
@@ -151,10 +154,11 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                 name: '',
                 email: '',
                 phone: '',
-                company: '',
-                stage: 'lead',
+                salesStage: 'lead',
                 value: 0,
-                notes: ''
+                description: '',
+                industry: '',
+                location: ''
             });
         } catch (err) {
             toast.error('Failed to add client');
@@ -261,15 +265,15 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                                                 </div>
                                                 <div className="overflow-hidden">
                                                     <div className="font-semibold text-white group-hover:text-teal-400 transition-colors truncate">{client.name}</div>
-                                                    <div className="text-xs text-slate-500 truncate">{client.company || 'No company'}</div>
+                                                    <div className="text-xs text-slate-500 truncate">{client.industry || 'No Industry'}</div>
                                                 </div>
                                             </div>
                                             <div className="flex-shrink-0 ml-2">
-                                                <div className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${client.stage === 'customer' ? 'bg-green-500/20 text-green-400' :
-                                                    client.stage === 'prospect' ? 'bg-blue-500/20 text-blue-400' :
+                                                <div className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${client.salesStage === 'customer' ? 'bg-green-500/20 text-green-400' :
+                                                    client.salesStage === 'prospect' ? 'bg-blue-500/20 text-blue-400' :
                                                         'bg-slate-700 text-slate-400'
                                                     }`}>
-                                                    {client.stage}
+                                                    {client.salesStage}
                                                 </div>
                                             </div>
                                         </div>
@@ -309,10 +313,10 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                                 <div>
                                     <h1 className="text-xl md:text-2xl font-black text-white">{selectedClient.name}</h1>
                                     <div className="flex flex-wrap items-center gap-2 mt-1 text-xs md:text-sm text-slate-400">
-                                        <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" /> {selectedClient.company || 'Private Individual'}</span>
+                                        <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" /> {selectedClient.industry || 'Unknown Industry'}</span>
                                         <span className="w-1 h-1 rounded-full bg-slate-600 hidden sm:block"></span>
-                                        <div className={`px-2 py-0.5 rounded-full font-bold uppercase text-[10px] tracking-widest ${selectedClient.stage === 'customer' ? 'bg-green-500/20 text-green-400' : 'bg-teal-500/20 text-teal-400'}`}>
-                                            {selectedClient.stage}
+                                        <div className={`px-2 py-0.5 rounded-full font-bold uppercase text-[10px] tracking-widest ${selectedClient.salesStage === 'customer' ? 'bg-green-500/20 text-green-400' : 'bg-teal-500/20 text-teal-400'}`}>
+                                            {selectedClient.salesStage}
                                         </div>
                                     </div>
                                 </div>
@@ -323,7 +327,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                                             <DollarSign className="w-3 h-3 text-teal-400" />
                                             Lifetime Value
                                         </div>
-                                        <div className="text-lg md:text-xl font-mono text-emerald-400">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(selectedClient.value)}</div>
+                                        <div className="text-lg md:text-xl font-mono text-emerald-400">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(selectedClient.value || 0)}</div>
                                     </div>
                                     <div className="p-4 rounded-xl bg-slate-950/40 border border-white/5 hover:border-teal-500/20 transition-colors overflow-hidden">
                                         <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1 flex items-center gap-2">
@@ -396,14 +400,14 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                                 </div>
                             </div>
 
-                            {selectedClient.notes && (
+                            {selectedClient.description && (
                                 <div className="pt-6 border-t border-white/5">
                                     <h3 className="text-sm font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2">
                                         <FileText className="w-4 h-4 text-teal-400" />
                                         Account Notes
                                     </h3>
                                     <div className="p-4 rounded-xl bg-slate-950/40 border border-white/5 text-sm text-slate-400 leading-relaxed italic">
-                                        "{selectedClient.notes}"
+                                        "{selectedClient.description}"
                                     </div>
                                 </div>
                             )}
@@ -432,13 +436,13 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                         label="Name"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="John Doe"
+                        placeholder="Business or Contact Name"
                     />
                     <Input
-                        label="Company"
-                        value={formData.company}
-                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                        placeholder="Acme Corp"
+                        label="Industry"
+                        value={formData.industry}
+                        onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                        placeholder="e.g. Technology"
                     />
                     <div className="grid grid-cols-2 gap-4">
                         <Input
@@ -456,10 +460,10 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Stage</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Sales Stage</label>
                             <select
-                                value={formData.stage}
-                                onChange={(e) => setFormData({ ...formData, stage: e.target.value as any })}
+                                value={formData.salesStage}
+                                onChange={(e) => setFormData({ ...formData, salesStage: e.target.value as any })}
                                 className="w-full px-4 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm text-slate-300 focus:outline-none focus:border-violet-500"
                             >
                                 <option value="lead">Lead</option>
@@ -475,6 +479,13 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                             onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) })}
                         />
                     </div>
+                    <Input
+                        label="Description/Notes"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        placeholder="Additional details..."
+                        textarea
+                    />
                     <div className="flex justify-end gap-3 pt-4">
                         <Button variant="secondary" onClick={() => setShowAddModal(false)}>Cancel</Button>
                         <Button variant="primary" onClick={handleCreateClient} disabled={isSubmitting}>
@@ -495,13 +506,13 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                         label="Name"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="John Doe"
+                        placeholder="Business or Contact Name"
                     />
                     <Input
-                        label="Company"
-                        value={formData.company}
-                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                        placeholder="Acme Corp"
+                        label="Industry"
+                        value={formData.industry}
+                        onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                        placeholder="e.g. Technology"
                     />
                     <div className="grid grid-cols-2 gap-4">
                         <Input
@@ -519,10 +530,10 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Stage</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Sales Stage</label>
                             <select
-                                value={formData.stage}
-                                onChange={(e) => setFormData({ ...formData, stage: e.target.value as any })}
+                                value={formData.salesStage}
+                                onChange={(e) => setFormData({ ...formData, salesStage: e.target.value as any })}
                                 className="w-full px-4 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm text-slate-300 focus:outline-none focus:border-violet-500"
                             >
                                 <option value="lead">Lead</option>
@@ -538,6 +549,13 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                             onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) })}
                         />
                     </div>
+                    <Input
+                        label="Description/Notes"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        placeholder="Additional details..."
+                        textarea
+                    />
                     <div className="flex justify-end gap-3 pt-4">
                         <Button variant="secondary" onClick={() => setShowEditModal(false)}>Cancel</Button>
                         <Button variant="primary" onClick={handleUpdateClient} disabled={isSubmitting}>

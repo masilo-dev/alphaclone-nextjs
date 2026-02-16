@@ -6,14 +6,17 @@ export interface BusinessClient {
     name: string;
     email?: string;
     phone?: string;
-    company?: string;
-    stage: 'lead' | 'prospect' | 'customer' | 'lost';
+    // company?: string; // Removed as it does not exist in schema. Name is the primary identifier.
+    salesStage: 'lead' | 'prospect' | 'customer' | 'lost'; // Mapped from sales_stage
     value: number;
-    notes?: string;
-    address?: string;
+    description?: string; // Mapped from description (was notes)
+    location?: string; // Mapped from location (was address)
     customFields?: Record<string, any>;
     createdAt: string;
     updatedAt: string;
+    isActive: boolean; // Added
+    industry?: string; // Added
+    website?: string; // Added
 }
 
 export interface ClientsResponse {
@@ -36,7 +39,7 @@ export const businessClientService = {
                 .eq('tenant_id', tenantId);
 
             if (searchTerm) {
-                query = query.or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,company.ilike.%${searchTerm}%`);
+                query = query.or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
             }
 
             const { data, count, error } = await query
@@ -51,14 +54,16 @@ export const businessClientService = {
                 name: c.name,
                 email: c.email,
                 phone: c.phone,
-                company: c.company,
-                stage: c.stage,
+                salesStage: c.sales_stage,
                 value: parseFloat(c.value || 0),
-                notes: c.notes,
-                address: c.address,
+                description: c.description,
+                location: c.location,
                 customFields: c.custom_fields,
                 createdAt: c.created_at,
-                updatedAt: c.updated_at
+                updatedAt: c.updated_at,
+                isActive: c.is_active,
+                industry: c.industry,
+                website: c.website
             }));
 
             return { clients, count: count || 0, error: null };
@@ -87,14 +92,16 @@ export const businessClientService = {
                 name: data.name,
                 email: data.email,
                 phone: data.phone,
-                company: data.company,
-                stage: data.stage,
+                salesStage: data.sales_stage,
                 value: parseFloat(data.value || 0),
-                notes: data.notes,
-                address: data.address,
+                description: data.description,
+                location: data.location,
                 customFields: data.custom_fields,
                 createdAt: data.created_at,
-                updatedAt: data.updated_at
+                updatedAt: data.updated_at,
+                isActive: data.is_active,
+                industry: data.industry,
+                website: data.website
             };
 
             return { client, error: null };
@@ -116,11 +123,14 @@ export const businessClientService = {
                     name: client.name,
                     email: client.email,
                     phone: client.phone,
-                    company: client.company,
-                    stage: client.stage || 'lead',
+                    industry: client.industry,
+                    location: client.location,
+                    sales_stage: client.salesStage || 'lead',
                     value: client.value || 0,
-                    notes: client.notes,
-                    custom_fields: client.customFields || {}
+                    description: client.description,
+                    custom_fields: client.customFields || {},
+                    website: client.website,
+                    is_active: true
                 })
                 .select()
                 .single();
@@ -133,13 +143,16 @@ export const businessClientService = {
                 name: data.name,
                 email: data.email,
                 phone: data.phone,
-                company: data.company,
-                stage: data.stage,
+                salesStage: data.sales_stage,
                 value: parseFloat(data.value || 0),
-                notes: data.notes,
+                description: data.description,
+                location: data.location,
                 customFields: data.custom_fields,
                 createdAt: data.created_at,
-                updatedAt: data.updated_at
+                updatedAt: data.updated_at,
+                isActive: data.is_active,
+                industry: data.industry,
+                website: data.website
             };
 
             return { client: newClient, error: null };
@@ -159,11 +172,14 @@ export const businessClientService = {
             if (updates.name !== undefined) updateData.name = updates.name;
             if (updates.email !== undefined) updateData.email = updates.email;
             if (updates.phone !== undefined) updateData.phone = updates.phone;
-            if (updates.company !== undefined) updateData.company = updates.company;
-            if (updates.stage !== undefined) updateData.stage = updates.stage;
+            if (updates.industry !== undefined) updateData.industry = updates.industry;
+            if (updates.location !== undefined) updateData.location = updates.location;
+            if (updates.salesStage !== undefined) updateData.sales_stage = updates.salesStage;
             if (updates.value !== undefined) updateData.value = updates.value;
-            if (updates.notes !== undefined) updateData.notes = updates.notes;
+            if (updates.description !== undefined) updateData.description = updates.description;
             if (updates.customFields !== undefined) updateData.custom_fields = updates.customFields;
+            if (updates.website !== undefined) updateData.website = updates.website;
+            if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
 
             updateData.updated_at = new Date().toISOString();
 
@@ -207,14 +223,15 @@ export const businessClientService = {
         try {
             const insertData = clients.map((c: any) => ({
                 tenant_id: tenantId,
-                name: c.name,
+                name: c.name || c.company, // Prioritize name, fallback to company if imported data has it
                 email: c.email,
                 phone: c.phone,
-                company: c.company,
-                stage: c.stage || 'lead',
+                sales_stage: c.salesStage || c.stage || 'lead',
                 value: c.value || 0,
-                notes: c.notes,
-                custom_fields: c.customFields || {}
+                description: c.description || c.notes,
+                location: c.location || c.address,
+                custom_fields: c.customFields || {},
+                is_active: true
             }));
 
             const { data, error } = await supabase
@@ -237,7 +254,7 @@ export const businessClientService = {
     async getDashboardStats(tenantId: string): Promise<{ stats: DashboardStats | null; error: string | null }> {
         try {
             const { data, error } = await supabase
-                .rpc('get_tenant_dashboard_stats', { p_tenant_id: tenantId });
+                .rpc('get_tenant_dashboard_stats', { tenant_id_param: tenantId }); // Fixed parameter name
 
             if (error) throw error;
             return { stats: data as DashboardStats, error: null };
@@ -261,6 +278,7 @@ export interface DashboardStats {
     monthlyRevenue: Array<{
         month: string;
         amount: number;
+
     }>;
     pipeline: Record<string, number>;
 }

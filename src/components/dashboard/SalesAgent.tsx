@@ -179,12 +179,12 @@ const SalesAgent: React.FC = () => {
 
             // Map ParsedContact to Lead
             const leadsToAdd = contacts.map(c => ({
-                businessName: c.name || c.company || 'Unknown Business',
+                businessName: c.name || 'Unknown Business',
                 email: c.email,
                 phone: c.phone,
-                industry: 'Imported',
-                location: 'Unknown',
-                notes: c.notes,
+                industry: c.industry || 'Imported',
+                location: c.location || 'Unknown',
+                notes: c.description,
                 source: 'CSV Import'
                 // value: c.value // Pending DB support for value
             }));
@@ -263,9 +263,11 @@ const SalesAgent: React.FC = () => {
             const { client, error: clientError } = await businessClientService.createClient(tenantId, {
                 name: lead.businessName,
                 email: lead.email || '',
-                company: lead.businessName,
                 phone: lead.phone,
-                stage: 'customer' // Qualified leads become customers in CRM
+                salesStage: 'customer', // Qualified leads become customers in CRM
+                industry: lead.industry,
+                location: lead.location,
+                description: lead.notes
             });
 
             if (clientError) {

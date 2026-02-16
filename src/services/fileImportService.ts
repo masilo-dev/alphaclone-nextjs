@@ -16,10 +16,10 @@ export interface ParsedContact {
     name?: string;
     email?: string;
     phone?: string;
-    company?: string;
     industry?: string;
     location?: string;
-    notes?: string;
+    description?: string;
+    salesStage?: 'lead' | 'prospect' | 'customer' | 'lost';
     value?: number;
 }
 
@@ -44,14 +44,25 @@ export const fileImportService = {
                     return 0;
                 };
 
+                // Map stage/status to valid salesStage
+                const rawStage = (row.stage || row.Stage || row.status || row.Status || 'lead').toLowerCase();
+                let salesStage: ParsedContact['salesStage'] = 'lead';
+                if (rawStage.includes('prospect')) salesStage = 'prospect';
+                if (rawStage.includes('custom') || rawStage.includes('won')) salesStage = 'customer';
+                if (rawStage.includes('lost')) salesStage = 'lost';
+
+                // Prioritize Company Name if available, else Person Name
+                // Or combine them? For now, we'll stick to a single "Name" field which maps to BusinessClient.name
+                const name = row.company || row.Company || row.COMPANY || row.Organization || row.name || row.Name || row.NAME || row['Full Name'] || '';
+
                 return {
-                    name: row.name || row.Name || row.NAME || row['Full Name'] || '',
+                    name: name,
                     email: row.email || row.Email || row.EMAIL || row['Email Address'] || '',
                     phone: row.phone || row.Phone || row.PHONE || row['Phone Number'] || '',
-                    company: row.company || row.Company || row.COMPANY || row.Organization || '',
                     industry: row.industry || row.Industry || row.INDUSTRY || row.Sector || '',
                     location: row.location || row.Location || row.LOCATION || row.City || row.Address || '',
-                    notes: row.notes || row.Notes || row.NOTES || '',
+                    description: row.notes || row.Notes || row.NOTES || row.description || row.Description || '',
+                    salesStage: salesStage,
                     value: parseValue(rawValue)
                 };
             }).filter(c => c.name || c.email); // Filter out empty rows
@@ -157,7 +168,9 @@ export const fileImportService = {
             contacts.push({
                 email,
                 phone: phones[index] || undefined,
-                name: this.extractNameNearEmail(text, email)
+                name: this.extractNameNearEmail(text, email),
+                salesStage: 'lead', // Default
+                description: 'Imported from document'
             });
         });
 

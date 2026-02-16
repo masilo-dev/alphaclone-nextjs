@@ -65,13 +65,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         if (searchTerm) {
             filtered = filtered.filter(c =>
                 c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                c.company?.toLowerCase().includes(searchTerm.toLowerCase())
+                c.email?.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
         if (selectedStage !== 'all') {
-            filtered = filtered.filter(c => c.stage === selectedStage);
+            filtered = filtered.filter(c => c.salesStage === selectedStage);
         }
 
         setFilteredClients(filtered);
@@ -326,7 +325,7 @@ const ClientCard = ({ client, onEdit, onDelete, onCall }: { client: BusinessClie
                     </div>
                     <div>
                         <h3 className="font-semibold">{client.name}</h3>
-                        {client.company && <p className="text-xs text-slate-400">{client.company}</p>}
+                        {client.industry && <p className="text-xs text-slate-400">{client.industry}</p>}
                     </div>
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
@@ -363,8 +362,8 @@ const ClientCard = ({ client, onEdit, onDelete, onCall }: { client: BusinessClie
             </div>
 
             <div className="flex items-center justify-between">
-                <span className={`text-xs px-2 py-1 rounded-full border ${stageColors[client.stage]}`}>
-                    {client.stage.charAt(0).toUpperCase() + client.stage.slice(1)}
+                <span className={`text-xs px-2 py-1 rounded-full border ${stageColors[client.salesStage]}`}>
+                    {client.salesStage.charAt(0).toUpperCase() + client.salesStage.slice(1)}
                 </span>
                 {client.value > 0 && (
                     <span className="text-sm font-semibold text-teal-400">
@@ -381,10 +380,11 @@ const AddClientModal = ({ onClose, onAdd }: any) => {
         name: '',
         email: '',
         phone: '',
-        company: '',
-        stage: 'lead' as any,
+        salesStage: 'lead' as any,
         value: 0,
-        notes: ''
+        description: '',
+        industry: '',
+        location: ''
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -414,41 +414,53 @@ const AddClientModal = ({ onClose, onAdd }: any) => {
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Email</label>
-                        <input
-                            type="email"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Email</label>
+                            <input
+                                type="email"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Phone</label>
+                            <input
+                                type="tel"
+                                value={formData.phone}
+                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            />
+                        </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Phone</label>
-                        <input
-                            type="tel"
-                            value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Company</label>
-                        <input
-                            type="text"
-                            value={formData.company}
-                            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Industry</label>
+                            <input
+                                type="text"
+                                value={formData.industry}
+                                onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Location</label>
+                            <input
+                                type="text"
+                                value={formData.location}
+                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            />
+                        </div>
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium mb-2">Stage</label>
                         <select
-                            value={formData.stage}
-                            onChange={(e) => setFormData({ ...formData, stage: e.target.value as any })}
+                            value={formData.salesStage}
+                            onChange={(e) => setFormData({ ...formData, salesStage: e.target.value as any })}
                             className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
                         >
                             <option value="lead">Lead</option>
@@ -466,6 +478,16 @@ const AddClientModal = ({ onClose, onAdd }: any) => {
                             className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
                         />
                     </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Description</label>
+                        <textarea
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            rows={3}
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                        />
+                    </div>
+
 
                     <div className="flex gap-3 pt-4">
                         <button
@@ -493,10 +515,11 @@ const EditClientModal = ({ client, onClose, onSave }: { client: BusinessClient; 
         name: client.name,
         email: client.email || '',
         phone: client.phone || '',
-        company: client.company || '',
-        stage: client.stage,
+        industry: client.industry || '',
+        location: client.location || '',
+        salesStage: client.salesStage,
         value: client.value,
-        notes: client.notes || ''
+        description: client.description || ''
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -526,41 +549,53 @@ const EditClientModal = ({ client, onClose, onSave }: { client: BusinessClient; 
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Email</label>
-                        <input
-                            type="email"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Email</label>
+                            <input
+                                type="email"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Phone</label>
+                            <input
+                                type="tel"
+                                value={formData.phone}
+                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            />
+                        </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Phone</label>
-                        <input
-                            type="tel"
-                            value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Company</label>
-                        <input
-                            type="text"
-                            value={formData.company}
-                            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Industry</label>
+                            <input
+                                type="text"
+                                value={formData.industry}
+                                onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Location</label>
+                            <input
+                                type="text"
+                                value={formData.location}
+                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            />
+                        </div>
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium mb-2">Stage</label>
                         <select
-                            value={formData.stage}
-                            onChange={(e) => setFormData({ ...formData, stage: e.target.value as any })}
+                            value={formData.salesStage}
+                            onChange={(e) => setFormData({ ...formData, salesStage: e.target.value as any })}
                             className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
                         >
                             <option value="lead">Lead</option>
@@ -581,10 +616,10 @@ const EditClientModal = ({ client, onClose, onSave }: { client: BusinessClient; 
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-2">Notes</label>
+                        <label className="block text-sm font-medium mb-2">Description</label>
                         <textarea
-                            value={formData.notes}
-                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             rows={3}
                             className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
                         />
