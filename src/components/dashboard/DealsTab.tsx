@@ -322,7 +322,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
     };
 
     return (
-        <div className="space-y-6 animate-fade-in h-full flex flex-col">
+        <div className="space-y-6 animate-fade-in min-h-0">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
                     <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-violet-500 flex items-center gap-3">
@@ -511,7 +511,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                     </div>
                                 </div>
 
-                                <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                                <div className="space-y-3 max-h-[800px] overflow-y-auto custom-scrollbar">
                                     {stageDeals.map((deal) => (
                                         <div
                                             key={deal.id}
