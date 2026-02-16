@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { routeAIRequest } from '@/services/aiRouter';
 
+export const runtime = 'nodejs';
+
 /**
  * AI Content Generation API Route
  * Now uses smart routing: Anthropic (Claude) → OpenAI (GPT-4) → Gemini

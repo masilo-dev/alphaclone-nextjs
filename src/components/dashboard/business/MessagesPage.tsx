@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { messageService } from '../../../services/messageService';
@@ -24,19 +24,7 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (currentTenant) {
-            loadConversations();
-        }
-    }, [currentTenant]);
-
-    useEffect(() => {
-        if (selectedConversation) {
-            loadMessages(selectedConversation.id);
-        }
-    }, [selectedConversation]);
-
-    const loadConversations = async () => {
+    const loadConversations = useCallback(async () => {
         setLoading(true);
         // Load conversations from messageService
         const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
@@ -56,17 +44,29 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
             setSelectedConversation(convos[0]);
         }
         setLoading(false);
-    };
+    }, [user.id, user.role]);
 
-    const loadMessages = async (conversationId: string) => {
+    const loadMessages = useCallback(async (conversationId: string) => {
         // Load messages for conversation
         const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
         const { messages: msgs } = await messageService.getMessages(user.id, isAdmin);
         setMessages(msgs.slice(0, 10));
-    };
+    }, [user.id, user.role]);
 
-    const handleSendMessage = async () => {
-        if (!newMessage.trim()) return;
+    useEffect(() => {
+        if (currentTenant) {
+            loadConversations();
+        }
+    }, [currentTenant, loadConversations]);
+
+    useEffect(() => {
+        if (selectedConversation) {
+            loadMessages(selectedConversation.id);
+        }
+    }, [selectedConversation, loadMessages]);
+
+    const handleSendMessage = useCallback(async () => {
+        if (!newMessage.trim() || !selectedConversation) return;
 
         await messageService.sendMessage(
             user.id,
@@ -78,7 +78,7 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
 
         setNewMessage('');
         loadMessages(selectedConversation.id);
-    };
+    }, [newMessage, selectedConversation, user.id, user.name, user.role, loadMessages]);
 
     const [autoPilotEnabled, setAutoPilotEnabled] = useState(false);
 

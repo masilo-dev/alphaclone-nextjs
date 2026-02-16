@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Building2,
     Search,
@@ -22,34 +22,34 @@ const SuperAdminTenantsTab: React.FC = () => {
     const [selectedTenant, setSelectedTenant] = useState<string | null>(null);
     const [tenantLogs, setTenantLogs] = useState<any[]>([]);
 
-    useEffect(() => {
-        loadTenants();
-    }, []);
-
-    const loadTenants = async () => {
+    const loadTenants = useCallback(async () => {
         setLoading(true);
         const { tenants: data } = await tenantManagementService.getAllTenants();
         setTenants(data);
         setLoading(false);
-    };
+    }, []);
 
-    const handleViewLogs = async (tenantId: string) => {
+    useEffect(() => {
+        loadTenants();
+    }, [loadTenants]);
+
+    const handleViewLogs = useCallback(async (tenantId: string) => {
         setSelectedTenant(tenantId);
         const { logs } = await securityLogService.getTenantLogs(tenantId, 50);
         setTenantLogs(logs);
-    };
+    }, []);
 
-    const handleDeleteTenant = async (tenantId: string, tenantName: string) => {
+    const handleDeleteTenant = useCallback(async (tenantId: string, tenantName: string) => {
         if (!confirm(`Are you sure you want to delete "${tenantName}"? This action cannot be undone.`)) return;
 
         const { error } = await tenantManagementService.deleteTenant(tenantId);
         if (!error) {
-            setTenants(tenants.filter(t => t.id !== tenantId));
+            setTenants(prev => prev.filter(t => t.id !== tenantId));
             alert('Tenant deleted successfully');
         } else {
             alert(`Error deleting tenant: ${error}`);
         }
-    };
+    }, []);
 
     const filteredTenants = tenants.filter(t =>
         t.name.toLowerCase().includes(searchTerm.toLowerCase())

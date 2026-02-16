@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { projectService } from '../../../services/projectService';
@@ -69,13 +69,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
         { id: 'done', title: 'Done', color: 'border-teal-500', bg: 'bg-teal-500/10' }
     ];
 
-    useEffect(() => {
-        if (currentTenant) {
-            loadData();
-        }
-    }, [currentTenant]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         if (!currentTenant) return;
         setLoading(true);
         const { projects: projectData } = await projectService.getProjects(user.id, user.role);
@@ -85,13 +79,19 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
         setClients(clientData || []);
         setContracts(contractData || []);
         setLoading(false);
-    };
+    }, [currentTenant, user.id, user.role]);
 
-    const handleDragStart = (event: DragStartEvent) => {
+    useEffect(() => {
+        if (currentTenant) {
+            loadData();
+        }
+    }, [currentTenant, loadData]);
+
+    const handleDragStart = useCallback((event: DragStartEvent) => {
         setActiveId(event.active.id as string);
-    };
+    }, []);
 
-    const handleDragEnd = async (event: DragEndEvent) => {
+    const handleDragEnd = useCallback(async (event: DragEndEvent) => {
         const { active, over } = event;
         if (!over) return;
         const projectId = active.id as string;
@@ -115,21 +115,21 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
             }
 
             await projectService.updateProject(projectId, { status: newStatus as any });
-            setProjects(projects.map(p => p.id === projectId ? { ...p, status: newStatus as any } : p));
+            setProjects(prev => prev.map(p => p.id === projectId ? { ...p, status: newStatus as any } : p));
         }
         setActiveId(null);
-    };
+    }, [projects, contracts]);
 
     const [editingProject, setEditingProject] = useState<BusinessProject | null>(null);
 
-    const handleSaveProject = async (projectData: Partial<BusinessProject>) => {
+    const handleSaveProject = useCallback(async (projectData: Partial<BusinessProject>) => {
         if (!currentTenant) return;
 
         if (editingProject) {
             // Update existing
             const { error } = await projectService.updateProject(editingProject.id, projectData);
             if (!error) {
-                setProjects(projects.map(p => p.id === editingProject.id ? { ...p, ...projectData } : p));
+                setProjects(prev => prev.map(p => p.id === editingProject.id ? { ...p, ...projectData } : p));
                 setEditingProject(null);
             }
         } else {
@@ -143,83 +143,22 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
             };
             const { project, error } = await projectService.createProject(projectToCreate);
             if (!error && project) {
-                setProjects([project, ...projects]);
+                setProjects(prev => [project, ...prev]);
                 setShowAddModal(false);
             }
         }
-    };
+    }, [currentTenant, editingProject, user.id, user.name]);
 
-    const handleDeleteProject = async (projectId: string) => {
+    const handleDeleteProject = useCallback(async (projectId: string) => {
         if (!confirm('Delete this project? This action cannot be undone.')) return;
         const { error } = await projectService.deleteProject(projectId);
         if (!error) {
-            setProjects(projects.filter(p => p.id !== projectId));
+            setProjects(prev => prev.filter(p => p.id !== projectId));
         }
-    };
+    }, []);
 
     const getProjectsByStatus = (status: string) => projects.filter(p => p.status === status);
 
-    const ProjectTimeline = () => {
-        const sorted = [...projects].sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
-        const timelineStart = new Date();
-        timelineStart.setMonth(timelineStart.getMonth() - 1);
-        const months = Array.from({ length: 6 }).map((_, i) => {
-            const d = new Date(timelineStart);
-            d.setMonth(d.getMonth() + i);
-            return d;
-        });
-
-        return (
-            <div className="glass-panel overflow-hidden rounded-3xl border border-white/5 flex flex-col h-full min-h-[500px] backdrop-blur-xl bg-slate-900/40">
-                <div className="flex border-b border-white/10 divide-x divide-white/5 bg-slate-950/60 sticky top-0 z-20">
-                    <div className="w-80 min-w-80 p-5 font-black text-slate-400 text-xs uppercase tracking-[0.2em]">Project Roadmap</div>
-                    <div className="flex-1 overflow-x-auto flex divide-x divide-white/5 scrollbar-hide">
-                        {months.map((m, i) => (
-                            <div key={i} className="min-w-[200px] p-4 text-center">
-                                <span className="text-xs font-black text-slate-300 uppercase tracking-widest">{m.toLocaleDateString('default', { month: 'long', year: 'numeric' })}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-                <div className="flex-1 overflow-y-auto divide-y divide-white/5">
-                    {sorted.map(proj => {
-                        const start = proj.startDate ? new Date(proj.startDate) : new Date(proj.createdAt || new Date().toISOString());
-                        const end = proj.dueDate ? new Date(proj.dueDate) : new Date(start);
-                        if (end < start) end.setMonth(start.getMonth() + 1);
-
-                        const totalDays = (months[5].getTime() - months[0].getTime()) / (1000 * 60 * 60 * 24);
-                        const startPos = ((start.getTime() - months[0].getTime()) / (1000 * 60 * 60 * 24) / totalDays) * 100;
-                        const duration = ((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24) / totalDays) * 100;
-
-                        return (
-                            <div key={proj.id} className="flex divide-x divide-white/5 hover:bg-white/5 group transition-all duration-300">
-                                <div className="w-80 min-w-80 p-5 flex flex-col gap-1 sticky left-0 z-10 bg-slate-900/90 backdrop-blur-xl border-r border-white/5">
-                                    <h4 className="text-sm font-semibold text-slate-100 group-hover:text-teal-400 transition-colors uppercase tracking-tight">{proj.name}</h4>
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xs font-black text-slate-500 uppercase flex items-center gap-1">
-                                            <Target className="w-3 h-3" /> {proj.status.replace('_', ' ')}
-                                        </span>
-                                        <span className="text-xs font-black text-teal-500 flex items-center gap-1">
-                                            <CheckCircle2 className="w-3 h-3" /> {proj.progress}%
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="flex-1 relative h-16 flex items-center min-w-[1200px]">
-                                    <div
-                                        className="absolute h-8 rounded-2xl bg-gradient-to-r from-teal-500/20 to-violet-500/20 border border-white/10 group-hover:border-teal-500/30 group-hover:shadow-[0_0_20px_rgba(45,212,191,0.1)] transition-all flex items-center px-4 overflow-hidden"
-                                        style={{ left: `${Math.max(0, startPos)}%`, width: `${Math.max(1, duration)}%` }}
-                                    >
-                                        <div className="absolute inset-0 bg-gradient-to-r from-teal-500/40 to-violet-500/40 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                        <span className="text-xs font-black text-white uppercase tracking-tighter truncate z-10">{proj.name}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-        );
-    };
 
     if (loading) {
         return (
@@ -296,7 +235,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     </DndContext>
                 ) : (
                     <div className="flex-1">
-                        <ProjectTimeline />
+                        <ProjectTimeline projects={projects} />
                     </div>
                 )}
             </div>
@@ -613,6 +552,68 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
                         <button type="submit" className="flex-1 px-6 py-4 bg-teal-500 hover:bg-teal-400 text-slate-900 rounded-2xl font-bold text-sm transition-all shadow-lg shadow-teal-500/20 active:scale-95">{initialData ? 'Save Changes' : 'Create Project'}</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    );
+};
+
+const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
+    const sorted = [...projects].sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+    const timelineStart = new Date();
+    timelineStart.setMonth(timelineStart.getMonth() - 1);
+    const months = Array.from({ length: 6 }).map((_, i) => {
+        const d = new Date(timelineStart);
+        d.setMonth(d.getMonth() + i);
+        return d;
+    });
+
+    return (
+        <div className="glass-panel overflow-hidden rounded-3xl border border-white/5 flex flex-col h-full min-h-[500px] backdrop-blur-xl bg-slate-900/40">
+            <div className="flex border-b border-white/10 divide-x divide-white/5 bg-slate-950/60 sticky top-0 z-20">
+                <div className="w-80 min-w-80 p-5 font-black text-slate-400 text-xs uppercase tracking-[0.2em]">Project Roadmap</div>
+                <div className="flex-1 overflow-x-auto flex divide-x divide-white/5 scrollbar-hide">
+                    {months.map((m, i) => (
+                        <div key={i} className="min-w-[200px] p-4 text-center">
+                            <span className="text-xs font-black text-slate-300 uppercase tracking-widest">{m.toLocaleDateString('default', { month: 'long', year: 'numeric' })}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <div className="flex-1 overflow-y-auto divide-y divide-white/5">
+                {sorted.map(proj => {
+                    const start = proj.startDate ? new Date(proj.startDate) : new Date(proj.createdAt || new Date().toISOString());
+                    const end = proj.dueDate ? new Date(proj.dueDate) : new Date(start);
+                    if (end < start) end.setMonth(start.getMonth() + 1);
+
+                    const totalDays = (months[5].getTime() - months[0].getTime()) / (1000 * 60 * 60 * 24);
+                    const startPos = ((start.getTime() - months[0].getTime()) / (1000 * 60 * 60 * 24) / totalDays) * 100;
+                    const duration = ((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24) / totalDays) * 100;
+
+                    return (
+                        <div key={proj.id} className="flex divide-x divide-white/5 hover:bg-white/5 group transition-all duration-300">
+                            <div className="w-80 min-w-80 p-5 flex flex-col gap-1 sticky left-0 z-10 bg-slate-900/90 backdrop-blur-xl border-r border-white/5">
+                                <h4 className="text-sm font-semibold text-slate-100 group-hover:text-teal-400 transition-colors uppercase tracking-tight">{proj.name}</h4>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs font-black text-slate-500 uppercase flex items-center gap-1">
+                                        <Target className="w-3 h-3" /> {proj.status.replace('_', ' ')}
+                                    </span>
+                                    <span className="text-xs font-black text-teal-500 flex items-center gap-1">
+                                        <CheckCircle2 className="w-3 h-3" /> {proj.progress}%
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="flex-1 relative h-16 flex items-center min-w-[1200px]">
+                                <div
+                                    className="absolute h-8 rounded-2xl bg-gradient-to-r from-teal-500/20 to-violet-500/20 border border-white/10 group-hover:border-teal-500/30 group-hover:shadow-[0_0_20px_rgba(45,212,191,0.1)] transition-all flex items-center px-4 overflow-hidden"
+                                    style={{ left: `${Math.max(0, startPos)}%`, width: `${Math.max(1, duration)}%` }}
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-r from-teal-500/40 to-violet-500/40 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    <span className="text-xs font-black text-white uppercase tracking-tighter truncate z-10">{proj.name}</span>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Bell, X, Check, Trash2, ExternalLink } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -15,6 +15,36 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
     const [unreadCount, setUnreadCount] = useState(0);
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
+    const loadNotifications = useCallback(async () => {
+        const { notifications: loaded, error } = await notificationService.getNotifications(userId);
+        if (loaded) {
+            setNotifications(loaded);
+        }
+    }, [userId]);
+
+    const handleMarkAsRead = useCallback(async (notificationId: string) => {
+        // Optimistic update
+        setNotifications(prev =>
+            prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+        );
+
+        await notificationService.markAsRead(notificationId);
+    }, []);
+
+    const handleMarkAllAsRead = useCallback(async () => {
+        // Optimistic update
+        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+
+        await notificationService.markAllAsRead(userId);
+    }, [userId]);
+
+    const handleDelete = useCallback(async (notificationId: string) => {
+        // Optimistic update
+        setNotifications(prev => prev.filter(n => n.id !== notificationId));
+
+        await notificationService.deleteNotification(notificationId);
+    }, []);
+
     useEffect(() => {
         if (!userId) return;
 
@@ -29,41 +59,11 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
         return () => {
             channel.unsubscribe();
         };
-    }, [userId]);
+    }, [userId, loadNotifications]);
 
     useEffect(() => {
         setUnreadCount(notifications.filter(n => !n.read).length);
     }, [notifications]);
-
-    const loadNotifications = async () => {
-        const { notifications: loaded, error } = await notificationService.getNotifications(userId);
-        if (loaded) {
-            setNotifications(loaded);
-        }
-    };
-
-    const handleMarkAsRead = async (notificationId: string) => {
-        // Optimistic update
-        setNotifications(prev =>
-            prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
-        );
-
-        await notificationService.markAsRead(notificationId);
-    };
-
-    const handleMarkAllAsRead = async () => {
-        // Optimistic update
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-
-        await notificationService.markAllAsRead(userId);
-    };
-
-    const handleDelete = async (notificationId: string) => {
-        // Optimistic update
-        setNotifications(prev => prev.filter(n => n.id !== notificationId));
-
-        await notificationService.deleteNotification(notificationId);
-    };
 
     const getNotificationIcon = (type: string) => {
         const icons: Record<string, string> = {

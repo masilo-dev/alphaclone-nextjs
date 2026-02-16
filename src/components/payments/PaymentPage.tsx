@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise, paymentService, Invoice, Payment } from '../../services/paymentService';
 import { CheckoutForm } from './CheckoutForm';
@@ -25,11 +25,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
     const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
     const [clientSecret, setClientSecret] = useState<string | null>(null);
 
-    useEffect(() => {
-        loadData();
-    }, [user.id]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true);
         const { invoices: invData } = await paymentService.getUserInvoices(user.id);
         const { payments: payData } = await paymentService.getPaymentHistory(user.id);
@@ -37,9 +33,13 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
         if (invData) setInvoices(invData);
         if (payData) setPayments(payData);
         setLoading(false);
-    };
+    }, [user.id]);
 
-    const handlePayClick = async (invoice: Invoice) => {
+    useEffect(() => {
+        loadData();
+    }, [user.id, loadData]);
+
+    const handlePayClick = useCallback(async (invoice: Invoice) => {
         if (!isStripeConfigured) {
             toast.error('Payment system is not configured');
             return;
@@ -55,9 +55,9 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
         } else {
             console.error('Failed to init payment:', error);
         }
-    };
+    }, [isStripeConfigured]);
 
-    const handlePaymentSuccess = async (paymentIntentId: string) => {
+    const handlePaymentSuccess = useCallback(async (paymentIntentId: string) => {
         if (selectedInvoice) {
             await paymentService.markInvoicePaid(selectedInvoice.id, paymentIntentId);
             setShowCheckout(false);
@@ -65,9 +65,9 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
             setSelectedInvoice(null);
             loadData(); // Refresh list
         }
-    };
+    }, [selectedInvoice, loadData]);
 
-    const startCreateInvoice = () => {
+    const startCreateInvoice = useCallback(() => {
         const dummyInvoice = {
             user_id: user.id,
             amount: 499.00,
@@ -81,7 +81,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
         };
 
         paymentService.createInvoice(dummyInvoice).then(() => loadData());
-    };
+    }, [user.id, loadData]);
 
     if (loading) {
         return <div className="p-8 text-center text-slate-400">Loading payments...</div>;

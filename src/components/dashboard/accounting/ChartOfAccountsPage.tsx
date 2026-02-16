@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ChartOfAccount, chartOfAccountsService, AccountType } from '../../../services/accounting/chartOfAccountsService';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -26,13 +26,7 @@ export function ChartOfAccountsPage() {
         normalBalance: 'debit' as 'debit' | 'credit',
     });
 
-    useEffect(() => {
-        if (currentTenant) {
-            loadAccounts();
-        }
-    }, [currentTenant, filterType, showInactive]);
-
-    const loadAccounts = async () => {
+    const loadAccounts = useCallback(async () => {
         setLoading(true);
         setError(null);
 
@@ -53,9 +47,25 @@ export function ChartOfAccountsPage() {
         }
 
         setLoading(false);
-    };
+    }, [filterType, showInactive]);
 
-    const handleCreate = async () => {
+    const resetForm = useCallback(() => {
+        setFormData({
+            accountCode: '',
+            accountName: '',
+            accountType: 'asset',
+            description: '',
+            normalBalance: 'debit',
+        });
+    }, []);
+
+    useEffect(() => {
+        if (currentTenant) {
+            loadAccounts();
+        }
+    }, [currentTenant, loadAccounts]);
+
+    const handleCreate = useCallback(async () => {
         const { account, error: err } = await chartOfAccountsService.createAccount(formData);
 
         if (err) {
@@ -65,9 +75,9 @@ export function ChartOfAccountsPage() {
             resetForm();
             loadAccounts();
         }
-    };
+    }, [formData, loadAccounts]);
 
-    const handleUpdate = async () => {
+    const handleUpdate = useCallback(async () => {
         if (!editingAccount) return;
 
         const { account, error: err } = await chartOfAccountsService.updateAccount(editingAccount.id, formData);
@@ -79,9 +89,9 @@ export function ChartOfAccountsPage() {
             resetForm();
             loadAccounts();
         }
-    };
+    }, [editingAccount, formData, loadAccounts]);
 
-    const handleDelete = async (accountId: string) => {
+    const handleDelete = useCallback(async (accountId: string) => {
         if (!confirm('Are you sure you want to delete this account?')) return;
 
         const { error: err } = await chartOfAccountsService.deleteAccount(accountId);
@@ -91,9 +101,9 @@ export function ChartOfAccountsPage() {
         } else {
             loadAccounts();
         }
-    };
+    }, [loadAccounts]);
 
-    const handleInitializeDefaults = async () => {
+    const handleInitializeDefaults = useCallback(async () => {
         if (!confirm('Initialize default chart of accounts? This will create 20+ standard accounts.')) return;
 
         const { success, error: err } = await chartOfAccountsService.initializeDefaultAccounts();
@@ -104,17 +114,8 @@ export function ChartOfAccountsPage() {
             alert('Default accounts created successfully!');
             loadAccounts();
         }
-    };
+    }, [loadAccounts]);
 
-    const resetForm = () => {
-        setFormData({
-            accountCode: '',
-            accountName: '',
-            accountType: 'asset',
-            description: '',
-            normalBalance: 'debit',
-        });
-    };
 
     const openEditModal = (account: ChartOfAccount) => {
         setEditingAccount(account);

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { aiService } from '@/services/ai/aiService';
 import { createClient } from '@supabase/supabase-js';
 
+export const runtime = 'nodejs';
+
 /**
  * AI Completion API Endpoint
  *

@@ -13,10 +13,6 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
     const [alerts, setAlerts] = useState<QuotaAlert[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        loadUsageData();
-    }, [tenantId]);
-
     async function loadUsageData() {
         setLoading(true);
         const [usageData, alertsData] = await Promise.all([
@@ -84,11 +80,10 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
                                     {alert.limit_value}
                                 </span>
                                 <span
-                                    className={`px-2 py-1 rounded text-xs font-medium ${
-                                        alert.alert_type === 'exceeded'
+                                    className={`px-2 py-1 rounded text-xs font-medium ${alert.alert_type === 'exceeded'
                                             ? 'bg-red-100 text-red-800'
                                             : 'bg-yellow-100 text-yellow-800'
-                                    }`}
+                                        }`}
                                 >
                                     {alert.alert_type}
                                 </span>
@@ -136,11 +131,10 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
                                     ? '∞'
                                     : metric.limit_value.toLocaleString()}
                             </span>
-                            <span className={`font-medium ${
-                                metric.status === 'exceeded' ? 'text-red-600' :
-                                metric.status === 'approaching' ? 'text-yellow-600' :
-                                'text-green-600'
-                            }`}>
+                            <span className={`font-medium ${metric.status === 'exceeded' ? 'text-red-600' :
+                                    metric.status === 'approaching' ? 'text-yellow-600' :
+                                        'text-green-600'
+                                }`}>
                                 {metric.percentage_used.toFixed(1)}%
                             </span>
                         </div>

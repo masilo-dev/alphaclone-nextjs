@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ServiceCard } from './landing/ServiceCard';
 import {
    CheckCircle2,
@@ -79,20 +79,20 @@ const PrismBackground = React.memo(() => {
    );
 });
 
+// Animated Hamburger Icon Component (internal)
+const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
+   <div className="relative w-6 h-5 flex flex-col justify-between items-center transition-all duration-300">
+      <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 transform origin-left ${isOpen ? 'rotate-[42deg] translate-x-1' : ''}`} />
+      <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 ${isOpen ? 'opacity-0 -translate-x-2' : ''}`} />
+      <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 transform origin-left ${isOpen ? '-rotate-[42deg] translate-x-1' : ''}`} />
+   </div>
+);
+
 const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
+
    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
    const [isLoginOpen, setIsLoginOpen] = useState(false);
    const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
-
-
-   // Animated Hamburger Icon Component (internal)
-   const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
-      <div className="relative w-6 h-5 flex flex-col justify-between items-center transition-all duration-300">
-         <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 transform origin-left ${isOpen ? 'rotate-[42deg] translate-x-1' : ''}`} />
-         <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 ${isOpen ? 'opacity-0 -translate-x-2' : ''}`} />
-         <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 transform origin-left ${isOpen ? '-rotate-[42deg] translate-x-1' : ''}`} />
-      </div>
-   );
 
    // Scroll Lock & State Management Effect
    React.useEffect(() => {
@@ -129,15 +129,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
       }
    }, []);
 
-   const scrollToSection = (id: string) => {
+   const scrollToSection = useCallback((id: string) => {
       const element = document.getElementById(id);
       if (element) {
          element.scrollIntoView({ behavior: 'smooth' });
       }
       setMobileMenuOpen(false);
-   };
+   }, []);
 
-   const handleContactSubmit = async (e: React.FormEvent) => {
+   const handleContactSubmit = useCallback(async (e: React.FormEvent) => {
       e.preventDefault();
       setFormStatus('sending');
 
@@ -155,7 +155,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
          setFormStatus('error');
          setTimeout(() => setFormStatus('idle'), 3000);
       }
-   };
+   }, [contactForm]);
 
 
 

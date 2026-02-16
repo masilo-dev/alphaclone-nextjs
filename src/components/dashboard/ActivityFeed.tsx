@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Activity, Clock, FileText, MessageSquare, DollarSign, User } from 'lucide-react';
 import { activityService, ActivityLog } from '../../services/dashboardService';
 import { formatDistanceToNow } from 'date-fns';
@@ -12,16 +12,16 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ userId, limit = 20 }) => {
     const [activities, setActivities] = useState<ActivityLog[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        loadActivities();
-    }, [userId]);
-
-    const loadActivities = async () => {
+    const loadActivities = useCallback(async () => {
         setIsLoading(true);
         const { logs } = await activityService.getActivityLogs(userId, limit);
         if (logs) setActivities(logs);
         setIsLoading(false);
-    };
+    }, [userId, limit]);
+
+    useEffect(() => {
+        loadActivities();
+    }, [loadActivities]);
 
     const getActivityIcon = (entityType?: string) => {
         switch (entityType) {

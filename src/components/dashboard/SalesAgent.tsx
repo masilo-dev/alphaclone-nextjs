@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, UserPlus, Phone, CheckCircle2, Bot, Send, Trash2, Upload, FileSpreadsheet, X, Mail, Settings, ExternalLink, FileText, Zap } from 'lucide-react';
+import { Search, UserPlus, Phone, CheckCircle2, Bot, Send, Trash2, Upload, FileSpreadsheet, X, Mail, ExternalLink, FileText, Zap } from 'lucide-react';
 import { generateLeads, chatWithGrowthAgent, isAnyAIConfigured } from '../../services/unifiedAIService';
 import { leadService, Lead } from '../../services/leadService';
 import { fileImportService } from '../../services/fileImportService';

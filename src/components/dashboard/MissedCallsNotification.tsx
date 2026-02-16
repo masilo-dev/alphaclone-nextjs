@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { PhoneMissed, X, Phone } from 'lucide-react';
 import { missedCallsService, MissedCall } from '../../services/missedCallsService';
 import { Button, Modal } from '../ui/UIComponents';
@@ -17,6 +17,18 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
     const [showModal, setShowModal] = useState(false);
     const [missedCalls, setMissedCalls] = useState<MissedCall[]>([]);
     const [loading, setLoading] = useState(false);
+
+    const loadUnseenCount = useCallback(async () => {
+        const { count } = await missedCallsService.getUnseenMissedCallsCount(userId);
+        setUnseenCount(count);
+    }, [userId]);
+
+    const loadMissedCalls = useCallback(async () => {
+        setLoading(true);
+        const { missedCalls: calls } = await missedCallsService.getMissedCallsForUser(userId, 20);
+        setMissedCalls(calls);
+        setLoading(false);
+    }, [userId]);
 
     useEffect(() => {
         loadUnseenCount();
@@ -55,27 +67,15 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
         return () => {
             unsubscribe();
         };
-    }, [userId]);
+    }, [userId, loadUnseenCount, onCallBack]);
 
-    const loadUnseenCount = async () => {
-        const { count } = await missedCallsService.getUnseenMissedCallsCount(userId);
-        setUnseenCount(count);
-    };
-
-    const loadMissedCalls = async () => {
-        setLoading(true);
-        const { missedCalls: calls } = await missedCallsService.getMissedCallsForUser(userId, 20);
-        setMissedCalls(calls);
-        setLoading(false);
-    };
-
-    const handleOpenModal = async () => {
+    const handleOpenModal = useCallback(async () => {
         setShowModal(true);
         await loadMissedCalls();
         // Mark all as seen
         await missedCallsService.markAllMissedCallsSeen(userId);
         setUnseenCount(0);
-    };
+    }, [userId, loadMissedCalls]);
 
     const handleCallBack = (callerId: string) => {
         setShowModal(false);
@@ -121,11 +121,10 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
                             {missedCalls.map((call) => (
                                 <div
                                     key={call.id}
-                                    className={`p-4 rounded-lg border transition-all ${
-                                        call.seen_at
+                                    className={`p-4 rounded-lg border transition-all ${call.seen_at
                                             ? 'bg-slate-800/30 border-slate-700/30'
                                             : 'bg-red-500/10 border-red-500/20'
-                                    }`}
+                                        }`}
                                 >
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-center gap-3 flex-1">

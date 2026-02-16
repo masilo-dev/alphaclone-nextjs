@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useVideoPlatform } from '../../../hooks/useVideoPlatform';
 import CustomVideoTile from './CustomVideoTile';
 import VideoControls from './VideoControls';
@@ -100,7 +100,8 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
             });
             // Don't throw - just log. React will handle the actual Error 310 if limit exceeded
         }
-    });
+    }); // Runs on every render
+
 
     // START CAMERA IMMEDIATELY (Instant Self-View)
     useEffect(() => {
@@ -110,6 +111,29 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
             startCamera().catch(err => console.error('Failed to start camera:', err));
         }
     }, []);
+
+    // Handle leaving the meeting
+    const handleLeave = useCallback(async () => {
+        try {
+            // Calculate duration
+            const duration = callStartTime
+                ? Math.floor((new Date().getTime() - callStartTime.getTime()) / 1000)
+                : undefined;
+
+            // End call in database
+            if (callId && duration) {
+                await dailyService.endVideoCall(callId, duration).catch(err => {
+                    console.error('Failed to end call in database:', err);
+                });
+            }
+
+            await leave();
+            onLeave();
+        } catch (err) {
+            console.error('Error leaving meeting:', err);
+            onLeave();
+        }
+    }, [callStartTime, callId, leave, onLeave]);
 
     // Join meeting on mount
     useEffect(() => {
@@ -161,7 +185,8 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 handleLeave();
             }
         };
-    }, []);
+    }, [roomUrl, user.name, callId, onLeave, join, isJoining, isJoined, handleLeave]);
+
 
     // Keep isJoinedRef in sync with isJoined state
     useEffect(() => {
@@ -296,58 +321,36 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         }
     }, [error]);
 
-    // Handle leaving the meeting
-    const handleLeave = async () => {
-        try {
-            // Calculate duration
-            const duration = callStartTime
-                ? Math.floor((new Date().getTime() - callStartTime.getTime()) / 1000)
-                : undefined;
-
-            // End call in database
-            if (callId && duration) {
-                await dailyService.endVideoCall(callId, duration).catch(err => {
-                    console.error('Failed to end call in database:', err);
-                });
-            }
-
-            await leave();
-            onLeave();
-        } catch (err) {
-            console.error('Error leaving meeting:', err);
-            onLeave();
-        }
-    };
 
     // Handle audio toggle
-    const handleToggleAudio = async () => {
+    const handleToggleAudio = useCallback(async () => {
         try {
             await toggleAudio();
         } catch (err: any) {
             toast.error(err?.userMessage || 'Failed to toggle audio');
         }
-    };
+    }, [toggleAudio]);
 
     // Handle video toggle
-    const handleToggleVideo = async () => {
+    const handleToggleVideo = useCallback(async () => {
         try {
             await toggleVideo();
         } catch (err: any) {
             toast.error(err?.userMessage || 'Failed to toggle video');
         }
-    };
+    }, [toggleVideo]);
 
     // Handle screen share toggle
-    const handleToggleScreenShare = async () => {
+    const handleToggleScreenShare = useCallback(async () => {
         try {
             await toggleScreenShare();
         } catch (err: any) {
             toast.error(err?.userMessage || 'Failed to toggle screen share');
         }
-    };
+    }, [toggleScreenShare]);
 
     // Admin: Mute participant (force mute)
-    const handleMuteParticipant = async (sessionId: string) => {
+    const handleMuteParticipant = useCallback(async (sessionId: string) => {
         if (!isUserAdmin(user)) {
             toast.error('Only admins can mute participants');
             return;
@@ -359,10 +362,10 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         } catch (err: any) {
             toast.error('Failed to mute participant');
         }
-    };
+    }, [user, muteParticipant]);
 
     // Admin: Remove participant from call
-    const handleRemoveParticipant = async (sessionId: string) => {
+    const handleRemoveParticipant = useCallback(async (sessionId: string) => {
         if (!isUserAdmin(user)) {
             toast.error('Only admins can remove participants');
             return;
@@ -374,10 +377,10 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         } catch (err: any) {
             toast.error('Failed to remove participant');
         }
-    };
+    }, [user, removeParticipant]);
 
     // Admin: End meeting for everyone
-    const handleEndMeetingForAll = async () => {
+    const handleEndMeetingForAll = useCallback(async () => {
         if (!isUserAdmin(user)) {
             toast.error('Only admins can end meetings');
             return;
@@ -397,10 +400,10 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         } catch (err: any) {
             toast.error('Failed to end meeting');
         }
-    };
+    }, [user, callId, leave, onLeave]);
 
     // Handle sending chat message
-    const handleSendChatMessage = async (message: string) => {
+    const handleSendChatMessage = useCallback(async (message: string) => {
         try {
             await sendChatMessage(message);
 
@@ -417,7 +420,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         } catch (err: any) {
             toast.error('Failed to send message');
         }
-    };
+    }, [sendChatMessage, user.name, user.id]);
 
     // Listen for incoming chat messages via app-message events
     useEffect(() => {

@@ -26,10 +26,12 @@ export default function BlogPage() {
         fetchArticles();
     }, []);
 
-    const filteredArticles = articles.filter(article =>
-        article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        article.category.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredArticles = React.useMemo(() =>
+        articles.filter(article =>
+            article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            article.category.toLowerCase().includes(searchQuery.toLowerCase())
+        ),
+        [articles, searchQuery]);
 
     return (
         <div className="min-h-screen bg-slate-950 text-white">

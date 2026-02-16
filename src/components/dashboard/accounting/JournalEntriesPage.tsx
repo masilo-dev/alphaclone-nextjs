@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     JournalEntry,
     JournalEntryWithLines,
@@ -23,14 +23,7 @@ export function JournalEntriesPage() {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [viewingEntry, setViewingEntry] = useState<JournalEntryWithLines | null>(null);
 
-    useEffect(() => {
-        if (currentTenant) {
-            loadEntries();
-            loadAccounts();
-        }
-    }, [currentTenant, filterStatus]);
-
-    const loadEntries = async () => {
+    const loadEntries = useCallback(async () => {
         setLoading(true);
         setError(null);
 
@@ -48,14 +41,14 @@ export function JournalEntriesPage() {
         }
 
         setLoading(false);
-    };
+    }, [filterStatus]);
 
-    const loadAccounts = async () => {
+    const loadAccounts = useCallback(async () => {
         const { accounts: data } = await chartOfAccountsService.getAccounts({ isActive: true });
         setAccounts(data);
-    };
+    }, []);
 
-    const handleViewEntry = async (entryId: string) => {
+    const handleViewEntry = useCallback(async (entryId: string) => {
         const { entry, error: err } = await journalEntryService.getEntry(entryId);
 
         if (err) {
@@ -63,9 +56,9 @@ export function JournalEntriesPage() {
         } else {
             setViewingEntry(entry);
         }
-    };
+    }, []);
 
-    const handlePost = async (entryId: string) => {
+    const handlePost = useCallback(async (entryId: string) => {
         if (!confirm('Post this journal entry? This action cannot be undone.')) return;
 
         const { success, error: err } = await journalEntryService.postEntry(entryId);
@@ -76,9 +69,9 @@ export function JournalEntriesPage() {
             alert('Entry posted successfully!');
             loadEntries();
         }
-    };
+    }, [loadEntries]);
 
-    const handleVoid = async (entryId: string) => {
+    const handleVoid = useCallback(async (entryId: string) => {
         const reason = prompt('Enter reason for voiding this entry:');
         if (!reason) return;
 
@@ -90,9 +83,9 @@ export function JournalEntriesPage() {
             alert(`Entry voided. Reversing entry created: ${reversingEntryId}`);
             loadEntries();
         }
-    };
+    }, [loadEntries]);
 
-    const handleDelete = async (entryId: string) => {
+    const handleDelete = useCallback(async (entryId: string) => {
         if (!confirm('Delete this draft entry?')) return;
 
         const { error: err } = await journalEntryService.deleteEntry(entryId);
@@ -102,7 +95,14 @@ export function JournalEntriesPage() {
         } else {
             loadEntries();
         }
-    };
+    }, [loadEntries]);
+
+    useEffect(() => {
+        if (currentTenant) {
+            loadEntries();
+            loadAccounts();
+        }
+    }, [currentTenant, loadEntries, loadAccounts]);
 
     if (loading) {
         return (

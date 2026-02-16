@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Calendar, User, Tag, Share2, Clock } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { seoService, SeoArticle } from '../../../services/seoService';
 import { MarkdownRenderer } from '../../../components/blog/MarkdownRenderer';
 import { CardSkeleton } from '../../../components/ui/Skeleton';
@@ -16,6 +17,11 @@ export default function BlogPost() {
     const [article, setArticle] = useState<SeoArticle | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const handleShare = useCallback(() => {
+        navigator.clipboard.writeText(window.location.href);
+        toast.success('Link copied to clipboard!');
+    }, []);
 
     useEffect(() => {
         if (!slug) return;
@@ -114,10 +120,10 @@ export default function BlogPost() {
                                 </div>
                             </div>
 
-                            <button className="text-slate-400 hover:text-white transition-colors p-2 rounded-full hover:bg-white/5" onClick={() => {
-                                navigator.clipboard.writeText(window.location.href);
-                                // Optional toast
-                            }}>
+                            <button
+                                className="text-slate-400 hover:text-white transition-colors p-2 rounded-full hover:bg-white/5"
+                                onClick={handleShare}
+                            >
                                 <Share2 className="w-5 h-5" />
                             </button>
                         </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { analyticsService, AnalyticsData } from '../../services/analyticsService';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, Users, DollarSign, Activity } from 'lucide-react';
@@ -11,11 +11,7 @@ const AnalyticsDashboard: React.FC = () => {
     const [stats, setStats] = useState<AnalyticsData | null>(null);
     const [dateRange, setDateRange] = useState<'7d' | '30d' | '1y'>('30d');
 
-    useEffect(() => {
-        loadData();
-    }, [dateRange]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true);
         const { data, error } = await analyticsService.getAnalytics(dateRange);
         if (data) {
@@ -24,7 +20,11 @@ const AnalyticsDashboard: React.FC = () => {
             console.error('Failed to load analytics:', error);
         }
         setLoading(false);
-    };
+    }, [dateRange]);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
     if (loading) {
         return (

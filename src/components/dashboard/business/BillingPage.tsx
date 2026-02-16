@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { businessInvoiceService, BusinessInvoice } from '../../../services/businessInvoiceService';
@@ -37,13 +37,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (currentTenant) {
-            loadData();
-        }
-    }, [currentTenant]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         if (!currentTenant) return;
 
         setLoading(true);
@@ -57,9 +51,15 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
         setProjects(projectData);
         setContracts(contractData || []);
         setLoading(false);
-    };
+    }, [currentTenant, user.id, user.role]);
 
-    const handleCreateInvoice = async (invoiceData: Partial<BusinessInvoice>) => {
+    useEffect(() => {
+        if (currentTenant) {
+            loadData();
+        }
+    }, [currentTenant, loadData]);
+
+    const handleCreateInvoice = useCallback(async (invoiceData: Partial<BusinessInvoice>) => {
         if (!currentTenant) return;
 
         const { invoice, error } = await businessInvoiceService.createInvoice(currentTenant.id, invoiceData);
@@ -69,13 +69,13 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
         }
 
         if (invoice) {
-            setInvoices([invoice, ...invoices]);
+            setInvoices(prev => [invoice, ...prev]);
             setShowCreateModal(false);
             toast.success('Invoice created successfully');
         }
-    };
+    }, [currentTenant]);
 
-    const handleDownloadPDF = (invoice: BusinessInvoice) => {
+    const handleDownloadPDF = useCallback((invoice: BusinessInvoice) => {
         const client = clients.find(c => c.id === invoice.clientId) || {};
         const tenant = currentTenant || { name: 'AlphaClone Business' };
 
@@ -87,19 +87,19 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
             console.error('PDF Generation Error:', e);
             toast.error('Failed to generate PDF');
         }
-    };
+    }, [clients, currentTenant]);
 
-    const handleDeleteInvoice = async (invoiceId: string) => {
+    const handleDeleteInvoice = useCallback(async (invoiceId: string) => {
         if (!confirm('Are you sure you want to delete this invoice?')) return;
 
         const { error } = await businessInvoiceService.deleteInvoice(invoiceId);
         if (error) {
             toast.error(`Failed to delete invoice: ${error}`);
         } else {
-            setInvoices(invoices.filter(inv => inv.id !== invoiceId));
+            setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
             toast.success('Invoice deleted');
         }
-    };
+    }, []);
 
     const filteredInvoices = filter === 'all'
         ? invoices
@@ -329,8 +329,8 @@ const CreateInvoiceModal = ({ clients, projects, contracts, isOpen, onClose, onI
     const [formData, setFormData] = useState({
         clientId: '',
         projectId: '',
-        issueDate: new Date().toISOString().split('T')[0],
-        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Default to 14 days
+        issueDate: '',
+        dueDate: '', // Will be set in useEffect
         senderName: currentTenant?.name || '',
         lineItems: [{ description: '', quantity: 1, rate: 0, amount: 0 }],
         taxRate: 0,
@@ -340,8 +340,17 @@ const CreateInvoiceModal = ({ clients, projects, contracts, isOpen, onClose, onI
     });
 
     useEffect(() => {
-        if (isOpen && currentTenant && !formData.senderName) {
-            setFormData(prev => ({ ...prev, senderName: currentTenant.name }));
+        if (isOpen) {
+            const today = new Date();
+            const future = new Date();
+            future.setDate(today.getDate() + 14);
+
+            setFormData(prev => ({
+                ...prev,
+                issueDate: today.toISOString().split('T')[0],
+                dueDate: future.toISOString().split('T')[0],
+                senderName: currentTenant?.name || prev.senderName
+            }));
         }
     }, [isOpen, currentTenant]);
 

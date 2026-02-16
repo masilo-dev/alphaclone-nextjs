@@ -20,6 +20,18 @@ export default function MeetPage() {
     // This ID is the database UUID, NOT the Daily room name
     const meetingId = params.id as string;
 
+    // Use lazy state to generate a stable guest ID once
+    const [guestId] = React.useState(() => `guest-${Date.now()}`);
+
+    // Memoize the guest user object to ensure it's pure and doesn't change on every render
+    const guestUser = React.useMemo(() => ({
+        id: guestId,
+        name: 'Guest',
+        email: '',
+        role: 'client' as const,
+        avatar: ''
+    }), [guestId]);
+
     useEffect(() => {
         // Wait for auth to initialize (even if user is null, we need to know that for sure)
         if (authLoading) return;
@@ -116,18 +128,13 @@ export default function MeetPage() {
         );
     }
 
+
     return (
         <div className="h-screen w-screen bg-slate-950 overflow-hidden relative">
             {/* The URL bar will show /meet/[id], effectively masking the Daily URL */}
             {roomUrl && (
                 <CustomVideoRoom
-                    user={user || {
-                        id: `guest-${Date.now()}`,
-                        name: 'Guest',
-                        email: '',
-                        role: 'client',
-                        avatar: ''
-                    }} // Fallback guest user if public
+                    user={user || guestUser}
                     roomUrl={roomUrl}
                     callId={callId!}
                     onLeave={() => router.push(user ? '/dashboard' : '/')}

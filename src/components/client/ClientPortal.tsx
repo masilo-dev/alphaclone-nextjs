@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Button } from '../ui/UIComponents';
 import { Calendar, Download, CheckCircle, Clock, FileText, Star } from 'lucide-react';
 import { Project, User } from '../../types';
@@ -35,29 +35,7 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user }) => {
     const [feedback, setFeedback] = useState({ rating: 0, comment: '' });
     const [showSurvey, setShowSurvey] = useState(false);
 
-    useEffect(() => {
-        loadProjects();
-    }, [user.id]);
-
-    useEffect(() => {
-        if (selectedProject) {
-            loadProjectDetails();
-        }
-    }, [selectedProject]);
-
-    const loadProjects = async () => {
-        setLoading(true);
-        const { projects: userProjects } = await projectService.getProjects(user.id, user.role);
-        if (userProjects && userProjects.length > 0) {
-            const firstProject = userProjects[0];
-            if (firstProject) {
-                setSelectedProject(firstProject);
-            }
-        }
-        setLoading(false);
-    };
-
-    const loadProjectDetails = async () => {
+    const loadProjectDetails = useCallback(async () => {
         // Load milestones and deliverables for the project
         // This would come from a project details API
         setMilestones([
@@ -88,7 +66,19 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user }) => {
                 size: 1024000,
             },
         ]);
-    };
+    }, []);
+
+    const loadProjects = useCallback(async () => {
+        setLoading(true);
+        const { projects: userProjects } = await projectService.getProjects(user.id, user.role);
+        if (userProjects && userProjects.length > 0) {
+            const firstProject = userProjects[0];
+            if (firstProject) {
+                setSelectedProject(firstProject);
+            }
+        }
+        setLoading(false);
+    }, [user.id, user.role]);
 
     const handleDownload = (deliverable: Deliverable) => {
         // Trigger download
@@ -100,6 +90,16 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user }) => {
         setShowSurvey(false);
         setFeedback({ rating: 0, comment: '' });
     };
+
+    useEffect(() => {
+        loadProjects();
+    }, [loadProjects]);
+
+    useEffect(() => {
+        if (selectedProject) {
+            loadProjectDetails();
+        }
+    }, [selectedProject, loadProjectDetails]);
 
     if (loading) {
         return (
@@ -135,11 +135,10 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user }) => {
                             <div key={milestone.id} className="flex items-start gap-4">
                                 <div className="flex flex-col items-center">
                                     <div
-                                        className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                            milestone.completed
-                                                ? 'bg-teal-500 text-white'
-                                                : 'bg-slate-800 border-2 border-slate-700'
-                                        }`}
+                                        className={`w-10 h-10 rounded-full flex items-center justify-center ${milestone.completed
+                                            ? 'bg-teal-500 text-white'
+                                            : 'bg-slate-800 border-2 border-slate-700'
+                                            }`}
                                     >
                                         {milestone.completed ? (
                                             <CheckCircle className="w-6 h-6" />
@@ -225,11 +224,10 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user }) => {
                                         <button
                                             key={rating}
                                             onClick={() => setFeedback({ ...feedback, rating })}
-                                            className={`w-10 h-10 rounded-lg transition-colors ${
-                                                feedback.rating >= rating
-                                                    ? 'bg-yellow-500 text-white'
-                                                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                                            }`}
+                                            className={`w-10 h-10 rounded-lg transition-colors ${feedback.rating >= rating
+                                                ? 'bg-yellow-500 text-white'
+                                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                                                }`}
                                         >
                                             <Star className="w-5 h-5 mx-auto" fill={feedback.rating >= rating ? 'currentColor' : 'none'} />
                                         </button>
@@ -263,4 +261,3 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user }) => {
 };
 
 export default ClientPortal;
-

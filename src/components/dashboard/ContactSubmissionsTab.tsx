@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Mail, Clock, CheckCircle, MessageSquare } from 'lucide-react';
 import { contactService, ContactSubmission } from '../../services/contactFormService';
 import { CardSkeleton } from '../ui/Skeleton';
@@ -9,21 +9,21 @@ const ContactSubmissionsTab: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'New' | 'Read' | 'Replied'>('all');
 
-    useEffect(() => {
-        loadSubmissions();
-    }, []);
-
-    const loadSubmissions = async () => {
+    const loadSubmissions = useCallback(async () => {
         setLoading(true);
         const { submissions: data } = await contactService.getContactSubmissions();
         setSubmissions(data);
         setLoading(false);
-    };
+    }, []);
 
-    const handleStatusChange = async (id: string, status: 'New' | 'Read' | 'Replied') => {
+    const handleStatusChange = useCallback(async (id: string, status: 'New' | 'Read' | 'Replied') => {
         await contactService.updateSubmissionStatus(id, status);
         loadSubmissions();
-    };
+    }, [loadSubmissions]);
+
+    useEffect(() => {
+        loadSubmissions();
+    }, [loadSubmissions]);
 
     const filteredSubmissions = filter === 'all'
         ? submissions
@@ -60,11 +60,10 @@ const ContactSubmissionsTab: React.FC = () => {
                         <button
                             key={status}
                             onClick={() => setFilter(status as any)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                filter === status
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === status
                                     ? 'bg-teal-500 text-white'
                                     : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                            }`}
+                                }`}
                         >
                             {status.charAt(0).toUpperCase() + status.slice(1)}
                             {status !== 'all' && (

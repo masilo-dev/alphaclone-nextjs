@@ -184,8 +184,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                 if (dueTasks.length > 0) {
                     setNotification(`You have ${dueTasks.length} tasks due today!`);
                 }
-            } catch (err) {
-                console.error('Failed to checked tasks', err);
+            } catch {
+                console.error('Failed to checked tasks');
             }
         };
 
@@ -206,8 +206,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                     // Update cache
                     localStorage.setItem('dashboard_projects_cache', JSON.stringify(data));
                 }
-            } catch (err) {
-                console.error('Failed to load projects in BusinessDashboard', err);
+            } catch {
+                console.error('Failed to load projects in BusinessDashboard');
             } finally {
                 setLoadingProjects(false);
             }
@@ -227,8 +227,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             if (cached) {
                 try {
                     setProjects(JSON.parse(cached));
-                } catch (e) {
-                    console.error('Failed to parse project cache', e);
+                } catch {
+                    console.error('Failed to parse project cache');
                 }
             }
         }
@@ -249,8 +249,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
 
     // Map routes to display content
     const renderBusinessContent = () => {
-        const plan = currentTenant?.subscription_plan || 'free';
-        const planFeatures = PLAN_PRICING[plan as keyof typeof PLAN_PRICING]?.features;
+        // const plan = currentTenant?.subscription_plan || 'free';
+        // const planFeatures = PLAN_PRICING[plan as keyof typeof PLAN_PRICING]?.features;
 
         const LockedFeature = ({ feature }: { feature: string }) => (
             <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in-up">
@@ -483,6 +483,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                         <div className="hidden md:block w-px h-6 bg-slate-800 mx-2" />
 
                         <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={currentTenant?.logo_url || user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
                                 alt="Profile"

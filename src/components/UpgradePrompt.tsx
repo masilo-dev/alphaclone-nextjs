@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { X, Zap, Check, TrendingUp } from 'lucide-react';
 import { subscriptionService, TIER_PRICING } from '../services/subscriptionService';
 import { useAuth } from '../contexts/AuthContext';
@@ -64,14 +64,7 @@ export function UpgradePrompt({
     const [isVisible, setIsVisible] = useState(true);
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
 
-    useEffect(() => {
-        // Track that prompt was shown
-        if (user && tenant) {
-            trackPromptShown();
-        }
-    }, []);
-
-    async function trackPromptShown() {
+    const trackPromptShown = useCallback(async () => {
         const result = await subscriptionService.trackUpgradePrompt(
             tenant!.id,
             user!.id,
@@ -87,7 +80,14 @@ export function UpgradePrompt({
         if (result.success && result.promptId) {
             setPromptId(result.promptId);
         }
-    }
+    }, [tenant, user, promptType, triggerFeature, currentTier, suggestedTier]);
+
+    useEffect(() => {
+        // Track that prompt was shown
+        if (user && tenant) {
+            trackPromptShown();
+        }
+    }, [user, tenant, trackPromptShown]);
 
     async function handleUpgradeClick() {
         if (promptId) {
@@ -203,8 +203,8 @@ export function UpgradePrompt({
                         <button
                             onClick={() => setBillingCycle('monthly')}
                             className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${billingCycle === 'monthly'
-                                    ? 'bg-white text-blue-600 shadow'
-                                    : 'text-gray-600 hover:text-gray-900'
+                                ? 'bg-white text-blue-600 shadow'
+                                : 'text-gray-600 hover:text-gray-900'
                                 }`}
                         >
                             Monthly
@@ -212,8 +212,8 @@ export function UpgradePrompt({
                         <button
                             onClick={() => setBillingCycle('annual')}
                             className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${billingCycle === 'annual'
-                                    ? 'bg-white text-blue-600 shadow'
-                                    : 'text-gray-600 hover:text-gray-900'
+                                ? 'bg-white text-blue-600 shadow'
+                                : 'text-gray-600 hover:text-gray-900'
                                 }`}
                         >
                             Annual

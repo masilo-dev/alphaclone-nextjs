@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { dailyService, VideoCall } from '../../../services/dailyService';
 import { supabase } from '../../../lib/supabase';
 import { User, Video, Calendar, Clock, AlertCircle } from 'lucide-react';
@@ -16,14 +16,9 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
     const router = useRouter();
     const [meetings, setMeetings] = useState<VideoCall[]>([]);
     const [loading, setLoading] = useState(true);
+    const [currentTime, setCurrentTime] = useState(Date.now());
 
-    useEffect(() => {
-        if (user) {
-            loadMeetings();
-        }
-    }, [user]);
-
-    const loadMeetings = async () => {
+    const loadMeetings = useCallback(async () => {
         if (!user) return;
         setLoading(true);
 
@@ -54,7 +49,18 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
             setMeetings([...dailyCalls, ...mappedBookings]);
         }
         setLoading(false);
-    };
+    }, [user]);
+
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(Date.now()), 60000); // Update every minute
+        return () => clearInterval(timer);
+    }, []);
+
+    useEffect(() => {
+        if (user) {
+            loadMeetings();
+        }
+    }, [user, loadMeetings]);
 
     const upcomingMeetings = meetings.filter(m =>
         (m.status === 'scheduled' || m.status === 'active' || (m.status as any) === 'confirmed') &&
@@ -156,10 +162,10 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
                                                 variant="secondary"
                                                 className="gap-2"
                                                 // Allow joining 10 mins early
-                                                disabled={dateToFormat.getTime() - Date.now() > 10 * 60 * 1000}
+                                                disabled={dateToFormat.getTime() - currentTime > 10 * 60 * 1000}
                                             >
                                                 <Video className="w-4 h-4" />
-                                                {dateToFormat.getTime() - Date.now() > 10 * 60 * 1000 ? 'Join (Too Early)' : 'Join Link'}
+                                                {dateToFormat.getTime() - currentTime > 10 * 60 * 1000 ? 'Join (Too Early)' : 'Join Link'}
                                             </Button>
                                         )}
                                     </div>

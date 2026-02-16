@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
 import { aiService } from '@/services/ai/aiService';
 
+export const runtime = 'nodejs';
+
 /**
  * AI Streaming Completion API Endpoint
  *

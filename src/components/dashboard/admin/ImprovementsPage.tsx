@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Filter,
     Search,
@@ -30,12 +30,7 @@ const ImprovementsPage: React.FC = () => {
     const [editNotes, setEditNotes] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
-    // Load improvements
-    useEffect(() => {
-        loadImprovements();
-    }, [filters]);
-
-    const loadImprovements = async () => {
+    const loadImprovements = useCallback(async () => {
         setLoading(true);
         const { improvements: data, error } = await improvementService.getImprovements(filters);
 
@@ -44,11 +39,16 @@ const ImprovementsPage: React.FC = () => {
         }
 
         setLoading(false);
-    };
+    }, [filters]);
 
-    const handleSearch = () => {
+    // Load improvements
+    useEffect(() => {
+        loadImprovements();
+    }, [loadImprovements]);
+
+    const handleSearch = useCallback(() => {
         setFilters({ ...filters, search: searchQuery });
-    };
+    }, [filters, searchQuery]);
 
     const handleFilterChange = (key: keyof ImprovementFilters, value: any) => {
         setFilters({ ...filters, [key]: value || undefined });
@@ -61,7 +61,7 @@ const ImprovementsPage: React.FC = () => {
         setDetailModalOpen(true);
     };
 
-    const handleSaveChanges = async () => {
+    const handleSaveChanges = useCallback(async () => {
         if (!selectedImprovement) return;
 
         setIsSaving(true);
@@ -91,7 +91,7 @@ const ImprovementsPage: React.FC = () => {
         }
 
         setIsSaving(false);
-    };
+    }, [selectedImprovement, editStatus, editNotes]);
 
     const getSeverityColor = (severity: string) => {
         switch (severity) {

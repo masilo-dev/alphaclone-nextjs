@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { contractService, Contract } from '../../services/contractService';
 import { SignaturePad } from './SignaturePad';
 import { Card, Button, Badge, Input } from '../ui/UIComponents';
@@ -43,18 +43,14 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         toast.success("Clause Inserted");
     };
 
-    useEffect(() => {
-        loadContracts();
-    }, [user.id]);
-
-    const loadContracts = async () => {
+    const loadContracts = useCallback(async () => {
         setLoading(true);
         const { contracts: data } = await contractService.getUserContracts(user.id, user.role);
         if (data) setContracts(data);
         setLoading(false);
-    };
+    }, [user.id, user.role]);
 
-    const handleCreateDraft = async () => {
+    const handleCreateDraft = useCallback(async () => {
         if (!draftTitle || !draftContent) {
             toast.error("Please provide title and content");
             return;
@@ -72,9 +68,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         setDraftContent('');
         setDraftTitle('');
         loadContracts();
-    };
+    }, [draftTitle, draftContent, user.id, loadContracts]);
 
-    const handleAIDraft = async () => {
+    const handleAIDraft = useCallback(async () => {
         if (!draftClient) {
             toast.error("Please enter Client Name for AI context");
             return;
@@ -87,14 +83,14 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             toast.error("AI Generation Failed");
         }
         setIsGenerating(false);
-    };
+    }, [draftClient]);
 
-    const handleSignClick = (contract: Contract) => {
+    const handleSignClick = useCallback((contract: Contract) => {
         setSelectedContract(contract);
         setShowSignModal(true);
-    };
+    }, []);
 
-    const handleSaveSignature = async (signatureDataUrl: string) => {
+    const handleSaveSignature = useCallback(async (signatureDataUrl: string) => {
         if (selectedContract) {
             // Use actual user role for signing
             const role = isAdmin ? 'admin' : 'client';
@@ -105,11 +101,15 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             toast.success(`Signed as ${role}`);
             loadContracts();
         }
-    };
+    }, [selectedContract, isAdmin, loadContracts]);
 
-    const handleDownload = (contract: Contract) => {
+    const handleDownload = useCallback((contract: Contract) => {
         contractService.downloadPDF(contract, currentTenant);
-    };
+    }, [currentTenant]);
+
+    useEffect(() => {
+        loadContracts();
+    }, [loadContracts]);
 
     if (loading) {
         return <div className="p-8 text-center text-slate-400">Loading contracts...</div>;

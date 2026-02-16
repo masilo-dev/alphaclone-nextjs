@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Plus, Edit, Trash2, Eye, EyeOff, Save, X } from 'lucide-react';
 
@@ -33,11 +33,7 @@ const ArticleEditor: React.FC = () => {
         published: false
     };
 
-    useEffect(() => {
-        loadArticles();
-    }, []);
-
-    const loadArticles = async () => {
+    const loadArticles = useCallback(async () => {
         const { data, error } = await supabase
             .from('seo_articles')
             .select('*')
@@ -47,9 +43,13 @@ const ArticleEditor: React.FC = () => {
             setArticles(data);
         }
         setLoading(false);
-    };
+    }, []);
 
-    const handleSave = async () => {
+    useEffect(() => {
+        loadArticles();
+    }, [loadArticles]);
+
+    const handleSave = useCallback(async () => {
         if (!editing) return;
 
         const articleData = {
@@ -78,9 +78,9 @@ const ArticleEditor: React.FC = () => {
                 setEditing(null);
             }
         }
-    };
+    }, [editing, isNew, loadArticles]);
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = useCallback(async (id: string) => {
         if (!confirm('Are you sure you want to delete this article?')) return;
 
         const { error } = await supabase
@@ -91,9 +91,9 @@ const ArticleEditor: React.FC = () => {
         if (!error) {
             loadArticles();
         }
-    };
+    }, [loadArticles]);
 
-    const togglePublished = async (article: Article) => {
+    const togglePublished = useCallback(async (article: Article) => {
         const { error } = await supabase
             .from('seo_articles')
             .update({ published: !article.published })
@@ -102,7 +102,7 @@ const ArticleEditor: React.FC = () => {
         if (!error) {
             loadArticles();
         }
-    };
+    }, [loadArticles]);
 
     if (loading) {
         return <div className="text-white">Loading...</div>;

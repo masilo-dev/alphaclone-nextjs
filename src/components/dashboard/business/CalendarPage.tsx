@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { businessEventService, BusinessEvent } from '../../../services/businessEventService';
@@ -25,22 +25,22 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (currentTenant) {
-            loadEvents();
-        }
-    }, [currentTenant]);
-
-    const loadEvents = async () => {
+    const loadEvents = useCallback(async () => {
         if (!currentTenant) return;
 
         setLoading(true);
         const { events: data } = await businessEventService.getEvents(currentTenant.id);
         setEvents(data);
         setLoading(false);
-    };
+    }, [currentTenant]);
 
-    const handleAddEvent = async (eventData: Partial<BusinessEvent>) => {
+    useEffect(() => {
+        if (currentTenant) {
+            loadEvents();
+        }
+    }, [currentTenant, loadEvents]);
+
+    const handleAddEvent = useCallback(async (eventData: Partial<BusinessEvent>) => {
         if (!currentTenant) return;
 
         const { event, error } = await businessEventService.createEvent(currentTenant.id, {
@@ -49,10 +49,10 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
         });
 
         if (!error && event) {
-            setEvents([...events, event]);
+            setEvents(prev => [...prev, event]);
             setShowAddModal(false);
         }
-    };
+    }, [currentTenant, user.id]);
 
     const getDaysInMonth = (date: Date) => {
         const year = date.getFullYear();

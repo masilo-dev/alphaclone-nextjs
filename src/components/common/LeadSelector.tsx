@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Search, ChevronDown, UserPlus, ExternalLink } from 'lucide-react';
 import { leadService, Lead } from '../../services/leadService';
 
@@ -21,11 +21,7 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        loadLeads();
-    }, [filter]);
-
-    const loadLeads = async () => {
+    const loadLeads = useCallback(async () => {
         setLoading(true);
         const { leads: data, error } = await leadService.getLeads();
         if (!error) {
@@ -38,7 +34,11 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
             setLeads(filteredLeads);
         }
         setLoading(false);
-    };
+    }, [filter]);
+
+    useEffect(() => {
+        loadLeads();
+    }, [loadLeads]);
 
     const filteredLeads = leads.filter(lead =>
         lead.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||

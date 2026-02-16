@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Search, X, FileText, MessageSquare, DollarSign, User, Filter } from 'lucide-react';
 import { searchService, SearchResult, SearchFilters } from '../../services/searchService';
 import { User as UserType } from '../../types';
@@ -21,52 +21,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
     const [isSearching, setIsSearching] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-                e.preventDefault();
-                setIsOpen(true);
-                setTimeout(() => inputRef.current?.focus(), 100);
-            }
-            if (e.key === 'Escape') {
-                setIsOpen(false);
-                setQuery('');
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        loadSearchHistory();
-
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
-
-    useEffect(() => {
-        if (query.length >= 2) {
-            const debounceTimer = setTimeout(() => {
-                performSearch();
-                loadSuggestions();
-            }, 300);
-
-            return () => clearTimeout(debounceTimer);
-        } else {
-            setResults([]);
-            setSuggestions([]);
-            return undefined;
-        }
-    }, [query, filters]);
-
-    const loadSearchHistory = async () => {
-        const historyData = await searchService.getSearchHistory(user.id, 5);
-        setHistory(historyData);
-    };
-
-    const loadSuggestions = async () => {
-        const role = user.role === 'admin' ? 'admin' : 'client';
-        const suggs = await searchService.getSuggestions(query, user.id, role);
-        setSuggestions(suggs);
-    };
-
-    const performSearch = async () => {
+    const performSearch = useCallback(async () => {
         if (!query.trim()) {
             setResults([]);
             return;
@@ -86,7 +41,52 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
             await searchService.saveSearchHistory(user.id, query, searchResults.length);
         }
         setIsSearching(false);
-    };
+    }, [query, user.id, user.role, filters]);
+
+    const loadSuggestions = useCallback(async () => {
+        const role = user.role === 'admin' ? 'admin' : 'client';
+        const suggs = await searchService.getSuggestions(query, user.id, role);
+        setSuggestions(suggs);
+    }, [query, user.id, user.role]);
+
+    const loadSearchHistory = useCallback(async () => {
+        const historyData = await searchService.getSearchHistory(user.id, 5);
+        setHistory(historyData);
+    }, [user.id]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                setIsOpen(true);
+                setTimeout(() => inputRef.current?.focus(), 100);
+            }
+            if (e.key === 'Escape') {
+                setIsOpen(false);
+                setQuery('');
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        loadSearchHistory();
+
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [loadSearchHistory]);
+
+    useEffect(() => {
+        if (query.length >= 2) {
+            const debounceTimer = setTimeout(() => {
+                performSearch();
+                loadSuggestions();
+            }, 300);
+
+            return () => clearTimeout(debounceTimer);
+        } else {
+            setResults([]);
+            setSuggestions([]);
+            return undefined;
+        }
+    }, [query, filters, performSearch, loadSuggestions]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'ArrowDown') {
@@ -307,8 +307,8 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                                 key={`${result.type}-${result.id}`}
                                 onClick={() => handleSelect(result)}
                                 className={`w-full flex items-start gap-3 p-4 text-left transition-colors ${index === selectedIndex
-                                        ? 'bg-slate-800'
-                                        : 'hover:bg-slate-800/50'
+                                    ? 'bg-slate-800'
+                                    : 'hover:bg-slate-800/50'
                                     }`}
                             >
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${getColor(result.type)}`}>

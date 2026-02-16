@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { tenantService } from '../services/tenancy/TenantService';
 import type { Tenant, SubscriptionPlan } from '../services/tenancy/types';
 import { authService } from '../services/authService';
@@ -47,27 +47,25 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  useEffect(() => {
-    if (user?.id) {
-      // Timeout safeguard: Force loading to false after 15 seconds (increased from 5s for high-latency regions)
-      const timeoutId = setTimeout(() => {
-        console.warn('TenantContext: Loading timeout reached, forcing isLoading to false');
-        setError('Loading timeout - please check your connection and refresh');
-        setIsLoading(false);
-      }, 15000);
+  /* Methods defined before useEffect to avoid 'used before declaration' */
+  const switchTenant = useCallback(async (tenantId: string) => {
+    const tenant = userTenants.find(t => t.id === tenantId);
 
-      loadUserTenants(timeoutId);
-
-      return () => clearTimeout(timeoutId);
-    } else {
-      setCurrentTenant(null);
-      setUserTenants([]);
-      setIsLoading(false);
-      setError(null);
+    if (!tenant) {
+      throw new Error('Tenant not found or no access');
     }
-  }, [user?.id]);
 
-  const loadUserTenants = async (timeoutId?: NodeJS.Timeout) => {
+    // Update context
+    setCurrentTenant(tenant);
+
+    // Persist to localStorage
+    tenantService.setCurrentTenant(tenantId);
+
+    // Reload the page to fetch new tenant's data
+    window.location.reload();
+  }, [userTenants]);
+
+  const loadUserTenants = useCallback(async (timeoutId?: NodeJS.Timeout) => {
     if (!user?.id) return;
 
     try {
@@ -167,35 +165,15 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       if (timeoutId) clearTimeout(timeoutId);
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
-  const switchTenant = async (tenantId: string) => {
-    const tenant = userTenants.find(t => t.id === tenantId);
-
-    if (!tenant) {
-      throw new Error('Tenant not found or no access');
-    }
-
-    // Update context
-    setCurrentTenant(tenant);
-
-    // Persist to localStorage
-    tenantService.setCurrentTenant(tenantId);
-
-    // Clear any cached queries (if using React Query)
-    // queryClient.invalidateQueries();
-
-    // Reload the page to fetch new tenant's data
-    window.location.reload();
-  };
-
-  const refreshTenants = async () => {
+  const refreshTenants = useCallback(async () => {
     if (user?.id) {
       await loadUserTenants();
     }
-  };
+  }, [user?.id, loadUserTenants]);
 
-  const createTenant = async (data: CreateTenantData): Promise<Tenant> => {
+  const createTenant = useCallback(async (data: CreateTenantData): Promise<Tenant> => {
     if (!user?.id) {
       throw new Error('Must be logged in to create tenant');
     }
@@ -214,7 +192,29 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     await switchTenant(tenant.id);
 
     return tenant;
-  };
+  }, [user?.id, refreshTenants, switchTenant]);
+
+  useEffect(() => {
+    if (user?.id) {
+      // Timeout safeguard: Force loading to false after 15 seconds (increased from 5s for high-latency regions)
+      const timeoutId = setTimeout(() => {
+        console.warn('TenantContext: Loading timeout reached, forcing isLoading to false');
+        setError('Loading timeout - please check your connection and refresh');
+        setIsLoading(false);
+      }, 15000);
+
+      loadUserTenants(timeoutId);
+
+      return () => clearTimeout(timeoutId);
+    } else {
+      setCurrentTenant(null);
+      setUserTenants([]);
+      setIsLoading(false);
+      setError(null);
+    }
+  }, [user?.id, loadUserTenants]);
+
+
 
   const value: TenantContextType = {
     currentTenant,

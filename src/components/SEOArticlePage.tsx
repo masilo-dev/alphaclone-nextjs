@@ -23,11 +23,7 @@ const SEOArticlePage: React.FC = () => {
     const [article, setArticle] = React.useState<Article | null>(null);
     const [loading, setLoading] = React.useState(true);
 
-    useEffect(() => {
-        loadArticle();
-    }, [slug]);
-
-    const loadArticle = async () => {
+    const loadArticle = React.useCallback(async () => {
         if (!slug) return;
 
         // Fetch article
@@ -49,7 +45,11 @@ const SEOArticlePage: React.FC = () => {
         }
 
         setLoading(false);
-    };
+    }, [slug]);
+
+    useEffect(() => {
+        loadArticle();
+    }, [slug, loadArticle]);
 
     if (loading) {
         return (

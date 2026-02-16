@@ -1,41 +1,19 @@
 'use client';
 // @ts-nocheck
 
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     CheckSquare,
     Plus,
-    Clock,
-    AlertCircle,
     User,
     Calendar,
     LayoutGrid,
     Trello,
-    BarChart,
-    ChevronLeft,
-    ChevronRight,
-    ArrowRight,
-    Check,
-    FileText,
-    MessageSquare,
-    MoreVertical,
-    CheckCircle2,
     X,
-    Sparkles,
     Loader2,
-    Trash2,
-    Zap,
-    Shield,
-    TrendingUp,
-    TrendingDown,
-    Activity
+    FileText
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { tenantService } from '../../services/tenancy/TenantService';
 import { taskService, Task } from '../../services/taskService';
-import { teamService } from '../../services/teamService';
-import { projectService } from '../../services/projectService';
-import { leadService } from '../../services/leadService';
 import { Button, Modal, Input } from '../ui/UIComponents';
 import { CollaborativeTaskNotes } from './projects/CollaborativeTaskNotes';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,29 +23,7 @@ import toast from 'react-hot-toast';
 import { useTasks } from '@/hooks/useTasks';
 import dynamic from 'next/dynamic';
 
-const FixedSizeGrid = dynamic(
-    () => import('react-window').then((mod: any) => mod.FixedSizeGrid),
-    {
-        ssr: false,
-        loading: () => (
-            <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
-            </div>
-        )
-    }
-) as any;
 
-const AutoSizer = dynamic(
-    () => import('react-virtualized-auto-sizer').then((mod: any) => mod.AutoSizer),
-    {
-        ssr: false,
-        loading: () => (
-            <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
-            </div>
-        )
-    }
-) as any;
 import {
     DndContext,
     DragEndEvent,
@@ -97,17 +53,11 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
     const [viewMode, setViewMode] = useState<ViewMode>('kanban');
     const [searchQuery, setSearchQuery] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [teamMembers, setTeamMembers] = useState<any[]>([]);
-    const [projects, setProjects] = useState<any[]>([]);
-    const [leads, setLeads] = useState<any[]>([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [notesTaskId, setNotesTaskId] = useState<string | null>(null);
     const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
-    const [draggingGanttTask, setDraggingGanttTask] = useState<string | null>(null);
-    const [ganttDragOffset, setGanttDragOffset] = useState(0);
-    const [selectedProject, setSelectedProject] = useState<string>('all');
-    const [isGeneratingOutline, setIsGeneratingOutline] = useState(false);
+    const [selectedProject] = useState<string>('all');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Hooks
     const { user } = useAuth();
@@ -219,8 +169,8 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
 
 
     const toggleTaskSelection = (taskId: string) => {
-        setSelectedTaskIds(prev =>
-            prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]
+        setSelectedTaskIds((prev: string[]) =>
+            prev.includes(taskId) ? prev.filter((id: string) => id !== taskId) : [...prev, taskId]
         );
     };
 
@@ -322,54 +272,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         </DndContext>
     );
 
-    // Grid Cell Renderer
-    const renderGridCell = ({ columnIndex, rowIndex, style }: any) => {
-        // Create a synthetic array from filtered tasks for grid
-        // We might need to handle this carefully if filteredAndSearchedTasks changes
-        const columnCount = Math.floor(style.width / 320) || 1; // Approximate
-        // Actually, react-window passes specific indices. 
-        // We need to map (rowIndex, columnIndex) to linear index
-        // However, FixedSizeGrid requires consistent column counts.
-        // Let's rely on AutoSizer to calculate columnCount and pass it to data
-        return null;
-    };
 
-    // Simplified Grid Render for stability first
-    const GridRow = ({ index, style, data }: any) => {
-        const { items, columnCount, width } = data;
-        const itemWidth = width / columnCount;
-        const rowItems = [];
-
-        for (let i = 0; i < columnCount; i++) {
-            const itemIndex = index * columnCount + i;
-            if (itemIndex < items.length) {
-                const task = items[itemIndex];
-                rowItems.push(
-                    <div key={task.id} style={{ width: itemWidth, height: '100%', padding: '8px', boxSizing: 'border-box', display: 'inline-block' }}>
-                        <div className="glass-panel p-4 h-full rounded-xl border border-white/5 bg-slate-900/40 relative group overflow-hidden hover:border-teal-500/30 transition-all">
-                            <div className="flex justify-between items-start mb-2">
-                                <h4 className="font-bold text-white text-sm line-clamp-2">{task.title}</h4>
-                                <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold ${task.status === 'completed' ? 'bg-green-500/20 text-green-400' : 'bg-slate-700 text-slate-400'}`}>
-                                    {task.status}
-                                </span>
-                            </div>
-                            <p className="text-xs text-slate-500 line-clamp-3 mb-4">{task.description}</p>
-                            <div className="mt-auto flex justify-between items-center text-xs text-slate-500">
-                                <span>{task.estimatedHours ? `${task.estimatedHours}h` : ''}</span>
-                                {task.dueDate && <span>{new Date(task.dueDate).toLocaleDateString()}</span>}
-                            </div>
-                        </div>
-                    </div>
-                );
-            }
-        }
-
-        return (
-            <div style={style}>
-                {rowItems}
-            </div>
-        );
-    };
 
     const renderLazyGrid = () => (
         <div className="h-full w-full overflow-y-auto p-4">

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from '../ui/UIComponents';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line } from 'recharts';
 import { DollarSign, TrendingUp, TrendingDown, Target } from 'lucide-react';
@@ -16,11 +16,7 @@ const SalesForecastTab = () => {
     const [winRate, setWinRate] = useState(0);
     const [chartData, setChartData] = useState<any[]>([]);
 
-    useEffect(() => {
-        loadData();
-    }, [user]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true);
         try {
             const [summaryRes, pipelineRes, winRateRes] = await Promise.all([
@@ -53,7 +49,11 @@ const SalesForecastTab = () => {
             console.error('Failed to load sales forecast:', error);
         }
         setLoading(false);
-    };
+    }, []);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData, user]);
 
     if (loading) {
         return <div className="p-12 text-center text-slate-500">Loading forecast data...</div>;

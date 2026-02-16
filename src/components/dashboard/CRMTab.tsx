@@ -1,7 +1,7 @@
 'use client';
 // @ts-nocheck
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
     Briefcase,
     Search,
@@ -10,16 +10,13 @@ import {
     MoreVertical,
     Phone,
     Mail,
-    Globe,
     Calendar,
     DollarSign,
     Users,
     TrendingUp,
     FileText,
-    ArrowRight,
     Loader2,
     X,
-    Check,
     Trash2,
     Edit2,
     Upload,
@@ -67,7 +64,6 @@ interface CRMTabProps {
 }
 
 const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
-    const { user } = useAuth();
     const { currentTenant: tenant } = useTenant();
     const [searchTerm, setSearchQuery] = useState('');
     const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(null);
@@ -81,8 +77,6 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
     const {
         clients,
         isLoading: loading,
-        fetchNextPage,
-        hasNextPage,
         createClient: createClientMutation,
         updateClient: updateClientMutation,
         deleteClient: deleteClientMutation
@@ -182,57 +176,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
         }
     };
 
-    // Virtualized List Row
-    const ClientRow = ({ index, style, data }: any) => {
-        const client = data.clients[index];
-        if (!client) return null;
 
-        const isSelected = selectedClient?.id === client.id;
-
-        return (
-            <div style={style} className="px-2 py-1">
-                <div
-                    onClick={() => setSelectedClient(client)}
-                    className={`p-4 rounded-xl border transition-all cursor-pointer group flex items-center justify-between ${isSelected
-                        ? 'bg-teal-500/10 border-teal-500/50 shadow-lg shadow-teal-500/10'
-                        : 'bg-slate-900/40 border-white/5 hover:border-white/10 hover:bg-slate-800/60'
-                        }`}
-                >
-                    <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold ${isSelected ? 'bg-teal-500 text-white' : 'bg-slate-800 text-slate-400 group-hover:bg-slate-700'}`}>
-                            {client.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                            <h3 className={`font-bold text-sm ${isSelected ? 'text-white' : 'text-slate-200 group-hover:text-white'}`}>{client.name}</h3>
-                            <p className="text-xs text-slate-500 flex items-center gap-2">
-                                {client.company && <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" /> {client.company}</span>}
-                                {client.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {client.email}</span>}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${client.stage === 'lead' ? 'bg-blue-500/10 text-blue-400' :
-                            client.stage === 'prospect' ? 'bg-purple-500/10 text-purple-400' :
-                                client.stage === 'customer' ? 'bg-green-500/10 text-green-400' :
-                                    'bg-red-500/10 text-red-400'
-                            }`}>
-                            {client.stage}
-                        </span>
-                        <div className="text-right">
-                            <div className="text-xs font-bold text-slate-300">
-                                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(client.value)}
-                            </div>
-                            <div className="text-[10px] text-slate-500">Value</div>
-                        </div>
-                        <button className="p-2 hover:bg-white/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
-                            <MoreVertical className="w-4 h-4 text-slate-400" />
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    };
 
     return (
         <div className="h-full flex flex-col space-y-4 md:space-y-6">

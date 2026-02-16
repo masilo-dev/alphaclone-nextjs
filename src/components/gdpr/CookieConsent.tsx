@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { X, Cookie, Shield, BarChart, Target } from 'lucide-react';
 import { consentService, ConsentType } from '../../services/gdpr/consentService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -22,11 +22,7 @@ export function CookieConsent() {
         cookies_marketing: false,
     });
 
-    useEffect(() => {
-        checkConsentStatus();
-    }, [user]);
-
-    async function checkConsentStatus() {
+    const checkConsentStatus = useCallback(async () => {
         if (!user) {
             // Check localStorage for anonymous users
             const hasConsented = localStorage.getItem('cookie_consent');
@@ -45,36 +41,13 @@ export function CookieConsent() {
         if (!hasCookieConsent) {
             setIsVisible(true);
         }
-    }
+    }, [user]);
 
-    async function handleAcceptAll() {
-        const newConsents = {
-            cookies_essential: true,
-            cookies_analytics: true,
-            cookies_marketing: true,
-        };
+    useEffect(() => {
+        checkConsentStatus();
+    }, [user, checkConsentStatus]);
 
-        await saveConsents(newConsents);
-        setIsVisible(false);
-    }
-
-    async function handleAcceptEssential() {
-        const newConsents = {
-            cookies_essential: true,
-            cookies_analytics: false,
-            cookies_marketing: false,
-        };
-
-        await saveConsents(newConsents);
-        setIsVisible(false);
-    }
-
-    async function handleSavePreferences() {
-        await saveConsents(consents);
-        setIsVisible(false);
-    }
-
-    async function saveConsents(consentData: typeof consents) {
+    const saveConsents = useCallback(async (consentData: typeof consents) => {
         if (user) {
             // Save to database for authenticated users
             await consentService.recordConsent(
@@ -115,7 +88,34 @@ export function CookieConsent() {
                 });
             }
         }
-    }
+    }, [user]);
+
+    const handleAcceptAll = useCallback(async () => {
+        const newConsents = {
+            cookies_essential: true,
+            cookies_analytics: true,
+            cookies_marketing: true,
+        };
+
+        await saveConsents(newConsents);
+        setIsVisible(false);
+    }, [saveConsents]);
+
+    const handleAcceptEssential = useCallback(async () => {
+        const newConsents = {
+            cookies_essential: true,
+            cookies_analytics: false,
+            cookies_marketing: false,
+        };
+
+        await saveConsents(newConsents);
+        setIsVisible(false);
+    }, [saveConsents]);
+
+    const handleSavePreferences = useCallback(async () => {
+        await saveConsents(consents);
+        setIsVisible(false);
+    }, [consents, saveConsents]);
 
     if (!isVisible) return null;
 

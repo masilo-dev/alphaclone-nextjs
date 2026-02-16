@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Daily, { DailyCall } from '@daily-co/daily-js';
 import { meetingAdapterService } from '../../services/meetingAdapterService';
@@ -52,22 +52,116 @@ const MeetingPage: React.FC<MeetingPageProps> = ({ user }) => {
     const startTimeRef = useRef<Date | null>(null);
     const unsubscribeRef = useRef<(() => void) | null>(null);
 
-    useEffect(() => {
-        if (!token) {
-            toast.error('Invalid meeting link');
-            router.push('/dashboard');
-            return;
+    // Helper to sync Daily participants to React state
+    const [participants, setParticipants] = useState<Record<string, any>>({});
+    const [localParticipant, setLocalParticipant] = useState<any>(null);
+
+    const updateParticipants = useCallback(() => {
+        if (!callObjectRef.current) return;
+
+        const p = callObjectRef.current.participants();
+        setLocalParticipant(p.local);
+
+        const remote: Record<string, any> = {};
+        Object.keys(p).forEach(id => {
+            if (id !== 'local') remote[id] = p[id];
+        });
+        setParticipants(remote);
+    }, []);
+
+    const handleLeave = useCallback(async () => {
+        try {
+            // Stop timer
+            if (timerIntervalRef.current) {
+                clearInterval(timerIntervalRef.current);
+                timerIntervalRef.current = null;
+            }
+
+            // Leave Daily room
+            if (callObjectRef.current) {
+                await callObjectRef.current.leave();
+                await callObjectRef.current.destroy();
+                callObjectRef.current = null;
+            }
+
+            // Calculate duration
+            const durationSeconds = startTimeRef.current
+                ? Math.floor((Date.now() - startTimeRef.current.getTime()) / 1000)
+                : undefined;
+
+            // End meeting in database if still active
+            if (meetingId && isInMeeting) {
+                await meetingAdapterService.endMeeting(
+                    meetingId,
+                    user.id,
+                    'manual',
+                    durationSeconds
+                );
+            }
+
+            // Navigate back to dashboard
+            router.push('/dashboard/conference');
+        } catch (err) {
+            console.error('Error leaving meeting:', err);
+            router.push('/dashboard/conference');
+        }
+    }, [meetingId, isInMeeting, user.id, router]);
+
+    const handleAutoEnd = useCallback(async () => {
+        toast.error('Meeting time limit reached (40 minutes)');
+
+        // Calculate duration
+        const durationSeconds = startTimeRef.current
+            ? Math.floor((Date.now() - startTimeRef.current.getTime()) / 1000)
+            : undefined;
+
+        // End meeting in database
+        if (meetingId) {
+            await meetingAdapterService.endMeeting(
+                meetingId,
+                user.id,
+                'time_limit',
+                durationSeconds
+            );
         }
 
-        validateAndJoin();
+        // Leave Daily room
+        await handleLeave();
+    }, [meetingId, user.id, handleLeave]);
 
-        // Cleanup on unmount
-        return () => {
-            cleanup();
-        };
-    }, [token]);
+    const startTimer = useCallback((autoEndAt: string) => {
+        const endTime = new Date(autoEndAt).getTime();
 
-    const validateAndJoin = async () => {
+        timerIntervalRef.current = setInterval(() => {
+            const now = Date.now();
+            const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+            setTimeRemaining(remaining);
+
+            if (remaining === 0) {
+                handleAutoEnd();
+            }
+        }, 1000);
+    }, [handleAutoEnd]);
+
+    const cleanup = useCallback(() => {
+        // Stop timer
+        if (timerIntervalRef.current) {
+            clearInterval(timerIntervalRef.current);
+        }
+
+        // Unsubscribe from status changes
+        if (unsubscribeRef.current) {
+            unsubscribeRef.current();
+        }
+
+        // Leave Daily room
+        if (callObjectRef.current) {
+            callObjectRef.current.leave().catch(console.error);
+            callObjectRef.current.destroy().catch(console.error);
+        }
+    }, []);
+
+    const validateAndJoin = useCallback(async () => {
         try {
             // Step 1: Validate token
             setIsValidating(true);
@@ -187,116 +281,22 @@ const MeetingPage: React.FC<MeetingPageProps> = ({ user }) => {
             toast.error('Failed to join meeting');
             router.push('/dashboard');
         }
-    };
+    }, [token, user.id, user.name, router, updateParticipants, startTimer, handleLeave]);
 
-    // Helper to sync Daily participants to React state
-    const [participants, setParticipants] = useState<Record<string, any>>({});
-    const [localParticipant, setLocalParticipant] = useState<any>(null);
-
-    const updateParticipants = () => {
-        if (!callObjectRef.current) return;
-
-        const p = callObjectRef.current.participants();
-        setLocalParticipant(p.local);
-
-        const remote: Record<string, any> = {};
-        Object.keys(p).forEach(id => {
-            if (id !== 'local') remote[id] = p[id];
-        });
-        setParticipants(remote);
-    };
-
-    const startTimer = (autoEndAt: string) => {
-        const endTime = new Date(autoEndAt).getTime();
-
-        timerIntervalRef.current = setInterval(() => {
-            const now = Date.now();
-            const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
-            setTimeRemaining(remaining);
-
-            if (remaining === 0) {
-                handleAutoEnd();
-            }
-        }, 1000);
-    };
-
-    const handleAutoEnd = async () => {
-        toast.error('Meeting time limit reached (40 minutes)');
-
-        // Calculate duration
-        const durationSeconds = startTimeRef.current
-            ? Math.floor((Date.now() - startTimeRef.current.getTime()) / 1000)
-            : undefined;
-
-        // End meeting in database
-        if (meetingId) {
-            await meetingAdapterService.endMeeting(
-                meetingId,
-                user.id,
-                'time_limit',
-                durationSeconds
-            );
+    useEffect(() => {
+        if (!token) {
+            toast.error('Invalid meeting link');
+            router.push('/dashboard');
+            return;
         }
 
-        // Leave Daily room
-        await handleLeave();
-    };
+        validateAndJoin();
 
-    const handleLeave = async () => {
-        try {
-            // Stop timer
-            if (timerIntervalRef.current) {
-                clearInterval(timerIntervalRef.current);
-                timerIntervalRef.current = null;
-            }
-
-            // Leave Daily room
-            if (callObjectRef.current) {
-                await callObjectRef.current.leave();
-                await callObjectRef.current.destroy();
-                callObjectRef.current = null;
-            }
-
-            // Calculate duration
-            const durationSeconds = startTimeRef.current
-                ? Math.floor((Date.now() - startTimeRef.current.getTime()) / 1000)
-                : undefined;
-
-            // End meeting in database if still active
-            if (meetingId && isInMeeting) {
-                await meetingAdapterService.endMeeting(
-                    meetingId,
-                    user.id,
-                    'manual',
-                    durationSeconds
-                );
-            }
-
-            // Navigate back to dashboard
-            router.push('/dashboard/conference');
-        } catch (err) {
-            console.error('Error leaving meeting:', err);
-            router.push('/dashboard/conference');
-        }
-    };
-
-    const cleanup = () => {
-        // Stop timer
-        if (timerIntervalRef.current) {
-            clearInterval(timerIntervalRef.current);
-        }
-
-        // Unsubscribe from status changes
-        if (unsubscribeRef.current) {
-            unsubscribeRef.current();
-        }
-
-        // Leave Daily room
-        if (callObjectRef.current) {
-            callObjectRef.current.leave().catch(console.error);
-            callObjectRef.current.destroy().catch(console.error);
-        }
-    };
+        // Cleanup on unmount
+        return () => {
+            cleanup();
+        };
+    }, [token, router, validateAndJoin, cleanup]);
 
     const formatTime = (seconds: number): string => {
         const mins = Math.floor(seconds / 60);
