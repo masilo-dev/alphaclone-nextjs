@@ -610,7 +610,7 @@ function UsersTab() {
               name: contact.name,
               email: contact.email,
               phone: contact.phone,
-              industry: contact.industry || contact.company || '', // Use industry field or fallback to company
+              industry: contact.industry || '', // Use industry field
               location: contact.location || '',
               role: 'client',
               created_at: new Date().toISOString()
