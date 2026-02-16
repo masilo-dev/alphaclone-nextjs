@@ -15,6 +15,7 @@ interface SidebarProps {
     setActiveTab: (tab: string) => void;
     unreadMessageCount: number;
     onLogout: () => void;
+    forceHidden?: boolean;
 }
 
 const Sidebar = React.memo<SidebarProps>(({
@@ -27,12 +28,13 @@ const Sidebar = React.memo<SidebarProps>(({
     activeTab,
     setActiveTab,
     unreadMessageCount,
-    onLogout
+    onLogout,
+    forceHidden = false
 }) => {
     const router = useRouter();
 
-    // Hidden during video calls unless manually toggled
-    if (isInCall && !showSidebarDuringCall) return null;
+    // Hidden during video calls unless manually toggled or forcibly hidden
+    if ((isInCall && !showSidebarDuringCall) || forceHidden) return null;
 
     const handleNavigation = (href: string) => {
         if (href !== '#') {

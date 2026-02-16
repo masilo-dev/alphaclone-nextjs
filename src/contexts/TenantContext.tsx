@@ -192,7 +192,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     await switchTenant(tenant.id);
 
     return tenant;
-  }, [user?.id, refreshTenants, switchTenant]);
+  }, [user, refreshTenants, switchTenant]);
 
   useEffect(() => {
     if (user?.id) {

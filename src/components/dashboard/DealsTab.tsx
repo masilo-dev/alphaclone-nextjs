@@ -11,6 +11,7 @@ import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import LeadSelector from '../common/LeadSelector';
 import LeadDetailModal from './leads/LeadDetailModal';
+import DealDetailModal from './deals/DealDetailModal';
 import { fileUploadService } from '../../services/fileUploadService';
 import toast from 'react-hot-toast';
 import { FileText, Download, Trash2, Eye } from 'lucide-react';
@@ -51,6 +52,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
     const [dealToDelete, setDealToDelete] = useState<Deal | null>(null);
     const [showDocumentsModal, setShowDocumentsModal] = useState(false);
     const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+    const [selectedDealForDetail, setSelectedDealForDetail] = useState<Deal | null>(null);
     const [dealDocuments, setDealDocuments] = useState<any[]>([]);
 
     // Create deal form state
@@ -495,8 +497,8 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                     description="Create your first deal to start tracking your sales pipeline."
                 />
             ) : (
-                <div className="flex gap-4 overflow-x-auto pb-4">
-                    {stages.slice(0, 4).map((stage) => {
+                <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                    {stages.map((stage) => {
                         const stageDeals = getDealsByStage(stage);
                         return (
                             <div key={stage} className="flex-shrink-0 w-80">
@@ -511,7 +513,11 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
 
                                 <div className="space-y-3 max-h-[600px] overflow-y-auto">
                                     {stageDeals.map((deal) => (
-                                        <div key={deal.id} className="glass-panel p-4 rounded-xl border border-white/5 hover:border-teal-500/30 transition-all group relative">
+                                        <div
+                                            key={deal.id}
+                                            onClick={() => setSelectedDealForDetail(deal)}
+                                            className="glass-panel p-4 rounded-xl border border-white/5 hover:border-teal-500/30 transition-all group relative cursor-pointer"
+                                        >
                                             <div className="flex justify-between items-start mb-2">
                                                 <h4 className="font-bold text-white pr-6">{deal.name}</h4>
                                                 <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 absolute top-3 right-3">
@@ -571,6 +577,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                             {(userRole === 'admin' || userRole === 'tenant_admin') && (
                                                 <select
                                                     value={deal.stage}
+                                                    onClick={(e) => e.stopPropagation()}
                                                     onChange={(e) => handleStageChange(deal.id, e.target.value as DealStage)}
                                                     className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-white text-xs"
                                                 >
@@ -833,7 +840,34 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                     </div>
                 </Modal>
             )}
-        </div >
+
+            {/* Lead Detail Modal */}
+            {selectedLeadForDetail && (
+                <LeadDetailModal
+                    isOpen={!!selectedLeadForDetail}
+                    onClose={() => setSelectedLeadForDetail(null)}
+                    lead={selectedLeadForDetail}
+                    onLeadUpdate={loadDeals}
+                />
+            )}
+
+            {/* Deal Detail Modal */}
+            {selectedDealForDetail && (
+                <DealDetailModal
+                    isOpen={!!selectedDealForDetail}
+                    onClose={() => {
+                        setSelectedDealForDetail(null);
+                        loadDeals();
+                        loadPipelineStats();
+                    }}
+                    deal={selectedDealForDetail}
+                    onDealUpdate={() => {
+                        loadDeals();
+                        loadPipelineStats();
+                    }}
+                />
+            )}
+        </div>
     );
 };
 

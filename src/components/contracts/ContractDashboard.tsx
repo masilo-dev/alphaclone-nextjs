@@ -3,6 +3,7 @@ import { contractService, Contract } from '../../services/contractService';
 import { SignaturePad } from './SignaturePad';
 import { DocumentViewer } from './DocumentViewer';
 import { fileUploadService } from '../../services/fileUploadService';
+import { businessClientService, BusinessClient } from '../../services/businessClientService';
 import { Card, Button, Badge, Input } from '../ui/UIComponents';
 import {
     FileText,
@@ -40,7 +41,7 @@ interface ContractDashboardProps {
     initialTab?: 'details' | 'document' | 'hub';
 }
 
-const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab = 'details' }) => {
+const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab = 'hub' }) => {
     const { currentTenant } = useTenant();
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [loading, setLoading] = useState(true);
@@ -65,6 +66,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
     const [draftClient, setDraftClient] = useState('');
     const [draftContent, setDraftContent] = useState('');
     const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
+    const [clients, setClients] = useState<BusinessClient[]>([]);
+    const [selectedClientId, setSelectedClientId] = useState<string>('');
 
     const CLAUSE_LIBRARY = [
         { title: 'Standard Liability', content: '\n\nSection 6.0 LIMITATION OF LIABILITY. To the maximum extent permitted by applicable law, in no event shall either party be liable for any indirect, punitive, incidental, special, consequential, or exemplary damages...' },
@@ -102,10 +105,16 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
         setLoading(true);
         const { contracts: data } = await contractService.getUserContracts(user.id, user.role);
         if (data) setContracts(data);
+
+        if (currentTenant?.id) {
+            const { clients: clientData } = await businessClientService.getClients(currentTenant.id);
+            setClients(clientData || []);
+        }
+
         await loadStorageUsage();
         await loadAllFiles();
         setLoading(false);
-    }, [user.id, user.role, loadStorageUsage, loadAllFiles]);
+    }, [user.id, user.role, currentTenant?.id, loadStorageUsage, loadAllFiles]);
 
     const handleCreateDraft = useCallback(async () => {
         if (!draftTitle || !draftContent) {
@@ -117,30 +126,68 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
             content: draftContent,
             type: 'service_agreement',
             status: 'draft',
-            owner_id: user.id
-            // client_id would be selected in a real app
+            owner_id: user.id,
+            client_id: selectedClientId
         });
         toast.success("Contract Draft Created");
         setIsEditing(false);
         setDraftContent('');
         setDraftTitle('');
+        setSelectedClientId('');
         loadContracts();
-    }, [draftTitle, draftContent, user.id, loadContracts]);
+    }, [draftTitle, draftContent, user.id, selectedClientId, loadContracts]);
 
     const handleAIDraft = useCallback(async () => {
-        if (!draftClient) {
-            toast.error("Please enter Client Name for AI context");
+        const clientName = draftClient || clients.find(c => c.id === selectedClientId)?.name;
+        if (!clientName) {
+            toast.error("Please select a Client or enter name for AI context");
             return;
         }
         setIsGenerating(true);
         try {
-            const { text } = await contractService.generateDraft('Service Agreement', draftClient, 'Standard web development services');
+            const { text } = await contractService.generateDraft('Service Agreement', clientName, 'Standard web development services');
             if (text) setDraftContent(text);
         } catch (e) {
             toast.error("AI Generation Failed");
         }
         setIsGenerating(false);
-    }, [draftClient]);
+    }, [draftClient, selectedClientId, clients]);
+
+    const handleExport = () => {
+        const data = {
+            title: draftTitle,
+            content: draftContent,
+            clientId: selectedClientId,
+            exportedAt: new Date().toISOString()
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `contract_draft_${draftTitle.replace(/\s+/g, '_') || 'untitled'}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success("Draft exported as JSON");
+    };
+
+    const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const data = JSON.parse(event.target?.result as string);
+                setDraftTitle(data.title || '');
+                setDraftContent(data.content || '');
+                setSelectedClientId(data.clientId || '');
+                toast.success("Draft imported successfully");
+            } catch (err) {
+                toast.error("Invalid JSON format");
+            }
+        };
+        reader.readAsText(file);
+    };
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -263,13 +310,50 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                             ></div>
                         </div>
                     </div>
-                    {isAdmin && !isEditing && (
-                        <Button onClick={() => setIsEditing(true)} className="w-full sm:w-auto md:w-full lg:w-auto font-bold h-12">
+                    {isAdmin && (
+                        <Button
+                            onClick={() => {
+                                setIsEditing(true);
+                                setActiveTab('details');
+                            }}
+                            className="w-full sm:w-auto md:w-full lg:w-auto font-bold h-12"
+                        >
                             <Plus className="w-4 h-4 mr-2" /> New Contract
                         </Button>
                     )}
                 </div>
             </div>
+
+            {/* Standalone Document Hub */}
+            {activeTab === 'hub' && !isEditing && (
+                <Card className="p-6 border-teal-500/30 bg-slate-900/60 shadow-2xl shadow-teal-500/5 min-h-[600px] animate-fade-in-up">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                            <Archive className="w-5 h-5 text-teal-400" />
+                            Global Document Hub
+                        </h3>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={loadAllFiles}
+                            className="text-xs font-black uppercase tracking-widest border-white/10"
+                        >
+                            Refresh Hub
+                        </Button>
+                    </div>
+                    {/* Render the hub content - Refactored into fragment below */}
+                    <HubContent
+                        allFiles={allFiles}
+                        isFilesLoading={isFilesLoading}
+                        searchQuery={searchQuery}
+                        setSearchQuery={setSearchQuery}
+                        entityFilter={entityFilter}
+                        setEntityFilter={setEntityFilter}
+                        loadAllFiles={loadAllFiles}
+                        loadStorageUsage={loadStorageUsage}
+                    />
+                </Card>
+            )}
 
             {/* Contract Editor - Admin Only */}
             {isAdmin && isEditing && (
@@ -285,27 +369,39 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                 onClick={() => setActiveTab('details')}
                                 className={`w-full text-left p-3 rounded-xl transition-all ${activeTab === 'details' ? 'bg-teal-500/10 border border-teal-500/30 text-teal-400' : 'text-slate-500 hover:text-slate-300'}`}
                             >
-                                Draft Editor
+                                <div className="flex items-center gap-2">
+                                    <PenTool className="w-4 h-4" />
+                                    Draft Editor
+                                </div>
                             </button>
                             <button
                                 onClick={() => setActiveTab('document')}
                                 className={`w-full text-left p-3 rounded-xl transition-all ${activeTab === 'document' ? 'bg-teal-500/10 border border-teal-500/30 text-teal-400' : 'text-slate-500 hover:text-slate-300'}`}
                             >
-                                PDF & Annotations
+                                <div className="flex items-center gap-2">
+                                    <Download className="w-4 h-4" />
+                                    PDF & Annotations
+                                </div>
                             </button>
                             <button
                                 onClick={() => setActiveTab('hub')}
                                 className={`w-full text-left p-3 rounded-xl transition-all ${activeTab === 'hub' ? 'bg-teal-500/10 border border-teal-500/30 text-teal-400' : 'text-slate-500 hover:text-slate-300'}`}
                             >
                                 <div className="flex items-center justify-between">
-                                    <span>Document Hub</span>
+                                    <div className="flex items-center gap-2">
+                                        <Archive className="w-4 h-4" />
+                                        <span>Document Hub</span>
+                                    </div>
                                     <Badge className="bg-teal-500/10 text-teal-400 text-[10px]">{allFiles.length}</Badge>
                                 </div>
                             </button>
 
                             {activeTab === 'details' && (
                                 <div className="mt-4 pt-4 border-t border-white/5">
-                                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Clause Library</h4>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Clause Library</h4>
+                                        <Archive className="w-3 h-3 text-slate-700" />
+                                    </div>
                                     <div className="space-y-2">
                                         {CLAUSE_LIBRARY.map((clause, idx) => (
                                             <button
@@ -316,6 +412,24 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                                 <div className="text-[9px] font-bold uppercase text-slate-400 group-hover:text-teal-400 transition-colors">{clause.title}</div>
                                             </button>
                                         ))}
+                                    </div>
+
+                                    <div className="mt-6 pt-4 border-t border-white/5 space-y-3">
+                                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Portability</h4>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full text-[10px] font-black uppercase tracking-widest h-9"
+                                            onClick={handleExport}
+                                        >
+                                            <Download className="w-3 h-3 mr-2" /> Export JSON
+                                        </Button>
+                                        <label className="w-full">
+                                            <div className="flex items-center justify-center w-full h-9 border border-white/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:border-teal-400 cursor-pointer transition-all">
+                                                <Upload className="w-3 h-3 mr-2" /> Import JSON
+                                            </div>
+                                            <input type="file" className="hidden" accept=".json" onChange={handleImport} />
+                                        </label>
                                     </div>
                                 </div>
                             )}
@@ -357,15 +471,42 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                     </div>
                                 </div>
 
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <Input
+                                        label="Document Identifier"
+                                        value={draftTitle}
+                                        onChange={e => setDraftTitle(e.target.value)}
+                                        placeholder="e.g. Master Service Agreement v1.0"
+                                    />
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">Link to Client</label>
+                                        <select
+                                            className="w-full bg-slate-950 border border-white/10 rounded-xl h-12 px-4 text-sm text-slate-300 focus:ring-2 focus:ring-teal-500/30 outline-none"
+                                            value={selectedClientId}
+                                            onChange={e => setSelectedClientId(e.target.value)}
+                                        >
+                                            <option value="">-- No Client Linked --</option>
+                                            {clients.map(c => (
+                                                <option key={c.id} value={c.id}>{c.name} ({c.company || 'Private'})</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                    <Input label="Document Identifier" value={draftTitle} onChange={e => setDraftTitle(e.target.value)} placeholder="e.g. Master Service Agreement v1.0" />
                                     <div className="flex items-end gap-2">
                                         <div className="flex-1">
-                                            <Input label="Counterparty Name" value={draftClient} onChange={e => setDraftClient(e.target.value)} placeholder="e.g. Acme Corporation" />
+                                            <Input label="Manual Counterparty Context" value={draftClient} onChange={e => setDraftClient(e.target.value)} placeholder="e.g. Acme Corporation" />
                                         </div>
                                         <Button onClick={handleAIDraft} disabled={isGenerating} className="mb-0.5 bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 border-none">
-                                            <Bot className="w-4 h-4 mr-2" /> AI Init
+                                            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4 mr-2" />} AI Init
                                         </Button>
+                                    </div>
+                                    <div className="flex items-end gap-1.5 p-1 bg-slate-950/50 rounded-xl border border-white/5">
+                                        <Button variant="ghost" size="sm" onClick={() => setDraftContent(prev => prev + '<strong></strong>')} className="flex-1 text-[10px] font-black h-8">BOLD</Button>
+                                        <Button variant="ghost" size="sm" onClick={() => setDraftContent(prev => prev + '<em></em>')} className="flex-1 text-[10px] font-black h-8">ITALIC</Button>
+                                        <Button variant="ghost" size="sm" onClick={() => setDraftContent(prev => prev + '<h2 class="text-xl font-bold mt-4 mb-2"></h2>')} className="flex-1 text-[10px] font-black h-8">H2</Button>
+                                        <Button variant="ghost" size="sm" onClick={() => setDraftContent(prev => prev + '<br/>')} className="flex-1 text-[10px] font-black h-8">BR</Button>
                                     </div>
                                 </div>
 
@@ -380,7 +521,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                     ) : (
                                         <div className="w-full h-96 bg-white rounded-2xl p-8 text-slate-900 overflow-y-auto shadow-inner font-serif leading-relaxed">
                                             <h1 className="text-2xl font-bold mb-6 border-b-2 border-slate-200 pb-4 text-center uppercase tracking-tight">{draftTitle || 'Untitled Agreement'}</h1>
-                                            <div className="whitespace-pre-wrap text-sm">{draftContent || 'Document content will appear here...'}</div>
+                                            <div className="whitespace-pre-wrap text-sm" dangerouslySetInnerHTML={{ __html: draftContent || 'Document content will appear here...' }}></div>
                                             <div className="mt-20 grid grid-cols-2 gap-8">
                                                 <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-400">SIGNATURE (CLIENT)</div>
                                                 <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-400">SIGNATURE (EXECUTIVE)</div>
@@ -416,149 +557,16 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                 )}
                             </div>
                         ) : (
-                            <div className="space-y-6">
-                                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
-                                    <div className="flex-1 w-full lg:w-auto">
-                                        <div className="relative">
-                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                                            <input
-                                                type="text"
-                                                placeholder="Search platform documents..."
-                                                className="w-full bg-slate-950/50 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 w-full lg:w-auto">
-                                        {['all', 'deal', 'quote', 'contract', 'project', 'lead'].map(filter => (
-                                            <button
-                                                key={filter}
-                                                onClick={() => setEntityFilter(filter)}
-                                                className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${entityFilter === filter ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'bg-slate-950 text-slate-500 hover:text-white border border-white/5'}`}
-                                            >
-                                                {filter}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {isFilesLoading ? (
-                                    <div className="flex flex-col items-center justify-center py-24 gap-4">
-                                        <div className="relative">
-                                            <div className="w-12 h-12 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin"></div>
-                                            <Zap className="absolute inset-0 m-auto w-5 h-5 text-teal-400 animate-pulse" />
-                                        </div>
-                                        <p className="text-slate-500 text-sm font-medium">Indexing artifacts...</p>
-                                    </div>
-                                ) : allFiles.filter(f =>
-                                    (entityFilter === 'all' || f.entity_type === entityFilter) &&
-                                    (f.file_name.toLowerCase().includes(searchQuery.toLowerCase()))
-                                ).length === 0 ? (
-                                    <div className="text-center py-24 bg-slate-950/40 rounded-3xl border border-white/5 backdrop-blur-sm">
-                                        <div className="w-20 h-20 bg-slate-900/50 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/5">
-                                            <FileTextIcon className="w-10 h-10 text-slate-700 opacity-50" />
-                                        </div>
-                                        <h4 className="text-white font-bold mb-2">No results found</h4>
-                                        <p className="text-slate-500 text-sm max-w-xs mx-auto">Adjust your search or filter settings to find what you're looking for.</p>
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 gap-3">
-                                        {allFiles
-                                            .filter(f =>
-                                                (entityFilter === 'all' || f.entity_type === entityFilter) &&
-                                                (f.file_name.toLowerCase().includes(searchQuery.toLowerCase()))
-                                            )
-                                            .map(file => (
-                                                <div key={file.id} className="flex items-center justify-between p-4 bg-slate-950/40 border border-white/5 rounded-2xl hover:border-teal-500/30 hover:bg-slate-900/40 transition-all group">
-                                                    <div className="flex items-center gap-4 overflow-hidden">
-                                                        <div className="w-12 h-12 bg-teal-500/10 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-500">
-                                                            <div className="relative">
-                                                                {file.file_name.match(/\.(jpg|jpeg|png|webp)$/i) ? (
-                                                                    <FileImage className="w-6 h-6 text-teal-400" />
-                                                                ) : file.file_name.match(/\.(zip|rar|7z)$/i) ? (
-                                                                    <Archive className="w-6 h-6 text-teal-400" />
-                                                                ) : (
-                                                                    <FileText className="w-6 h-6 text-teal-400" />
-                                                                )}
-                                                                {file.file_name.endsWith('.pdf') && (
-                                                                    <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-slate-950"></div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                        <div className="overflow-hidden">
-                                                            <div className="flex items-center gap-2 mb-0.5">
-                                                                <p className="text-white font-bold truncate group-hover:text-teal-400 transition-colors uppercase tracking-tight">{file.file_name}</p>
-                                                                <Badge className="text-[8px] bg-indigo-500/10 text-indigo-400 border-indigo-500/20 font-black">
-                                                                    {file.entity_type}
-                                                                </Badge>
-                                                            </div>
-                                                            <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
-                                                                <div className="flex items-center gap-1">
-                                                                    <Clock className="w-3 h-3 text-slate-600" />
-                                                                    {format(new Date(file.created_at), 'MMM dd, HH:mm')}
-                                                                </div>
-                                                                <span className="w-1 h-1 bg-slate-800 rounded-full"></span>
-                                                                <div className="flex items-center gap-1">
-                                                                    <Save className="w-3 h-3 text-slate-600" />
-                                                                    {(file.file_size / 1024).toFixed(1)} KB
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                                navigator.clipboard.writeText(file.file_url);
-                                                                toast.success('Public URL copied');
-                                                            }}
-                                                            className="w-10 h-10 p-0 text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 rounded-xl transition-all"
-                                                            title="Copy URL"
-                                                        >
-                                                            <Copy className="w-4 h-4" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => window.open(file.file_url, '_blank')}
-                                                            className="w-10 h-10 p-0 text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 rounded-xl transition-all"
-                                                            title="Open in Tab"
-                                                        >
-                                                            <ExternalLink className="w-4 h-4" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => window.open(file.file_url, '_blank')}
-                                                            className="w-10 h-10 p-0 text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 rounded-xl transition-all"
-                                                            title="Preview"
-                                                        >
-                                                            <Eye className="w-4 h-4" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={async () => {
-                                                                const { success } = await fileUploadService.deleteFile(file.id);
-                                                                if (success) {
-                                                                    toast.success('Artifact purged successfully');
-                                                                    loadAllFiles();
-                                                                    loadStorageUsage();
-                                                                }
-                                                            }}
-                                                            className="w-10 h-10 p-0 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all"
-                                                            title="Purge"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                    </div>
-                                )}
-                            </div>
+                            <HubContent
+                                allFiles={allFiles}
+                                isFilesLoading={isFilesLoading}
+                                searchQuery={searchQuery}
+                                setSearchQuery={setSearchQuery}
+                                entityFilter={entityFilter}
+                                setEntityFilter={setEntityFilter}
+                                loadAllFiles={loadAllFiles}
+                                loadStorageUsage={loadStorageUsage}
+                            />
                         )}
 
                         <div className="flex justify-between items-center pt-6 border-t border-white/5 mt-6">
@@ -693,5 +701,169 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
         </div>
     );
 };
+
+const HubContent: React.FC<{
+    allFiles: any[];
+    isFilesLoading: boolean;
+    searchQuery: string;
+    setSearchQuery: (q: string) => void;
+    entityFilter: string;
+    setEntityFilter: (f: string) => void;
+    loadAllFiles: () => void;
+    loadStorageUsage: () => void;
+}> = ({
+    allFiles,
+    isFilesLoading,
+    searchQuery,
+    setSearchQuery,
+    entityFilter,
+    setEntityFilter,
+    loadAllFiles,
+    loadStorageUsage
+}) => (
+        <div className="space-y-6">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+                <div className="flex-1 w-full lg:w-auto">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                        <input
+                            type="text"
+                            placeholder="Search platform documents..."
+                            className="w-full bg-slate-950/50 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 w-full lg:w-auto">
+                    {['all', 'deal', 'quote', 'contract', 'project', 'lead'].map(filter => (
+                        <button
+                            key={filter}
+                            onClick={() => setEntityFilter(filter)}
+                            className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${entityFilter === filter ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'bg-slate-950 text-slate-500 hover:text-white border border-white/5'}`}
+                        >
+                            {filter}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {isFilesLoading ? (
+                <div className="flex flex-col items-center justify-center py-24 gap-4">
+                    <div className="relative">
+                        <div className="w-12 h-12 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin"></div>
+                        <Zap className="absolute inset-0 m-auto w-5 h-5 text-teal-400 animate-pulse" />
+                    </div>
+                    <p className="text-slate-500 text-sm font-medium">Indexing artifacts...</p>
+                </div>
+            ) : allFiles.filter(f =>
+                (entityFilter === 'all' || f.entity_type === entityFilter) &&
+                (f.file_name.toLowerCase().includes(searchQuery.toLowerCase()))
+            ).length === 0 ? (
+                <div className="text-center py-24 bg-slate-950/40 rounded-3xl border border-white/5 backdrop-blur-sm">
+                    <div className="w-20 h-20 bg-slate-900/50 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/5">
+                        <FileTextIcon className="w-10 h-10 text-slate-700 opacity-50" />
+                    </div>
+                    <h4 className="text-white font-bold mb-2">No results found</h4>
+                    <p className="text-slate-500 text-sm max-w-xs mx-auto">Adjust your search or filter settings to find what you're looking for.</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 gap-3">
+                    {allFiles
+                        .filter(f =>
+                            (entityFilter === 'all' || f.entity_type === entityFilter) &&
+                            (f.file_name.toLowerCase().includes(searchQuery.toLowerCase()))
+                        )
+                        .map(file => (
+                            <div key={file.id} className="flex items-center justify-between p-4 bg-slate-950/40 border border-white/5 rounded-2xl hover:border-teal-500/30 hover:bg-slate-900/40 transition-all group">
+                                <div className="flex items-center gap-4 overflow-hidden">
+                                    <div className="w-12 h-12 bg-teal-500/10 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-500">
+                                        <div className="relative">
+                                            {file.file_name.match(/\.(jpg|jpeg|png|webp)$/i) ? (
+                                                <FileImage className="w-6 h-6 text-teal-400" />
+                                            ) : file.file_name.match(/\.(zip|rar|7z)$/i) ? (
+                                                <Archive className="w-6 h-6 text-teal-400" />
+                                            ) : (
+                                                <FileText className="w-6 h-6 text-teal-400" />
+                                            )}
+                                            {file.file_name.endsWith('.pdf') && (
+                                                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-slate-950"></div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="overflow-hidden">
+                                        <div className="flex items-center gap-2 mb-0.5">
+                                            <p className="text-white font-bold truncate group-hover:text-teal-400 transition-colors uppercase tracking-tight">{file.file_name}</p>
+                                            <Badge className="text-[8px] bg-indigo-500/10 text-indigo-400 border-indigo-500/20 font-black">
+                                                {file.entity_type}
+                                            </Badge>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
+                                            <div className="flex items-center gap-1">
+                                                <Clock className="w-3 h-3 text-slate-600" />
+                                                {format(new Date(file.created_at), 'MMM dd, HH:mm')}
+                                            </div>
+                                            <span className="w-1 h-1 bg-slate-800 rounded-full"></span>
+                                            <div className="flex items-center gap-1">
+                                                <Save className="w-3 h-3 text-slate-600" />
+                                                {(file.file_size / 1024).toFixed(1)} KB
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(file.file_url);
+                                            toast.success('Public URL copied');
+                                        }}
+                                        className="w-10 h-10 p-0 text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 rounded-xl transition-all"
+                                        title="Copy URL"
+                                    >
+                                        <Copy className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => window.open(file.file_url, '_blank')}
+                                        className="w-10 h-10 p-0 text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 rounded-xl transition-all"
+                                        title="Open in Tab"
+                                    >
+                                        <ExternalLink className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => window.open(file.file_url, '_blank')}
+                                        className="w-10 h-10 p-0 text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 rounded-xl transition-all"
+                                        title="Preview"
+                                    >
+                                        <Eye className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={async () => {
+                                            const { success } = await fileUploadService.deleteFile(file.id);
+                                            if (success) {
+                                                toast.success('Artifact purged successfully');
+                                                loadAllFiles();
+                                                loadStorageUsage();
+                                            }
+                                        }}
+                                        className="w-10 h-10 p-0 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all"
+                                        title="Purge"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
+                </div>
+            )}
+        </div>
+    );
 
 export default ContractDashboard;

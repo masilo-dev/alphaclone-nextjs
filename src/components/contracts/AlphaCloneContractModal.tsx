@@ -4,6 +4,7 @@ import { Button, Input, Badge } from '../ui/UIComponents';
 import { SignaturePad } from './SignaturePad';
 import { generateAlphaCloneContract, ContractVariables, PAYMENT_SCHEDULES, SCOPE_TEMPLATES } from '../../services/alphacloneContractTemplate';
 import { contractService } from '../../services/contractService';
+import { businessClientService, BusinessClient } from '../../services/businessClientService';
 import toast from 'react-hot-toast';
 import { User, Project } from '../../types';
 
@@ -42,6 +43,8 @@ const AlphaCloneContractModal: React.FC<Props> = ({
     const [newComment, setNewComment] = useState('');
     const [showComments, setShowComments] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [clients, setClients] = useState<BusinessClient[]>([]);
+    const [selectedClientId, setSelectedClientId] = useState<string>(project.ownerId || '');
 
     // Contract variables with defaults
     const [variables, setVariables] = useState<ContractVariables>({
@@ -64,6 +67,29 @@ const AlphaCloneContractModal: React.FC<Props> = ({
         providerRegistration: '',
         governingJurisdiction: '[Your State/Country Jurisdiction]'
     });
+
+    useEffect(() => {
+        if (currentTenant?.id) {
+            businessClientService.getClients(currentTenant.id).then(({ clients }) => {
+                setClients(clients || []);
+            });
+        }
+    }, [currentTenant?.id]);
+
+    useEffect(() => {
+        if (selectedClientId && clients.length > 0) {
+            const client = clients.find(c => c.id === selectedClientId);
+            if (client) {
+                setVariables(prev => ({
+                    ...prev,
+                    clientName: client.name,
+                    clientCompany: client.company || '',
+                    clientEmail: client.email || prev.clientEmail,
+                    clientAddress: client.address || ''
+                }));
+            }
+        }
+    }, [selectedClientId, clients]);
 
     useEffect(() => {
         if (existingContractText) {
@@ -130,7 +156,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
             } else {
                 const { contract, error } = await contractService.createContract({
                     project_id: project.id,
-                    client_id: project.ownerId,
+                    client_id: selectedClientId || project.ownerId,
                     title: `Service Agreement - ${project.name}`,
                     content: contractText,
                 });
@@ -242,11 +268,26 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <Input
-                                    label="Client Name *"
-                                    value={variables.clientName}
-                                    onChange={(e) => handleVariableChange('clientName', e.target.value)}
-                                />
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">Select Existing Client</label>
+                                    <select
+                                        className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-slate-300 text-sm outline-none focus:ring-2 focus:ring-teal-500/30"
+                                        value={selectedClientId}
+                                        onChange={e => setSelectedClientId(e.target.value)}
+                                    >
+                                        <option value="">-- Manual Entry --</option>
+                                        {clients.map(c => (
+                                            <option key={c.id} value={c.id}>{c.name} ({c.company || 'Private'})</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="md:col-start-1">
+                                    <Input
+                                        label="Client Name *"
+                                        value={variables.clientName}
+                                        onChange={(e) => handleVariableChange('clientName', e.target.value)}
+                                    />
+                                </div>
                                 <Input
                                     label="Client Company"
                                     value={variables.clientCompany}

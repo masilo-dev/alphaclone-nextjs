@@ -147,7 +147,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 setShowAddModal(false);
             }
         }
-    }, [currentTenant, editingProject, user.id, user.name]);
+    }, [currentTenant, editingProject, user.id, user.name, setProjects, setEditingProject]);
 
     const handleDeleteProject = useCallback(async (projectId: string) => {
         if (!confirm('Delete this project? This action cannot be undone.')) return;
@@ -215,8 +215,8 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
             <div className="hidden lg:block flex-1 overflow-hidden">
                 {viewMode === 'kanban' ? (
                     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={closestCorners} sensors={sensors}>
-                        <div className="flex-1 overflow-x-auto scrollbar-hide h-full">
-                            <div className="flex gap-6 h-full min-w-max pb-4">
+                        <div className="flex-1 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent h-full">
+                            <div className="flex gap-4 h-full min-w-max">
                                 {columns.map(column => (
                                     <KanbanColumn
                                         key={column.id}
@@ -360,20 +360,20 @@ const MobileProjectList = ({ projects, onDelete, onEdit, onManageMilestones }: a
 
 const KanbanColumn = ({ column, projects, onDelete, onEdit, onManageMilestones }: any) => {
     return (
-        <div className="flex flex-col w-80 group/col">
-            <div className={`border-t-4 ${column.color} ${column.bg} border-x border-white/5 rounded-t-3xl px-5 py-4 flex items-center justify-between backdrop-blur-md`}>
-                <h3 className="font-black text-white text-xs uppercase tracking-[0.1em]">{column.title}</h3>
-                <span className="text-xs font-black text-slate-500 bg-white/5 px-2.5 py-1 rounded-full">{projects.length}</span>
+        <div className="flex flex-col w-72 group/col">
+            <div className={`border-t-4 ${column.color} ${column.bg} border-x border-white/5 rounded-t-2xl px-4 py-3 flex items-center justify-between backdrop-blur-md`}>
+                <h3 className="font-bold text-white text-[10px] uppercase tracking-[0.15em]">{column.title}</h3>
+                <span className="text-[10px] font-black text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">{projects.length}</span>
             </div>
             <SortableContext id={column.id} items={projects.map((p: any) => p.id)} strategy={verticalListSortingStrategy}>
-                <div className="flex-1 bg-slate-900/20 border-x border-b border-white/5 rounded-b-3xl p-4 space-y-4 overflow-y-auto min-h-[500px] scrollbar-hide">
+                <div className="flex-1 bg-slate-900/10 border-x border-b border-white/5 rounded-b-2xl p-3 space-y-3 overflow-y-auto min-h-[500px] scrollbar-thin scrollbar-thumb-slate-800">
                     {projects.map((project: BusinessProject) => (
                         <ProjectCard key={project.id} project={project} onDelete={onDelete} onEdit={onEdit} onManageMilestones={onManageMilestones} />
                     ))}
                     {projects.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-12 opacity-20">
-                            <Plus className="w-8 h-8 text-slate-500 mb-2" />
-                            <span className="text-xs font-medium text-slate-500">Empty</span>
+                        <div className="flex flex-col items-center justify-center py-8 opacity-20">
+                            <Plus className="w-6 h-6 text-slate-500 mb-2" />
+                            <span className="text-[10px] font-medium text-slate-500">Empty</span>
                         </div>
                     )}
                 </div>
@@ -393,64 +393,64 @@ const ProjectCard = ({ project, isDragging, onDelete, onEdit, onManageMilestones
             {...attributes}
             {...listeners}
             onClick={() => onEdit && onEdit(project)}
-            className={`glass-panel p-5 rounded-2xl border transition-all cursor-grab active:cursor-grabbing group/card ${isDragging ? 'opacity-50 scale-105 z-50 border-teal-500 shadow-2xl shadow-teal-500/20' : 'border-white/5 bg-slate-900/60 hover:border-white/20'
+            className={`glass-panel p-4 rounded-xl border transition-all cursor-grab active:cursor-grabbing group/card ${isDragging ? 'opacity-50 scale-105 z-50 border-teal-500 shadow-2xl shadow-teal-500/20' : 'border-white/5 bg-slate-900/40 hover:border-white/20'
                 }`}
         >
-            <div className="flex items-start justify-between mb-4">
-                <div>
-                    <h4 className="font-black text-white text-sm uppercase tracking-tight leading-tight group-hover/card:text-teal-400 transition-colors">{project.name}</h4>
+            <div className="flex items-start justify-between mb-3">
+                <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-white text-xs uppercase tracking-tight leading-tight group-hover/card:text-teal-400 transition-colors truncate">{project.name}</h4>
                     {project.category && (
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 block">{project.category}</span>
+                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5 block">{project.category}</span>
                     )}
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-1 ml-2">
                     <button
                         onClick={(e) => { e.stopPropagation(); onManageMilestones(project); }}
-                        className="p-1.5 opacity-0 group-hover/card:opacity-100 bg-teal-500/10 hover:bg-teal-500 text-teal-500 hover:text-white rounded-lg transition-all"
-                        title="Manage Phases"
+                        className="p-1 opacity-0 group-hover/card:opacity-100 bg-teal-500/10 hover:bg-teal-500 text-teal-500 hover:text-white rounded-md transition-all"
+                        title="Phases"
                     >
-                        <Target className="w-3.5 h-3.5" />
+                        <Target className="w-3 h-3" />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
-                        className="p-1.5 opacity-0 group-hover/card:opacity-100 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-lg transition-all"
+                        className="p-1 opacity-0 group-hover/card:opacity-100 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-md transition-all"
                     >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-3 h-3" />
                     </button>
                 </div>
             </div>
 
             {project.description && (
-                <p className="text-xs text-slate-400 mb-5 line-clamp-2 leading-relaxed italic">"{project.description}"</p>
+                <p className="text-[11px] text-slate-400 mb-4 line-clamp-1 leading-relaxed italic opacity-70">"{project.description}"</p>
             )}
 
-            <div className="space-y-4">
+            <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                         {project.dueDate && (
-                            <div className="flex items-center gap-1.5 text-xs font-black text-slate-500 uppercase">
-                                <Calendar className="w-3 h-3" />
-                                {new Date(project.dueDate).toLocaleDateString()}
+                            <div className="flex items-center gap-1 text-[10px] font-black text-slate-500 uppercase">
+                                <Calendar className="w-2.5 h-2.5" />
+                                {new Date(project.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                             </div>
                         )}
-                        <div className="w-px h-3 bg-white/5"></div>
-                        <div className="flex -space-x-1.5">
+                        <div className="w-px h-2 bg-white/5"></div>
+                        <div className="flex -space-x-1">
                             {[1, 2].map(i => (
-                                <div key={i} className="w-5 h-5 rounded-full bg-slate-800 border border-slate-900 flex items-center justify-center">
-                                    <UsersIcon className="w-2.5 h-2.5 text-slate-500" />
+                                <div key={i} className="w-4 h-4 rounded-full bg-slate-800 border border-slate-900 flex items-center justify-center">
+                                    <UsersIcon className="w-2 h-2 text-slate-500" />
                                 </div>
                             ))}
                         </div>
                     </div>
                 </div>
 
-                <div className="space-y-2 pt-4 border-t border-white/5">
-                    <div className="flex items-center justify-between text-xs font-black uppercase tracking-widest">
-                        <span className="text-slate-500">Progress</span>
+                <div className="space-y-1.5 pt-3 border-t border-white/5">
+                    <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest">
+                        <span className="text-slate-600">Progress</span>
                         <span className="text-teal-400">{project.progress}%</span>
                     </div>
-                    <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden border border-white/5 shadow-inner">
-                        <div className="bg-gradient-to-r from-teal-500 to-violet-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(45,212,191,0.3)]" style={{ width: `${project.progress}%` }} />
+                    <div className="w-full bg-slate-950 rounded-full h-1 overflow-hidden border border-white/5 shadow-inner">
+                        <div className="bg-gradient-to-r from-teal-500 to-violet-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(45,212,191,0.3)]" style={{ width: `${project.progress}%` }} />
                     </div>
                 </div>
             </div>
@@ -558,57 +558,105 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
 };
 
 const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
-    const sorted = [...projects].sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+    const sorted = [...projects].sort((a, b) => new Date(a.startDate || a.createdAt || 0).getTime() - new Date(b.startDate || b.createdAt || 0).getTime());
+
+    // Calculate range: from today to 6 months out
     const timelineStart = new Date();
-    timelineStart.setMonth(timelineStart.getMonth() - 1);
-    const months = Array.from({ length: 6 }).map((_, i) => {
+    timelineStart.setDate(1); // Start of current month
+    const timelineEnd = new Date(timelineStart);
+    timelineEnd.setMonth(timelineEnd.getMonth() + 6);
+
+    const months = Array.from({ length: 7 }).map((_, i) => {
         const d = new Date(timelineStart);
         d.setMonth(d.getMonth() + i);
         return d;
     });
 
+    const getPosition = (dateStr: string | undefined, fallback: Date) => {
+        const date = dateStr ? new Date(dateStr) : fallback;
+        const totalMs = timelineEnd.getTime() - timelineStart.getTime();
+        const startMs = date.getTime() - timelineStart.getTime();
+        return Math.max(0, Math.min(100, (startMs / totalMs) * 100));
+    };
+
     return (
-        <div className="glass-panel overflow-hidden rounded-3xl border border-white/5 flex flex-col h-full min-h-[500px] backdrop-blur-xl bg-slate-900/40">
-            <div className="flex border-b border-white/10 divide-x divide-white/5 bg-slate-950/60 sticky top-0 z-20">
-                <div className="w-80 min-w-80 p-5 font-black text-slate-400 text-xs uppercase tracking-[0.2em]">Project Roadmap</div>
-                <div className="flex-1 overflow-x-auto flex divide-x divide-white/5 scrollbar-hide">
+        <div className="glass-panel overflow-hidden rounded-3xl border border-white/5 flex flex-col h-full min-h-[500px] backdrop-blur-xl bg-slate-950/20">
+            {/* Timeline Header */}
+            <div className="flex border-b border-white/10 bg-slate-900/40 sticky top-0 z-20">
+                <div className="w-64 min-w-[16rem] p-4 font-black text-slate-400 text-[10px] uppercase tracking-[0.2em] border-r border-white/5">Project Objective</div>
+                <div className="flex-1 relative h-12 flex">
                     {months.map((m, i) => (
-                        <div key={i} className="min-w-[200px] p-4 text-center">
-                            <span className="text-xs font-black text-slate-300 uppercase tracking-widest">{m.toLocaleDateString('default', { month: 'long', year: 'numeric' })}</span>
+                        <div
+                            key={i}
+                            className="flex-1 border-r border-white/5 last:border-0 p-3 text-center flex flex-col justify-center"
+                        >
+                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{m.toLocaleDateString('default', { month: 'short' })}</span>
+                            <span className="text-[8px] font-bold text-slate-600 uppercase tracking-tighter">{m.getFullYear()}</span>
                         </div>
                     ))}
+                    {/* Today indicator line */}
+                    <div
+                        className="absolute top-0 bottom-0 w-px bg-teal-500/40 shadow-[0_0_10px_rgba(20,184,166,0.3)] z-10"
+                        style={{ left: `${getPosition(new Date().toISOString(), new Date())}%` }}
+                    >
+                        <div className="absolute -top-1 -left-1 w-2 h-2 rounded-full bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]"></div>
+                    </div>
                 </div>
             </div>
-            <div className="flex-1 overflow-y-auto divide-y divide-white/5">
-                {sorted.map(proj => {
-                    const start = proj.startDate ? new Date(proj.startDate) : new Date(proj.createdAt || new Date().toISOString());
-                    const end = proj.dueDate ? new Date(proj.dueDate) : new Date(start);
-                    if (end < start) end.setMonth(start.getMonth() + 1);
 
-                    const totalDays = (months[5].getTime() - months[0].getTime()) / (1000 * 60 * 60 * 24);
-                    const startPos = ((start.getTime() - months[0].getTime()) / (1000 * 60 * 60 * 24) / totalDays) * 100;
-                    const duration = ((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24) / totalDays) * 100;
+            {/* Timeline Rows */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden divide-y divide-white/5">
+                {sorted.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-64 opacity-30">
+                        <BarChart3 className="w-12 h-12 mb-4" />
+                        <p className="text-sm font-black uppercase tracking-widest">No Active Timelines</p>
+                    </div>
+                ) : sorted.map(proj => {
+                    const fallbackDate = new Date().getTime();
+                    const startPos = getPosition(proj.startDate || proj.createdAt, new Date());
+                    const endPos = getPosition(proj.dueDate, new Date(new Date(proj.startDate || proj.createdAt || fallbackDate).getTime() + 30 * 24 * 60 * 60 * 1000));
+                    const width = Math.max(2, endPos - startPos);
 
                     return (
-                        <div key={proj.id} className="flex divide-x divide-white/5 hover:bg-white/5 group transition-all duration-300">
-                            <div className="w-80 min-w-80 p-5 flex flex-col gap-1 sticky left-0 z-10 bg-slate-900/90 backdrop-blur-xl border-r border-white/5">
-                                <h4 className="text-sm font-semibold text-slate-100 group-hover:text-teal-400 transition-colors uppercase tracking-tight">{proj.name}</h4>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-xs font-black text-slate-500 uppercase flex items-center gap-1">
-                                        <Target className="w-3 h-3" /> {proj.status.replace('_', ' ')}
+                        <div key={proj.id} className="flex hover:bg-white/[0.02] group transition-all duration-300 border-l-2 border-transparent hover:border-teal-500/30">
+                            <div className="w-64 min-w-[16rem] p-4 flex flex-col gap-1 border-r border-white/5 bg-slate-900/20 backdrop-blur-sm">
+                                <h4 className="text-xs font-bold text-slate-200 group-hover:text-teal-400 transition-colors truncate">{proj.name}</h4>
+                                <div className="flex items-center gap-2">
+                                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded bg-slate-800 text-slate-500 uppercase tracking-widest`}>
+                                        {proj.status.replace('_', ' ')}
                                     </span>
-                                    <span className="text-xs font-black text-teal-500 flex items-center gap-1">
-                                        <CheckCircle2 className="w-3 h-3" /> {proj.progress}%
-                                    </span>
+                                    <span className="text-[9px] font-bold text-teal-500/80">{proj.progress}%</span>
                                 </div>
                             </div>
-                            <div className="flex-1 relative h-16 flex items-center min-w-[1200px]">
+                            <div className="flex-1 relative h-14 flex items-center px-2">
+                                {/* Grid lines background */}
+                                <div className="absolute inset-0 flex divide-x divide-white/5 pointer-events-none">
+                                    {months.map((_, i) => <div key={i} className="flex-1 h-full"></div>)}
+                                </div>
+
+                                {/* Project Bar */}
                                 <div
-                                    className="absolute h-8 rounded-2xl bg-gradient-to-r from-teal-500/20 to-violet-500/20 border border-white/10 group-hover:border-teal-500/30 group-hover:shadow-[0_0_20px_rgba(45,212,191,0.1)] transition-all flex items-center px-4 overflow-hidden"
-                                    style={{ left: `${Math.max(0, startPos)}%`, width: `${Math.max(1, duration)}%` }}
+                                    className="absolute h-7 rounded-lg group-hover:h-8 transition-all duration-300 flex items-center shadow-lg hover:shadow-teal-500/10 overflow-hidden cursor-pointer"
+                                    style={{
+                                        left: `${startPos}%`,
+                                        width: `${width}%`,
+                                        background: 'linear-gradient(90deg, rgba(20,184,166,0.15) 0%, rgba(139,92,246,0.15) 100%)',
+                                        border: '1px solid rgba(255,255,255,0.05)',
+                                    }}
                                 >
-                                    <div className="absolute inset-0 bg-gradient-to-r from-teal-500/40 to-violet-500/40 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                    <span className="text-xs font-black text-white uppercase tracking-tighter truncate z-10">{proj.name}</span>
+                                    {/* Progress inner bar */}
+                                    <div
+                                        className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-teal-500/30 to-violet-500/30 transition-all duration-1000"
+                                        style={{ width: `${proj.progress}%` }}
+                                    ></div>
+                                    <div className="relative px-3 flex items-center justify-between w-full min-w-max">
+                                        <span className="text-[9px] font-black text-white uppercase tracking-wider truncate drop-shadow-md">{proj.name}</span>
+                                        {width > 10 && (
+                                            <span className="text-[8px] font-bold text-slate-400 pl-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                {proj.dueDate ? new Date(proj.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>

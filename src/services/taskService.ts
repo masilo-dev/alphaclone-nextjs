@@ -15,7 +15,7 @@ export interface Task {
     relatedToDeal?: string;
     relatedToLead?: string;
     priority: 'low' | 'medium' | 'high' | 'urgent';
-    status: 'todo' | 'in_progress' | 'completed' | 'cancelled';
+    status: 'ideas' | 'todo' | 'in_progress' | 'review' | 'completed' | 'cancelled';
     dueDate?: string;
     startDate?: string;
     completedAt?: string;

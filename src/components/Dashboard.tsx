@@ -28,7 +28,8 @@ import {
   ListChecks,
   Share2,
   AlertCircle,
-  Zap
+  Zap,
+  ArrowLeft
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import MilestoneManager from './dashboard/projects/MilestoneManager';
@@ -145,6 +146,17 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [isCallMinimized, setIsCallMinimized] = useState(false);
   const [isInCall, setIsInCall] = useState(false); // Kept for backward compatibility if needed, or synced
   const [showSidebarDuringCall, setShowSidebarDuringCall] = useState(false);
+  const [forceSidebarHide, setForceSidebarHide] = useState(false);
+
+  // Auto-hide sidebar on specific views or states
+  useEffect(() => {
+    const hiddenRoutes = ['/dashboard/conference'];
+    if (hiddenRoutes.includes(activeTab)) {
+      setForceSidebarHide(true);
+    } else {
+      setForceSidebarHide(false);
+    }
+  }, [activeTab]);
 
   const handleJoinCall = (url: string) => {
     setActiveCallUrl(url);
@@ -1458,7 +1470,18 @@ const Dashboard: React.FC<DashboardProps> = ({
         setActiveTab={setActiveTab}
         unreadMessageCount={unreadMessageCount}
         onLogout={onLogout}
+        forceHidden={forceSidebarHide}
       />
+
+      {forceSidebarHide && (
+        <button
+          onClick={() => setForceSidebarHide(false)}
+          className="fixed top-6 left-6 z-[70] p-3 bg-slate-900/80 backdrop-blur border border-white/10 rounded-full text-white hover:bg-teal-600 transition-all shadow-xl active:scale-95"
+          title="Back to Navigation"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+      )}
 
       {/* Mobile Bottom Navigation */}
       <BottomNav

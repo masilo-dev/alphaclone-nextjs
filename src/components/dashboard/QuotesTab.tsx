@@ -33,8 +33,13 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
         name: '',
         validForDays: '30',
         notes: '',
-        currency: 'USD'
+        currency: 'USD',
+        contactId: '',
+        dealId: ''
     });
+
+    const [availableContacts, setAvailableContacts] = useState<any[]>([]);
+    const [availableDeals, setAvailableDeals] = useState<any[]>([]);
 
     const [lineItems, setLineItems] = useState<Partial<QuoteItem>[]>([
         { productName: '', description: '', quantity: 1, unitPrice: 0 }
@@ -42,7 +47,24 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
 
     useEffect(() => {
         loadQuotes();
+        if (userRole === 'admin' || userRole === 'tenant_admin') {
+            loadAvailableResources();
+        }
     }, [filter, userId, userRole]);
+
+    const loadAvailableResources = async () => {
+        try {
+            const [dealsRes, leadsRes] = await Promise.all([
+                require('../../services/dealService').dealService.getDeals(),
+                require('../../services/leadService').leadService.getLeads()
+            ]);
+
+            if (!dealsRes.error) setAvailableDeals(dealsRes.deals);
+            if (!leadsRes.error) setAvailableContacts(leadsRes.leads);
+        } catch (err) {
+            console.error('Failed to load resources for linking', err);
+        }
+    };
 
     const loadQuotes = async () => {
         setLoading(true);
@@ -118,7 +140,9 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                 name: quoteForm.name,
                 validForDays: parseInt(quoteForm.validForDays) || 30,
                 notes: quoteForm.notes || undefined,
-                currency: quoteForm.currency
+                currency: quoteForm.currency,
+                contactId: quoteForm.contactId || undefined,
+                dealId: quoteForm.dealId || undefined
             });
 
             if (error) {
@@ -144,7 +168,9 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                     name: '',
                     validForDays: '30',
                     notes: '',
-                    currency: 'USD'
+                    currency: 'USD',
+                    contactId: '',
+                    dealId: ''
                 });
                 setLineItems([{ productName: '', description: '', quantity: 1, unitPrice: 0 }]);
                 loadQuotes();
@@ -443,6 +469,34 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                                     <option value="GBP">GBP (£)</option>
                                 </select>
                             </div>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="block text-sm font-medium text-slate-300">Link to Lead/Contact (Optional)</label>
+                            <select
+                                value={quoteForm.contactId}
+                                onChange={(e) => setQuoteForm({ ...quoteForm, contactId: e.target.value })}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+                            >
+                                <option value="">No Contact Linked</option>
+                                {availableContacts.map(contact => (
+                                    <option key={contact.id} value={contact.id}>{contact.businessName || contact.name || 'Unnamed Contact'}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="block text-sm font-medium text-slate-300">Link to Deal (Optional)</label>
+                            <select
+                                value={quoteForm.dealId}
+                                onChange={(e) => setQuoteForm({ ...quoteForm, dealId: e.target.value })}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+                            >
+                                <option value="">No Deal Linked</option>
+                                {availableDeals.map(deal => (
+                                    <option key={deal.id} value={deal.id}>{deal.name}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 

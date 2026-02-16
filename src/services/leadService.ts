@@ -416,5 +416,47 @@ export const leadService = {
             // Let's return error so UI can decide.
             return { allowed: false, error: 'Unable to verify lead limit.', remaining: 0 };
         }
+    },
+
+    /**
+     * Get activity history for a lead
+     */
+    async getLeadActivities(leadId: string): Promise<{ activities: any[]; error: string | null }> {
+        try {
+            const { data, error } = await supabase
+                .from('lead_activities')
+                .select('*')
+                .eq('lead_id', leadId)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            return { activities: data || [], error: null };
+        } catch (err: any) {
+            console.error('Error fetching lead activities:', err);
+            return { activities: [], error: err.message };
+        }
+    },
+
+    /**
+     * Add a manual activity/note to a lead
+     */
+    async addLeadActivity(leadId: string, userId: string, type: string, description: string, metadata: any = {}): Promise<{ error: string | null }> {
+        try {
+            const { error } = await supabase
+                .from('lead_activities')
+                .insert({
+                    lead_id: leadId,
+                    user_id: userId,
+                    type,
+                    description,
+                    metadata
+                });
+
+            if (error) throw error;
+            return { error: null };
+        } catch (err: any) {
+            console.error('Error adding lead activity:', err);
+            return { error: err.message };
+        }
     }
 };

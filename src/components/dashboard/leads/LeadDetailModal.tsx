@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckSquare, Calendar, Clock, Plus, ArrowRight, Upload, Phone, Mail, Globe, MapPin, User, FileText, Send, Bot } from 'lucide-react';
+import { X, CheckSquare, Calendar, Clock, Plus, ArrowRight, Upload, Phone, Mail, Globe, MapPin, User, FileText, Send, Bot, History as HistoryIcon } from 'lucide-react';
 import { Modal, Button, Input, Card, Badge } from '../../ui/UIComponents';
 import { Lead, leadService } from '../../../services/leadService';
 import { taskService, Task } from '../../../services/taskService';
@@ -19,12 +19,13 @@ interface LeadDetailModalProps {
 
 export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }: LeadDetailModalProps) {
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'meetings' | 'notes'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'meetings' | 'notes' | 'history'>('overview');
     const [isLoading, setIsLoading] = useState(false);
 
     // Data States
     const [tasks, setTasks] = useState<Task[]>([]);
     const [events, setEvents] = useState<CalendarEvent[]>([]);
+    const [activities, setActivities] = useState<any[]>([]);
 
     // Task Creation State
     const [showTaskForm, setShowTaskForm] = useState(false);
@@ -55,6 +56,12 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                     relatedToLead: lead.id
                 });
                 setTasks(fetchedTasks);
+            }
+
+            // Fetch Activities
+            if (activeTab === 'history' || activeTab === 'overview') {
+                const { activities: fetchedActivities } = await leadService.getLeadActivities(lead.id);
+                setActivities(fetchedActivities);
             }
 
             // Fetch Meetings (Events)
@@ -182,8 +189,15 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
         try {
             const { error } = await leadService.updateLead(lead.id, { notes: leadNotes });
             if (error) throw new Error(error);
+
+            // Also log a history item
+            if (user) {
+                await leadService.addLeadActivity(lead.id, user.id, 'note', 'Note updated');
+            }
+
             toast.success('Notes saved successfully');
             if (onLeadUpdate) onLeadUpdate({ ...lead, notes: leadNotes });
+            fetchRelatedData();
         } catch (error) {
             toast.error('Failed to save notes');
         } finally {
@@ -257,7 +271,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
 
                 {/* Tabs */}
                 <div className="px-4 sm:px-6 border-b border-slate-800 bg-slate-900/50 flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide">
-                    {['overview', 'tasks', 'meetings', 'notes'].map((tab) => (
+                    {['overview', 'history', 'tasks', 'meetings', 'notes'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab as any)}
@@ -491,6 +505,40 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                             <div className="flex items-center gap-2 text-xs text-slate-500 italic mt-2">
                                 <Bot className="w-4 h-4 text-teal-400" />
                                 <span>These notes are visible to all members of your team with access to this lead.</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'history' && (
+                        <div className="space-y-6">
+                            <h3 className="text-lg font-semibold text-white mb-4">Activity Timeline</h3>
+                            <div className="relative border-l-2 border-slate-800 ml-4 pl-8 space-y-8">
+                                {activities.map((activity) => (
+                                    <div key={activity.id} className="relative">
+                                        <div className="absolute -left-[41px] top-0 w-5 h-5 rounded-full bg-slate-900 border-2 border-slate-800 flex items-center justify-center">
+                                            <div className={`w-2 h-2 rounded-full ${activity.type === 'stage_change' ? 'bg-teal-500' : 'bg-blue-500'}`} />
+                                        </div>
+                                        <div className="glass-panel p-4 rounded-xl border border-white/5">
+                                            <div className="flex justify-between items-start mb-1">
+                                                <p className="font-medium text-white">{activity.description}</p>
+                                                <span className="text-xs text-slate-500">{format(new Date(activity.created_at), 'MMM d, p')}</span>
+                                            </div>
+                                            {activity.metadata?.old_stage && (
+                                                <div className="flex items-center gap-2 mt-2 text-xs">
+                                                    <Badge variant="neutral" className="text-[10px] opacity-60">{activity.metadata.old_stage.toUpperCase()}</Badge>
+                                                    <ArrowRight className="w-3 h-3 text-slate-600" />
+                                                    <Badge variant="blue" className="text-[10px] text-teal-400 border-teal-500/20">{activity.metadata.new_stage.toUpperCase()}</Badge>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                                {activities.length === 0 && (
+                                    <div className="text-center py-12 text-slate-500">
+                                        <HistoryIcon className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                                        <p>No activity recorded yet for this lead.</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}

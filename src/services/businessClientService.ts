@@ -10,6 +10,7 @@ export interface BusinessClient {
     stage: 'lead' | 'prospect' | 'customer' | 'lost';
     value: number;
     notes?: string;
+    address?: string;
     customFields?: Record<string, any>;
     createdAt: string;
     updatedAt: string;
@@ -54,6 +55,7 @@ export const businessClientService = {
                 stage: c.stage,
                 value: parseFloat(c.value || 0),
                 notes: c.notes,
+                address: c.address,
                 customFields: c.custom_fields,
                 createdAt: c.created_at,
                 updatedAt: c.updated_at
@@ -89,6 +91,7 @@ export const businessClientService = {
                 stage: data.stage,
                 value: parseFloat(data.value || 0),
                 notes: data.notes,
+                address: data.address,
                 customFields: data.custom_fields,
                 createdAt: data.created_at,
                 updatedAt: data.updated_at
@@ -247,17 +250,17 @@ export const businessClientService = {
 
 export interface DashboardStats {
     totalRevenue: number;
-    totalClients: number;
+    clientCount: number;
     activeProjects: number;
     pendingInvoices: number;
     recentActivity: Array<{
-        type: 'client' | 'project' | 'invoice';
-        text: string;
-        time: string;
+        type: string;
+        title: string;
+        date: string;
     }>;
     monthlyRevenue: Array<{
         month: string;
-        year: number;
-        revenue: number;
+        amount: number;
     }>;
+    pipeline: Record<string, number>;
 }

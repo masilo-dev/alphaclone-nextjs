@@ -216,7 +216,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
 
     const KanbanColumn = ({ status, title, items }: { status: string, title: string, items: Task[] }) => {
         return (
-            <div className="flex flex-col w-80 min-w-80 h-full">
+            <div className="flex flex-col w-72 min-w-[18rem] h-full">
                 <div className={`p-3 rounded-t-xl bg-slate-900/60 border-t-2 border-slate-700 border-x border-slate-800/50 flex items-center justify-between`}>
                     <h3 className="font-bold text-slate-200 text-sm flex items-center gap-2">
                         {title}
@@ -257,9 +257,11 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
             collisionDetection={closestCorners}
             sensors={sensors}
         >
-            <div className="flex gap-6 h-full overflow-x-auto pb-4 pr-4">
+            <div className="flex gap-4 h-full overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-slate-700">
+                <KanbanColumn status="ideas" title="Ideas" items={filteredAndSearchedTasks.filter(t => t.status === 'ideas')} />
                 <KanbanColumn status="todo" title="Planning" items={filteredAndSearchedTasks.filter(t => t.status === 'todo')} />
                 <KanbanColumn status="in_progress" title="Active" items={filteredAndSearchedTasks.filter(t => t.status === 'in_progress')} />
+                <KanbanColumn status="review" title="Review" items={filteredAndSearchedTasks.filter(t => t.status === 'review')} />
                 <KanbanColumn status="completed" title="Done" items={filteredAndSearchedTasks.filter(t => t.status === 'completed')} />
             </div>
             <DragOverlay>

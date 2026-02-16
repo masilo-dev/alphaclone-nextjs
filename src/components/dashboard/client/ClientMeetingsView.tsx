@@ -16,7 +16,7 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
     const router = useRouter();
     const [meetings, setMeetings] = useState<VideoCall[]>([]);
     const [loading, setLoading] = useState(true);
-    const [currentTime, setCurrentTime] = useState(Date.now());
+    const [currentTime, setCurrentTime] = useState(() => Date.now());
 
     const loadMeetings = useCallback(async () => {
         if (!user) return;
