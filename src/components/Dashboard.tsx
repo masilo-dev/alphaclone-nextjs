@@ -343,6 +343,12 @@ const Dashboard: React.FC<DashboardProps> = ({
     } catch (e) { console.error('Cache load error', e); }
 
     const loadAllData = async () => {
+      // Wait for tenant to be loaded (except for super admin who sees all data)
+      if (user.role !== 'admin' && !currentTenant?.id) {
+        console.log('Waiting for tenant to be loaded...');
+        return;
+      }
+
       const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
 
       // Load everything in parallel - don't wait for one to finish before starting another
@@ -371,7 +377,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     };
 
     loadAllData();
-  }, [user.id, user.role]);
+  }, [user.id, user.role, currentTenant?.id]);
 
   // Use ref for activeTab to avoid breaking message subscription on tab change
   const activeTabRef = useRef(activeTab);
