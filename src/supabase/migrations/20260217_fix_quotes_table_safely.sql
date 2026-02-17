@@ -215,3 +215,28 @@ BEGIN
     END IF;
 END $$;
 
+-- =====================================================
+-- FIX UNIQUE CONSTRAINT ON QUOTES
+-- =====================================================
+-- The previous index was global, causing 409 conflicts. Make it per-tenant.
+ALTER TABLE quotes DROP CONSTRAINT IF EXISTS quotes_quote_number_key;
+DROP INDEX IF EXISTS quotes_quote_number_key;
+CREATE UNIQUE INDEX IF NOT EXISTS quotes_tenant_quote_number_key ON quotes(tenant_id, quote_number);
+
+-- =====================================================
+-- FIX RLS HELPER FUNCTION
+-- =====================================================
+-- Ensure this runs as SECURITY DEFINER to avoid recursion/permission issues
+CREATE OR REPLACE FUNCTION get_user_tenant_ids()
+RETURNS TABLE (tenant_id UUID) AS $$
+BEGIN
+  RETURN QUERY SELECT tu.tenant_id FROM tenant_users tu WHERE tu.user_id = auth.uid();
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Ensure permissions
+GRANT ALL ON quotes TO authenticated;
+GRANT ALL ON leads TO authenticated;
+GRANT ALL ON deals TO authenticated;
+GRANT ALL ON tenant_users TO authenticated;
+
