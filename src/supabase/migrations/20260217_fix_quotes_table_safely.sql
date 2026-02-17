@@ -171,8 +171,11 @@ CREATE TRIGGER update_quotes_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
--- Create or replace the dashboard stats function
-CREATE OR REPLACE FUNCTION get_tenant_dashboard_stats(tenant_id_param UUID)
+-- Drop existing function first to avoid return type conflict
+DROP FUNCTION IF EXISTS get_tenant_dashboard_stats(UUID);
+
+-- Create the dashboard stats function
+CREATE FUNCTION get_tenant_dashboard_stats(tenant_id_param UUID)
 RETURNS JSON AS $$
 DECLARE
     result JSON;
