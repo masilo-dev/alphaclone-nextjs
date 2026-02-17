@@ -166,8 +166,8 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                             <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                                 <TrendingUp className="w-5 h-5 text-teal-400" /> Revenue vs Expenses
                             </h3>
-                            <div className="h-[300px] w-full">
-                                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                            <div className="h-[300px] w-full min-h-[300px]">
+                                <ResponsiveContainer width="100%" height={300} minWidth={0} debounce={50}>
                                     <AreaChart data={chartData}>
                                         <defs>
                                             <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">

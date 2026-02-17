@@ -145,8 +145,8 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
                         <TrendingUp className="w-5 h-5 text-teal-400" />
                         Revenue Trend
                     </h3>
-                    <div className="h-[250px]">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                    <div className="h-[250px] w-full min-h-[250px]">
+                        <ResponsiveContainer width="100%" height={250} minWidth={0} debounce={50}>
                             <LineChart data={revenueData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                                 <XAxis dataKey="month" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
@@ -176,9 +176,9 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
                         </button>
                     </div>
 
-                    <div className="h-[250px] w-full">
+                    <div className="h-[250px] w-full min-h-[250px]">
                         {pipelineData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                            <ResponsiveContainer width="100%" height={250} minWidth={0} debounce={50}>
                                 <BarChart data={pipelineData} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                                     <XAxis

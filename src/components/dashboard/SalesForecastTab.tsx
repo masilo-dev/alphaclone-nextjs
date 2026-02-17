@@ -122,8 +122,8 @@ const SalesForecastTab = () => {
                 {/* Revenue Forecast Chart */}
                 <Card className="bg-slate-900 border-slate-800 p-6">
                     <h3 className="text-lg font-bold text-white mb-6">Revenue Forecast vs Actual</h3>
-                    <div className="h-80 w-full">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={320}>
+                    <div className="h-80 w-full min-h-[320px]">
+                        <ResponsiveContainer width="100%" height={320} minWidth={0} minHeight={320} debounce={50}>
                             <LineChart data={chartData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                                 <XAxis dataKey="month" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
@@ -143,8 +143,8 @@ const SalesForecastTab = () => {
                 {/* Pipeline Distribution Chart */}
                 <Card className="bg-slate-900 border-slate-800 p-6">
                     <h3 className="text-lg font-bold text-white mb-6">Deal Pipeline Value</h3>
-                    <div className="h-80 w-full">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={320}>
+                    <div className="h-80 w-full min-h-[320px]">
+                        <ResponsiveContainer width="100%" height={320} minWidth={0} minHeight={320} debounce={50}>
                             <BarChart data={pipelineChartData} layout="vertical" margin={{ left: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
                                 <XAxis type="number" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value / 1000}k`} />
