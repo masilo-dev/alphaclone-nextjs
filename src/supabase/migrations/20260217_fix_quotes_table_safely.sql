@@ -190,8 +190,8 @@ BEGIN
         'total_messages', COALESCE((SELECT COUNT(*) FROM messages WHERE tenant_id = tenant_id_param), 0),
         'pending_invoices', COALESCE((SELECT COUNT(*) FROM invoices WHERE tenant_id = tenant_id_param AND status = 'pending'), 0),
         'overdue_invoices', COALESCE((SELECT COUNT(*) FROM invoices WHERE tenant_id = tenant_id_param AND status = 'overdue'), 0),
-        'total_revenue', COALESCE((SELECT SUM(total) FROM invoices WHERE tenant_id = tenant_id_param AND status = 'paid'), 0),
-        'pending_revenue', COALESCE((SELECT SUM(total) FROM invoices WHERE tenant_id = tenant_id_param AND status IN ('pending', 'sent')), 0)
+        'total_revenue', COALESCE((SELECT SUM(amount) FROM invoices WHERE tenant_id = tenant_id_param AND status = 'paid'), 0),
+        'pending_revenue', COALESCE((SELECT SUM(amount) FROM invoices WHERE tenant_id = tenant_id_param AND status IN ('pending', 'sent')), 0)
     ) INTO result;
     
     RETURN result;
