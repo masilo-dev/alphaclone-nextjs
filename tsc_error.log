@@ -1,0 +1,3 @@
+﻿src/components/dashboard/SalesAgent.tsx(215,55): error TS2307: Cannot find module '../../lib/supabaseClient' or its corresponding type declarations.
+src/components/dashboard/SalesAgent.tsx(495,55): error TS2307: Cannot find module '../../lib/supabaseClient' or its corresponding type declarations.
+src/components/dashboard/SalesAgent.tsx(547,47): error TS2307: Cannot find module '../../lib/supabaseClient' or its corresponding type declarations.

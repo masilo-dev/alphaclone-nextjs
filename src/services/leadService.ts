@@ -62,6 +62,7 @@ export const leadService = {
                 value: l.value,
                 notes: l.notes,
                 created_at: l.created_at,
+                client_id: l.client_id, // Include client_id
                 // UI compatibility
                 status: l.stage === 'lead' ? 'New' : l.stage,
                 fb: l.website // Map website to fb/social link for display if needed

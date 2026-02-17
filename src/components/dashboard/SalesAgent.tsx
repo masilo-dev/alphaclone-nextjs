@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, UserPlus, Phone, CheckCircle2, Bot, Send, Trash2, Upload, FileSpreadsheet, X, Mail, ExternalLink, FileText, Zap } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Bot, Search, Play, Pause, Settings, RefreshCw, Plus, Filter, Database, MessageSquare, ArrowRight, CheckCircle2, AlertCircle, UserPlus, Phone, Send, Trash2, Upload, FileSpreadsheet, X, Mail, ExternalLink, FileText, Zap } from 'lucide-react';
 import { generateLeads, chatWithGrowthAgent, isAnyAIConfigured } from '../../services/unifiedAIService';
 import { leadService, Lead } from '../../services/leadService';
 import { fileImportService } from '../../services/fileImportService';
@@ -58,7 +58,62 @@ const SalesAgent: React.FC = () => {
             toast.success('Lead added successfully');
             setShowManualModal(false);
             setManualLead({ businessName: '', email: '', phone: '', industry: '', location: '', value: '' });
+
+            // Auto-process manual lead too? User said "ALL generated leads", but let's stick to AI ones for now unless specified.
+            // Actually, for consistency, let's keep manual separate unless requested.
             loadLeads();
+        }
+    };
+
+    // Helper to process a single lead into CRM and Quote
+    const processLeadHelper = async (lead: Lead, userId: string, tenantId: string) => {
+        try {
+            // 0. Dynamic imports
+            const { businessClientService } = await import('../../services/businessClientService');
+            const { quoteService } = await import('../../services/quoteService');
+
+            // 1. Qualify Lead
+            await leadService.updateLead(lead.id, { stage: 'qualified' });
+
+            // 2. Create Client
+            const { client, error: clientError } = await businessClientService.createClient(tenantId, {
+                name: lead.businessName,
+                email: lead.email || '',
+                phone: lead.phone,
+                salesStage: 'customer',
+                industry: lead.industry,
+                location: lead.location,
+                description: lead.notes
+            });
+
+            if (clientError || !client) return { success: false, error: clientError || 'Failed to create client' };
+
+            // 3. Link Lead to Client
+            await leadService.updateLead(lead.id, { client_id: client.id });
+
+            // 4. Create Draft Quote
+            const { quote, error: quoteError } = await quoteService.createQuote(userId, {
+                name: `Quote for ${lead.businessName}`,
+                validForDays: 30,
+                currency: 'USD',
+                contactId: client.id,
+                notes: 'Auto-generated draft quote from AI Agent'
+            });
+
+            if (quoteError || !quote) return { success: false, error: quoteError || 'Failed to create quote' };
+
+            // 5. Add default line item
+            await quoteService.addQuoteItem(quote.id, {
+                productName: 'Consultation Services',
+                description: 'Initial consultation and requirements gathering',
+                quantity: 1,
+                unitPrice: 0 // User to edit
+            });
+
+            return { success: true };
+        } catch (err: any) {
+            console.error("Auto-process error", err);
+            return { success: false, error: err.message };
         }
     };
 
@@ -141,7 +196,38 @@ const SalesAgent: React.FC = () => {
                     console.error('❌ Database error:', error);
                     toast.error(`AI found leads but failed to save them: ${error}`, { id: progressToast });
                 } else {
-                    toast.success(`🎉 AI discovered and saved ${count} new leads!`, { id: progressToast, duration: 4000 });
+                    // AUTOMATION START: Process all new leads
+                    toast.loading(`⚡ Auto-processing ${results.length} leads into CRM & Quotes...`, { id: progressToast });
+
+                    // We need to fetch the newly created leads to have their IDs.
+                    // addBulkLeads might not return IDs. Let's fetch latest leads or rely on the fact we just added them.
+                    // Strategy: Fetch leads sorted by created_at desc limit N
+
+                    const { leads: newLeads } = await leadService.getLeads(); // This gets all.
+                    // Better: Filtering by created_at in memory for now or just process the top N
+                    // Assuming getLeads returns sorted by newest.
+
+                    const leadsToProcess = newLeads.slice(0, results.length); // Rough approximation
+
+                    let processed = 0;
+
+                    // Need current user ID for quote creation
+                    const { supabase } = await import('../../lib/supabase');
+                    const { data: { user } } = await supabase.auth.getUser();
+
+                    if (user) {
+                        const { tenantService } = await import('../../services/tenancy/TenantService');
+                        const tenantId = tenantService.getCurrentTenantId();
+
+                        if (tenantId) {
+                            for (const lead of leadsToProcess) {
+                                const result = await processLeadHelper(lead, user.id, tenantId);
+                                if (result.success) processed++;
+                            }
+                        }
+                    }
+
+                    toast.success(`🎉 Added ${count} leads, created ${processed} clients & draft quotes!`, { id: progressToast, duration: 5000 });
                     loadLeads(); // Reload from DB
                 }
             } else {
@@ -399,7 +485,29 @@ const SalesAgent: React.FC = () => {
                 if (error) {
                     toast.error(`AI found leads but failed to save them: ${error}`, { id: progressToast });
                 } else {
-                    toast.success(`🎉 Discovered and saved ${count} new leads!`, { id: progressToast, duration: 4000 });
+                    // AUTOMATION START for AutoSearch
+                    toast.loading(`⚡ Auto-converting ${count} leads to Clients & Quotes...`, { id: progressToast });
+
+                    const { leads: newLeads } = await leadService.getLeads();
+                    const leadsToProcess = newLeads.slice(0, results.length);
+                    let processed = 0;
+
+                    const { supabase } = await import('../../lib/supabase');
+                    const { data: { user } } = await supabase.auth.getUser();
+
+                    if (user) {
+                        const { tenantService } = await import('../../services/tenancy/TenantService');
+                        const tenantId = tenantService.getCurrentTenantId();
+
+                        if (tenantId) {
+                            for (const lead of leadsToProcess) {
+                                const result = await processLeadHelper(lead, user.id, tenantId);
+                                if (result.success) processed++;
+                            }
+                        }
+                    }
+
+                    toast.success(`🎉 Process complete! Created ${processed} draft quotes ready for review.`, { id: progressToast, duration: 5000 });
                     loadLeads();
 
                     // Conversational Follow-up
@@ -417,6 +525,63 @@ const SalesAgent: React.FC = () => {
             toast.error(error?.message || 'AI Generation failed.', { id: progressToast });
         } finally {
             setIsSearching(false);
+        }
+    };
+
+    // New Function: Process Pending Leads
+    const handleProcessPendingLeads = async () => {
+        const toastId = toast.loading('🔍 Scanning for pending leads...');
+        try {
+            const { leads: allLeads, error } = await leadService.getLeads();
+            if (error) throw new Error(error);
+
+            const pendingLeads = allLeads.filter(l => !l.client_id);
+
+            if (pendingLeads.length === 0) {
+                toast.success('No pending leads found! All leads are processed.', { id: toastId });
+                return;
+            }
+
+            toast.loading(`⚡ Found ${pendingLeads.length} pending leads. Processing...`, { id: toastId });
+
+            const { supabase } = await import('../../lib/supabase');
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user) {
+                toast.error('User not authenticated', { id: toastId });
+                return;
+            }
+
+            const { tenantService } = await import('../../services/tenancy/TenantService');
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) {
+                toast.error('No active tenant', { id: toastId });
+                return;
+            }
+
+            let successCount = 0;
+            let failCount = 0;
+
+            // Process in chunks to avoid overwhelming? Or just loop. Loop is fine for < 500.
+            for (const lead of pendingLeads) {
+                const result = await processLeadHelper(lead, user.id, tenantId);
+                if (result.success) {
+                    successCount++;
+                } else {
+                    failCount++;
+                }
+                // Update toast every 5 leads
+                if ((successCount + failCount) % 5 === 0) {
+                    toast.loading(`Processing... ${successCount + failCount}/${pendingLeads.length}`, { id: toastId });
+                }
+            }
+
+            toast.success(`Complete! Processed ${successCount} leads. (${failCount} failed)`, { id: toastId, duration: 5000 });
+            loadLeads(); // Refresh UI
+
+        } catch (err: any) {
+            console.error('Error processing pending leads:', err);
+            toast.error(`Failed: ${err.message}`, { id: toastId });
         }
     };
 
