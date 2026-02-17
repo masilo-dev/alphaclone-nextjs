@@ -200,4 +200,18 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Grant permissions
 GRANT EXECUTE ON FUNCTION get_tenant_dashboard_stats(UUID) TO authenticated;
-GRANT ALL ON quotes TO authenticated;
+-- =====================================================
+-- PROFILES TABLE UPDATES
+-- =====================================================
+-- Add missing flags for improvement survey
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'profiles' AND column_name = 'has_seen_exit_improvement') THEN
+        ALTER TABLE profiles ADD COLUMN has_seen_exit_improvement BOOLEAN DEFAULT FALSE;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'profiles' AND column_name = 'has_submitted_exit_improvement') THEN
+        ALTER TABLE profiles ADD COLUMN has_submitted_exit_improvement BOOLEAN DEFAULT FALSE;
+    END IF;
+END $$;
+
