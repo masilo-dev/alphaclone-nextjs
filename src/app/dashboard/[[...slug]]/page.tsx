@@ -16,10 +16,22 @@ export default function DashboardPage() {
 
     useEffect(() => {
         // Redirection logic: If loading is done and no user exists, send to login
-        // Only redirect if NOT already being handled by a shell (to avoid conflicts)
         if (!loading && !user) {
-            console.warn('Dashboard DashboardPage: Session not established. Redirecting to login...');
-            router.replace('/auth/login');
+            // Check if there is even a HINT of a session in localStorage
+            // Supabase keys start with 'sb-'
+            const hasLocalToken = typeof window !== 'undefined' &&
+                Object.keys(localStorage).some(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+
+            const timeoutDuration = hasLocalToken ? 3000 : 800;
+
+            const timer = setTimeout(() => {
+                // Double check user still null after grace period
+                if (!user) {
+                    console.warn(`Dashboard DashboardPage: Session not established after ${timeoutDuration}ms. Redirecting to login...`);
+                    router.replace('/auth/login');
+                }
+            }, timeoutDuration);
+            return () => clearTimeout(timer);
         }
     }, [user, loading, router]);
 

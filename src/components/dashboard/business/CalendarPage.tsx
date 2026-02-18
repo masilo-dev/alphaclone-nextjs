@@ -6,14 +6,13 @@ import { taskService, Task } from '../../../services/taskService';
 import { projectService } from '../../../services/projectService';
 import { dealService, Deal } from '../../../services/dealService';
 import { supabase } from '../../../lib/supabase';
+import { googleCalendarService, GoogleCalendarEvent } from '../../../services/googleCalendarService';
 import {
     Calendar as CalendarIcon,
     Plus,
     ChevronLeft,
     ChevronRight,
     X,
-    Settings,
-    Link as LinkIcon,
     CheckSquare,
     Briefcase,
     TrendingUp,
@@ -21,7 +20,6 @@ import {
     User as UserIcon,
     Mail,
 } from 'lucide-react';
-import { CalendlySettingsModal } from './CalendlySettingsModal';
 
 interface CalendarPageProps {
     user: User;
@@ -34,7 +32,7 @@ interface CalendarEvent {
     date: string; // ISO date string
     startTime?: string;
     endTime?: string;
-    source: 'event' | 'task' | 'project' | 'deal' | 'booking';
+    source: 'event' | 'task' | 'project' | 'deal' | 'booking' | 'google';
     priority?: string;
     status?: string;
     description?: string;
@@ -82,6 +80,13 @@ const SOURCE_CONFIG = {
         dot: 'bg-teal-500',
         border: 'border-teal-500/30',
     },
+    google: {
+        label: 'Google Calendar',
+        bg: 'bg-red-500/20',
+        text: 'text-red-400',
+        dot: 'bg-red-500',
+        border: 'border-red-500/30',
+    },
 };
 
 const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
@@ -89,13 +94,13 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     const [allEvents, setAllEvents] = useState<CalendarEvent[]>([]);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [showAddModal, setShowAddModal] = useState(false);
-    const [showBookingSettings, setShowBookingSettings] = useState(false);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeFilters, setActiveFilters] = useState<Set<CalendarEvent['source']>>(
-        new Set(['event', 'task', 'project', 'deal', 'booking'])
+        new Set(['event', 'task', 'project', 'deal', 'booking', 'google'])
     );
+    const [isGoogleConnected, setIsGoogleConnected] = useState(false);
 
     const loadAllEvents = useCallback(async () => {
         if (!currentTenant) return;
@@ -197,15 +202,36 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
             });
         } catch (_) { /* silent */ }
 
+        // 6. Google Calendar events
+        try {
+            const { data: tokenData } = await supabase
+                .from('google_calendar_tokens')
+                .select('id')
+                .eq('user_id', user.id)
+                .single();
+
+            if (tokenData) {
+                setIsGoogleConnected(true);
+                const googleEvents = await googleCalendarService.listEvents(user.id);
+                googleEvents.forEach((ge: GoogleCalendarEvent) => {
+                    unified.push({
+                        id: `google-${ge.id}`,
+                        title: ge.summary || '(No title)',
+                        date: ge.start.dateTime || ge.start.date || '',
+                        startTime: ge.start.dateTime,
+                        endTime: ge.end.dateTime,
+                        source: 'google',
+                        description: ge.description,
+                    });
+                });
+            } else {
+                setIsGoogleConnected(false);
+            }
+        } catch (_) { /* silent */ }
+
         setAllEvents(unified);
         setLoading(false);
     }, [currentTenant, user.id, user.role]);
-
-    useEffect(() => {
-        if (currentTenant) {
-            loadAllEvents();
-        }
-    }, [currentTenant, loadAllEvents]);
 
     const handleAddEvent = useCallback(async (eventData: Partial<BusinessEvent>) => {
         if (!currentTenant) return;
@@ -226,6 +252,17 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
             setShowAddModal(false);
         }
     }, [currentTenant, user.id]);
+
+    useEffect(() => {
+        if (currentTenant) {
+            loadAllEvents();
+        }
+    }, [currentTenant, loadAllEvents]);
+
+    const handleGoogleConnect = () => {
+        // window.location.href = `/api/auth/google/calendar/connect?userId=${user.id}`;
+        // Google Calendar marked as coming soon per user request
+    };
 
     const toggleFilter = (source: CalendarEvent['source']) => {
         setActiveFilters(prev => {
@@ -304,15 +341,13 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                     </div>
                 </div>
                 <div className="flex w-full sm:w-auto gap-2">
-                    <button
-                        onClick={() => setShowBookingSettings(true)}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors"
+                    <div
+                        title="Google Calendar Integration - Coming Soon"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-500 cursor-not-allowed transition-colors"
                     >
-                        <Settings className="w-4 h-4" />
-                        <span className="sr-only sm:not-sr-only text-sm">
-                            {isCalendlyConnected ? 'Calendly ✓' : 'Connect Calendly'}
-                        </span>
-                    </button>
+                        <Mail className="w-4 h-4 opacity-50" />
+                        <span className="text-sm font-medium">Coming Soon</span>
+                    </div>
                     <button
                         onClick={() => setShowAddModal(true)}
                         className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors font-semibold text-slate-950"
@@ -343,21 +378,6 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                 </span>
             </div>
 
-            {/* Calendly not connected banner */}
-            {!isCalendlyConnected && (
-                <div className="flex items-center gap-3 px-4 py-3 bg-purple-500/10 border border-purple-500/20 rounded-xl">
-                    <LinkIcon className="w-4 h-4 text-purple-400 shrink-0" />
-                    <p className="text-sm text-purple-300">
-                        Connect Calendly to sync your bookings to this calendar.
-                    </p>
-                    <button
-                        onClick={() => setShowBookingSettings(true)}
-                        className="ml-auto text-xs font-semibold text-purple-400 hover:text-purple-300 whitespace-nowrap"
-                    >
-                        Connect →
-                    </button>
-                </div>
-            )}
 
             {/* Desktop Calendar Grid */}
             <div className="hidden md:block bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
@@ -440,32 +460,29 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
             <UpcomingEvents events={filteredEvents} onSelectEvent={setSelectedEvent} />
 
             {/* Event Detail Modal */}
-            {selectedEvent && (
-                <EventDetailModal
-                    event={selectedEvent}
-                    onClose={() => setSelectedEvent(null)}
-                />
-            )}
+            {
+                selectedEvent && (
+                    <EventDetailModal
+                        event={selectedEvent}
+                        onClose={() => setSelectedEvent(null)}
+                    />
+                )
+            }
 
             {/* Add Event Modal */}
-            {showAddModal && (
-                <AddEventModal
-                    selectedDate={selectedDate}
-                    onClose={() => {
-                        setShowAddModal(false);
-                        setSelectedDate(null);
-                    }}
-                    onAdd={handleAddEvent}
-                />
-            )}
-
-            {/* Booking Settings Modal */}
-            {showBookingSettings && (
-                <CalendlySettingsModal
-                    onClose={() => setShowBookingSettings(false)}
-                />
-            )}
-        </div>
+            {
+                showAddModal && (
+                    <AddEventModal
+                        selectedDate={selectedDate}
+                        onClose={() => {
+                            setShowAddModal(false);
+                            setSelectedDate(null);
+                        }}
+                        onAdd={handleAddEvent}
+                    />
+                )
+            }
+        </div >
     );
 };
 
