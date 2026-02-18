@@ -2,10 +2,11 @@
 
 import React from 'react';
 import { Button, Badge } from '../ui/UIComponents';
-import { CreditCard, CheckCircle, Download, TrendingUp, TrendingDown, DollarSign, FileDown } from 'lucide-react';
+import { CreditCard, CheckCircle, Download, TrendingUp, TrendingDown, DollarSign, FileDown, Zap, Star, Rocket, Check } from 'lucide-react';
 import { User, Invoice } from '../../types';
 import { paymentService } from '../../services/paymentService';
 import { useTenant } from '@/contexts/TenantContext';
+import { TIER_PRICING } from '../../services/subscriptionService';
 import toast from 'react-hot-toast';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
@@ -15,15 +16,231 @@ interface FinanceTabProps {
     filteredInvoices: Invoice[];
     handlePayClick: (invoice: Invoice) => void;
     onCreateInvoice?: () => void;
-    initialSubTab?: 'invoices' | 'quotes';
+    initialSubTab?: 'invoices' | 'quotes' | 'subscription';
 }
 
 import QuotesTab from './QuotesTab';
 
+// ─── Subscription Plans ────────────────────────────────────────────────────────
+const PLANS = [
+    {
+        id: 'starter',
+        name: 'Basic',
+        description: 'Perfect for solo operators and small teams getting started.',
+        monthlyPrice: 15,
+        priceId: TIER_PRICING.starter.monthlyPriceId,
+        icon: Zap,
+        color: 'teal',
+        features: [
+            'Up to 5 team members',
+            'CRM & Lead Management',
+            'Gmail Integration',
+            'Invoicing & Quotes',
+            'Basic Analytics',
+            '5GB Storage',
+            'Email Support',
+        ],
+    },
+    {
+        id: 'pro',
+        name: 'Professional',
+        description: 'For growing businesses that need more power and automation.',
+        monthlyPrice: 45,
+        priceId: TIER_PRICING.pro.monthlyPriceId,
+        icon: Star,
+        color: 'violet',
+        popular: true,
+        features: [
+            'Up to 20 team members',
+            'Everything in Basic',
+            'AI Email Drafting',
+            'Sales Pipeline & Deals',
+            'Advanced Analytics',
+            'Document Hub & e-Signatures',
+            '50GB Storage',
+            'Priority Support',
+        ],
+    },
+    {
+        id: 'enterprise',
+        name: 'Unlimited',
+        description: 'For established businesses with no limits and full control.',
+        monthlyPrice: 80,
+        priceId: TIER_PRICING.enterprise.monthlyPriceId,
+        icon: Rocket,
+        color: 'amber',
+        features: [
+            'Unlimited team members',
+            'Everything in Professional',
+            'Custom AI Workflows',
+            'White-label Options',
+            'API Access',
+            'Unlimited Storage',
+            'Dedicated Account Manager',
+            'SLA Guarantee',
+        ],
+    },
+];
+
+const colorMap: Record<string, { border: string; badge: string; btn: string; icon: string; glow: string }> = {
+    teal: {
+        border: 'border-teal-500/40',
+        badge: 'bg-teal-500/20 text-teal-400',
+        btn: 'bg-teal-500 hover:bg-teal-400 text-slate-900',
+        icon: 'text-teal-400',
+        glow: 'shadow-teal-500/10',
+    },
+    violet: {
+        border: 'border-violet-500/40',
+        badge: 'bg-violet-500/20 text-violet-400',
+        btn: 'bg-violet-500 hover:bg-violet-400 text-white',
+        icon: 'text-violet-400',
+        glow: 'shadow-violet-500/10',
+    },
+    amber: {
+        border: 'border-amber-500/40',
+        badge: 'bg-amber-500/20 text-amber-400',
+        btn: 'bg-amber-500 hover:bg-amber-400 text-slate-900',
+        icon: 'text-amber-400',
+        glow: 'shadow-amber-500/10',
+    },
+};
+
+interface SubscriptionSectionProps {
+    user: User;
+    tenantId: string;
+    tenantEmail?: string;
+}
+
+const SubscriptionSection: React.FC<SubscriptionSectionProps> = ({ user, tenantId, tenantEmail }) => {
+    const [loadingPlan, setLoadingPlan] = React.useState<string | null>(null);
+
+    const handleSubscribe = async (plan: typeof PLANS[0]) => {
+        setLoadingPlan(plan.id);
+        try {
+            const res = await fetch('/api/stripe/create-checkout-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    priceId: plan.priceId,
+                    planId: plan.id,
+                    tenantId,
+                    adminEmail: tenantEmail || user.email,
+                    successUrl: `${window.location.origin}/dashboard?checkout=success&plan=${plan.id}`,
+                    cancelUrl: `${window.location.origin}/dashboard?checkout=cancelled`,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.url) {
+                throw new Error(data.error || 'Failed to create checkout session');
+            }
+
+            window.location.href = data.url;
+        } catch (err: any) {
+            console.error('Checkout error:', err);
+            toast.error(err.message || 'Failed to start checkout');
+            setLoadingPlan(null);
+        }
+    };
+
+    return (
+        <div className="space-y-8">
+            {/* Header */}
+            <div className="text-center max-w-2xl mx-auto">
+                <h3 className="text-2xl font-bold text-white mb-2">Choose Your Plan</h3>
+                <p className="text-slate-400 text-sm">
+                    Unlock the full power of AlphaClone. All plans include a 21-day free trial — no credit card required to start.
+                </p>
+            </div>
+
+            {/* Plan Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {PLANS.map((plan) => {
+                    const colors = colorMap[plan.color];
+                    const Icon = plan.icon;
+                    return (
+                        <motion.div
+                            key={plan.id}
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: PLANS.indexOf(plan) * 0.08 }}
+                            className={`relative bg-slate-900 border rounded-2xl p-6 flex flex-col shadow-xl ${colors.border} ${colors.glow} ${plan.popular ? 'ring-1 ring-violet-500/30' : ''}`}
+                        >
+                            {plan.popular && (
+                                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                                    <span className="bg-violet-500 text-white text-xs font-black px-3 py-1 rounded-full tracking-wider uppercase shadow-lg">
+                                        Most Popular
+                                    </span>
+                                </div>
+                            )}
+
+                            <div className="mb-5">
+                                <div className={`w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center mb-3 ${colors.icon}`}>
+                                    <Icon className="w-5 h-5" />
+                                </div>
+                                <h4 className="text-lg font-bold text-white">{plan.name}</h4>
+                                <p className="text-slate-400 text-xs mt-1 leading-relaxed">{plan.description}</p>
+                            </div>
+
+                            <div className="mb-6">
+                                <div className="flex items-end gap-1">
+                                    <span className="text-4xl font-black text-white">${plan.monthlyPrice}</span>
+                                    <span className="text-slate-500 text-sm mb-1">/month</span>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-0.5">Billed monthly · Cancel anytime</p>
+                            </div>
+
+                            <ul className="space-y-2 mb-8 flex-1">
+                                {plan.features.map((feature) => (
+                                    <li key={feature} className="flex items-start gap-2 text-sm text-slate-300">
+                                        <Check className={`w-4 h-4 mt-0.5 shrink-0 ${colors.icon}`} />
+                                        {feature}
+                                    </li>
+                                ))}
+                            </ul>
+
+                            <button
+                                onClick={() => handleSubscribe(plan)}
+                                disabled={loadingPlan !== null}
+                                className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${colors.btn} disabled:opacity-60 disabled:cursor-not-allowed`}
+                            >
+                                {loadingPlan === plan.id ? (
+                                    <>
+                                        <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                        </svg>
+                                        Redirecting...
+                                    </>
+                                ) : (
+                                    <>
+                                        <CreditCard className="w-4 h-4" />
+                                        Subscribe to {plan.name}
+                                    </>
+                                )}
+                            </button>
+                        </motion.div>
+                    );
+                })}
+            </div>
+
+            {/* Footer note */}
+            <div className="text-center text-xs text-slate-500 bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+                🔒 Payments are securely processed by <span className="font-bold text-slate-400">Stripe</span>. You can cancel or change your plan at any time from your billing portal.
+            </div>
+        </div>
+    );
+};
+
+// ─── Main Finance Tab ──────────────────────────────────────────────────────────
 const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handlePayClick, onCreateInvoice, initialSubTab = 'invoices' }) => {
     const { currentTenant: tenant } = useTenant();
     const [isExporting, setIsExporting] = React.useState(false);
-    const [subTab, setSubTab] = React.useState<'invoices' | 'quotes'>(initialSubTab);
+    const [subTab, setSubTab] = React.useState<'invoices' | 'quotes' | 'subscription'>(initialSubTab);
+
+    const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
 
     const handleExport = async (type: 'pdf' | 'xlsx', category: string) => {
         if (!tenant?.id) {
@@ -57,7 +274,6 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
 
     const totalRevenue = filteredInvoices.filter(i => i.status === 'Paid').reduce((acc, curr) => acc + curr.amount, 0);
     const outstanding = filteredInvoices.filter(i => i.status !== 'Paid').reduce((acc, curr) => acc + curr.amount, 0);
-    const paidCount = filteredInvoices.filter(i => i.status === 'Paid').length;
 
     // Mock Expenses for MVP Polish
     const totalExpenses = 4500;
@@ -73,7 +289,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
 
         return last6Months.map(month => ({
             name: month,
-            revenue: Math.floor(Math.random() * 5000) + 1000 + (totalRevenue / 12), // Mock distribution + actual baseline
+            revenue: Math.floor(Math.random() * 5000) + 1000 + (totalRevenue / 12),
             expenses: Math.floor(Math.random() * 2000) + 500
         }));
     }, [totalRevenue]);
@@ -84,28 +300,30 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                     <CreditCard className="w-6 h-6 text-teal-400" /> Financial Center
                 </h2>
-                <div className="flex gap-2">
-                    <Button
-                        variant="secondary"
-                        onClick={() => handleExport('pdf', 'revenue')}
-                        isLoading={isExporting}
-                        icon={<FileDown className="w-4 h-4" />}
-                    >
-                        Export PDF
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        onClick={() => handleExport('xlsx', 'revenue')}
-                        isLoading={isExporting}
-                        icon={<Download className="w-4 h-4" />}
-                    >
-                        Export Excel
-                    </Button>
-                    {(user.role === 'admin' || user.role === 'tenant_admin') && <Button onClick={onCreateInvoice}>Create Invoice</Button>}
-                </div>
+                {subTab !== 'subscription' && (
+                    <div className="flex gap-2">
+                        <Button
+                            variant="secondary"
+                            onClick={() => handleExport('pdf', 'revenue')}
+                            isLoading={isExporting}
+                            icon={<FileDown className="w-4 h-4" />}
+                        >
+                            Export PDF
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            onClick={() => handleExport('xlsx', 'revenue')}
+                            isLoading={isExporting}
+                            icon={<Download className="w-4 h-4" />}
+                        >
+                            Export Excel
+                        </Button>
+                        {isAdmin && <Button onClick={onCreateInvoice}>Create Invoice</Button>}
+                    </div>
+                )}
             </div>
 
-            {/* Sub-tabs for Finance Center */}
+            {/* Sub-tabs */}
             <div className="flex gap-4 border-b border-slate-800 pb-px">
                 <button
                     onClick={() => setSubTab('invoices')}
@@ -121,17 +339,32 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                     Quotes & Proposals
                     {subTab === 'quotes' && <motion.div layoutId="activeSubTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-400" />}
                 </button>
+                {isAdmin && (
+                    <button
+                        onClick={() => setSubTab('subscription')}
+                        className={`pb-4 px-2 text-sm font-bold transition-all relative flex items-center gap-1.5 ${subTab === 'subscription' ? 'text-violet-400' : 'text-slate-500 hover:text-slate-300'}`}
+                    >
+                        <Rocket className="w-3.5 h-3.5" />
+                        Subscription
+                        {subTab === 'subscription' && <motion.div layoutId="activeSubTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-400" />}
+                    </button>
+                )}
             </div>
 
             {subTab === 'quotes' ? (
                 <div className="pt-4">
                     <QuotesTab userId={user.id} userRole={user.role} />
                 </div>
+            ) : subTab === 'subscription' ? (
+                <div className="pt-4">
+                    <SubscriptionSection
+                        user={user}
+                        tenantId={tenant?.id || ''}
+                        tenantEmail={user.email}
+                    />
+                </div>
             ) : (
                 <>
-
-
-
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Financial Summary Cards */}
                         <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -255,7 +488,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                     </div>
                 </>
             )}
-        </div >
+        </div>
     );
 };
 

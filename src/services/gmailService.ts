@@ -11,41 +11,51 @@ export interface GmailMessage {
     messageCount?: number;
 }
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export const gmailService = {
     /**
-     * Proxy call to our internal Gmail API
+     * Proxy call to our internal Gmail API with retry on rate-limit / server errors
      */
-    async apiCall(endpoint: string, userId: string, options: RequestInit = {}) {
+    async apiCall(endpoint: string, userId: string, options: RequestInit = {}, retries = 2): Promise<any> {
         const url = new URL(`${window.location.origin}/api/gmail/${endpoint}`);
         url.searchParams.set('userId', userId);
 
-        const response = await fetch(url.toString(), {
-            ...options,
-            headers: {
-                ...options.headers,
-                'Content-Type': 'application/json',
-            },
-        });
+        for (let attempt = 0; attempt <= retries; attempt++) {
+            const response = await fetch(url.toString(), {
+                ...options,
+                headers: {
+                    ...options.headers,
+                    'Content-Type': 'application/json',
+                },
+            });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Gmail API request failed');
+            // Rate limited or server error — retry with backoff
+            if ((response.status === 429 || response.status >= 500) && attempt < retries) {
+                const backoff = (attempt + 1) * 1200; // 1.2s, 2.4s
+                console.warn(`Gmail API ${response.status} on ${endpoint}, retrying in ${backoff}ms (attempt ${attempt + 1}/${retries})`);
+                await sleep(backoff);
+                continue;
+            }
+
+            if (!response.ok) {
+                let errorMsg = 'Gmail API request failed';
+                try {
+                    const error = await response.json();
+                    errorMsg = error.error || errorMsg;
+                } catch { /* ignore parse error */ }
+                throw new Error(errorMsg);
+            }
+
+            return await response.json();
         }
-
-        return await response.json();
     },
 
     /**
-     * List threads with details
+     * List threads with details — fetches thread metadata first, then details in batches of 5
+     * to avoid hitting Google's per-user rate limit
      */
     async listThreads(userId: string, maxResults = 20, pageToken?: string, labelIds: string[] = ['INBOX']): Promise<{ threads: GmailMessage[], nextPageToken?: string }> {
-        let endpoint = `threads?maxResults=${maxResults}`;
-        if (pageToken) endpoint += `&pageToken=${pageToken}`;
-        if (labelIds && labelIds.length > 0) {
-            labelIds.forEach(label => endpoint += `&labelIds=${label}`); // Note: apiCall handles searchParams append differently if multiple, let's fix below
-        }
-
-        // Refined apiCall for multiple params
         const url = new URL(`${window.location.origin}/api/gmail/threads`);
         url.searchParams.set('userId', userId);
         url.searchParams.set('maxResults', maxResults.toString());
@@ -53,24 +63,48 @@ export const gmailService = {
         labelIds.forEach(label => url.searchParams.append('labelIds', label));
 
         const response = await fetch(url.toString());
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.error || 'Failed to list threads');
+        }
         const data = await response.json();
 
-        if (!data.threads) return { threads: [] };
+        if (!data.threads || data.threads.length === 0) return { threads: [] };
 
-        const threadDetails = await Promise.all(
-            data.threads.map(async (thread: any) => {
-                const detail = await this.getThreadRaw(userId, thread.id);
-                if (!detail.messages || detail.messages.length === 0) return null;
+        // Fetch thread details in sequential batches of 5 to avoid rate limiting
+        const BATCH_SIZE = 5;
+        const results: (GmailMessage | null)[] = [];
 
-                const lastMsg = detail.messages[detail.messages.length - 1];
-                const parsed = this.parseMessageDetail(lastMsg);
-                parsed.messageCount = detail.messages.length;
-                return parsed;
-            })
-        );
+        for (let i = 0; i < data.threads.length; i += BATCH_SIZE) {
+            const batch = data.threads.slice(i, i + BATCH_SIZE);
+
+            const batchResults = await Promise.all(
+                batch.map(async (thread: any) => {
+                    try {
+                        const detail = await this.getThreadRaw(userId, thread.id);
+                        if (!detail.messages || detail.messages.length === 0) return null;
+
+                        const lastMsg = detail.messages[detail.messages.length - 1];
+                        const parsed = this.parseMessageDetail(lastMsg);
+                        parsed.messageCount = detail.messages.length;
+                        return parsed;
+                    } catch (err) {
+                        console.warn(`Failed to fetch thread ${thread.id}:`, err);
+                        return null;
+                    }
+                })
+            );
+
+            results.push(...batchResults);
+
+            // Small delay between batches to respect rate limits
+            if (i + BATCH_SIZE < data.threads.length) {
+                await sleep(300);
+            }
+        }
 
         return {
-            threads: threadDetails.filter((t: any) => t !== null) as GmailMessage[],
+            threads: results.filter((t): t is GmailMessage => t !== null),
             nextPageToken: data.nextPageToken
         };
     },
@@ -103,20 +137,20 @@ export const gmailService = {
     },
 
     /**
-     * Send Email (supports reply via threadId)
+     * Send Email (supports reply via threadId) — with retry
      */
     async sendMessage(userId: string, to: string, subject: string, messageBody: string, threadId?: string): Promise<any> {
         return this.apiCall('messages/send', userId, {
             method: 'POST',
             body: JSON.stringify({ to, subject, messageBody, threadId })
-        });
+        }, 2); // 2 retries for send
     },
 
     /**
      * Helper to parse Gmail API response
      */
     parseMessageDetail(detail: any): GmailMessage {
-        const headers = detail.payload.headers;
+        const headers = detail.payload?.headers || [];
         const subject = headers.find((h: any) => h.name === 'Subject')?.value;
         const from = headers.find((h: any) => h.name === 'From')?.value;
         const date = headers.find((h: any) => h.name === 'Date')?.value;
@@ -136,6 +170,8 @@ export const gmailService = {
      * Extract HTML or Text body from payload
      */
     extractBody(payload: any): string {
+        if (!payload) return '';
+
         const getRawData = (p: any): string | null => {
             if (p.body && p.body.data) return p.body.data;
             if (p.parts) {
@@ -153,7 +189,6 @@ export const gmailService = {
 
         const body = getRawData(payload);
         if (body) {
-            // Buffer is not available in browsers, use atob for base64
             try {
                 const b64 = body.replace(/-/g, '+').replace(/_/g, '/');
                 return decodeURIComponent(escape(atob(b64)));
