@@ -5,6 +5,7 @@ import { ExternalLink, Globe, Calendar, Tag, Search, Plus, Edit, Trash2, Upload,
 import { Project } from '../../types';
 import { Button, Modal, Input } from '../ui/UIComponents';
 import { projectService } from '../../services/projectService';
+import { notificationService } from '../../services/dashboardService';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -73,7 +74,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
             contractText: '',
             externalUrl: '',
             status: 'Completed',
-            currentStage: 'Deployment',
+            currentStage: 'Closure',
             progress: 100
         });
         setPreviewImage(null);
@@ -261,7 +262,17 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                     new Promise(async (resolve, reject) => {
                         const { error } = await projectService.updateProject(editingProject.id, projectData);
                         if (error) reject(error);
-                        else resolve(true);
+                        else {
+                            notificationService.createNotification({
+                                user_id: userId || 'unknown',
+                                type: 'project',
+                                title: 'Project Updated',
+                                message: `Project "${formData.name}" has been updated.`,
+                                read: false,
+                                link: '/dashboard/projects'
+                            }).catch(console.error);
+                            resolve(true);
+                        }
                     }),
                     {
                         loading: 'Updating project...',
@@ -287,7 +298,17 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                         } as any);
 
                         if (error) reject(error);
-                        else resolve(project);
+                        else {
+                            notificationService.createNotification({
+                                user_id: finalOwnerId,
+                                type: 'project',
+                                title: 'Project Created',
+                                message: `Project "${formData.name}" has been added to the portfolio.`,
+                                read: false,
+                                link: '/dashboard/projects'
+                            }).catch(console.error);
+                            resolve(project);
+                        }
                     }),
                     {
                         loading: 'Creating project...',

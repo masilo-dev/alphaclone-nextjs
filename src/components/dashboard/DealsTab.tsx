@@ -497,11 +497,11 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                     description="Create your first deal to start tracking your sales pipeline."
                 />
             ) : (
-                <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent max-h-[calc(100vh-400px)] overflow-y-hidden">
                     {stages.map((stage) => {
                         const stageDeals = getDealsByStage(stage);
                         return (
-                            <div key={stage} className="flex-shrink-0 w-80">
+                            <div key={stage} className="flex-shrink-0 w-72">
                                 <div className="glass-panel p-3 rounded-xl border border-white/5 mb-3">
                                     <div className="flex items-center justify-between">
                                         <h3 className="font-bold text-white">{stageLabels[stage]}</h3>
@@ -516,7 +516,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                         <div
                                             key={deal.id}
                                             onClick={() => typeof setSelectedDealForDetail === 'function' && setSelectedDealForDetail(deal)}
-                                            className="glass-panel p-4 rounded-xl border border-white/5 hover:border-teal-500/30 transition-all group relative cursor-pointer"
+                                            className="glass-panel p-3 rounded-xl border border-white/5 hover:border-teal-500/30 transition-all group relative cursor-pointer"
                                         >
                                             <div className="flex justify-between items-start mb-2">
                                                 <h4 className="font-bold text-white pr-6">{deal.name}</h4>

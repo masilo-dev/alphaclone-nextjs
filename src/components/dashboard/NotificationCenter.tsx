@@ -7,7 +7,7 @@ interface NotificationCenterProps {
 }
 
 // Inline type definition
-import { notificationService, Notification } from '../../services/notificationService';
+import { notificationService, Notification } from '../../services/dashboardService';
 
 const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -51,13 +51,13 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
         loadNotifications();
 
         // Realtime subscription
-        const channel = notificationService.subscribe(userId, (newNotification) => {
+        const unsubscribe = notificationService.subscribeToNotifications(userId, (newNotification: Notification) => {
             setNotifications(prev => [newNotification, ...prev]);
             setUnreadCount(prev => prev + 1);
         });
 
         return () => {
-            notificationService.unsubscribe(channel);
+            unsubscribe();
         };
     }, [userId, loadNotifications]);
 

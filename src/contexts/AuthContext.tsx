@@ -38,32 +38,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     return;
                 }
 
-                if (isMounted && initialUser) {
-                    console.log('AuthContext: Optimistic session found', initialUser.email);
-                    setUser(initialUser);
-                    setError(null);
-                    setLoading(false);
-                } else if (isMounted && !initialUser) {
-                    // DOUBLE CHECK: If no user found, wait a moment and check again
-                    // This handles race conditions where the storage sync is slightly slower than the render
-                    console.log('AuthContext: No initial session, checking again in 500ms...');
-                    setTimeout(async () => {
-                        if (!isMounted) return;
-
-                        // Re-check
-                        const { data: { session } } = await import('../lib/supabase').then(m => m.supabase.auth.getSession());
-                        if (session?.user) {
-                            console.log('AuthContext: Session found on second attempt!');
-                            const { user: retryUser } = await authService.getCurrentUser();
-                            if (retryUser) {
-                                setUser(retryUser);
-                                setError(null);
-                            }
-                        } else {
-                            console.log('AuthContext: Confirmed no session.');
-                        }
+                if (isMounted) {
+                    if (initialUser) {
+                        console.log('AuthContext: Optimistic session found', initialUser.email);
+                        setUser(initialUser);
+                        setError(null);
                         setLoading(false);
-                    }, 500);
+                    } else {
+                        // DOUBLE CHECK: If no user found, wait a moment and check again
+                        // This handles race conditions where the storage sync is slightly slower than the render
+                        // OPTIMIZATION: Immediate retry with parallel check
+                        console.log('AuthContext: No initial session, checking again immediately...');
+
+                        // Parallel check: Try to restore session immediately while setting up the timeout backup
+                        const immediateCheck = authService.getCurrentUser().then(({ user }) => {
+                            if (user && isMounted && loading) {
+                                console.log('AuthContext: Immediate parallel check found user!');
+                                setUser(user);
+                                setError(null);
+                                setLoading(false);
+                            }
+                        });
+
+                        // Fire immediately (0ms) — parallel check already handles the race condition
+                        setTimeout(async () => {
+                            if (!isMounted) return;
+                            await immediateCheck; // Ensure we don't race with the immediate check
+
+                            if (!loading && user) return; // Already found
+
+                            // Re-check
+                            const { data: { session } } = await import('../lib/supabase').then(m => m.supabase.auth.getSession());
+                            if (session?.user) {
+                                console.log('AuthContext: Session found on second attempt!');
+                                const { user: retryUser } = await authService.getCurrentUser();
+                                if (retryUser && isMounted) {
+                                    setUser(retryUser);
+                                    setError(null);
+                                }
+                            } else {
+                                console.log('AuthContext: Confirmed no session.');
+                            }
+                            if (isMounted) setLoading(false);
+                        }, 0);
+                    }
                 }
             } catch (e) {
                 // Ignore AbortErrors
@@ -97,29 +115,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } else if (event === 'SIGNED_OUT') {
                 // Explicit sign out
                 setUser(null);
+                setError(null);
                 setLoading(false);
+            } else if (event === 'INITIAL_SESSION' && !u) {
+                // If INITIAL_SESSION fires with no user, we still wait for our 800ms retry to finish
+                // unless we've already decided loading is false.
+                // This is the key change to prevent early loading: false.
+                console.log('AuthContext: INITIAL_SESSION event with no user, waiting for retry logic...');
             } else if (event === 'SIGNED_IN' && !u) {
                 // Signed in but no user data (shouldn't happen with our wrapper, but safe fallback)
                 setUser(null);
                 setLoading(false);
             } else {
-                // Initial session check or other events where no user is present
                 // Don't clear user if we're just refreshing session token!
                 if (event === 'TOKEN_REFRESHED' && user) {
                     return;
                 }
 
-                // Only clear if we didn't find an optimistic user earlier or if this is an explicit no-session event
-                if (event === 'INITIAL_SESSION' && !u) {
+                // Fallback for other events
+                if (!u && event !== 'TOKEN_REFRESHED') {
                     setUser(null);
                     setLoading(false);
                 }
             }
         });
 
+        // SAFETY NET: Force stop loading after 5 seconds to preventing hanging
+        const safetyTimeout = setTimeout(() => {
+            if (isMounted && loading) {
+                console.warn('AuthContext: Safety timeout triggered (5s), forcing loading completion');
+                setLoading(false);
+            }
+        }, 5000);
+
         return () => {
             isMounted = false;
             subscription.unsubscribe();
+            clearTimeout(safetyTimeout);
         };
     }, []);
 

@@ -28,7 +28,10 @@ import { useTenant } from '../../contexts/TenantContext';
 import { SubscriptionPlan, PLAN_PRICING } from '../../services/tenancy/types';
 import CalendlySettings from './business/CalendlySettings';
 import GmailIntegration from './business/GmailIntegration';
+
 import StripeConnectSettings from './business/StripeConnectSettings';
+import BrandingSettings from './settings/BrandingSettings';
+import { Building } from 'lucide-react';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -43,7 +46,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const validSections = ['profile', 'notifications', 'security', 'appearance', 'billing', 'booking'];
     const defaultSection = validSections.includes(initialSection) ? initialSection : 'profile';
 
-    const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'security' | 'appearance' | 'billing' | 'booking'>(defaultSection);
+    const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'security' | 'appearance' | 'billing' | 'booking' | 'branding'>(defaultSection);
     const [isSaving, setIsSaving] = useState(false);
     const { currentTenant } = useTenant();
 
@@ -83,7 +86,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         { id: 'security' as const, label: 'Security', icon: Lock },
         { id: 'appearance' as const, label: 'Appearance', icon: Palette },
         // SHOW BILLING ONLY FOR TENANT ADMINS (They are the ones who subscribe)
-        ...(user.role === 'tenant_admin' ? [{ id: 'billing' as const, label: 'Plans & Billing', icon: CreditCardIcon }] : []),
+        ...(user.role === 'tenant_admin' ? [
+            { id: 'billing' as const, label: 'Plans & Billing', icon: CreditCardIcon },
+            { id: 'branding' as const, label: 'Branding', icon: Building }
+        ] : []),
         { id: 'booking' as const, label: 'Booking & Integrations', icon: CalendarIcon }
     ];
 
@@ -610,6 +616,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             </div>
                             <CalendlySettings />
                         </div>
+                    )}
+
+                    {activeSection === 'branding' && (
+                        <BrandingSettings />
                     )}
                 </div>
             </div>

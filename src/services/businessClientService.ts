@@ -257,7 +257,26 @@ export const businessClientService = {
                 .rpc('get_tenant_dashboard_stats', { tenant_id_param: tenantId }); // Fixed parameter name
 
             if (error) throw error;
-            return { stats: data as DashboardStats, error: null };
+
+            const raw = data as any;
+            const stats: DashboardStats = {
+                totalRevenue: raw.total_revenue || 0,
+                clientCount: raw.total_clients || 0,
+                activeProjects: raw.total_projects || 0,
+                pendingInvoices: raw.pending_invoices || 0,
+                recentActivity: (raw.recent_activity || []).map((a: any) => ({
+                    type: a.type,
+                    title: a.title,
+                    date: a.date
+                })),
+                monthlyRevenue: (raw.monthly_revenue || []).map((m: any) => ({
+                    month: m.month,
+                    amount: m.amount
+                })),
+                pipeline: raw.pipeline || {}
+            };
+
+            return { stats, error: null };
         } catch (err: any) {
             console.error('Error fetching dashboard stats:', err);
             return { stats: null, error: err.message };

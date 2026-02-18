@@ -16,6 +16,7 @@ interface SidebarProps {
     unreadMessageCount: number;
     onLogout: () => void;
     forceHidden?: boolean;
+    onNavigate?: () => void;
 }
 
 const Sidebar = React.memo<SidebarProps>(({
@@ -29,7 +30,8 @@ const Sidebar = React.memo<SidebarProps>(({
     setActiveTab,
     unreadMessageCount,
     onLogout,
-    forceHidden = false
+    forceHidden = false,
+    onNavigate
 }) => {
     const router = useRouter();
 
@@ -38,7 +40,12 @@ const Sidebar = React.memo<SidebarProps>(({
 
     const handleNavigation = (href: string) => {
         if (href !== '#') {
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('dashboard_focus_mode_trigger', 'true');
+            }
             router.push(href);
+            if (onNavigate) onNavigate();
+
             // Auto-close sidebar on mobile after navigation
             if (typeof window !== 'undefined' && window.innerWidth < 768) {
                 setSidebarOpen(false);
@@ -47,7 +54,12 @@ const Sidebar = React.memo<SidebarProps>(({
     };
 
     const handleSubNavigation = (href: string) => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('dashboard_focus_mode_trigger', 'true');
+        }
         setActiveTab(href);
+        if (onNavigate) onNavigate();
+
         // Auto-close sidebar on mobile after navigation
         if (typeof window !== 'undefined' && window.innerWidth < 768) {
             setSidebarOpen(false);
@@ -65,8 +77,8 @@ const Sidebar = React.memo<SidebarProps>(({
             )}
 
             <aside className={`
-                fixed md:relative z-[60] h-full bg-slate-900 border-r border-slate-800 flex flex-col transition-all duration-300 shadow-2xl overflow-hidden will-change-transform
-                ${sidebarOpen ? 'translate-x-0 w-64 pb-safe md:pb-0' : '-translate-x-full w-0 md:translate-x-0 md:w-16'}
+                fixed lg:relative z-[60] h-full bg-slate-900 border-r border-slate-800 flex flex-col transition-all duration-300 shadow-2xl overflow-hidden will-change-transform
+                ${sidebarOpen ? 'translate-x-0 w-64 pb-safe lg:pb-0' : '-translate-x-full lg:translate-x-0 w-0 lg:w-20'}
                 ${isInCall ? 'z-[110]' : 'z-[60]'}
             `}>
                 <div className="h-20 flex items-center px-6 border-b border-slate-800 bg-slate-900">

@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { FileText, Plus, Eye, Check, X, DollarSign, Trash2, Download, Upload, Search } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { FileText, Plus, Eye, Check, X, DollarSign, Trash2, Download, Upload, Search, Edit, PenLine } from 'lucide-react';
 import { quoteService, Quote, QuoteItem } from '../../services/quoteService';
 import { businessInvoiceService } from '../../services/businessInvoiceService';
+import { businessClientService } from '../../services/businessClientService';
+import { dealService } from '../../services/dealService';
+import { leadService } from '../../services/leadService';
 import { useTenant } from '../../contexts/TenantContext';
 import { fileUploadService } from '../../services/fileUploadService';
 import { Button, Modal, Input } from '../ui/UIComponents';
@@ -21,9 +24,14 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
     const [filter, setFilter] = useState<'all' | 'draft' | 'sent' | 'accepted'>('all');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
     const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
     const [selectedQuoteItems, setSelectedQuoteItems] = useState<QuoteItem[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [signatureData, setSignatureData] = useState<string | null>(null);
+    const [isSigning, setIsSigning] = useState(false);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const isDrawing = useRef(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [storageUsage, setStorageUsage] = useState<number>(0);
     const MAX_STORAGE = 100 * 1024 * 1024; // 100MB
@@ -34,6 +42,15 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
         validForDays: '30',
         notes: '',
         currency: 'USD',
+        contactId: '',
+        dealId: ''
+    });
+
+    const [editForm, setEditForm] = useState({
+        id: '',
+        name: '',
+        status: '',
+        notes: '',
         contactId: '',
         dealId: ''
     });
@@ -54,13 +71,24 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
 
     const loadAvailableResources = async () => {
         try {
-            const [dealsRes, leadsRes] = await Promise.all([
-                require('../../services/dealService').dealService.getDeals(),
-                require('../../services/leadService').leadService.getLeads()
+            const [dealsRes, leadsRes, clientsRes] = await Promise.all([
+                dealService.getDeals(),
+                leadService.getLeads(),
+                currentTenant ? businessClientService.getClients(currentTenant.id) : Promise.resolve({ clients: [], count: 0, error: null })
             ]);
 
             if (!dealsRes.error) setAvailableDeals(dealsRes.deals);
-            if (!leadsRes.error) setAvailableContacts(leadsRes.leads);
+
+            // Combine leads and clients for contacts
+            const clients = clientsRes.clients || [];
+            const leads = leadsRes.leads || [];
+
+            const combinedContacts = [
+                ...clients.map((c: any) => ({ id: c.id, name: c.name, type: 'client', email: c.email })),
+                ...leads.map((l: any) => ({ id: l.id, name: l.businessName || l.name, type: 'lead', email: l.email }))
+            ];
+
+            setAvailableContacts(combinedContacts);
         } catch (err) {
             console.error('Failed to load resources for linking', err);
         }
@@ -147,18 +175,21 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
 
             if (error) {
                 toast.error(`Failed to create quote header: ${error}`);
+                setIsSubmitting(false); // Reset loading state
                 return;
             }
 
             if (quote) {
                 // Add line items
                 for (const item of validItems) {
-                    await quoteService.addQuoteItem(quote.id, {
+                    const { error: itemError } = await quoteService.addQuoteItem(quote.id, {
                         productName: item.productName!,
                         description: item.description,
                         quantity: item.quantity || 1,
                         unitPrice: item.unitPrice || 0
                     });
+
+                    if (itemError) throw new Error(`Failed to add item ${item.productName}: ${itemError}`);
                 }
 
                 toast.success('Quote created with line items successfully!');
@@ -175,8 +206,9 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                 setLineItems([{ productName: '', description: '', quantity: 1, unitPrice: 0 }]);
                 loadQuotes();
             }
-        } catch (err) {
-            toast.error('Failed to create quote');
+        } catch (err: any) {
+            console.error(err);
+            toast.error(err.message || 'Failed to create quote');
         } finally {
             setIsSubmitting(false);
         }
@@ -247,50 +279,209 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
         }
     };
 
-    const handleConvertToInvoice = async () => {
-        if (!selectedQuote) return;
+    const handleConvertToInvoice = async (quote: Quote) => {
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return; // Simple check to ensure we are client side or env is loaded
+
+        if (!window.confirm('Generate a draft invoice from this quote?')) return;
 
         setIsSubmitting(true);
         try {
             // 1. Get items
-            const { items, error: itemsError } = await quoteService.getQuoteItems(selectedQuote.id);
+            const { items, error: itemsError } = await quoteService.getQuoteItems(quote.id);
             if (itemsError) throw new Error(itemsError);
 
             // 2. Map to Invoice Line Items
-            const lineItems = items.map(item => ({
+            const lineItems = (items || []).map(item => ({
                 description: item.productName + (item.description ? ` - ${item.description}` : ''),
                 quantity: item.quantity,
                 rate: item.unitPrice,
-                amount: item.lineTotal // Using the line total which already includes discounts/tax if calculated
+                amount: item.lineTotal
             }));
 
             // 3. Create Invoice
             const { invoice, error: invError } = await businessInvoiceService.createInvoice(currentTenant?.id || '', {
-                clientId: selectedQuote.contactId,
+                clientId: quote.contactId,
+                projectId: quote.dealId, // Assuming deal maps to project roughly, or leave null. 
                 status: 'draft',
                 issueDate: new Date().toISOString().split('T')[0],
-                dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +7 days default
-                subtotal: selectedQuote.subtotal,
-                total: selectedQuote.totalAmount,
-                taxRate: selectedQuote.taxPercent,
-                tax: selectedQuote.taxAmount,
-                discountAmount: selectedQuote.discountAmount,
+                // dueDate defaults to +14 days in service
+                subtotal: quote.subtotal,
+                total: quote.totalAmount,
+                taxRate: quote.taxPercent,
+                tax: quote.taxAmount,
+                discountAmount: quote.discountAmount,
                 lineItems: lineItems,
-                notes: `Converted from Quote #${selectedQuote.quoteNumber}`
+                notes: `Converted from Quote #${quote.quoteNumber}`,
+                senderName: currentTenant?.legal_name || currentTenant?.name
             });
 
             if (invError) throw new Error(invError);
 
             // 4. Update Quote Status
-            await quoteService.updateQuote(selectedQuote.id, { status: 'converted' });
+            await quoteService.updateQuote(quote.id, { status: 'converted' as any }); // Cast to 'any' if 'converted' is not in QuoteStatus type yet
 
             toast.success('Quote converted to Invoice successfully!');
             setShowViewModal(false);
             loadQuotes();
         } catch (err: any) {
+            console.error(err);
             toast.error(err.message || 'Failed to convert quote');
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleEditOpen = async (quote: Quote) => {
+        setEditForm({
+            id: quote.id,
+            name: quote.name,
+            status: quote.status,
+            notes: quote.notes || '',
+            contactId: quote.contactId || '',
+            dealId: quote.dealId || ''
+        });
+
+        // Fetch items for editing
+        try {
+            const { items, error } = await quoteService.getQuoteItems(quote.id);
+            if (error) {
+                toast.error('Failed to load quote items');
+                setLineItems([]);
+            } else {
+                // Map to compatible format for editor
+                setLineItems(items?.map(i => ({
+                    id: i.id, // Keep ID for updates
+                    productName: i.productName,
+                    description: i.description,
+                    quantity: i.quantity,
+                    unitPrice: i.unitPrice
+                })) || []);
+            }
+        } catch (err) {
+            console.error(err);
+            setLineItems([]);
+        }
+
+        setShowEditModal(true);
+    };
+
+    const handleUpdateQuote = async () => {
+        if (!editForm.name.trim()) return;
+        setIsSubmitting(true);
+        try {
+            // 1. Update Quote Header
+            const { quote, error } = await quoteService.updateQuote(editForm.id, {
+                name: editForm.name,
+                notes: editForm.notes,
+                contactId: editForm.contactId || undefined,
+                dealId: editForm.dealId || undefined,
+                status: editForm.status as any
+            });
+
+            if (error) throw new Error(error);
+
+            // 2. Sync Line Items
+            // Fetch current items from DB to compare
+            const { items: currentDbItems, error: fetchError } = await quoteService.getQuoteItems(editForm.id);
+            if (fetchError) throw new Error(`Failed to fetch current items: ${fetchError}`);
+
+            const currentDbIds = new Set(currentDbItems?.map(i => i.id) || []);
+            const formItemIds = new Set(lineItems.filter((i: any) => i.id).map((i: any) => i.id));
+
+            // Identify items to delete (in DB but not in form)
+            const itemsToDelete = currentDbItems?.filter(i => !formItemIds.has(i.id)) || [];
+
+            // Identify items to add (in form but no ID)
+            const itemsToAdd = lineItems.filter((i: any) => !i.id && i.productName);
+
+            // Identify items to update (in form and has ID)
+            const itemsToUpdate = lineItems.filter((i: any) => i.id && i.productName);
+
+            const promises = [];
+
+            // Execute Deletes
+            for (const item of itemsToDelete) {
+                promises.push(quoteService.deleteQuoteItem(item.id));
+            }
+
+            // Execute Adds
+            for (const item of itemsToAdd) {
+                promises.push(quoteService.addQuoteItem(editForm.id, {
+                    productName: item.productName!,
+                    description: item.description,
+                    quantity: item.quantity || 1,
+                    unitPrice: item.unitPrice || 0
+                }));
+            }
+
+            // Execute Updates
+            for (const item of itemsToUpdate) {
+                promises.push(quoteService.updateQuoteItem(item.id!, {
+                    productName: item.productName,
+                    description: item.description,
+                    quantity: item.quantity,
+                    unitPrice: item.unitPrice,
+                    itemOrder: lineItems.indexOf(item) // Preserve order if needed
+                }));
+            }
+
+            await Promise.all(promises);
+
+            toast.success('Quote updated successfully');
+            setShowEditModal(false);
+            loadQuotes();
+        } catch (err: any) {
+            console.error(err);
+            toast.error(err.message || 'Failed to update quote');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleShareQuote = async (quote: Quote) => {
+        // Mock share - just copy link and update status
+        const link = `${window.location.origin}/portal/quotes/${quote.id}`;
+        try {
+            await navigator.clipboard.writeText(link);
+            toast.success('Quote link copied to clipboard!');
+
+            if (quote.status === 'draft') {
+                await quoteService.updateQuote(quote.id, { status: 'sent', sentAt: new Date().toISOString() });
+                loadQuotes();
+            }
+        } catch (err) {
+            toast.error('Failed to share quote');
+        }
+    };
+
+    const handleDownloadActualPDF = async (quote: Quote) => {
+        try {
+            toast.loading('Generating PDF...');
+
+            // 1. Fetch Items
+            const { items, error } = await quoteService.getQuoteItems(quote.id);
+            if (error) throw new Error(error);
+
+            // 2. Generate PDF
+            const { generateQuotePDF } = await import('../../utils/pdfGenerator');
+            if (currentTenant) {
+                generateQuotePDF(quote, items || [], currentTenant);
+            } else {
+                toast.error("Tenant information missing");
+            }
+
+            toast.dismiss();
+            toast.success('PDF Downloaded');
+
+            // 3. Update Status if Draft
+            if (quote.status === 'draft') {
+                await quoteService.updateQuote(quote.id, { status: 'sent', sentAt: new Date().toISOString() });
+                loadQuotes();
+            }
+        } catch (err) {
+            toast.dismiss();
+            console.error(err);
+            toast.error('Failed to generate PDF');
         }
     };
 
@@ -417,12 +608,30 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                                     </Button>
                                     <Button
                                         variant="outline"
-                                        className="p-2 border-white/10 hover:bg-slate-800"
-                                        onClick={() => handleDownloadPDF(quote)}
+                                        className="p-2 border-white/10 hover:bg-slate-700 group"
+                                        onClick={() => handleDownloadActualPDF(quote)}
                                         title="Download PDF"
                                     >
-                                        <Download className="w-4 h-4 text-slate-400" />
+                                        <Download className="w-4 h-4 text-slate-300 group-hover:text-white" />
                                     </Button>
+                                    <Button
+                                        variant="outline"
+                                        className="p-2 border-white/10 hover:bg-slate-700 group"
+                                        onClick={() => handleEditOpen(quote)}
+                                        title="Edit Quote"
+                                    >
+                                        <Edit className="w-4 h-4 text-slate-300 group-hover:text-white" />
+                                    </Button>
+                                    {quote.status === 'accepted' && (userRole === 'admin' || userRole === 'tenant_admin') && (
+                                        <Button
+                                            variant="outline"
+                                            className="p-2 border-white/10 hover:bg-teal-500/10 hover:border-teal-500/30"
+                                            onClick={() => handleConvertToInvoice(quote)}
+                                            title="Convert to Invoice"
+                                        >
+                                            <FileText className="w-4 h-4 text-teal-400" />
+                                        </Button>
+                                    )}
                                     {(userRole === 'admin' || userRole === 'tenant_admin') && (
                                         <Button
                                             variant="outline"
@@ -430,7 +639,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                                             onClick={() => handleDeleteQuote(quote.id)}
                                             title="Delete Quote"
                                         >
-                                            <Trash2 className="w-4 h-4 text-slate-500 group-hover:text-red-400" />
+                                            <Trash2 className="w-4 h-4 text-red-400 group-hover:text-red-300" />
                                         </Button>
                                     )}
                                 </div>
@@ -597,130 +806,370 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                 </div>
             </Modal>
 
-            {/* View Quote Modal */}
-            {showViewModal && selectedQuote && (
-                <Modal isOpen={showViewModal} onClose={() => setShowViewModal(false)} title={`Quote: ${selectedQuote.quoteNumber}`}>
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-1">Quote Name</label>
-                                <p className="text-white font-medium">{selectedQuote?.name}</p>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-1">Status</label>
-                                <span className={`px-2 py-1 text-xs rounded-full font-bold uppercase ${getStatusColor(selectedQuote?.status || '')}`}>
-                                    {selectedQuote?.status}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-1">Total Amount</label>
-                                <p className="text-2xl text-teal-400 font-bold">{formatCurrency(selectedQuote?.totalAmount || 0, selectedQuote?.currency || 'USD')}</p>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-1">Valid Until</label>
-                                <p className="text-white">{selectedQuote?.validUntil ? new Date(selectedQuote.validUntil).toLocaleDateString() : 'N/A'}</p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-1">View Count</label>
-                                <p className="text-white">{selectedQuote?.viewCount || 0} times</p>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-1">Currency</label>
-                                <p className="text-white">{selectedQuote?.currency}</p>
-                            </div>
-                        </div>
-
-                        {/* Items Table */}
-                        <div className="border border-white/5 rounded-xl overflow-hidden">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-slate-900/80 text-slate-400 text-[10px] uppercase font-black tracking-widest border-b border-white/5">
-                                    <tr>
-                                        <th className="px-4 py-3">Description</th>
-                                        <th className="px-4 py-3 text-center">Qty</th>
-                                        <th className="px-4 py-3 text-right">Price</th>
-                                        <th className="px-4 py-3 text-right">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-white/5">
-                                    {selectedQuoteItems.map((item: QuoteItem) => (
-                                        <tr key={item.id} className="text-slate-300">
-                                            <td className="px-4 py-3">
-                                                <div className="font-medium text-white">{item.productName}</div>
-                                                {item.description && <div className="text-xs text-slate-500">{item.description}</div>}
-                                            </td>
-                                            <td className="px-4 py-3 text-center">{item.quantity}</td>
-                                            <td className="px-4 py-3 text-right">{formatCurrency(item.unitPrice, selectedQuote?.currency || 'USD')}</td>
-                                            <td className="px-4 py-3 text-right font-bold text-teal-400">{formatCurrency(item.lineTotal, selectedQuote?.currency || 'USD')}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                                <tfoot className="bg-slate-900/40 border-t border-white/5 font-bold">
-                                    <tr>
-                                        <td colSpan={3} className="px-4 py-3 text-right text-slate-400">Subtotal</td>
-                                        <td className="px-4 py-3 text-right text-white">{formatCurrency(selectedQuote?.subtotal || 0, selectedQuote?.currency || 'USD')}</td>
-                                    </tr>
-                                    <tr className="border-t border-white/5 bg-teal-500/5">
-                                        <td colSpan={3} className="px-4 py-3 text-right text-teal-400 uppercase text-[10px] tracking-widest font-black">Total Due</td>
-                                        <td className="px-4 py-3 text-right text-teal-400 text-lg">{formatCurrency(selectedQuote?.totalAmount || 0, selectedQuote?.currency || 'USD')}</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-
-                        {selectedQuote.notes && (
-                            <div className="bg-slate-950/40 p-4 rounded-xl border border-white/5">
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Notes & Terms</label>
-                                <p className="text-slate-300 text-sm italic">"{selectedQuote.notes}"</p>
-                            </div>
-                        )}
-
-                        {selectedQuote?.sentAt && (
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-1">Sent At</label>
-                                <p className="text-white">{selectedQuote?.sentAt ? new Date(selectedQuote.sentAt).toLocaleString() : 'N/A'}</p>
-                            </div>
-                        )}
-
-                        {selectedQuote?.acceptedAt && (
-                            <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
-                                <label className="block text-sm font-medium text-green-400 mb-1">Accepted</label>
-                                <p className="text-white">{selectedQuote?.acceptedAt ? new Date(selectedQuote.acceptedAt).toLocaleString() : 'N/A'}</p>
-                            </div>
-                        )}
-
-                        {selectedQuote?.rejectedAt && (
-                            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                                <label className="block text-sm font-medium text-red-400 mb-1">Rejected</label>
-                                <p className="text-white">{selectedQuote?.rejectedAt ? new Date(selectedQuote.rejectedAt).toLocaleString() : 'N/A'}</p>
-                                {selectedQuote?.rejectionReason && (
-                                    <p className="text-slate-400 text-sm mt-1">Reason: {selectedQuote.rejectionReason}</p>
-                                )}
-                            </div>
-                        )}
-
-                        <div className="pt-4 flex justify-end gap-3">
-                            <Button variant="outline" onClick={() => setShowViewModal(false)}>Close</Button>
-                            {selectedQuote?.status === 'accepted' && (
-                                <Button
-                                    onClick={handleConvertToInvoice}
-                                    disabled={isSubmitting}
-                                    className="bg-teal-500 hover:bg-teal-600 text-white"
-                                >
-                                    {isSubmitting ? 'Converting...' : 'Convert to Invoice'}
-                                </Button>
-                            )}
+            {/* Edit Quote Modal */}
+            <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title="Edit Quote">
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input
+                            label="Quote Name *"
+                            value={editForm.name}
+                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                            required
+                        />
+                        <div className="space-y-1.5">
+                            <label className="block text-sm font-medium text-slate-300">Status</label>
+                            <select
+                                value={editForm.status}
+                                onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+                            >
+                                <option value="draft">Draft</option>
+                                <option value="sent">Sent</option>
+                                <option value="accepted">Accepted</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
                         </div>
                     </div>
-                </Modal>
-            )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="block text-sm font-medium text-slate-300">Link to Lead/Contact</label>
+                            <select
+                                value={editForm.contactId}
+                                onChange={(e) => setEditForm({ ...editForm, contactId: e.target.value })}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+                            >
+                                <option value="">No Contact Linked</option>
+                                {availableContacts.map(contact => (
+                                    <option key={contact.id} value={contact.id}>{contact.businessName || contact.name || 'Unnamed Contact'}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="block text-sm font-medium text-slate-300">Link to Deal</label>
+                            <select
+                                value={editForm.dealId}
+                                onChange={(e) => setEditForm({ ...editForm, dealId: e.target.value })}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+                            >
+                                <option value="">No Deal Linked</option>
+                                {availableDeals.map(deal => (
+                                    <option key={deal.id} value={deal.id}>{deal.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                    {/* Line Items Editor */}
+                    <div className="space-y-3 pt-4 border-t border-white/5">
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-bold text-teal-400 uppercase tracking-wider">Services & Pricing</h4>
+                            <Button type="button" variant="outline" className="h-8 py-0 text-xs border-teal-500/30 text-teal-400" onClick={addLineItem}>
+                                <Plus className="w-3.5 h-3.5 mr-1" /> Add Item
+                            </Button>
+                        </div>
+
+                        <div className="space-y-3 border border-white/5 rounded-xl p-4 bg-slate-950/30 max-h-[300px] overflow-y-auto">
+                            {lineItems.map((item: any, index: number) => (
+                                <div key={index} className="grid grid-cols-12 gap-3 items-start pb-3 border-b border-white/5 last:border-0 last:pb-0">
+                                    <div className="col-span-12 md:col-span-5">
+                                        <input
+                                            className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-teal-500/50 outline-none transition-all"
+                                            placeholder="Service name *"
+                                            value={item.productName}
+                                            onChange={(e) => updateLineItem(index, 'productName', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="col-span-4 md:col-span-2">
+                                        <input
+                                            type="number"
+                                            className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 outline-none focus:border-teal-500/50"
+                                            placeholder="Qty"
+                                            value={item.quantity}
+                                            onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                                        />
+                                    </div>
+                                    <div className="col-span-6 md:col-span-4">
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-2 text-slate-500 text-sm">
+                                                {quoteForm.currency === 'EUR' ? '€' : quoteForm.currency === 'GBP' ? '£' : '$'}
+                                            </span>
+                                            <input
+                                                type="number"
+                                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg pl-6 pr-3 py-2 text-sm text-slate-200 outline-none focus:border-teal-500/50"
+                                                placeholder="Price"
+                                                value={item.unitPrice}
+                                                onChange={(e) => updateLineItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="col-span-2 md:col-span-1 flex justify-end">
+                                        <button
+                                            type="button"
+                                            onClick={() => removeLineItem(index)}
+                                            className="p-2 text-slate-600 hover:text-red-400 transition-colors"
+                                            disabled={lineItems.length === 1 && !lineItems[0].productName}
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    <div className="col-span-12">
+                                        <input
+                                            className="w-full bg-transparent border-none px-3 py-1 text-xs text-slate-500 placeholder-slate-700 outline-none"
+                                            placeholder="Optional description..."
+                                            value={item.description || ''}
+                                            onChange={(e) => updateLineItem(index, 'description', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex justify-end pt-2">
+                            <div className="text-right">
+                                <div className="text-[10px] uppercase font-black text-slate-500 tracking-widest">Estimated Subtotal</div>
+                                <div className="text-xl font-bold text-teal-400">{formatCurrency(calculateSubtotal(), quoteForm.currency)}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Notes</label>
+                        <textarea
+                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-sm"
+                            rows={3}
+                            value={editForm.notes}
+                            onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                        />
+                    </div>
+                    <div className="pt-4 border-t border-white/5 flex justify-end gap-3">
+                        <Button variant="outline" onClick={() => setShowEditModal(false)}>Cancel</Button>
+                        <Button onClick={handleUpdateQuote} disabled={isSubmitting} className="min-w-[140px]">
+                            {isSubmitting ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* View Quote Modal */}
+            {
+                showViewModal && selectedQuote && (
+                    <Modal isOpen={showViewModal} onClose={() => setShowViewModal(false)} title={`Quote: ${selectedQuote.quoteNumber}`}>
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400 mb-1">Quote Name</label>
+                                    <p className="text-white font-medium">{selectedQuote?.name}</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400 mb-1">Status</label>
+                                    <span className={`px-2 py-1 text-xs rounded-full font-bold uppercase ${getStatusColor(selectedQuote?.status || '')}`}>
+                                        {selectedQuote?.status}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400 mb-1">Total Amount</label>
+                                    <p className="text-2xl text-teal-400 font-bold">{formatCurrency(selectedQuote?.totalAmount || 0, selectedQuote?.currency || 'USD')}</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400 mb-1">Valid Until</label>
+                                    <p className="text-white">{selectedQuote?.validUntil ? new Date(selectedQuote.validUntil).toLocaleDateString() : 'N/A'}</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400 mb-1">View Count</label>
+                                    <p className="text-white">{selectedQuote?.viewCount || 0} times</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400 mb-1">Currency</label>
+                                    <p className="text-white">{selectedQuote?.currency}</p>
+                                </div>
+                            </div>
+
+                            {/* Items Table */}
+                            <div className="border border-white/5 rounded-xl overflow-hidden">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-slate-900/80 text-slate-400 text-[10px] uppercase font-black tracking-widest border-b border-white/5">
+                                        <tr>
+                                            <th className="px-4 py-3">Description</th>
+                                            <th className="px-4 py-3 text-center">Qty</th>
+                                            <th className="px-4 py-3 text-right">Price</th>
+                                            <th className="px-4 py-3 text-right">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5">
+                                        {selectedQuoteItems.map((item: QuoteItem) => (
+                                            <tr key={item.id} className="text-slate-300">
+                                                <td className="px-4 py-3">
+                                                    <div className="font-medium text-white">{item.productName}</div>
+                                                    {item.description && <div className="text-xs text-slate-500">{item.description}</div>}
+                                                </td>
+                                                <td className="px-4 py-3 text-center">{item.quantity}</td>
+                                                <td className="px-4 py-3 text-right">{formatCurrency(item.unitPrice, selectedQuote?.currency || 'USD')}</td>
+                                                <td className="px-4 py-3 text-right font-bold text-teal-400">{formatCurrency(item.lineTotal, selectedQuote?.currency || 'USD')}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                    <tfoot className="bg-slate-900/40 border-t border-white/5 font-bold">
+                                        <tr>
+                                            <td colSpan={3} className="px-4 py-3 text-right text-slate-400">Subtotal</td>
+                                            <td className="px-4 py-3 text-right text-white">{formatCurrency(selectedQuote?.subtotal || 0, selectedQuote?.currency || 'USD')}</td>
+                                        </tr>
+                                        <tr className="border-t border-white/5 bg-teal-500/5">
+                                            <td colSpan={3} className="px-4 py-3 text-right text-teal-400 uppercase text-[10px] tracking-widest font-black">Total Due</td>
+                                            <td className="px-4 py-3 text-right text-teal-400 text-lg">{formatCurrency(selectedQuote?.totalAmount || 0, selectedQuote?.currency || 'USD')}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            {selectedQuote.notes && (
+                                <div className="bg-slate-950/40 p-4 rounded-xl border border-white/5">
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Notes & Terms</label>
+                                    <p className="text-slate-300 text-sm italic">"{selectedQuote.notes}"</p>
+                                </div>
+                            )}
+
+                            {selectedQuote?.sentAt && (
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400 mb-1">Sent At</label>
+                                    <p className="text-white">{selectedQuote?.sentAt ? new Date(selectedQuote.sentAt).toLocaleString() : 'N/A'}</p>
+                                </div>
+                            )}
+
+                            {selectedQuote?.acceptedAt && (
+                                <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                                    <label className="block text-sm font-medium text-green-400 mb-1">Accepted</label>
+                                    <p className="text-white">{selectedQuote?.acceptedAt ? new Date(selectedQuote.acceptedAt).toLocaleString() : 'N/A'}</p>
+                                </div>
+                            )}
+
+                            {selectedQuote?.rejectedAt && (
+                                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                                    <label className="block text-sm font-medium text-red-400 mb-1">Rejected</label>
+                                    <p className="text-white">{selectedQuote?.rejectedAt ? new Date(selectedQuote.rejectedAt).toLocaleString() : 'N/A'}</p>
+                                    {selectedQuote?.rejectionReason && (
+                                        <p className="text-slate-400 text-sm mt-1">Reason: {selectedQuote.rejectionReason}</p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Signature Section */}
+                            <div className="border border-white/5 rounded-xl p-4 bg-slate-950/40">
+                                <div className="flex items-center justify-between mb-3">
+                                    <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                        <PenLine className="w-4 h-4 text-teal-400" />
+                                        Signature
+                                    </label>
+                                    {signatureData && (
+                                        <button
+                                            onClick={() => setSignatureData(null)}
+                                            className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                                        >
+                                            Clear
+                                        </button>
+                                    )}
+                                </div>
+                                {signatureData ? (
+                                    <div className="bg-white rounded-lg p-2">
+                                        <img src={signatureData} alt="Signature" className="max-h-24 mx-auto" />
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        <canvas
+                                            ref={canvasRef}
+                                            width={500}
+                                            height={120}
+                                            className="w-full bg-white rounded-lg cursor-crosshair border border-white/10"
+                                            style={{ touchAction: 'none' }}
+                                            onMouseDown={(e) => {
+                                                isDrawing.current = true;
+                                                const canvas = canvasRef.current!;
+                                                const ctx = canvas.getContext('2d')!;
+                                                const rect = canvas.getBoundingClientRect();
+                                                const scaleX = canvas.width / rect.width;
+                                                const scaleY = canvas.height / rect.height;
+                                                ctx.beginPath();
+                                                ctx.moveTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY);
+                                            }}
+                                            onMouseMove={(e) => {
+                                                if (!isDrawing.current) return;
+                                                const canvas = canvasRef.current!;
+                                                const ctx = canvas.getContext('2d')!;
+                                                const rect = canvas.getBoundingClientRect();
+                                                const scaleX = canvas.width / rect.width;
+                                                const scaleY = canvas.height / rect.height;
+                                                ctx.lineWidth = 2;
+                                                ctx.lineCap = 'round';
+                                                ctx.strokeStyle = '#0f172a';
+                                                ctx.lineTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY);
+                                                ctx.stroke();
+                                            }}
+                                            onMouseUp={() => {
+                                                isDrawing.current = false;
+                                                const canvas = canvasRef.current!;
+                                                setSignatureData(canvas.toDataURL());
+                                            }}
+                                            onMouseLeave={() => { isDrawing.current = false; }}
+                                            onTouchStart={(e) => {
+                                                e.preventDefault();
+                                                isDrawing.current = true;
+                                                const canvas = canvasRef.current!;
+                                                const ctx = canvas.getContext('2d')!;
+                                                const rect = canvas.getBoundingClientRect();
+                                                const scaleX = canvas.width / rect.width;
+                                                const scaleY = canvas.height / rect.height;
+                                                const touch = e.touches[0];
+                                                ctx.beginPath();
+                                                ctx.moveTo((touch.clientX - rect.left) * scaleX, (touch.clientY - rect.top) * scaleY);
+                                            }}
+                                            onTouchMove={(e) => {
+                                                e.preventDefault();
+                                                if (!isDrawing.current) return;
+                                                const canvas = canvasRef.current!;
+                                                const ctx = canvas.getContext('2d')!;
+                                                const rect = canvas.getBoundingClientRect();
+                                                const scaleX = canvas.width / rect.width;
+                                                const scaleY = canvas.height / rect.height;
+                                                const touch = e.touches[0];
+                                                ctx.lineWidth = 2;
+                                                ctx.lineCap = 'round';
+                                                ctx.strokeStyle = '#0f172a';
+                                                ctx.lineTo((touch.clientX - rect.left) * scaleX, (touch.clientY - rect.top) * scaleY);
+                                                ctx.stroke();
+                                            }}
+                                            onTouchEnd={() => {
+                                                isDrawing.current = false;
+                                                const canvas = canvasRef.current!;
+                                                setSignatureData(canvas.toDataURL());
+                                            }}
+                                        />
+                                        <p className="text-xs text-slate-500 text-center">Draw your signature above</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="pt-4 flex justify-end gap-3">
+                                <Button variant="outline" onClick={() => setShowViewModal(false)}>Close</Button>
+                                {selectedQuote?.status === 'accepted' && (
+                                    <Button
+                                        onClick={() => handleConvertToInvoice(selectedQuote)}
+                                        disabled={isSubmitting}
+                                        className="bg-teal-500 hover:bg-teal-600 text-white"
+                                    >
+                                        {isSubmitting ? 'Converting...' : 'Convert to Invoice'}
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    </Modal>
+                )
+            }
         </div>
     );
-};
+}
 
 export default QuotesTab;

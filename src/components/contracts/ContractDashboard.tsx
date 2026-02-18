@@ -2,35 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { contractService, Contract } from '../../services/contractService';
 import { SignaturePad } from './SignaturePad';
 import { DocumentViewer } from './DocumentViewer';
-import { fileUploadService } from '../../services/fileUploadService';
+import { ChevronLeft, FileText, Plus, Search, Filter, Download, Eye, Send, MoreVertical, CheckCircle, XCircle, Clock, AlertCircle, Trash2, Infinity as InfinityIcon, Archive, MessageSquare, PenTool, Upload, Loader2, Save, FileText as FileTextIcon, Zap, FileImage, RotateCcw, Trash, Copy, ExternalLink, X, FileCheck, Bot } from 'lucide-react';
 import { businessClientService, BusinessClient } from '../../services/businessClientService';
+import { fileUploadService } from '../../services/fileUploadService';
+import { supabase } from '../../lib/supabase';
 import { Card, Button, Badge, Input } from '../ui/UIComponents';
-import {
-    FileText,
-    PenTool,
-    Download,
-    Plus,
-    CheckCircle,
-    Clock,
-    X,
-    Bot,
-    Eye,
-    Save,
-    Zap,
-    Loader2,
-    Upload,
-    FileCheck,
-    FileText as FileTextIcon,
-    FileImage,
-    Archive,
-    Copy,
-    ExternalLink,
-    MessageSquare,
-    Edit3,
-    Search,
-    Trash,
-    Trash2
-} from 'lucide-react';
+
 import { format } from 'date-fns';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
@@ -48,13 +25,16 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
     const [showSignModal, setShowSignModal] = useState(false);
     const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [isGlobalUploading, setIsGlobalUploading] = useState(false);
     const [activeTab, setActiveTab] = useState<'details' | 'document' | 'hub'>(initialTab);
     const [storageUsage, setStorageUsage] = useState<number>(0);
     const [allFiles, setAllFiles] = useState<any[]>([]);
     const [isFilesLoading, setIsFilesLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [entityFilter, setEntityFilter] = useState<string>('all');
-    const MAX_STORAGE = 100 * 1024 * 1024; // 100MB
+    const [viewTrash, setViewTrash] = useState(false);
+    const [storageLimit, setStorageLimit] = useState<number>(100 * 1024 * 1024); // Default 100MB
+    const MAX_STORAGE = storageLimit;
 
     // Role-based access: client can only view and sign, admin can do everything
     const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
@@ -87,10 +67,17 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
     }, [user.id]);
 
     const loadAllFiles = useCallback(async () => {
+        if (!currentTenant?.id) {
+            setIsFilesLoading(false);
+            return;
+        }
         setIsFilesLoading(true);
         try {
-            if (!currentTenant?.id) return;
-            const { files, error } = await fileUploadService.getFilesByTenant(currentTenant.id);
+            // Fetch based on viewTrash state
+            const { files, error } = viewTrash
+                ? await fileUploadService.getDeletedFilesByTenant(currentTenant.id)
+                : await fileUploadService.getFilesByTenant(currentTenant.id);
+
             if (!error) {
                 setAllFiles(files || []);
             }
@@ -99,7 +86,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
         } finally {
             setIsFilesLoading(false);
         }
-    }, []);
+    }, [currentTenant?.id, viewTrash]);
 
     const loadContracts = useCallback(async () => {
         setLoading(true);
@@ -193,9 +180,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
         const file = event.target.files?.[0];
         if (!file || !selectedContract) return;
 
-        setIsUploading(true);
         try {
-            const result = await fileUploadService.uploadFile(file, 'contract', selectedContract.id);
+            const result = await fileUploadService.uploadFile(file, 'contract', selectedContract.id, user.id, currentTenant?.id);
             if (result.success && result.url) {
                 const { error } = await contractService.updateContract(selectedContract.id, {
                     document_url: result.url
@@ -212,6 +198,27 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
             toast.error(err.message || 'Upload failed');
         } finally {
             setIsUploading(false);
+        }
+    };
+
+    const handleGlobalUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setIsGlobalUploading(true);
+        try {
+            const result = await fileUploadService.uploadFile(file, 'hub', undefined, user.id, currentTenant?.id);
+            if (result.success) {
+                toast.success('File added to hub successfully');
+                loadAllFiles();
+                loadStorageUsage();
+            } else {
+                toast.error(result.error || 'Failed to upload file');
+            }
+        } catch (error) {
+            toast.error('An error occurred during upload');
+        } finally {
+            setIsGlobalUploading(false);
         }
     };
 
@@ -251,13 +258,59 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
         }
     }, [selectedContract, isAdmin, loadContracts]);
 
-    const handleDownload = useCallback((contract: Contract) => {
+    const handleDownload = useCallback(async (contract: Contract) => {
         if (contract.document_url) {
-            window.open(contract.document_url, '_blank');
+            try {
+                // Extracts storage path from the public URL if possible, otherwise use a fallback
+                // For contract documents, we usually store the path in metadata or can infer it
+                // If it's a full URL, we need to handle it carefully.
+                // However, most contract.document_url in this app are Supabase public URLs.
+                const storagePath = contract.document_url.split('/uploads/')[1];
+                if (storagePath) {
+                    const { data, error } = await supabase.storage.from('uploads').download(storagePath);
+                    if (error) throw error;
+
+                    const url = window.URL.createObjectURL(data);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${contract.title}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    return;
+                }
+                window.open(contract.document_url, '_blank');
+            } catch (error) {
+                console.error('Error downloading contract:', error);
+                window.open(contract.document_url, '_blank');
+            }
         } else {
             contractService.downloadPDF(contract, currentTenant);
         }
     }, [currentTenant]);
+
+    const handleFileDownload = useCallback(async (file: any) => {
+        try {
+            const path = file.storage_path || file.file_url?.split('/uploads/')[1];
+            if (!path) throw new Error('No storage path found');
+
+            const { data, error } = await supabase.storage.from('uploads').download(path);
+            if (error) throw error;
+
+            const url = window.URL.createObjectURL(data);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = file.file_name || file.original_filename || 'download';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error('Download failed:', error);
+            toast.error('Download failed');
+        }
+    }, []);
 
     const handleDeleteDocument = useCallback(async (contractId: string) => {
         if (!window.confirm('Are you sure you want to delete this document? This will free up storage space but the action cannot be undone.')) {
@@ -278,6 +331,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
     useEffect(() => {
         loadContracts();
     }, [loadContracts]);
+
+    // Reload files when viewTrash changes
+    useEffect(() => {
+        loadAllFiles();
+    }, [viewTrash, loadAllFiles]);
 
     if (loading) {
         return <div className="p-8 text-center text-slate-400">Loading contracts...</div>;
@@ -300,7 +358,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                         <div className="text-left md:text-right min-w-[100px]">
                             <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Storage Used</div>
                             <div className={`text-xs font-bold mt-1 ${storageUsage > MAX_STORAGE * 0.9 ? 'text-red-400' : 'text-teal-400'}`}>
-                                {(storageUsage / 1024 / 1024).toFixed(1)}MB / 100MB
+                                {(storageUsage / 1024 / 1024).toFixed(1)}MB / {(MAX_STORAGE / 1024 / 1024).toFixed(0)}MB
                             </div>
                         </div>
                         <div className="w-24 h-1.5 bg-slate-950 rounded-full overflow-hidden border border-white/5 shrink-0">
@@ -308,6 +366,22 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                 className={`h-full transition-all duration-1000 ${storageUsage > MAX_STORAGE * 0.9 ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-teal-500 shadow-[0_0_10px_rgba(20,184,166,0.3)]'}`}
                                 style={{ width: `${Math.min((storageUsage / MAX_STORAGE) * 100, 100)}%` }}
                             ></div>
+                        </div>
+                        <div className="flex gap-1 ml-2 border-l border-white/10 pl-2">
+                            <Button size="sm" className="h-6 text-[10px] px-2 bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white" onClick={() => {
+                                toast.success("Upgrading to 5GB Storage Plan ($1/mo)...");
+                                // Implement Stripe logic here
+                                setStorageLimit(5 * 1024 * 1024 * 1024);
+                            }}>
+                                +5GB
+                            </Button>
+                            <Button size="sm" className="h-6 text-[10px] px-2 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white" onClick={() => {
+                                toast.success("Upgrading to Unlimited Storage Plan ($5/mo)...");
+                                // Implement Stripe logic here
+                                setStorageLimit(1000 * 1024 * 1024 * 1024); // 1TB virtual unlimited
+                            }}>
+                                <InfinityIcon className="w-3 h-3" />
+                            </Button>
                         </div>
                     </div>
                     {isAdmin && (
@@ -351,6 +425,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                         setEntityFilter={setEntityFilter}
                         loadAllFiles={loadAllFiles}
                         loadStorageUsage={loadStorageUsage}
+                        handleGlobalUpload={handleGlobalUpload}
+                        isGlobalUploading={isGlobalUploading}
+                        viewTrash={viewTrash}
+                        setViewTrash={setViewTrash}
+                        handleFileDownload={handleFileDownload}
                     />
                 </Card>
             )}
@@ -532,14 +611,42 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                             </>
                         ) : activeTab === 'document' ? (
                             <div className="h-full flex flex-col">
-                                {selectedContract?.document_url ? (
-                                    <DocumentViewer
-                                        url={selectedContract.document_url}
-                                        userName={user.name}
-                                        initialAnnotations={(selectedContract.metadata as any)?.annotations || []}
-                                        onSaveAnnotations={handleSaveAnnotations}
-                                    />
-                                ) : (
+                                {selectedContract?.document_url && (
+                                    <div className="fixed inset-0 z-[100] flex flex-col bg-slate-950 animate-in fade-in duration-200">
+                                        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-slate-900 shrink-0 shadow-2xl">
+                                            <div className="flex items-center gap-4">
+                                                <button
+                                                    onClick={() => { setIsEditing(false); setSelectedContract(null); }}
+                                                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all text-sm font-bold"
+                                                >
+                                                    <ChevronLeft className="w-4 h-4" /> Exit Workspace
+                                                </button>
+                                                <div className="w-px h-6 bg-white/10" />
+                                                <div>
+                                                    <span className="text-white font-bold text-sm block truncate max-w-xs">{selectedContract.title}</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    onClick={() => handleDownload(selectedContract)}
+                                                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-all border border-white/5"
+                                                >
+                                                    <Download className="w-4 h-4" /> Download
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex-1 overflow-hidden">
+                                            <DocumentViewer
+                                                url={selectedContract.document_url}
+                                                userName={user.name}
+                                                initialAnnotations={(selectedContract.metadata as any)?.annotations || []}
+                                                onSaveAnnotations={handleSaveAnnotations}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                                {!selectedContract?.document_url && (
                                     <div className="flex-1 flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-800 rounded-3xl bg-slate-950/40">
                                         <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mb-4 border border-white/5">
                                             <FileTextIcon className="w-8 h-8 text-slate-700" />
@@ -549,9 +656,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                         <label className="cursor-pointer">
                                             <Button variant="primary" className="bg-teal-600 hover:bg-teal-500 pointer-events-none">
                                                 {isUploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
-                                                Upload Contract PDF
+                                                Upload Document (PDF or Word)
                                             </Button>
-                                            <input type="file" className="hidden" accept=".pdf" onChange={handleFileUpload} />
+                                            <input type="file" className="hidden" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleFileUpload} />
                                         </label>
                                     </div>
                                 )}
@@ -566,6 +673,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab 
                                 setEntityFilter={setEntityFilter}
                                 loadAllFiles={loadAllFiles}
                                 loadStorageUsage={loadStorageUsage}
+                                handleGlobalUpload={handleGlobalUpload}
+                                isGlobalUploading={isGlobalUploading}
+                                viewTrash={viewTrash}
+                                setViewTrash={setViewTrash}
+                                handleFileDownload={handleFileDownload}
                             />
                         )}
 
@@ -711,6 +823,11 @@ const HubContent: React.FC<{
     setEntityFilter: (f: string) => void;
     loadAllFiles: () => void;
     loadStorageUsage: () => void;
+    handleGlobalUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    isGlobalUploading: boolean;
+    viewTrash: boolean;
+    setViewTrash: (v: boolean) => void;
+    handleFileDownload: (file: any) => void;
 }> = ({
     allFiles,
     isFilesLoading,
@@ -719,7 +836,12 @@ const HubContent: React.FC<{
     entityFilter,
     setEntityFilter,
     loadAllFiles,
-    loadStorageUsage
+    loadStorageUsage,
+    handleGlobalUpload,
+    isGlobalUploading,
+    viewTrash,
+    setViewTrash,
+    handleFileDownload
 }) => (
         <div className="space-y-6">
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
@@ -728,7 +850,7 @@ const HubContent: React.FC<{
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                         <input
                             type="text"
-                            placeholder="Search platform documents..."
+                            placeholder={viewTrash ? "Search trash..." : "Search platform documents..."}
                             className="w-full bg-slate-950/50 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -745,6 +867,47 @@ const HubContent: React.FC<{
                             {filter}
                         </button>
                     ))}
+                </div>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setViewTrash(!viewTrash)}
+                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewTrash ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-slate-950 text-slate-500 hover:text-white border border-white/5'}`}
+                    >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        {viewTrash ? 'Exit Trash' : 'Trash'}
+                    </button>
+
+                    {!viewTrash && (
+                        <label className="cursor-pointer">
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                className="text-[10px] font-black uppercase tracking-widest bg-teal-600 hover:bg-teal-500 shadow-lg shadow-teal-500/20 pointer-events-none"
+                            >
+                                {isGlobalUploading ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <Plus className="w-3 h-3 mr-2" />}
+                                Global Artifact
+                            </Button>
+                            <input type="file" className="hidden" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleGlobalUpload} />
+                        </label>
+                    )}
+
+                    {viewTrash && (
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            className="text-[10px] font-black uppercase tracking-widest bg-red-600 hover:bg-red-500 shadow-lg shadow-red-500/20"
+                            onClick={async () => {
+                                if (window.confirm("Empty entire trash? This cannot be undone.")) {
+                                    await fileUploadService.emptyTrash((allFiles[0]?.tenant_id)); // Need tenant ID access here really
+                                    loadAllFiles();
+                                    loadStorageUsage();
+                                    toast.success("Trash emptied");
+                                }
+                            }}
+                        >
+                            <Trash className="w-3 h-3 mr-2" /> Empty Trash
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -812,52 +975,88 @@ const HubContent: React.FC<{
                                     </div>
                                 </div>
                                 <div className="flex gap-2">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => {
-                                            navigator.clipboard.writeText(file.file_url);
-                                            toast.success('Public URL copied');
-                                        }}
-                                        className="w-10 h-10 p-0 text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 rounded-xl transition-all"
-                                        title="Copy URL"
-                                    >
-                                        <Copy className="w-4 h-4" />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => window.open(file.file_url, '_blank')}
-                                        className="w-10 h-10 p-0 text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 rounded-xl transition-all"
-                                        title="Open in Tab"
-                                    >
-                                        <ExternalLink className="w-4 h-4" />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => window.open(file.file_url, '_blank')}
-                                        className="w-10 h-10 p-0 text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 rounded-xl transition-all"
-                                        title="Preview"
-                                    >
-                                        <Eye className="w-4 h-4" />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={async () => {
-                                            const { success } = await fileUploadService.deleteFile(file.id);
-                                            if (success) {
-                                                toast.success('Artifact purged successfully');
-                                                loadAllFiles();
-                                                loadStorageUsage();
-                                            }
-                                        }}
-                                        className="w-10 h-10 p-0 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all"
-                                        title="Purge"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
+                                    {viewTrash ? (
+                                        <>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={async () => {
+                                                    await fileUploadService.restoreFile(file.id);
+                                                    toast.success("File restored");
+                                                    loadAllFiles();
+                                                }}
+                                                className="w-10 h-10 p-0 text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 rounded-xl transition-all"
+                                                title="Restore"
+                                            >
+                                                <RotateCcw className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={async () => {
+                                                    if (window.confirm("Permanently delete this file? This cannot be undone.")) {
+                                                        await fileUploadService.permanentDeleteFile(file.id);
+                                                        toast.success("File deleted permanently");
+                                                        loadAllFiles();
+                                                        loadStorageUsage();
+                                                    }
+                                                }}
+                                                className="w-10 h-10 p-0 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all"
+                                                title="Delete Permanently"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(file.file_url);
+                                                    toast.success('Public URL copied');
+                                                }}
+                                                className="w-10 h-10 p-0 text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 rounded-xl transition-all"
+                                                title="Copy URL"
+                                            >
+                                                <Copy className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => window.open(file.file_url, '_blank')}
+                                                className="w-10 h-10 p-0 text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 rounded-xl transition-all"
+                                                title="Open in Tab"
+                                            >
+                                                <ExternalLink className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleFileDownload(file)}
+                                                className="w-10 h-10 p-0 text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 rounded-xl transition-all"
+                                                title="Download"
+                                            >
+                                                <Download className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={async () => {
+                                                    const { success } = await fileUploadService.deleteFile(file.id);
+                                                    if (success) {
+                                                        toast.success('File moved to trash');
+                                                        loadAllFiles();
+                                                        loadStorageUsage();
+                                                    }
+                                                }}
+                                                className="w-10 h-10 p-0 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all"
+                                                title="Move to Trash"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         ))}

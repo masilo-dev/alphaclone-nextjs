@@ -326,6 +326,19 @@ export const taskService = {
 
             if (error) throw error;
 
+            // Log activity
+            if (updateData.status === 'completed') {
+                await activityService.logActivity(data.created_by, 'Task Completed', {
+                    taskId: data.id,
+                    taskTitle: data.title,
+                });
+            } else if (updateData.status) {
+                await activityService.logActivity(data.created_by, `Task Status: ${updateData.status}`, {
+                    taskId: data.id,
+                    taskTitle: data.title,
+                });
+            }
+
             // Trigger project progress recalculation if linked to a project
             if (data.related_to_project) {
                 projectService.recalculateProjectProgress(data.related_to_project).catch(err => console.error('Failed to update project progress:', err));
@@ -410,6 +423,14 @@ export const taskService = {
                 .eq('tenant_id', tenantId);
 
             if (error) throw error;
+
+            // Log activity
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                await activityService.logActivity(user.id, 'Task Deleted', {
+                    taskId: taskId,
+                });
+            }
 
             // Trigger project progress recalculation if it was linked to a project
             if (taskData?.related_to_project) {

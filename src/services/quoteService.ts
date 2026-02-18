@@ -391,6 +391,8 @@ export const quoteService = {
             const updateData: any = {};
 
             if (updates.name !== undefined) updateData.name = updates.name;
+            if (updates.contactId !== undefined) updateData.contact_id = updates.contactId;
+            if (updates.dealId !== undefined) updateData.deal_id = updates.dealId;
             if (updates.status !== undefined) updateData.status = updates.status;
             if (updates.discountAmount !== undefined) updateData.discount_amount = updates.discountAmount;
             if (updates.discountPercent !== undefined) updateData.discount_percent = updates.discountPercent;
@@ -457,12 +459,23 @@ export const quoteService = {
      */
     async deleteQuote(quoteId: string): Promise<{ success: boolean; error: string | null }> {
         try {
+            const tenantId = this.getTenantId();
+
             // Reclaim storage space
             await fileUploadService.deleteFileByEntity('quote', quoteId);
 
-            const { error } = await supabase.from('quotes').delete().eq('id', quoteId).in('status', ['draft']);
+            // Delete the quote - remove status restriction to allow admins to delete any quote
+            const { error, count } = await supabase
+                .from('quotes')
+                .delete({ count: 'exact' })
+                .eq('id', quoteId)
+                .eq('tenant_id', tenantId);
 
             if (error) throw error;
+
+            if (count === 0) {
+                throw new Error('Quote not found or could not be deleted.');
+            }
 
             return { success: true, error: null };
         } catch (err) {
@@ -470,9 +483,6 @@ export const quoteService = {
         }
     },
 
-    /**
-     * Get quote items
-     */
     async getQuoteItems(quoteId: string): Promise<{ items: QuoteItem[]; error: string | null }> {
         try {
             const { data, error } = await supabase
@@ -527,6 +537,7 @@ export const quoteService = {
                 .from('quote_items')
                 .insert({
                     quote_id: quoteId,
+                    tenant_id: this.getTenantId(),
                     product_name: itemData.productName,
                     description: itemData.description,
                     quantity: itemData.quantity,

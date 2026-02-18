@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import { jsPDF } from 'jspdf';
 import { journalEntryService } from './accounting/journalEntryService';
 import { chartOfAccountsService } from './accounting/chartOfAccountsService';
+import { activityService } from './activityService';
 
 export interface BusinessInvoice {
     id: string;
@@ -23,6 +24,7 @@ export interface BusinessInvoice {
     senderName?: string;
     bankDetails?: string;
     mobilePaymentDetails?: string;
+    signature?: { type: 'draw' | 'type', data: string };
     createdAt: string;
     updatedAt: string;
 }
@@ -68,6 +70,7 @@ export const businessInvoiceService = {
                 senderName: inv.sender_name,
                 bankDetails: inv.bank_details,
                 mobilePaymentDetails: inv.mobile_payment_details,
+                signature: inv.signature,
                 createdAt: inv.created_at,
                 updatedAt: inv.updated_at
             }));
@@ -109,7 +112,8 @@ export const businessInvoiceService = {
                 is_public: invoice.isPublic || false,
                 sender_name: invoice.senderName,
                 bank_details: invoice.bankDetails,
-                mobile_payment_details: invoice.mobilePaymentDetails
+                mobile_payment_details: invoice.mobilePaymentDetails,
+                signature: invoice.signature || null
             };
 
             // Debug logging
@@ -146,9 +150,21 @@ export const businessInvoiceService = {
                 senderName: data.sender_name,
                 bankDetails: data.bank_details,
                 mobilePaymentDetails: data.mobile_payment_details,
+                signature: data.signature,
                 createdAt: data.created_at,
                 updatedAt: data.updated_at
             };
+
+            if (newInvoice.id) {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    await activityService.logActivity(user.id, 'Invoice Created', {
+                        invoiceId: newInvoice.id,
+                        invoiceNumber: newInvoice.invoiceNumber,
+                        amount: newInvoice.total
+                    });
+                }
+            }
 
             return { invoice: newInvoice, error: null };
         } catch (err: any) {
@@ -200,6 +216,7 @@ export const businessInvoiceService = {
             if (updates.senderName !== undefined) updateData.sender_name = updates.senderName;
             if (updates.bankDetails !== undefined) updateData.bank_details = updates.bankDetails;
             if (updates.mobilePaymentDetails !== undefined) updateData.mobile_payment_details = updates.mobilePaymentDetails;
+            if (updates.signature !== undefined) updateData.signature = updates.signature;
 
             updateData.updated_at = new Date().toISOString();
 
@@ -369,6 +386,15 @@ export const businessInvoiceService = {
                 .eq('id', invoiceId);
 
             if (error) throw error;
+
+            // Log activity
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                await activityService.logActivity(user.id, 'Invoice Paid', {
+                    invoiceId: invoiceId
+                });
+            }
+
             return { error: null };
         } catch (err: any) {
             console.error('Error marking invoice as paid:', err);
@@ -379,7 +405,7 @@ export const businessInvoiceService = {
     /**
      * Generate a professional PDF for a business invoice
      */
-    generatePDF(invoice: any, tenant: any, client: any) {
+    generatePDF(invoice: any, tenant: any, client: any, signature?: { type: 'draw' | 'type', data: string }) {
         const doc = new jsPDF();
         const primaryColor = '#14b8a6'; // Teal-500
 
@@ -594,6 +620,31 @@ export const businessInvoiceService = {
             doc.setFontSize(9);
             const splitNotes = doc.splitTextToSize(invoice.notes, 160);
             doc.text(splitNotes, 25, yPos + 16);
+        }
+
+        // --- SIGNATURE SECTION ---
+        if (signature) {
+            const sigY = pageHeight - 60;
+            doc.setDrawColor(203, 213, 225); // slate-300
+            doc.line(140, sigY + 15, 190, sigY + 15);
+
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(148, 163, 184); // slate-400
+            doc.text('AUTHORIZED SIGNATORY', 140, sigY + 20);
+
+            if (signature.type === 'draw' && signature.data) {
+                try {
+                    doc.addImage(signature.data, 'PNG', 140, sigY - 10, 40, 20);
+                } catch (e) {
+                    console.error('Failed to add drawn signature to PDF:', e);
+                }
+            } else if (signature.type === 'type' && signature.data) {
+                doc.setFontSize(16);
+                doc.setFont('times', 'italic'); // Best standard cursive fallback in jsPDF
+                doc.setTextColor(15, 23, 42); // slate-900
+                doc.text(signature.data, 140, sigY + 10);
+            }
         }
 
         return doc;

@@ -14,6 +14,7 @@ interface TenantContextType {
   switchTenant: (tenantId: string) => Promise<void>;
   refreshTenants: () => Promise<void>;
   createTenant: (data: CreateTenantData) => Promise<Tenant>;
+  getDashboardStats: (tenantId: string) => Promise<{ stats: any | null; error: string | null }>;
 }
 
 interface CreateTenantData {
@@ -26,12 +27,23 @@ const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 export function TenantProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
+  const [currentTenant, setCurrentTenant] = useState<Tenant | null>(() => {
+    // Synchronously read from cache so the dashboard renders immediately
+    if (typeof window !== 'undefined') {
+      return tenantService.getCachedCurrentTenant() || null;
+    }
+    return null;
+  });
   const [userTenants, setUserTenants] = useState<Array<Tenant & { role: string }>>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Start as false if we already have a cached tenant — no need to block the UI
+  const [isLoading, setIsLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return !tenantService.getCachedCurrentTenant();
+    }
+    return true;
+  });
   const [error, setError] = useState<string | null>(null);
 
-  // Load user's tenants when user logs in
   // Load user's tenants when user logs in
   useEffect(() => {
     // Subscribe to auth changes
@@ -88,12 +100,14 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
         if (savedTenant) {
           setCurrentTenant(savedTenant);
+          // Refresh the full object cache
+          tenantService.setCurrentTenant(savedTenant);
           setIsLoading(false);
         } else {
           // Default to first tenant
           const firstTenant = tenants[0];
           setCurrentTenant(firstTenant);
-          tenantService.setCurrentTenant(firstTenant.id);
+          tenantService.setCurrentTenant(firstTenant);
           setIsLoading(false);
         }
       } else if (user.role === 'admin' || user.role === 'tenant_admin') {
@@ -144,6 +158,11 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           // Early return to prevent further execution
           return;
         }
+      } else {
+        // No tenants and not an admin - just stop loading
+        console.log('No tenants found for non-admin user.');
+        setCurrentTenant(null);
+        setIsLoading(false);
       }
     } catch (error: any) {
       console.error('Failed to load user tenants:', error);
@@ -194,6 +213,10 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     return tenant;
   }, [user, refreshTenants, switchTenant]);
 
+  const getDashboardStats = useCallback(async (tenantId: string) => {
+    return await tenantService.getDashboardStats(tenantId);
+  }, []);
+
   useEffect(() => {
     if (user?.id) {
       // Timeout safeguard: Force loading to false after 15 seconds (increased from 5s for high-latency regions)
@@ -223,7 +246,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     error,
     switchTenant,
     refreshTenants,
-    createTenant
+    createTenant,
+    getDashboardStats
   };
 
   return (

@@ -23,6 +23,12 @@ export interface Tenant {
     cancel_at_period_end?: boolean;
     created_at: Date;
     updated_at: Date;
+    // Branding & Legal
+    legal_name?: string;
+    tax_id?: string;
+    business_address?: string;
+    brand_color_primary?: string;
+    brand_color_secondary?: string;
 }
 
 // Tenant Settings

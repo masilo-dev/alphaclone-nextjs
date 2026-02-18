@@ -57,6 +57,8 @@ const AutoSizer = dynamic(
     }
 ) as any;
 import { ClientImportModal } from './crm/ClientImport';
+import { LeadImportModal } from './crm/LeadImportModal';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface CRMTabProps {
     userId: string;
@@ -70,8 +72,10 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
+    const [showLeadImportModal, setShowLeadImportModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+    const queryClient = useQueryClient();
 
     // React Query Hook
     const {
@@ -209,12 +213,20 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                     </div>
                     <div className="flex gap-2">
                         <Button
+                            onClick={() => setShowLeadImportModal(true)}
+                            variant="secondary"
+                            icon={<Users className="w-4 h-4" />}
+                            className="flex-1 sm:flex-none"
+                        >
+                            Import from Leads
+                        </Button>
+                        <Button
                             onClick={() => setShowImportModal(true)}
                             variant="secondary"
                             icon={<Upload className="w-4 h-4" />}
                             className="flex-1 sm:flex-none"
                         >
-                            Import
+                            Import CSV
                         </Button>
                         <Button
                             onClick={() => setShowAddModal(true)}
@@ -572,6 +584,14 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                 onImportComplete={() => {
                     // Invalidate queries or refetch
                     // queryClient.invalidateQueries(['clients'])
+                }}
+            />
+            {/* Lead Import Modal */}
+            <LeadImportModal
+                isOpen={showLeadImportModal}
+                onClose={() => setShowLeadImportModal(false)}
+                onImportComplete={() => {
+                    queryClient.invalidateQueries({ queryKey: ['clients'] });
                 }}
             />
         </div>

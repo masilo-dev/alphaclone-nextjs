@@ -381,6 +381,57 @@ const SalesAgent: React.FC = () => {
         }
     };
 
+    const bulkAddLeadsToCRM = async () => {
+        if (selectedLeads.length === 0) return;
+
+        const toastId = toast.loading(`Converting ${selectedLeads.length} leads to CRM clients...`);
+        try {
+            const { businessClientService } = await import('../../services/businessClientService');
+            const { tenantService } = await import('../../services/tenancy/TenantService');
+            const tenantId = tenantService.getCurrentTenantId();
+
+            if (!tenantId) {
+                toast.error('No active organization session', { id: toastId });
+                return;
+            }
+
+            let successCount = 0;
+            let failCount = 0;
+
+            for (const id of selectedLeads) {
+                const lead = leads.find(l => l.id === id);
+                if (!lead) continue;
+
+                // Mark lead as qualified
+                await leadService.updateLead(id, { stage: 'qualified' });
+
+                // Create client
+                const { client, error: clientError } = await businessClientService.createClient(tenantId, {
+                    name: lead.businessName,
+                    email: lead.email || '',
+                    phone: lead.phone,
+                    salesStage: 'customer',
+                    industry: lead.industry,
+                    location: lead.location,
+                    description: lead.notes
+                });
+
+                if (client && !clientError) {
+                    await leadService.updateLead(id, { client_id: client.id });
+                    successCount++;
+                } else {
+                    failCount++;
+                }
+            }
+
+            toast.success(`Successfully converted ${successCount} leads to CRM!`, { id: toastId });
+            setSelectedLeads([]);
+            loadLeads();
+        } catch (err: any) {
+            toast.error(`Bulk conversion failed: ${err.message}`, { id: toastId });
+        }
+    };
+
     const handleSendMessage = async () => {
         if (!inputText.trim()) return;
 
@@ -686,9 +737,22 @@ const SalesAgent: React.FC = () => {
                                 </Button>
 
                                 {selectedLeads.length > 0 && (
-                                    <Button onClick={deleteSelected} variant="danger" className="flex-1 sm:flex-initial bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/50">
-                                        <Trash2 className="w-4 h-4 sm:mr-2" /> ({selectedLeads.length})
-                                    </Button>
+                                    <>
+                                        <Button
+                                            onClick={bulkAddLeadsToCRM}
+                                            variant="primary"
+                                            className="flex-1 sm:flex-initial bg-teal-600 hover:bg-teal-500"
+                                        >
+                                            <UserPlus className="w-4 h-4 sm:mr-2" /> Add Selection to CRM ({selectedLeads.length})
+                                        </Button>
+                                        <Button
+                                            onClick={deleteSelected}
+                                            variant="danger"
+                                            className="flex-1 sm:flex-initial bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/50"
+                                        >
+                                            <Trash2 className="w-4 h-4 sm:mr-2" />
+                                        </Button>
+                                    </>
                                 )}
                             </div>
                         </div>

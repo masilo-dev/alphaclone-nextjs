@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download, PenLine } from 'lucide-react';
 import { Button, Input } from '../ui/UIComponents';
 import { paymentService } from '../../services/paymentService';
 import { Project } from '../../types';
@@ -29,6 +29,11 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [clients, setClients] = useState<any[]>([]);
     const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
+    const [signatureData, setSignatureData] = useState<string | null>(null);
+    const [signatureType, setSignatureType] = useState<'draw' | 'type'>('draw');
+    const [typedSignature, setTypedSignature] = useState('');
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const isDrawing = useRef(false);
 
     // Fetch tenant defaults
     const [tenantDefaults, setTenantDefaults] = useState({ bank: '', mobile: '', organizationName: '' });
@@ -133,8 +138,10 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     amount: amountNum
                 }],
                 // Send specific details
-                bankDetails: bankDetails,
                 mobilePaymentDetails: mobileDetails,
+                signature: signatureType === 'draw' && signatureData ? { type: 'draw' as const, data: signatureData }
+                    : signatureType === 'type' && typedSignature ? { type: 'type' as const, data: typedSignature }
+                        : undefined,
                 // Legacy support / fallback logic handled in service/PDF
                 notes: undefined,
                 isPublic: false
@@ -195,7 +202,11 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 } : undefined
             };
 
-            const doc = businessInvoiceService.generatePDF(invoiceData, tenant, invoiceData.client);
+            const signature = signatureType === 'draw' && signatureData ? { type: 'draw' as const, data: signatureData }
+                : signatureType === 'type' && typedSignature ? { type: 'type' as const, data: typedSignature }
+                    : undefined;
+
+            const doc = businessInvoiceService.generatePDF(invoiceData, tenant, invoiceData.client, signature);
             doc.save(`Invoice-${invoiceData.invoiceNumber}.pdf`);
             toast.success('PDF downloaded!');
         } catch (err) {
@@ -213,7 +224,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         setPaymentMethod('stripe');
         setBankDetails(tenantDefaults.bank);
         setMobileDetails(tenantDefaults.mobile);
-        setCreatedInvoiceId(null);
+        setSignatureData(null);
+        setSignatureType('draw');
+        setTypedSignature('');
         setStep('edit');
     };
 
@@ -520,6 +533,126 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                         )}
                                     </div>
                                 )}
+
+                                {/* Signature Section */}
+                                <div className="mt-6 border-t-2 border-gray-200 pt-6">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="font-bold text-sm flex items-center gap-2">
+                                            <PenLine className="w-4 h-4 text-gray-600" />
+                                            Authorized Signature
+                                        </h3>
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex bg-gray-100 rounded-lg p-1">
+                                                <button
+                                                    onClick={() => setSignatureType('draw')}
+                                                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${signatureType === 'draw' ? 'bg-white shadow-sm text-teal-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                                >
+                                                    DRAW
+                                                </button>
+                                                <button
+                                                    onClick={() => setSignatureType('type')}
+                                                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${signatureType === 'type' ? 'bg-white shadow-sm text-teal-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                                >
+                                                    TYPE
+                                                </button>
+                                            </div>
+                                            {(signatureData || typedSignature) && (
+                                                <button
+                                                    onClick={() => {
+                                                        setSignatureData(null);
+                                                        setTypedSignature('');
+                                                        if (canvasRef.current) {
+                                                            const ctx = canvasRef.current.getContext('2d')!;
+                                                            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+                                                        }
+                                                    }}
+                                                    className="text-xs text-red-500 hover:text-red-700 font-medium"
+                                                >
+                                                    Clear
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {signatureType === 'draw' ? (
+                                        signatureData ? (
+                                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-2 bg-gray-50">
+                                                <img src={signatureData} alt="Signature" className="max-h-20 mx-auto" />
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <canvas
+                                                    ref={canvasRef}
+                                                    width={500}
+                                                    height={100}
+                                                    className="w-full border-2 border-dashed border-gray-300 rounded-lg cursor-crosshair bg-gray-50"
+                                                    style={{ touchAction: 'none' }}
+                                                    onMouseDown={(e) => {
+                                                        isDrawing.current = true;
+                                                        const canvas = canvasRef.current!;
+                                                        const ctx = canvas.getContext('2d')!;
+                                                        const rect = canvas.getBoundingClientRect();
+                                                        ctx.beginPath();
+                                                        ctx.moveTo((e.clientX - rect.left) * (canvas.width / rect.width), (e.clientY - rect.top) * (canvas.height / rect.height));
+                                                    }}
+                                                    onMouseMove={(e) => {
+                                                        if (!isDrawing.current) return;
+                                                        const canvas = canvasRef.current!;
+                                                        const ctx = canvas.getContext('2d')!;
+                                                        const rect = canvas.getBoundingClientRect();
+                                                        ctx.lineWidth = 2;
+                                                        ctx.lineCap = 'round';
+                                                        ctx.strokeStyle = '#1e293b';
+                                                        ctx.lineTo((e.clientX - rect.left) * (canvas.width / rect.width), (e.clientY - rect.top) * (canvas.height / rect.height));
+                                                        ctx.stroke();
+                                                    }}
+                                                    onMouseUp={() => { isDrawing.current = false; setSignatureData(canvasRef.current!.toDataURL()); }}
+                                                    onMouseLeave={() => { isDrawing.current = false; }}
+                                                    onTouchStart={(e) => {
+                                                        e.preventDefault(); isDrawing.current = true;
+                                                        const canvas = canvasRef.current!;
+                                                        const ctx = canvas.getContext('2d')!;
+                                                        const rect = canvas.getBoundingClientRect();
+                                                        const t = e.touches[0];
+                                                        ctx.beginPath();
+                                                        ctx.moveTo((t.clientX - rect.left) * (canvas.width / rect.width), (t.clientY - rect.top) * (canvas.height / rect.height));
+                                                    }}
+                                                    onTouchMove={(e) => {
+                                                        e.preventDefault();
+                                                        if (!isDrawing.current) return;
+                                                        const canvas = canvasRef.current!;
+                                                        const ctx = canvas.getContext('2d')!;
+                                                        const rect = canvas.getBoundingClientRect();
+                                                        const t = e.touches[0];
+                                                        ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#1e293b';
+                                                        ctx.lineTo((t.clientX - rect.left) * (canvas.width / rect.width), (t.clientY - rect.top) * (canvas.height / rect.height));
+                                                        ctx.stroke();
+                                                    }}
+                                                    onTouchEnd={() => { isDrawing.current = false; setSignatureData(canvasRef.current!.toDataURL()); }}
+                                                />
+                                                <p className="text-xs text-gray-400 text-center mt-1 uppercase tracking-tighter font-bold">Draw your signature above</p>
+                                            </div>
+                                        )
+                                    ) : (
+                                        <div className="space-y-3">
+                                            <input
+                                                type="text"
+                                                className="w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:border-teal-500 transition-colors"
+                                                placeholder="Type your full legal name..."
+                                                value={typedSignature}
+                                                onChange={(e) => setTypedSignature(e.target.value)}
+                                            />
+                                            {typedSignature && (
+                                                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
+                                                    <span className="text-3xl font-cursive text-gray-800 block" style={{ fontFamily: "'Dancing Script', 'Sacramento', cursive" }}>
+                                                        {typedSignature}
+                                                    </span>
+                                                    <p className="text-[10px] text-gray-400 mt-2 uppercase tracking-widest font-bold">Digital Signature Preview</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
 
                                 {paymentMethod === 'stripe' && (
                                     <div className="bg-blue-50 p-4 rounded-lg">

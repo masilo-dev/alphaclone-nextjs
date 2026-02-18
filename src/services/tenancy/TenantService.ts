@@ -275,12 +275,69 @@ class TenantService {
     /**
      * Set current tenant context
      */
-    setCurrentTenant(tenantId: string): void {
-        this.currentTenantId = tenantId;
-        // Store in localStorage for persistence
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('currentTenantId', tenantId);
+    setCurrentTenant(tenant: Tenant | string): void {
+        if (typeof tenant === 'string') {
+            this.currentTenantId = tenant;
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('currentTenantId', tenant);
+            }
+        } else {
+            this.currentTenantId = tenant.id;
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('currentTenantId', tenant.id);
+                localStorage.setItem('currentTenant', JSON.stringify(tenant));
+            }
         }
+    }
+
+    /**
+     * Get cached tenant object
+     */
+    getCachedCurrentTenant(): Tenant | null {
+        if (typeof window !== 'undefined') {
+            const stored = localStorage.getItem('currentTenant');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch (e) {
+                    console.error('Failed to parse cached tenant', e);
+                }
+            }
+        }
+        return null;
+    }
+
+    async getDashboardStats(tenantId: string): Promise<{ stats: any | null; error: string | null }> {
+        const { data, error } = await supabase.rpc('get_tenant_dashboard_stats', {
+            tenant_id_param: tenantId
+        });
+
+        if (error) {
+            console.error('Error fetching dashboard stats:', error);
+            return { stats: null, error: error.message };
+        }
+
+        const raw = data as any;
+        const stats = {
+            totalRevenue: raw.total_revenue || 0,
+            clientCount: raw.total_clients || 0,
+            activeProjects: raw.total_projects || 0,
+            pendingInvoices: raw.pending_invoices || 0,
+            totalMessages: raw.total_messages || 0,
+            pendingRevenue: raw.pending_revenue || 0,
+            recentActivity: (raw.recent_activity || []).map((a: any) => ({
+                type: a.type,
+                text: a.text || a.title, // Support both 'text' from RPC and 'title' if fallback needed
+                time: a.time || a.date // Support both 'time' from RPC and 'date' if fallback needed
+            })),
+            monthlyRevenue: (raw.monthly_revenue || []).map((m: any) => ({
+                month: m.month,
+                amount: m.amount
+            })),
+            pipeline: raw.pipeline || {}
+        };
+
+        return { stats, error: null };
     }
 
     /**

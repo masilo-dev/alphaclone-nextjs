@@ -74,6 +74,10 @@ export const projectService = {
                 isPublic: p.is_public,
                 showInPortfolio: p.show_in_portfolio,
                 clientId: p.client_id,
+                budget: p.budget,
+                risk: p.risk,
+                health: p.health,
+                resources: p.resources || [],
                 createdAt: p.created_at,
             }));
 
@@ -200,7 +204,11 @@ export const projectService = {
                     external_url: project.externalUrl,
                     is_public: project.isPublic,
                     show_in_portfolio: project.showInPortfolio,
-                    client_id: project.clientId,
+                    client_id: project.clientId || null,
+                    budget: project.budget,
+                    risk: project.risk,
+                    health: project.health,
+                    resources: project.resources,
                 })
                 .select()
                 .single();
@@ -228,6 +236,10 @@ export const projectService = {
                 isPublic: data.is_public,
                 showInPortfolio: data.show_in_portfolio,
                 clientId: data.client_id,
+                budget: data.budget,
+                risk: data.risk,
+                health: data.health,
+                resources: data.resources || [],
                 createdAt: data.created_at,
             };
 
@@ -270,6 +282,10 @@ export const projectService = {
             if (updates.externalUrl !== undefined) updateData.external_url = updates.externalUrl;
             if (updates.isPublic !== undefined) updateData.is_public = updates.isPublic;
             if (updates.showInPortfolio !== undefined) updateData.show_in_portfolio = updates.showInPortfolio;
+            if (updates.budget !== undefined) updateData.budget = updates.budget;
+            if (updates.risk !== undefined) updateData.risk = updates.risk;
+            if (updates.health !== undefined) updateData.health = updates.health;
+            if (updates.resources !== undefined) updateData.resources = updates.resources;
 
             // Build update query
             let updateQuery = supabase
@@ -414,6 +430,10 @@ export const projectService = {
                         isPublic: p.is_public,
                         showInPortfolio: p.show_in_portfolio,
                         clientId: p.client_id,
+                        budget: p.budget,
+                        risk: p.risk,
+                        health: p.health,
+                        resources: p.resources || [],
                         createdAt: p.created_at,
                     };
                     callback(project);

@@ -282,6 +282,7 @@ export const contactService = {
         options?: {
             createCompany?: boolean;
             companyName?: string;
+            contactName?: string; // NEW PARAMETER
         }
     ): Promise<{ contactId: string | null; error: string | null }> {
         try {
@@ -289,14 +290,15 @@ export const contactService = {
                 lead_id: leadId,
                 create_company: options?.createCompany || false,
                 company_name: options?.companyName || null,
+                contact_name_override: options?.contactName || null,
             });
 
             if (error) throw error;
 
             return { contactId: data, error: null };
         } catch (err: any) {
-            console.error('Error converting lead to contact:', err);
-            return { contactId: null, error: err.message };
+            console.error('Error converting lead to contact:', JSON.stringify(err, null, 2), err);
+            return { contactId: null, error: err.message || 'Unknown error occurred during conversion' };
         }
     },
 

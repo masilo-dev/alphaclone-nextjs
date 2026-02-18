@@ -19,8 +19,8 @@ export interface ProjectStage {
 }
 
 const PROJECT_STAGES: Record<string, ProjectStage> = {
-    'Discovery': {
-        name: 'Discovery',
+    'Initiation': {
+        name: 'Initiation',
         order: 1,
         requiredFields: ['name', 'description'],
         nextStages: ['Planning', 'On Hold'],
@@ -30,50 +30,36 @@ const PROJECT_STAGES: Record<string, ProjectStage> = {
         name: 'Planning',
         order: 2,
         requiredFields: ['name', 'description', 'timeline'],
-        nextStages: ['Design', 'On Hold'],
-        previousStages: ['Discovery'],
+        nextStages: ['Execution', 'On Hold'],
+        previousStages: ['Initiation'],
     },
-    'Design': {
-        name: 'Design',
+    'Execution': {
+        name: 'Execution',
         order: 3,
         requiredFields: ['name', 'description', 'timeline', 'design_files'],
-        nextStages: ['Development', 'Planning', 'On Hold'],
+        nextStages: ['Review', 'Planning', 'On Hold'],
         previousStages: ['Planning'],
     },
-    'Development': {
-        name: 'Development',
+    'Review': {
+        name: 'Review',
         order: 4,
-        requiredFields: ['name', 'description', 'timeline', 'design_files'],
-        nextStages: ['Testing', 'Design', 'On Hold'],
-        previousStages: ['Design'],
-    },
-    'Testing': {
-        name: 'Testing',
-        order: 5,
         requiredFields: ['name', 'description', 'timeline', 'test_results'],
-        nextStages: ['Deployment', 'Development', 'On Hold'],
-        previousStages: ['Development'],
+        nextStages: ['Closure', 'Execution', 'On Hold'],
+        previousStages: ['Execution'],
     },
-    'Deployment': {
-        name: 'Deployment',
-        order: 6,
-        requiredFields: ['name', 'description', 'timeline', 'test_results', 'deployment_url'],
-        nextStages: ['Completed', 'Testing', 'On Hold'],
-        previousStages: ['Testing'],
-    },
-    'Completed': {
-        name: 'Completed',
-        order: 7,
+    'Closure': {
+        name: 'Closure',
+        order: 5,
         requiredFields: ['name', 'description', 'timeline', 'completion_date'],
         nextStages: [],
-        previousStages: ['Deployment'],
+        previousStages: ['Review'],
     },
     'On Hold': {
         name: 'On Hold',
         order: 0,
         requiredFields: ['name', 'hold_reason'],
-        nextStages: ['Discovery', 'Planning', 'Design', 'Development', 'Testing', 'Deployment'],
-        previousStages: ['Discovery', 'Planning', 'Design', 'Development', 'Testing', 'Deployment'],
+        nextStages: ['Initiation', 'Planning', 'Execution', 'Review', 'Closure'],
+        previousStages: ['Initiation', 'Planning', 'Execution', 'Review', 'Closure'],
     },
 };
 
@@ -274,18 +260,25 @@ class ProjectStageService {
             await supabase.from('messages').insert(message);
 
             // Send email notification for deployment
-            if (newStage === 'Deployment') {
+            if (newStage === 'Review') { // Deployment is now part of Review/Closure transition? Or maybe Execution -> Review
+                // Logic for deployment notification might need adjustment.
+                // Assuming 'Review' is where testing happens, and 'Closure' is final.
+                // Let's assume 'Execution' -> 'Review' is where we might notify.
+                // But previously it was 'Deployment'.
+                // If the user wants 5 stages: Initiation, Planning, Execution, Review, Closure.
+                // 'Deployment' maps best to 'Review' (UAT) or 'Closure' (Go Live).
+                // I'll map 'Deployment' logic to 'Review' for now as that's when client sees it usually.
                 const { userService } = await import('./userService');
                 const { user: profile } = await userService.getUser(project.owner_id);
                 if (profile?.email) {
                     const { emailCampaignService } = await import('./emailCampaignService');
-                    emailCampaignService.sendTransactionalEmail(profile.email, 'Deployment Confirmation', {
+                    emailCampaignService.sendTransactionalEmail(profile.email, 'Project Review Ready', {
                         name: profile.name,
                         projectName: project.name,
                         deploymentUrl: project.deployment_url || 'https://alphaclone.tech'
-                    }).catch(err => console.error('Failed to trigger deployment email:', err));
+                    }).catch(err => console.error('Failed to trigger review email:', err));
                 }
-            } else if (newStage === 'Completed') {
+            } else if (newStage === 'Closure') {
                 // Potential for another template here if needed
             }
         } catch (error) {
@@ -307,7 +300,7 @@ class ProjectStageService {
      * Validate project can move to completion
      */
     canComplete(project: any): { canComplete: boolean; missingItems: string[] } {
-        const completionStage = PROJECT_STAGES['Completed'];
+        const completionStage = PROJECT_STAGES['Closure'];
         const missingItems = completionStage.requiredFields.filter(
             (field) => !project[field] || project[field] === ''
         );

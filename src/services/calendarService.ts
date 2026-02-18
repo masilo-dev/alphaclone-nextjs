@@ -10,7 +10,7 @@ export interface CalendarEvent {
     description?: string;
     start_time: string;
     end_time: string;
-    type: 'meeting' | 'call' | 'reminder' | 'deadline' | 'task' | 'invoice';
+    type: 'meeting' | 'call' | 'reminder' | 'deadline' | 'task' | 'invoice' | 'project' | 'milestone';
     video_room_id?: string;
     attendees?: string[];
     location?: string;
@@ -33,7 +33,7 @@ export interface ConflictDetection {
 
 export const calendarService = {
     /**
-     * Get all events for a user (federated from Events, Tasks, Invoices, Contracts)
+     * Get all events for a user (federated from Events, Tasks, Invoices, Contracts, Projects, Milestones)
      */
     async getEvents(userId: string, startDate?: Date, endDate?: Date) {
         const tenantId = tenantService.getCurrentTenantId();
@@ -68,24 +68,47 @@ export const calendarService = {
             .not('payment_due_date', 'is', null) // Only with due dates
             .neq('payment_status', 'paid');
 
+        // 5. Projects Query (Deadlines)
+        let projectsQuery = supabase
+            .from('business_projects')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .not('due_date', 'is', null)
+            .neq('status', 'completed');
+
+        // 6. Milestones Query (Project Milestones)
+        // Since milestones are child of projects, we fetch those with due dates
+        let milestonesQuery = supabase
+            .from('project_milestones')
+            .select('*, business_projects!inner(*)')
+            .eq('business_projects.tenant_id', tenantId)
+            .not('due_date', 'is', null)
+            .neq('status', 'completed');
+
         if (startDate) {
             eventsQuery = eventsQuery.gte('start_time', startDate.toISOString());
             tasksQuery = tasksQuery.gte('due_date', startDate.toISOString());
             invoicesQuery = invoicesQuery.gte('due_date', startDate.toISOString());
             contractsQuery = contractsQuery.gte('payment_due_date', startDate.toISOString());
+            projectsQuery = projectsQuery.gte('due_date', startDate.toISOString());
+            milestonesQuery = milestonesQuery.gte('due_date', startDate.toISOString());
         }
         if (endDate) {
             eventsQuery = eventsQuery.lte('end_time', endDate.toISOString());
             tasksQuery = tasksQuery.lte('due_date', endDate.toISOString());
             invoicesQuery = invoicesQuery.lte('due_date', endDate.toISOString());
             contractsQuery = contractsQuery.lte('payment_due_date', endDate.toISOString());
+            projectsQuery = projectsQuery.lte('due_date', endDate.toISOString());
+            milestonesQuery = milestonesQuery.lte('due_date', endDate.toISOString());
         }
 
-        const [eventsRes, tasksRes, invoicesRes, contractsRes] = await Promise.all([
+        const [eventsRes, tasksRes, invoicesRes, contractsRes, projectsRes, milestonesRes] = await Promise.all([
             eventsQuery.order('start_time', { ascending: true }),
             tasksQuery.order('due_date', { ascending: true }),
             invoicesQuery.order('due_date', { ascending: true }),
-            contractsQuery.order('payment_due_date', { ascending: true })
+            contractsQuery.order('payment_due_date', { ascending: true }),
+            projectsQuery.order('due_date', { ascending: true }),
+            milestonesQuery.order('due_date', { ascending: true })
         ]);
 
         // Map Calendar Events
@@ -153,12 +176,55 @@ export const calendarService = {
             updated_at: c.updated_at
         }));
 
-        const combinedEvents = [...events, ...taskEvents, ...invoiceEvents, ...contractEvents];
+        // Map Projects to Events
+        const projectEvents: CalendarEvent[] = (projectsRes.data || []).map((p: any) => ({
+            id: `project_${p.id}`,
+            user_id: userId,
+            title: `Project Deadline: ${p.name}`,
+            description: `Category: ${p.category} - Health: ${p.health}`,
+            start_time: p.due_date,
+            end_time: p.due_date,
+            type: 'project',
+            color: '#8b5cf6', // Violet
+            is_all_day: true,
+            reminder_minutes: 60,
+            metadata: { projectId: p.id, health: p.health, budget: p.budget },
+            related_entity_id: p.id,
+            created_at: p.created_at,
+            updated_at: p.updated_at
+        }));
+
+        // Map Milestones to Events
+        const milestoneEvents: CalendarEvent[] = (milestonesRes.data || []).map((m: any) => ({
+            id: `milestone_${m.id}`,
+            user_id: userId,
+            title: `Milestone: ${m.name}`,
+            description: m.description,
+            start_time: m.due_date,
+            end_time: m.due_date,
+            type: 'milestone',
+            color: '#ec4899', // Pink
+            is_all_day: true,
+            reminder_minutes: 0,
+            metadata: { milestoneId: m.id, projectId: m.project_id },
+            related_entity_id: m.id,
+            created_at: m.created_at,
+            updated_at: m.updated_at
+        }));
+
+        const combinedEvents = [
+            ...events,
+            ...taskEvents,
+            ...invoiceEvents,
+            ...contractEvents,
+            ...projectEvents,
+            ...milestoneEvents
+        ];
         combinedEvents.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
 
         return {
             events: combinedEvents,
-            error: eventsRes.error || tasksRes.error || invoicesRes.error || contractsRes.error
+            error: eventsRes.error || tasksRes.error || invoicesRes.error || contractsRes.error || projectsRes.error || milestonesRes.error
         };
     },
 

@@ -48,7 +48,7 @@ export interface ChatMessage {
   priority?: 'normal' | 'high' | 'urgent';
 }
 
-export type ProjectStage = 'Discovery' | 'Design' | 'Development' | 'Testing' | 'Deployment' | 'Maintenance';
+export type ProjectStage = 'Initiation' | 'Planning' | 'Execution' | 'Review' | 'Closure';
 
 export interface Project {
   id: string;
@@ -72,6 +72,9 @@ export interface Project {
   isPublic?: boolean;
   showInPortfolio?: boolean;
   clientId?: string;
+  risk?: 'Low' | 'Medium' | 'High';
+  health?: 'On Track' | 'At Risk' | 'Delayed';
+  resources?: string[];
   createdAt?: string; // ISO Date
 }
 

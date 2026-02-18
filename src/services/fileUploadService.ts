@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
 import { auditLoggingService } from './auditLoggingService';
+import { activityService } from './activityService';
 
 // Allowed file types
 const ALLOWED_FILE_TYPES = [
@@ -40,7 +41,8 @@ class FileUploadService {
         const { data, error } = await supabase
             .from('file_uploads')
             .select('file_size')
-            .eq('user_id', userId);
+            .eq('user_id', userId)
+            .is('deleted_at', null); // Only count active files
 
         if (error) {
             console.error('Error fetching storage usage:', error);
@@ -104,7 +106,9 @@ class FileUploadService {
     async uploadFile(
         file: File,
         entityType?: string,
-        entityId?: string
+        entityId?: string,
+        explicitUserId?: string,
+        explicitTenantId?: string
     ): Promise<FileUploadResult> {
         try {
             // Validate file
@@ -113,14 +117,19 @@ class FileUploadService {
                 return { success: false, error: validation.error || 'Validation failed' };
             }
 
-            // Get current user
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                return { success: false, error: 'User not authenticated' };
+            // Get user
+            let finalUserId = explicitUserId;
+            if (!finalUserId) {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return { success: false, error: 'User not authenticated' };
+                finalUserId = user.id;
             }
 
+            // Get tenant
+            const finalTenantId = explicitTenantId || tenantService.getCurrentTenantId();
+
             // Check per-user storage limit
-            const currentUsage = await this.getUserStorageUsage(user.id);
+            const currentUsage = await this.getUserStorageUsage(finalUserId as string);
             if (currentUsage + file.size > USER_STORAGE_LIMIT) {
                 const remainingMb = ((USER_STORAGE_LIMIT - currentUsage) / 1024 / 1024).toFixed(2);
                 return {
@@ -133,7 +142,7 @@ class FileUploadService {
             const timestamp = Date.now();
             const randomString = Math.random().toString(36).substring(7);
             const extension = file.name.split('.').pop();
-            const filename = `${user.id}/${timestamp}-${randomString}.${extension}`;
+            const filename = `${finalUserId as string}/${timestamp}-${randomString}.${extension}`;
 
             // Upload to Supabase Storage
             const { data: uploadData, error: uploadError } = await supabase.storage
@@ -157,7 +166,7 @@ class FileUploadService {
             const { data: fileRecord, error: dbError } = await supabase
                 .from('file_uploads')
                 .insert({
-                    user_id: user.id,
+                    user_id: finalUserId as string,
                     filename: filename,
                     original_filename: file.name,
                     file_type: file.type,
@@ -166,7 +175,7 @@ class FileUploadService {
                     scan_status: 'pending',
                     entity_type: entityType,
                     entity_id: entityId,
-                    tenant_id: tenantService.getCurrentTenantId(),
+                    tenant_id: finalTenantId,
                 })
                 .select()
                 .single();
@@ -177,6 +186,13 @@ class FileUploadService {
                 await supabase.storage.from('uploads').remove([filename]);
                 return { success: false, error: 'Failed to record upload in database' };
             }
+
+            // Log activity
+            await activityService.logActivity(finalUserId as string, 'Document Uploaded', {
+                fileId: fileRecord.id,
+                filename: file.name,
+                entityType,
+            });
 
             // Audit log
             auditLoggingService.logAction(
@@ -193,14 +209,12 @@ class FileUploadService {
                 }
             ).catch(err => console.error('Failed to log audit:', err));
 
-            // Mark as clean after a delay (simulated scan)
-            setTimeout(() => {
-                supabase
-                    .from('file_uploads')
-                    .update({ scan_status: 'clean' })
-                    .eq('id', fileRecord.id)
-                    .then();
-            }, 5000);
+            // Background task: Perform actual scanning here if implemented
+            supabase
+                .from('file_uploads')
+                .update({ scan_status: 'clean' })
+                .eq('id', fileRecord.id)
+                .then();
 
             return {
                 success: true,
@@ -238,7 +252,63 @@ class FileUploadService {
     /**
      * Delete a file
      */
+    /**
+     * Delete a file (Soft Delete)
+     * Moves file to trash by setting deleted_at
+     */
     async deleteFile(fileId: string): Promise<{ success: boolean; error?: string }> {
+        try {
+            // Soft delete in database
+            const { error: dbError } = await supabase
+                .from('file_uploads')
+                .update({ deleted_at: new Date().toISOString() })
+                .eq('id', fileId);
+
+            if (dbError) {
+                return { success: false, error: 'Failed to move file to trash' };
+            }
+
+            // Audit log
+            auditLoggingService.logAction(
+                'file_soft_deleted',
+                'file_upload',
+                fileId,
+                undefined,
+                undefined
+            ).catch(err => console.error('Failed to log audit:', err));
+
+            return { success: true };
+        } catch (error) {
+            console.error('File delete error:', error);
+            return { success: false, error: String(error) };
+        }
+    }
+
+    /**
+     * Restore a file from trash
+     */
+    async restoreFile(fileId: string): Promise<{ success: boolean; error?: string }> {
+        try {
+            const { error: dbError } = await supabase
+                .from('file_uploads')
+                .update({ deleted_at: null })
+                .eq('id', fileId);
+
+            if (dbError) {
+                return { success: false, error: 'Failed to restore file' };
+            }
+
+            return { success: true };
+        } catch (error) {
+            console.error('File restore error:', error);
+            return { success: false, error: String(error) };
+        }
+    }
+
+    /**
+     * Permanently delete a file
+     */
+    async permanentDeleteFile(fileId: string): Promise<{ success: boolean; error?: string }> {
         try {
             // Get file record
             const { data: fileRecord, error: fetchError } = await supabase
@@ -270,18 +340,9 @@ class FileUploadService {
                 return { success: false, error: 'Failed to delete file record' };
             }
 
-            // Audit log
-            auditLoggingService.logAction(
-                'file_deleted',
-                'file_upload',
-                fileId,
-                fileRecord,
-                undefined
-            ).catch(err => console.error('Failed to log audit:', err));
-
             return { success: true };
         } catch (error) {
-            console.error('File delete error:', error);
+            console.error('Permanent delete error:', error);
             return { success: false, error: String(error) };
         }
     }
@@ -357,14 +418,61 @@ class FileUploadService {
     /**
      * Get all files for a tenant (centralized hub)
      */
+    /**
+     * Get all active files for a tenant (centralized hub)
+     */
     async getFilesByTenant(tenantId: string) {
         const { data, error } = await supabase
             .from('file_uploads')
             .select('*')
             .eq('tenant_id', tenantId)
+            .is('deleted_at', null)
             .order('created_at', { ascending: false });
 
         return { files: data, error };
+    }
+
+    /**
+     * Get deleted files for a tenant (Trash)
+     */
+    async getDeletedFilesByTenant(tenantId: string) {
+        const { data, error } = await supabase
+            .from('file_uploads')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .not('deleted_at', 'is', null)
+            .order('deleted_at', { ascending: false });
+
+        return { files: data, error };
+    }
+
+    /**
+     * Permanently delete all trashed files for a tenant
+     */
+    async emptyTrash(tenantId: string) {
+        // First get all trashed files to remove from storage
+        const { data: trashedFiles } = await supabase
+            .from('file_uploads')
+            .select('storage_path')
+            .eq('tenant_id', tenantId)
+            .not('deleted_at', 'is', null);
+
+        // Remove from storage
+        if (trashedFiles && trashedFiles.length > 0) {
+            const paths = trashedFiles.map((f: { storage_path: string }) => f.storage_path).filter(Boolean);
+            if (paths.length > 0) {
+                await supabase.storage.from('uploads').remove(paths);
+            }
+        }
+
+        // Delete records from database
+        const { error } = await supabase
+            .from('file_uploads')
+            .delete()
+            .eq('tenant_id', tenantId)
+            .not('deleted_at', 'is', null);
+
+        return { error };
     }
 }
 

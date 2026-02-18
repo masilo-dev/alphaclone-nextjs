@@ -5,6 +5,7 @@ import Dashboard from '@/components/Dashboard';
 import { Project, ChatMessage, GalleryItem } from '@/types';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { DashboardShellSkeleton } from '@/components/ui/TabSkeleton';
 
 export default function DashboardPage() {
     const { user, loading, signOut } = useAuth();
@@ -14,23 +15,17 @@ export default function DashboardPage() {
     const router = useRouter();
 
     useEffect(() => {
-        // Redirection logic: If loading is done and no user exists, send to home
+        // Redirection logic: If loading is done and no user exists, send to login
+        // Only redirect if NOT already being handled by a shell (to avoid conflicts)
         if (!loading && !user) {
-            console.warn('Dashboard DashboardPage: Session not established. Redirecting...');
-            router.push('/');
+            console.warn('Dashboard DashboardPage: Session not established. Redirecting to login...');
+            router.replace('/auth/login');
         }
     }, [user, loading, router]);
 
-    // Fast minimal loading - no delays
+    // Show skeleton shell immediately — never a blank screen
     if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-950">
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div>
-                    <span className="text-slate-400 text-sm">Loading...</span>
-                </div>
-            </div>
-        );
+        return <DashboardShellSkeleton />;
     }
 
     // Shield against rendering without user

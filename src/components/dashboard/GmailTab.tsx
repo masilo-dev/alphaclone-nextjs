@@ -200,20 +200,51 @@ const GmailTab: React.FC = () => {
 
     if (!isConnected && !loading) {
         return (
-            <div className="flex flex-col items-center justify-center h-full p-12 text-center">
-                <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-6">
-                    <Mail className="w-10 h-10 text-slate-500" />
+            <div className="w-full h-full overflow-y-auto flex flex-col items-center justify-start sm:justify-center py-8 px-4 sm:px-6 text-center">
+                <div className="w-full max-w-sm sm:max-w-md mx-auto flex flex-col items-center">
+                    <div className="w-14 h-14 sm:w-20 sm:h-20 bg-slate-800 rounded-full flex items-center justify-center mb-4 sm:mb-6">
+                        <Mail className="w-7 h-7 sm:w-10 sm:h-10 text-slate-500" />
+                    </div>
+                    <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3">Gmail Not Connected</h2>
+                    <p className="text-slate-400 text-sm sm:text-base mb-5 sm:mb-7">
+                        Connect your Gmail account to read and send emails directly from AlphaClone.
+                    </p>
+
+                    {/* Step-by-step instructions */}
+                    <div className="w-full text-left bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 mb-4 space-y-3 sm:space-y-4">
+                        <h3 className="text-white font-bold text-xs sm:text-sm uppercase tracking-widest mb-3 sm:mb-4 flex items-center gap-2">
+                            <span className="w-5 h-5 bg-teal-500 rounded-full flex items-center justify-center text-slate-900 text-xs font-black shrink-0">!</span>
+                            How to Connect Gmail
+                        </h3>
+                        <div className="flex items-start gap-3">
+                            <span className="w-6 h-6 bg-teal-500/20 text-teal-400 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</span>
+                            <p className="text-slate-300 text-xs sm:text-sm">Go to <span className="font-bold text-white">Settings</span> from the left sidebar menu.</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                            <span className="w-6 h-6 bg-teal-500/20 text-teal-400 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</span>
+                            <p className="text-slate-300 text-xs sm:text-sm">Find the <span className="font-bold text-white">Integrations</span> section and press <span className="font-bold text-teal-400">Connect Gmail</span>.</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                            <span className="w-6 h-6 bg-teal-500/20 text-teal-400 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</span>
+                            <p className="text-slate-300 text-xs sm:text-sm">A Google sign-in window will open — <span className="font-bold text-white">give access</span> to your Gmail account.</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                            <span className="w-6 h-6 bg-teal-500/20 text-teal-400 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">4</span>
+                            <p className="text-slate-300 text-xs sm:text-sm">After giving access, you will be <span className="font-bold text-white">automatically logged out</span> — you will need to <span className="font-bold text-white">log back in manually</span>. This confirms you are the owner of the account.</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                            <span className="w-6 h-6 bg-teal-500/20 text-teal-400 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">5</span>
+                            <p className="text-slate-300 text-xs sm:text-sm">Once logged back in, return to the <span className="font-bold text-white">Gmail</span> tab — your inbox will be ready!</p>
+                        </div>
+                    </div>
+
+                    {/* Data privacy notice */}
+                    <div className="w-full bg-slate-900/50 border border-slate-800 rounded-xl p-3 sm:p-4 text-left">
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                            <span className="text-slate-400 font-bold">🔒 Privacy Notice:</span> AlphaClone does <span className="font-bold text-slate-300">not</span> delete or modify your Gmail data. To delete a conversation, please do so directly in your <span className="font-bold text-slate-300">Gmail app</span>.
+                        </p>
+                    </div>
                 </div>
-                <h2 className="text-2xl font-bold mb-4">Gmail Not Connected</h2>
-                <p className="text-slate-400 max-w-md mb-8">
-                    Connect your individual Gmail account in Settings to read and send emails directly from AlphaClone.
-                </p>
-                <button
-                    onClick={() => window.location.href = '/dashboard/settings?section=booking'}
-                    className="px-8 py-3 bg-teal-500 hover:bg-teal-600 text-slate-900 font-black tracking-widest uppercase rounded-xl transition-all"
-                >
-                    GO TO SETTINGS (INTEGRATIONS)
-                </button>
             </div>
         );
     }
@@ -376,15 +407,15 @@ const GmailTab: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Messages Area */}
-                            <div className="flex-1 overflow-y-auto bg-slate-100/5 flex flex-col p-4 space-y-4 overscroll-contain touch-pan-y ios-scroll">
+                            {/* Messages Area - scrollable to read full messages */}
+                            <div className="flex-1 overflow-y-auto bg-slate-100/5 flex flex-col p-4 space-y-4 overscroll-contain touch-pan-y" style={{ minHeight: 0 }}>
                                 {loadingConversation ? (
                                     <div className="flex justify-center p-12">
                                         <RefreshCw className="w-8 h-8 animate-spin text-teal-500" />
                                     </div>
                                 ) : (
                                     conversation.map((msg, idx) => (
-                                        <div key={msg.id} className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200">
+                                        <div key={msg.id} className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200 flex-shrink-0">
                                             <div className="p-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
@@ -401,8 +432,9 @@ const GmailTab: React.FC = () => {
                                                     </button>
                                                 )}
                                             </div>
+                                            {/* Full message body - scrollable within the conversation area */}
                                             <div
-                                                className="p-4 text-slate-800 prose prose-sm max-w-none"
+                                                className="p-4 text-slate-800 prose prose-sm max-w-none overflow-x-auto"
                                                 dangerouslySetInnerHTML={{
                                                     __html: DOMPurify.sanitize(msg.body || '')
                                                 }}
@@ -415,11 +447,20 @@ const GmailTab: React.FC = () => {
                                 {!loadingConversation && conversation.length > 0 && (
                                     <button
                                         onClick={openReply}
-                                        className="flex items-center gap-2 text-slate-400 hover:text-teal-400 p-4 border border-dashed border-slate-800 rounded-xl justify-center transition-all hover:bg-slate-900/30 group"
+                                        className="flex items-center gap-2 text-slate-400 hover:text-teal-400 p-4 border border-dashed border-slate-800 rounded-xl justify-center transition-all hover:bg-slate-900/30 group flex-shrink-0"
                                     >
                                         <Send className="w-4 h-4 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
                                         <span>Click here to Reply</span>
                                     </button>
+                                )}
+
+                                {/* Data privacy notice */}
+                                {!loadingConversation && conversation.length > 0 && (
+                                    <div className="flex-shrink-0 bg-slate-900/60 border border-slate-800 rounded-xl p-3 text-center">
+                                        <p className="text-xs text-slate-500 leading-relaxed">
+                                            🔒 <span className="font-bold text-slate-400">AlphaClone does not delete your data.</span> To delete a conversation, please go to your <span className="font-bold text-slate-300">Gmail app</span> and delete it there.
+                                        </p>
+                                    </div>
                                 )}
                             </div>
                         </>

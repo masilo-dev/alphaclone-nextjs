@@ -73,7 +73,7 @@ const HomeTab: React.FC<HomeTabProps> = ({
                     </div>
 
                     <div className="bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden shadow-xl overflow-x-auto">
-                        {isLoadingProjects ? (
+                        {isLoadingProjects && filteredProjects.length === 0 ? (
                             <div className="p-4 md:p-6">
                                 <TableSkeleton rows={5} />
                             </div>
@@ -115,7 +115,7 @@ const HomeTab: React.FC<HomeTabProps> = ({
                                                     {user.role === 'admin' ? (
                                                         <select
                                                             className="bg-transparent border-none text-xs text-white focus:ring-0 cursor-pointer p-0"
-                                                            value={p.currentStage || 'Discovery'}
+                                                            value={p.currentStage || 'Initiation'}
                                                             onClick={(e) => e.stopPropagation()}
                                                             onChange={(e) => updateProjectStage(p.id, e.target.value as any)}
                                                         >

@@ -399,13 +399,20 @@ export const authService = {
                 };
 
                 // Update metadata for next time (non-blocking optimization)
-                supabase.auth.updateUser({
-                    data: {
-                        name: user.name,
-                        role: user.role,
-                        avatar: user.avatar,
-                    }
-                }).catch(() => { }); // Silent fail
+                // PREVENT INFINITE LOOP: Only update if metadata actually changed
+                if (
+                    session.user.user_metadata.name !== user.name ||
+                    session.user.user_metadata.role !== user.role ||
+                    session.user.user_metadata.avatar !== user.avatar
+                ) {
+                    supabase.auth.updateUser({
+                        data: {
+                            name: user.name,
+                            role: user.role,
+                            avatar: user.avatar,
+                        }
+                    }).catch(() => { }); // Silent fail
+                }
             }
 
             console.log(`AuthService: Profile fetched in ${Date.now() - startTime}ms. Role: ${user.role}`);

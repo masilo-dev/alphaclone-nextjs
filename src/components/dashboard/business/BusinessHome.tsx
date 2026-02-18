@@ -22,26 +22,62 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 
 interface BusinessHomeProps {
     user: User;
+    stats?: any;
 }
 
-const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
+const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
     const { currentTenant } = useTenant();
     const [metrics, setMetrics] = useState({
-        totalRevenue: 0,
-        totalClients: 0,
-        activeProjects: 0,
-        pendingInvoices: 0
+        totalRevenue: stats?.totalRevenue || 0,
+        totalClients: stats?.clientCount || 0,
+        activeProjects: stats?.activeProjects || 0,
+        pendingInvoices: stats?.pendingInvoices || 0
     });
-    const [revenueData, setRevenueData] = useState<any[]>([]);
+    const [revenueData, setRevenueData] = useState<any[]>(stats?.monthlyRevenue || []);
     const [pipelineData, setPipelineData] = useState<any[]>([]);
-    const [recentActivity, setRecentActivity] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [recentActivity, setRecentActivity] = useState<any[]>(stats?.recentActivity || []);
+    const [loading, setLoading] = useState(!stats);
 
     useEffect(() => {
-        if (currentTenant) {
+        if (stats) {
+            setMetrics({
+                totalRevenue: stats.totalRevenue || 0,
+                totalClients: stats.clientCount || 0,
+                activeProjects: stats.activeProjects || 0,
+                pendingInvoices: stats.pendingInvoices || 0
+            });
+            setRevenueData(stats.monthlyRevenue || []);
+            setRecentActivity(stats.recentActivity || []);
+            if (stats.pipeline) {
+                mapPipelineData(stats.pipeline);
+            }
+            setLoading(false);
+        } else if (currentTenant) {
             loadDashboardData();
         }
-    }, [currentTenant]);
+    }, [currentTenant, stats]);
+
+    const mapPipelineData = (pipeline: Record<string, number>) => {
+        const stageLabels: Record<string, string> = {
+            lead: 'Leads',
+            qualified: 'Qualified',
+            proposal: 'Proposal',
+            negotiation: 'Negotiation',
+            closed_won: 'Won',
+            closed_lost: 'Lost'
+        };
+
+        const chartData = Object.entries(pipeline).map(([stage, count]) => ({
+            stage: stageLabels[stage] || stage,
+            count: count as number,
+            originalStage: stage
+        }));
+
+        const order = ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost'];
+        chartData.sort((a, b) => order.indexOf(a.originalStage) - order.indexOf(b.originalStage));
+
+        setPipelineData(chartData);
+    };
 
     const loadDashboardData = async () => {
         if (!currentTenant) return;
@@ -68,26 +104,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
 
             // Handle pipeline data for chart
             if (stats.pipeline) {
-                const stageLabels: Record<string, string> = {
-                    lead: 'Leads',
-                    qualified: 'Qualified',
-                    proposal: 'Proposal',
-                    negotiation: 'Negotiation',
-                    closed_won: 'Won',
-                    closed_lost: 'Lost'
-                };
-
-                const chartData = Object.entries(stats.pipeline).map(([stage, count]) => ({
-                    stage: stageLabels[stage] || stage,
-                    count: count as number,
-                    originalStage: stage
-                }));
-
-                // Define order
-                const order = ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost'];
-                chartData.sort((a, b) => order.indexOf(a.originalStage) - order.indexOf(b.originalStage));
-
-                setPipelineData(chartData);
+                mapPipelineData(stats.pipeline);
             }
 
 
@@ -253,9 +270,9 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
                                         'bg-orange-400'
                                     }`} />
                                 <div className="flex-1">
-                                    <p className="text-sm text-slate-300">{activity.title}</p>
+                                    <p className="text-sm text-slate-300">{activity.text}</p>
                                     <p className="text-xs text-slate-500 mt-1">
-                                        {new Date(activity.date).toLocaleDateString()}
+                                        {activity.time ? new Date(activity.time).toLocaleDateString() : 'Recent'}
                                     </p>
                                 </div>
                             </div>

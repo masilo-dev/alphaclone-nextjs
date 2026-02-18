@@ -20,7 +20,8 @@ import {
   Mail,
   Zap,
   BarChart3,
-  MapPin
+  MapPin,
+  FolderOpen
 } from 'lucide-react';
 import { NavItem, DashboardStat } from './types';
 
@@ -106,7 +107,6 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Growth Agent', href: '/dashboard/sales-agent', icon: Zap },
   { label: 'Task Center', href: '/dashboard/tasks', icon: CheckSquare },
   { label: 'Projects', href: '/dashboard/business/projects', icon: Briefcase },
-  { label: 'Documents', href: '/dashboard/business/documents', icon: FileText },
   { label: 'Gmail', href: '/dashboard/gmail', icon: Mail },
   { label: 'Active Meetings', href: '/dashboard/business/meetings', icon: Video },
   { label: 'Financials', href: '/dashboard/business/billing', icon: DollarSign },
@@ -121,6 +121,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     ]
   },
   { label: 'Contracts', href: '/dashboard/business/contracts', icon: FileText },
+  { label: 'Document Hub', href: '/dashboard/business/documents', icon: FolderOpen },
   { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },
 ];
 

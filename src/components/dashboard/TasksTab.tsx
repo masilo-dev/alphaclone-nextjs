@@ -11,53 +11,37 @@ import {
     Trello,
     X,
     Loader2,
-    FileText
+    FileText,
+    List,
+    AlertCircle,
+    CheckCircle2,
+    Clock,
+    Target
 } from 'lucide-react';
 import { taskService, Task } from '../../services/taskService';
+import { notificationService } from '../../services/dashboardService';
 import { Button, Modal, Input } from '../ui/UIComponents';
+import { TaskCountdown } from './tasks/TaskCountdown';
 import { CollaborativeTaskNotes } from './projects/CollaborativeTaskNotes';
 import { useAuth } from '@/contexts/AuthContext';
 import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import toast from 'react-hot-toast';
 import { useTasks } from '@/hooks/useTasks';
-import dynamic from 'next/dynamic';
-
-
-import {
-    DndContext,
-    DragEndEvent,
-    DragOverlay,
-    DragStartEvent,
-    closestCorners,
-    PointerSensor,
-    useSensor,
-    useSensors
-} from '@dnd-kit/core';
-import {
-    SortableContext,
-    verticalListSortingStrategy,
-    useSortable
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 
 interface TasksTabProps {
     userId: string;
     userRole: string;
 }
 
-type ViewMode = 'grid' | 'kanban' | 'gantt';
-
 const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
     const [filter, setFilter] = useState<'all' | 'my_tasks' | 'overdue'>('all');
-    const [viewMode, setViewMode] = useState<ViewMode>('kanban');
     const [searchQuery, setSearchQuery] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [activeId, setActiveId] = useState<string | null>(null);
     const [notesTaskId, setNotesTaskId] = useState<string | null>(null);
-    const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
     const [selectedProject] = useState<string>('all');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingTask, setEditingTask] = useState<Task | null>(null);
 
     // Hooks
     const { user } = useAuth();
@@ -87,14 +71,6 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         startDate: new Date().toISOString().split('T')[0],
         estimatedHours: ''
     });
-
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 8,
-            },
-        })
-    );
 
     // Computed Tasks
     const filteredAndSearchedTasks = useMemo(() => {
@@ -133,265 +109,370 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         }
         setIsSubmitting(true);
         try {
-            await createTaskMutation.mutateAsync({
-                userId,
-                taskData: {
-                    title: taskForm.title,
-                    description: taskForm.description || undefined,
-                    priority: taskForm.priority,
-                    dueDate: taskForm.dueDate || undefined,
-                    startDate: taskForm.startDate || undefined,
-                    assignedTo: (taskForm as any).assignedTo || undefined,
-                    relatedToProject: (taskForm as any).relatedToProject || undefined,
-                    relatedToLead: (taskForm as any).relatedToLead || undefined,
-                    estimatedHours: taskForm.estimatedHours ? parseFloat(taskForm.estimatedHours) : undefined
-                }
-            });
-            toast.success('Task created successfully!');
+            if (editingTask) {
+                await updateTaskMutation.mutateAsync({
+                    taskId: editingTask.id,
+                    updates: {
+                        title: taskForm.title,
+                        description: taskForm.description || undefined,
+                        priority: taskForm.priority,
+                        dueDate: taskForm.dueDate || undefined,
+                        startDate: taskForm.startDate || undefined,
+                        assignedTo: (taskForm as any).assignedTo || undefined,
+                        relatedToProject: (taskForm as any).relatedToProject || undefined,
+                        relatedToLead: (taskForm as any).relatedToLead || undefined,
+                        estimatedHours: taskForm.estimatedHours ? parseFloat(taskForm.estimatedHours) : undefined
+                    }
+                });
+                toast.success('Task updated successfully!');
+            } else {
+                await createTaskMutation.mutateAsync({
+                    userId,
+                    taskData: {
+                        title: taskForm.title,
+                        description: taskForm.description || undefined,
+                        priority: taskForm.priority,
+                        dueDate: taskForm.dueDate || undefined,
+                        startDate: taskForm.startDate || undefined,
+                        assignedTo: (taskForm as any).assignedTo || undefined,
+                        relatedToProject: (taskForm as any).relatedToProject || undefined,
+                        relatedToLead: (taskForm as any).relatedToLead || undefined,
+                        estimatedHours: taskForm.estimatedHours ? parseFloat(taskForm.estimatedHours) : undefined
+                    }
+                });
+                toast.success('Task created successfully!');
+            }
             setShowCreateModal(false);
-            setTaskForm({
-                title: '',
-                description: '',
-                priority: 'medium',
-                assignedTo: '',
-                relatedToProject: '',
-                relatedToLead: '',
-                dueDate: '',
-                startDate: new Date().toISOString().split('T')[0],
-                estimatedHours: ''
-            } as any);
+            setEditingTask(null);
+            resetTaskForm();
         } catch (err) {
-            toast.error('Failed to create task');
+            toast.error(editingTask ? 'Failed to update task' : 'Failed to create task');
         } finally {
             setIsSubmitting(false);
         }
     };
 
-
-    const toggleTaskSelection = (taskId: string) => {
-        setSelectedTaskIds((prev: string[]) =>
-            prev.includes(taskId) ? prev.filter((id: string) => id !== taskId) : [...prev, taskId]
-        );
+    const resetTaskForm = () => {
+        setTaskForm({
+            title: '',
+            description: '',
+            priority: 'medium',
+            assignedTo: '',
+            relatedToProject: '',
+            relatedToLead: '',
+            dueDate: '',
+            startDate: new Date().toISOString().split('T')[0],
+            estimatedHours: ''
+        } as any);
     };
 
-    // Sortable Item Component
-    const SortableTaskItem = ({ task, isOverlay }: { task: Task; isOverlay?: boolean }) => {
-        const {
-            attributes,
-            listeners,
-            setNodeRef,
-            transform,
-            transition,
-            isDragging
-        } = useSortable({ id: task.id });
+    const openEditModal = (task: Task) => {
+        setEditingTask(task);
+        setTaskForm({
+            title: task.title,
+            description: task.description || '',
+            priority: task.priority,
+            assignedTo: task.assignedTo || '',
+            relatedToProject: task.relatedToProject || '',
+            relatedToLead: task.relatedToLead || '',
+            dueDate: task.dueDate || '',
+            startDate: task.startDate || '',
+            estimatedHours: task.estimatedHours?.toString() || ''
+        });
+        setShowCreateModal(true);
+    };
 
-        const style = {
-            transform: CSS.Translate.toString(transform),
-            transition,
-            opacity: isDragging ? 0.3 : 1,
-        };
-
-        const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'completed';
-
-        return (
-            <div
-                ref={setNodeRef}
-                style={style}
-                {...attributes}
-                {...listeners}
-                className={`glass-panel p-4 rounded-xl border group hover:border-teal-500/40 transition-all cursor-grab active:cursor-grabbing relative overflow-hidden mb-3 ${isOverdue ? 'border-red-500/30 bg-red-500/5' : 'border-white/5 bg-slate-900/40'
-                    } ${selectedTaskIds.includes(task.id) ? 'border-teal-500/60 bg-teal-500/5' : ''}`}
-            >
-                <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-bold text-slate-100 text-sm group-hover:text-white transition-colors line-clamp-2">{task.title}</h4>
-                </div>
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                    <span className={`px-2 py-0.5 text-[10px] rounded-md font-bold uppercase tracking-wider bg-slate-800`}>
-                        {task.priority}
-                    </span>
-                </div>
+    const renderDirectiveList = () => (
+        <div className="w-full space-y-4">
+            {/* Table Header - Simplified for Modern Look */}
+            <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-3 bg-slate-900/40 border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 font-mono">
+                <div className="col-span-12 lg:col-span-5">Objective Detail</div>
+                <div className="lg:col-span-2 text-center">Status</div>
+                <div className="lg:col-span-2 text-center">Priority</div>
+                <div className="lg:col-span-2 text-center">Deadline</div>
+                <div className="lg:col-span-1 text-right">Ops</div>
             </div>
-        );
-    };
 
-    const KanbanColumn = ({ status, title, items }: { status: string, title: string, items: Task[] }) => {
-        return (
-            <div className="flex flex-col w-72 min-w-[18rem] h-full">
-                <div className={`p-3 rounded-t-xl bg-slate-900/60 border-t-2 border-slate-700 border-x border-slate-800/50 flex items-center justify-between`}>
-                    <h3 className="font-bold text-slate-200 text-sm flex items-center gap-2">
-                        {title}
-                    </h3>
-                    <span className="text-xs text-slate-500 font-mono bg-slate-800/50 px-2 py-0.5 rounded-full">{items.length}</span>
-                </div>
-                <SortableContext
-                    id={status}
-                    items={items.map(t => t.id)}
-                    strategy={verticalListSortingStrategy}
-                >
-                    <div className="flex-1 p-3 bg-slate-900/20 border-x border-b border-slate-800/50 rounded-b-xl overflow-y-auto min-h-[400px]">
-                        {items.map(task => (
-                            <SortableTaskItem key={task.id} task={task} />
-                        ))}
+            {/* List Rows */}
+            <div className="space-y-3">
+                {filteredAndSearchedTasks.length === 0 && !loading ? (
+                    <div className="py-12 flex flex-col items-center justify-center text-slate-500 bg-slate-900/20 rounded-2xl border border-dashed border-white/5">
+                        <Target className="w-12 h-12 mb-4 opacity-20" />
+                        <p className="font-mono text-sm uppercase tracking-widest">No Active Directives</p>
                     </div>
-                </SortableContext>
-            </div>
-        );
-    };
+                ) : (
+                    filteredAndSearchedTasks.map((task) => (
+                        <div
+                            key={task.id}
+                            className="group grid grid-cols-1 lg:grid-cols-12 gap-4 items-center px-6 py-4 bg-slate-900/40 hover:bg-slate-800/40 border border-white/5 hover:border-teal-500/30 rounded-2xl transition-all duration-300 relative overflow-hidden"
+                        >
+                            {/* Priority Indicator Line */}
+                            <div className={`absolute left-0 top-0 bottom-0 w-1 ${task.priority === 'high' ? 'bg-red-500' :
+                                    task.priority === 'medium' ? 'bg-orange-500' : 'bg-teal-500/30'
+                                }`} />
 
-    const renderKanbanView = () => (
-        <DndContext
-            onDragStart={(event) => setActiveId(event.active.id as string)}
-            onDragEnd={async (event) => {
-                const { active, over } = event;
-                setActiveId(null);
-                if (!over) return;
+                            {/* Objective Detail */}
+                            <div className="col-span-1 lg:col-span-5 flex items-center gap-4">
+                                <div className={`p-2 rounded-lg ${task.status === 'completed' ? 'bg-green-500/10 text-green-400' : 'bg-teal-500/10 text-teal-400'}`}>
+                                    {task.status === 'completed' ? <CheckCircle2 className="w-5 h-5" /> : <Target className="w-5 h-5" />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors truncate">
+                                        {task.title}
+                                    </h4>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        {task.description && (
+                                            <p className="text-xs text-slate-500 truncate max-w-[200px]">
+                                                {task.description}
+                                            </p>
+                                        )}
+                                        {task.estimatedHours && (
+                                            <span className="flex items-center gap-1 text-[10px] text-slate-600 bg-white/5 px-1.5 py-0.5 rounded">
+                                                <Clock className="w-3 h-3" />
+                                                {task.estimatedHours}h
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
 
-                const taskId = active.id as string;
-                const newStatus = over.id as Task['status'];
+                            {/* Status Select */}
+                            <div className="col-span-1 lg:col-span-2 flex justify-center">
+                                <select
+                                    value={task.status}
+                                    onChange={(e) => handleStatusChange(task.id, e.target.value as any)}
+                                    className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg bg-slate-950/50 border border-white/5 outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer w-full lg:w-32 text-center appearance-none hover:bg-slate-900 transition-colors ${task.status === 'completed' ? 'text-green-400 border-green-500/20' :
+                                            task.status === 'in_progress' ? 'text-teal-400 border-teal-500/20' : 'text-slate-400'
+                                        }`}
+                                >
+                                    <option value="ideas">Standby</option>
+                                    <option value="todo">Planning</option>
+                                    <option value="in_progress">Active</option>
+                                    <option value="review">Review</option>
+                                    <option value="completed">Success</option>
+                                </select>
+                            </div>
 
-                const task = tasks.find(t => t.id === taskId);
-                if (task && task.status !== newStatus) {
-                    await handleStatusChange(taskId, newStatus);
-                }
-            }}
-            collisionDetection={closestCorners}
-            sensors={sensors}
-        >
-            <div className="flex gap-4 h-full overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-slate-700">
-                <KanbanColumn status="ideas" title="Ideas" items={filteredAndSearchedTasks.filter(t => t.status === 'ideas')} />
-                <KanbanColumn status="todo" title="Planning" items={filteredAndSearchedTasks.filter(t => t.status === 'todo')} />
-                <KanbanColumn status="in_progress" title="Active" items={filteredAndSearchedTasks.filter(t => t.status === 'in_progress')} />
-                <KanbanColumn status="review" title="Review" items={filteredAndSearchedTasks.filter(t => t.status === 'review')} />
-                <KanbanColumn status="completed" title="Done" items={filteredAndSearchedTasks.filter(t => t.status === 'completed')} />
-            </div>
-            <DragOverlay>
-                {activeId ? (
-                    <div className="p-4 bg-slate-800 rounded-lg border border-teal-500 shadow-xl w-72">
-                        Dragging...
-                    </div>
-                ) : null}
-            </DragOverlay>
-        </DndContext>
-    );
-
-
-
-    const renderLazyGrid = () => (
-        <div className="h-full w-full overflow-y-auto p-4">
-            {filteredAndSearchedTasks.length === 0 && !loading ? (
-                <div className="flex items-center justify-center h-full text-slate-500">No tasks found</div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {filteredAndSearchedTasks.map((task) => (
-                        <div key={task.id} className="glass-panel p-4 rounded-xl border border-white/5 bg-slate-900/40 relative group overflow-hidden hover:border-teal-500/30 transition-all flex flex-col h-56">
-                            <div className="flex justify-between items-start mb-2">
-                                <h4 className="font-bold text-white text-sm line-clamp-2">{task.title}</h4>
-                                <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold ${task.status === 'completed' ? 'bg-green-500/20 text-green-400' : 'bg-slate-700 text-slate-400'}`}>
-                                    {task.status.replace('_', ' ')}
+                            {/* Priority Tag */}
+                            <div className="col-span-1 lg:col-span-2 flex justify-center">
+                                <span className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] rounded-lg font-black uppercase tracking-widest border ${task.priority === 'high' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
+                                        task.priority === 'medium' ? 'bg-orange-500/10 border-orange-500/20 text-orange-500' :
+                                            'bg-slate-800/50 border-white/5 text-slate-500'
+                                    }`}>
+                                    <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${task.priority === 'high' ? 'bg-red-500' :
+                                            task.priority === 'medium' ? 'bg-orange-500' : 'bg-slate-500'
+                                        }`} />
+                                    {task.priority}
                                 </span>
                             </div>
-                            <p className="text-xs text-slate-500 line-clamp-3 mb-4 flex-1">{task.description}</p>
-                            <div className="mt-auto flex justify-between items-center text-xs text-slate-500 border-t border-white/5 pt-2">
-                                <span>{task.estimatedHours ? `${task.estimatedHours}h` : '-'}</span>
-                                {task.dueDate && <span>{new Date(task.dueDate).toLocaleDateString()}</span>}
+
+                            {/* Deadline / Countdown */}
+                            <div className="col-span-1 lg:col-span-2 flex justify-center">
+                                {task.dueDate ? (
+                                    <div className="bg-slate-950/30 px-3 py-1.5 rounded-lg border border-white/5 w-full lg:w-auto text-center">
+                                        <TaskCountdown
+                                            dueDate={task.dueDate}
+                                            onOverdue={() => handleStatusChange(task.id, 'review')}
+                                        />
+                                    </div>
+                                ) : (
+                                    <span className="text-[10px] text-slate-600 font-mono italic">No Deadline</span>
+                                )}
+                            </div>
+
+                            {/* Row Actions */}
+                            <div className="col-span-1 lg:col-span-1 flex justify-end gap-1">
                                 <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setNotesTaskId(task.id);
-                                    }}
-                                    className="p-1 hover:bg-teal-500/10 text-slate-400 hover:text-teal-400 rounded-md transition-colors"
+                                    onClick={() => openEditModal(task)}
+                                    className="p-2 hover:bg-teal-500/10 text-slate-400 hover:text-teal-400 rounded-lg transition-all"
+                                    title="Edit Directive"
                                 >
-                                    <FileText className="w-3.5 h-3.5" />
+                                    <Plus className="w-4 h-4 rotate-45" />
+                                </button>
+                                <button
+                                    onClick={() => setNotesTaskId(task.id)}
+                                    className="p-2 hover:bg-teal-500/10 text-slate-400 hover:text-teal-400 rounded-lg transition-all"
+                                    title="Intelligence Notes"
+                                >
+                                    <FileText className="w-4 h-4" />
                                 </button>
                             </div>
                         </div>
-                    ))}
-                </div>
-            )}
+                    ))
+                )}
+            </div>
         </div>
     );
 
     return (
         <div className="h-full flex flex-col space-y-6">
-            {/* Header Controls */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Mission Interface Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/5">
                 <div>
-                    <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-3">
-                        <CheckSquare className="w-8 h-8 text-teal-400" />
-                        Mission Control
-                        <span className="px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-400 text-xs font-mono font-normal">
-                            {loading ? '...' : tasks.length} Active
+                    <h1 className="text-3xl font-black text-white tracking-tighter flex items-center gap-3">
+                        <div className="p-2 bg-teal-500 rounded-lg shadow-lg shadow-teal-500/20">
+                            <CheckSquare className="w-6 h-6 text-slate-900" />
+                        </div>
+                        MISSION CONTROL
+                        <span className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-teal-400 text-xs font-mono font-bold animate-pulse">
+                            {loading ? 'SYNCING...' : `${tasks.length} ACTIVE DIRECTIVES`}
                         </span>
                     </h1>
-                    <p className="text-slate-400 text-sm mt-1">Manage and track operational objectives</p>
+                    <p className="text-slate-400 text-xs font-mono uppercase tracking-[0.2em] mt-2 opacity-60">System Operational // Objective Tracking Interface</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex bg-slate-900/50 p-1 rounded-lg border border-white/5">
-                        <button onClick={() => setViewMode('grid')} className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-400 hover:bg-white/5'}`}>
-                            <LayoutGrid className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => setViewMode('kanban')} className={`p-2 rounded-md ${viewMode === 'kanban' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-400 hover:bg-white/5'}`}>
-                            <Trello className="w-4 h-4" />
-                        </button>
+                <div className="flex items-center gap-4">
+                    <div className="relative group">
+                        <Input
+                            placeholder="SEARCH DIRECTIVES..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="bg-slate-900/60 border-white/10 w-64 h-11 text-xs font-mono tracking-widest focus:border-teal-500 focus:bg-slate-900 transition-all pl-10"
+                        />
+                        <Target className="w-4 h-4 text-slate-600 absolute left-3 top-1/2 -translate-y-1/2 group-focus-within:text-teal-500 transition-colors" />
                     </div>
-                    <Button onClick={() => setShowCreateModal(true)} icon={<Plus className="w-4 h-4" />} variant="primary">
+                    <Button
+                        onClick={() => { setEditingTask(null); resetTaskForm(); setShowCreateModal(true); }}
+                        icon={<Plus className="w-4 h-4" />}
+                        variant="primary"
+                        className="h-11 px-6 font-black uppercase tracking-widest text-xs shadow-xl shadow-teal-500/10"
+                    >
                         New Directive
                     </Button>
                 </div>
             </div>
 
-            {/* Content Area */}
-            <div className="flex-1 min-h-0 relative" style={{ minHeight: '600px' }}>
+            {/* Main Operational Window */}
+            <div className="flex-1 min-h-0 relative">
                 {loading && tasks.length === 0 ? (
-                    <div className="flex justify-center items-center h-64">
-                        <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
+                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                        <div className="relative">
+                            <Loader2 className="w-12 h-12 text-teal-500 animate-spin" />
+                            <div className="absolute inset-0 bg-teal-500/20 blur-xl rounded-full" />
+                        </div>
+                        <p className="font-mono text-[10px] text-slate-500 uppercase tracking-widest animate-pulse">Synchronizing Mission Data...</p>
                     </div>
                 ) : (
-                    viewMode === 'grid' ? renderLazyGrid() : renderKanbanView()
+                    renderDirectiveList()
                 )}
             </div>
 
-            {/* Create Modal */}
+            {/* Directive Modification Unit (Create/Edit Modal) */}
             <Modal
                 isOpen={showCreateModal}
                 onClose={() => setShowCreateModal(false)}
-                title="Create New Task"
+                title={editingTask ? "MODifying DIRECTIVE" : "INITIALIZING NEW MISSION"}
                 maxWidth="max-w-4xl"
             >
                 <div className="space-y-6">
                     <div>
-                        <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Title</label>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Mission Objective Title</label>
                         <Input
-                            placeholder="Objective Title"
+                            placeholder="Enter Objective..."
                             value={taskForm.title}
                             onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
-                            className="bg-slate-950/50 text-xl font-bold border-white/10 focus:border-teal-500"
+                            className="bg-slate-950/50 text-xl font-black border-white/10 focus:border-teal-500 py-6 tracking-tight"
                         />
                     </div>
-                    {/* Simplified form for brevity in this refactor */}
-                    <div className="flex justify-end gap-3 pt-6 border-t border-white/5">
-                        <button onClick={() => setShowCreateModal(false)} className="px-4 py-2 text-slate-400 hover:text-white">Cancel</button>
-                        <Button onClick={handleCreateTask} disabled={isSubmitting} variant="primary">
-                            {isSubmitting ? 'Initializing...' : 'Initialize Directive'}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Intelligence Briefing</label>
+                            <textarea
+                                className="w-full bg-slate-950/50 border border-white/10 rounded-2xl p-4 text-slate-300 focus:border-teal-500 outline-none transition-all min-h-[160px] resize-none text-sm placeholder:text-slate-700"
+                                placeholder="Describe the mission details and required parameters..."
+                                value={taskForm.description}
+                                onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-6">
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Threat Level (Priority)</label>
+                                <div className="grid grid-cols-3 gap-3">
+                                    {(['low', 'medium', 'high'] as const).map(p => (
+                                        <button
+                                            key={p}
+                                            onClick={() => setTaskForm({ ...taskForm, priority: p })}
+                                            className={`py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${taskForm.priority === p
+                                                    ? 'bg-teal-500 border-teal-400 text-slate-900 shadow-xl shadow-teal-500/20'
+                                                    : 'bg-slate-900 border-white/5 text-slate-600 hover:border-white/20'
+                                                }`}
+                                        >
+                                            {p}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Launch Date</label>
+                                    <Input
+                                        type="date"
+                                        value={taskForm.startDate}
+                                        onChange={(e) => setTaskForm({ ...taskForm, startDate: e.target.value })}
+                                        className="bg-slate-950/50 border-white/10 h-12 text-slate-300 font-mono text-xs"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Exfil Date (Due)</label>
+                                    <Input
+                                        type="date"
+                                        value={taskForm.dueDate}
+                                        onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })}
+                                        className="bg-slate-950/50 border-white/10 h-12 text-slate-300 font-mono text-xs"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Resource Allocation (Hrs)</label>
+                                <Input
+                                    type="number"
+                                    placeholder="0.0"
+                                    value={taskForm.estimatedHours}
+                                    onChange={(e) => setTaskForm({ ...taskForm, estimatedHours: e.target.value })}
+                                    className="bg-slate-950/50 border-white/10 h-12 text-slate-300 font-mono text-xs"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end gap-4 pt-8 border-t border-white/5">
+                        <button
+                            onClick={() => setShowCreateModal(false)}
+                            className="px-6 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 hover:text-white transition-colors"
+                        >
+                            Abort
+                        </button>
+                        <Button
+                            onClick={handleCreateTask}
+                            disabled={isSubmitting}
+                            variant="primary"
+                            className="px-8 h-12 font-black uppercase tracking-widest text-xs shadow-xl shadow-teal-500/20"
+                        >
+                            {isSubmitting ? 'SYNCING...' : (editingTask ? 'Commit Changes' : 'Initialize Mission')}
                         </Button>
                     </div>
                 </div>
             </Modal>
 
-            {/* Collaborative Notes Modal */}
+            {/* Intelligence Notes Interface */}
             {notesTaskId && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                    <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl glass-panel shadow-2xl relative flex flex-col">
-                        <div className="flex items-center justify-between p-4 border-b border-white/10 bg-slate-900/90">
-                            <h3 className="font-bold text-white flex items-center gap-2">
-                                <FileText className="w-4 h-4 text-teal-400" />
-                                Intelligence Notes
-                            </h3>
-                            <button onClick={() => setNotesTaskId(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                                <X className="w-5 h-5 text-slate-400" />
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
+                    <div className="w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-3xl border border-white/10 bg-slate-900 shadow-[0_0_50px_-12px_rgba(20,184,166,0.3)] relative flex flex-col">
+                        <div className="flex items-center justify-between p-6 border-b border-white/5 bg-slate-900/50 backdrop-blur-xl">
+                            <div>
+                                <h3 className="font-black text-white text-lg flex items-center gap-3 tracking-tighter">
+                                    <div className="p-1.5 bg-teal-500/10 rounded-lg">
+                                        <FileText className="w-5 h-5 text-teal-400" />
+                                    </div>
+                                    INTELLIGENCE BRIEFING
+                                </h3>
+                                <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mt-1">Classification: Level 5 // Active Operational Logs</p>
+                            </div>
+                            <button onClick={() => setNotesTaskId(null)} className="p-2 hover:bg-white/5 rounded-xl transition-all border border-transparent hover:border-white/10">
+                                <X className="w-6 h-6 text-slate-500 hover:text-white" />
                             </button>
                         </div>
-                        <div className="flex-1 overflow-hidden relative">
+                        <div className="flex-1 overflow-hidden relative bg-slate-950/20">
                             <CollaborativeTaskNotes taskId={notesTaskId} userId={userId} userName={user?.user_metadata?.name || 'Agent'} onClose={() => setNotesTaskId(null)} />
                         </div>
                     </div>

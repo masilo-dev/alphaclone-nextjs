@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { User } from '../../../types';
+import { User, ProjectStage } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import toast from 'react-hot-toast';
 import { businessClientService } from '../../../services/businessClientService';
@@ -129,7 +129,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
             setClientData(clientStages);
 
             // Project status distribution (mapped to stages)
-            const projectStages: any[] = ['Discovery', 'Design', 'Development', 'Testing', 'Deployment', 'Maintenance'];
+            const projectStages: ProjectStage[] = ['Initiation', 'Planning', 'Execution', 'Review', 'Closure'];
             const projectStatuses = projectStages.map(stage => ({
                 name: stage,
                 value: projects.filter(p => p.currentStage === stage).length

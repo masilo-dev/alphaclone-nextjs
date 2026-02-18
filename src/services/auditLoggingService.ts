@@ -29,16 +29,9 @@ class AuditLoggingService {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      let ipBox = { ip: 'Unknown', city: 'Unknown', country: 'Unknown' };
-      try {
-        const res = await fetch('https://ipapi.co/json/');
-        if (res.ok) {
-          const data = await res.json();
-          ipBox = { ip: data.ip, city: data.city, country: data.country_name };
-        }
-      } catch (e) {
-        // Fallback or silent fail
-      }
+      const ipBox = { ip: 'Unknown', city: 'Unknown', country: 'Unknown' };
+      // Note: External IP fetch removed to prevent significant delays in core operations.
+      // If IP data is critical, it should be fetched asynchronously or via a server-side handler.
 
       const logEntry: AuditLogEntry = {
         user_id: user?.id,

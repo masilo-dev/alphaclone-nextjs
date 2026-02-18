@@ -15,37 +15,38 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         // If auth is still loading, do nothing
         if (authLoading) return;
 
-        if (!user) {
-            // Not authenticated
-            if (pathname !== '/auth/login') {
-                setIsRedirecting(true);
-                router.replace('/auth/login');
+        const handleRedirection = async () => {
+            if (!user) {
+                // Not authenticated
+                if (pathname !== '/auth/login' && !pathname.startsWith('/auth/')) {
+                    console.log('AppShell: No user, redirecting to login');
+                    setIsRedirecting(true);
+                    await router.replace('/auth/login');
+                } else {
+                    setIsRedirecting(false);
+                }
             } else {
-                setIsRedirecting(false);
+                // Authenticated
+                // Prevent access to landing page (root) and login page in PWA mode
+                if (pathname === '/' || pathname === '/auth/login') {
+                    console.log('AppShell: Logged in, redirecting to dashboard');
+                    setIsRedirecting(true);
+                    await router.replace('/dashboard');
+                } else {
+                    // We are where we should be
+                    setIsRedirecting(false);
+                }
             }
-        } else {
-            // Authenticated
-            // Prevent access to landing page (root) and login page
-            if (pathname === '/' || pathname === '/auth/login') {
-                setIsRedirecting(true);
-                router.replace('/dashboard');
-            } else {
-                setIsRedirecting(false);
-            }
-        }
+        };
+
+        handleRedirection();
     }, [user, authLoading, pathname, router]);
 
-    // Show splash during auth load or redirection logic
+    // Show splash during initial auth load OR while redirecting
     if (authLoading || isRedirecting) {
         return <Splash />;
     }
 
-    // If we are on the landing page but haven't redirected yet (edge case), show Splash
-    // This prevents the landing page from flashing
-    if (pathname === '/' && user) return <Splash />;
-    if (pathname === '/' && !user) return <Splash />; // Will redirect to login
-
-    // "PWA Mode" layout - Minimal, no browser UI interference
     return (
         <div className="flex flex-col h-screen w-screen bg-[#050B1E] overflow-hidden overscroll-none text-white">
             {/* 

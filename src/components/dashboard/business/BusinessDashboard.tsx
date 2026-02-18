@@ -45,6 +45,7 @@ const DealsTab = React.lazy(() => import('../DealsTab'));
 const QuotesTab = React.lazy(() => import('../QuotesTab'));
 import AlphaCloneContractModal from '../../contracts/AlphaCloneContractModal';
 import ContractDashboard from '../../contracts/ContractDashboard';
+import DocumentHub from '../../documents/DocumentHub';
 // Accounting Components - Lazy loaded to prevent module resolution issues
 const ChartOfAccountsPage = React.lazy(() => import('../accounting/ChartOfAccountsPage'));
 const JournalEntriesPage = React.lazy(() => import('../accounting/JournalEntriesPage'));
@@ -53,6 +54,7 @@ const GmailTab = React.lazy(() => import('../GmailTab'));
 const CustomVideoRoom = React.lazy(() => import('../video/CustomVideoRoom'));
 
 import Sidebar from '@/components/dashboard/Sidebar';
+import { TableSkeleton } from '@/components/ui/Skeleton';
 import { TENANT_ADMIN_NAV_ITEMS } from '@/constants';
 import { PLAN_PRICING } from '../../../services/tenancy/types';
 
@@ -64,8 +66,9 @@ interface BusinessDashboardProps {
 }
 
 const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, activeTab, setActiveTab }) => {
-    const { currentTenant, isLoading: tenantLoading } = useTenant();
+    const { currentTenant, isLoading: tenantLoading, getDashboardStats } = useTenant();
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [dashboardStats, setDashboardStats] = useState<any>(null);
 
     // Sync sidebar on mount to avoid hydration mismatch
     React.useEffect(() => {
@@ -215,6 +218,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
         };
 
         loadProjects();
+
+        // Fetch consolidated stats
+        if (currentTenant?.id) {
+            getDashboardStats(currentTenant.id).then(({ stats }) => {
+                if (stats) setDashboardStats(stats);
+            });
+        }
     }, [user, currentTenant]);
 
     const [notification, setNotification] = useState<string | null>(null);
@@ -275,7 +285,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
 
         switch (activeTab) {
             case '/dashboard':
-                return <BusinessHome user={user} />;
+                return <BusinessHome user={user} stats={dashboardStats} />;
             case '/dashboard/business/projects':
                 return <ProjectsPage user={user} />;
             case '/dashboard/business/team':
@@ -297,7 +307,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             case '/dashboard/crm':
             case '/dashboard/business/clients':
                 return (
-                    <React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div></div>}>
+                    <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
                         <CRMTab
                             userId={user.id}
                             userRole={user.role}
@@ -306,7 +316,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                 );
             case '/dashboard/tasks':
                 return (
-                    <React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div></div>}>
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
                         <TasksTab userId={user.id} userRole={user.role} />
                     </React.Suspense>
                 );
@@ -318,10 +328,10 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             case '/dashboard/business/contracts':
                 return <ContractDashboard user={user} initialTab="details" />;
             case '/dashboard/business/documents':
-                return <ContractDashboard user={user} initialTab="hub" />;
+                return <DocumentHub user={user} />;
             case '/dashboard/business/quotes':
                 return (
-                    <React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div></div>}>
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
                         <QuotesTab userId={user.id} userRole={user.role} />
                     </React.Suspense>
                 );
@@ -336,25 +346,25 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             // Accounting Routes
             case '/dashboard/accounting/chart-of-accounts':
                 return (
-                    <React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div></div>}>
+                    <React.Suspense fallback={<TableSkeleton rows={10} columns={5} />}>
                         <ChartOfAccountsPage />
                     </React.Suspense>
                 );
             case '/dashboard/accounting/journal-entries':
                 return (
-                    <React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div></div>}>
+                    <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
                         <JournalEntriesPage />
                     </React.Suspense>
                 );
             case '/dashboard/accounting/reports':
                 return (
-                    <React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div></div>}>
+                    <React.Suspense fallback={<TableSkeleton rows={10} columns={4} />}>
                         <FinancialReportsPage />
                     </React.Suspense>
                 );
 
             default:
-                return <BusinessHome user={user} />;
+                return <BusinessHome user={user} stats={dashboardStats} />;
         }
     };
 
@@ -371,7 +381,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             case '/dashboard/business/reports': return 'Analytics & Reports';
             case '/dashboard/business/settings': return 'Settings';
             case '/dashboard/business/contracts': return 'Contracts';
-            case '/dashboard/business/documents': return 'Documents';
+            case '/dashboard/business/documents': return 'Document Hub';
             case '/dashboard/business/quotes': return 'Quotes & Proposals';
             case '/dashboard/crm': return 'CRM';
             case '/dashboard/tasks': return 'Tasks';
@@ -385,12 +395,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
         }
     };
 
-    // Show loading state while tenant context initializes
-    if (tenantLoading) {
+    // Show loading state while tenant context initializes (only if no cache found)
+    if (tenantLoading && !currentTenant) {
         return (
             <div className="flex items-center justify-center h-screen bg-slate-950">
                 <div id="main-content" className="text-center">
-                    <div className="text-slate-400 text-lg">Loading your workspace...</div>
+                    <div className="text-slate-400 text-lg animate-pulse">Loading Workspace...</div>
                 </div>
             </div>
         );
