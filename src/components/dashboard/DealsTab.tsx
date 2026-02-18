@@ -497,7 +497,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                     description="Create your first deal to start tracking your sales pipeline."
                 />
             ) : (
-                <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent max-h-[calc(100vh-400px)] overflow-y-hidden">
+                <div className="flex gap-4 overflow-x-auto pb-8 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
                     {stages.map((stage) => {
                         const stageDeals = getDealsByStage(stage);
                         return (

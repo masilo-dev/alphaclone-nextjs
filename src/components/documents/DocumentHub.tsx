@@ -354,18 +354,18 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
 
     // ── LIST MODE ─────────────────────────────────────────────────────────────
     return (
-        <div className="space-y-6 p-6">
+        <div className="space-y-4 p-4 sm:p-6" style={{ touchAction: 'pan-y' }}>
             {/* Header */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
                         <FolderOpen className="w-5 h-5 text-teal-400" />
                         Document Hub
                     </h2>
-                    <p className="text-slate-400 text-sm mt-0.5">Upload, view, and edit your PDF and Word documents</p>
+                    <p className="text-slate-400 text-xs sm:text-sm mt-0.5">Upload, view, and edit your PDF and Word documents</p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                     <button
                         onClick={() => { setViewTrash(!viewTrash); }}
                         className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewTrash ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-slate-900 text-slate-500 hover:text-white border border-white/5'}`}
@@ -382,8 +382,8 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                             <Trash2 className="w-3.5 h-3.5" /> Empty Trash
                         </button>
                     ) : (
-                        <label className="cursor-pointer">
-                            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-colors shadow-lg shadow-teal-500/20">
+                        <label className="cursor-pointer flex-1 sm:flex-none">
+                            <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-colors shadow-lg shadow-teal-500/20">
                                 {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                                 Upload Document
                             </div>
@@ -448,15 +448,16 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                     {filteredFiles.map(file => (
                         <div
                             key={file.id}
-                            className="flex items-center justify-between gap-4 p-4 bg-slate-900 border border-white/5 rounded-xl hover:border-teal-500/20 transition-all group"
+                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-slate-900 border border-white/5 rounded-xl hover:border-teal-500/20 transition-all group"
                         >
+                            {/* File info */}
                             <div className="flex items-center gap-3 flex-1 min-w-0">
                                 <div className="p-2.5 bg-slate-800 rounded-lg shrink-0">
                                     {getFileIcon(file.file_type)}
                                 </div>
                                 <div className="min-w-0">
                                     <p className="text-white font-medium text-sm truncate">{file.original_filename}</p>
-                                    <div className="flex items-center gap-2 mt-0.5">
+                                    <div className="flex flex-wrap items-center gap-2 mt-0.5">
                                         <span className="text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-slate-800 text-slate-500">
                                             {getFileLabel(file.file_type)}
                                         </span>
@@ -468,22 +469,21 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2 shrink-0">
+                            {/* Action buttons — always visible on mobile, hover-reveal on desktop */}
+                            <div className="flex items-center gap-2 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 sm:transition-opacity">
                                 {viewTrash ? (
                                     <>
                                         <button
                                             onClick={() => handleRestore(file.id)}
-                                            className="p-2 rounded-lg bg-slate-800 hover:bg-teal-500/20 text-slate-400 hover:text-teal-400 transition-colors"
-                                            title="Restore"
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-teal-500/20 text-slate-400 hover:text-teal-400 transition-colors text-xs font-bold"
                                         >
-                                            <RotateCcw className="w-4 h-4" />
+                                            <RotateCcw className="w-3.5 h-3.5" /> Restore
                                         </button>
                                         <button
                                             onClick={() => handlePermanentDelete(file.id)}
-                                            className="p-2 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
-                                            title="Delete permanently"
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors text-xs font-bold"
                                         >
-                                            <X className="w-4 h-4" />
+                                            <X className="w-3.5 h-3.5" /> Delete
                                         </button>
                                     </>
                                 ) : (
