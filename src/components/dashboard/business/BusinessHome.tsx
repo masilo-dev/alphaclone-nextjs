@@ -124,8 +124,38 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
         );
     }
 
+    const calendlyConfig = (currentTenant?.settings as any)?.calendly;
+    const isConnected = calendlyConfig?.enabled && calendlyConfig?.accessToken;
+
     return (
         <div className="space-y-6">
+            {/* Calendly Connection Prompt */}
+            {!isConnected && (
+                <div className="bg-gradient-to-r from-teal-500/10 to-violet-500/10 border border-slate-800 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative group">
+                    <div className="absolute -right-8 -top-8 w-32 h-32 bg-teal-500/5 rounded-full blur-3xl group-hover:bg-teal-500/10 transition-all duration-500" />
+                    <div className="absolute -left-8 -bottom-8 w-32 h-32 bg-violet-500/5 rounded-full blur-3xl group-hover:bg-violet-500/10 transition-all duration-500" />
+
+                    <div className="flex items-center gap-5 relative z-10">
+                        <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-500">
+                            <Calendar className="w-8 h-8 text-teal-400" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-white mb-1">Scale your scheduling</h3>
+                            <p className="text-slate-400 text-sm max-w-md leading-relaxed">
+                                Connect Calendly to enable automated bookings on your landing page and sync meetings to your dashboard.
+                            </p>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={() => window.location.href = '/dashboard/business/settings?tab=booking'}
+                        className="relative z-10 px-8 py-3.5 bg-teal-500 hover:bg-teal-600 text-slate-900 font-black rounded-xl transition-all shadow-lg shadow-teal-500/20 active:scale-95 whitespace-nowrap"
+                    >
+                        ACTIVATE CALENDLY
+                    </button>
+                </div>
+            )}
+
             {/* Metrics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <MetricCard

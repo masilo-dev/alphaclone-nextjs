@@ -1,1068 +1,934 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { contractService, Contract } from '../../services/contractService';
-import { SignaturePad } from './SignaturePad';
-import { DocumentViewer } from './DocumentViewer';
-import { ChevronLeft, FileText, Plus, Search, Filter, Download, Eye, Send, MoreVertical, CheckCircle, XCircle, Clock, AlertCircle, Trash2, Infinity as InfinityIcon, Archive, MessageSquare, PenTool, Upload, Loader2, Save, FileText as FileTextIcon, Zap, FileImage, RotateCcw, Trash, Copy, ExternalLink, X, FileCheck, Bot } from 'lucide-react';
+'use client';
+import React, { useState, useEffect, useRef } from 'react';
+import { FileText, Bot, Download, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, MapPin, Mail, Briefcase, ChevronRight, Loader2, Eye, Edit3, RotateCcw, Send } from 'lucide-react';
 import { businessClientService, BusinessClient } from '../../services/businessClientService';
-import { fileUploadService } from '../../services/fileUploadService';
+import { contractService } from '../../services/contractService';
 import { supabase } from '../../lib/supabase';
-import { Card, Button, Badge, Input } from '../ui/UIComponents';
-
-import { format } from 'date-fns';
-import { User } from '../../types';
-import toast from 'react-hot-toast';
 import { useTenant } from '../../contexts/TenantContext';
+import { User as UserType } from '../../types';
+import toast from 'react-hot-toast';
+import { format } from 'date-fns';
 
 interface ContractDashboardProps {
-    user: User;
-    initialTab?: 'details' | 'document' | 'hub';
+    user: UserType;
+    initialTab?: string;
 }
 
-const ContractDashboard: React.FC<ContractDashboardProps> = ({ user, initialTab = 'hub' }) => {
+interface ContractForm {
+    // Parties
+    providerName: string;
+    providerAddress: string;
+    providerEmail: string;
+    providerPhone: string;
+    providerRegistration: string;
+    clientId: string;
+    clientName: string;
+    clientCompany: string;
+    clientAddress: string;
+    clientEmail: string;
+    clientPhone: string;
+    // Project
+    projectName: string;
+    projectType: string;
+    projectScope: string;
+    deliverables: string;
+    // Financial
+    totalAmount: string;
+    currency: string;
+    paymentSchedule: string;
+    depositPercent: string;
+    // Timeline
+    startDate: string;
+    endDate: string;
+    // Legal
+    jurisdiction: string;
+    governingLaw: string;
+    // Extra
+    additionalTerms: string;
+}
+
+const PROJECT_TYPES = [
+    'Web Application Development',
+    'Mobile App Development',
+    'E-Commerce Platform',
+    'UI/UX Design',
+    'Brand Identity & Design',
+    'Digital Marketing Campaign',
+    'SEO & Content Strategy',
+    'Software Consulting',
+    'IT Infrastructure & Support',
+    'Data Analytics & Reporting',
+    'Custom Software Solution',
+    'SaaS Product Development',
+];
+
+const PAYMENT_OPTIONS = [
+    '50% upfront, 50% on delivery',
+    '30% upfront, 30% at midpoint, 40% on delivery',
+    '25% upfront, 25% at each milestone, 25% on delivery',
+    'Monthly installments over project duration',
+    '100% upfront before work begins',
+    'Net 30 upon invoice',
+];
+
+const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'ZAR', 'NGN', 'GHS'];
+
+const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const { currentTenant } = useTenant();
-    const [contracts, setContracts] = useState<Contract[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [showSignModal, setShowSignModal] = useState(false);
-    const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
-    const [isUploading, setIsUploading] = useState(false);
-    const [isGlobalUploading, setIsGlobalUploading] = useState(false);
-    const [activeTab, setActiveTab] = useState<'details' | 'document' | 'hub'>(initialTab);
-    const [storageUsage, setStorageUsage] = useState<number>(0);
-    const [allFiles, setAllFiles] = useState<any[]>([]);
-    const [isFilesLoading, setIsFilesLoading] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [entityFilter, setEntityFilter] = useState<string>('all');
-    const [viewTrash, setViewTrash] = useState(false);
-    const [storageLimit, setStorageLimit] = useState<number>(100 * 1024 * 1024); // Default 100MB
-    const MAX_STORAGE = storageLimit;
-
-    // Role-based access: client can only view and sign, admin can do everything
-    const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
-
-    // Editor State
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [draftTitle, setDraftTitle] = useState('');
-    const [draftClient, setDraftClient] = useState('');
-    const [draftContent, setDraftContent] = useState('');
-    const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
     const [clients, setClients] = useState<BusinessClient[]>([]);
-    const [selectedClientId, setSelectedClientId] = useState<string>('');
+    const [step, setStep] = useState<'form' | 'preview' | 'sign' | 'saved'>('form');
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [generatedContract, setGeneratedContract] = useState('');
+    const [savedContracts, setSavedContracts] = useState<any[]>([]);
+    const [loadingContracts, setLoadingContracts] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [activeView, setActiveView] = useState<'new' | 'list'>('new');
+    const [signatureName, setSignatureName] = useState('');
+    const [signatureDate] = useState(format(new Date(), 'MMMM d, yyyy'));
+    const [isSigned, setIsSigned] = useState(false);
+    const printRef = useRef<HTMLDivElement>(null);
 
-    const CLAUSE_LIBRARY = [
-        { title: 'Standard Liability', content: '\n\nSection 6.0 LIMITATION OF LIABILITY. To the maximum extent permitted by applicable law, in no event shall either party be liable for any indirect, punitive, incidental, special, consequential, or exemplary damages...' },
-        { title: 'Intellectual Property', content: '\n\nSection 4.0 INTELLECTUAL PROPERTY. Upon full and final payment of all Fees, Contractor hereby assigns to Client all right, title, and interest in and to any work product created under this Agreement.' },
-        { title: 'Termination 30-Day', content: '\n\nSection 7.0 TERMINATION. Either party may terminate this Agreement upon thirty (30) days written notice to the other party if the other party breaches any material term of this Agreement.' },
-        { title: 'Confidentiality', content: '\n\nSection 5.0 CONFIDENTIALITY. Each party agrees that it will not disclose to any third party or use any Confidential Information disclosed to it by the other party except as required to perform its obligations.' }
-    ];
+    const today = format(new Date(), 'MMMM d, yyyy');
+    const ninetyDays = format(new Date(Date.now() + 90 * 86400000), 'MMMM d, yyyy');
 
-    const insertClause = (content: string) => {
-        setDraftContent(prev => prev + content);
-        toast.success("Clause Inserted");
-    };
+    const [form, setForm] = useState<ContractForm>({
+        providerName: currentTenant?.name || '',
+        providerAddress: '',
+        providerEmail: user.email || '',
+        providerPhone: '',
+        providerRegistration: '',
+        clientId: '',
+        clientName: '',
+        clientCompany: '',
+        clientAddress: '',
+        clientEmail: '',
+        clientPhone: '',
+        projectName: '',
+        projectType: PROJECT_TYPES[0],
+        projectScope: '',
+        deliverables: '',
+        totalAmount: '',
+        currency: 'USD',
+        paymentSchedule: PAYMENT_OPTIONS[0],
+        depositPercent: '50',
+        startDate: today,
+        endDate: ninetyDays,
+        jurisdiction: '',
+        governingLaw: '',
+        additionalTerms: '',
+    });
 
-    const loadStorageUsage = useCallback(async () => {
-        const usage = await fileUploadService.getUserStorageUsage(user.id);
-        setStorageUsage(usage);
-    }, [user.id]);
-
-    const loadAllFiles = useCallback(async () => {
-        if (!currentTenant?.id) {
-            setIsFilesLoading(false);
-            return;
-        }
-        setIsFilesLoading(true);
-        try {
-            // Fetch based on viewTrash state
-            const { files, error } = viewTrash
-                ? await fileUploadService.getDeletedFilesByTenant(currentTenant.id)
-                : await fileUploadService.getFilesByTenant(currentTenant.id);
-
-            if (!error) {
-                setAllFiles(files || []);
-            }
-        } catch (err) {
-            console.error('Error loading all files:', err);
-        } finally {
-            setIsFilesLoading(false);
-        }
-    }, [currentTenant?.id, viewTrash]);
-
-    const loadContracts = useCallback(async () => {
-        setLoading(true);
-        const { contracts: data } = await contractService.getUserContracts(user.id, user.role);
-        if (data) setContracts(data);
-
+    useEffect(() => {
         if (currentTenant?.id) {
-            const { clients: clientData } = await businessClientService.getClients(currentTenant.id);
-            setClients(clientData || []);
+            businessClientService.getClients(currentTenant.id).then(({ clients: c }) => setClients(c || []));
+            supabase.from('contracts').select('*').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false })
+                .then(({ data }: { data: any[] | null }) => { setSavedContracts(data || []); setLoadingContracts(false); })
+                .catch(() => setLoadingContracts(false));
         }
+    }, [currentTenant?.id]);
 
-        await loadStorageUsage();
-        await loadAllFiles();
-        setLoading(false);
-    }, [user.id, user.role, currentTenant?.id, loadStorageUsage, loadAllFiles]);
-
-    const handleCreateDraft = useCallback(async () => {
-        if (!draftTitle || !draftContent) {
-            toast.error("Please provide title and content");
-            return;
+    useEffect(() => {
+        if (form.clientId && clients.length > 0) {
+            const c = clients.find(cl => cl.id === form.clientId);
+            if (c) {
+                setForm(prev => ({
+                    ...prev,
+                    clientName: c.name || prev.clientName,
+                    clientEmail: c.email || prev.clientEmail,
+                    clientAddress: c.location || prev.clientAddress,
+                    clientPhone: c.phone || prev.clientPhone,
+                    clientCompany: c.name || prev.clientCompany,
+                }));
+            }
         }
-        await contractService.createContract({
-            title: draftTitle,
-            content: draftContent,
-            type: 'service_agreement',
-            status: 'draft',
-            owner_id: user.id,
-            client_id: selectedClientId
-        });
-        toast.success("Contract Draft Created");
-        setIsEditing(false);
-        setDraftContent('');
-        setDraftTitle('');
-        setSelectedClientId('');
-        loadContracts();
-    }, [draftTitle, draftContent, user.id, selectedClientId, loadContracts]);
+    }, [form.clientId, clients]);
 
-    const handleAIDraft = useCallback(async () => {
-        const clientName = draftClient || clients.find(c => c.id === selectedClientId)?.name;
-        if (!clientName) {
-            toast.error("Please select a Client or enter name for AI context");
-            return;
-        }
+    const set = (field: keyof ContractForm, val: string) =>
+        setForm(prev => ({ ...prev, [field]: val }));
+
+    const generateContract = async () => {
+        if (!form.clientName.trim()) { toast.error('Client name is required'); return; }
+        if (!form.projectName.trim()) { toast.error('Project name is required'); return; }
+        if (!form.totalAmount.trim()) { toast.error('Contract value is required'); return; }
+
         setIsGenerating(true);
         try {
-            const { text } = await contractService.generateDraft('Service Agreement', clientName, 'Standard web development services');
-            if (text) setDraftContent(text);
-        } catch (e) {
-            toast.error("AI Generation Failed");
-        }
-        setIsGenerating(false);
-    }, [draftClient, selectedClientId, clients]);
-
-    const handleExport = () => {
-        const data = {
-            title: draftTitle,
-            content: draftContent,
-            clientId: selectedClientId,
-            exportedAt: new Date().toISOString()
-        };
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `contract_draft_${draftTitle.replace(/\s+/g, '_') || 'untitled'}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        toast.success("Draft exported as JSON");
-    };
-
-    const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            try {
-                const data = JSON.parse(event.target?.result as string);
-                setDraftTitle(data.title || '');
-                setDraftContent(data.content || '');
-                setSelectedClientId(data.clientId || '');
-                toast.success("Draft imported successfully");
-            } catch (err) {
-                toast.error("Invalid JSON format");
-            }
-        };
-        reader.readAsText(file);
-    };
-
-    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file || !selectedContract) return;
-
-        try {
-            const result = await fileUploadService.uploadFile(file, 'contract', selectedContract.id, user.id, currentTenant?.id);
-            if (result.success && result.url) {
-                const { error } = await contractService.updateContract(selectedContract.id, {
-                    document_url: result.url
-                });
-                if (error) throw error;
-
-                setSelectedContract({ ...selectedContract, document_url: result.url });
-                loadContracts();
-                toast.success('Document uploaded successfully');
-            } else {
-                throw new Error(result.error);
-            }
-        } catch (err: any) {
-            toast.error(err.message || 'Upload failed');
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
-    const handleGlobalUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        setIsGlobalUploading(true);
-        try {
-            const result = await fileUploadService.uploadFile(file, 'hub', undefined, user.id, currentTenant?.id);
-            if (result.success) {
-                toast.success('File added to hub successfully');
-                loadAllFiles();
-                loadStorageUsage();
-            } else {
-                toast.error(result.error || 'Failed to upload file');
-            }
-        } catch (error) {
-            toast.error('An error occurred during upload');
-        } finally {
-            setIsGlobalUploading(false);
-        }
-    };
-
-    const handleSaveAnnotations = async (annotations: any[]) => {
-        if (!selectedContract) return;
-
-        const updatedMetadata = {
-            ...(selectedContract.metadata || {}),
-            annotations
-        };
-
-        const { error } = await contractService.updateContract(selectedContract.id, {
-            metadata: updatedMetadata
-        });
-
-        if (error) {
-            toast.error('Failed to save annotations');
-        } else {
-            setSelectedContract({ ...selectedContract, metadata: updatedMetadata });
-            toast.success('Annotations saved successfully');
-        }
-    };
-
-    const handleSignClick = useCallback((contract: Contract) => {
-        setSelectedContract(contract);
-        setShowSignModal(true);
-    }, []);
-
-    const handleSaveSignature = useCallback(async (signatureDataUrl: string) => {
-        if (selectedContract) {
-            const role = isAdmin ? 'admin' : 'client';
-            await contractService.signContract(selectedContract.id, role, signatureDataUrl);
-            setShowSignModal(false);
-            setSelectedContract(null);
-            toast.success(`Signed as ${role}`);
-            loadContracts();
-        }
-    }, [selectedContract, isAdmin, loadContracts]);
-
-    const handleDownload = useCallback(async (contract: Contract) => {
-        if (contract.document_url) {
-            try {
-                // Extracts storage path from the public URL if possible, otherwise use a fallback
-                // For contract documents, we usually store the path in metadata or can infer it
-                // If it's a full URL, we need to handle it carefully.
-                // However, most contract.document_url in this app are Supabase public URLs.
-                const storagePath = contract.document_url.split('/uploads/')[1];
-                if (storagePath) {
-                    const { data, error } = await supabase.storage.from('uploads').download(storagePath);
-                    if (error) throw error;
-
-                    const url = window.URL.createObjectURL(data);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${contract.title}.pdf`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
+            // Try AI generation first
+            const prompt = buildAIPrompt(form);
+            const res = await fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, maxTokens: 4000 }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.content) {
+                    setGeneratedContract(data.content);
+                    setIsSigned(false);
+                    setSignatureName('');
+                    setStep('preview');
+                    setIsGenerating(false);
                     return;
                 }
-                window.open(contract.document_url, '_blank');
-            } catch (error) {
-                console.error('Error downloading contract:', error);
-                window.open(contract.document_url, '_blank');
             }
-        } else {
-            contractService.downloadPDF(contract, currentTenant);
-        }
-    }, [currentTenant]);
+        } catch { /* fall through to template */ }
 
-    const handleFileDownload = useCallback(async (file: any) => {
+        // Fallback: generate from template
+        setGeneratedContract(buildTemplateContract(form));
+        setIsSigned(false);
+        setSignatureName('');
+        setStep('preview');
+        setIsGenerating(false);
+    };
+
+    const saveContract = async () => {
+        if (!currentTenant?.id) return;
+        setIsSaving(true);
         try {
-            const path = file.storage_path || file.file_url?.split('/uploads/')[1];
-            if (!path) throw new Error('No storage path found');
-
-            const { data, error } = await supabase.storage.from('uploads').download(path);
-            if (error) throw error;
-
-            const url = window.URL.createObjectURL(data);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = file.file_name || file.original_filename || 'download';
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        } catch (error) {
-            console.error('Download failed:', error);
-            toast.error('Download failed');
+            const { contract, error } = await contractService.createContract({
+                title: `${form.projectName} — ${form.clientName}`,
+                content: generatedContract,
+                client_id: form.clientId || undefined,
+                status: 'draft',
+                payment_amount: parseFloat(form.totalAmount) || 0,
+            });
+            if (error) throw new Error(error);
+            toast.success('Contract saved successfully!');
+            setSavedContracts(prev => [contract, ...prev]);
+            setStep('saved');
+        } catch (e: any) {
+            toast.error(e.message || 'Failed to save contract');
+        } finally {
+            setIsSaving(false);
         }
-    }, []);
+    };
 
-    const handleDeleteDocument = useCallback(async (contractId: string) => {
-        if (!window.confirm('Are you sure you want to delete this document? This will free up storage space but the action cannot be undone.')) {
-            return;
-        }
+    const handlePrint = () => {
+        const win = window.open('', '_blank');
+        if (!win) return;
+        win.document.write(`
+            <html><head><title>${form.projectName} Contract</title>
+            <style>
+                body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.8; color: #000; margin: 0; padding: 0; }
+                .page { width: 8.5in; min-height: 11in; margin: 0 auto; padding: 1in; box-sizing: border-box; page-break-after: always; }
+                h1 { font-size: 18pt; text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+                h2 { font-size: 13pt; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 4px; margin-top: 24px; }
+                h3 { font-size: 12pt; margin-top: 16px; }
+                p { margin: 8px 0; text-align: justify; }
+                .center { text-align: center; }
+                .sig-block { margin-top: 40px; display: flex; justify-content: space-between; }
+                .sig-line { width: 45%; border-top: 1px solid #000; padding-top: 8px; }
+                hr { border: none; border-top: 1px solid #000; margin: 20px 0; }
+                @media print { body { -webkit-print-color-adjust: exact; } }
+            </style></head><body>
+            <div class="page">${contractToHTML(generatedContract)}</div>
+            </body></html>
+        `);
+        win.document.close();
+        win.focus();
+        setTimeout(() => { win.print(); win.close(); }, 500);
+    };
 
-        try {
-            const { error } = await contractService.deleteContract(contractId);
-            if (error) throw error;
-
-            toast.success('Document deleted');
-            loadContracts();
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to delete document');
-        }
-    }, [loadContracts]);
-
-    useEffect(() => {
-        loadContracts();
-    }, [loadContracts]);
-
-    // Reload files when viewTrash changes
-    useEffect(() => {
-        loadAllFiles();
-    }, [viewTrash, loadAllFiles]);
-
-    if (loading) {
-        return <div className="p-8 text-center text-slate-400">Loading contracts...</div>;
-    }
+    const inputCls = 'w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 transition-all text-sm';
+    const labelCls = 'block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5';
+    const sectionCls = 'bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4';
 
     return (
-        <div className="space-y-6 animate-fade-in">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 bg-slate-900/40 border border-white/5 p-6 rounded-2xl backdrop-blur-md">
-                <div className="flex-1">
-                    <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <FileTextIcon className="w-6 h-6 text-teal-400" />
-                        Contracts & Documents
-                    </h2>
-                    <p className="text-slate-400 text-sm mt-1">
-                        {isAdmin ? 'Manage, draft, and sign legal agreements.' : 'View and sign your contracts.'}
-                    </p>
+        <div className="min-h-full text-white">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <h1 className="text-2xl font-bold text-white">Contract Generator</h1>
+                    <p className="text-slate-400 text-sm mt-1">AI-powered professional contracts — fully customized, legally structured</p>
                 </div>
-                <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row items-stretch sm:items-center md:items-end lg:items-center gap-4 w-full md:w-auto">
-                    <div className="flex items-center gap-3 bg-slate-950/40 border border-white/5 px-4 py-2.5 rounded-xl flex-1 md:flex-none justify-between sm:justify-start">
-                        <div className="text-left md:text-right min-w-[100px]">
-                            <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Storage Used</div>
-                            <div className={`text-xs font-bold mt-1 ${storageUsage > MAX_STORAGE * 0.9 ? 'text-red-400' : 'text-teal-400'}`}>
-                                {(storageUsage / 1024 / 1024).toFixed(1)}MB / {(MAX_STORAGE / 1024 / 1024).toFixed(0)}MB
-                            </div>
-                        </div>
-                        <div className="w-24 h-1.5 bg-slate-950 rounded-full overflow-hidden border border-white/5 shrink-0">
-                            <div
-                                className={`h-full transition-all duration-1000 ${storageUsage > MAX_STORAGE * 0.9 ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-teal-500 shadow-[0_0_10px_rgba(20,184,166,0.3)]'}`}
-                                style={{ width: `${Math.min((storageUsage / MAX_STORAGE) * 100, 100)}%` }}
-                            ></div>
-                        </div>
-                        <div className="flex gap-1 ml-2 border-l border-white/10 pl-2">
-                            <Button size="sm" className="h-6 text-[10px] px-2 bg-teal-500/10 text-teal-400 hover:bg-teal-500 hover:text-white" onClick={() => {
-                                toast.success("Upgrading to 5GB Storage Plan ($1/mo)...");
-                                // Implement Stripe logic here
-                                setStorageLimit(5 * 1024 * 1024 * 1024);
-                            }}>
-                                +5GB
-                            </Button>
-                            <Button size="sm" className="h-6 text-[10px] px-2 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white" onClick={() => {
-                                toast.success("Upgrading to Unlimited Storage Plan ($5/mo)...");
-                                // Implement Stripe logic here
-                                setStorageLimit(1000 * 1024 * 1024 * 1024); // 1TB virtual unlimited
-                            }}>
-                                <InfinityIcon className="w-3 h-3" />
-                            </Button>
-                        </div>
-                    </div>
-                    {isAdmin && (
-                        <Button
-                            onClick={() => {
-                                setIsEditing(true);
-                                setActiveTab('details');
-                            }}
-                            className="w-full sm:w-auto md:w-full lg:w-auto font-bold h-12"
-                        >
-                            <Plus className="w-4 h-4 mr-2" /> New Contract
-                        </Button>
-                    )}
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setActiveView('new')}
+                        className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeView === 'new' ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+                    >
+                        New Contract
+                    </button>
+                    <button
+                        onClick={() => setActiveView('list')}
+                        className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeView === 'list' ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+                    >
+                        Saved ({savedContracts.length})
+                    </button>
                 </div>
             </div>
 
-            {/* Standalone Document Hub */}
-            {activeTab === 'hub' && !isEditing && (
-                <Card className="p-6 border-teal-500/30 bg-slate-900/60 shadow-2xl shadow-teal-500/5 min-h-[600px] animate-fade-in-up">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                            <Archive className="w-5 h-5 text-teal-400" />
-                            Global Document Hub
-                        </h3>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={loadAllFiles}
-                            className="text-xs font-black uppercase tracking-widest border-white/10"
-                        >
-                            Refresh Hub
-                        </Button>
-                    </div>
-                    {/* Render the hub content - Refactored into fragment below */}
-                    <HubContent
-                        allFiles={allFiles}
-                        isFilesLoading={isFilesLoading}
-                        searchQuery={searchQuery}
-                        setSearchQuery={setSearchQuery}
-                        entityFilter={entityFilter}
-                        setEntityFilter={setEntityFilter}
-                        loadAllFiles={loadAllFiles}
-                        loadStorageUsage={loadStorageUsage}
-                        handleGlobalUpload={handleGlobalUpload}
-                        isGlobalUploading={isGlobalUploading}
-                        viewTrash={viewTrash}
-                        setViewTrash={setViewTrash}
-                        handleFileDownload={handleFileDownload}
-                    />
-                </Card>
-            )}
-
-            {/* Contract Editor - Admin Only */}
-            {isAdmin && isEditing && (
-                <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 animate-fade-in-up">
-                    {/* Sidebar */}
-                    <Card className="xl:col-span-1 p-4 border-white/5 bg-slate-900/40 backdrop-blur-md hidden xl:block sticky top-6 self-start">
-                        <div className="flex flex-col gap-4">
-                            <div className="flex items-center gap-2 text-teal-400 font-bold text-sm mb-2">
-                                <MessageSquare className="w-4 h-4" />
-                                Editor Mode
+            {/* Saved Contracts List */}
+            {activeView === 'list' && (
+                <div className="space-y-3">
+                    {loadingContracts ? (
+                        <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-teal-400 animate-spin" /></div>
+                    ) : savedContracts.length === 0 ? (
+                        <div className="text-center py-20 text-slate-500">
+                            <FileText className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                            <p>No saved contracts yet. Generate your first one!</p>
+                        </div>
+                    ) : savedContracts.map((c: any) => (
+                        <div key={c.id} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex items-center justify-between hover:border-teal-500/30 transition-all">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center">
+                                    <FileText className="w-5 h-5 text-teal-400" />
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-white">{c.title}</p>
+                                    <p className="text-xs text-slate-500">{c.status} · {c.currency} {c.value?.toLocaleString()} · {c.created_at ? format(new Date(c.created_at), 'MMM d, yyyy') : ''}</p>
+                                </div>
                             </div>
                             <button
-                                onClick={() => setActiveTab('details')}
-                                className={`w-full text-left p-3 rounded-xl transition-all ${activeTab === 'details' ? 'bg-teal-500/10 border border-teal-500/30 text-teal-400' : 'text-slate-500 hover:text-slate-300'}`}
+                                onClick={() => { setGeneratedContract(c.content); setStep('preview'); setActiveView('new'); }}
+                                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all flex items-center gap-2"
                             >
-                                <div className="flex items-center gap-2">
-                                    <PenTool className="w-4 h-4" />
-                                    Draft Editor
-                                </div>
+                                <Eye className="w-4 h-4" /> View
                             </button>
-                            <button
-                                onClick={() => setActiveTab('document')}
-                                className={`w-full text-left p-3 rounded-xl transition-all ${activeTab === 'document' ? 'bg-teal-500/10 border border-teal-500/30 text-teal-400' : 'text-slate-500 hover:text-slate-300'}`}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Download className="w-4 h-4" />
-                                    PDF & Annotations
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('hub')}
-                                className={`w-full text-left p-3 rounded-xl transition-all ${activeTab === 'hub' ? 'bg-teal-500/10 border border-teal-500/30 text-teal-400' : 'text-slate-500 hover:text-slate-300'}`}
-                            >
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Archive className="w-4 h-4" />
-                                        <span>Document Hub</span>
-                                    </div>
-                                    <Badge className="bg-teal-500/10 text-teal-400 text-[10px]">{allFiles.length}</Badge>
-                                </div>
-                            </button>
-
-                            {activeTab === 'details' && (
-                                <div className="mt-4 pt-4 border-t border-white/5">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Clause Library</h4>
-                                        <Archive className="w-3 h-3 text-slate-700" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        {CLAUSE_LIBRARY.map((clause, idx) => (
-                                            <button
-                                                key={idx}
-                                                onClick={() => insertClause(clause.content)}
-                                                className="w-full text-left p-2 rounded-lg border border-white/5 hover:border-teal-500/30 hover:bg-teal-500/5 transition-all group"
-                                            >
-                                                <div className="text-[9px] font-bold uppercase text-slate-400 group-hover:text-teal-400 transition-colors">{clause.title}</div>
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    <div className="mt-6 pt-4 border-t border-white/5 space-y-3">
-                                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Portability</h4>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="w-full text-[10px] font-black uppercase tracking-widest h-9"
-                                            onClick={handleExport}
-                                        >
-                                            <Download className="w-3 h-3 mr-2" /> Export JSON
-                                        </Button>
-                                        <label className="w-full">
-                                            <div className="flex items-center justify-center w-full h-9 border border-white/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:border-teal-400 cursor-pointer transition-all">
-                                                <Upload className="w-3 h-3 mr-2" /> Import JSON
-                                            </div>
-                                            <input type="file" className="hidden" accept=".json" onChange={handleImport} />
-                                        </label>
-                                    </div>
-                                </div>
-                            )}
-
-                            {activeTab === 'document' && (
-                                <div className="mt-4 pt-4 border-t border-white/5">
-                                    <label className="w-full flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-700 rounded-xl hover:border-teal-500/50 cursor-pointer transition-colors group">
-                                        <Upload className="w-6 h-6 text-slate-500 group-hover:text-teal-400 transition-colors" />
-                                        <span className="text-[10px] text-slate-500 group-hover:text-teal-400 mt-2 font-black uppercase tracking-widest">Upload PDF</span>
-                                        <input type="file" className="hidden" accept=".pdf" onChange={handleFileUpload} />
-                                    </label>
-                                </div>
-                            )}
                         </div>
-                    </Card>
+                    ))}
+                </div>
+            )}
 
-                    {/* Main Content Area */}
-                    <Card className="xl:col-span-3 p-6 border-teal-500/30 bg-slate-900/60 shadow-2xl shadow-teal-500/5 min-h-[600px]">
-                        {activeTab === 'details' ? (
-                            <>
-                                <div className="flex justify-between items-center mb-6">
-                                    <div className="flex items-center gap-2">
-                                        <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
-                                        <h3 className="text-lg font-bold text-white">Advanced Drafting Engine</h3>
+            {/* New Contract Flow */}
+            {activeView === 'new' && (
+                <>
+                    {/* Step: Form */}
+                    {step === 'form' && (
+                        <div className="space-y-6">
+                            {/* Service Provider */}
+                            <div className={sectionCls}>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <Building2 className="w-5 h-5 text-teal-400" />
+                                    <h2 className="text-base font-bold text-white">Service Provider (You)</h2>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className={labelCls}>Full Legal Name / Company Name *</label>
+                                        <input className={inputCls} value={form.providerName} onChange={e => set('providerName', e.target.value)} placeholder="e.g. Acme Solutions Ltd." />
                                     </div>
-                                    <div className="flex items-center gap-2 bg-slate-950 p-1 rounded-lg border border-white/10">
-                                        <button
-                                            onClick={() => setViewMode('edit')}
-                                            className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'edit' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
-                                        >
-                                            Source Code
-                                        </button>
-                                        <button
-                                            onClick={() => setViewMode('preview')}
-                                            className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'preview' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
-                                        >
-                                            Live Preview
-                                        </button>
+                                    <div>
+                                        <label className={labelCls}>Email Address</label>
+                                        <input className={inputCls} value={form.providerEmail} onChange={e => set('providerEmail', e.target.value)} placeholder="you@company.com" />
+                                    </div>
+                                    <div>
+                                        <label className={labelCls}>Business Address</label>
+                                        <input className={inputCls} value={form.providerAddress} onChange={e => set('providerAddress', e.target.value)} placeholder="123 Business Ave, City, State" />
+                                    </div>
+                                    <div>
+                                        <label className={labelCls}>Phone Number</label>
+                                        <input className={inputCls} value={form.providerPhone} onChange={e => set('providerPhone', e.target.value)} placeholder="+1 (555) 000-0000" />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className={labelCls}>Business Registration Number (optional)</label>
+                                        <input className={inputCls} value={form.providerRegistration} onChange={e => set('providerRegistration', e.target.value)} placeholder="e.g. LLC-123456 or Company No. 12345678" />
                                     </div>
                                 </div>
+                            </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                    <Input
-                                        label="Document Identifier"
-                                        value={draftTitle}
-                                        onChange={e => setDraftTitle(e.target.value)}
-                                        placeholder="e.g. Master Service Agreement v1.0"
-                                    />
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">Link to Client</label>
-                                        <select
-                                            className="w-full bg-slate-950 border border-white/10 rounded-xl h-12 px-4 text-sm text-slate-300 focus:ring-2 focus:ring-teal-500/30 outline-none"
-                                            value={selectedClientId}
-                                            onChange={e => setSelectedClientId(e.target.value)}
-                                        >
-                                            <option value="">-- No Client Linked --</option>
-                                            {clients.map(c => (
-                                                <option key={c.id} value={c.id}>{c.name}</option>
-                                            ))}
+                            {/* Client */}
+                            <div className={sectionCls}>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <User className="w-5 h-5 text-purple-400" />
+                                    <h2 className="text-base font-bold text-white">Client Information</h2>
+                                </div>
+                                {clients.length > 0 && (
+                                    <div>
+                                        <label className={labelCls}>Select from CRM (optional)</label>
+                                        <select className={inputCls} value={form.clientId} onChange={e => set('clientId', e.target.value)}>
+                                            <option value="">— Select a client —</option>
+                                            {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                        </select>
+                                    </div>
+                                )}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className={labelCls}>Client Full Name *</label>
+                                        <input className={inputCls} value={form.clientName} onChange={e => set('clientName', e.target.value)} placeholder="e.g. Jonathan Williams" />
+                                    </div>
+                                    <div>
+                                        <label className={labelCls}>Company / Organization</label>
+                                        <input className={inputCls} value={form.clientCompany} onChange={e => set('clientCompany', e.target.value)} placeholder="e.g. Williams Enterprises Inc." />
+                                    </div>
+                                    <div>
+                                        <label className={labelCls}>Email Address</label>
+                                        <input className={inputCls} value={form.clientEmail} onChange={e => set('clientEmail', e.target.value)} placeholder="client@email.com" />
+                                    </div>
+                                    <div>
+                                        <label className={labelCls}>Phone Number</label>
+                                        <input className={inputCls} value={form.clientPhone} onChange={e => set('clientPhone', e.target.value)} placeholder="+1 (555) 000-0000" />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className={labelCls}>Client Address</label>
+                                        <input className={inputCls} value={form.clientAddress} onChange={e => set('clientAddress', e.target.value)} placeholder="456 Client Street, City, State, ZIP" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Project */}
+                            <div className={sectionCls}>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <Briefcase className="w-5 h-5 text-blue-400" />
+                                    <h2 className="text-base font-bold text-white">Project Details</h2>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className={labelCls}>Project Name *</label>
+                                        <input className={inputCls} value={form.projectName} onChange={e => set('projectName', e.target.value)} placeholder="e.g. E-Commerce Platform Redesign" />
+                                    </div>
+                                    <div>
+                                        <label className={labelCls}>Project Type</label>
+                                        <select className={inputCls} value={form.projectType} onChange={e => set('projectType', e.target.value)}>
+                                            {PROJECT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className={labelCls}>Scope of Work *</label>
+                                        <textarea className={`${inputCls} min-h-[100px] resize-y`} value={form.projectScope} onChange={e => set('projectScope', e.target.value)} placeholder="Describe what you will do in detail. E.g. Design and develop a full-stack e-commerce platform with product catalog, shopping cart, Stripe payments, admin dashboard, and mobile-responsive design." />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className={labelCls}>Deliverables</label>
+                                        <textarea className={`${inputCls} min-h-[80px] resize-y`} value={form.deliverables} onChange={e => set('deliverables', e.target.value)} placeholder="List specific deliverables. E.g. Fully functional web app, source code, deployment, 30-day support, documentation." />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Financial */}
+                            <div className={sectionCls}>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <DollarSign className="w-5 h-5 text-green-400" />
+                                    <h2 className="text-base font-bold text-white">Financial Terms</h2>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className={labelCls}>Total Contract Value *</label>
+                                        <input className={inputCls} type="number" value={form.totalAmount} onChange={e => set('totalAmount', e.target.value)} placeholder="10000" />
+                                    </div>
+                                    <div>
+                                        <label className={labelCls}>Currency</label>
+                                        <select className={inputCls} value={form.currency} onChange={e => set('currency', e.target.value)}>
+                                            {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className={labelCls}>Deposit %</label>
+                                        <input className={inputCls} type="number" min="0" max="100" value={form.depositPercent} onChange={e => set('depositPercent', e.target.value)} placeholder="50" />
+                                    </div>
+                                    <div className="md:col-span-3">
+                                        <label className={labelCls}>Payment Schedule</label>
+                                        <select className={inputCls} value={form.paymentSchedule} onChange={e => set('paymentSchedule', e.target.value)}>
+                                            {PAYMENT_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
                                         </select>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                    <div className="flex items-end gap-2">
-                                        <div className="flex-1">
-                                            <Input label="Manual Counterparty Context" value={draftClient} onChange={e => setDraftClient(e.target.value)} placeholder="e.g. Acme Corporation" />
-                                        </div>
-                                        <Button onClick={handleAIDraft} disabled={isGenerating} className="mb-0.5 bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 border-none">
-                                            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4 mr-2" />} AI Init
-                                        </Button>
+                            {/* Timeline & Legal */}
+                            <div className={sectionCls}>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <Calendar className="w-5 h-5 text-orange-400" />
+                                    <h2 className="text-base font-bold text-white">Timeline & Legal</h2>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className={labelCls}>Start Date</label>
+                                        <input className={inputCls} value={form.startDate} onChange={e => set('startDate', e.target.value)} placeholder="e.g. March 1, 2026" />
                                     </div>
-                                    <div className="flex items-end gap-1.5 p-1 bg-slate-950/50 rounded-xl border border-white/5">
-                                        <Button variant="ghost" size="sm" onClick={() => setDraftContent(prev => prev + '<strong></strong>')} className="flex-1 text-[10px] font-black h-8">BOLD</Button>
-                                        <Button variant="ghost" size="sm" onClick={() => setDraftContent(prev => prev + '<em></em>')} className="flex-1 text-[10px] font-black h-8">ITALIC</Button>
-                                        <Button variant="ghost" size="sm" onClick={() => setDraftContent(prev => prev + '<h2 class="text-xl font-bold mt-4 mb-2"></h2>')} className="flex-1 text-[10px] font-black h-8">H2</Button>
-                                        <Button variant="ghost" size="sm" onClick={() => setDraftContent(prev => prev + '<br/>')} className="flex-1 text-[10px] font-black h-8">BR</Button>
+                                    <div>
+                                        <label className={labelCls}>Estimated Completion Date</label>
+                                        <input className={inputCls} value={form.endDate} onChange={e => set('endDate', e.target.value)} placeholder="e.g. June 1, 2026" />
+                                    </div>
+                                    <div>
+                                        <label className={labelCls}>Governing Jurisdiction</label>
+                                        <input className={inputCls} value={form.jurisdiction} onChange={e => set('jurisdiction', e.target.value)} placeholder="e.g. State of California, USA" />
+                                    </div>
+                                    <div>
+                                        <label className={labelCls}>Governing Law</label>
+                                        <input className={inputCls} value={form.governingLaw} onChange={e => set('governingLaw', e.target.value)} placeholder="e.g. Laws of the State of California" />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className={labelCls}>Additional Terms (optional)</label>
+                                        <textarea className={`${inputCls} min-h-[80px] resize-y`} value={form.additionalTerms} onChange={e => set('additionalTerms', e.target.value)} placeholder="Any special clauses, NDA requirements, exclusivity terms, etc." />
                                     </div>
                                 </div>
+                            </div>
 
-                                <div className="relative mb-6">
-                                    {viewMode === 'edit' ? (
-                                        <textarea
-                                            className="w-full h-96 bg-slate-950 border border-white/5 rounded-2xl p-6 text-slate-300 font-mono text-sm focus:ring-2 focus:ring-teal-500/30 outline-none shadow-inner"
-                                            value={draftContent}
-                                            onChange={e => setDraftContent(e.target.value)}
-                                            placeholder="Initialize content via AI or type manually..."
-                                        ></textarea>
-                                    ) : (
-                                        <div className="w-full h-96 bg-white rounded-2xl p-8 text-slate-900 overflow-y-auto shadow-inner font-serif leading-relaxed">
-                                            <h1 className="text-2xl font-bold mb-6 border-b-2 border-slate-200 pb-4 text-center uppercase tracking-tight">{draftTitle || 'Untitled Agreement'}</h1>
-                                            <div className="whitespace-pre-wrap text-sm" dangerouslySetInnerHTML={{ __html: draftContent || 'Document content will appear here...' }}></div>
-                                            <div className="mt-20 grid grid-cols-2 gap-8">
-                                                <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-400">SIGNATURE (CLIENT)</div>
-                                                <div className="border-t border-slate-300 pt-2 text-[10px] text-slate-400">SIGNATURE (EXECUTIVE)</div>
-                                            </div>
-                                        </div>
+                            {/* Generate Button */}
+                            <button
+                                onClick={generateContract}
+                                disabled={isGenerating}
+                                className="w-full py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white font-bold text-base rounded-2xl transition-all shadow-lg shadow-teal-900/30 flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                                {isGenerating ? (
+                                    <><Loader2 className="w-5 h-5 animate-spin" /> Generating Professional Contract...</>
+                                ) : (
+                                    <><Bot className="w-5 h-5" /> Generate 5-Page Professional Contract</>
+                                )}
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Step: Preview */}
+                    {(step === 'preview' || step === 'saved') && (
+                        <div className="space-y-4">
+                            {/* Action Bar */}
+                            <div className="flex flex-wrap gap-3 items-center justify-between bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
+                                <div className="flex gap-2 flex-wrap">
+                                    <button onClick={() => setStep('form')} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all">
+                                        <Edit3 className="w-4 h-4" /> Edit Details
+                                    </button>
+                                    {isSigned && (
+                                        <>
+                                            <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all">
+                                                <Printer className="w-4 h-4" /> Print / PDF
+                                            </button>
+                                            {step !== 'saved' && (
+                                                <button onClick={saveContract} disabled={isSaving} className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-60">
+                                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                                    Save Contract
+                                                </button>
+                                            )}
+                                        </>
+                                    )}
+                                    {step === 'saved' && (
+                                        <span className="flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-400 rounded-xl text-sm font-medium border border-green-500/20">
+                                            <CheckCircle className="w-4 h-4" /> Saved
+                                        </span>
                                     )}
                                 </div>
-                            </>
-                        ) : activeTab === 'document' ? (
-                            <div className="h-full flex flex-col">
-                                {selectedContract?.document_url && (
-                                    <div className="fixed inset-0 z-[100] flex flex-col bg-slate-950 animate-in fade-in duration-200">
-                                        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-slate-900 shrink-0 shadow-2xl">
-                                            <div className="flex items-center gap-4">
-                                                <button
-                                                    onClick={() => { setIsEditing(false); setSelectedContract(null); }}
-                                                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all text-sm font-bold"
-                                                >
-                                                    <ChevronLeft className="w-4 h-4" /> Exit Workspace
-                                                </button>
-                                                <div className="w-px h-6 bg-white/10" />
-                                                <div>
-                                                    <span className="text-white font-bold text-sm block truncate max-w-xs">{selectedContract.title}</span>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-3">
-                                                <button
-                                                    onClick={() => handleDownload(selectedContract)}
-                                                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-all border border-white/5"
-                                                >
-                                                    <Download className="w-4 h-4" /> Download
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex-1 overflow-hidden">
-                                            <DocumentViewer
-                                                url={selectedContract.document_url}
-                                                userName={user.name}
-                                                initialAnnotations={(selectedContract.metadata as any)?.annotations || []}
-                                                onSaveAnnotations={handleSaveAnnotations}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-                                {!selectedContract?.document_url && (
-                                    <div className="flex-1 flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-800 rounded-3xl bg-slate-950/40">
-                                        <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mb-4 border border-white/5">
-                                            <FileTextIcon className="w-8 h-8 text-slate-700" />
-                                        </div>
-                                        <h3 className="text-white font-bold mb-2">No Document Uploaded</h3>
-                                        <p className="text-slate-500 text-sm mb-6 text-center max-w-xs">Upload a professional PDF version of this contract to enable in-platform viewing and annotations.</p>
-                                        <label className="cursor-pointer">
-                                            <Button variant="primary" className="bg-teal-600 hover:bg-teal-500 pointer-events-none">
-                                                {isUploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
-                                                Upload Document (PDF or Word)
-                                            </Button>
-                                            <input type="file" className="hidden" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleFileUpload} />
-                                        </label>
-                                    </div>
-                                )}
+                                <button onClick={() => { setStep('form'); setGeneratedContract(''); setIsSigned(false); setSignatureName(''); }} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl text-sm transition-all">
+                                    <RotateCcw className="w-4 h-4" /> New Contract
+                                </button>
                             </div>
-                        ) : (
-                            <HubContent
-                                allFiles={allFiles}
-                                isFilesLoading={isFilesLoading}
-                                searchQuery={searchQuery}
-                                setSearchQuery={setSearchQuery}
-                                entityFilter={entityFilter}
-                                setEntityFilter={setEntityFilter}
-                                loadAllFiles={loadAllFiles}
-                                loadStorageUsage={loadStorageUsage}
-                                handleGlobalUpload={handleGlobalUpload}
-                                isGlobalUploading={isGlobalUploading}
-                                viewTrash={viewTrash}
-                                setViewTrash={setViewTrash}
-                                handleFileDownload={handleFileDownload}
-                            />
-                        )}
 
-                        <div className="flex justify-between items-center pt-6 border-t border-white/5 mt-6">
-                            <Button variant="ghost" onClick={() => setIsEditing(false)}>Cancel Changes</Button>
-                            <Button onClick={handleCreateDraft} className="bg-teal-600 hover:bg-teal-500 shadow-lg shadow-teal-500/20">
-                                <Save className="w-4 h-4 mr-2" /> Save Draft
-                            </Button>
-                        </div>
-                    </Card>
-                </div>
-            )}
-
-            {/* Contract List */}
-            <div className="grid grid-cols-1 gap-4">
-                {contracts.length === 0 && !isEditing ? (
-                    <Card className="p-8 text-center text-slate-400">
-                        <FileTextIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                        No contracts found.
-                    </Card>
-                ) : (
-                    contracts.map((contract) => (
-                        <Card key={contract.id} className="p-4 flex flex-col md:flex-row justify-between items-center gap-4 hover:border-teal-500/20 transition-all">
-                            <div className="flex items-center gap-4 flex-1">
-                                <div className={`p-3 rounded-full ${contract.status === 'fully_signed' ? 'bg-green-500/10 text-green-500' : 'bg-slate-700 text-slate-300'}`}>
-                                    {contract.status === 'fully_signed' ? <CheckCircle className="w-6 h-6" /> : <Clock className="w-6 h-6" />}
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-white">{contract.title}</h3>
-                                    <div className="text-sm text-slate-400">Created: {format(new Date(contract.created_at), 'MMM dd, yyyy')}</div>
-                                    <div className="flex gap-2 mt-1">
-                                        <Badge className={`text-[10px] ${contract.status === 'fully_signed' ? 'bg-green-500/20 text-green-400' : 'bg-slate-800 text-slate-400'}`}>
-                                            {contract.status.toUpperCase().replace('_', ' ')}
-                                        </Badge>
-                                        {contract.document_url && (
-                                            <Badge variant="blue" className="text-[10px] border-blue-500/20 text-blue-400">
-                                                <FileCheck className="w-3 h-3 mr-1" /> PDF UPLOADED
-                                            </Badge>
-                                        )}
+                            {/* Signature Panel — shown when not yet signed */}
+                            {!isSigned && (
+                                <div className="bg-gradient-to-br from-teal-900/30 to-slate-900/60 border border-teal-500/30 rounded-2xl p-6">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center">
+                                            <Edit3 className="w-5 h-5 text-teal-400" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-white font-bold text-base">Sign to Proceed</h3>
+                                            <p className="text-slate-400 text-sm">Type your full name or initials to sign this contract before saving or printing.</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <input
+                                            className="flex-1 bg-white/5 border border-teal-500/40 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-all text-sm font-serif italic"
+                                            placeholder="Type your full name or initials here..."
+                                            value={signatureName}
+                                            onChange={e => setSignatureName(e.target.value)}
+                                            onKeyDown={e => { if (e.key === 'Enter' && signatureName.trim().length >= 2) setIsSigned(true); }}
+                                        />
+                                        <button
+                                            onClick={() => { if (signatureName.trim().length >= 2) setIsSigned(true); else toast.error('Please enter your full name or initials'); }}
+                                            className="px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition-all flex items-center gap-2 whitespace-nowrap"
+                                        >
+                                            <CheckCircle className="w-4 h-4" /> Sign Contract
+                                        </button>
                                     </div>
                                 </div>
+                            )}
+
+                            {/* Signed confirmation */}
+                            {isSigned && (
+                                <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-4 flex items-center gap-3">
+                                    <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+                                    <div>
+                                        <p className="text-green-300 font-semibold text-sm">Signed by <span className="font-serif italic">{signatureName}</span> on {signatureDate}</p>
+                                        <p className="text-green-400/70 text-xs">You can now save or print this contract.</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Contract Document */}
+                            <div ref={printRef} className="bg-white text-gray-900 rounded-2xl shadow-2xl overflow-hidden">
+                                <div className="p-8 md:p-12 font-serif leading-relaxed" style={{ fontFamily: "'Times New Roman', Georgia, serif" }}>
+                                    <div className="whitespace-pre-wrap text-sm leading-7" dangerouslySetInnerHTML={{ __html: contractToHTML(generatedContract) }} />
+                                </div>
                             </div>
-
-                            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
-                                <Button variant="outline" onClick={() => handleDownload(contract)} size="sm" className="flex-1 md:flex-none">
-                                    <Download className="w-4 h-4 mr-2" /> Download
-                                </Button>
-
-                                {contract.document_url && (
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => {
-                                            setSelectedContract(contract);
-                                            setIsEditing(true);
-                                            setActiveTab('document');
-                                        }}
-                                        size="sm"
-                                        className="flex-1 md:flex-none border-teal-500/30 text-teal-400 hover:bg-teal-500/10"
-                                    >
-                                        <Eye className="w-4 h-4 mr-2" /> Annotate
-                                    </Button>
-                                )}
-
-                                {contract.status !== 'fully_signed' && (
-                                    <>
-                                        {!isAdmin && contract.status === 'draft' && (
-                                            <Button onClick={() => handleSignClick(contract)} size="sm" className="flex-1 md:flex-none bg-teal-600 hover:bg-teal-500">
-                                                <PenTool className="w-4 h-4 mr-2" /> Sign
-                                            </Button>
-                                        )}
-                                        {isAdmin && contract.status === 'client_signed' && (
-                                            <Button onClick={() => handleSignClick(contract)} size="sm" className="flex-1 md:flex-none bg-blue-600 hover:bg-blue-500">
-                                                <PenTool className="w-4 h-4 mr-2" /> Executive Sign
-                                            </Button>
-                                        )}
-                                    </>
-                                )}
-
-                                {isAdmin && (
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => handleDeleteDocument(contract.id)}
-                                        size="sm"
-                                        className="shrink-0 border-red-500/30 text-red-400 hover:bg-red-500/10"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </Button>
-                                )}
-                            </div>
-                        </Card>
-                    ))
-                )}
-            </div>
-
-            {/* Signature Modal */}
-            {showSignModal && selectedContract && (
-                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-                    <Card className="w-full max-w-2xl relative animate-fade-in-up max-h-[90vh] overflow-y-auto flex flex-col">
-                        <button
-                            onClick={() => setShowSignModal(false)}
-                            className="absolute top-4 right-4 text-slate-400 hover:text-white z-10"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
-
-                        <div className="mb-6">
-                            <h3 className="text-xl font-bold text-white mb-1">Review & Sign</h3>
-                            <p className="text-slate-400 text-sm">Please review the contract terms before signing.</p>
                         </div>
-
-                        {/* Contract Content Preview */}
-                        <div className="bg-slate-950 p-6 rounded-lg border border-slate-800 mb-6 font-mono text-sm text-slate-300 whitespace-pre-wrap max-h-60 overflow-y-auto shadow-inner">
-                            {typeof selectedContract.content === 'string' ? selectedContract.content : 'Content format error'}
-                        </div>
-
-                        <div className="mb-2">
-                            <label className="text-sm font-medium text-white">Sign Below ({isAdmin ? 'Executive' : 'Client'})</label>
-                        </div>
-
-                        <div className="border border-slate-700 rounded-lg overflow-hidden bg-white shadow-inner">
-                            <SignaturePad
-                                onSave={handleSaveSignature}
-                                onClear={() => { }}
-                            />
-                        </div>
-
-                        <div className="mt-4 pt-4 border-t border-slate-700 text-center text-[10px] text-slate-500 uppercase tracking-widest font-black">
-                            By clicking "Save Signature", you legally agree to the terms listed in {selectedContract.title}.
-                        </div>
-                    </Card>
-                </div>
+                    )}
+                </>
             )}
         </div>
     );
 };
 
-const HubContent: React.FC<{
-    allFiles: any[];
-    isFilesLoading: boolean;
-    searchQuery: string;
-    setSearchQuery: (q: string) => void;
-    entityFilter: string;
-    setEntityFilter: (f: string) => void;
-    loadAllFiles: () => void;
-    loadStorageUsage: () => void;
-    handleGlobalUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    isGlobalUploading: boolean;
-    viewTrash: boolean;
-    setViewTrash: (v: boolean) => void;
-    handleFileDownload: (file: any) => void;
-}> = ({
-    allFiles,
-    isFilesLoading,
-    searchQuery,
-    setSearchQuery,
-    entityFilter,
-    setEntityFilter,
-    loadAllFiles,
-    loadStorageUsage,
-    handleGlobalUpload,
-    isGlobalUploading,
-    viewTrash,
-    setViewTrash,
-    handleFileDownload
-}) => (
-        <div className="space-y-6">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
-                <div className="flex-1 w-full lg:w-auto">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                        <input
-                            type="text"
-                            placeholder={viewTrash ? "Search trash..." : "Search platform documents..."}
-                            className="w-full bg-slate-950/50 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
-                </div>
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 w-full lg:w-auto">
-                    {['all', 'deal', 'quote', 'contract', 'project', 'lead'].map(filter => (
-                        <button
-                            key={filter}
-                            onClick={() => setEntityFilter(filter)}
-                            className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${entityFilter === filter ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'bg-slate-950 text-slate-500 hover:text-white border border-white/5'}`}
-                        >
-                            {filter}
-                        </button>
-                    ))}
-                </div>
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => setViewTrash(!viewTrash)}
-                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewTrash ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-slate-950 text-slate-500 hover:text-white border border-white/5'}`}
-                    >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        {viewTrash ? 'Exit Trash' : 'Trash'}
-                    </button>
+function contractToHTML(text: string): string {
+    return text
+        .replace(/^# (.+)$/gm, '<h1 style="font-size:20pt;text-align:center;text-transform:uppercase;letter-spacing:2px;margin:0 0 8px;font-weight:bold;">$1</h1>')
+        .replace(/^## (.+)$/gm, '<h2 style="font-size:13pt;text-transform:uppercase;border-bottom:1px solid #333;padding-bottom:4px;margin:28px 0 12px;font-weight:bold;">$1</h2>')
+        .replace(/^### (.+)$/gm, '<h3 style="font-size:12pt;margin:16px 0 8px;font-weight:bold;">$1</h3>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid #333;margin:20px 0;" />')
+        .replace(/\n\n/g, '</p><p style="margin:8px 0;text-align:justify;">')
+        .replace(/\n/g, '<br/>');
+}
 
-                    {!viewTrash && (
-                        <label className="cursor-pointer">
-                            <Button
-                                variant="primary"
-                                size="sm"
-                                className="text-[10px] font-black uppercase tracking-widest bg-teal-600 hover:bg-teal-500 shadow-lg shadow-teal-500/20 pointer-events-none"
-                            >
-                                {isGlobalUploading ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <Plus className="w-3 h-3 mr-2" />}
-                                Global Artifact
-                            </Button>
-                            <input type="file" className="hidden" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleGlobalUpload} />
-                        </label>
-                    )}
+function buildAIPrompt(f: ContractForm): string {
+    const deposit = f.totalAmount ? (parseFloat(f.totalAmount) * parseFloat(f.depositPercent || '50') / 100).toLocaleString() : '0';
+    return `You are a professional contract lawyer. Generate a complete, formal, legally-structured 5-page Master Services Agreement (MSA) between the following parties. The contract must be fully professional with NO placeholder text, NO asterisks, NO brackets like [NAME] or [DATE] — use only the real information provided below. Every section must be fully written out in proper legal language.
 
-                    {viewTrash && (
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            className="text-[10px] font-black uppercase tracking-widest bg-red-600 hover:bg-red-500 shadow-lg shadow-red-500/20"
-                            onClick={async () => {
-                                if (window.confirm("Empty entire trash? This cannot be undone.")) {
-                                    await fileUploadService.emptyTrash((allFiles[0]?.tenant_id)); // Need tenant ID access here really
-                                    loadAllFiles();
-                                    loadStorageUsage();
-                                    toast.success("Trash emptied");
-                                }
-                            }}
-                        >
-                            <Trash className="w-3 h-3 mr-2" /> Empty Trash
-                        </Button>
-                    )}
-                </div>
-            </div>
+SERVICE PROVIDER:
+- Name: ${f.providerName}
+- Address: ${f.providerAddress || 'On file with the parties'}
+- Email: ${f.providerEmail}
+- Phone: ${f.providerPhone || 'On file'}
+- Registration: ${f.providerRegistration || 'N/A'}
 
-            {isFilesLoading ? (
-                <div className="flex flex-col items-center justify-center py-24 gap-4">
-                    <div className="relative">
-                        <div className="w-12 h-12 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin"></div>
-                        <Zap className="absolute inset-0 m-auto w-5 h-5 text-teal-400 animate-pulse" />
-                    </div>
-                    <p className="text-slate-500 text-sm font-medium">Indexing artifacts...</p>
-                </div>
-            ) : allFiles.filter(f =>
-                (entityFilter === 'all' || f.entity_type === entityFilter) &&
-                (f.file_name.toLowerCase().includes(searchQuery.toLowerCase()))
-            ).length === 0 ? (
-                <div className="text-center py-24 bg-slate-950/40 rounded-3xl border border-white/5 backdrop-blur-sm">
-                    <div className="w-20 h-20 bg-slate-900/50 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/5">
-                        <FileTextIcon className="w-10 h-10 text-slate-700 opacity-50" />
-                    </div>
-                    <h4 className="text-white font-bold mb-2">No results found</h4>
-                    <p className="text-slate-500 text-sm max-w-xs mx-auto">Adjust your search or filter settings to find what you're looking for.</p>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 gap-3">
-                    {allFiles
-                        .filter(f =>
-                            (entityFilter === 'all' || f.entity_type === entityFilter) &&
-                            (f.file_name.toLowerCase().includes(searchQuery.toLowerCase()))
-                        )
-                        .map(file => (
-                            <div key={file.id} className="flex items-center justify-between p-4 bg-slate-950/40 border border-white/5 rounded-2xl hover:border-teal-500/30 hover:bg-slate-900/40 transition-all group">
-                                <div className="flex items-center gap-4 overflow-hidden">
-                                    <div className="w-12 h-12 bg-teal-500/10 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-500">
-                                        <div className="relative">
-                                            {file.file_name.match(/\.(jpg|jpeg|png|webp)$/i) ? (
-                                                <FileImage className="w-6 h-6 text-teal-400" />
-                                            ) : file.file_name.match(/\.(zip|rar|7z)$/i) ? (
-                                                <Archive className="w-6 h-6 text-teal-400" />
-                                            ) : (
-                                                <FileText className="w-6 h-6 text-teal-400" />
-                                            )}
-                                            {file.file_name.endsWith('.pdf') && (
-                                                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-slate-950"></div>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div className="overflow-hidden">
-                                        <div className="flex items-center gap-2 mb-0.5">
-                                            <p className="text-white font-bold truncate group-hover:text-teal-400 transition-colors uppercase tracking-tight">{file.file_name}</p>
-                                            <Badge className="text-[8px] bg-indigo-500/10 text-indigo-400 border-indigo-500/20 font-black">
-                                                {file.entity_type}
-                                            </Badge>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
-                                            <div className="flex items-center gap-1">
-                                                <Clock className="w-3 h-3 text-slate-600" />
-                                                {format(new Date(file.created_at), 'MMM dd, HH:mm')}
-                                            </div>
-                                            <span className="w-1 h-1 bg-slate-800 rounded-full"></span>
-                                            <div className="flex items-center gap-1">
-                                                <Save className="w-3 h-3 text-slate-600" />
-                                                {(file.file_size / 1024).toFixed(1)} KB
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex gap-2">
-                                    {viewTrash ? (
-                                        <>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={async () => {
-                                                    await fileUploadService.restoreFile(file.id);
-                                                    toast.success("File restored");
-                                                    loadAllFiles();
-                                                }}
-                                                className="w-10 h-10 p-0 text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 rounded-xl transition-all"
-                                                title="Restore"
-                                            >
-                                                <RotateCcw className="w-4 h-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={async () => {
-                                                    if (window.confirm("Permanently delete this file? This cannot be undone.")) {
-                                                        await fileUploadService.permanentDeleteFile(file.id);
-                                                        toast.success("File deleted permanently");
-                                                        loadAllFiles();
-                                                        loadStorageUsage();
-                                                    }
-                                                }}
-                                                className="w-10 h-10 p-0 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all"
-                                                title="Delete Permanently"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => {
-                                                    navigator.clipboard.writeText(file.file_url);
-                                                    toast.success('Public URL copied');
-                                                }}
-                                                className="w-10 h-10 p-0 text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 rounded-xl transition-all"
-                                                title="Copy URL"
-                                            >
-                                                <Copy className="w-4 h-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => window.open(file.file_url, '_blank')}
-                                                className="w-10 h-10 p-0 text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 rounded-xl transition-all"
-                                                title="Open in Tab"
-                                            >
-                                                <ExternalLink className="w-4 h-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleFileDownload(file)}
-                                                className="w-10 h-10 p-0 text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 rounded-xl transition-all"
-                                                title="Download"
-                                            >
-                                                <Download className="w-4 h-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={async () => {
-                                                    const { success } = await fileUploadService.deleteFile(file.id);
-                                                    if (success) {
-                                                        toast.success('File moved to trash');
-                                                        loadAllFiles();
-                                                        loadStorageUsage();
-                                                    }
-                                                }}
-                                                className="w-10 h-10 p-0 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all"
-                                                title="Move to Trash"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                </div>
-            )}
-        </div>
-    );
+CLIENT:
+- Full Name: ${f.clientName}
+- Company: ${f.clientCompany || 'N/A'}
+- Address: ${f.clientAddress || 'On file with the parties'}
+- Email: ${f.clientEmail || 'On file'}
+- Phone: ${f.clientPhone || 'On file'}
+
+PROJECT:
+- Name: ${f.projectName}
+- Type: ${f.projectType}
+- Scope: ${f.projectScope || f.projectType + ' services as mutually agreed'}
+- Deliverables: ${f.deliverables || 'All project deliverables as described in the scope'}
+
+FINANCIAL:
+- Total Value: ${f.currency} ${parseFloat(f.totalAmount || '0').toLocaleString()}
+- Deposit (${f.depositPercent}%): ${f.currency} ${deposit}
+- Payment Schedule: ${f.paymentSchedule}
+
+TIMELINE:
+- Start: ${f.startDate}
+- Completion: ${f.endDate}
+
+LEGAL:
+- Jurisdiction: ${f.jurisdiction || 'the parties\' agreed jurisdiction'}
+- Governing Law: ${f.governingLaw || 'applicable law'}
+${f.additionalTerms ? `- Additional Terms: ${f.additionalTerms}` : ''}
+
+Structure the contract with these sections:
+1. PARTIES AND RECITALS
+2. SCOPE OF SERVICES AND DELIVERABLES
+3. COMPENSATION, PAYMENT TERMS, AND SCHEDULE
+4. PROJECT TIMELINE AND MILESTONES
+5. INTELLECTUAL PROPERTY RIGHTS
+6. CONFIDENTIALITY AND NON-DISCLOSURE
+7. WARRANTIES AND REPRESENTATIONS
+8. LIMITATION OF LIABILITY AND INDEMNIFICATION
+9. TERMINATION AND DISPUTE RESOLUTION
+10. GENERAL PROVISIONS (Force Majeure, Entire Agreement, Amendments, Severability, Assignment, Notices)
+11. SIGNATURES AND EXECUTION
+
+Use markdown formatting: # for main title, ## for sections, **bold** for key terms. Make it exactly 5 pages worth of content. Write every clause in full — do not abbreviate or use placeholders.`;
+}
+
+function buildTemplateContract(f: ContractForm): string {
+    const amount = parseFloat(f.totalAmount || '0');
+    const depositPct = parseFloat(f.depositPercent || '50');
+    const deposit = (amount * depositPct / 100);
+    const balance = amount - deposit;
+    const jurisdiction = f.jurisdiction || 'the applicable jurisdiction agreed upon by the parties';
+    const govLaw = f.governingLaw || 'the laws of the applicable jurisdiction';
+    const today = format(new Date(), 'MMMM d, yyyy');
+
+    return `# MASTER SERVICES AGREEMENT
+
+**Agreement Date:** ${today}
+
+**Reference Number:** MSA-${Date.now().toString().slice(-6)}
+
+---
+
+This Master Services Agreement ("Agreement") is entered into as of ${today}, by and between:
+
+**${f.providerName}** ("Service Provider")${f.providerAddress ? `, a business entity located at ${f.providerAddress}` : ''}${f.providerEmail ? `, reachable at ${f.providerEmail}` : ''}${f.providerRegistration ? `, registered under number ${f.providerRegistration}` : ''};
+
+AND
+
+**${f.clientName}**${f.clientCompany && f.clientCompany !== f.clientName ? ` of ${f.clientCompany}` : ''} ("Client")${f.clientAddress ? `, located at ${f.clientAddress}` : ''}${f.clientEmail ? `, reachable at ${f.clientEmail}` : ''}.
+
+The Service Provider and the Client are each referred to herein individually as a "Party" and collectively as the "Parties."
+
+---
+
+## 1. RECITALS AND PURPOSE
+
+WHEREAS, the Service Provider is engaged in the business of providing professional ${f.projectType} services and possesses the requisite expertise, skills, and resources to perform such services;
+
+WHEREAS, the Client desires to engage the Service Provider to perform certain services in connection with the project described herein, and the Service Provider desires to perform such services for the Client, subject to the terms and conditions set forth in this Agreement;
+
+NOW, THEREFORE, in consideration of the mutual covenants and agreements contained herein, and for other good and valuable consideration, the receipt and sufficiency of which are hereby acknowledged, the Parties agree as follows:
+
+---
+
+## 2. SCOPE OF SERVICES AND DELIVERABLES
+
+**2.1 Project Identification**
+
+The Service Provider agrees to perform the following project for the Client:
+
+**Project Name:** ${f.projectName}
+**Project Type:** ${f.projectType}
+
+**2.2 Scope of Work**
+
+The Service Provider shall perform the following services (collectively, the "Services"):
+
+${f.projectScope || `The Service Provider shall deliver comprehensive ${f.projectType} services, including all planning, design, development, testing, and deployment activities necessary to complete the ${f.projectName} project to the Client's satisfaction and in accordance with industry best practices.`}
+
+**2.3 Deliverables**
+
+Upon completion of the Services, the Service Provider shall deliver to the Client the following ("Deliverables"):
+
+${f.deliverables || `All work product, documentation, source files, and materials produced in connection with the ${f.projectName} project, including but not limited to: final production-ready outputs, technical documentation, user guides, and all associated assets created specifically for this engagement.`}
+
+**2.4 Change Orders**
+
+Any modifications to the Scope of Work or Deliverables must be agreed upon in writing by both Parties prior to implementation. Additional work beyond the agreed scope shall be subject to a separate written change order specifying the additional fees and timeline adjustments.
+
+**2.5 Service Standards**
+
+The Service Provider shall perform all Services in a professional and workmanlike manner, consistent with applicable industry standards and best practices. The Service Provider shall assign qualified personnel to perform the Services and shall maintain adequate resources to fulfill its obligations under this Agreement.
+
+---
+
+## 3. COMPENSATION AND PAYMENT TERMS
+
+**3.1 Total Contract Value**
+
+In consideration for the Services and Deliverables described herein, the Client agrees to pay the Service Provider a total fee of **${f.currency} ${amount.toLocaleString()}** (the "Contract Value").
+
+**3.2 Payment Schedule**
+
+Payments shall be made according to the following schedule:
+
+${f.paymentSchedule}
+
+Specifically:
+- **Initial Deposit (${depositPct}%):** ${f.currency} ${deposit.toLocaleString()} — due upon execution of this Agreement
+- **Remaining Balance:** ${f.currency} ${balance.toLocaleString()} — due as per the payment schedule above
+
+**3.3 Invoicing**
+
+The Service Provider shall issue invoices to the Client in accordance with the payment schedule set forth above. All invoices shall be sent to ${f.clientEmail || "the Client's designated billing contact"} and shall be payable within fourteen (14) calendar days of the invoice date unless otherwise specified.
+
+**3.4 Late Payment**
+
+Payments not received within fourteen (14) days of the due date shall accrue interest at the rate of one and one-half percent (1.5%) per month, or the maximum rate permitted by applicable law, whichever is lower. The Service Provider reserves the right to suspend performance of the Services if any payment remains outstanding for more than fourteen (14) days beyond the due date, without prejudice to any other rights or remedies available.
+
+**3.5 Expenses**
+
+Unless otherwise agreed in writing, all reasonable out-of-pocket expenses incurred by the Service Provider in connection with the performance of the Services (including travel, accommodation, and third-party software licenses) shall be reimbursed by the Client within fourteen (14) days of submission of supporting documentation.
+
+---
+
+## 4. PROJECT TIMELINE AND MILESTONES
+
+**4.1 Commencement**
+
+The Service Provider shall commence performance of the Services on or about **${f.startDate}**, subject to receipt of the initial deposit specified in Section 3.2.
+
+**4.2 Estimated Completion**
+
+The Service Provider shall use commercially reasonable efforts to complete the Services and deliver the Deliverables on or before **${f.endDate}** (the "Estimated Completion Date").
+
+**4.3 Milestone Schedule**
+
+The Parties agree to the following general project phases:
+
+- **Phase 1 — Discovery and Planning:** Requirements gathering, technical specification, and project roadmap development
+- **Phase 2 — Design and Architecture:** Creation of design concepts, prototypes, and technical architecture
+- **Phase 3 — Development and Implementation:** Core development, integration, and iterative testing
+- **Phase 4 — Quality Assurance and Review:** Comprehensive testing, bug resolution, and client review cycles
+- **Phase 5 — Delivery and Deployment:** Final delivery, deployment, and post-launch support
+
+**4.4 Client Cooperation**
+
+The Client acknowledges that timely completion of the project depends on the Client's cooperation, including the prompt provision of feedback, approvals, content, credentials, and other materials reasonably requested by the Service Provider. Delays caused by the Client's failure to cooperate in a timely manner shall extend the Estimated Completion Date by a corresponding period and shall not constitute a breach by the Service Provider.
+
+---
+
+## 5. INTELLECTUAL PROPERTY RIGHTS
+
+**5.1 Assignment of Work Product**
+
+Upon receipt of full and final payment of all fees and expenses due under this Agreement, the Service Provider hereby assigns to the Client all right, title, and interest in and to the custom work product and Deliverables created specifically for the Client under this Agreement, including all copyrights, patents, trade secrets, and other intellectual property rights therein.
+
+**5.2 Service Provider's Retained Rights**
+
+Notwithstanding Section 5.1, the Service Provider retains all right, title, and interest in and to: (a) pre-existing intellectual property owned by the Service Provider prior to the commencement of this Agreement; (b) general methodologies, processes, tools, frameworks, and know-how developed or used by the Service Provider; and (c) any open-source or third-party components incorporated into the Deliverables, which shall remain subject to their respective licenses.
+
+**5.3 License to Pre-Existing Materials**
+
+To the extent that any pre-existing materials of the Service Provider are incorporated into the Deliverables, the Service Provider hereby grants the Client a non-exclusive, perpetual, royalty-free license to use such pre-existing materials solely as incorporated into and as part of the Deliverables.
+
+**5.4 Client-Provided Materials**
+
+The Client represents and warrants that it has all necessary rights to any materials, content, data, or information provided to the Service Provider for use in connection with the Services, and grants the Service Provider a limited license to use such materials solely for the purpose of performing the Services.
+
+---
+
+## 6. CONFIDENTIALITY AND NON-DISCLOSURE
+
+**6.1 Confidential Information**
+
+Each Party (as a "Receiving Party") acknowledges that it may receive confidential or proprietary information of the other Party (the "Disclosing Party"), including but not limited to technical data, trade secrets, business plans, financial information, customer lists, and other non-public information ("Confidential Information").
+
+**6.2 Obligations**
+
+The Receiving Party agrees to: (a) hold all Confidential Information in strict confidence; (b) not disclose Confidential Information to any third party without the prior written consent of the Disclosing Party; (c) use Confidential Information solely for the purpose of performing its obligations or exercising its rights under this Agreement; and (d) protect Confidential Information with at least the same degree of care it uses to protect its own confidential information, but in no event less than reasonable care.
+
+**6.3 Exceptions**
+
+The obligations of confidentiality shall not apply to information that: (a) is or becomes publicly available through no fault of the Receiving Party; (b) was rightfully known to the Receiving Party prior to disclosure; (c) is independently developed by the Receiving Party without use of Confidential Information; or (d) is required to be disclosed by law or court order, provided that the Receiving Party gives the Disclosing Party prompt written notice and cooperates in seeking a protective order.
+
+**6.4 Survival**
+
+The obligations of confidentiality set forth in this Section 6 shall survive the termination or expiration of this Agreement for a period of three (3) years.
+
+---
+
+## 7. WARRANTIES AND REPRESENTATIONS
+
+**7.1 Service Provider Warranties**
+
+The Service Provider represents and warrants that: (a) it has the full right, power, and authority to enter into and perform this Agreement; (b) the Services will be performed in a professional and workmanlike manner consistent with applicable industry standards; (c) the Deliverables will substantially conform to the specifications agreed upon by the Parties; and (d) the Deliverables will not, to the Service Provider's knowledge, infringe upon any third-party intellectual property rights.
+
+**7.2 Client Warranties**
+
+The Client represents and warrants that: (a) it has the full right, power, and authority to enter into and perform this Agreement; (b) all materials and information provided by the Client to the Service Provider are accurate and do not infringe upon any third-party rights; and (c) the Client will make all payments required under this Agreement in a timely manner.
+
+**7.3 Warranty Period**
+
+The Service Provider warrants that the Deliverables will be free from material defects for a period of thirty (30) days following final delivery (the "Warranty Period"). The Service Provider's sole obligation under this warranty shall be to correct any such defects at no additional charge. This warranty does not cover defects caused by the Client's modifications, misuse, or third-party components.
+
+**7.4 Disclaimer**
+
+EXCEPT AS EXPRESSLY SET FORTH IN THIS SECTION 7, THE SERVICE PROVIDER MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT.
+
+---
+
+## 8. LIMITATION OF LIABILITY AND INDEMNIFICATION
+
+**8.1 Limitation of Liability**
+
+IN NO EVENT SHALL EITHER PARTY BE LIABLE TO THE OTHER FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, PUNITIVE, OR EXEMPLARY DAMAGES, INCLUDING LOSS OF PROFITS, LOSS OF DATA, OR LOSS OF BUSINESS OPPORTUNITY, ARISING OUT OF OR RELATED TO THIS AGREEMENT, EVEN IF SUCH PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. THE SERVICE PROVIDER'S TOTAL CUMULATIVE LIABILITY UNDER THIS AGREEMENT SHALL NOT EXCEED THE TOTAL FEES ACTUALLY PAID BY THE CLIENT TO THE SERVICE PROVIDER UNDER THIS AGREEMENT IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM.
+
+**8.2 Indemnification by Client**
+
+The Client agrees to indemnify, defend, and hold harmless the Service Provider and its officers, directors, employees, and agents from and against any claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising out of or related to: (a) the Client's use of the Deliverables; (b) any content or materials provided by the Client; (c) the Client's breach of this Agreement; or (d) the Client's violation of any applicable law or regulation.
+
+**8.3 Indemnification by Service Provider**
+
+The Service Provider agrees to indemnify, defend, and hold harmless the Client from and against any claims arising out of the Service Provider's gross negligence, willful misconduct, or material breach of this Agreement.
+
+---
+
+## 9. TERMINATION AND DISPUTE RESOLUTION
+
+**9.1 Termination for Convenience**
+
+Either Party may terminate this Agreement upon thirty (30) days' prior written notice to the other Party. In the event of termination by the Client for convenience, the Client shall pay the Service Provider for all Services performed and expenses incurred up to the effective date of termination, plus a termination fee equal to twenty percent (20%) of the remaining unpaid Contract Value.
+
+**9.2 Termination for Cause**
+
+Either Party may terminate this Agreement immediately upon written notice if the other Party: (a) materially breaches this Agreement and fails to cure such breach within fifteen (15) days after receiving written notice thereof; (b) becomes insolvent or makes an assignment for the benefit of creditors; or (c) ceases to conduct business in the ordinary course.
+
+**9.3 Effect of Termination**
+
+Upon termination, the Service Provider shall deliver to the Client all completed Deliverables and work-in-progress, and the Client shall pay all amounts due for Services rendered through the termination date. Sections 5, 6, 7.4, 8, and 10 shall survive any termination or expiration of this Agreement.
+
+**9.4 Dispute Resolution**
+
+In the event of any dispute arising out of or relating to this Agreement, the Parties shall first attempt to resolve the dispute through good-faith negotiation. If the dispute is not resolved within thirty (30) days, the Parties agree to submit the dispute to binding arbitration in ${jurisdiction}, conducted in accordance with the rules of a mutually agreed arbitration body. The arbitrator's decision shall be final and binding. Notwithstanding the foregoing, either Party may seek injunctive or other equitable relief in any court of competent jurisdiction to protect its intellectual property or confidential information.
+
+---
+
+## 10. GENERAL PROVISIONS
+
+**10.1 Governing Law**
+
+This Agreement shall be governed by and construed in accordance with ${govLaw}, without regard to its conflict of law principles.
+
+**10.2 Entire Agreement**
+
+This Agreement constitutes the entire agreement between the Parties with respect to the subject matter hereof and supersedes all prior and contemporaneous agreements, representations, and understandings, whether written or oral, relating to such subject matter.
+
+**10.3 Amendments**
+
+No amendment, modification, or waiver of any provision of this Agreement shall be effective unless made in writing and signed by authorized representatives of both Parties.
+
+**10.4 Severability**
+
+If any provision of this Agreement is held to be invalid, illegal, or unenforceable, the remaining provisions shall continue in full force and effect, and the invalid provision shall be modified to the minimum extent necessary to make it valid and enforceable.
+
+**10.5 Assignment**
+
+Neither Party may assign or transfer this Agreement or any of its rights or obligations hereunder without the prior written consent of the other Party, which consent shall not be unreasonably withheld. Any purported assignment in violation of this Section shall be null and void.
+
+**10.6 Force Majeure**
+
+Neither Party shall be liable for any delay or failure to perform its obligations under this Agreement to the extent such delay or failure is caused by circumstances beyond such Party's reasonable control, including acts of God, natural disasters, war, terrorism, government actions, or widespread internet outages, provided that the affected Party gives prompt written notice to the other Party and uses commercially reasonable efforts to resume performance.
+
+**10.7 Notices**
+
+All notices required or permitted under this Agreement shall be in writing and shall be deemed delivered when: (a) delivered personally; (b) sent by confirmed email to the addresses specified in this Agreement; or (c) sent by overnight courier with tracking confirmation.
+
+**10.8 Independent Contractors**
+
+The Parties are independent contractors. Nothing in this Agreement shall be construed to create a partnership, joint venture, agency, employment, or fiduciary relationship between the Parties.
+
+**10.9 Waiver**
+
+The failure of either Party to enforce any provision of this Agreement shall not constitute a waiver of that Party's right to enforce such provision in the future.
+
+**10.10 Counterparts**
+
+This Agreement may be executed in one or more counterparts, each of which shall be deemed an original, and all of which together shall constitute one and the same instrument. Electronic signatures shall be deemed valid and binding.
+
+---
+
+## 11. SIGNATURES AND EXECUTION
+
+IN WITNESS WHEREOF, the Parties have executed this Master Services Agreement as of the date first written above, each by its duly authorized representative.
+
+---
+
+**SERVICE PROVIDER:**
+
+**${f.providerName}**
+
+Signature: _________________________________
+
+Printed Name: _________________________________
+
+Title: Authorized Representative
+
+Date: _________________________________
+
+${f.providerAddress ? `Address: ${f.providerAddress}` : ''}
+${f.providerEmail ? `Email: ${f.providerEmail}` : ''}
+${f.providerPhone ? `Phone: ${f.providerPhone}` : ''}
+
+---
+
+**CLIENT:**
+
+**${f.clientName}**${f.clientCompany && f.clientCompany !== f.clientName ? ` (${f.clientCompany})` : ''}
+
+Signature: _________________________________
+
+Printed Name: _________________________________
+
+Title: Authorized Representative
+
+Date: _________________________________
+
+${f.clientAddress ? `Address: ${f.clientAddress}` : ''}
+${f.clientEmail ? `Email: ${f.clientEmail}` : ''}
+${f.clientPhone ? `Phone: ${f.clientPhone}` : ''}
+
+---
+
+*This Master Services Agreement is a legally binding document. Both Parties are advised to review this Agreement carefully and seek independent legal counsel if needed before signing. This document was prepared using AlphaClone's professional contract generation system.*`;
+}
 
 export default ContractDashboard;

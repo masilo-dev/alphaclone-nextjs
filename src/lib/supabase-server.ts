@@ -28,3 +28,19 @@ export async function createClient() {
         }
     )
 }
+export async function createAdminClient() {
+    return createServerClient(
+        ENV.VITE_SUPABASE_URL!,
+        ENV.SUPABASE_SERVICE_ROLE_KEY!,
+        {
+            cookies: {
+                getAll() {
+                    return []
+                },
+                setAll() {
+                    // No need to set cookies for service role client
+                },
+            },
+        }
+    )
+}

@@ -64,8 +64,9 @@ export async function GET(req: NextRequest) {
         const userUri = userData.resource.uri;
         const schedulingUrl = userData.resource.scheduling_url;
 
-        // Save to Supabase
-        const supabase = await createClient();
+        // Save to Supabase using admin client to bypass RLS
+        const { createAdminClient } = await import('@/lib/supabase-server');
+        const supabase = await createAdminClient();
 
         // Get current settings first to preserve others
         const { data: tenant, error: fetchError } = await supabase

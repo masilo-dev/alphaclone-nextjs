@@ -14,7 +14,8 @@ export async function POST(req: Request) {
         // For now, we'll process the payload but log the event
         console.log('Calendly Webhook Received:', payload.event);
 
-        const supabase = await createClient();
+        const { createAdminClient } = await import('@/lib/supabase-server');
+        const supabase = await createAdminClient();
 
         if (payload.event === 'invitee.created') {
             await handleInviteeCreated(payload.payload, supabase);
