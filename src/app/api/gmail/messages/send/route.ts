@@ -3,8 +3,10 @@ import { gmailServerService } from '@/services/server/gmailServerService';
 
 export async function POST(req: NextRequest) {
     try {
+        const { searchParams } = new URL(req.url);
+        const userId = searchParams.get('userId');
         const body = await req.json();
-        const { userId, to, subject, messageBody, threadId } = body;
+        const { to, subject, messageBody, threadId } = body;
 
         if (!userId || !to || !subject || !messageBody) {
             return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
