@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { dailyService, VideoCall } from '../../../services/dailyService';
-import { Settings, Video, Calendar, Clock, User as UserIcon, Link, Copy } from 'lucide-react';
+import { Settings, Video, Calendar, Clock, User as UserIcon, Link, Copy, Trash2 } from 'lucide-react';
 import { CalendlySettingsModal } from './CalendlySettingsModal';
 import SimpleVideoMeeting from '../SimpleVideoMeeting';
 import { format, isFuture } from 'date-fns';
@@ -19,6 +19,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
     const [meetings, setMeetings] = useState<VideoCall[]>([]);
     const [loading, setLoading] = useState(true);
     const [showSettings, setShowSettings] = useState(false);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     useEffect(() => {
         if (currentTenant) {
@@ -54,6 +55,25 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
             const url = `${window.location.origin}/book/${currentTenant.settings.booking.slug}`;
             navigator.clipboard.writeText(url);
             import('react-hot-toast').then(({ toast }) => toast.success('Booking link copied!'));
+        }
+    };
+
+    const handleDeleteMeeting = async (meetingId: string) => {
+        // First click: ask for confirmation
+        if (deletingId !== meetingId) {
+            setDeletingId(meetingId);
+            // Auto-reset confirmation after 3 seconds
+            setTimeout(() => setDeletingId(prev => prev === meetingId ? null : prev), 3000);
+            return;
+        }
+        // Second click: confirmed — cancel/delete
+        setDeletingId(null);
+        const { success, error } = await dailyService.cancelVideoCall(meetingId, user.id, 'Deleted by host');
+        if (success) {
+            setMeetings(prev => prev.filter(m => m.id !== meetingId));
+            import('react-hot-toast').then(({ toast }) => toast.success('Meeting removed'));
+        } else {
+            import('react-hot-toast').then(({ toast }) => toast.error(error || 'Failed to delete meeting'));
         }
     };
 
@@ -185,6 +205,16 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                                             >
                                                 {meeting.daily_room_url && !meeting.daily_room_url.includes(window.location.hostname) ? 'Open Link' : 'Join'}
                                             </Button>
+                                            <button
+                                                onClick={() => handleDeleteMeeting(meeting.id)}
+                                                title={deletingId === meeting.id ? 'Click again to confirm' : 'Delete meeting'}
+                                                className={`p-2 rounded-lg transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 ${deletingId === meeting.id
+                                                        ? 'bg-red-500/20 text-red-400 ring-1 ring-red-500/50 animate-pulse'
+                                                        : 'bg-slate-800 hover:bg-red-500/20 text-slate-500 hover:text-red-400'
+                                                    }`}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
                                         </div>
                                     </div>
                                 ))
