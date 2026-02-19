@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { createAdminClient } from '@/lib/supabaseServer';
+import { createSupabaseAdminClient } from '@/lib/supabase-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
         // 1. If tenantId provided, check for connected Stripe account
         if (tenantId) {
-            const supabaseAdmin = createAdminClient();
+            const supabaseAdmin = createSupabaseAdminClient();
             const { data: tenant } = await supabaseAdmin
                 .from('tenants')
                 .select('stripe_connect_id, stripe_connect_onboarded')

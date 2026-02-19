@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabaseServer';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable'; // Note: This might need a separate import if not bundled
@@ -15,13 +15,13 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Tenant ID is required' }, { status: 400 });
         }
 
-        const supabaseAdmin = createAdminClient();
+        const supabase = await createSupabaseServerClient();
         let data: any[] = [];
         let fileName = `report_${category}_${new Date().toISOString().split('T')[0]}`;
 
         // 1. Fetch data based on category
         if (category === 'revenue') {
-            const { data: invoices, error } = await supabaseAdmin
+            const { data: invoices, error } = await supabase
                 .from('business_invoices')
                 .select('invoice_number, client_id, total, status, issue_date, due_date')
                 .eq('tenant_id', tenantId)
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
             if (error) throw error;
             data = invoices || [];
         } else if (category === 'clients') {
-            const { data: clients, error } = await supabaseAdmin
+            const { data: clients, error } = await supabase
                 .from('business_clients')
                 .select('name, email, phone, company, stage, value, created_at')
                 .eq('tenant_id', tenantId)
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
             if (error) throw error;
             data = clients || [];
         } else if (category === 'activity') {
-            const { data: activities, error } = await supabaseAdmin
+            const { data: deals, error } = await supabase
                 .from('activity_logs')
                 .select('action, metadata, created_at')
                 .eq('tenant_id', tenantId)
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
                 .limit(1000);
 
             if (error) throw error;
-            data = activities.map(a => ({
+            data = deals.map((a: any) => ({
                 action: a.action,
                 timestamp: a.created_at,
                 details: JSON.stringify(a.metadata)

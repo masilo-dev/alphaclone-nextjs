@@ -1,8 +1,12 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { ENV } from '@/config/env'
 
-export async function createClient() {
+/**
+ * Creates a Supabase client for server-side use with session cookies.
+ * This should be used in Server Components, API routes, and Server Actions.
+ */
+export async function createSupabaseServerClient() {
     const cookieStore = await cookies()
 
     return createServerClient(
@@ -28,18 +32,19 @@ export async function createClient() {
         }
     )
 }
-export async function createAdminClient() {
+
+/**
+ * Creates a Supabase client with the service role key for administrative tasks.
+ * This bypasses RLS and should ONLY be used in server-side code (API routes, Server Actions).
+ */
+export function createSupabaseAdminClient() {
     return createServerClient(
         ENV.VITE_SUPABASE_URL!,
         ENV.SUPABASE_SERVICE_ROLE_KEY!,
         {
             cookies: {
-                getAll() {
-                    return []
-                },
-                setAll() {
-                    // No need to set cookies for service role client
-                },
+                getAll() { return [] },
+                setAll() { },
             },
         }
     )

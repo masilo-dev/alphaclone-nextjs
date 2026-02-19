@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-server';
 import { ENV } from '@/config/env';
 
 export async function GET(req: NextRequest) {
@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     const error = searchParams.get('error');
 
     if (error) {
-        return NextResponse.json({ error: `Calendly error: ${error}` }, { status: 400 });
+        return NextResponse.json({ error: `Calendly error: ${error} ` }, { status: 400 });
     }
 
     if (!code || !state) {
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`
+                'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')} `
             },
             body: new URLSearchParams({
                 grant_type: 'authorization_code',
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
         // Get Calendly User Info
         const userResponse = await fetch('https://api.calendly.com/users/me', {
             headers: {
-                'Authorization': `Bearer ${tokens.access_token}`
+                'Authorization': `Bearer ${tokens.access_token} `
             }
         });
 
@@ -65,11 +65,10 @@ export async function GET(req: NextRequest) {
         const schedulingUrl = userData.resource.scheduling_url;
 
         // Save to Supabase using admin client to bypass RLS
-        const { createAdminClient } = await import('@/lib/supabase-server');
-        const supabase = await createAdminClient();
+        const supabaseAdmin = createSupabaseAdminClient();
 
         // Get current settings first to preserve others
-        const { data: tenant, error: fetchError } = await supabase
+        const { data: tenant, error: fetchError } = await supabaseAdmin
             .from('tenants')
             .select('settings')
             .eq('id', tenantId)
@@ -91,7 +90,7 @@ export async function GET(req: NextRequest) {
             }
         };
 
-        const { error: updateError } = await supabase
+        const { error: updateError } = await supabaseAdmin
             .from('tenants')
             .update({ settings: updatedSettings })
             .eq('id', tenantId);

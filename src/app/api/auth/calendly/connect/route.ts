@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase-server';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { ENV } from '@/config/env';
 
 export async function GET(req: NextRequest) {
-    const supabase = await createClient();
+    const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     const redirectUri = ENV.VITE_CALENDLY_REDIRECT_URI;
 
     if (!clientId || !redirectUri) {
-        return NextResponse.redirect(new URL(`/dashboard/settings?tab=booking&error=calendly_not_configured`, req.url));
+        return NextResponse.redirect(new URL(`/ dashboard / settings ? tab = booking & error=calendly_not_configured`, req.url));
     }
 
     // Create state to keep track of tenantId

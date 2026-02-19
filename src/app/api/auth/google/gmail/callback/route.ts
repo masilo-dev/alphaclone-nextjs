@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '../../../../../../config/env';
-import { createAdminClient } from '../../../../../../lib/supabaseServer';
+import { createSupabaseAdminClient } from '@/lib/supabase-server';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 
     try {
         console.log('Creating admin client for callback...');
-        const supabaseAdmin = createAdminClient();
+        const supabaseAdmin = createSupabaseAdminClient();
 
         // 1. Verify and consume the state nonce
         console.log('Verifying state nonce:', stateNonce);

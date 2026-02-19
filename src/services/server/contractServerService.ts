@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/lib/supabaseServer';
+import { createSupabaseServerClient, createSupabaseAdminClient } from '@/lib/supabase-server';
 import crypto from 'crypto';
 
 export interface SignatureRequest {
@@ -17,7 +17,8 @@ export const contractServerService = {
      * Securely sign a contract
      */
     async signContract(req: SignatureRequest) {
-        const supabaseAdmin = createAdminClient();
+        const supabase = await createSupabaseServerClient();
+        const supabaseAdmin = createSupabaseAdminClient();
 
         // 1. Fetch current contract state
         const { data: contract, error: fetchError } = await supabaseAdmin

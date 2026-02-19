@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/lib/supabaseServer';
+import { createSupabaseServerClient, createSupabaseAdminClient } from '@/lib/supabase-server';
 import { ENV } from '@/config/env';
 
 export const gmailServerService = {
@@ -6,7 +6,7 @@ export const gmailServerService = {
      * Get valid access token (refreshes if needed)
      */
     async getValidToken(userId: string): Promise<string | null> {
-        const supabaseAdmin = createAdminClient();
+        const supabaseAdmin = createSupabaseAdminClient();
         const { data: tokenData, error } = await supabaseAdmin
             .from('gmail_sync_tokens')
             .select('*')
@@ -48,7 +48,7 @@ export const gmailServerService = {
 
             const expiresAt = new Date(Date.now() + data.expires_in * 1000).toISOString();
 
-            const supabaseAdmin = createAdminClient();
+            const supabaseAdmin = createSupabaseAdminClient();
             await supabaseAdmin
                 .from('gmail_sync_tokens')
                 .update({

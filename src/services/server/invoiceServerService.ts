@@ -1,11 +1,11 @@
-import { createAdminClient } from '@/lib/supabaseServer';
+import { createSupabaseServerClient, createSupabaseAdminClient } from '@/lib/supabase-server';
 
 export const invoiceServerService = {
     /**
      * Mark invoice as paid securely from server
      */
     async markAsPaid(invoiceId: string): Promise<{ success: boolean; error: string | null }> {
-        const supabaseAdmin = createAdminClient();
+        const supabaseAdmin = createSupabaseAdminClient();
 
         try {
             // 1. Get invoice details including total and tenant
@@ -45,7 +45,7 @@ export const invoiceServerService = {
      * Uses RPC if available, or direct inserts
      */
     async postPaymentToGL(invoiceId: string, invoice: any): Promise<void> {
-        const supabaseAdmin = createAdminClient();
+        const supabaseAdmin = createSupabaseAdminClient();
 
         try {
             const tenantId = invoice.tenant_id;

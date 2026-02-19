@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
-import { createAdminClient } from '@/lib/supabaseServer';
+import { createSupabaseAdminClient } from '@/lib/supabase-server';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
     try {
         console.log('Creating admin client...');
-        const supabaseAdmin = createAdminClient();
+        const supabaseAdmin = createSupabaseAdminClient();
 
         // 1. Cleanup old states (> 1 hour)
         console.log('Cleaning up old states...');

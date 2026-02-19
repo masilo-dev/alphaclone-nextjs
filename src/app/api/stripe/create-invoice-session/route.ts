@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { createAdminClient } from '@/lib/supabaseServer';
+import { createSupabaseServerClient, createSupabaseAdminClient } from '@/lib/supabase-server';
 
 export async function POST(req: Request) {
     try {
@@ -10,7 +10,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing invoiceId' }, { status: 400 });
         }
 
-        const supabaseAdmin = createAdminClient();
+        const supabaseAdmin = createSupabaseAdminClient();
 
         // 1. Fetch invoice details
         const { data: invoice, error: invoiceError } = await supabaseAdmin

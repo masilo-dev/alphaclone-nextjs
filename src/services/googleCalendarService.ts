@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabaseServer';
+import { supabase } from '@/lib/supabase';
 import { ENV } from '@/config/env';
 
 export interface GoogleCalendarEvent {
@@ -18,7 +18,6 @@ export interface GoogleCalendarEvent {
 
 export const googleCalendarService = {
     async getTokens(userId: string) {
-        const supabase = await createClient();
         const { data, error } = await supabase
             .from('google_calendar_tokens')
             .select('*')
@@ -57,7 +56,6 @@ export const googleCalendarService = {
             const { access_token, expires_in } = tokens;
             const expiresAt = new Date(Date.now() + expires_in * 1000).toISOString();
 
-            const supabase = await createClient();
             const { data, error } = await supabase
                 .from('google_calendar_tokens')
                 .update({

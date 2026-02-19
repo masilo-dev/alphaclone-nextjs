@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase-server';
+import { createSupabaseServerClient, createSupabaseAdminClient } from '@/lib/supabase-server';
 import crypto from 'crypto';
 
 // Calendly Webhook Handler
@@ -14,13 +14,12 @@ export async function POST(req: Request) {
         // For now, we'll process the payload but log the event
         console.log('Calendly Webhook Received:', payload.event);
 
-        const { createAdminClient } = await import('@/lib/supabase-server');
-        const supabase = await createAdminClient();
+        const supabaseAdmin = createSupabaseAdminClient();
 
         if (payload.event === 'invitee.created') {
-            await handleInviteeCreated(payload.payload, supabase);
+            await handleInviteeCreated(payload.payload, supabaseAdmin);
         } else if (payload.event === 'invitee.canceled') {
-            await handleInviteeCanceled(payload.payload, supabase);
+            await handleInviteeCanceled(payload.payload, supabaseAdmin);
         }
 
         return NextResponse.json({ success: true });
@@ -112,7 +111,7 @@ async function handleInviteeCreated(payload: any, supabase: any) {
                 .from('video_calls')
                 .insert({
                     host_id: userData.id,
-                    title: `Calendly: ${name || 'Guest'}`,
+                    title: `Calendly: ${name || 'Guest'} `,
                     status: 'scheduled',
                     scheduled_at: booking.start_time,
                     daily_room_url: payload.scheduled_event?.location?.location || null, // Could be Zoom/Meet link
