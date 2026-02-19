@@ -13,6 +13,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// ... (existing imports and interface)
+
 /**
  * Read the Supabase session from localStorage synchronously.
  * Called INSIDE useEffect so it always reads the current state of localStorage
@@ -27,21 +29,36 @@ function readSessionFromStorage(): User | null {
         const storageKey = Object.keys(localStorage).find(
             (k) => k.startsWith('sb-')
         );
-        if (!storageKey) return null;
+
+        if (!storageKey) {
+            console.warn('[AuthContext] Debug: No supabase token found in localStorage matching "sb-"');
+            return null;
+        }
 
         const raw = localStorage.getItem(storageKey);
-        if (!raw) return null;
+        if (!raw) {
+            console.warn('[AuthContext] Debug: Found key but value is empty', storageKey);
+            return null;
+        }
 
         const parsed = JSON.parse(raw);
         // Supabase stores it either directly or under 'currentSession'
         const session = parsed?.currentSession ?? parsed;
 
         // VALIDATION: Ensure it's actually a session object
-        if (!session?.user || !session?.access_token) return null;
+        if (!session?.user || !session?.access_token) {
+            console.warn('[AuthContext] Debug: Invalid session structure', { hasUser: !!session?.user, hasToken: !!session?.access_token });
+            return null;
+        }
 
         // Check expiry (Unix timestamp in seconds)
         const expiresAt = session.expires_at;
-        if (expiresAt && Date.now() / 1000 > expiresAt) return null;
+        if (expiresAt && Date.now() / 1000 > expiresAt) {
+            console.warn('[AuthContext] Debug: Session token expired', { expiresAt, now: Date.now() / 1000 });
+            return null;
+        }
+
+        console.log('[AuthContext] Debug: Optimistic read success', { userId: session.user.id });
 
         const { user } = session;
         const metadata = user.user_metadata || {};
@@ -53,10 +70,12 @@ function readSessionFromStorage(): User | null {
             role: metadata.role || 'tenant_admin',
             avatar: metadata.avatar || metadata.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`,
         };
-    } catch {
+    } catch (e) {
+        console.error('[AuthContext] Debug: Error reading session from storage', e);
         return null;
     }
 }
+
 
 /**
  * Clear all Supabase auth tokens from localStorage.
@@ -80,6 +99,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [error, setError] = useState<string | null>(null);
     // Track whether we've already done the optimistic read to avoid double-render
     const didOptimisticRead = useRef(false);
+    // Track the latest user state to prevent race conditions between initSession and onAuthStateChange
+    const latestUserRef = useRef<User | null>(null);
+
+    // Wrapper to set user and update ref
+    const setSafeUser = (u: User | null) => {
+        latestUserRef.current = u;
+        setUser(u);
+    };
 
     useEffect(() => {
         let isMounted = true;
@@ -91,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             didOptimisticRead.current = true;
             const cachedUser = readSessionFromStorage();
             if (cachedUser && isMounted) {
-                setUser(cachedUser);
+                setSafeUser(cachedUser);
                 setLoading(false);
             }
         }
@@ -105,28 +132,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
                 if (authError) {
                     if (authError.includes('aborted') || authError.includes('AbortError')) return;
-                    console.error('AuthContext: Session validation error', authError);
-                    setUser(null);
+                    setSafeUser(null);
                     setError(authError);
                     setLoading(false);
                     return;
                 }
 
                 if (validatedUser) {
-                    setUser(validatedUser);
+                    setSafeUser(validatedUser);
                     setError(null);
                     setLoading(false);
                 } else {
+                    // RACE CONDITION FIX:
+                    // If onAuthStateChange already found a user (via latestUserRef), DO NOT overwrite it with null
+                    if (latestUserRef.current) {
+                        // We trust the listener more than the REST check in this race case
+                        return;
+                    }
+
                     // Session invalid or expired — always clear user
-                    setUser(null);
+                    setSafeUser(null);
                     setError(null);
                     setLoading(false);
                 }
             } catch (e) {
                 if (!isMounted) return;
                 if (e instanceof Error && e.name === 'AbortError') return;
-                console.warn('AuthContext: Session validation failed', e);
-                setUser(null);
+
+                // RACE CONDITION FIX for exception case
+                if (latestUserRef.current) {
+                    return;
+                }
+
+                setSafeUser(null);
                 setLoading(false);
             }
         };
@@ -136,14 +174,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // STEP 3: Subscribe to auth state changes
         const { data: { subscription } } = authService.onAuthStateChange((u, event) => {
             if (!isMounted) return;
-            console.log(`AuthContext: ${event} event, User: ${u?.email}`);
 
             if (u) {
-                setUser(u);
+                setSafeUser(u);
                 setError(null);
                 setLoading(false);
             } else if (event === 'SIGNED_OUT') {
-                setUser(null);
+                setSafeUser(null);
                 setError(null);
                 setLoading(false);
             } else if (event === 'INITIAL_SESSION' && !u) {
@@ -153,7 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 // Don't clear user on token refresh
                 return;
             } else if (!u) {
-                setUser(null);
+                setSafeUser(null);
                 setLoading(false);
             }
         });
@@ -175,7 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const signOut = async () => {
         // Clear localStorage FIRST so any refresh during sign-out doesn't re-read stale session
         clearStorageSession();
-        setUser(null);
+        setSafeUser(null);
         setLoading(false);
         await authService.signOut();
     };
