@@ -19,10 +19,12 @@ export default function DashboardPage() {
         if (!loading && !user) {
             // Check if there is even a HINT of a session in localStorage
             // Supabase keys start with 'sb-'
+            // Also check for any key that might look like a token to be safe
             const hasLocalToken = typeof window !== 'undefined' &&
-                Object.keys(localStorage).some(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+                Object.keys(localStorage).some(k => k.startsWith('sb-'));
 
-            const timeoutDuration = hasLocalToken ? 3000 : 800;
+            // Increased timeout to account for slower connections/device processing
+            const timeoutDuration = hasLocalToken ? 3000 : 2500;
 
             const timer = setTimeout(() => {
                 // Double check user still null after grace period

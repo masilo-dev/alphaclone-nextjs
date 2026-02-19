@@ -22,8 +22,10 @@ function readSessionFromStorage(): User | null {
     try {
         if (typeof window === 'undefined') return null;
 
+        // OPTIMIZED: Look for ANY Supabase token, not just those ending in -auth-token
+        // This is more robust against different client versions/configs
         const storageKey = Object.keys(localStorage).find(
-            (k) => k.startsWith('sb-') && k.endsWith('-auth-token')
+            (k) => k.startsWith('sb-')
         );
         if (!storageKey) return null;
 
@@ -31,8 +33,10 @@ function readSessionFromStorage(): User | null {
         if (!raw) return null;
 
         const parsed = JSON.parse(raw);
+        // Supabase stores it either directly or under 'currentSession'
         const session = parsed?.currentSession ?? parsed;
 
+        // VALIDATION: Ensure it's actually a session object
         if (!session?.user || !session?.access_token) return null;
 
         // Check expiry (Unix timestamp in seconds)
