@@ -304,9 +304,15 @@ export const authService = {
             }
 
             if (!session?.user) {
-                console.log("AuthService: No active session found");
+                console.log("AuthService: No active session found (data.session is null)");
                 return { user: null, error: null };
             }
+
+            console.log("AuthService: Active session found", {
+                userId: session.user.id,
+                expiresAt: session.expires_at,
+                now: Math.floor(Date.now() / 1000)
+            });
 
             const startTime = Date.now();
             console.log(`AuthService: Fetching profile for ${session.user.id}...`);

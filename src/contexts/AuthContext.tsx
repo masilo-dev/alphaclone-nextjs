@@ -24,20 +24,38 @@ function readSessionFromStorage(): User | null {
     try {
         if (typeof window === 'undefined') return null;
 
+        // DEBUG: List all keys to diagnose production environment differences
+        const allKeys = Object.keys(localStorage);
+        const sbKeys = allKeys.filter(k => k.includes('sb-'));
+
+        console.log('[AuthContext] Debug: Storage Inspection', {
+            allKeysCount: allKeys.length,
+            sbKeys: sbKeys,
+            url: window.location.href
+        });
+
         // OPTIMIZED: Match precisely the auth token to avoid matching -code-verifier strings
         // This is more robust than just checking for 'sb-' prefixes
-        const storageKey = Object.keys(localStorage).find(
+        const storageKey = allKeys.find(
             (k) => k.startsWith('sb-') && k.endsWith('-auth-token')
         );
 
         if (!storageKey) {
-            console.warn('[AuthContext] Debug: No supabase token found in localStorage matching "sb-"');
-            return null;
+            // FALLBACK: Try a broader search if exact match fails
+            const fallbackKey = allKeys.find(k => k.includes('auth-token') && k.includes('sb-'));
+            if (fallbackKey) {
+                console.log('[AuthContext] Debug: Found key via fallback', fallbackKey);
+            } else {
+                console.warn('[AuthContext] Debug: No supabase token found in localStorage matching "sb-"');
+                return null;
+            }
         }
 
-        const raw = localStorage.getItem(storageKey);
+        const effectiveKey = storageKey || allKeys.find(k => k.includes('auth-token') && k.includes('sb-'))!;
+        const raw = localStorage.getItem(effectiveKey);
+
         if (!raw) {
-            console.warn('[AuthContext] Debug: Found key but value is empty', storageKey);
+            console.warn('[AuthContext] Debug: Found key but value is empty', effectiveKey);
             return null;
         }
 
@@ -47,18 +65,29 @@ function readSessionFromStorage(): User | null {
 
         // VALIDATION: Ensure it's actually a session object
         if (!session?.user || !session?.access_token) {
-            console.warn('[AuthContext] Debug: Invalid session structure', { hasUser: !!session?.user, hasToken: !!session?.access_token });
+            console.warn('[AuthContext] Debug: Invalid session structure', {
+                hasUser: !!session?.user,
+                hasToken: !!session?.access_token,
+                keys: Object.keys(session || {})
+            });
             return null;
         }
 
         // Check expiry (Unix timestamp in seconds)
         const expiresAt = session.expires_at;
         if (expiresAt && Date.now() / 1000 > expiresAt) {
-            console.warn('[AuthContext] Debug: Session token expired', { expiresAt, now: Date.now() / 1000 });
+            console.warn('[AuthContext] Debug: Session token expired', {
+                expiresAt,
+                now: Math.floor(Date.now() / 1000),
+                diff: Math.floor(Date.now() / 1000 - expiresAt)
+            });
             return null;
         }
 
-        console.log('[AuthContext] Debug: Optimistic read success', { userId: session.user.id });
+        console.log('[AuthContext] Debug: Optimistic read success', {
+            userId: session.user.id,
+            email: session.user.email
+        });
 
         const { user } = session;
         const metadata = user.user_metadata || {};
@@ -131,10 +160,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (!isMounted) return;
 
                 if (authError) {
-                    if (authError.includes('aborted') || authError.includes('AbortError')) return;
-                    clearStorageSession();
-                    setSafeUser(null);
-                    setError(authError);
+                    console.error('[AuthContext] Debug: getCurrentUser returned error', authError);
+
+                    // CRITICAL FIX: Only clear the session if it's a definitive auth failure.
+                    // Network errors or transient server issues should NOT trigger a logout.
+                    const isAuthError = authError.toLowerCase().includes('invalid') ||
+                        authError.toLowerCase().includes('expired') ||
+                        authError.toLowerCase().includes('unauthorized') ||
+                        authError.toLowerCase().includes('not found');
+
+                    if (isAuthError) {
+                        console.warn('[AuthContext] Debug: Definitive auth failure. Clearing session.');
+                        clearStorageSession();
+                        setSafeUser(null);
+                        setError(authError);
+                    } else {
+                        console.warn('[AuthContext] Debug: Possible transient error. Retaining current session state.');
+                        // If we already have a cached user, we keep it rather than logging out.
+                        if (!latestUserRef.current) {
+                            setError(authError);
+                        }
+                    }
                     setLoading(false);
                     return;
                 }

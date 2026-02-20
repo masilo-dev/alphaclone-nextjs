@@ -31,7 +31,9 @@ export default function DashboardPage() {
                 Object.keys(localStorage).some(k => k.startsWith('sb-'));
 
             // Increased timeout to account for slower connections/device processing
-            const timeoutDuration = hasLocalToken ? 3000 : 2500;
+            const timeoutDuration = hasLocalToken ? 5000 : 3500;
+
+            console.log(`DashboardPage: User missing, starting grace period of ${timeoutDuration}ms`, { hasLocalToken });
 
             const timer = setTimeout(() => {
                 setIsGracePeriod(false);
@@ -43,7 +45,11 @@ export default function DashboardPage() {
     // Separate effect for the actual redirection to ensure we always use the latest state values
     useEffect(() => {
         if (!loading && !isGracePeriod && !user) {
-            console.warn(`Dashboard DashboardPage: Session not established. Redirecting to login...`);
+            console.warn(`Dashboard DashboardPage: Session not established after grace period. Redirecting to login...`, {
+                loading,
+                isGracePeriod,
+                hasUser: !!user
+            });
             router.replace('/auth/login');
         }
     }, [loading, isGracePeriod, user, router]);
