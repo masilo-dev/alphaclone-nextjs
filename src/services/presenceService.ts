@@ -19,7 +19,8 @@ export interface UserPresence {
 
 class PresenceService {
     private heartbeatInterval: NodeJS.Timeout | null = null;
-    private readonly HEARTBEAT_INTERVAL = 30000; // 30 seconds
+    private readonly HEARTBEAT_INTERVAL = 180000; // 3 minutes instead of 30 seconds for background sync
+    private lastActivityTime: number = Date.now();
 
     /**
      * Initialize presence tracking for current user
@@ -56,12 +57,28 @@ class PresenceService {
         // Clear any existing heartbeat
         this.stopHeartbeat();
 
-        // Send heartbeat every 30 seconds
+        // Track user activity to determine idle state
+        const updateActivityTime = () => {
+            this.lastActivityTime = Date.now();
+        };
+
+        window.addEventListener('mousemove', updateActivityTime, { passive: true });
+        window.addEventListener('keydown', updateActivityTime, { passive: true });
+        window.addEventListener('click', updateActivityTime, { passive: true });
+        window.addEventListener('scroll', updateActivityTime, { passive: true });
+
+        // Send heartbeat every 3 minutes, but only if not idle (active in last 5 minutes)
         this.heartbeatInterval = setInterval(async () => {
             try {
+                const idleTime = Date.now() - this.lastActivityTime;
+
+                // If user has been idle for more than 5 minutes, mark as away instead of online
+                const isIdle = idleTime > 5 * 60 * 1000;
+                const nextStatus = isIdle ? 'away' : 'online';
+
                 await supabase.rpc('update_user_presence', {
                     p_user_id: userId,
-                    p_status: 'online',
+                    p_status: nextStatus,
                     p_device_info: null
                 });
             } catch (err) {

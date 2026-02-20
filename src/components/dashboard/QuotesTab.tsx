@@ -193,6 +193,21 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                 }
 
                 toast.success('Quote created with line items successfully!');
+
+                // Auto-save to Document Hub
+                try {
+                    const { generateQuotePDF } = await import('../../utils/pdfGenerator');
+                    if (currentTenant) {
+                        // Cast validItems to QuoteItem[] since they don't have IDs yet but PDF gen doesn't strictly need IDs for rendering
+                        const doc = generateQuotePDF(quote as any, validItems as any[], currentTenant);
+                        const pdfBlob = doc.output('blob');
+                        const pdfFile = new File([pdfBlob], `Quote_${quote.quoteNumber || quote.id}.pdf`, { type: 'application/pdf' });
+                        await fileUploadService.uploadFile(pdfFile, 'quote', quote.id);
+                    }
+                } catch (pdfErr) {
+                    console.error('Failed to auto-save quote PDF to Document Hub:', pdfErr);
+                }
+
                 setShowCreateModal(false);
                 // Reset form
                 setQuoteForm({
@@ -438,19 +453,24 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
         }
     };
 
-    const handleShareQuote = async (quote: Quote) => {
-        // Mock share - just copy link and update status
-        const link = `${window.location.origin}/portal/quotes/${quote.id}`;
-        try {
-            await navigator.clipboard.writeText(link);
-            toast.success('Quote link copied to clipboard!');
+    const handleShareQuote = async (_quote: Quote) => {
+        // Link sharing is temporarily disabled.
+        toast('Link sharing is coming soon. Use the status dropdown or Edit to change quote status.', { icon: '🔗' });
+    };
 
-            if (quote.status === 'draft') {
-                await quoteService.updateQuote(quote.id, { status: 'sent', sentAt: new Date().toISOString() });
-                loadQuotes();
-            }
-        } catch (err) {
-            toast.error('Failed to share quote');
+    const handleQuickStatusUpdate = async (quote: Quote, newStatus: string) => {
+        try {
+            const updates: any = { status: newStatus as any };
+            if (newStatus === 'sent' && !quote.sentAt) updates.sentAt = new Date().toISOString();
+            if (newStatus === 'accepted') updates.acceptedAt = new Date().toISOString();
+            if (newStatus === 'rejected') updates.rejectedAt = new Date().toISOString();
+
+            const { error } = await quoteService.updateQuote(quote.id, updates);
+            if (error) throw new Error(error);
+            toast.success(`Quote marked as "${newStatus}"`);
+            loadQuotes();
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to update status');
         }
     };
 
@@ -465,7 +485,8 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
             // 2. Generate PDF
             const { generateQuotePDF } = await import('../../utils/pdfGenerator');
             if (currentTenant) {
-                generateQuotePDF(quote, items || [], currentTenant);
+                const doc = generateQuotePDF(quote, items || [], currentTenant);
+                doc.save(`Quote_${quote.quoteNumber}.pdf`);
             } else {
                 toast.error("Tenant information missing");
             }
@@ -565,9 +586,24 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                                         <div className="text-xs text-slate-500 mb-1">{quote.quoteNumber}</div>
                                         <h3 className="font-bold text-white text-lg">{quote.name}</h3>
                                     </div>
-                                    <span className={`px-2 py-1 text-xs rounded-full font-bold uppercase ${getStatusColor(quote.status)}`}>
-                                        {quote.status}
-                                    </span>
+                                    {/* Quick Status Update Dropdown */}
+                                    {(userRole === 'admin' || userRole === 'tenant_admin') ? (
+                                        <select
+                                            value={quote.status}
+                                            onChange={(e) => handleQuickStatusUpdate(quote, e.target.value)}
+                                            className={`text-xs font-bold uppercase rounded-full px-2 py-1 border-0 outline-none cursor-pointer bg-transparent ${getStatusColor(quote.status)}`}
+                                            title="Update status"
+                                        >
+                                            <option value="draft">Draft</option>
+                                            <option value="sent">Sent</option>
+                                            <option value="accepted">Accepted</option>
+                                            <option value="rejected">Declined</option>
+                                        </select>
+                                    ) : (
+                                        <span className={`px-2 py-1 text-xs rounded-full font-bold uppercase ${getStatusColor(quote.status)}`}>
+                                            {quote.status}
+                                        </span>
+                                    )}
                                 </div>
 
                                 <div className="flex items-center gap-2 text-teal-400 text-2xl font-bold mb-4">

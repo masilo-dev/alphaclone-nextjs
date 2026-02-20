@@ -131,21 +131,83 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Failed to check calendar' }, { status: 500 });
         }
 
-        // 5. Calculate Slots
+        // 5. Fetch External Conflicts (Google Calendar & Video Calls)
+        let externalEvents: { start: number; end: number }[] = [];
+
+        // Fetch Google Calendar events if connected
+        const { data: gcalTokens } = await supabaseAdmin
+            .from('google_calendar_tokens')
+            .select('*')
+            .eq('user_id', hostId)
+            .single();
+
+        if (gcalTokens) {
+            try {
+                // We use a simplified fetch here to avoid circular dependencies or complex service imports in API route
+                // Or we can just use the hostId and hope listEvents works if we import it, 
+                // but token refresh needs ENV which might not be available here depending on setup.
+                // For now, let's just use the existing calendar_events table which should 
+                // ideally have synced events, BUT we were asked to check external calendars.
+
+                // If we want REAL-TIME Google Calendar check:
+                const response = await fetch(
+                    `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${workStart.toISOString()}&timeMax=${workEnd.toISOString()}`,
+                    {
+                        headers: { Authorization: `Bearer ${gcalTokens.access_token}` }
+                    }
+                );
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const gEntries = (data.items || []).map((item: any) => ({
+                        start: new Date(item.start.dateTime || item.start.date).getTime(),
+                        end: new Date(item.end.dateTime || item.end.date).getTime()
+                    }));
+                    externalEvents = [...externalEvents, ...gEntries];
+                }
+            } catch (err) {
+                console.error('[BookingAPI] Google Calendar fetch error:', err);
+            }
+        }
+
+        // Fetch Video Calls (for Calendly syncs or other scheduled calls)
+        const { data: videoCalls } = await supabaseAdmin
+            .from('video_calls')
+            .select('scheduled_at, duration_minutes')
+            .eq('host_id', hostId)
+            .eq('status', 'scheduled')
+            .or(`and(scheduled_at.lte.${workEnd.toISOString()},scheduled_at.gte.${workStart.toISOString()})`);
+
+        if (videoCalls) {
+            const vEntries = videoCalls.map((call: any) => {
+                const start = new Date(call.scheduled_at).getTime();
+                const end = start + (call.duration_minutes || 30) * 60000;
+                return { start, end };
+            });
+            externalEvents = [...externalEvents, ...vEntries];
+        }
+
+        // 6. Calculate Slots
         const slots = [];
         let currentSlot = new Date(workStart); // Start at 09:00 Tenant Time (UTC equivalent)
 
         while (addMinutes(currentSlot, duration) <= workEnd) {
             const slotEnd = addMinutes(currentSlot, duration);
+            const slotStartTime = currentSlot.getTime();
+            const slotEndTime = slotEnd.getTime();
 
             // Overlap Check (compare UTC timestamps)
-            const isBlocked = (events || []).some((e: any) => {
+            const isBlockedLocal = (events || []).some((e: any) => {
                 const eventStart = new Date(e.start_time).getTime();
                 const eventEnd = new Date(e.end_time).getTime();
-                const slotStartTime = currentSlot.getTime();
-                const slotEndTime = slotEnd.getTime();
                 return (slotStartTime < eventEnd && slotEndTime > eventStart);
             });
+
+            const isBlockedExternal = externalEvents.some((e: any) => {
+                return (slotStartTime < e.end && slotEndTime > e.start);
+            });
+
+            const isBlocked = isBlockedLocal || isBlockedExternal;
 
             // Lead time check (1 hour from NOW)
             const leadTimeCutoff = addMinutes(new Date(), 60);

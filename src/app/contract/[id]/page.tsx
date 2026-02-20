@@ -120,7 +120,10 @@ export default function PublicContractPage() {
 
         doc.setFont('helvetica', 'bold');
         doc.text('CLIENT SIGNATURE', 20, y);
-        doc.addImage(signature, 'PNG', 20, y + 5, 60, 25);
+        const isJpeg = signature.startsWith('data:image/jpeg');
+        const imgFormat = isJpeg ? 'JPEG' : 'PNG';
+        const base64Data = signature.includes(',') ? signature.split(',')[1] : signature;
+        doc.addImage(base64Data, imgFormat, 20, y + 5, 60, 25);
 
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);

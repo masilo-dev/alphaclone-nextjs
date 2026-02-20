@@ -154,6 +154,42 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 toast.error(`Failed to create invoice: ${error}`);
             } else if (invoice) {
                 setCreatedInvoiceId(invoice.id);
+
+                // Auto-save to Document Hub
+                try {
+                    const { fileUploadService } = await import('../../services/fileUploadService');
+                    const client = clients.find(c => c.id === finalClientId);
+
+                    const invoiceDataForPDF = {
+                        id: invoice.id,
+                        invoiceNumber: invoice.invoiceNumber, // Ensure this property exists on the returned invoice
+                        issueDate: invoice.issueDate,
+                        dueDate: invoice.dueDate,
+                        status: invoice.status,
+                        subtotal: amountNum,
+                        tax: 0,
+                        total: amountNum,
+                        lineItems: [{
+                            description: description,
+                            quantity: 1,
+                            rate: amountNum,
+                            amount: amountNum
+                        }],
+                        bankDetails: bankDetails,
+                        mobilePaymentDetails: mobileDetails,
+                        client: client ? { name: client.name, email: client.email } : undefined,
+                        project: project ? { name: project.name } : undefined
+                    };
+
+                    const doc = businessInvoiceService.generatePDF(invoiceDataForPDF, currentTenant, invoiceDataForPDF.client, invoiceData.signature);
+                    const pdfBlob = doc.output('blob');
+                    const pdfFile = new File([pdfBlob], `Invoice-${invoice.invoiceNumber || invoice.id}.pdf`, { type: 'application/pdf' });
+
+                    await fileUploadService.uploadFile(pdfFile, 'invoice', invoice.id);
+                } catch (pdfErr) {
+                    console.error('Failed to auto-save invoice PDF to Document Hub:', pdfErr);
+                }
+
                 setStep('success');
                 toast.success('Invoice created successfully!');
                 onInvoiceCreated();

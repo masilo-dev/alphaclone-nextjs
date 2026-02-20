@@ -14,6 +14,21 @@ import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import DOMPurify from 'dompurify';
 import { notificationService } from '../../services/dashboardService';
+import dynamic from 'next/dynamic';
+
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
+import 'react-quill-new/dist/quill.snow.css';
+
+const quillModules = {
+    toolbar: [
+        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+        [{ 'color': [] }, { 'background': [] }],
+        ['link', 'image'],
+        ['clean']
+    ],
+};
 
 interface DocumentHubProps {
     user: User;
@@ -264,6 +279,37 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         }
     };
 
+    const handleDownloadAsPDF = async () => {
+        if (!selectedFile) return;
+        setIsSaving(true);
+        const toastId = toast.loading('Generating PDF...');
+        try {
+            // Dynamically import html2pdf to avoid SSR issues
+            const html2pdf = (await import('html2pdf.js')).default;
+            const element = document.getElementById('editor-pdf-content');
+            if (!element) {
+                toast.error('Could not find content to print', { id: toastId });
+                return;
+            }
+
+            const opt: any = {
+                margin: 0.5,
+                filename: selectedFile.original_filename.replace(/\.(doc|docx|txt)$/i, '.pdf'),
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            await html2pdf().set(opt).from(element).save();
+            toast.success('Downloaded as PDF', { id: toastId });
+        } catch (error) {
+            console.error('PDF generation error:', error);
+            toast.error('Failed to generate PDF', { id: toastId });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const filteredFiles = files.filter(f =>
         f.original_filename.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -291,14 +337,24 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                     </div>
                     <div className="flex items-center gap-3">
                         {viewMode === 'editor' && (
-                            <button
-                                onClick={handleSaveEdits}
-                                disabled={isSaving}
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all shadow-lg shadow-teal-500/20 disabled:opacity-50"
-                            >
-                                {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                                Save Changes
-                            </button>
+                            <>
+                                <button
+                                    onClick={handleDownloadAsPDF}
+                                    disabled={isSaving}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition-all shadow-lg shadow-orange-500/20 disabled:opacity-50"
+                                >
+                                    <Download className="w-3.5 h-3.5" />
+                                    Save as PDF
+                                </button>
+                                <button
+                                    onClick={handleSaveEdits}
+                                    disabled={isSaving}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all shadow-lg shadow-teal-500/20 disabled:opacity-50"
+                                >
+                                    {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                                    Save Changes
+                                </button>
+                            </>
                         )}
                         <button
                             onClick={() => handleDownload(selectedFile)}
@@ -323,13 +379,26 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                         </div>
                     ) : viewMode === 'editor' ? (
                         <div className="h-full overflow-auto flex flex-col items-center bg-slate-900/50 py-12 px-6">
-                            <div className="w-full max-w-4xl bg-white text-slate-900 p-16 shadow-2xl rounded-sm min-h-screen mb-12 animate-in slide-in-from-bottom-4 duration-500">
-                                <div
-                                    contentEditable
-                                    className="outline-none min-h-[800px] prose prose-slate prose-sm md:prose-base max-w-none"
-                                    onBlur={(e) => setEditorContent(e.currentTarget.innerHTML)}
-                                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(editorContent) }}
-                                />
+                            <div className="w-full max-w-4xl bg-white text-slate-900 shadow-2xl rounded-sm min-h-screen mb-12 animate-in slide-in-from-bottom-4 duration-500">
+                                {/* Editor wrapper gets custom quill styling */}
+                                <div className="h-full min-h-[800px] flex flex-col [&_.ql-toolbar]:rounded-t-sm [&_.ql-container]:rounded-b-sm [&_.ql-container]:flex-1 [&_.ql-editor]:min-h-[800px] [&_.ql-editor]:text-base [&_.ql-editor]:bg-white [&_.ql-editor]:text-black [&_.ql-editor]:!text-[#000000] [&_.ql-editor]:shadow-inner [&_.ql-toolbar]:border-slate-300 [&_.ql-container]:border-slate-300 [&_.ql-toolbar]:bg-slate-50">
+                                    <ReactQuill
+                                        theme="snow"
+                                        value={editorContent}
+                                        onChange={setEditorContent}
+                                        modules={quillModules}
+                                    />
+                                </div>
+                                {/* Hidden element required for rendering clean HTML to PDF without editor toolbars */}
+                                <div className="hidden">
+                                    {/* Removed 'prose prose-slate' because Tailwind uses oklch/lab which html2canvas cannot parse. Using exact hex codes and standard CSS mimics to prevent the color crash. */}
+                                    <div
+                                        id="editor-pdf-content"
+                                        className="p-10 max-w-none min-h-[1056px] [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:mb-6 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:mb-4 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:mb-3 [&_p]:mb-4 [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-4 [&_strong]:font-bold [&_em]:italic"
+                                        style={{ color: '#000000', backgroundColor: '#ffffff' }}
+                                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(editorContent) }}
+                                    />
+                                </div>
                             </div>
                         </div>
                     ) : fileUrl ? (
@@ -469,48 +538,48 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                 </div>
                             </div>
 
-                            {/* Action buttons — always visible on mobile, hover-reveal on desktop */}
-                            <div className="flex items-center gap-2 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 sm:transition-opacity">
+                            {/* Action buttons */}
+                            <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-slate-800/50 sm:border-t-0 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 sm:transition-opacity">
                                 {viewTrash ? (
                                     <>
                                         <button
                                             onClick={() => handleRestore(file.id)}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-teal-500/20 text-slate-400 hover:text-teal-400 transition-colors text-xs font-bold"
+                                            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-teal-500/20 text-slate-400 hover:text-teal-400 transition-colors text-sm sm:text-xs font-bold border border-transparent"
                                         >
-                                            <RotateCcw className="w-3.5 h-3.5" /> Restore
+                                            <RotateCcw className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> Restore
                                         </button>
                                         <button
                                             onClick={() => handlePermanentDelete(file.id)}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors text-xs font-bold"
+                                            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors text-sm sm:text-xs font-bold border border-transparent"
                                         >
-                                            <X className="w-3.5 h-3.5" /> Delete
+                                            <X className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> Delete
                                         </button>
                                     </>
                                 ) : (
                                     <>
                                         <button
                                             onClick={() => handleOpenFile(file)}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-teal-500/20 text-slate-400 hover:text-teal-400 transition-colors text-xs font-bold"
+                                            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 hover:text-teal-300 transition-colors text-sm sm:text-xs font-bold border border-teal-500/20"
                                         >
                                             {file.file_type === 'application/pdf' ? (
-                                                <><Eye className="w-3.5 h-3.5" /> View</>
+                                                <><Eye className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> View Document</>
                                             ) : (
-                                                <><Edit3 className="w-3.5 h-3.5" /> Open</>
+                                                <><Edit3 className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> Open Editor</>
                                             )}
                                         </button>
                                         <button
                                             onClick={() => handleDownload(file)}
-                                            className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                                            className="p-2 sm:p-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-transparent flex justify-center items-center"
                                             title="Download"
                                         >
-                                            <Download className="w-4 h-4" />
+                                            <Download className="w-5 h-5 sm:w-4 sm:h-4" />
                                         </button>
                                         <button
                                             onClick={() => handleSoftDelete(file.id)}
-                                            className="p-2 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
+                                            className="p-2 sm:p-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors border border-transparent flex justify-center items-center"
                                             title="Move to trash"
                                         >
-                                            <Trash2 className="w-4 h-4" />
+                                            <Trash2 className="w-5 h-5 sm:w-4 sm:h-4" />
                                         </button>
                                     </>
                                 )}

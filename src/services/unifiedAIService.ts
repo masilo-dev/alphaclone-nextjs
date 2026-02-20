@@ -66,13 +66,13 @@ export const chatWithGrowthAgent = async (
     INTENT DETECTION:
     If a user asks to "find", "search", "get", or "discover" leads/businesses for a specific service/industry in a specific location, you MUST respond with a specialized command at the end of your text.
     
-    COMMAND FORMAT: [SEARCH_COMMAND: {"industry": "precise service name", "location": "city or country"}]
+    COMMAND FORMAT: [SEARCH_COMMAND: {"industry": "precise service name", "location": "city or country", "filters": "any additional requirements like 'no website', 'size', etc."}]
     
     EXAMPLES:
-    - User: "Find me plumbers in London" 
-      AI: "Certainly! I'll search for plumbers in London for you right now. [SEARCH_COMMAND: {"industry": "Plumbing Services", "location": "London"}]"
+    - User: "Find me plumbers in London who don't have a website" 
+      AI: "Certainly! I'll search for plumbers in London without websites for you right now. [SEARCH_COMMAND: {"industry": "Plumbing Services", "location": "London", "filters": "no website"}]"
     - User: "I need graphic designers in NY"
-      AI: "Great choice. Searching for graphic designers in New York... [SEARCH_COMMAND: {"industry": "Graphic Design", "location": "New York"}]"
+      AI: "Great choice. Searching for graphic designers in New York... [SEARCH_COMMAND: {"industry": "Graphic Design", "location": "New York", "filters": ""}]"
     
     If information is missing (like location), ask the user for it first.
     Be proactive, premium, and concise.`;
@@ -226,7 +226,7 @@ export const generateLeadsWithManus = async (industry: string, location: string)
 /**
  * Generate leads using AI or Google Places (proxied through server-side route)
  */
-export const generateLeads = async (industry: string, location: string, googleApiKey?: string, mode: 'admin' | 'tenant' = 'tenant') => {
+export const generateLeads = async (industry: string, location: string, googleApiKey?: string, mode: 'admin' | 'tenant' = 'tenant', filters?: string) => {
     if (!industry || !location) {
         throw new Error('Industry and location are required to generate leads.');
     }
@@ -243,7 +243,8 @@ export const generateLeads = async (industry: string, location: string, googleAp
             body: JSON.stringify({
                 industry,
                 location,
-                mode
+                mode,
+                filters
             })
         });
 

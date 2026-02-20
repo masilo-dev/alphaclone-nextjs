@@ -14,12 +14,19 @@ export default function DashboardPage() {
     const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
     const router = useRouter();
 
+    const [isGracePeriod, setIsGracePeriod] = useState(true);
+
     useEffect(() => {
-        // Redirection logic: If loading is done and no user exists, send to login
+        // Stop checking if user exists
+        if (user) {
+            setIsGracePeriod(false);
+            return;
+        }
+
+        // If loading is done and no user exists, start grace period
         if (!loading && !user) {
             // Check if there is even a HINT of a session in localStorage
             // Supabase keys start with 'sb-'
-            // Also check for any key that might look like a token to be safe
             const hasLocalToken = typeof window !== 'undefined' &&
                 Object.keys(localStorage).some(k => k.startsWith('sb-'));
 
@@ -27,18 +34,22 @@ export default function DashboardPage() {
             const timeoutDuration = hasLocalToken ? 3000 : 2500;
 
             const timer = setTimeout(() => {
-                // Double check user still null after grace period
-                if (!user) {
-                    console.warn(`Dashboard DashboardPage: Session not established after ${timeoutDuration}ms. Redirecting to login...`);
-                    router.replace('/auth/login');
-                }
+                setIsGracePeriod(false);
             }, timeoutDuration);
             return () => clearTimeout(timer);
         }
-    }, [user, loading, router]);
+    }, [user, loading]);
+
+    // Separate effect for the actual redirection to ensure we always use the latest state values
+    useEffect(() => {
+        if (!loading && !isGracePeriod && !user) {
+            console.warn(`Dashboard DashboardPage: Session not established. Redirecting to login...`);
+            router.replace('/auth/login');
+        }
+    }, [loading, isGracePeriod, user, router]);
 
     // Show skeleton shell immediately — never a blank screen
-    if (loading) {
+    if (loading || (isGracePeriod && !user)) {
         return <DashboardShellSkeleton />;
     }
 

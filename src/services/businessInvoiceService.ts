@@ -635,7 +635,10 @@ export const businessInvoiceService = {
 
             if (signature.type === 'draw' && signature.data) {
                 try {
-                    doc.addImage(signature.data, 'PNG', 140, sigY - 10, 40, 20);
+                    const cleanSigData = signature.data.includes(',')
+                        ? signature.data.split(',')[1]
+                        : signature.data;
+                    doc.addImage(cleanSigData, 'PNG', 140, sigY - 10, 40, 20);
                 } catch (e) {
                     console.error('Failed to add drawn signature to PDF:', e);
                 }

@@ -242,6 +242,70 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
 
     const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
 
+    const [pnlData, setPnlData] = React.useState<any>(null);
+    const [isGeneratingPnL, setIsGeneratingPnL] = React.useState(false);
+
+    React.useEffect(() => {
+        const fetchPnL = async () => {
+            if (!tenant?.id || !isAdmin) return;
+            try {
+                const { generalLedgerService } = await import('../../services/accounting/generalLedgerService');
+                const endDate = new Date().toISOString().split('T')[0];
+                const startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+                const { statement, error } = await generalLedgerService.getProfitLossData(startDate, endDate);
+                if (!error && statement) {
+                    setPnlData(statement);
+                }
+            } catch (err) {
+                console.error("Failed to fetch PnL", err);
+            }
+        };
+        fetchPnL();
+    }, [tenant?.id, isAdmin]);
+
+    const handleGeneratePnL = async () => {
+        if (!tenant?.id) return;
+        setIsGeneratingPnL(true);
+        toast.loading('Generating P&L Report...', { id: 'pnl-gen' });
+        try {
+            const endDate = new Date().toISOString().split('T')[0];
+            const startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+
+            let currentStatement = pnlData;
+            if (!currentStatement) {
+                const { generalLedgerService } = await import('../../services/accounting/generalLedgerService');
+                const { statement, error } = await generalLedgerService.getProfitLossData(startDate, endDate);
+                if (error) throw new Error(error);
+                currentStatement = statement;
+            }
+
+            const { generatePnLPDF } = await import('../../utils/pdfGenerator');
+            const doc = generatePnLPDF(currentStatement, tenant, startDate, endDate);
+
+            // Save to browser
+            const fileName = `PnL_Report_${new Date().toLocaleString('default', { month: 'short' })}_${new Date().getFullYear()}.pdf`;
+            doc.save(fileName);
+
+            // Auto-save to Document Hub
+            try {
+                const { fileUploadService } = await import('../../services/fileUploadService');
+                const pdfBlob = doc.output('blob');
+                const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+                // We'll use the tenant's ID or a static string as the entity ID, but document hub handles it.
+                await fileUploadService.uploadFile(pdfFile, 'report', tenant.id);
+                toast.success('P&L Report generated and saved to Document Hub!', { id: 'pnl-gen' });
+            } catch (uploadErr) {
+                console.error('Failed to auto-save PnL PDF to Document Hub:', uploadErr);
+                toast.success('P&L Report generated, but auto-save failed.', { id: 'pnl-gen' });
+            }
+        } catch (err) {
+            console.error('Failed to generate P&L:', err);
+            toast.error('Failed to generate P&L Report', { id: 'pnl-gen' });
+        } finally {
+            setIsGeneratingPnL(false);
+        }
+    };
+
     const handleExport = async (type: 'pdf' | 'xlsx', category: string) => {
         if (!tenant?.id) {
             toast.error("Tenant information unavailable");
@@ -272,12 +336,12 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
         }
     };
 
-    const totalRevenue = filteredInvoices.filter(i => i.status === 'Paid').reduce((acc, curr) => acc + curr.amount, 0);
+    const totalRevenue = pnlData ? pnlData.totalRevenue : filteredInvoices.filter(i => i.status === 'Paid').reduce((acc, curr) => acc + curr.amount, 0);
     const outstanding = filteredInvoices.filter(i => i.status !== 'Paid').reduce((acc, curr) => acc + curr.amount, 0);
 
-    // Mock Expenses for MVP Polish
-    const totalExpenses = 4500;
-    const netProfit = totalRevenue - totalExpenses;
+    // Use fetched expenses or fallback to Mock Expenses for MVP Polish
+    const totalExpenses = pnlData ? pnlData.totalExpenses : 4500;
+    const netProfit = pnlData ? pnlData.netIncome : (totalRevenue - totalExpenses);
 
     // Prepare Chart Data
     const chartData = React.useMemo(() => {
@@ -318,6 +382,16 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                         >
                             Export Excel
                         </Button>
+                        {isAdmin && (
+                            <Button
+                                variant="secondary"
+                                onClick={handleGeneratePnL}
+                                isLoading={isGeneratingPnL}
+                                icon={<FileDown className="w-4 h-4" />}
+                            >
+                                P&L Report
+                            </Button>
+                        )}
                         {isAdmin && <Button onClick={onCreateInvoice}>Create Invoice</Button>}
                     </div>
                 )}
@@ -377,10 +451,10 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                 <p className="text-2xl font-bold text-orange-400">${outstanding.toLocaleString()}</p>
                             </div>
                             <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-                                <p className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Expenses (Est)</p>
+                                <p className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Expenses {!pnlData && '(Est)'}</p>
                                 <p className="text-2xl font-bold text-red-400 flex items-center gap-2">
                                     ${totalExpenses.toLocaleString()}
-                                    <span className="text-xs text-slate-500 font-normal bg-slate-800 px-1.5 py-0.5 rounded">Placeholder</span>
+                                    {!pnlData && <span className="text-xs text-slate-500 font-normal bg-slate-800 px-1.5 py-0.5 rounded">Placeholder</span>}
                                 </p>
                             </div>
                             <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl relative overflow-hidden">

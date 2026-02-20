@@ -17,6 +17,10 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) =
 
             const ctx = canvas.getContext('2d');
             if (ctx) {
+                // Fill background with white to prevent PDF transparency issues
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
                 ctx.strokeStyle = '#000000';
                 ctx.lineWidth = 2;
                 ctx.lineCap = 'round';
@@ -50,7 +54,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) =
         setIsDrawing(false);
         const canvas = canvasRef.current;
         if (canvas) {
-            onSave(canvas.toDataURL());
+            onSave(canvas.toDataURL('image/jpeg', 1.0));
         }
     };
 
@@ -77,7 +81,8 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) =
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext('2d');
         if (canvas && ctx) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             onClear();
         }
     };

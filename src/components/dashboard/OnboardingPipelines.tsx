@@ -162,6 +162,13 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
         const oldStage = draggedLead.stage;
         const newStage = stageId as Lead['stage'];
 
+        const stageOrder = ['lead', 'qualified', 'proposal', 'negotiation', 'won', 'lost'];
+        if (stageOrder.indexOf(newStage) < stageOrder.indexOf(oldStage)) {
+            toast.error('Cannot move lead back to a previous stage');
+            setDraggedLead(null);
+            return;
+        }
+
         // Optimistic update
         setLeads(prev => prev.map(l =>
             l.id === draggedLead.id ? { ...l, stage: newStage } : l
@@ -405,12 +412,22 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                                     onChange={(e) => setFormData({ ...formData, stage: e.target.value as Lead['stage'] })}
                                     className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500"
                                 >
-                                    <option value="lead">Lead</option>
-                                    <option value="qualified">Qualified</option>
-                                    <option value="proposal">Proposal</option>
-                                    <option value="negotiation">Negotiation</option>
-                                    <option value="won">Won</option>
-                                    <option value="lost">Lost</option>
+                                    {[
+                                        { value: 'lead', label: 'Lead' },
+                                        { value: 'qualified', label: 'Qualified' },
+                                        { value: 'proposal', label: 'Proposal' },
+                                        { value: 'negotiation', label: 'Negotiation' },
+                                        { value: 'won', label: 'Won' },
+                                        { value: 'lost', label: 'Lost' }
+                                    ].map((stage) => {
+                                        const stageOrder = ['lead', 'qualified', 'proposal', 'negotiation', 'won', 'lost'];
+                                        const isDisabled = editingLead ? stageOrder.indexOf(stage.value) < stageOrder.indexOf(editingLead.stage) : false;
+                                        return (
+                                            <option key={stage.value} value={stage.value} disabled={isDisabled}>
+                                                {stage.label}
+                                            </option>
+                                        );
+                                    })}
                                 </select>
                             </div>
                         </div>

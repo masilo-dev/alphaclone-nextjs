@@ -8,16 +8,11 @@ import { contractService } from '../../../services/contractService';
 import {
     Plus,
     Download,
-    Send,
     DollarSign,
     FileText,
     X,
     Trash2,
-    Share2,
-    Globe,
-    Lock,
-    TrendingUp,
-    TrendingDown
+    TrendingUp
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -98,6 +93,19 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
         } else {
             setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
             toast.success('Invoice deleted');
+        }
+    }, []);
+
+    // Status order for forward-only progression
+    const STATUS_ORDER = ['draft', 'sent', 'paid', 'overdue'];
+
+    const handleUpdateInvoiceStatus = useCallback(async (invoiceId: string, newStatus: string) => {
+        const { error } = await businessInvoiceService.updateInvoice(invoiceId, { status: newStatus as any });
+        if (error) {
+            toast.error(`Failed to update status: ${error}`);
+        } else {
+            setInvoices(prev => prev.map(inv => inv.id === invoiceId ? { ...inv, status: newStatus as any } : inv));
+            toast.success(`Invoice marked as "${newStatus}"`);
         }
     }, []);
 
@@ -227,6 +235,8 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
                         clients={clients}
                         onDownload={handleDownloadPDF}
                         onDelete={handleDeleteInvoice}
+                        onStatusUpdate={handleUpdateInvoiceStatus}
+                        statusOrder={STATUS_ORDER}
                     />
                 ))}
             </div>
@@ -252,15 +262,21 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
     );
 };
 
-const InvoiceCard = ({ invoice, clients, onDownload, onDelete }: any) => {
+const InvoiceCard = ({ invoice, clients, onDownload, onDelete, onStatusUpdate, statusOrder }: any) => {
     const client = clients.find((c: any) => c.id === invoice.clientId);
 
-    const statusColors = {
+    const statusColors: Record<string, string> = {
         draft: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
         sent: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
         paid: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
         overdue: 'bg-red-500/10 text-red-400 border-red-500/20'
     };
+
+    // Forward-only: only show options at the current level or ahead
+    const currentIndex = (statusOrder as string[]).indexOf(invoice.status);
+    const availableStatuses = (statusOrder as string[]).filter((_: string, i: number) => i >= currentIndex);
+
+    const isPaid = invoice.status === 'paid';
 
     return (
         <div className="bg-slate-900/50 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 transition-all group shadow-sm">
@@ -285,22 +301,27 @@ const InvoiceCard = ({ invoice, clients, onDownload, onDelete }: any) => {
                     </div>
 
                     <div className="flex items-center justify-between md:justify-end gap-3">
-                        <span className={`text-xs px-3 py-1 rounded-full border ${statusColors[invoice.status as keyof typeof statusColors]}`}>
-                            {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                        </span>
+                        {/* Status dropdown — forward-only (no going back) */}
+                        {isPaid ? (
+                            <span className={`text-xs px-3 py-1 rounded-full border font-bold uppercase ${statusColors[invoice.status]}`}>
+                                Paid
+                            </span>
+                        ) : (
+                            <select
+                                value={invoice.status}
+                                onChange={(e) => onStatusUpdate(invoice.id, e.target.value)}
+                                className={`text-xs font-bold uppercase rounded-full px-3 py-1 border cursor-pointer outline-none bg-slate-900 ${statusColors[invoice.status]}`}
+                                title="Update invoice status"
+                            >
+                                {availableStatuses.map((s: string) => (
+                                    <option key={s} value={s} className="bg-slate-900 text-slate-200 normal-case">
+                                        {s.charAt(0).toUpperCase() + s.slice(1)}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
 
                         <div className="flex gap-2">
-                            <button
-                                onClick={() => {
-                                    const url = `${window.location.origin}/invoice/${invoice.id}`;
-                                    navigator.clipboard.writeText(url);
-                                    alert('Payment link copied to clipboard!');
-                                }}
-                                className={`p-2 rounded-lg transition-colors ${invoice.isPublic ? 'bg-teal-500/10 hover:bg-teal-500/20 text-teal-400' : 'bg-slate-800 text-slate-500'}`}
-                                title={invoice.isPublic ? 'Copy Payment Link' : 'Invoice is Private'}
-                            >
-                                <Share2 className="w-4 h-4" />
-                            </button>
                             <button
                                 onClick={() => onDownload(invoice)}
                                 className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"

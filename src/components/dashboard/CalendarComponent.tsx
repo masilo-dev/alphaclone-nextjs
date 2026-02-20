@@ -10,6 +10,7 @@ import { calendarService, CalendarEvent } from '../../services/calendarService';
 import { taskService } from '../../services/taskService'; // Added taskService
 import { User } from '../../types';
 import toast from 'react-hot-toast';
+import { PastEventPromptModal } from './PastEventPromptModal';
 
 interface CalendarProps {
     user: User;
@@ -48,6 +49,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         attendees: [],
     });
     const [availableUsers] = useState<any[]>([]);
+    const [pastEventsPrompt, setPastEventsPrompt] = useState<CalendarEvent[]>([]);
 
     // UseRef to control FullCalendar API
     const calendarRef = useRef<FullCalendar>(null);
@@ -93,6 +95,23 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
         if (!error && fetchedEvents) {
             setEvents(fetchedEvents);
+
+            // Check for past uncompleted real calendar events
+            const now = new Date();
+            const unhandledPast = fetchedEvents.filter(e => {
+                // Only prompt for real calendar events, not tasks, invoices, etc.
+                if (e.id.startsWith('task_') || e.id.startsWith('inv_') || e.id.startsWith('contract_') || e.id.startsWith('project_') || e.id.startsWith('milestone_')) {
+                    return false;
+                }
+                const endTime = new Date(e.end_time);
+                // Assume past if end time is more than 30 minutes ago
+                const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60000);
+                return isBefore(endTime, thirtyMinutesAgo) && e.metadata?.status !== 'completed' && e.metadata?.status !== 'cancelled' && e.metadata?.status !== 'postponed';
+            });
+
+            if (unhandledPast.length > 0) {
+                setPastEventsPrompt(unhandledPast);
+            }
         } else if (error) {
             toast.error('Failed to load calendar events');
         }
@@ -265,6 +284,31 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             case 'invoice': return '#ef4444'; // Red (Money Owed)
             default: return '#3b82f6';
         }
+    };
+
+    const extractMeetingUrl = (event: CalendarEvent) => {
+        // 1. Check video_room_id (Daily.co)
+        if (event.video_room_id) {
+            return `/meet/${event.video_room_id}`;
+        }
+
+        // 2. Check location for URLs
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        const locationUrl = event.location?.match(urlRegex)?.[0];
+        if (locationUrl) return locationUrl;
+
+        // 3. Check description for URLs
+        const descriptionUrl = event.description?.match(urlRegex)?.[0];
+        if (descriptionUrl) return descriptionUrl;
+
+        // 4. Check metadata
+        if (event.metadata?.meeting_url) return event.metadata.meeting_url;
+        if (event.metadata?.calendly_event_uri) {
+            // If it's a calendly event, the full payload might have the link
+            // or we just trust the location field if it's there.
+        }
+
+        return null;
     };
 
     const getEventTypeIcon = (type: string) => {
@@ -489,6 +533,17 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                 />
             </Card>
 
+            {/* Past Events Follow-up Modal */}
+            {pastEventsPrompt.length > 0 && (
+                <PastEventPromptModal
+                    events={pastEventsPrompt}
+                    onComplete={() => {
+                        setPastEventsPrompt([]);
+                        loadEvents();
+                    }}
+                />
+            )}
+
             {/* Event Modal */}
             {showEventModal && (
                 <Modal
@@ -565,12 +620,31 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                             )}
 
                             {/* Video Call */}
-                            {selectedEvent.video_room_id && (
-                                <div className="flex items-center gap-3 p-4 bg-green-500/10 rounded-lg border border-green-500/30">
-                                    <Video className="w-5 h-5 text-green-400 flex-shrink-0" />
-                                    <span className="text-green-300 font-semibold">Video call enabled</span>
-                                </div>
-                            )}
+                            {(() => {
+                                const meetingUrl = extractMeetingUrl(selectedEvent);
+                                if (!meetingUrl) return null;
+
+                                return (
+                                    <div className="flex flex-col gap-3 p-4 bg-teal-500/10 rounded-lg border border-teal-500/30">
+                                        <div className="flex items-center gap-3">
+                                            <Video className="w-5 h-5 text-teal-400 flex-shrink-0" />
+                                            <span className="text-teal-300 font-semibold">Join the meeting</span>
+                                        </div>
+                                        <Button
+                                            onClick={() => {
+                                                if (meetingUrl.startsWith('/')) {
+                                                    window.location.href = meetingUrl;
+                                                } else {
+                                                    window.open(meetingUrl, '_blank');
+                                                }
+                                            }}
+                                            className="bg-teal-600 hover:bg-teal-500 mt-2"
+                                        >
+                                            Join Meeting Now
+                                        </Button>
+                                    </div>
+                                );
+                            })()}
 
                             {/* Actions */}
                             <div className="flex gap-3 pt-4 border-t border-slate-800">

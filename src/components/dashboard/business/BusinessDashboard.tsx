@@ -17,7 +17,8 @@ import {
     FileCheck,
     BarChart3,
     BookOpen,
-    Receipt
+    Receipt,
+    RefreshCw
 } from 'lucide-react';
 import { Project, User } from '../../../types';
 import { projectService } from '../../../services/projectService';
@@ -26,6 +27,7 @@ import { dailyService } from '../../../services/dailyService';
 import { callSignalingService } from '../../../services/video/CallSignalingService';
 import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
+import { useBackgroundTasks } from '../../../contexts/BackgroundTaskContext';
 
 // Components
 import BusinessHome from './BusinessHome';
@@ -47,9 +49,7 @@ import AlphaCloneContractModal from '../../contracts/AlphaCloneContractModal';
 import ContractDashboard from '../../contracts/ContractDashboard';
 import DocumentHub from '../../documents/DocumentHub';
 // Accounting Components - Lazy loaded to prevent module resolution issues
-const ChartOfAccountsPage = React.lazy(() => import('../accounting/ChartOfAccountsPage'));
-const JournalEntriesPage = React.lazy(() => import('../accounting/JournalEntriesPage'));
-const FinancialReportsPage = React.lazy(() => import('../accounting/FinancialReportsPage'));
+const AccountingDashboard = React.lazy(() => import('../accounting/AccountingDashboard'));
 const GmailTab = React.lazy(() => import('../GmailTab'));
 const CustomVideoRoom = React.lazy(() => import('../video/CustomVideoRoom'));
 
@@ -80,6 +80,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
     // -- PERSISTENT VIDEO CALL STATE --
     const [activeCallUrl, setActiveCallUrl] = useState<string | null>(null);
     const [isCallMinimized, setIsCallMinimized] = useState(false);
+    const { tasks: bgTasks } = useBackgroundTasks();
+    const activeBgTasksCount = bgTasks.filter(t => t.status === 'running').length;
 
     // Explicitly typed handlers
     const handleJoinCall = (url: string) => {
@@ -344,22 +346,10 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                 );
 
             // Accounting Routes
-            case '/dashboard/accounting/chart-of-accounts':
+            case '/dashboard/accounting':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={10} columns={5} />}>
-                        <ChartOfAccountsPage />
-                    </React.Suspense>
-                );
-            case '/dashboard/accounting/journal-entries':
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
-                        <JournalEntriesPage />
-                    </React.Suspense>
-                );
-            case '/dashboard/accounting/reports':
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={10} columns={4} />}>
-                        <FinancialReportsPage />
+                        <AccountingDashboard />
                     </React.Suspense>
                 );
 
@@ -387,9 +377,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             case '/dashboard/tasks': return 'Tasks';
             case '/dashboard/sales-agent': return 'Sales Agent';
             case '/dashboard/leads': return 'Leads & Pipelines';
-            case '/dashboard/accounting/chart-of-accounts': return 'Chart of Accounts';
-            case '/dashboard/accounting/journal-entries': return 'Journal Entries';
-            case '/dashboard/accounting/reports': return 'Financial Reports';
+            case '/dashboard/accounting': return 'Accounting Dashboard';
             case '/dashboard/gmail': return 'Gmail Integration';
             default: return 'AlphaClone';
         }
@@ -500,6 +488,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
 
                     <div className="flex items-center gap-4">
                         {/* Removed Assistant Button as requested ("remove the recording button") */}
+
+                        {activeBgTasksCount > 0 && (
+                            <div className="flex items-center gap-2 bg-slate-800/50 text-teal-400 px-3 py-1.5 rounded-full text-xs font-semibold animate-pulse border border-teal-500/30">
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                <span className="hidden sm:inline">{activeBgTasksCount} Task(s)</span>
+                            </div>
+                        )}
 
                         <div className="hidden md:block w-px h-6 bg-slate-800 mx-2" />
 

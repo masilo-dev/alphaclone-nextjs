@@ -373,7 +373,10 @@ export const contractService = {
         if (contract.client_signature) {
             doc.setFont('helvetica', 'bold');
             doc.text('CLIENT SIGNATURE', 20, y);
-            doc.addImage(contract.client_signature, 'PNG', 20, y + 5, sigWidth, sigHeight);
+            const clientSigData = contract.client_signature.includes(',')
+                ? contract.client_signature.split(',')[1]
+                : contract.client_signature;
+            doc.addImage(clientSigData, 'PNG', 20, y + 5, sigWidth, sigHeight);
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(8);
             doc.text(`Signed at: ${new Date(contract.client_signed_at).toLocaleString()}`, 20, y + 42);
@@ -388,7 +391,10 @@ export const contractService = {
             doc.setTextColor(15, 23, 42);
             doc.setFont('helvetica', 'bold');
             doc.text('EXECUTIVE SIGNATURE', 120, y);
-            doc.addImage(contract.admin_signature, 'PNG', 120, y + 5, sigWidth, sigHeight);
+            const adminSigData = contract.admin_signature.includes(',')
+                ? contract.admin_signature.split(',')[1]
+                : contract.admin_signature;
+            doc.addImage(adminSigData, 'PNG', 120, y + 5, sigWidth, sigHeight);
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(8);
             doc.text(`Signed at: ${new Date(contract.admin_signed_at).toLocaleString()}`, 120, y + 42);

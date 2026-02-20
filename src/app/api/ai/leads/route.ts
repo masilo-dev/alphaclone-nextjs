@@ -14,7 +14,7 @@ export async function POST(req: Request) {
         const providers = getAvailableProviders();
         console.log("[Lead Gen] Available providers:", providers);
 
-        const { industry, location } = await req.json();
+        const { industry, location, filters } = await req.json();
 
         if (!industry || !location) {
             return NextResponse.json({ error: 'Industry and location are required' }, { status: 400 });
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
         const prompt = `Generate EXACTLY 5 high-quality, realistic business leads for the following specification:
 Target Service/Industry: "${industry}"
 Location: "${location}"
-
+${filters ? `\nADDITIONAL USER FILTERS TO STRICTLY OBEY:\n- ${filters}\n` : ''}
 CRITICAL REQUIREMENTS:
 - Match the SPECIFIC service description if provided (e.g., if industry is "Emergency Plumber", don't just return general contractors).
 - All data must be plausible and realistic for ${location}.

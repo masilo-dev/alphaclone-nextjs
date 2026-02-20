@@ -9,8 +9,11 @@ import { TableSkeleton } from '../ui/Skeleton';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 
+import { useBackgroundTasks } from '../../contexts/BackgroundTaskContext';
+
 const SalesAgent: React.FC = () => {
     const aiConfigured = isAnyAIConfigured();
+    const { startTask } = useBackgroundTasks();
     const [activeTab, setActiveTab] = useState<'leads' | 'agent'>('agent'); // Default to agent chat for "Manus" experience
     const [searchParams, setSearchParams] = useState({ industry: '', location: '' });
     const [leads, setLeads] = useState<Lead[]>([]);
@@ -141,6 +144,7 @@ const SalesAgent: React.FC = () => {
         { id: 1, sender: 'agent', text: 'Hello! I am your AI Sales Agent. I can help you find leads, draft outreach messages, or manage your CRM. What would you like to do today?' }
     ]);
     const [inputText, setInputText] = useState('');
+    const [pendingSearch, setPendingSearch] = useState<{ industry: string, location: string, filters?: string } | null>(null);
 
     const handleSearch = async () => {
         // Validate inputs
@@ -160,58 +164,40 @@ const SalesAgent: React.FC = () => {
             return;
         }
 
-        setIsSearching(true);
+        const taskName = `AI Lead Search for ${searchParams.industry} in ${searchParams.location}`;
 
-        // Show progress indicator
-        const progressToast = toast.loading('🤖 AI is searching for leads... This may take 30-60 seconds.');
+        startTask(
+            `lead_search_${Date.now()}`,
+            taskName,
+            async () => {
+                console.log('🚀 Starting AI lead generation...');
+                const results = await generateLeads(searchParams.industry, searchParams.location, '', 'tenant');
 
-        try {
-            console.log('🚀 Starting AI lead generation...');
-            // Pass API key if available
-            const results = await generateLeads(searchParams.industry, searchParams.location, '', 'tenant');
+                if (results && results.length > 0) {
+                    console.log(`✅ Generated ${results.length} leads, saving to database...`);
+                    const leadsToAdd = results.map((r: any) => ({
+                        businessName: r.businessName,
+                        industry: r.industry,
+                        location: r.location,
+                        phone: r.phone,
+                        email: r.email,
+                        website: r.website,
+                        fb: r.facebook || r.fb,
+                        notes: r.notes || r.aiAnalysis || r.description,
+                        outreachMessage: r.outreachMessage || r.emailDraft,
+                        value: r.estimatedValue || r.value,
+                        source: r.leadSource || 'AI Agent'
+                    }));
 
-            if (results && results.length > 0) {
-                console.log(`✅ Generated ${results.length} leads, saving to database...`);
+                    const { count, error } = await leadService.addBulkLeads(leadsToAdd);
+                    if (error) {
+                        throw new Error(`AI found leads but failed to save them: ${error}`);
+                    }
 
-                // Update progress
-                toast.loading('💾 Saving leads to database...', { id: progressToast });
-
-                // Bulk add to DB
-                const leadsToAdd = results.map((r: any) => ({
-                    businessName: r.businessName,
-                    industry: r.industry,
-                    location: r.location,
-                    phone: r.phone,
-                    email: r.email,
-                    website: r.website,
-                    fb: r.facebook || r.fb,
-                    notes: r.notes || r.aiAnalysis || r.description,
-                    outreachMessage: r.outreachMessage || r.emailDraft,
-                    value: r.estimatedValue || r.value,
-                    source: r.leadSource || 'AI Agent'
-                }));
-
-                const { count, error } = await leadService.addBulkLeads(leadsToAdd);
-                if (error) {
-                    console.error('❌ Database error:', error);
-                    toast.error(`AI found leads but failed to save them: ${error}`, { id: progressToast });
-                } else {
-                    // AUTOMATION START: Process all new leads
-                    toast.loading(`⚡ Auto-processing ${results.length} leads into CRM & Quotes...`, { id: progressToast });
-
-                    // We need to fetch the newly created leads to have their IDs.
-                    // addBulkLeads might not return IDs. Let's fetch latest leads or rely on the fact we just added them.
-                    // Strategy: Fetch leads sorted by created_at desc limit N
-
-                    const { leads: newLeads } = await leadService.getLeads(); // This gets all.
-                    // Better: Filtering by created_at in memory for now or just process the top N
-                    // Assuming getLeads returns sorted by newest.
-
-                    const leadsToProcess = newLeads.slice(0, results.length); // Rough approximation
-
+                    const { leads: newLeads } = await leadService.getLeads();
+                    const leadsToProcess = newLeads.slice(0, results.length);
                     let processed = 0;
 
-                    // Need current user ID for quote creation
                     const { supabase } = await import('../../lib/supabase');
                     const { data: { user } } = await supabase.auth.getUser();
 
@@ -226,23 +212,18 @@ const SalesAgent: React.FC = () => {
                             }
                         }
                     }
-
-                    toast.success(`🎉 Added ${count} leads, created ${processed} clients & draft quotes!`, { id: progressToast, duration: 5000 });
-                    loadLeads(); // Reload from DB
+                    return { count, processed };
+                } else {
+                    throw new Error("No leads found. Try different search criteria.");
                 }
-            } else {
-                toast.error("No leads found. Try different search criteria.", { id: progressToast });
+            },
+            (result) => {
+                toast.success(`🎉 Added ${result.count} leads, created ${result.processed} clients & draft quotes!`, { duration: 5000 });
+                loadLeads();
             }
-        } catch (error: any) {
-            console.error('❌ Lead generation error:', error);
-            const errorMessage = error?.message || 'AI Generation failed. Please try again.';
-            toast.error(errorMessage, { id: progressToast, duration: 5000 });
+        );
 
-            // Show helpful message if it's an API key issue
-            if (errorMessage.includes('API key') || errorMessage.includes('not configured')) {
-                toast.error('AI configuration is incomplete. Please check your API keys in the dashboard settings.', { duration: 7000 });
-            }
-        }
+        toast.success(`Task started: ${taskName}. You can safely navigate away!`);
         setIsSearching(false);
     };
 
@@ -465,20 +446,12 @@ const SalesAgent: React.FC = () => {
                 try {
                     const searchData = JSON.parse(commandMatch[1]);
                     if (searchData.industry && searchData.location) {
-                        toast.success(`🤖 Intent detected: Searching for ${searchData.industry} in ${searchData.location}...`);
-
-                        // Switch to leads tab briefly or just trigger search
-                        // Actually, let's just trigger the search logic
-                        setSearchParams({
+                        toast.success(`🤖 Intent detected: Drafting search parameters...`);
+                        setPendingSearch({
                             industry: searchData.industry,
-                            location: searchData.location
+                            location: searchData.location,
+                            filters: searchData.filters
                         });
-
-                        // Small delay to let state update
-                        setTimeout(() => {
-                            setActiveTab('leads');
-                            handleAutoSearch(searchData.industry, searchData.location);
-                        }, 500);
                     }
                 } catch (e) {
                     console.error("Failed to parse search command", e);
@@ -498,7 +471,7 @@ const SalesAgent: React.FC = () => {
     };
 
     // Specialized auto-search that bypasses toast.loading if needed or just reuses handleSearch
-    const handleAutoSearch = async (industry: string, location: string) => {
+    const handleAutoSearch = async (industry: string, location: string, filters?: string) => {
         // Validate inputs
         if (!industry.trim() || !location.trim()) return;
 
@@ -509,35 +482,33 @@ const SalesAgent: React.FC = () => {
             return;
         }
 
-        setIsSearching(true);
-        const progressToast = toast.loading(`🤖 AI is searching for ${industry} in ${location}...`);
+        const taskName = `AI Agent Search for ${industry} in ${location}`;
 
-        try {
-            const results = await generateLeads(industry, location, '', 'tenant');
+        startTask(
+            `auto_search_${Date.now()}`,
+            taskName,
+            async () => {
+                const results = await generateLeads(industry, location, '', 'tenant', filters);
 
-            if (results && results.length > 0) {
-                toast.loading('💾 Saving leads...', { id: progressToast });
+                if (results && results.length > 0) {
+                    const leadsToAdd = results.map((r: any) => ({
+                        businessName: r.businessName,
+                        industry: r.industry,
+                        location: r.location,
+                        phone: r.phone,
+                        email: r.email,
+                        website: r.website,
+                        fb: r.facebook || r.fb,
+                        notes: r.notes || r.aiAnalysis || r.description,
+                        outreachMessage: r.outreachMessage || r.emailDraft,
+                        value: r.estimatedValue || r.value,
+                        source: r.leadSource || 'AI Agent'
+                    }));
 
-                const leadsToAdd = results.map((r: any) => ({
-                    businessName: r.businessName,
-                    industry: r.industry,
-                    location: r.location,
-                    phone: r.phone,
-                    email: r.email,
-                    website: r.website,
-                    fb: r.facebook || r.fb,
-                    notes: r.notes || r.aiAnalysis || r.description,
-                    outreachMessage: r.outreachMessage || r.emailDraft,
-                    value: r.estimatedValue || r.value,
-                    source: r.leadSource || 'AI Agent'
-                }));
-
-                const { count, error } = await leadService.addBulkLeads(leadsToAdd);
-                if (error) {
-                    toast.error(`AI found leads but failed to save them: ${error}`, { id: progressToast });
-                } else {
-                    // AUTOMATION START for AutoSearch
-                    toast.loading(`⚡ Auto-converting ${count} leads to Clients & Quotes...`, { id: progressToast });
+                    const { count, error } = await leadService.addBulkLeads(leadsToAdd);
+                    if (error) {
+                        throw new Error(`AI found leads but failed to save them: ${error}`);
+                    }
 
                     const { leads: newLeads } = await leadService.getLeads();
                     const leadsToProcess = newLeads.slice(0, results.length);
@@ -558,25 +529,25 @@ const SalesAgent: React.FC = () => {
                         }
                     }
 
-                    toast.success(`🎉 Process complete! Created ${processed} draft quotes ready for review.`, { id: progressToast, duration: 5000 });
-                    loadLeads();
-
-                    // Conversational Follow-up
-                    setMessages(prev => [...prev, {
-                        id: prev.length + 1,
-                        sender: 'agent',
-                        text: `Done! I've discovered ${count} high-quality leads for ${industry} in ${location} and added them to your Lead Finder. Would you like me to analyze any of them or draft a specific outreach?`
-                    }]);
+                    return { count, processed, industry, location };
+                } else {
+                    throw new Error("No leads found. Try different criteria.");
                 }
-            } else {
-                toast.error("No leads found. Try different criteria.", { id: progressToast });
+            },
+            (result) => {
+                toast.success(`🎉 Process complete! Created ${result.processed} draft quotes ready for review.`, { duration: 5000 });
+                loadLeads();
+
+                setMessages(prev => [...prev, {
+                    id: prev.length + 1,
+                    sender: 'agent',
+                    text: `Done! I've discovered ${result.count} high-quality leads for ${result.industry} in ${result.location} and added them to your Lead Finder. Would you like me to analyze any of them or draft a specific outreach?`
+                }]);
             }
-        } catch (error: any) {
-            console.error('❌ Lead generation error:', error);
-            toast.error(error?.message || 'AI Generation failed.', { id: progressToast });
-        } finally {
-            setIsSearching(false);
-        }
+        );
+
+        toast.success(`Task started: ${taskName}. You can safely navigate away!`);
+        setIsSearching(false);
     };
 
     // New Function: Process Pending Leads
@@ -955,17 +926,61 @@ const SalesAgent: React.FC = () => {
                         ))}
                     </div>
                     {/* Input Area */}
-                    <div className="p-4 bg-slate-950 border-t border-slate-800 flex gap-4">
-                        <input
-                            type="text"
-                            className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-50"
-                            placeholder={aiConfigured ? "Type a message to the agent..." : "AI core offline..."}
-                            disabled={!aiConfigured}
-                            value={inputText}
-                            onChange={(e) => setInputText(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                        />
-                        <Button onClick={handleSendMessage} className="bg-teal-500" disabled={!aiConfigured}><Send className="w-4 h-4" /></Button>
+                    <div className="p-4 bg-slate-950 border-t border-slate-800 flex flex-col gap-4">
+                        {pendingSearch && (
+                            <div className="bg-slate-900 border border-teal-500/30 p-4 rounded-xl shadow-lg">
+                                <h4 className="text-white font-bold mb-3 flex items-center gap-2">
+                                    <Search className="w-4 h-4 text-teal-400" /> Confirm AI Lead Search
+                                </h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                                    <Input
+                                        label="Target Industry"
+                                        value={pendingSearch.industry}
+                                        onChange={e => setPendingSearch({ ...pendingSearch, industry: e.target.value })}
+                                    />
+                                    <Input
+                                        label="Target Location"
+                                        value={pendingSearch.location}
+                                        onChange={e => setPendingSearch({ ...pendingSearch, location: e.target.value })}
+                                    />
+                                    <div className="sm:col-span-2">
+                                        <Input
+                                            label="Additional Filters (optional)"
+                                            placeholder="e.g., 'no website', 'size > 10'"
+                                            value={pendingSearch.filters || ''}
+                                            onChange={e => setPendingSearch({ ...pendingSearch, filters: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex gap-3 justify-end items-center mt-2">
+                                    <span className="text-xs text-slate-400 mr-auto flex items-center gap-1">
+                                        <AlertCircle className="w-3 h-3" /> Verify filters before searching
+                                    </span>
+                                    <Button variant="outline" size="sm" onClick={() => setPendingSearch(null)}>Cancel</Button>
+                                    <Button size="sm" className="bg-teal-600 hover:bg-teal-500" onClick={() => {
+                                        setSearchParams({
+                                            industry: pendingSearch.industry,
+                                            location: pendingSearch.location
+                                        });
+                                        setActiveTab('leads');
+                                        handleAutoSearch(pendingSearch.industry, pendingSearch.location, pendingSearch.filters);
+                                        setPendingSearch(null);
+                                    }}>Confirm & Start Search</Button>
+                                </div>
+                            </div>
+                        )}
+                        <div className="flex gap-4">
+                            <input
+                                type="text"
+                                className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-50"
+                                placeholder={aiConfigured ? "Type a message to the agent..." : "AI core offline..."}
+                                disabled={!aiConfigured}
+                                value={inputText}
+                                onChange={(e) => setInputText(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                            />
+                            <Button onClick={handleSendMessage} className="bg-teal-500" disabled={!aiConfigured}><Send className="w-4 h-4" /></Button>
+                        </div>
                     </div>
                 </div>
             )}

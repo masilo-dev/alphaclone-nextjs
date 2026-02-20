@@ -121,6 +121,25 @@ async function handleInviteeCreated(payload: any, supabase: any) {
                         calendly_event_uri: eventUri
                     }
                 });
+
+            // 3. Create entry in calendar_events so it shows in the main dashboard calendar
+            await supabase
+                .from('calendar_events')
+                .insert({
+                    tenant_id: tenantId,
+                    user_id: userData.id,
+                    title: `Calendly: ${name || 'Guest'}`,
+                    description: questions_and_answers ? JSON.stringify(questions_and_answers) : `Calendly meeting with ${name || 'Guest'}`,
+                    start_time: booking.start_time,
+                    end_time: booking.end_time,
+                    type: 'meeting',
+                    location: payload.scheduled_event?.location?.location || 'Calendly Video Link',
+                    metadata: {
+                        booking_id: booking.id,
+                        calendly_event_uri: eventUri,
+                        calendly_invitee_uri: inviteeUri
+                    }
+                });
         }
     }
 }

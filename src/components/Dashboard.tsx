@@ -31,7 +31,8 @@ import {
   Zap,
   ArrowLeft,
   List,
-  LayoutGrid
+  LayoutGrid,
+  RefreshCw
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import MilestoneManager from './dashboard/projects/MilestoneManager';
@@ -63,6 +64,7 @@ interface ArchitectData {
 const generateContract = async (clientName: string, projectName: string): Promise<string> => {
   return await generateContractAI(clientName, projectName, 0);
 };
+import { useBackgroundTasks } from '../contexts/BackgroundTaskContext';
 // Consolidated notification service
 import { notificationService, Notification } from '../services/dashboardService';
 import { projectService } from '../services/projectService';
@@ -81,7 +83,7 @@ import OnboardingFlow from './onboarding/OnboardingFlow';
 import CreateInvoiceModal from './dashboard/CreateInvoiceModal';
 import { WidgetErrorBoundary } from './dashboard/WidgetErrorBoundary';
 import ResourceAllocationView from '@/components/dashboard/ResourceAllocationView';
-
+import { useOverdueTaskNotifier } from '../hooks/useOverdueTaskNotifier';
 
 const ConferenceTab = React.lazy(() => import('./dashboard/ConferenceTab'));
 const AnalyticsTab = React.lazy(() => import('./dashboard/AnalyticsTab'));
@@ -138,6 +140,9 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [dashboardStats, setDashboardStats] = useState<any>(null);
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Initialize recurring overdue task notifications
+  useOverdueTaskNotifier(user);
 
   // Sync sidebar on mount to avoid hydration mismatch
   useEffect(() => {
@@ -244,6 +249,9 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Milestone Management
   const [milestoneModalOpen, setMilestoneModalOpen] = useState(false);
   const [selectedProjectForMilestones, setSelectedProjectForMilestones] = useState<Project | null>(null);
+
+  const { tasks: bgTasks } = useBackgroundTasks();
+  const activeBgTasksCount = bgTasks.filter(t => t.status === 'running').length;
 
   // -- ISOLATION LOGIC --
   // Super Admin: sees ALL data across ALL tenants
@@ -932,31 +940,34 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // -- ACTIVITY TRACKING (DEFERRED) --
   useEffect(() => {
-    // DEFERRED: Don't block dashboard render with activity tracking
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(() => {
+    // Debounce the activity logging so rapid clicking doesn't spam the network
+    const timer = setTimeout(() => {
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(() => {
+          import('../services/activityService').then(({ activityService }) => {
+            activityService.logActivity(user.id, `Navigated to ${activeTab}`, { path: activeTab }).catch(() => { });
+          });
+        }, { timeout: 3000 });
+      } else {
         import('../services/activityService').then(({ activityService }) => {
-          activityService.logActivity(user.id, 'View Dashboard', { path: activeTab });
+          activityService.logActivity(user.id, `Navigated to ${activeTab}`, { path: activeTab }).catch(() => { });
         });
-      }, { timeout: 3000 });
-    } else {
-      setTimeout(() => {
-        import('../services/activityService').then(({ activityService }) => {
-          activityService.logActivity(user.id, 'View Dashboard', { path: activeTab });
-        });
-      }, 200);
-    }
+      }
+    }, 1000); // Wait 1 second before tracking to ensure they actually landed on the tab
 
-    // 2. Heartbeat (every 2 minutes) - already deferred by setInterval
-    const interval = setInterval(() => {
-      // Heartbeat tracking happens in background
-      import('../services/activityService').then(({ activityService }) => {
-        activityService.logActivity(user.id, 'User Active', { path: activeTab });
-      });
-    }, 120000);
-
-    return () => clearInterval(interval);
+    return () => clearTimeout(timer);
   }, [user.id, activeTab]);
+
+  // Global Dashboard Heartbeat (run once on mount, independent of activeTab)
+  useEffect(() => {
+    const heartbeatInterval = setInterval(() => {
+      import('../services/activityService').then(({ activityService }) => {
+        activityService.logActivity(user.id, 'User Active', { source: 'dashboard_heartbeat' }).catch(() => { });
+      });
+    }, 5 * 60 * 1000); // 5 minutes instead of 2 minutes to reduce DB load
+
+    return () => clearInterval(heartbeatInterval);
+  }, [user.id]);
 
   // -- RENDER CONTENT --
   const handleShareProject = (projectId: string) => {
@@ -1617,7 +1628,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       <Sidebar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
-        isInCall={isInCall}
+        isInCall={isInCall && !isCallMinimized}
         showSidebarDuringCall={showSidebarDuringCall}
         user={user}
         navItems={NAV_ITEMS}
@@ -1683,6 +1694,12 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
 
               <div className="flex items-center gap-2 sm:gap-3">
+                {activeBgTasksCount > 0 && (
+                  <div className="flex items-center gap-2 bg-slate-800/50 text-teal-400 px-3 py-1.5 rounded-full text-xs font-semibold animate-pulse border border-teal-500/30">
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span className="hidden sm:inline">{activeBgTasksCount} Task(s)</span>
+                  </div>
+                )}
                 <EnhancedGlobalSearch
                   user={user}
                   onNavigate={router.push}

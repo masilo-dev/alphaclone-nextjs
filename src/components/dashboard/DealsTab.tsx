@@ -582,8 +582,8 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                                     onChange={(e) => handleStageChange(deal.id, e.target.value as DealStage)}
                                                     className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-white text-xs"
                                                 >
-                                                    {stages.map((s) => (
-                                                        <option key={s} value={s}>
+                                                    {stages.map((s, idx) => (
+                                                        <option key={s} value={s} disabled={idx < stages.indexOf(deal.stage)}>
                                                             {stageLabels[s]}
                                                         </option>
                                                     ))}

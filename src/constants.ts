@@ -111,16 +111,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
   { label: 'Active Meetings', href: '/dashboard/business/meetings', icon: Video },
   { label: 'Financials', href: '/dashboard/business/billing', icon: DollarSign },
-  {
-    label: 'Accounting',
-    href: '#',
-    icon: BarChart3,
-    subItems: [
-      { label: 'Chart of Accounts', href: '/dashboard/accounting/chart-of-accounts' },
-      { label: 'Journal Entries', href: '/dashboard/accounting/journal-entries' },
-      { label: 'Financial Reports', href: '/dashboard/accounting/reports' },
-    ]
-  },
+  { label: 'Accounting', href: '/dashboard/accounting', icon: BarChart3 },
   { label: 'Contracts', href: '/dashboard/business/contracts', icon: FileText },
   { label: 'Document Hub', href: '/dashboard/business/documents', icon: FolderOpen },
   { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },

@@ -77,15 +77,28 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
     const loadData = useCallback(async () => {
         if (!currentTenant) return;
-        setLoading(true);
-        const { projects: projectData } = await projectService.getProjects(user.id, user.role);
-        const { clients: clientData } = await businessClientService.getClients(currentTenant.id);
-        const { contracts: contractData } = await contractService.getUserContracts(user.id, 'tenant_admin');
-        setProjects(projectData || []);
-        setClients(clientData || []);
-        setContracts(contractData || []);
-        setLoading(false);
-    }, [currentTenant, user.id, user.role]);
+
+        // Use cached projects if available before showing full loader to avoid flashing
+        if (projects.length === 0) {
+            setLoading(true);
+        }
+
+        try {
+            const [projectRes, clientRes, contractRes] = await Promise.all([
+                projectService.getProjects(user.id, user.role),
+                businessClientService.getClients(currentTenant.id),
+                contractService.getUserContracts(user.id, 'tenant_admin')
+            ]);
+
+            setProjects(projectRes.projects || []);
+            setClients(clientRes.clients || []);
+            setContracts(contractRes.contracts || []);
+        } catch (e) {
+            console.error('Failed to load mission control data', e);
+        } finally {
+            setLoading(false);
+        }
+    }, [currentTenant, user.id, user.role, projects.length]);
 
     useEffect(() => {
         if (currentTenant) {
@@ -359,11 +372,14 @@ const ProjectListRow = ({
                                 className={`bg-transparent ${project.currentStage ? 'text-teal-400' : ''} font-black hover:text-white cursor-pointer outline-none appearance-none`}
                                 onClick={(e) => e.stopPropagation()}
                             >
-                                {PROJECT_STAGES_ORDER.map(stage => (
-                                    <option key={stage} value={stage} className="bg-slate-900 text-slate-300">
-                                        {stage}
-                                    </option>
-                                ))}
+                                {PROJECT_STAGES_ORDER.map((stage, idx) => {
+                                    const currentIdx = PROJECT_STAGES_ORDER.indexOf(getNormalizedStage(project.currentStage));
+                                    return (
+                                        <option key={stage} value={stage} disabled={idx < currentIdx} className="bg-slate-900 text-slate-300">
+                                            {stage}
+                                        </option>
+                                    );
+                                })}
                             </select>
                             <span>Step {PROJECT_STAGES_ORDER.indexOf(getNormalizedStage(project.currentStage)) + 1}/5</span>
                         </div>
@@ -584,9 +600,12 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
                                 onChange={(e) => setFormData({ ...formData, currentStage: e.target.value as any })}
                                 className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-bold focus:border-violet-400 outline-none appearance-none"
                             >
-                                {PROJECT_STAGES_ORDER.map(stage => (
-                                    <option key={stage} value={stage}>{stage}</option>
-                                ))}
+                                {PROJECT_STAGES_ORDER.map((stage, idx) => {
+                                    const currentIdx = initialData ? PROJECT_STAGES_ORDER.indexOf(getNormalizedStage(initialData.currentStage)) : 0;
+                                    return (
+                                        <option key={stage} value={stage} disabled={idx < currentIdx}>{stage}</option>
+                                    );
+                                })}
                             </select>
                         </div>
                         <div className="space-y-1.5">

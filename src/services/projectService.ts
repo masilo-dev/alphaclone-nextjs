@@ -27,16 +27,15 @@ export const projectService = {
                 .from('projects')
                 .select('*');
 
-            // Super Admin (role === 'admin') sees ALL projects across ALL tenants
-            // Tenant Admin (role === 'tenant_admin') sees all projects within their tenant
-            // Clients see only their own projects
-            if (role === 'tenant_admin') {
-                // Tenant admins: filter by their tenant
+            // Super Admin (role === 'admin') and Tenant Admin (role === 'tenant_admin') 
+            // both see projects within their current active tenant context.
+            // This ensures business account projects are hidden from a global Super Admin view.
+            if (role === 'tenant_admin' || role === 'admin') {
                 const tenantId = this.getTenantId();
                 if (tenantId) {
                     query = query.eq('tenant_id', tenantId);
                 }
-            } else if (role !== 'admin') {
+            } else {
                 // Regular clients: filter by owner AND tenant
                 const tenantId = this.getTenantId();
                 if (tenantId) {
@@ -44,7 +43,6 @@ export const projectService = {
                 }
                 query = query.eq('owner_id', userId);
             }
-            // Note: Super Admin (role === 'admin') has NO filters applied
 
             const { data, error } = await query
                 .order('created_at', { ascending: false })

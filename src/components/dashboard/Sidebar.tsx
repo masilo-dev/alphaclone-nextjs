@@ -100,7 +100,11 @@ const Sidebar = React.memo<SidebarProps>(({
                             <button
                                 onClick={() => {
                                     if (item.comingSoon) return;
-                                    item.href === '#' ? handleSubNavigation('/dashboard/settings') : handleNavigation(item.href);
+                                    if (item.href === '#') {
+                                        handleSubNavigation('/dashboard/settings');
+                                    } else {
+                                        handleNavigation(item.href);
+                                    }
                                 }}
                                 title={!sidebarOpen ? item.label : undefined}
                                 className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-2'} py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden active:scale-95 touch-manipulation

@@ -24,10 +24,10 @@ function readSessionFromStorage(): User | null {
     try {
         if (typeof window === 'undefined') return null;
 
-        // OPTIMIZED: Look for ANY Supabase token, not just those ending in -auth-token
-        // This is more robust against different client versions/configs
+        // OPTIMIZED: Match precisely the auth token to avoid matching -code-verifier strings
+        // This is more robust than just checking for 'sb-' prefixes
         const storageKey = Object.keys(localStorage).find(
-            (k) => k.startsWith('sb-')
+            (k) => k.startsWith('sb-') && k.endsWith('-auth-token')
         );
 
         if (!storageKey) {
@@ -132,6 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
                 if (authError) {
                     if (authError.includes('aborted') || authError.includes('AbortError')) return;
+                    clearStorageSession();
                     setSafeUser(null);
                     setError(authError);
                     setLoading(false);
@@ -151,6 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     }
 
                     // Session invalid or expired — always clear user
+                    clearStorageSession();
                     setSafeUser(null);
                     setError(null);
                     setLoading(false);

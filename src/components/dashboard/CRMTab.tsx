@@ -126,6 +126,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
             await updateClientMutation.mutateAsync({ clientId: selectedClient.id, updates: formData });
             toast.success('Client updated successfully');
             setShowEditModal(false);
+            setSelectedClient({ ...selectedClient, ...formData });
             setFormData({
                 name: '',
                 email: '',
@@ -557,8 +558,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                         <Input
                             label="Value ($)"
                             type="number"
-                            value={formData.value}
-                            onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) })}
+                            value={formData.value || ''}
+                            onChange={(e) => setFormData({ ...formData, value: e.target.value === '' ? 0 : (parseFloat(e.target.value) || 0) })}
                         />
                     </div>
                     <Input
