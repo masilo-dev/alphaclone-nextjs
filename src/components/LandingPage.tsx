@@ -1046,7 +1046,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               </div>
                               <div>
                                  <h4 className="text-white font-bold mb-1">Email Us</h4>
-                                 <a href="mailto:info@alphaclone.tech" className="text-slate-400 hover:text-white transition-colors">info@alphaclone.tech</a>
+                                 <div className="flex flex-col gap-1">
+                                    <a href="mailto:info@alphaclone.tech" className="text-slate-400 hover:text-white transition-colors">General: info@alphaclone.tech</a>
+                                    <a href="mailto:sales@alphaclone.tech" className="text-slate-400 hover:text-white transition-colors">Sales: sales@alphaclone.tech</a>
+                                 </div>
                               </div>
                            </div>
                            <div className="flex items-start gap-4">
@@ -1162,7 +1165,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <li><button onClick={() => scrollToSection('about')} className="hover:text-teal-400">About Us</button></li>
                            <li><button onClick={() => scrollToSection('portfolio')} className="hover:text-teal-400">Portfolio</button></li>
                            <li><button onClick={() => scrollToSection('contact')} className="hover:text-teal-400">Contact</button></li>
-                           <li><Link href="/guide" className="hover:text-teal-400">Platform Guide</Link></li>
+                           <li><a href="mailto:admin@alphaclone.tech" className="hover:text-teal-400">Administration</a></li>
                         </ul>
                      </div>
                      <div>
@@ -1171,7 +1174,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <li><Link href="/privacy-policy" className="hover:text-teal-400">Privacy Policy</Link></li>
                            <li><Link href="/terms-of-service" className="hover:text-teal-400">Terms of Service</Link></li>
                            <li><Link href="/cookie-policy" className="hover:text-teal-400">Cookie Policy</Link></li>
-
+                           <li><a href="mailto:security@alphaclone.tech" className="hover:text-teal-400 text-teal-500/80">Security Reporting</a></li>
                         </ul>
                      </div>
                   </div>
