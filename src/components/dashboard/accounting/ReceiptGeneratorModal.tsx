@@ -27,6 +27,8 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
         date: new Date().toISOString().split('T')[0],
         clientName: '',
         clientEmail: '',
+        paymentMethod: 'Credit Card',
+        receivedBy: '',
         template: 'professional' as 'professional' | 'modern',
         items: [{ description: '', quantity: 1, price: 0 }] as ReceiptItem[],
         notes: 'Thank you for your business.'
@@ -108,6 +110,17 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                     doc.text(receiptData.clientEmail, 14, 62);
                 }
 
+                // Payment Details
+                doc.setFontSize(11);
+                doc.setTextColor(30, 41, 59);
+                doc.text('Payment Details:', 140, 50);
+                doc.setFontSize(10);
+                doc.setTextColor(100, 116, 139);
+                doc.text(`Method: ${receiptData.paymentMethod}`, 140, 56);
+                if (receiptData.receivedBy) {
+                    doc.text(`Received By: ${receiptData.receivedBy}`, 140, 62);
+                }
+
                 // Items Table
                 autoTable(doc, {
                     startY: 75,
@@ -178,8 +191,19 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                     doc.text(receiptData.clientEmail, 140, 68);
                 }
 
+                // Payment Details
+                doc.setFontSize(10);
+                doc.setTextColor(100, 116, 139);
+                doc.text('PAYMENT METHOD', 14, 76);
+                doc.text('RECEIVED BY', 70, 76);
+
+                doc.setFontSize(11);
+                doc.setTextColor(15, 23, 42);
+                doc.text(receiptData.paymentMethod || 'N/A', 14, 83);
+                doc.text(receiptData.receivedBy || 'N/A', 70, 83);
+
                 autoTable(doc, {
-                    startY: 85,
+                    startY: 95,
                     head: [['Description', 'Qty', 'Price', 'Total']],
                     body: receiptData.items.map(item => [
                         item.description,
@@ -237,8 +261,8 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div className="bg-slate-900 rounded-xl border border-slate-700 w-full max-w-4xl shadow-2xl my-8">
-                <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center sticky top-0 bg-slate-900/95 backdrop-blur-sm rounded-t-xl z-10">
+            <div className="bg-slate-900 rounded-xl border border-slate-700 w-full max-w-4xl shadow-2xl my-8 flex flex-col max-h-[90vh]">
+                <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/95 backdrop-blur-sm rounded-t-xl shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-teal-500/10 flex items-center justify-center text-teal-400">
                             <FileText className="w-5 h-5" />
@@ -253,7 +277,7 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                     </button>
                 </div>
 
-                <div className="p-6 space-y-8">
+                <div className="p-6 space-y-8 overflow-y-auto grow">
                     {/* General Information */}
                     <div>
                         <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">Receipt Details</h3>
@@ -301,6 +325,38 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                                     onChange={(e) => setReceiptData({ ...receiptData, clientEmail: e.target.value })}
                                     className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 transition-colors"
                                     placeholder="jane@example.com"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Payment Information */}
+                    <div>
+                        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">Payment Details</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-2">Payment Method</label>
+                                <select
+                                    value={receiptData.paymentMethod}
+                                    onChange={(e) => setReceiptData({ ...receiptData, paymentMethod: e.target.value })}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 transition-colors"
+                                >
+                                    <option value="Credit Card">Credit Card</option>
+                                    <option value="Bank Transfer">Bank Transfer</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Mobile Money">Mobile Money</option>
+                                    <option value="Check">Check</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-2">Received By</label>
+                                <input
+                                    type="text"
+                                    value={receiptData.receivedBy}
+                                    onChange={(e) => setReceiptData({ ...receiptData, receivedBy: e.target.value })}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 transition-colors"
+                                    placeholder="Name of receiver"
                                 />
                             </div>
                         </div>
@@ -423,20 +479,21 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
 
                 </div>
 
-                <div className="px-6 py-4 border-t border-slate-800 flex justify-end gap-3 rounded-b-xl bg-slate-900/95 sticky bottom-0">
+                <div className="px-6 py-4 border-t border-slate-800 flex justify-end gap-3 bg-slate-900/95 rounded-b-xl shrink-0">
                     <Button variant="outline" onClick={onClose} className="border-slate-700 hover:bg-slate-800 text-white">
                         Cancel
                     </Button>
                     <Button
                         onClick={() => generatePDF('preview')}
                         className="bg-slate-700 hover:bg-slate-600 text-white border border-slate-600"
+                        disabled={!receiptData.clientName}
                     >
                         <Eye className="w-4 h-4 mr-2" />
                         Preview PDF
                     </Button>
                     <Button
                         onClick={() => generatePDF('download')}
-                        className="bg-teal-500 hover:bg-teal-600 text-white"
+                        className="bg-teal-500 hover:bg-teal-600 text-white border-0"
                         disabled={!receiptData.clientName}
                     >
                         <Download className="w-4 h-4 mr-2" />

@@ -471,8 +471,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     {/* STEP 2: Preview Invoice */}
                     {step === 'preview' && (
                         <div className="space-y-6">
-                            {/* Invoice Preview */}
-                            <div className="bg-white text-black p-4 sm:p-6 md:p-8 rounded-lg max-h-[500px] overflow-y-auto border-4 border-slate-700">
+                            {/* Invoice Preview Container block */}
+                            <div className="bg-white text-black p-4 sm:p-6 md:p-8 rounded-lg border-4 border-slate-700">
                                 {/* Header */}
                                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-8">
                                     {currentTenant?.logo_url && (
@@ -572,7 +572,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
                                 {/* Signature Section */}
                                 <div className="mt-6 border-t-2 border-gray-200 pt-6">
-                                    <div className="flex items-center justify-between mb-3">
+                                    <div className="flex flex-col sm:flex-row items-center justify-between mb-3 gap-3">
                                         <h3 className="font-bold text-sm flex items-center gap-2">
                                             <PenLine className="w-4 h-4 text-gray-600" />
                                             Authorized Signature
@@ -691,7 +691,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 </div>
 
                                 {paymentMethod === 'stripe' && (
-                                    <div className="bg-blue-50 p-4 rounded-lg">
+                                    <div className="bg-blue-50 p-4 rounded-lg mt-6">
                                         <p className="text-blue-800 text-sm">
                                             <strong>Payment Method:</strong> Online payment via Stripe (Card/Online)
                                         </p>
@@ -746,7 +746,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     )}
                 </div>
             </div>
-        </div >
+        </div>
     );
 };
 
