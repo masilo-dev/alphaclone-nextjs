@@ -9,12 +9,21 @@ import { supabase } from '@/lib/supabase'; // Use admin client if possible, but 
 const vapidPublicKey = process.env.VITE_VAPID_PUBLIC_KEY || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 
-if (vapidPublicKey && vapidPrivateKey) {
-    webPush.setVapidDetails(
-        'mailto:support@alphaclone.io',
-        vapidPublicKey,
-        vapidPrivateKey
-    );
+// Helper to check if keys are just placeholders
+const isPlaceholder = (key?: string) => !key || key.includes('your_') || key.length < 20;
+
+if (vapidPublicKey && vapidPrivateKey && !isPlaceholder(vapidPublicKey) && !isPlaceholder(vapidPrivateKey)) {
+    try {
+        webPush.setVapidDetails(
+            'mailto:support@alphaclone.io',
+            vapidPublicKey,
+            vapidPrivateKey
+        );
+    } catch (err) {
+        console.error('Failed to initialize Web Push – invalid keys provided:', err);
+    }
+} else {
+    console.warn('Web Push not initialized: VAPID keys are missing or placeholders.');
 }
 
 export async function POST(request: Request) {
