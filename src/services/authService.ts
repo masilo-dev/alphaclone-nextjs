@@ -296,11 +296,30 @@ export const authService = {
      */
     async getCurrentUser(): Promise<{ user: User | null; error: string | null }> {
         try {
-            const { data: { session }, error } = await supabase.auth.getSession();
+            // OPTIMIZATION: Small wait/retry for OAuth redirects where cookies might not be ready
+            let session = null;
+            let lastError = null;
 
-            if (error) {
-                console.error("AuthService: getSession error", error);
-                return { user: null, error: error.message };
+            const isAuthCallback = typeof window !== 'undefined' &&
+                (window.location.search.includes('code=') ||
+                    window.location.pathname.includes('/auth/callback'));
+
+            for (let i = 0; i < (isAuthCallback ? 3 : 1); i++) {
+                const { data: { session: s }, error } = await supabase.auth.getSession();
+                if (s?.user) {
+                    session = s;
+                    break;
+                }
+                lastError = error;
+                if (isAuthCallback && i < 2) {
+                    console.log(`AuthService: Retrying session retrieval after callback (${i + 1}/3)...`);
+                    await new Promise(r => setTimeout(r, 800));
+                }
+            }
+
+            if (lastError) {
+                console.error("AuthService: getSession error", lastError);
+                return { user: null, error: lastError.message };
             }
 
             if (!session?.user) {

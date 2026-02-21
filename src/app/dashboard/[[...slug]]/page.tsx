@@ -32,9 +32,14 @@ export default function DashboardPage() {
                 Object.keys(localStorage).some(k => k.includes('auth-token') || k.startsWith('sb-'));
 
             // Dramatically reduced timeout to make dashboard feel near-instant
-            const timeoutDuration = hasLocalToken ? 1000 : 1500;
+            // BUT: Increased slightly for callback cases to prevent premature redirect
+            const isAuthCallback = typeof window !== 'undefined' &&
+                (window.location.search.includes('code=') ||
+                    window.location.pathname.includes('/auth/callback'));
 
-            console.log(`DashboardPage: User missing, starting grace period of ${timeoutDuration}ms`, { hasLocalToken });
+            const timeoutDuration = isAuthCallback ? 3000 : (hasLocalToken ? 1000 : 2000);
+
+            console.log(`DashboardPage: User missing, starting grace period of ${timeoutDuration}ms`, { hasLocalToken, isAuthCallback });
 
             const timer = setTimeout(() => {
                 setIsGracePeriod(false);

@@ -46,7 +46,12 @@ function readSessionFromStorage(): User | null {
             if (fallbackKey) {
                 console.log('[AuthContext] Debug: Found key via broad fallback', fallbackKey);
             } else {
-                console.warn('[AuthContext] Debug: No supabase token found in localStorage among keys:', allKeys.filter(k => k.length < 50));
+                // IMPORTANT: If we are on the auth callback page, it's NORMAL not to have a token yet in localStorage
+                // as it might be stored in cookies by @supabase/ssr
+                const isAuthFlow = window.location.pathname.includes('/auth/');
+                if (!isAuthFlow) {
+                    console.warn('[AuthContext] Debug: No supabase token found in localStorage among keys:', allKeys.filter(k => k.length < 50));
+                }
                 return null;
             }
         }
@@ -147,8 +152,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             didOptimisticRead.current = true;
             const cachedUser = readSessionFromStorage();
             if (cachedUser && isMounted) {
+                console.log('[AuthContext] Found cached user in storage, setting immediately');
                 setSafeUser(cachedUser);
                 setLoading(false);
+            } else {
+                // If no cached user, we don't set loading to false yet.
+                // We wait for initSession (async validation) to finish.
+                console.log('[AuthContext] No cached user found, waiting for async validation...');
             }
         }
 
@@ -243,12 +253,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         });
 
-        // Safety net: force stop loading after 5s
+        // Safety net: force stop loading after 8s (increased from 5s for slower production cold starts)
         const safetyTimeout = setTimeout(() => {
-            if (isMounted) {
+            if (isMounted && loading) {
+                console.warn('[AuthContext] Safety timeout reached, forcing loading to false');
                 setLoading(false);
             }
-        }, 5000);
+        }, 8000);
 
         return () => {
             isMounted = false;
