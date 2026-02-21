@@ -37,21 +37,21 @@ function readSessionFromStorage(): User | null {
         // OPTIMIZED: Match precisely the auth token to avoid matching -code-verifier strings
         // This is more robust than just checking for 'sb-' prefixes
         const storageKey = allKeys.find(
-            (k) => k.startsWith('sb-') && k.endsWith('-auth-token')
+            (k) => (k.startsWith('sb-') || k.includes('-auth-token')) && k.endsWith('-auth-token')
         );
 
         if (!storageKey) {
             // FALLBACK: Try a broader search if exact match fails
-            const fallbackKey = allKeys.find(k => k.includes('auth-token') && k.includes('sb-'));
+            const fallbackKey = allKeys.find(k => k.includes('auth-token'));
             if (fallbackKey) {
-                console.log('[AuthContext] Debug: Found key via fallback', fallbackKey);
+                console.log('[AuthContext] Debug: Found key via broad fallback', fallbackKey);
             } else {
-                console.warn('[AuthContext] Debug: No supabase token found in localStorage matching "sb-"');
+                console.warn('[AuthContext] Debug: No supabase token found in localStorage among keys:', allKeys.filter(k => k.length < 50));
                 return null;
             }
         }
 
-        const effectiveKey = storageKey || allKeys.find(k => k.includes('auth-token') && k.includes('sb-'))!;
+        const effectiveKey = storageKey || allKeys.find(k => k.includes('auth-token'))!;
         const raw = localStorage.getItem(effectiveKey);
 
         if (!raw) {
