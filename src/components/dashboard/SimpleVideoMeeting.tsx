@@ -91,10 +91,10 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
     const handleJoin = async () => {
         if (!room) return;
         try {
-            // Resolve the ID from the share link (last part of URL)
+            // Open meeting in a new tab so the dashboard stays accessible
             const meetingId = room.shareLink.split('/').pop();
-            router.push(`/meet/${meetingId}`);
-            toast.success('Joining secure meet...');
+            window.open(`/meet/${meetingId}`, '_blank', 'noopener,noreferrer');
+            toast.success('Meeting opened in a new tab!');
         } catch (err) {
             console.error('Failed to join:', err);
             onJoinRoom(room.url);
