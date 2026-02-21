@@ -27,11 +27,12 @@ export default function DashboardPage() {
         if (!loading && !user) {
             // Check if there is even a HINT of a session in localStorage
             // Supabase keys start with 'sb-'
+            // Resilient token discovery: check for any Supabase auth token
             const hasLocalToken = typeof window !== 'undefined' &&
-                Object.keys(localStorage).some(k => k.startsWith('sb-'));
+                Object.keys(localStorage).some(k => k.includes('auth-token') || k.startsWith('sb-'));
 
-            // Increased timeout to account for slower connections/device processing
-            const timeoutDuration = hasLocalToken ? 5000 : 3500;
+            // Dramatically reduced timeout to make dashboard feel near-instant
+            const timeoutDuration = hasLocalToken ? 1000 : 1500;
 
             console.log(`DashboardPage: User missing, starting grace period of ${timeoutDuration}ms`, { hasLocalToken });
 

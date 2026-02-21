@@ -219,12 +219,17 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (user?.id) {
-      // Timeout safeguard: Force loading to false after 15 seconds (increased from 5s for high-latency regions)
+      // Timeout safeguard: Force loading to false after 8 seconds (reduced from 15s)
       const timeoutId = setTimeout(() => {
         console.warn('TenantContext: Loading timeout reached, forcing isLoading to false');
+        // If we have a cached tenant, we're probably fine to proceed anyway
+        if (currentTenant) {
+          setIsLoading(false);
+          return;
+        }
         setError('Loading timeout - please check your connection and refresh');
         setIsLoading(false);
-      }, 15000);
+      }, 8000);
 
       loadUserTenants(timeoutId);
 

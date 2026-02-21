@@ -351,44 +351,61 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // Fetch projects function
   const refreshProjects = async () => {
+    console.log('[Dashboard] Refreshing projects for user:', user.id);
     // Only show loading if no projects (initial load or empty)
     if (projects.length === 0) setIsLoadingProjects(true);
 
-    const { projects: fetchedProjects, error } = await projectService.getProjects(user.id, user.role);
-    if (!error && fetchedProjects) {
-      setProjects(fetchedProjects);
-      localStorage.setItem(`dashboard_projects_${user.id}`, JSON.stringify(fetchedProjects));
+    try {
+      const { projects: fetchedProjects, error } = await projectService.getProjects(user.id, user.role);
+      if (error) {
+        console.error('[Dashboard] Project fetch error:', error);
+        toast.error('Failed to load projects');
+      } else if (fetchedProjects) {
+        console.log('[Dashboard] Projects loaded:', fetchedProjects.length);
+        setProjects(fetchedProjects);
+        localStorage.setItem(`dashboard_projects_${user.id}`, JSON.stringify(fetchedProjects));
+      }
+    } catch (err) {
+      console.error('[Dashboard] Unexpected project fetch error:', err);
+    } finally {
+      setIsLoadingProjects(false);
     }
-    setIsLoadingProjects(false);
   };
 
   // Fetch invoices function
   const refreshInvoices = async () => {
-    // setIsLoadingInvoices(true);
-    let result;
-    // Client/TenantAdmin fetches all invoices relevant to their tenant/business view
-    if (user.role === 'admin' || user.role === 'tenant_admin') {
-      result = await paymentService.getAllInvoices(user.role); // Pass role for filtering
-    } else {
-      result = await paymentService.getUserInvoices(user.id);
-    }
+    console.log('[Dashboard] Refreshing invoices for user:', user.id);
+    try {
+      let result;
+      // Client/TenantAdmin fetches all invoices relevant to their tenant/business view
+      if (user.role === 'admin' || user.role === 'tenant_admin') {
+        result = await paymentService.getAllInvoices(user.role); // Pass role for filtering
+      } else {
+        result = await paymentService.getUserInvoices(user.id);
+      }
 
-    if (result.invoices) {
-      // Map to UI Invoice type
-      const mappedInvoices = result.invoices.map((inv: any) => ({
-        id: inv.id,
-        projectId: inv.project_id || '',
-        projectName: inv.project?.name || 'General Service',
-        clientId: inv.user_id,
-        amount: inv.amount,
-        status: inv.status === 'paid' ? 'Paid' : (new Date(inv.due_date) < new Date() ? 'Overdue' : 'Unpaid'),
-        dueDate: new Date(inv.due_date).toLocaleDateString(),
-        description: inv.description
-      })) as Invoice[];
-      setInvoices(mappedInvoices);
-      localStorage.setItem(`dashboard_invoices_${user.id}`, JSON.stringify(mappedInvoices));
+      if (result.error) {
+        console.error('[Dashboard] Invoice fetch error:', result.error);
+        toast.error('Failed to load invoices');
+      } else if (result.invoices) {
+        console.log('[Dashboard] Invoices loaded:', result.invoices.length);
+        // Map to UI Invoice type
+        const mappedInvoices = result.invoices.map((inv: any) => ({
+          id: inv.id,
+          projectId: inv.project_id || '',
+          projectName: inv.project?.name || 'General Service',
+          clientId: inv.user_id,
+          amount: inv.amount,
+          status: inv.status === 'paid' ? 'Paid' : (new Date(inv.due_date) < new Date() ? 'Overdue' : 'Unpaid'),
+          dueDate: new Date(inv.due_date).toLocaleDateString(),
+          description: inv.description
+        })) as Invoice[];
+        setInvoices(mappedInvoices);
+        localStorage.setItem(`dashboard_invoices_${user.id}`, JSON.stringify(mappedInvoices));
+      }
+    } catch (err) {
+      console.error('[Dashboard] Unexpected invoice fetch error:', err);
     }
-    // setIsLoadingInvoices(false);
   };
 
   // OPTIMIZED: Load ALL critical data in parallel for fastest loading, with Caching
