@@ -119,16 +119,43 @@ export const businessInvoiceService = {
             // Debug logging
             console.log('Creating invoice with payload:', payload);
 
-            const { data, error } = await supabase
-                .from('business_invoices')
-                .insert(payload)
-                .select()
-                .single();
+            let insertError;
+            let retryCount = 0;
+            const maxRetries = 2;
+            let currentPayload = { ...payload };
+            let finalData;
 
-            if (error) {
-                console.error('Supabase Error creating invoice:', error);
-                throw error;
+            while (retryCount <= maxRetries) {
+                const { data, error } = await supabase
+                    .from('business_invoices')
+                    .insert(currentPayload)
+                    .select()
+                    .single();
+
+                if (!error) {
+                    finalData = data;
+                    break;
+                }
+
+                insertError = error;
+                // Check for duplicate key violation (PostgreSQL error code 23505)
+                if (error.code === '23505' && error.message?.includes('invoice_number')) {
+                    console.warn(`Duplicate invoice number detected. Retry ${retryCount + 1}/${maxRetries}...`);
+                    const nextInvoiceNumber = await this.generateInvoiceNumber(tenantId);
+                    currentPayload.invoice_number = nextInvoiceNumber;
+                    retryCount++;
+                } else {
+                    // Not a duplicate key error we can handle by retrying
+                    break;
+                }
             }
+
+            if (!finalData) {
+                console.error('Final attempt to create invoice failed:', insertError);
+                throw insertError;
+            }
+
+            const data = finalData;
 
             const newInvoice: BusinessInvoice = {
                 id: data.id,

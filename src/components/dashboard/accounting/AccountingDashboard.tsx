@@ -46,7 +46,7 @@ export default function AccountingDashboard() {
                 // 3. Fetch Total Expenses (from journal entries hitting expense accounts - simplified heuristic)
                 const { data: expenses } = await supabase
                     .from('journal_entry_lines')
-                    .select('amount, account:account_id(account_type)')
+                    .select('amount, account:chart_of_accounts(account_type)')
                     .eq('tenant_id', currentTenant.id);
 
                 const totalExp = (expenses || [])
@@ -56,7 +56,7 @@ export default function AccountingDashboard() {
                 // 4. Calculate approximate Cash Balance
                 const { data: cashLines } = await supabase
                     .from('journal_entry_lines')
-                    .select('amount, is_debit, account:account_id(account_type, account_code)')
+                    .select('amount, is_debit, account:chart_of_accounts(account_type, account_code)')
                     .eq('tenant_id', currentTenant.id);
 
                 const cashBalance = (cashLines || [])

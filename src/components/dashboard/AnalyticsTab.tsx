@@ -15,6 +15,7 @@ const AnalyticsTab: React.FC = () => {
     const { currentTenant: tenant } = useTenant();
     const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isMounted, setIsMounted] = useState(false);
     const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
     const [error, setError] = useState<string | null>(null);
     const [isExporting, setIsExporting] = useState(false);
@@ -62,10 +63,11 @@ const AnalyticsTab: React.FC = () => {
             setLoading(false);
         };
 
+        setIsMounted(true);
         fetchAnalytics();
     }, [dateRange]);
 
-    if (loading) {
+    if (loading || !isMounted) {
         return (
             <div className="p-10 text-center text-slate-500">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-teal-400 mb-4"></div>

@@ -8,6 +8,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const AnalyticsDashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
+    const [isMounted, setIsMounted] = useState(false);
     const [stats, setStats] = useState<AnalyticsData | null>(null);
     const [dateRange, setDateRange] = useState<'7d' | '30d' | '1y'>('30d');
 
@@ -23,10 +24,11 @@ const AnalyticsDashboard: React.FC = () => {
     }, [dateRange]);
 
     useEffect(() => {
+        setIsMounted(true);
         loadData();
     }, [loadData]);
 
-    if (loading) {
+    if (loading || !isMounted) {
         return (
             <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
