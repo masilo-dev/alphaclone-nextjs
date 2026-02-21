@@ -51,19 +51,18 @@ export const performanceMonitor = {
   },
 };
 
-// Web Vitals monitoring (optional - requires web-vitals package)
+// Web Vitals monitoring
 export const reportWebVitals = (onPerfEntry?: (metric: any) => void) => {
   if (onPerfEntry && typeof window !== 'undefined') {
-    // Commented out until web-vitals is installed
-    // import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
-    //   getCLS(onPerfEntry);
-    //   getFID(onPerfEntry);
-    //   getFCP(onPerfEntry);
-    //   getLCP(onPerfEntry);
-    //   getTTFB(onPerfEntry);
-    // }).catch(() => {
-    //   console.log('web-vitals not installed');
-    // });
+    import('web-vitals').then(({ onCLS, onINP, onLCP, onFCP, onTTFB }) => {
+      onCLS(onPerfEntry);
+      onINP(onPerfEntry);
+      onLCP(onPerfEntry);
+      onFCP(onPerfEntry);
+      onTTFB(onPerfEntry);
+    }).catch((err) => {
+      console.warn('web-vitals failed to load:', err);
+    });
   }
 };
 
@@ -71,7 +70,7 @@ export const reportWebVitals = (onPerfEntry?: (metric: any) => void) => {
 export function trackRenderTime(componentName: string) {
   const startMark = `${componentName}-render-start`;
   const endMark = `${componentName}-render-end`;
-  
+
   return {
     start: () => performanceMonitor.mark(startMark),
     end: () => {
@@ -81,11 +80,11 @@ export function trackRenderTime(componentName: string) {
         startMark,
         endMark
       );
-      
+
       if (duration > 100) {
         console.warn(`${componentName} took ${duration.toFixed(2)}ms to render`);
       }
-      
+
       return duration;
     },
   };
@@ -94,15 +93,15 @@ export function trackRenderTime(componentName: string) {
 // Network request tracker
 export function trackNetworkRequest(url: string, method: string = 'GET') {
   const startTime = Date.now();
-  
+
   return {
     end: (success: boolean = true) => {
       const duration = Date.now() - startTime;
-      
+
       if (duration > 2000) {
         console.warn(`Slow ${method} request to ${url}: ${duration}ms`);
       }
-      
+
       return {
         url,
         method,
@@ -120,11 +119,11 @@ export function checkMemoryUsage() {
     const used = memory.usedJSHeapSize / 1048576; // Convert to MB
     const total = memory.totalJSHeapSize / 1048576;
     const limit = memory.jsHeapSizeLimit / 1048576;
-    
+
     if (used / limit > 0.9) {
       console.warn(`High memory usage: ${used.toFixed(2)}MB / ${limit.toFixed(2)}MB`);
     }
-    
+
     return {
       used: used.toFixed(2),
       total: total.toFixed(2),
@@ -132,7 +131,7 @@ export function checkMemoryUsage() {
       percentage: ((used / limit) * 100).toFixed(2),
     };
   }
-  
+
   return null;
 }
 
@@ -140,7 +139,7 @@ export function checkMemoryUsage() {
 export const getBundleInfo = () => {
   const scripts = Array.from(document.querySelectorAll('script[src]'));
   const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"]'));
-  
+
   return {
     scriptCount: scripts.length,
     styleCount: styles.length,

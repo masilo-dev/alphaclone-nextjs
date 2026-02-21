@@ -46,6 +46,8 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
+import { WebVitals } from "@/components/common/WebVitals";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -56,6 +58,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${dancingScript.variable} ${sacramento.variable} antialiased text-base subpixel-antialiased`}
       >
+        <WebVitals />
         <Providers>
           <PWAProvider>
             <ShellSwitcher>
