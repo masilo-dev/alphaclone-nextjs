@@ -30,6 +30,7 @@ interface VideoControlsProps {
     isAdmin?: boolean;
     roomUrl?: string;
     callId?: string;
+    unreadMessageCount?: number;
 }
 
 /**
@@ -51,7 +52,8 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 
     isAdmin = false,
     roomUrl,
-    callId
+    callId,
+    unreadMessageCount = 0
 }) => {
     const [copied, setCopied] = React.useState(false);
 
@@ -207,10 +209,18 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                         {onToggleChat && (
                             <button
                                 onClick={onToggleChat}
-                                className="p-3 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
+                                className="relative p-3 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white group"
                                 title="Chat"
                             >
-                                <MessageCircle className="w-5 h-5" />
+                                <MessageCircle className="w-5 h-5 relative z-10" />
+                                {unreadMessageCount > 0 && (
+                                    <span className="absolute top-1.5 right-1.5 flex h-3.5 w-3.5 items-center justify-center z-20">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-500 border-2 border-slate-900 text-[8px] font-bold text-white items-center justify-center">
+                                            {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+                                        </span>
+                                    </span>
+                                )}
                             </button>
                         )}
                         {onToggleParticipants && (

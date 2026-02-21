@@ -69,6 +69,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     const isRestricted = user.role !== 'admin';
     const [showParticipants, setShowParticipants] = useState(false);
     const [showChat, setShowChat] = useState(false);
+    const [unreadChatCount, setUnreadChatCount] = useState(0);
     const [viewMode, setViewMode] = useState<'grid' | 'speaker'>('speaker');
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const joinAttemptedRef = useRef(false); // Prevent double join in React Strict Mode
@@ -453,9 +454,55 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
 
                 setChatMessages(prev => [...prev, newMessage]);
 
-                // Show notification if chat is closed
+                // Handle unread count and custom toast notification
                 if (!showChat) {
-                    toast.success(`${data.sender}: ${data.message.substring(0, 50)}${data.message.length > 50 ? '...' : ''}`);
+                    setUnreadChatCount(prev => prev + 1);
+
+                    toast.custom(
+                        (t) => (
+                            <div
+                                className={`${t.visible ? 'animate-in slide-in-from-top-2 fade-in' : 'animate-out fade-out slide-out-to-top-2'
+                                    } max-w-sm w-full bg-slate-900 border border-slate-700/50 shadow-2xl rounded-xl pointer-events-auto flex ring-1 ring-black ring-opacity-5 cursor-pointer hover:bg-slate-800 transition-colors duration-200`}
+                                onClick={() => {
+                                    setShowChat(true);
+                                    setUnreadChatCount(0);
+                                    toast.dismiss(t.id);
+                                }}
+                            >
+                                <div className="flex-1 w-0 p-4">
+                                    <div className="flex items-start">
+                                        <div className="flex-shrink-0 pt-0.5">
+                                            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center border border-slate-700 shadow-sm">
+                                                <span className="text-white text-sm font-bold">
+                                                    {(data.sender?.[0] || 'G').toUpperCase()}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="ml-3 flex-1">
+                                            <p className="text-sm font-semibold text-white">
+                                                {data.sender}
+                                            </p>
+                                            <p className="mt-1 text-sm text-slate-300 line-clamp-2">
+                                                {data.message}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex border-l border-slate-700/50">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toast.dismiss(t.id);
+                                        }}
+                                        className="w-full border border-transparent rounded-none rounded-r-xl p-4 flex items-center justify-center text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors"
+                                    >
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        ),
+                        { duration: 4000, position: 'top-right' }
+                    );
                 }
             }
         };
