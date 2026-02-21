@@ -1028,7 +1028,7 @@ const SalesAgent: React.FC = () => {
                         onChange={e => setManualLead({ ...manualLead, businessName: e.target.value })}
                         required
                     />
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <Input
                             label="Email Address"
                             type="email"
@@ -1043,7 +1043,7 @@ const SalesAgent: React.FC = () => {
                             onChange={e => setManualLead({ ...manualLead, phone: e.target.value })}
                         />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <Input
                             label="Industry"
                             placeholder="e.g. Technology"

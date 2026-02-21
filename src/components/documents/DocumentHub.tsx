@@ -322,26 +322,26 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         return (
             <div className="fixed inset-0 z-[100] flex flex-col bg-slate-950 animate-in fade-in duration-200">
                 {/* Toolbar */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-slate-900 shrink-0 shadow-2xl">
-                    <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-b border-white/10 bg-slate-900 shrink-0 shadow-2xl gap-3">
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                         <button
                             onClick={() => { setViewMode('list'); setSelectedFile(null); setFileUrl(null); }}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all text-sm font-bold"
+                            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all text-xs sm:text-sm font-bold shrink-0"
                         >
-                            <ChevronLeft className="w-4 h-4" /> Close Viewer
+                            <ChevronLeft className="w-4 h-4" /> <span className="hidden sm:inline">Close Viewer</span><span className="sm:hidden">Back</span>
                         </button>
-                        <div className="w-px h-6 bg-white/10" />
-                        <div>
-                            <span className="text-white font-bold text-sm block truncate max-w-xs">{selectedFile.original_filename}</span>
+                        <div className="w-px h-6 bg-white/10 hidden sm:block" />
+                        <div className="min-w-0">
+                            <span className="text-white font-bold text-xs sm:text-sm block truncate max-w-[150px] sm:max-w-xs">{selectedFile.original_filename}</span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                         {viewMode === 'editor' && (
                             <>
                                 <button
                                     onClick={handleDownloadAsPDF}
                                     disabled={isSaving}
-                                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition-all shadow-lg shadow-orange-500/20 disabled:opacity-50"
+                                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-[10px] sm:text-xs font-bold transition-all shadow-lg shadow-orange-500/20 disabled:opacity-50"
                                 >
                                     <Download className="w-3.5 h-3.5" />
                                     Save as PDF
@@ -349,7 +349,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                 <button
                                     onClick={handleSaveEdits}
                                     disabled={isSaving}
-                                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all shadow-lg shadow-teal-500/20 disabled:opacity-50"
+                                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-[10px] sm:text-xs font-bold transition-all shadow-lg shadow-teal-500/20 disabled:opacity-50"
                                 >
                                     {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                                     Save Changes
@@ -358,7 +358,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                         )}
                         <button
                             onClick={() => handleDownload(selectedFile)}
-                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-all border border-white/5"
+                            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-[10px] sm:text-xs font-bold transition-all border border-white/5"
                         >
                             <Download className="w-4 h-4" /> Download
                         </button>

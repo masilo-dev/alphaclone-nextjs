@@ -29,7 +29,8 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
     const [selectedQuoteItems, setSelectedQuoteItems] = useState<QuoteItem[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [signatureData, setSignatureData] = useState<string | null>(null);
-    const [isSigning, setIsSigning] = useState(false);
+    const [showSignModal, setShowSignModal] = useState(false);
+    const [quoteToSign, setQuoteToSign] = useState<Quote | null>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const isDrawing = useRef(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -256,6 +257,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                 toast.error(`Failed to load quote: ${error}`);
             } else if (quote) {
                 setSelectedQuote(quote);
+                setSignatureData(quote.signatureUrl || null);
 
                 // Load items
                 const { items, error: itemsError } = await quoteService.getQuoteItems(quoteId);
@@ -460,9 +462,14 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
 
     const handleQuickStatusUpdate = async (quote: Quote, newStatus: string) => {
         try {
+            if (newStatus === 'accepted') {
+                setQuoteToSign(quote);
+                setShowSignModal(true);
+                return;
+            }
+
             const updates: any = { status: newStatus as any };
             if (newStatus === 'sent' && !quote.sentAt) updates.sentAt = new Date().toISOString();
-            if (newStatus === 'accepted') updates.acceptedAt = new Date().toISOString();
             if (newStatus === 'rejected') updates.rejectedAt = new Date().toISOString();
 
             const { error } = await quoteService.updateQuote(quote.id, updates);
@@ -471,6 +478,57 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
             loadQuotes();
         } catch (err: any) {
             toast.error(err.message || 'Failed to update status');
+        }
+    };
+
+    const handleConfirmAndSign = async () => {
+        if (!quoteToSign) return;
+        if (!signatureData) {
+            toast.error('Please provide a signature to accept the quote.');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const updates: any = {
+                status: 'accepted',
+                acceptedAt: new Date().toISOString(),
+                signatureUrl: signatureData
+            };
+
+            const { error } = await quoteService.updateQuote(quoteToSign.id, updates);
+            if (error) throw new Error(error);
+
+            toast.success('Quote accepted and signed successfully!');
+            setShowSignModal(false);
+            setSignatureData(null);
+            setQuoteToSign(null);
+            loadQuotes();
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to sign quote');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleSaveSignature = async () => {
+        if (!selectedQuote || !signatureData) return;
+        setIsSubmitting(true);
+        try {
+            const updates: any = { signatureUrl: signatureData };
+            if (selectedQuote.status !== 'accepted') {
+                updates.status = 'accepted';
+                updates.acceptedAt = new Date().toISOString();
+            }
+            const { error } = await quoteService.updateQuote(selectedQuote.id, updates);
+            if (error) throw new Error(error);
+            toast.success('Signature saved and quote accepted!');
+            setShowViewModal(false);
+            loadQuotes();
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to save signature');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -1147,7 +1205,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                                             onMouseUp={() => {
                                                 isDrawing.current = false;
                                                 const canvas = canvasRef.current!;
-                                                setSignatureData(canvas.toDataURL());
+                                                setSignatureData(canvas.toDataURL('image/png'));
                                             }}
                                             onMouseLeave={() => { isDrawing.current = false; }}
                                             onTouchStart={(e) => {
@@ -1180,7 +1238,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                                             onTouchEnd={() => {
                                                 isDrawing.current = false;
                                                 const canvas = canvasRef.current!;
-                                                setSignatureData(canvas.toDataURL());
+                                                setSignatureData(canvas.toDataURL('image/png'));
                                             }}
                                         />
                                         <p className="text-xs text-slate-500 text-center">Draw your signature above</p>
@@ -1190,6 +1248,15 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
 
                             <div className="pt-4 flex justify-end gap-3">
                                 <Button variant="outline" onClick={() => setShowViewModal(false)}>Close</Button>
+                                {signatureData && selectedQuote?.signatureUrl !== signatureData && (
+                                    <Button
+                                        onClick={handleSaveSignature}
+                                        disabled={isSubmitting}
+                                        className="bg-teal-500 hover:bg-teal-600 text-white"
+                                    >
+                                        {isSubmitting ? 'Saving...' : 'Accept & Save Signature'}
+                                    </Button>
+                                )}
                                 {selectedQuote?.status === 'accepted' && (
                                     <Button
                                         onClick={() => handleConvertToInvoice(selectedQuote)}

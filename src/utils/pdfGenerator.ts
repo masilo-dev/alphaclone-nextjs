@@ -141,6 +141,33 @@ export const generateQuotePDF = (quote: Quote, items: QuoteItem[], tenant: Tenan
 
         const splitTerms = doc.splitTextToSize(quote.termsAndConditions, pageWidth - 40);
         doc.text(splitTerms, 20, noteY + 5);
+        noteY += 10 + (splitTerms.length * 5);
+    }
+
+    // --- Signature ---
+    if (quote.signatureUrl) {
+        doc.setDrawColor(203, 213, 225);
+        doc.line(20, noteY + 15, 70, noteY + 15);
+
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(148, 163, 184);
+        doc.text('ACCEPTED BY (CLIENT SIGNATURE)', 20, noteY + 20);
+
+        try {
+            const cleanSigData = quote.signatureUrl.includes(',')
+                ? quote.signatureUrl.split(',')[1]
+                : quote.signatureUrl;
+            doc.addImage(cleanSigData, 'PNG', 20, noteY - 10, 40, 20);
+
+            if (quote.acceptedAt) {
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7);
+                doc.text(`Signed: ${new Date(quote.acceptedAt).toLocaleString()}`, 20, noteY + 28);
+            }
+        } catch (e) {
+            console.error('Failed to add drawn signature to PDF:', e);
+        }
     }
 
     // --- Footer ---

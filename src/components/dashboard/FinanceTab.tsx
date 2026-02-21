@@ -25,17 +25,20 @@ import QuotesTab from './QuotesTab';
 const PLANS = [
     {
         id: 'starter',
-        name: 'Basic',
-        description: 'Perfect for solo operators and small teams getting started.',
+        name: 'Starter',
+        description: 'Everything you need to run your business — solo.',
         monthlyPrice: 15,
         priceId: TIER_PRICING.starter.monthlyPriceId,
         icon: Zap,
         color: 'teal',
         features: [
-            'Up to 5 team members',
-            'CRM & Lead Management',
+            'Document Hub',
+            'Accounting & Invoicing',
+            'Smart Contract Generation',
             'Gmail Integration',
-            'Invoicing & Quotes',
+            'Google Calendar & Calendly',
+            'CRM & Lead Management',
+            'Limited Video Meetings',
             'Basic Analytics',
             '5GB Storage',
             'Email Support',
@@ -44,15 +47,15 @@ const PLANS = [
     {
         id: 'pro',
         name: 'Professional',
-        description: 'For growing businesses that need more power and automation.',
+        description: 'For growing businesses that need more power. Single-user.',
         monthlyPrice: 45,
         priceId: TIER_PRICING.pro.monthlyPriceId,
         icon: Star,
         color: 'violet',
         popular: true,
         features: [
-            'Up to 20 team members',
-            'Everything in Basic',
+            'Everything in Starter',
+            'Unlimited 25-min Video Meetings',
             'AI Email Drafting',
             'Sales Pipeline & Deals',
             'Advanced Analytics',
@@ -60,18 +63,19 @@ const PLANS = [
             '50GB Storage',
             'Priority Support',
         ],
+        badge: 'Single User',
     },
     {
         id: 'enterprise',
-        name: 'Unlimited',
-        description: 'For established businesses with no limits and full control.',
+        name: 'Enterprise',
+        description: 'Full control with multi-user and unlimited everything.',
         monthlyPrice: 80,
         priceId: TIER_PRICING.enterprise.monthlyPriceId,
         icon: Rocket,
         color: 'amber',
         features: [
-            'Unlimited team members',
             'Everything in Professional',
+            'Multi-User & Multi-Tenant',
             'Custom AI Workflows',
             'White-label Options',
             'API Access',
@@ -176,6 +180,14 @@ const SubscriptionSection: React.FC<SubscriptionSectionProps> = ({ user, tenantI
                                 </div>
                             )}
 
+                            {'badge' in plan && (plan as any).badge && (
+                                <div className="absolute -top-3 right-4">
+                                    <span className="bg-slate-700 text-slate-300 text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wider uppercase border border-slate-600">
+                                        {(plan as any).badge}
+                                    </span>
+                                </div>
+                            )}
+
                             <div className="mb-5">
                                 <div className={`w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center mb-3 ${colors.icon}`}>
                                     <Icon className="w-5 h-5" />
@@ -224,6 +236,12 @@ const SubscriptionSection: React.FC<SubscriptionSectionProps> = ({ user, tenantI
                         </motion.div>
                     );
                 })}
+            </div>
+
+            {/* Founder Involvement Banner */}
+            <div className="text-center bg-gradient-to-r from-teal-500/10 via-violet-500/10 to-amber-500/10 border border-teal-500/20 rounded-xl p-5">
+                <p className="text-white font-bold text-sm mb-1">🚀 Subscribe now and get the founder personally involved for the next 100 days!</p>
+                <p className="text-slate-400 text-xs">Hands-on guidance, strategy sessions, and direct support to help you succeed.</p>
             </div>
 
             {/* Footer note */}

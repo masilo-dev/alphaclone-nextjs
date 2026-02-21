@@ -20,9 +20,18 @@ import { useTenant } from '../../contexts/TenantContext';
 
 type Tab = 'overview' | 'tenants' | 'users' | 'analytics' | 'security' | 'system' | 'growth';
 
-export default function SuperAdminDashboard() {
+interface SuperAdminDashboardProps {
+  activeTab?: string;
+  setActiveTab?: (tab: string) => void;
+}
+
+export default function SuperAdminDashboard({ activeTab: externalTab, setActiveTab: externalSetTab }: SuperAdminDashboardProps) {
   const { currentTenant } = useTenant();
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
+  // Use external tab if provided (from Sidebar), otherwise fallback to internal
+  const [internalTab, setInternalTab] = useState<Tab>('overview');
+  const activeTab = (externalTab as Tab) || internalTab;
+  const setActiveTab = externalSetTab || ((t: string) => setInternalTab(t as Tab));
+
   const [stats, setStats] = useState({
     totalTenants: 0,
     totalUsers: 0,
@@ -59,55 +68,25 @@ export default function SuperAdminDashboard() {
     loadStats();
   }, []);
 
-  const tabs = [
-    { id: 'overview' as Tab, label: 'Overview', icon: Activity },
-    { id: 'tenants' as Tab, label: 'Tenants', icon: Building2 },
-    { id: 'users' as Tab, label: 'Users', icon: Users },
-    { id: 'analytics' as Tab, label: 'Analytics', icon: TrendingUp },
-    { id: 'security' as Tab, label: 'Security', icon: Shield },
-    { id: 'system' as Tab, label: 'Global Settings', icon: Settings }, // Renamed from System
-    { id: 'growth' as Tab, label: 'Growth & Leads', icon: TrendingUp }
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
-      <div className="max-w-[1800px] mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Shield className="w-8 h-8 text-teal-400" />
-            <h1 className="text-4xl font-bold text-white">Super Admin Dashboard</h1>
-          </div>
-          <p className="text-slate-400 text-lg">Complete system control and monitoring</p>
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <Shield className="w-7 h-7 text-teal-400" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">Super Admin Dashboard</h1>
         </div>
-
-        {/* Tabs */}
-        <div className="flex gap-2 mb-8 border-b border-slate-700 overflow-x-auto">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-3 font-medium whitespace-nowrap transition-colors relative ${activeTab === tab.id ? 'text-teal-400' : 'text-slate-400 hover:text-slate-300'
-                }`}
-            >
-              <tab.icon className="w-5 h-5" />
-              {tab.label}
-              {activeTab === tab.id && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-400" />
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* Content */}
-        {activeTab === 'overview' && <OverviewTab stats={stats} />}
-        {activeTab === 'tenants' && <TenantsTab />}
-        {activeTab === 'users' && <UsersTab />}
-        {activeTab === 'analytics' && <AnalyticsTab />}
-        {activeTab === 'security' && <SecurityTab />}
-        {activeTab === 'system' && <SystemTab />}
-        {activeTab === 'growth' && <GrowthTab />}
+        <p className="text-slate-400 text-sm">Complete system control and monitoring</p>
       </div>
+
+      {/* Content — no horizontal tabs, driven by sidebar */}
+      {activeTab === 'overview' && <OverviewTab stats={stats} />}
+      {activeTab === 'tenants' && <TenantsTab />}
+      {activeTab === 'users' && <UsersTab />}
+      {activeTab === 'analytics' && <AnalyticsTab />}
+      {activeTab === 'security' && <SecurityTab />}
+      {activeTab === 'system' && <SystemTab />}
+      {activeTab === 'growth' && <GrowthTab />}
     </div>
   );
 }

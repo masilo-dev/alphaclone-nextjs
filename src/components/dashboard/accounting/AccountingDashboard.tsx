@@ -5,8 +5,10 @@ import { DollarSign, ArrowUpRight, ArrowDownRight, FileText, Activity, Upload, C
 import { supabase } from '../../../lib/supabase';
 import ReceiptUploadModal from './ReceiptUploadModal';
 import { journalEntryService } from '../../../services/accounting/journalEntryService';
-import { chartOfAccountsService } from '../../../services/accounting/chartOfAccountsService';
+import { chartOfAccountsService, ChartOfAccount } from '../../../services/accounting/chartOfAccountsService';
 import toast from 'react-hot-toast';
+import { JournalEntryModal } from './JournalEntryModal';
+import ReceiptGeneratorModal from './ReceiptGeneratorModal';
 
 // A simplified Accounting Dashboard focused on cash flow, revenue, and automated AI receipt tracking.
 export default function AccountingDashboard() {
@@ -14,6 +16,9 @@ export default function AccountingDashboard() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'overview' | 'income' | 'balance'>('overview');
     const [isUploadOpen, setIsUploadOpen] = useState(false);
+    const [isManualEntryOpen, setIsManualEntryOpen] = useState(false);
+    const [isReceiptGeneratorOpen, setIsReceiptGeneratorOpen] = useState(false);
+    const [accounts, setAccounts] = useState<ChartOfAccount[]>([]);
     const [stats, setStats] = useState({
         totalRevenue: 0,
         totalExpenses: 0,
@@ -99,6 +104,12 @@ export default function AccountingDashboard() {
                         recentTransactions: simpleTransactions
                     });
                 }
+
+                // Fetch Chart of Accounts for Manual Entry
+                const { accounts: fetchedAccounts } = await chartOfAccountsService.getAccounts();
+                if (mounted && fetchedAccounts) {
+                    setAccounts(fetchedAccounts);
+                }
             } catch (err) {
                 console.error("Failed to load accounting data", err);
             } finally {
@@ -175,13 +186,31 @@ export default function AccountingDashboard() {
                     <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Accounting & Finance</h1>
                     <p className="text-slate-400">Automated financial tracking and AI receipt parsing.</p>
                 </div>
-                <Button
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-900/20"
-                    onClick={() => setIsUploadOpen(true)}
-                >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload Receipt
-                </Button>
+                <div className="flex flex-wrap gap-3">
+                    <Button
+                        variant="outline"
+                        className="border-slate-700 hover:bg-slate-800 text-white"
+                        onClick={() => setIsManualEntryOpen(true)}
+                    >
+                        <Activity className="w-4 h-4 mr-2" />
+                        Manual Entry
+                    </Button>
+                    <Button
+                        variant="outline"
+                        className="bg-indigo-600/10 border-indigo-500/30 hover:bg-indigo-600/20 text-indigo-400"
+                        onClick={() => setIsReceiptGeneratorOpen(true)}
+                    >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Generate Receipt
+                    </Button>
+                    <Button
+                        className="bg-teal-600 hover:bg-teal-500 text-white shadow-lg shadow-teal-900/20"
+                        onClick={() => setIsUploadOpen(true)}
+                    >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Receipt
+                    </Button>
+                </div>
             </div>
 
             {/* Dashboard Tabs */}
@@ -390,6 +419,23 @@ export default function AccountingDashboard() {
                 isOpen={isUploadOpen}
                 onClose={() => setIsUploadOpen(false)}
                 onSuccess={handleReceiptSuccess}
+            />
+
+            <JournalEntryModal
+                isOpen={isManualEntryOpen}
+                onClose={() => setIsManualEntryOpen(false)}
+                onSuccess={() => {
+                    setIsManualEntryOpen(false);
+                    // trigger a basic refetch simulation
+                    setLoading(true);
+                    setTimeout(() => { setLoading(false); }, 500);
+                }}
+                accounts={accounts}
+            />
+
+            <ReceiptGeneratorModal
+                isOpen={isReceiptGeneratorOpen}
+                onClose={() => setIsReceiptGeneratorOpen(false)}
             />
         </div>
     );

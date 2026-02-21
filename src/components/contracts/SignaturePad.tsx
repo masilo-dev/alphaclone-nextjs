@@ -54,7 +54,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) =
         setIsDrawing(false);
         const canvas = canvasRef.current;
         if (canvas) {
-            onSave(canvas.toDataURL('image/jpeg', 1.0));
+            onSave(canvas.toDataURL('image/png', 1.0));
         }
     };
 
