@@ -37,12 +37,12 @@ export const rateLimitConfigs: {
         general: { limit: number; window: Duration };
     };
 } = {
-    // Authentication endpoints - strict limits
+    // Authentication endpoints - relaxed limits as per user request
     auth: {
-        login: { limit: 5, window: '15m' }, // 5 attempts per 15 minutes
-        signup: { limit: 3, window: '1h' }, // 3 signups per hour
-        passwordReset: { limit: 3, window: '1h' }, // 3 resets per hour
-        verifyEmail: { limit: 10, window: '1h' }, // 10 verifications per hour
+        login: { limit: 1000, window: '1m' }, // Effectively disabled
+        signup: { limit: 1000, window: '1m' }, // Effectively disabled
+        passwordReset: { limit: 1000, window: '1m' }, // Effectively disabled
+        verifyEmail: { limit: 1000, window: '1m' }, // Effectively disabled
     },
 
     // API endpoints - moderate limits

@@ -6,7 +6,8 @@ export async function updateSession(request: NextRequest) {
     // Apply rate limiting based on route
     const pathname = request.nextUrl.pathname;
 
-    // Authentication routes - strict rate limiting
+    // Authentication routes - rate limiting removed as per user request
+    /*
     if (pathname.startsWith('/api/auth/login') || pathname.startsWith('/auth/login')) {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.auth.login);
         if (rateLimitResponse && rateLimitResponse.status === 429) {
@@ -27,6 +28,7 @@ export async function updateSession(request: NextRequest) {
             return rateLimitResponse;
         }
     }
+    */
 
     // API routes - moderate rate limiting
     if (pathname.startsWith('/api/')) {
