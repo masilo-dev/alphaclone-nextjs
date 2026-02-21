@@ -2,14 +2,13 @@ import { MetadataRoute } from 'next';
 import { seoService } from '../services/seoService';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const baseUrl = 'https://alphaclonesystems.com'; // Replace with actual domain
+    const baseUrl = 'https://alphaclone.tech'; // Updated domain
 
     // 1. Static Routes
     const staticRoutes = [
         '',
         '/about',
         '/services',
-        '/portfolio',
         '/contact',
         '/blog',
         '/login',

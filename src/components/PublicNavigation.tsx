@@ -25,12 +25,11 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
     }, [mobileMenuOpen]);
 
     const navItems = [
-        { label: 'Home', path: '/' },
-        { label: 'Ecosystem', path: '/ecosystem' },
-        { label: 'Services', path: '/services' },
-        { label: 'About', path: '/about' },
-        { label: 'Contact', path: '/contact' },
-        { label: 'Portfolio', path: '/portfolio' }
+        { label: 'Home', path: 'https://alphaclone.tech/' },
+        { label: 'Ecosystem', path: 'https://alphaclone.tech/ecosystem' },
+        { label: 'Services', path: 'https://alphaclone.tech/services' },
+        { label: 'About', path: 'https://alphaclone.tech/about' },
+        { label: 'Contact', path: 'https://alphaclone.tech/contact' }
     ];
 
     const isActive = (path: string) => pathname === path;
@@ -61,13 +60,13 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                             </Link>
                         ))}
                         <div className="flex items-center gap-4 ml-4 pl-4 border-l border-slate-800">
-                            <button
-                                onClick={onLoginClick}
+                            <Link
+                                href="https://alphaclone.tech/login"
                                 className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
                             >
                                 Login
-                            </button>
-                            <Link href="/register">
+                            </Link>
+                            <Link href="https://alphaclone.tech/register">
                                 <Button size="sm" className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold shadow-lg shadow-teal-500/20">
                                     Start Free Trial
                                 </Button>
@@ -109,10 +108,12 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                             ))}
                         </div>
                         <div className="pt-8 flex flex-col gap-4">
-                            <Button onClick={onLoginClick} variant="outline" className="w-full py-4 text-center font-bold text-slate-300 border border-slate-800 rounded-2xl hover:bg-slate-900 transition-colors text-lg">
-                                Login
-                            </Button>
-                            <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
+                            <Link href="https://alphaclone.tech/login" onClick={() => setMobileMenuOpen(false)}>
+                                <Button variant="outline" className="w-full py-4 text-center font-bold text-slate-300 border border-slate-800 rounded-2xl hover:bg-slate-900 transition-colors text-lg">
+                                    Login
+                                </Button>
+                            </Link>
+                            <Link href="https://alphaclone.tech/register" onClick={() => setMobileMenuOpen(false)}>
                                 <Button className="w-full py-4 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-2xl shadow-lg shadow-teal-500/20 text-lg h-auto">
                                     Start Free Trial
                                 </Button>

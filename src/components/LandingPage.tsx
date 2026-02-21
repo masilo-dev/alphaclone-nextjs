@@ -268,22 +268,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <span className="text-[10px] uppercase tracking-[0.2em] text-slate-600 font-bold mb-2">Company</span>
 
                            <Link
-                              href="/portfolio"
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="flex items-center justify-end gap-3 w-full text-right text-base font-semibold text-slate-300 hover:text-white transition-colors py-1"
-                           >
-                              Portfolio
-                           </Link>
-
-                           <Link
-                              href="/about"
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="flex items-center justify-end gap-3 w-full text-right text-base font-semibold text-slate-300 hover:text-white transition-colors py-1"
-                           >
-                              About
-                           </Link>
-
-                           <Link
                               href="/contact"
                               onClick={() => setMobileMenuOpen(false)}
                               className="flex items-center justify-end gap-3 w-full text-right text-base font-semibold text-slate-300 hover:text-white transition-colors py-1"
@@ -330,19 +314,19 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
 
                      {/* Desktop Nav */}
                      <div className="hidden lg:flex items-center gap-8">
-                        <button onClick={() => scrollToSection('home')} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Home</button>
-                        <button onClick={() => scrollToSection('ecosystem')} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Platform</button>
-                        <button onClick={() => scrollToSection('pricing')} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Pricing</button>
+                        <Link href="/" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Home</Link>
+                        <Link href="/ecosystem" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Platform</Link>
+                        <Link href="/pricing" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Pricing</Link>
                         <Link href="/docs" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Docs</Link>
 
                         {/* Services Dropdown */}
                         <div className="relative" onMouseEnter={() => setServicesDropdownOpen(true)} onMouseLeave={() => setServicesDropdownOpen(false)}>
-                           <button className="text-sm font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-1 group">
+                           <Link href="/services" className="text-sm font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-1 group">
                               Services
                               <motion.span animate={{ rotate: servicesDropdownOpen ? 180 : 0 }}>
                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                               </motion.span>
-                           </button>
+                           </Link>
 
                            <AnimatePresence>
                               {servicesDropdownOpen && (
@@ -358,24 +342,19 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                                        { title: 'AI Automation', desc: 'Custom LLMs & Sales Agents', isComingSoon: true },
                                        { title: 'Enterprise Dashboards', desc: 'Unified business control' }
                                     ].map((s, i) => (
-                                       <button key={i} onClick={() => scrollToSection('services')} className="w-full text-left p-3 rounded-xl hover:bg-slate-800 transition-colors group mb-1">
+                                       <Link key={i} href="/services" className="block w-full text-left p-3 rounded-xl hover:bg-slate-800 transition-colors group mb-1">
                                           <div className="text-sm font-bold text-white group-hover:text-teal-400">{s.title}</div>
                                           <div className="text-[10px] text-slate-500">{s.desc}</div>
-                                       </button>
+                                       </Link>
                                     ))}
                                  </motion.div>
                               )}
                            </AnimatePresence>
                         </div>
 
-                        <button onClick={() => scrollToSection('about')} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">About</button>
-                        <button onClick={() => scrollToSection('contact')} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Contact</button>
-                        <Link
-                           href="/portfolio"
-                           className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
-                        >
-                           Portfolio
-                        </Link>
+                        <Link href="https://alphaclone.tech/about" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">About</Link>
+                        <Link href="https://alphaclone.tech/contact" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Contact</Link>
+
                         <div className="flex items-center gap-4 ml-4">
                            <button onClick={() => setIsLoginOpen(true)} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
                               Login
@@ -1153,19 +1132,20 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      <div>
                         <h4 className="text-white font-bold mb-6">Services</h4>
                         <ul className="space-y-4 text-sm text-slate-400">
-                           <li><button onClick={() => scrollToSection('services')} className="hover:text-teal-400">Web Development</button></li>
-                           <li><button onClick={() => scrollToSection('services')} className="hover:text-teal-400">Mobile Apps</button></li>
-                           <li><button onClick={() => scrollToSection('services')} className="hover:text-teal-400">AI Solutions</button></li>
-                           <li><button onClick={() => scrollToSection('services')} className="hover:text-teal-400">Dashboards</button></li>
+                           <li><Link href="https://alphaclone.tech/services" className="hover:text-teal-400">Web Development</Link></li>
+                           <li><Link href="https://alphaclone.tech/services" className="hover:text-teal-400">Mobile Apps</Link></li>
+                           <li><Link href="https://alphaclone.tech/services" className="hover:text-teal-400">AI Solutions</Link></li>
+                           <li><Link href="https://alphaclone.tech/services" className="hover:text-teal-400">Dashboards</Link></li>
                         </ul>
                      </div>
                      <div>
                         <h4 className="text-white font-bold mb-6">Company</h4>
                         <ul className="space-y-4 text-sm text-slate-400">
-                           <li><button onClick={() => scrollToSection('about')} className="hover:text-teal-400">About Us</button></li>
-                           <li><button onClick={() => scrollToSection('portfolio')} className="hover:text-teal-400">Portfolio</button></li>
-                           <li><button onClick={() => scrollToSection('contact')} className="hover:text-teal-400">Contact</button></li>
-                           <li><a href="mailto:admin@alphaclone.tech" className="hover:text-teal-400">Administration</a></li>
+                           <li><Link href="https://alphaclone.tech/about" className="hover:text-teal-400">About AlphaClone Systems</Link></li>
+                           <li><Link href="https://alphaclone.tech/contact" className="hover:text-teal-400">Contact Us</Link></li>
+                           <li><Link href="https://alphaclone.tech/pricing" className="hover:text-teal-400">AlphaClone Pricing</Link></li>
+                           <li><Link href="https://alphaclone.tech/login" className="hover:text-teal-400 block mt-2 text-slate-500">Member Login</Link></li>
+                           <li><Link href="https://alphaclone.tech/register" className="hover:text-teal-400 text-slate-500">Sign Up</Link></li>
                         </ul>
                      </div>
                      <div>

@@ -104,9 +104,17 @@ const ContactPage: React.FC = () => {
                                     <Mail className="w-6 h-6 text-teal-400 mt-1 flex-shrink-0" />
                                     <div>
                                         <div className="font-semibold mb-1">Email</div>
-                                        <a href="mailto:info@alphaclone.tech" className="text-teal-400 hover:text-teal-300">
-                                            info@alphaclone.tech
-                                        </a>
+                                        <div className="flex flex-col gap-1">
+                                            <a href="mailto:info@alphaclone.tech" className="text-teal-400 hover:text-teal-300">
+                                                General: info@alphaclone.tech
+                                            </a>
+                                            <a href="mailto:sales@alphaclone.tech" className="text-teal-400 hover:text-teal-300">
+                                                Sales: sales@alphaclone.tech
+                                            </a>
+                                            <a href="mailto:admin@alphaclone.tech" className="text-teal-400 hover:text-teal-300">
+                                                Administration: admin@alphaclone.tech
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-4">
