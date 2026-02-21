@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Dancing_Script, Sacramento } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { PWAProvider } from "@/contexts/PWAContext";
@@ -13,6 +13,18 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const dancingScript = Dancing_Script({
+  variable: "--font-dancing-script",
+  subsets: ["latin"],
+  weight: ["400", "700"],
+});
+
+const sacramento = Sacramento({
+  variable: "--font-sacramento",
+  subsets: ["latin"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -42,7 +54,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased text-base subpixel-antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${dancingScript.variable} ${sacramento.variable} antialiased text-base subpixel-antialiased`}
       >
         <Providers>
           <PWAProvider>

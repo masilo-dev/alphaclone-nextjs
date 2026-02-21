@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { ExternalLink, Globe, Calendar, Tag, Search, Plus, Edit, Trash2, Upload, Image as ImageIcon, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { Project } from '../../types';
 import { Button, Modal, Input } from '../ui/UIComponents';
@@ -194,7 +195,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = (e) => {
-                const img = new Image();
+                const img = new window.Image();
                 img.src = e.target?.result as string;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
@@ -402,10 +403,12 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                         {/* Project Image */}
                         <div className="relative h-48 overflow-hidden bg-gradient-to-br from-teal-900/20 to-purple-900/20">
                             {project.image ? (
-                                <img
+                                <Image
                                     src={project.image}
                                     alt={project.name}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                    className="object-cover group-hover:scale-110 transition-transform duration-300"
                                 />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center">
@@ -486,10 +489,11 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                                 {/* Preview */}
                                 {previewImage && (
                                     <div className="relative w-full h-48 rounded-lg overflow-hidden border border-slate-700">
-                                        <img
+                                        <Image
                                             src={previewImage}
                                             alt="Preview"
-                                            className="w-full h-full object-cover"
+                                            fill
+                                            className="object-cover"
                                         />
                                     </div>
                                 )}

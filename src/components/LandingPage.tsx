@@ -68,8 +68,8 @@ const PrismBackground = React.memo(() => {
          {/* Moving Gradient Orbs - Reduced blur for performance */}
          {mounted && (
             <>
-               <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-teal-500/8 blur-[80px] animate-blob mix-blend-screen will-change-transform transform-gpu" style={{ animationDuration: '20s' }} />
-               <div className="absolute top-[20%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-600/8 blur-[80px] animate-blob mix-blend-screen will-change-transform transform-gpu" style={{ animationDelay: '6s', animationDuration: '25s' }} />
+               <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-teal-500/8 blur-[40px] md:blur-[80px] animate-blob mix-blend-screen will-change-transform transform-gpu" style={{ animationDuration: '20s' }} />
+               <div className="absolute top-[20%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-600/8 blur-[40px] md:blur-[80px] animate-blob mix-blend-screen will-change-transform transform-gpu" style={{ animationDelay: '6s', animationDuration: '25s' }} />
             </>
          )}
 
@@ -181,7 +181,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      exit={{ opacity: 0 }}
                      transition={{ duration: 0.3, ease: "easeInOut" }}
                      onClick={() => setMobileMenuOpen(false)}
-                     className="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-[9999] touch-none"
+                     className="fixed inset-0 bg-slate-950/80 md:bg-slate-950/70 md:backdrop-blur-md z-[9999] touch-none"
                   />
 
                   {/* Right Drawer - Smooth 0.3s transition */}
@@ -302,7 +302,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
          {/* Main Content Wrapper */}
          <div className="relative z-10">
             {/* Navigation */}
-            <nav className="fixed w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/50 pt-safe">
+            <nav className="fixed w-full z-50 bg-slate-950/90 md:bg-slate-950/80 md:backdrop-blur-md border-b border-slate-800/50 pt-safe">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="flex items-center justify-between h-20">
                      {/* Logo */}
@@ -385,13 +385,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
             {/* Hero Section */}
             <section id="home" className="pt-24 pb-16 lg:pt-48 lg:pb-32 relative overflow-hidden">
                {/* Local Glow for Hero Emphasis */}
-               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-teal-500/10 blur-[120px] -z-10 rounded-full" />
+               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-teal-500/10 blur-[60px] md:blur-[120px] -z-10 rounded-full" />
 
                <div className="max-w-5xl mx-auto px-4 text-center">
                   <motion.div
                      initial={{ opacity: 0, y: 20 }}
                      animate={{ opacity: 1, y: 0 }}
-                     className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/50 backdrop-blur border border-slate-700/50 text-teal-400 text-sm font-medium mb-8 shadow-lg shadow-teal-900/20"
+                     className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/80 md:bg-slate-900/50 md:backdrop-blur border border-slate-700/50 text-teal-400 text-sm font-medium mb-8 shadow-lg shadow-teal-900/20"
                   >
                      <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
                      The Future of Business Infrastructure
@@ -435,7 +435,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         size="lg"
                         variant="outline"
                         onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
-                        className="border-slate-700 bg-slate-900/50 backdrop-blur hover:bg-slate-800 text-white px-10 h-14 w-full sm:w-auto text-lg hover:border-slate-500"
+                        className="border-slate-700 bg-slate-900/80 md:bg-slate-900/50 md:backdrop-blur hover:bg-slate-800 text-white px-10 h-14 w-full sm:w-auto text-lg hover:border-slate-500"
                      >
                         Book a Demo
                      </Button>
@@ -461,16 +461,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                   <div className="text-center mb-16">
                      <motion.h2
                         initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
+                        whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }}
                         className="text-4xl md:text-5xl font-bold text-white mb-6"
                      >
                         Who We Serve
                      </motion.h2>
                      <motion.p
                         initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
+                        whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }}
                         transition={{ delay: 0.1 }}
                         className="text-slate-400 max-w-2xl mx-auto text-xl"
                      >
@@ -711,8 +709,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         <motion.div
                            key={i}
                            initial={{ opacity: 0, y: 20 }}
-                           whileInView={{ opacity: 1, y: 0 }}
-                           viewport={{ once: true }}
+                           whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }}
                            transition={{ delay: i * 0.1 }}
                            whileHover={{ y: -5 }}
                            className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 hover:border-teal-500/30 transition-all group backdrop-blur-md"
@@ -858,8 +855,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <motion.div
                               key={i}
                               initial={{ opacity: 0, y: 10 }}
-                              whileInView={{ opacity: 1, y: 0 }}
-                              viewport={{ once: true }}
+                              whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }}
                               transition={{ delay: i * 0.1 }}
                               className="bg-slate-900/40 p-8 rounded-2xl text-center border border-slate-800/50 backdrop-blur-xl group hover:border-teal-500/30 transition-all flex flex-col items-center justify-center shadow-xl"
                            >
