@@ -1,2 +1,0 @@
-﻿src/components/dashboard/SalesAgent.tsx(116,17): error TS2322: Type '"discovery"' is not assignable to type 'DealStage | undefined'.
-src/components/dashboard/SalesAgent.tsx(117,17): error TS2322: Type '"AI Growth Agent"' is not assignable to type 'DealSource | undefined'.
