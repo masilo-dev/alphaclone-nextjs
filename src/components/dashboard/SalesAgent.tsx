@@ -113,8 +113,9 @@ const SalesAgent: React.FC = () => {
                 contactId: client.id,
                 value: lead.value || 0,
                 currency: 'USD',
-                stage: 'discovery',
-                source: 'AI Growth Agent',
+                stage: 'lead',
+                source: 'other',
+                sourceDetails: 'AI Growth Agent',
                 description: lead.notes || 'Auto-generated deal'
             });
 

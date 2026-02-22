@@ -141,3 +141,5 @@ export const googleCalendarService = {
         }
     }
 };
+
+export default googleCalendarService;
