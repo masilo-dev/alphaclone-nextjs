@@ -147,93 +147,107 @@ const AlphaCloneContractModal: React.FC<Props> = ({
             return;
         }
 
+        setIsSubmitting(true);
         const taskName = `Finalizing Contract for ${project.name}`;
 
-        startTask(
-            `finalize_contract_${Date.now()}`,
-            taskName,
-            async () => {
-                if (existingContractId) {
-                    await contractService.signContract(
-                        existingContractId,
-                        user.role === 'admin' ? 'admin' : 'client',
-                        signature
-                    );
-
-                    // Auto-save to Document Hub
+        try {
+            startTask(
+                `finalize_contract_${Date.now()}`,
+                taskName,
+                async () => {
                     try {
-                        const { fileUploadService } = await import('../../services/fileUploadService');
-                        const { supabase } = await import('../../lib/supabase');
-                        const { data: finalContract } = await supabase
-                            .from('contracts')
-                            .select('*, project:projects(name)')
-                            .eq('id', existingContractId)
-                            .single();
+                        if (existingContractId) {
+                            await contractService.signContract(
+                                existingContractId,
+                                user.role === 'admin' ? 'admin' : 'client',
+                                signature
+                            );
 
-                        if (finalContract) {
-                            const doc = contractService.generateProfessionalPDF(finalContract, currentTenant);
-                            const pdfBlob = doc.output('blob');
-                            const pdfFile = new File([pdfBlob], `Contract-${finalContract.title}.pdf`, { type: 'application/pdf' });
-                            await fileUploadService.uploadFile(pdfFile, 'contract', finalContract.id);
-                        }
-                    } catch (err) {
-                        console.error('Failed to auto-save contract PDF:', err);
-                    }
+                            // Auto-save to Document Hub
+                            try {
+                                const { fileUploadService } = await import('../../services/fileUploadService');
+                                const { supabase } = await import('../../lib/supabase');
+                                const { data: finalContract } = await supabase
+                                    .from('contracts')
+                                    .select('*, project:projects(name)')
+                                    .eq('id', existingContractId)
+                                    .single();
 
-                    return { success: true };
-                } else {
-                    const { contract, error } = await contractService.createContract({
-                        project_id: project.id,
-                        client_id: selectedClientId || project.ownerId,
-                        title: `Service Agreement - ${project.name}`,
-                        content: contractText,
-                    });
-
-                    if (error) throw new Error(error);
-
-                    if (contract) {
-                        await contractService.signContract(
-                            contract.id,
-                            user.role === 'admin' ? 'admin' : 'client',
-                            signature
-                        );
-
-                        if (user.role === 'admin') {
-                            const { projectService } = await import('../../services/projectService');
-                            await projectService.updateProject(project.id, {
-                                contractStatus: 'Sent',
-                                contractText: contractText
-                            });
-                        }
-
-                        // Auto-save to Document Hub
-                        try {
-                            const { fileUploadService } = await import('../../services/fileUploadService');
-                            const { supabase } = await import('../../lib/supabase');
-                            const { data: finalContract } = await supabase
-                                .from('contracts')
-                                .select('*, project:projects(name)')
-                                .eq('id', contract.id)
-                                .single();
-
-                            if (finalContract) {
-                                const doc = contractService.generateProfessionalPDF(finalContract, currentTenant);
-                                const pdfBlob = doc.output('blob');
-                                const pdfFile = new File([pdfBlob], `Contract-${finalContract.title}.pdf`, { type: 'application/pdf' });
-                                await fileUploadService.uploadFile(pdfFile, 'contract', finalContract.id);
+                                if (finalContract) {
+                                    const doc = contractService.generateProfessionalPDF(finalContract, currentTenant);
+                                    const pdfBlob = doc.output('blob');
+                                    const pdfFile = new File([pdfBlob], `Contract-${finalContract.title}.pdf`, { type: 'application/pdf' });
+                                    await fileUploadService.uploadFile(pdfFile, 'contract', finalContract.id);
+                                }
+                            } catch (err) {
+                                console.error('Failed to auto-save contract PDF:', err);
                             }
-                        } catch (err) {
-                            console.error('Failed to auto-save contract PDF:', err);
-                        }
-                    }
-                    return { contractId: contract?.id };
-                }
-            }
-        );
 
-        // Immediately move to success
-        setStep('success');
-        toast.success(`Started: ${taskName}`);
+                            return { success: true };
+                        } else {
+                            const { contract, error } = await contractService.createContract({
+                                project_id: project.id,
+                                client_id: selectedClientId || project.ownerId,
+                                title: `Service Agreement - ${project.name}`,
+                                content: contractText,
+                            });
+
+                            if (error) throw new Error(error);
+
+                            if (contract) {
+                                await contractService.signContract(
+                                    contract.id,
+                                    user.role === 'admin' ? 'admin' : 'client',
+                                    signature
+                                );
+
+                                if (user.role === 'admin') {
+                                    const { projectService } = await import('../../services/projectService');
+                                    await projectService.updateProject(project.id, {
+                                        contractStatus: 'Sent',
+                                        contractText: contractText
+                                    });
+                                }
+
+                                // Auto-save to Document Hub
+                                try {
+                                    const { fileUploadService } = await import('../../services/fileUploadService');
+                                    const { supabase } = await import('../../lib/supabase');
+                                    const { data: finalContract } = await supabase
+                                        .from('contracts')
+                                        .select('*, project:projects(name)')
+                                        .eq('id', contract.id)
+                                        .single();
+
+                                    if (finalContract) {
+                                        const doc = contractService.generateProfessionalPDF(finalContract, currentTenant);
+                                        const pdfBlob = doc.output('blob');
+                                        const pdfFile = new File([pdfBlob], `Contract-${finalContract.title}.pdf`, { type: 'application/pdf' });
+                                        await fileUploadService.uploadFile(pdfFile, 'contract', finalContract.id);
+                                    }
+                                } catch (err) {
+                                    console.error('Failed to auto-save contract PDF:', err);
+                                }
+                            }
+                            return { contractId: contract?.id };
+                        }
+                    } catch (taskErr) {
+                        console.error('Background task error:', taskErr);
+                        toast.error(`Background task failed: ${taskErr instanceof Error ? taskErr.message : 'Unknown error'}`);
+                        throw taskErr;
+                    }
+                }
+            );
+
+            // Successfully started the task, move to success step
+            setStep('success');
+            toast.success(`Started: ${taskName}`);
+        } catch (err) {
+            console.error('Failed to start contract task:', err);
+            toast.error('Failed to initiate contract processing');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     if (!isOpen) return null;

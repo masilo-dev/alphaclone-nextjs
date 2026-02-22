@@ -29,6 +29,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [clients, setClients] = useState<any[]>([]);
     const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
+    const [createdInvoice, setCreatedInvoice] = useState<any | null>(null);
     const [signatureData, setSignatureData] = useState<string | null>(null);
     const [signatureType, setSignatureType] = useState<'draw' | 'type'>('draw');
     const [typedSignature, setTypedSignature] = useState('');
@@ -154,34 +155,15 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 toast.error(`Failed to create invoice: ${error}`);
             } else if (invoice) {
                 setCreatedInvoiceId(invoice.id);
+                // Store full invoice for PDF consistency
+                setCreatedInvoice(invoice);
 
                 // Auto-save to Document Hub
                 try {
                     const { fileUploadService } = await import('../../services/fileUploadService');
                     const client = clients.find(c => c.id === finalClientId);
 
-                    const invoiceDataForPDF = {
-                        id: invoice.id,
-                        invoiceNumber: invoice.invoiceNumber, // Ensure this property exists on the returned invoice
-                        issueDate: invoice.issueDate,
-                        dueDate: invoice.dueDate,
-                        status: invoice.status,
-                        subtotal: amountNum,
-                        tax: 0,
-                        total: amountNum,
-                        lineItems: [{
-                            description: description,
-                            quantity: 1,
-                            rate: amountNum,
-                            amount: amountNum
-                        }],
-                        bankDetails: bankDetails,
-                        mobilePaymentDetails: mobileDetails,
-                        client: client ? { name: client.name, email: client.email } : undefined,
-                        project: project ? { name: project.name } : undefined
-                    };
-
-                    const doc = businessInvoiceService.generatePDF(invoiceDataForPDF, currentTenant, invoiceDataForPDF.client, invoiceData.signature);
+                    const doc = businessInvoiceService.generatePDF(invoice, currentTenant, client, invoiceData.signature);
                     const pdfBlob = doc.output('blob');
                     const pdfFile = new File([pdfBlob], `Invoice-${invoice.invoiceNumber || invoice.id}.pdf`, { type: 'application/pdf' });
 
@@ -205,16 +187,28 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const handleDownloadPDF = async () => {
         try {
             const { businessInvoiceService } = await import('../../services/businessInvoiceService');
-            const { useTenant } = await import('../../contexts/TenantContext');
+
+            // If we have a finalized invoice, use its data for the PDF
+            if (createdInvoice) {
+                const client = clients.find(c => c.id === createdInvoice.client_id || createdInvoice.clientId);
+                const signature = signatureType === 'draw' && signatureData ? { type: 'draw' as const, data: signatureData }
+                    : signatureType === 'type' && typedSignature ? { type: 'type' as const, data: typedSignature }
+                        : undefined;
+
+                const doc = businessInvoiceService.generatePDF(createdInvoice, currentTenant, client, signature);
+                doc.save(`Invoice-${createdInvoice.invoice_number || createdInvoice.invoiceNumber || createdInvoice.id}.pdf`);
+                toast.success('PDF downloaded!');
+                return;
+            }
 
             const tenant = currentTenant;
             const project = projects.find(p => p.id === selectedProjectId);
             const client = clients.find(c => c.id === selectedClientId);
 
-            // Build invoice object for PDF
+            // Build invoice object for preview/draft PDF
             const invoiceData = {
-                id: createdInvoiceId || 'DRAFT',
-                invoiceNumber: `INV-${Date.now()}`,
+                id: 'DRAFT',
+                invoiceNumber: `DRAFT-${Date.now().toString().slice(-4)}`,
                 issueDate: new Date().toISOString().split('T')[0],
                 dueDate: dueDate,
                 status: 'draft' as const,
@@ -244,7 +238,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
             const doc = businessInvoiceService.generatePDF(invoiceData, tenant, invoiceData.client, signature);
             doc.save(`Invoice-${invoiceData.invoiceNumber}.pdf`);
-            toast.success('PDF downloaded!');
+            toast.success('Draft PDF downloaded!');
         } catch (err) {
             console.error('PDF generation error:', err);
             toast.error('Failed to generate PDF');

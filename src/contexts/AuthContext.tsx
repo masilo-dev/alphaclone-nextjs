@@ -2,7 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { authService } from '../services/authService';
-import { User } from '../types';
+import { User, UserRole } from '../types';
+import { AuthChangeEvent } from '@supabase/supabase-js';
 
 interface AuthContextType {
     user: User | null;
@@ -16,9 +17,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // ... (existing imports and interface)
 
 /**
- * Read the Supabase session from localStorage synchronously.
- * Called INSIDE useEffect so it always reads the current state of localStorage
- * (not a stale closure from render time — this is critical for logout to work).
+ * Helper to get a cookie value by name.
+ */
+function getCookie(name: string): string | null {
+    if (typeof document === 'undefined') return null;
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return decodeURIComponent(parts.pop()?.split(';').shift() || '');
+    return null;
+}
+
+/**
+ * Read the Supabase session from localStorage OR cookies synchronously.
+ * Called INSIDE useEffect so it always reads the current state of storage.
  */
 function readSessionFromStorage(): User | null {
     try {
@@ -31,49 +42,60 @@ function readSessionFromStorage(): User | null {
         console.log('[AuthContext] Debug: Storage Inspection', {
             allKeysCount: allKeys.length,
             sbKeys: sbKeys,
+            cookiesPresent: !!document.cookie,
             url: window.location.href
         });
 
-        // OPTIMIZED: Match precisely the auth token to avoid matching -code-verifier strings
-        // This is more robust than just checking for 'sb-' prefixes
+        let raw: string | null = null;
+        let source: 'localStorage' | 'cookie' = 'localStorage';
+
+        // 1. Try Local Storage first (standard client-side behavior)
         const storageKey = allKeys.find(
             (k) => (k.startsWith('sb-') || k.includes('-auth-token')) && k.endsWith('-auth-token')
         );
 
-        if (!storageKey) {
-            // FALLBACK: Try a broader search if exact match fails
-            const fallbackKey = allKeys.find(k => k.includes('auth-token'));
-            if (fallbackKey) {
-                console.log('[AuthContext] Debug: Found key via broad fallback', fallbackKey);
-            } else {
-                // IMPORTANT: If we are on the auth callback page, it's NORMAL not to have a token yet in localStorage
-                // as it might be stored in cookies by @supabase/ssr
-                const isAuthFlow = window.location.pathname.includes('/auth/');
-                if (!isAuthFlow) {
-                    console.warn('[AuthContext] Debug: No supabase token found in localStorage among keys:', allKeys.filter(k => k.length < 50));
-                }
-                return null;
+        if (storageKey) {
+            raw = localStorage.getItem(storageKey);
+        }
+
+        // 2. Try Cookies if Local Storage failed (standard SSR behavior / Google Sign-In)
+        if (!raw) {
+            // Supabase auth cookies usually follow sb-project-auth-token or similar
+            // We search for any cookie that looks like an auth token
+            const allCookies = document.cookie.split(';').map(c => c.trim().split('=')[0]);
+            const cookieKey = allCookies.find(k => k.includes('auth-token') || k.startsWith('sb-'));
+
+            if (cookieKey) {
+                raw = getCookie(cookieKey);
+                source = 'cookie';
+                console.log('[AuthContext] Debug: Found potential session in cookies', { cookieKey });
             }
         }
 
-        const effectiveKey = storageKey || allKeys.find(k => k.includes('auth-token'))!;
-        const raw = localStorage.getItem(effectiveKey);
-
         if (!raw) {
-            console.warn('[AuthContext] Debug: Found key but value is empty', effectiveKey);
+            const isAuthFlow = window.location.pathname.includes('/auth/');
+            if (!isAuthFlow) {
+                console.warn('[AuthContext] Debug: No supabase token found in localStorage or cookies');
+            }
             return null;
         }
 
-        const parsed = JSON.parse(raw);
-        // Supabase stores it either directly or under 'currentSession'
-        const session = parsed?.currentSession ?? parsed;
+        let session: any = null;
+        try {
+            const parsed = JSON.parse(raw);
+            session = parsed?.currentSession ?? parsed;
+        } catch (e) {
+            // If it's not JSON, it might be a raw token (unlikely for Supabase but let's be safe)
+            console.warn('[AuthContext] Debug: Session data is not valid JSON', { source });
+            return null;
+        }
 
         // VALIDATION: Ensure it's actually a session object
         if (!session?.user || !session?.access_token) {
             console.warn('[AuthContext] Debug: Invalid session structure', {
+                source,
                 hasUser: !!session?.user,
-                hasToken: !!session?.access_token,
-                keys: Object.keys(session || {})
+                hasToken: !!session?.access_token
             });
             return null;
         }
@@ -82,14 +104,14 @@ function readSessionFromStorage(): User | null {
         const expiresAt = session.expires_at;
         if (expiresAt && Date.now() / 1000 > expiresAt) {
             console.warn('[AuthContext] Debug: Session token expired', {
+                source,
                 expiresAt,
-                now: Math.floor(Date.now() / 1000),
-                diff: Math.floor(Date.now() / 1000 - expiresAt)
+                now: Math.floor(Date.now() / 1000)
             });
             return null;
         }
 
-        console.log('[AuthContext] Debug: Optimistic read success', {
+        console.log(`[AuthContext] Debug: Optimistic read success from ${source}`, {
             userId: session.user.id,
             email: session.user.email
         });
@@ -112,16 +134,33 @@ function readSessionFromStorage(): User | null {
 
 
 /**
- * Clear all Supabase auth tokens from localStorage.
+ * Clear all Supabase auth tokens from localStorage AND cookies.
  * Called before signOut to ensure the session is fully cleared.
  */
-function clearStorageSession() {
+function clearAuthSession() {
     try {
         if (typeof window === 'undefined') return;
+
+        // 1. Clear LocalStorage
         const keys = Object.keys(localStorage).filter(
-            (k) => k.startsWith('sb-') && k.endsWith('-auth-token')
+            (k) => (k.startsWith('sb-') || k.includes('auth-token'))
         );
         keys.forEach((k) => localStorage.removeItem(k));
+
+        // 2. Clear Cookies (set expiry to past)
+        if (typeof document !== 'undefined') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i];
+                const eqPos = cookie.indexOf('=');
+                const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+                if (name.includes('auth-token') || name.startsWith('sb-')) {
+                    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+                    // Also try domain-scoped if needed
+                    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
+                }
+            }
+        }
     } catch {
         // ignore
     }
@@ -180,16 +219,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         authError.toLowerCase().includes('not found');
 
                     if (isAuthError) {
-                        console.warn('[AuthContext] Debug: Definitive auth failure. Clearing session.');
-                        clearStorageSession();
+                        // Session invalid or expired — always clear user
+                        clearAuthSession();
                         setSafeUser(null);
                         setError(authError);
                     } else {
-                        console.warn('[AuthContext] Debug: Possible transient error. Retaining current session state.');
-                        // If we already have a cached user, we keep it rather than logging out.
-                        if (!latestUserRef.current) {
-                            setError(authError);
-                        }
+                        console.warn('[AuthContext] Debug: Possible transient error. Retaining current state.');
                     }
                     setLoading(false);
                     return;
@@ -200,15 +235,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     setError(null);
                     setLoading(false);
                 } else {
-                    // RACE CONDITION FIX:
-                    // If onAuthStateChange already found a user (via latestUserRef), DO NOT overwrite it with null
-                    if (latestUserRef.current) {
-                        // We trust the listener more than the REST check in this race case
-                        return;
-                    }
+                    // RACE CONDITION FIX: If onAuthStateChange already found a user, don't overwrite with null
+                    if (latestUserRef.current) return;
 
                     // Session invalid or expired — always clear user
-                    clearStorageSession();
+                    clearAuthSession();
                     setSafeUser(null);
                     setError(null);
                     setLoading(false);
@@ -218,9 +249,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (e instanceof Error && e.name === 'AbortError') return;
 
                 // RACE CONDITION FIX for exception case
-                if (latestUserRef.current) {
-                    return;
-                }
+                if (latestUserRef.current) return;
 
                 setSafeUser(null);
                 setLoading(false);
@@ -230,7 +259,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         initSession();
 
         // STEP 3: Subscribe to auth state changes
-        const { data: { subscription } } = authService.onAuthStateChange((u, event) => {
+        const { data: { subscription } } = authService.onAuthStateChange((u: User | null, event?: AuthChangeEvent) => {
             if (!isMounted) return;
 
             if (u) {
@@ -253,13 +282,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         });
 
-        // Safety net: force stop loading after 8s (increased from 5s for slower production cold starts)
+        // Safety net: force stop loading after 12s (increased from 8s for slower production cold starts)
         const safetyTimeout = setTimeout(() => {
             if (isMounted && loading) {
                 console.warn('[AuthContext] Safety timeout reached, forcing loading to false');
                 setLoading(false);
             }
-        }, 8000);
+        }, 12000);
 
         return () => {
             isMounted = false;
@@ -269,8 +298,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const signOut = async () => {
-        // Clear localStorage FIRST so any refresh during sign-out doesn't re-read stale session
-        clearStorageSession();
+        // Clear auth tokens FIRST so any refresh during sign-out doesn't re-read stale session
+        clearAuthSession();
         setSafeUser(null);
         setLoading(false);
         await authService.signOut();

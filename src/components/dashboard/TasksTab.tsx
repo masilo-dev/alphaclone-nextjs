@@ -28,6 +28,10 @@ import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import toast from 'react-hot-toast';
 import { useTasks } from '@/hooks/useTasks';
+import { useQuery } from '@tanstack/react-query';
+import { userService } from '../../services/userService';
+import { projectService } from '../../services/projectService';
+import { leadService } from '../../services/leadService';
 
 interface TasksTabProps {
     userId: string;
@@ -58,6 +62,32 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         relatedToProject: selectedProject !== 'all' ? selectedProject : undefined,
         limit: 50
     });
+
+    // Fetch related data for relational fields - Optimize: Only fetch when modal is open
+    const { data: userData } = useQuery({
+        queryKey: ['users'],
+        queryFn: () => userService.getUsers(),
+        staleTime: 5 * 60 * 1000,
+        enabled: showCreateModal || !!editingTask,
+    });
+
+    const { data: projectData } = useQuery({
+        queryKey: ['projects', userId],
+        queryFn: () => projectService.getProjects(userId, userRole as any),
+        staleTime: 5 * 60 * 1000,
+        enabled: showCreateModal || !!editingTask,
+    });
+
+    const { data: leadData } = useQuery({
+        queryKey: ['leads'],
+        queryFn: () => leadService.getLeads(),
+        staleTime: 5 * 60 * 1000,
+        enabled: showCreateModal || !!editingTask,
+    });
+
+    const users = userData?.users || [];
+    const projects = projectData?.projects || [];
+    const leads = leadData?.leads || [];
 
     // Create task form state
     const [taskForm, setTaskForm] = useState({
@@ -208,7 +238,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                         >
                             {/* Priority Indicator Line */}
                             <div className={`absolute left-0 top-0 bottom-0 w-1 ${task.priority === 'high' ? 'bg-red-500' :
-                                    task.priority === 'medium' ? 'bg-orange-500' : 'bg-teal-500/30'
+                                task.priority === 'medium' ? 'bg-orange-500' : 'bg-teal-500/30'
                                 }`} />
 
                             {/* Objective Detail */}
@@ -242,7 +272,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                     value={task.status}
                                     onChange={(e) => handleStatusChange(task.id, e.target.value as any)}
                                     className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg bg-slate-950/50 border border-white/5 outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer w-full lg:w-32 text-center appearance-none hover:bg-slate-900 transition-colors ${task.status === 'completed' ? 'text-green-400 border-green-500/20' :
-                                            task.status === 'in_progress' ? 'text-teal-400 border-teal-500/20' : 'text-slate-400'
+                                        task.status === 'in_progress' ? 'text-teal-400 border-teal-500/20' : 'text-slate-400'
                                         }`}
                                 >
                                     <option value="ideas">Standby</option>
@@ -256,11 +286,11 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                             {/* Priority Tag */}
                             <div className="col-span-1 lg:col-span-2 flex justify-center">
                                 <span className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] rounded-lg font-black uppercase tracking-widest border ${task.priority === 'high' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
-                                        task.priority === 'medium' ? 'bg-orange-500/10 border-orange-500/20 text-orange-500' :
-                                            'bg-slate-800/50 border-white/5 text-slate-500'
+                                    task.priority === 'medium' ? 'bg-orange-500/10 border-orange-500/20 text-orange-500' :
+                                        'bg-slate-800/50 border-white/5 text-slate-500'
                                     }`}>
                                     <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${task.priority === 'high' ? 'bg-red-500' :
-                                            task.priority === 'medium' ? 'bg-orange-500' : 'bg-slate-500'
+                                        task.priority === 'medium' ? 'bg-orange-500' : 'bg-slate-500'
                                         }`} />
                                     {task.priority}
                                 </span>
@@ -393,8 +423,8 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                             key={p}
                                             onClick={() => setTaskForm({ ...taskForm, priority: p })}
                                             className={`py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${taskForm.priority === p
-                                                    ? 'bg-teal-500 border-teal-400 text-slate-900 shadow-xl shadow-teal-500/20'
-                                                    : 'bg-slate-900 border-white/5 text-slate-600 hover:border-white/20'
+                                                ? 'bg-teal-500 border-teal-400 text-slate-900 shadow-xl shadow-teal-500/20'
+                                                : 'bg-slate-900 border-white/5 text-slate-600 hover:border-white/20'
                                                 }`}
                                         >
                                             {p}
@@ -431,6 +461,50 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                     onChange={(e) => setTaskForm({ ...taskForm, estimatedHours: e.target.value })}
                                     className="bg-slate-950/50 border-white/10 h-12 text-slate-300 font-mono text-xs"
                                 />
+                            </div>
+
+                            {/* New Relational Fields */}
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Assigned Operative</label>
+                                <select
+                                    value={taskForm.assignedTo}
+                                    onChange={(e) => setTaskForm({ ...taskForm, assignedTo: e.target.value })}
+                                    className="w-full bg-slate-950/50 border border-white/10 rounded-xl h-12 px-4 text-slate-300 focus:border-teal-500 outline-none transition-all text-xs font-mono"
+                                >
+                                    <option value="">UNCALLIBRATED (Unassigned)</option>
+                                    {users.map(u => (
+                                        <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Linked Project</label>
+                                    <select
+                                        value={taskForm.relatedToProject}
+                                        onChange={(e) => setTaskForm({ ...taskForm, relatedToProject: e.target.value })}
+                                        className="w-full bg-slate-950/50 border border-white/10 rounded-xl h-12 px-4 text-slate-300 focus:border-teal-500 outline-none transition-all text-xs font-mono"
+                                    >
+                                        <option value="">NO PROJECT LINK</option>
+                                        {projects.map(p => (
+                                            <option key={p.id} value={p.id}>{p.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Linked Target (Lead)</label>
+                                    <select
+                                        value={taskForm.relatedToLead}
+                                        onChange={(e) => setTaskForm({ ...taskForm, relatedToLead: e.target.value })}
+                                        className="w-full bg-slate-950/50 border border-white/10 rounded-xl h-12 px-4 text-slate-300 focus:border-teal-500 outline-none transition-all text-xs font-mono"
+                                    >
+                                        <option value="">NO LEAD LINK</option>
+                                        {leads.map(l => (
+                                            <option key={l.id} value={l.id}>{l.businessName}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>

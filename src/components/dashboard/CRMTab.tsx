@@ -488,8 +488,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                         <Input
                             label="Value ($)"
                             type="number"
-                            value={formData.value}
-                            onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) })}
+                            value={formData.value ?? ''}
+                            onChange={(e) => setFormData({ ...formData, value: e.target.value === '' ? 0 : (parseFloat(e.target.value) || 0) })}
                         />
                     </div>
                     <Input
@@ -558,7 +558,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                         <Input
                             label="Value ($)"
                             type="number"
-                            value={formData.value || ''}
+                            value={formData.value ?? ''}
                             onChange={(e) => setFormData({ ...formData, value: e.target.value === '' ? 0 : (parseFloat(e.target.value) || 0) })}
                         />
                     </div>

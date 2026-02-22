@@ -68,6 +68,7 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
                     name: lead.businessName,
                     email: lead.email,
                     phone: lead.phone,
+                    value: lead.value || 0,
                     salesStage: 'customer',
                     industry: lead.industry,
                     location: lead.location,

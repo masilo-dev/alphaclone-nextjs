@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
     LayoutDashboard,
     Users,
@@ -153,6 +154,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
     const [showContractModal, setShowContractModal] = useState(false);
     const [selectedProjectForContract, setSelectedProjectForContract] = useState<any>(null);
 
+    const [notification, setNotification] = useState<string | null>(null);
+
     const handleOpenContract = (project?: any) => {
         // If no project passed, create dummy one for standalone contract
         setSelectedProjectForContract(project || {
@@ -165,25 +168,29 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
         setShowContractModal(true);
     };
 
+    // Fetch projects using useQuery for caching and sharing with TasksTab
+    const { data: projectData, isLoading: loadingProjects } = useQuery({
+        queryKey: ['projects', user.id],
+        queryFn: () => projectService.getProjects(user.id, user.role),
+        staleTime: 5 * 60 * 1000,
+        enabled: !!user.id && !!currentTenant,
+    });
+
+    const projects = projectData?.projects || [];
+
     // Check for Due Tasks on Load
     React.useEffect(() => {
         const checkTasks = async () => {
-            // Import services dynamically if needed or assume user context
             if (!user?.id || !currentTenant) return;
 
             try {
-                // Dynamically import task service to avoid circular deps if any
                 const { taskService } = await import('../../../services/taskService');
-
-                // OPTIMIZATION: Fetch in background, verify cache first
                 const { tasks } = await taskService.getUpcomingTasks(user.id);
 
-                // Filter for tasks due today or overdue
                 const today = new Date();
                 const dueTasks = tasks.filter(t => {
                     if (!t.dueDate) return false;
                     const due = new Date(t.dueDate);
-                    // Check if due date is today or earlier (and not completed)
                     return due.setHours(0, 0, 0, 0) <= today.setHours(0, 0, 0, 0) && t.status !== 'completed';
                 });
 
@@ -197,55 +204,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
 
         checkTasks();
 
-        // Fetch projects for context in other tabs (CRM, etc)
-        const loadProjects = async () => {
-            if (!currentTenant) return;
-            // Don't set loading true if we have cached data to avoid flashing skeleton
-            if (projects.length === 0) {
-                setLoadingProjects(true);
-            }
-
-            try {
-                const { projects: data } = await projectService.getProjects(user.id, user.role);
-                if (data) {
-                    setProjects(data);
-                    // Update cache
-                    localStorage.setItem('dashboard_projects_cache', JSON.stringify(data));
-                }
-            } catch {
-                console.error('Failed to load projects in BusinessDashboard');
-            } finally {
-                setLoadingProjects(false);
-            }
-        };
-
-        loadProjects();
-
         // Fetch consolidated stats
-        if (currentTenant?.id) {
+        if (currentTenant?.id && !dashboardStats) {
             getDashboardStats(currentTenant.id).then(({ stats }) => {
                 if (stats) setDashboardStats(stats);
             });
         }
-    }, [user, currentTenant]);
-
-    const [notification, setNotification] = useState<string | null>(null);
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [loadingProjects, setLoadingProjects] = useState(true);
-
-    // Load from cache on mount
-    React.useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const cached = localStorage.getItem('dashboard_projects_cache');
-            if (cached) {
-                try {
-                    setProjects(JSON.parse(cached));
-                } catch {
-                    console.error('Failed to parse project cache');
-                }
-            }
-        }
-    }, []);
+    }, [user, currentTenant, dashboardStats]);
 
     // Trial Logic - DISABLED as per user request for full access
     const isTrialExpired = React.useMemo(() => {

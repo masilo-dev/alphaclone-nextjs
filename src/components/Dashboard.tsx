@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { ConnectionStatus } from './ConnectionStatus';
 import {
@@ -257,17 +257,17 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Super Admin: sees ALL data across ALL tenants
   // Tenant Admin: sees all data within their tenant
   // Client: sees only their own data
-  const filteredProjects = user.role === 'admin'
+  const filteredProjects = useMemo(() => user.role === 'admin'
     ? projects // Super Admin sees everything
-    : projects.filter(p => p.ownerId === user.id); // Clients see only their own
+    : projects.filter(p => p.ownerId === user.id), [user.id, user.role, projects]);
 
-  const filteredMessages = user.role === 'admin'
+  const filteredMessages = useMemo(() => user.role === 'admin'
     ? messages // Super Admin sees everything
-    : messages.filter(m => m.senderId === user.id || m.recipientId === user.id);
+    : messages.filter(m => m.senderId === user.id || m.recipientId === user.id), [user.id, user.role, messages]);
 
-  const filteredInvoices = (user.role as UserRole) === 'admin' || (user.role as UserRole) === 'tenant_admin'
+  const filteredInvoices = useMemo(() => (user.role as UserRole) === 'admin' || (user.role as UserRole) === 'tenant_admin'
     ? invoices // Admin sees all (cross-tenant), tenant_admin sees tenant-scoped (from service)
-    : invoices.filter(i => i.clientId === user.id); // Clients see only their own invoices
+    : invoices.filter(i => i.clientId === user.id), [user.id, user.role, invoices]);
 
   // Stats Logic
   // Stats Logic - REAL DATA ONLY (No Placeholders)
@@ -277,7 +277,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     return Math.floor((Date.now() - oldest) / (1000 * 60 * 60 * 24));
   }, [filteredProjects]);
 
-  const currentStats: DashboardStat[] = user.role === 'admin' ? [
+  const currentStats: DashboardStat[] = useMemo(() => user.role === 'admin' ? [
     {
       label: 'Total Clients',
       value: (dashboardStats?.clientCount || totalClientCount).toString(),
@@ -327,7 +327,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       icon: Clock,
       color: 'bg-purple-600'
     }
-  ];
+  ], [user.role, user.id, dashboardStats, totalClientCount, projects, invoices, filteredProjects, filteredMessages, filteredInvoices, projectDays]);
 
   // Forms State
   const [newProject, setNewProject] = useState({ name: '', category: '', description: '', image: '' });
@@ -350,7 +350,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   ).length;
 
   // Fetch projects function
-  const refreshProjects = async () => {
+  const refreshProjects = useCallback(async () => {
     console.log('[Dashboard] Refreshing projects for user:', user.id);
     // Only show loading if no projects (initial load or empty)
     if (projects.length === 0) setIsLoadingProjects(true);
@@ -370,10 +370,10 @@ const Dashboard: React.FC<DashboardProps> = ({
     } finally {
       setIsLoadingProjects(false);
     }
-  };
+  }, [user.id, user.role, projects.length, setProjects]);
 
   // Fetch invoices function
-  const refreshInvoices = async () => {
+  const refreshInvoices = useCallback(async () => {
     console.log('[Dashboard] Refreshing invoices for user:', user.id);
     try {
       let result;
@@ -406,7 +406,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     } catch (err) {
       console.error('[Dashboard] Unexpected invoice fetch error:', err);
     }
-  };
+  }, [user.id, user.role, setInvoices]);
 
   // OPTIMIZED: Load ALL critical data in parallel for fastest loading, with Caching
   useEffect(() => {
@@ -463,25 +463,33 @@ const Dashboard: React.FC<DashboardProps> = ({
     loadAllData();
   }, [user.id, user.role, currentTenant?.id]);
 
-  // PRELOAD: Prefetch the most-visited lazy tabs in the background after mount
+  // PRELOAD: Prefetch the most-visited lazy tabs sequentially in the background after mount
   // so they're already downloaded when the user clicks them (eliminates Suspense delay)
   useEffect(() => {
-    const preloadTabs = () => {
-      // Preload in order of most-visited tabs
-      import('./dashboard/CRMTab');
-      import('./dashboard/FinanceTab');
-      import('./dashboard/TasksTab');
-      import('./dashboard/QuotesTab');
-      import('./dashboard/DealsTab');
-      import('./dashboard/AnalyticsTab');
+    const preloadTabs = async () => {
+      const tabs = [
+        () => import('./dashboard/CRMTab'),
+        () => import('./dashboard/FinanceTab'),
+        () => import('./dashboard/TasksTab'),
+        () => import('./dashboard/QuotesTab'),
+        () => import('./dashboard/DealsTab'),
+        () => import('./dashboard/AnalyticsTab')
+      ];
+
+      for (const preloader of tabs) {
+        // Wait for idle or small delay before next chunk
+        if ('requestIdleCallback' in window) {
+          await new Promise(resolve => requestIdleCallback(() => resolve(null), { timeout: 2000 }));
+        } else {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        preloader().catch(() => { }); // Fire and forget
+      }
     };
 
-    // Defer preloading until after the initial render is complete
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(preloadTabs, { timeout: 3000 });
-    } else {
-      setTimeout(preloadTabs, 1500);
-    }
+    // Defer the start of preloading until 3s after mount
+    const timer = setTimeout(preloadTabs, 3000);
+    return () => clearTimeout(timer);
   }, []); // Only run once on mount
 
 

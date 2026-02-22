@@ -236,6 +236,12 @@ export const authService = {
      */
     async signInWithGoogle(): Promise<{ error: string | null }> {
         try {
+            // Set a flag to help AuthContext/AuthService identify that we are in a callback loop
+            // and should be more persistent with session discovery.
+            if (typeof window !== 'undefined') {
+                sessionStorage.setItem('auth_callback_in_progress', 'true');
+            }
+
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
@@ -249,11 +255,17 @@ export const authService = {
 
             if (error) {
                 console.error("Google SignIn Error:", error);
+                if (typeof window !== 'undefined') {
+                    sessionStorage.removeItem('auth_callback_in_progress');
+                }
                 return { error: error.message };
             }
 
             return { error: null };
         } catch (err) {
+            if (typeof window !== 'undefined') {
+                sessionStorage.removeItem('auth_callback_in_progress');
+            }
             return { error: err instanceof Error ? err.message : 'Unknown error' };
         }
     },
@@ -302,18 +314,26 @@ export const authService = {
 
             const isAuthCallback = typeof window !== 'undefined' &&
                 (window.location.search.includes('code=') ||
-                    window.location.pathname.includes('/auth/callback'));
+                    window.location.pathname.includes('/auth/callback') ||
+                    sessionStorage.getItem('auth_callback_in_progress') === 'true');
 
-            for (let i = 0; i < (isAuthCallback ? 3 : 1); i++) {
+            // If we're on the dashboard, we also benefit from a small retry if session is initially missing
+            const isDashboard = typeof window !== 'undefined' && window.location.pathname.startsWith('/dashboard');
+
+            const maxAttempts = isAuthCallback ? 5 : (isDashboard ? 3 : 1);
+
+            for (let i = 0; i < maxAttempts; i++) {
                 const { data: { session: s }, error } = await supabase.auth.getSession();
                 if (s?.user) {
                     session = s;
+                    if (isAuthCallback) sessionStorage.removeItem('auth_callback_in_progress');
                     break;
                 }
                 lastError = error;
-                if (isAuthCallback && i < 2) {
-                    console.log(`AuthService: Retrying session retrieval after callback (${i + 1}/3)...`);
-                    await new Promise(r => setTimeout(r, 800));
+                if ((isAuthCallback || isDashboard) && i < maxAttempts - 1) {
+                    const delay = isAuthCallback ? 1000 : 1500;
+                    console.log(`AuthService: Retrying session retrieval (${i + 1}/${maxAttempts}) in ${delay}ms...`);
+                    await new Promise(r => setTimeout(r, delay));
                 }
             }
 

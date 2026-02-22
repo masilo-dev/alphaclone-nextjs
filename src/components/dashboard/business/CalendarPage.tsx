@@ -20,6 +20,7 @@ import {
     User as UserIcon,
     Mail,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface CalendarPageProps {
     user: User;
@@ -233,6 +234,40 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
         setLoading(false);
     }, [currentTenant, user.id, user.role]);
 
+    const [editingEvent, setEditingEvent] = useState<BusinessEvent | null>(null);
+
+    const handleUpdateEvent = useCallback(async (eventId: string, updates: Partial<BusinessEvent>) => {
+        try {
+            const { error } = await businessEventService.updateEvent(eventId, updates);
+            if (!error) {
+                toast.success('Event updated');
+                loadAllEvents();
+                setEditingEvent(null);
+                setSelectedEvent(null);
+            } else {
+                toast.error('Failed to update event');
+            }
+        } catch (_) {
+            toast.error('An error occurred');
+        }
+    }, [loadAllEvents]);
+
+    const handleDeleteEvent = useCallback(async (eventId: string) => {
+        if (!confirm('Are you sure you want to delete this event?')) return;
+        try {
+            const { error } = await businessEventService.deleteEvent(eventId);
+            if (!error) {
+                toast.success('Event deleted');
+                loadAllEvents();
+                setSelectedEvent(null);
+            } else {
+                toast.error('Failed to delete event');
+            }
+        } catch (_) {
+            toast.error('An error occurred');
+        }
+    }, [loadAllEvents]);
+
     const handleAddEvent = useCallback(async (eventData: Partial<BusinessEvent>) => {
         if (!currentTenant) return;
         const { event, error } = await businessEventService.createEvent(currentTenant.id, {
@@ -240,18 +275,13 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
             createdBy: user.id,
         });
         if (!error && event) {
-            setAllEvents(prev => [...prev, {
-                id: `event-${event.id}`,
-                title: event.title,
-                date: event.startTime,
-                startTime: event.startTime,
-                endTime: event.endTime,
-                source: 'event',
-                description: event.description,
-            }]);
+            toast.success('Event created');
+            loadAllEvents();
             setShowAddModal(false);
+        } else {
+            toast.error(error || 'Failed to create event');
         }
-    }, [currentTenant, user.id]);
+    }, [currentTenant, user.id, loadAllEvents]);
 
     useEffect(() => {
         if (currentTenant) {
@@ -465,22 +495,40 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                     <EventDetailModal
                         event={selectedEvent}
                         onClose={() => setSelectedEvent(null)}
-                    />
-                )
-            }
-
-            {/* Add Event Modal */}
-            {
-                showAddModal && (
-                    <AddEventModal
-                        selectedDate={selectedDate}
-                        onClose={() => {
-                            setShowAddModal(false);
-                            setSelectedDate(null);
+                        onDelete={handleDeleteEvent}
+                        onEdit={(event) => {
+                            // Find the original business event data
+                            const bizEvent = allEvents.find(e => e.id === event.id);
+                            if (bizEvent) {
+                                setEditingEvent({
+                                    id: event.id.replace('event-', ''),
+                                    title: event.title,
+                                    description: event.description,
+                                    startTime: event.startTime ?? event.date,
+                                    endTime: event.endTime ?? event.date,
+                                    eventType: (event as any).type || 'meeting',
+                                    tenantId: currentTenant?.id || '',
+                                    attendees: [],
+                                    createdAt: new Date().toISOString()
+                                });
+                                setSelectedEvent(null); // Close detail modal
+                            }
                         }}
-                        onAdd={handleAddEvent}
                     />
-                )
+                )}
+
+            {(showAddModal || editingEvent) && (
+                <AddEventModal
+                    selectedDate={selectedDate}
+                    initialData={editingEvent || undefined}
+                    onClose={() => {
+                        setShowAddModal(false);
+                        setEditingEvent(null);
+                        setSelectedDate(null); // Reset selected date when modal closes
+                    }}
+                    onAdd={editingEvent ? (data) => handleUpdateEvent(editingEvent.id, data) : handleAddEvent}
+                />
+            )
             }
         </div >
     );
@@ -534,7 +582,12 @@ const UpcomingEvents = ({ events, onSelectEvent }: { events: CalendarEvent[]; on
 
 // ─── Event Detail Modal ────────────────────────────────────────────────────
 
-const EventDetailModal = ({ event, onClose }: { event: CalendarEvent; onClose: () => void }) => {
+const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
+    event: CalendarEvent;
+    onClose: () => void;
+    onDelete: (id: string) => void;
+    onEdit: (event: CalendarEvent) => void;
+}) => {
     const cfg = SOURCE_CONFIG[event.source];
     const date = new Date(event.date);
 
@@ -617,6 +670,53 @@ const EventDetailModal = ({ event, onClose }: { event: CalendarEvent; onClose: (
                             {event.description}
                         </div>
                     )}
+
+                    {/* Navigation Buttons for Related Entities */}
+                    <div className="mt-6 flex flex-col gap-2">
+                        {event.source === 'task' && (
+                            <button
+                                onClick={() => (window.location.href = '/dashboard/tasks')}
+                                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded-lg transition-colors border border-slate-700"
+                            >
+                                View Task Details
+                            </button>
+                        )}
+                        {event.source === 'project' && (
+                            <button
+                                onClick={() => (window.location.href = '/dashboard/business/projects')}
+                                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded-lg transition-colors border border-slate-700"
+                            >
+                                View Project Details
+                            </button>
+                        )}
+                        {event.source === 'deal' && (
+                            <button
+                                onClick={() => (window.location.href = '/dashboard/leads')}
+                                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded-lg transition-colors border border-slate-700"
+                            >
+                                View Deal Details
+                            </button>
+                        )}
+                        {event.source === 'event' && (
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => onEdit(event)}
+                                    className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded-lg transition-colors border border-slate-700"
+                                >
+                                    Edit Event
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const eventId = event.id.replace('event-', '');
+                                        onDelete(eventId);
+                                    }}
+                                    className="flex-1 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium rounded-lg transition-colors border border-red-500/20"
+                                >
+                                    Delete Event
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
@@ -705,21 +805,36 @@ const MobileCalendarView = ({ currentDate, events, onSelectDate, onSelectEvent }
 
 // ─── Add Event Modal ───────────────────────────────────────────────────────
 
-const AddEventModal = ({ selectedDate, onClose, onAdd }: {
+const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
     selectedDate: Date | null;
+    initialData?: BusinessEvent;
     onClose: () => void;
     onAdd: (data: Partial<BusinessEvent>) => void;
 }) => {
     const [formData, setFormData] = useState({
-        title: '',
-        description: '',
-        startTime: selectedDate ? selectedDate.toISOString().slice(0, 16) : '',
-        endTime: '',
-        eventType: 'meeting',
+        title: initialData?.title || '',
+        description: initialData?.description || '',
+        startTime: initialData?.startTime
+            ? new Date(initialData.startTime).toISOString().slice(0, 16)
+            : (selectedDate ? selectedDate.toISOString().slice(0, 16) : ''),
+        endTime: initialData?.endTime
+            ? new Date(initialData.endTime).toISOString().slice(0, 16)
+            : '',
+        eventType: initialData?.eventType || 'meeting',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (!formData.title?.trim()) {
+            toast.error('Please enter a title');
+            return;
+        }
+
+        if (new Date(formData.endTime) <= new Date(formData.startTime)) {
+            toast.error('End time must be after start time');
+            return;
+        }
+
         onAdd(formData);
     };
 
@@ -803,7 +918,7 @@ const AddEventModal = ({ selectedDate, onClose, onAdd }: {
                             type="submit"
                             className="flex-1 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors font-semibold text-slate-950"
                         >
-                            Add Event
+                            {initialData ? 'Update Event' : 'Add Event'}
                         </button>
                     </div>
                 </form>

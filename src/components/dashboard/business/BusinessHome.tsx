@@ -38,25 +38,6 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
     const [recentActivity, setRecentActivity] = useState<any[]>(stats?.recentActivity || []);
     const [loading, setLoading] = useState(!stats);
 
-    useEffect(() => {
-        if (stats) {
-            setMetrics({
-                totalRevenue: stats.totalRevenue || 0,
-                totalClients: stats.clientCount || 0,
-                activeProjects: stats.activeProjects || 0,
-                pendingInvoices: stats.pendingInvoices || 0
-            });
-            setRevenueData(stats.monthlyRevenue || []);
-            setRecentActivity(stats.recentActivity || []);
-            if (stats.pipeline) {
-                mapPipelineData(stats.pipeline);
-            }
-            setLoading(false);
-        } else if (currentTenant) {
-            loadDashboardData();
-        }
-    }, [currentTenant, stats]);
-
     const mapPipelineData = (pipeline: Record<string, number>) => {
         const stageLabels: Record<string, string> = {
             lead: 'Leads',
@@ -79,42 +60,22 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
         setPipelineData(chartData);
     };
 
-    const loadDashboardData = async () => {
-        if (!currentTenant) return;
-
-        setLoading(true);
-        try {
-            // Fetch aggregated stats from RPC
-            const { stats, error } = await businessClientService.getDashboardStats(currentTenant.id);
-
-            if (error || !stats) {
-                console.error('Failed to load dashboard stats:', error);
-                return;
-            }
-
+    useEffect(() => {
+        if (stats) {
             setMetrics({
                 totalRevenue: stats.totalRevenue || 0,
                 totalClients: stats.clientCount || 0,
                 activeProjects: stats.activeProjects || 0,
                 pendingInvoices: stats.pendingInvoices || 0
             });
-
             setRevenueData(stats.monthlyRevenue || []);
             setRecentActivity(stats.recentActivity || []);
-
-            // Handle pipeline data for chart
             if (stats.pipeline) {
                 mapPipelineData(stats.pipeline);
             }
-
-
-        } catch (error) {
-            console.error('Error loading dashboard data:', error);
-        } finally {
             setLoading(false);
         }
-    };
-
+    }, [stats]);
 
     if (loading) {
         return (

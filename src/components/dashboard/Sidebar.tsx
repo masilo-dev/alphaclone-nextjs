@@ -106,6 +106,20 @@ const Sidebar = React.memo<SidebarProps>(({
                                         handleNavigation(item.href);
                                     }
                                 }}
+                                onMouseEnter={() => {
+                                    // Proactively pre-fetch components for hover
+                                    if (!item.comingSoon && item.href !== '#' && item.href.startsWith('/dashboard/')) {
+                                        const tabName = item.href.split('/').pop();
+                                        // Dynamically trigger the import that React.lazy uses in Dashboard.tsx
+                                        // This fills the browser cache before the click
+                                        if (tabName === 'tasks') import('./TasksTab');
+                                        if (tabName === 'deals') import('./DealsTab');
+                                        if (tabName === 'crm') import('./CRMTab');
+                                        if (tabName === 'messages') import('./MessagesTab');
+                                        if (tabName === 'finance') import('./FinanceTab');
+                                        if (tabName === 'calendar') import('./CalendarComponent');
+                                    }
+                                }}
                                 title={!sidebarOpen ? item.label : undefined}
                                 className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-2'} py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden active:scale-95 touch-manipulation
                    ${activeTab === item.href

@@ -39,9 +39,9 @@ export async function POST(req: NextRequest) {
             email: item.Email || item.email || null,
             phone: item.Phone || item.phone || null,
             company: item.Company || item.company || null,
-            stage: item.Stage || item.stage || 'lead',
-            value: parseFloat(item.Value || item.value || '0'),
-            notes: item.Notes || item.notes || null,
+            sales_stage: item.Stage || item.stage || 'lead',
+            value: parseFloat(String(item.Value || item.value || '0').replace(/[^0-9.]/g, '')),
+            description: item.Notes || item.notes || item.Description || item.description || null,
             updated_at: new Date().toISOString()
         })).filter(client => client.name); // Ensure name is present
 

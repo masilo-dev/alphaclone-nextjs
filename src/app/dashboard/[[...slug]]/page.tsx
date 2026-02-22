@@ -25,19 +25,23 @@ export default function DashboardPage() {
 
         // If loading is done and no user exists, start grace period
         if (!loading && !user) {
-            // Check if there is even a HINT of a session in localStorage
-            // Supabase keys start with 'sb-'
-            // Resilient token discovery: check for any Supabase auth token
-            const hasLocalToken = typeof window !== 'undefined' &&
-                Object.keys(localStorage).some(k => k.includes('auth-token') || k.startsWith('sb-'));
+            // Resilient token discovery: check for any Supabase auth token (localStorage OR cookies)
+            const hasLocalToken = typeof window !== 'undefined' && (
+                Object.keys(localStorage).some(k => k.includes('auth-token') || k.startsWith('sb-')) ||
+                document.cookie.includes('auth-token') ||
+                document.cookie.includes('sb-')
+            );
 
-            // Dramatically reduced timeout to make dashboard feel near-instant
-            // BUT: Increased slightly for callback cases to prevent premature redirect
-            const isAuthCallback = typeof window !== 'undefined' &&
-                (window.location.search.includes('code=') ||
-                    window.location.pathname.includes('/auth/callback'));
+            // Check if we are in an auth callback flow
+            const isAuthCallback = typeof window !== 'undefined' && (
+                window.location.search.includes('code=') ||
+                window.location.pathname.includes('/auth/callback') ||
+                sessionStorage.getItem('auth_callback_in_progress') === 'true'
+            );
 
-            const timeoutDuration = isAuthCallback ? 3000 : (hasLocalToken ? 1000 : 2000);
+            // Grace period based on probable presence of session. 
+            // In callback or redirect flows, we give it much more time (8s) before failing.
+            const timeoutDuration = isAuthCallback ? 8000 : (hasLocalToken ? 2500 : 2000);
 
             console.log(`DashboardPage: User missing, starting grace period of ${timeoutDuration}ms`, { hasLocalToken, isAuthCallback });
 

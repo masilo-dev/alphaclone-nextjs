@@ -74,6 +74,7 @@ const SalesAgent: React.FC = () => {
             // 0. Dynamic imports
             const { businessClientService } = await import('../../services/businessClientService');
             const { quoteService } = await import('../../services/quoteService');
+            const { dealService } = await import('../../services/dealService');
 
             // 1. Qualify Lead
             await leadService.updateLead(lead.id, { stage: 'qualified' });
@@ -85,6 +86,7 @@ const SalesAgent: React.FC = () => {
                 phone: lead.phone,
                 salesStage: 'customer',
                 industry: lead.industry,
+                value: lead.value || 0,
                 location: lead.location,
                 description: lead.notes
             });
@@ -105,7 +107,23 @@ const SalesAgent: React.FC = () => {
 
             if (quoteError || !quote) return { success: false, error: quoteError || 'Failed to create quote' };
 
-            // 5. Add default line item
+            // 5. Create Deal (NEW)
+            const { error: dealError } = await dealService.createDeal(userId, {
+                name: `${lead.businessName} - Opportunity`,
+                contactId: client.id,
+                value: lead.value || 0,
+                currency: 'USD',
+                stage: 'discovery',
+                source: 'AI Growth Agent',
+                description: lead.notes || 'Auto-generated deal'
+            });
+
+            if (dealError) {
+                console.error("Deal creation failed after quote creation:", dealError);
+                // We don't fail the whole process if just the deal fails, but we log it
+            }
+
+            // 6. Add default line item
             await quoteService.addQuoteItem(quote.id, {
                 productName: 'Consultation Services',
                 description: 'Initial consultation and requirements gathering',
@@ -330,6 +348,7 @@ const SalesAgent: React.FC = () => {
                 name: lead.businessName,
                 email: lead.email || '',
                 phone: lead.phone,
+                value: lead.value || 0,
                 salesStage: 'customer', // Qualified leads become customers in CRM
                 industry: lead.industry,
                 location: lead.location,
@@ -391,6 +410,7 @@ const SalesAgent: React.FC = () => {
                     name: lead.businessName,
                     email: lead.email || '',
                     phone: lead.phone,
+                    value: lead.value || 0,
                     salesStage: 'customer',
                     industry: lead.industry,
                     location: lead.location,

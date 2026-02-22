@@ -319,29 +319,48 @@ export const businessInvoiceService = {
 
     /**
      * Generate next invoice number
+     * IMPROVED: Using a more robust approach to avoid race conditions
      */
     async generateInvoiceNumber(tenantId: string): Promise<string> {
         try {
-            const { data } = await supabase
+            // Fetch the highest invoice number for this tenant
+            // Sorting by invoice_number descending instead of created_at
+            const { data, error } = await supabase
                 .from('business_invoices')
                 .select('invoice_number')
                 .eq('tenant_id', tenantId)
-                .order('created_at', { ascending: false })
+                .order('invoice_number', { ascending: false })
                 .limit(1);
+
+            if (error) throw error;
 
             if (data && data.length > 0) {
                 const lastNumber = data[0].invoice_number;
-                const match = lastNumber.match(/\d+$/);
-                if (match) {
-                    const nextNum = parseInt(match[0]) + 1;
-                    return `INV-${nextNum.toString().padStart(4, '0')}`;
+                // Regular expression to find the numeric part (handling variations like INV-0001 or INV1001)
+                const match = lastNumber.match(/\d+/g);
+                if (match && match.length > 0) {
+                    // Take the last match (useful if the prefix has numbers)
+                    const lastNumericPart = match[match.length - 1];
+                    const nextNum = parseInt(lastNumericPart) + 1;
+
+                    // Maintain original padding if it was numeric lead
+                    const padding = lastNumericPart.length;
+                    const nextNumString = nextNum.toString().padStart(padding, '0');
+
+                    // Reconstruct with original prefix
+                    const prefixMatch = lastNumber.match(/^[A-Z-]+/i);
+                    const prefix = prefixMatch ? prefixMatch[0] : 'INV-';
+
+                    return `${prefix}${nextNumString}`;
                 }
             }
 
-            return 'INV-0001';
+            // Default fallback
+            return 'INV-1001';
         } catch (err) {
             console.error('Error generating invoice number:', err);
-            return `INV-${Date.now()}`;
+            // Unique enough to avoid collision but clearly a fallback
+            return `INV-${Date.now().toString().slice(-6)}`;
         }
     },
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { tenantService } from '../services/tenancy/TenantService';
 import type { Tenant, SubscriptionPlan } from '../services/tenancy/types';
 import { authService } from '../services/authService';
@@ -244,7 +244,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
 
 
-  const value: TenantContextType = {
+  const value = useMemo(() => ({
     currentTenant,
     userTenants,
     isLoading,
@@ -253,7 +253,16 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     refreshTenants,
     createTenant,
     getDashboardStats
-  };
+  }), [
+    currentTenant,
+    userTenants,
+    isLoading,
+    error,
+    switchTenant,
+    refreshTenants,
+    createTenant,
+    getDashboardStats
+  ]);
 
   return (
     <TenantContext.Provider value={value}>
