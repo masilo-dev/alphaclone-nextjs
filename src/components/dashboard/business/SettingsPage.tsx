@@ -13,10 +13,14 @@ import {
     Save,
     Upload,
     Loader2,
-    Calendar
+    Calendar,
+    Trash2,
+    X
 } from 'lucide-react';
 import { fileUploadService } from '../../../services/fileUploadService';
 import GmailIntegration from './GmailIntegration';
+import { authService } from '../../../services/authService';
+import { Button, Modal, Input } from '../../ui/UIComponents';
 
 interface SettingsPageProps {
     user: User;
@@ -41,6 +45,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const searchParams = useSearchParams();
 
     useEffect(() => {
@@ -165,6 +171,26 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         { id: 'security', label: 'Security', icon: Shield },
         { id: 'booking', label: 'Booking & Calendly', icon: Calendar }
     ];
+
+    const handleDeleteAccount = async () => {
+        setIsDeleting(true);
+        try {
+            const { error } = await authService.requestAccountDeletion();
+            if (error) {
+                toast.error(error);
+                return;
+            }
+            toast.success('Account deletion scheduled. You will be logged out.');
+            setDeleteModalOpen(false);
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } catch (err) {
+            toast.error('Failed to request account deletion');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     if (loading) {
         return <div className="flex items-center justify-center h-full"><div className="text-slate-400">Loading settings...</div></div>;
@@ -336,7 +362,64 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                     </div>
                                 </div>
                             </div>
+
+                            <div className="mt-8 pt-8 border-t border-slate-700">
+                                <h4 className="text-red-500 font-bold mb-4 flex items-center gap-2 uppercase text-xs tracking-widest">
+                                    Danger Zone
+                                </h4>
+                                <div className="p-6 bg-red-500/5 rounded-2xl border border-red-500/10">
+                                    <h4 className="text-white font-semibold mb-2">Delete Account</h4>
+                                    <p className="text-sm text-slate-400 mb-6">
+                                        Once scheduled, your data will be kept for 30 days before permanent removal.
+                                        You can cancel this request at any time during this period.
+                                    </p>
+                                    <button
+                                        onClick={() => setDeleteModalOpen(true)}
+                                        className="flex items-center gap-2 px-4 py-2 border border-red-500/30 text-red-500 hover:bg-red-500/10 rounded-xl transition-all text-sm font-medium"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        Delete My Account
+                                    </button>
+                                </div>
+                            </div>
                         </div>
+
+                        {/* Delete Confirmation Modal */}
+                        <Modal
+                            isOpen={deleteModalOpen}
+                            onClose={() => setDeleteModalOpen(false)}
+                            title="Delete Account"
+                        >
+                            <div className="space-y-4">
+                                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-start gap-3">
+                                    <Trash2 className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                                    <div>
+                                        <h4 className="text-red-500 font-bold text-sm">Are you absolutely sure?</h4>
+                                        <p className="text-xs text-slate-400 mt-1">
+                                            Your account will be scheduled for deletion. You will have 30 days to cancel this request.
+                                            After 30 days, your account and all associated data will be permanently deleted.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                                    <button
+                                        onClick={handleDeleteAccount}
+                                        disabled={isDeleting}
+                                        className="flex-1 py-3 bg-red-500 hover:bg-red-600 disabled:bg-slate-700 text-white rounded-xl font-bold text-sm transition-all"
+                                    >
+                                        {isDeleting ? 'Processing...' : 'Yes, Delete My Account'}
+                                    </button>
+                                    <button
+                                        onClick={() => setDeleteModalOpen(false)}
+                                        disabled={isDeleting}
+                                        className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold text-sm transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </Modal>
                     </div>
                 )}
 
