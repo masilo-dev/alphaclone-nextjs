@@ -379,7 +379,7 @@ export const authService = {
                 for (let i = 0; i < maxRetries; i++) {
                     const { data: p, error: profileError } = await supabase
                         .from('profiles')
-                        .select('*')
+                        .select('*, account_status, scheduled_deletion_at')
                         .eq('id', session.user.id)
                         .single();
 
@@ -511,5 +511,37 @@ export const authService = {
                 callback(null, event);
             }
         });
+    },
+
+    /**
+     * Request account deletion
+     */
+    async requestAccountDeletion(): Promise<{ error: string | null }> {
+        try {
+            const { error } = await supabase.rpc('request_account_deletion');
+            if (error) {
+                console.error("Request Account Deletion Error:", error);
+                return { error: error.message };
+            }
+            return { error: null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * Cancel account deletion
+     */
+    async cancelAccountDeletion(): Promise<{ error: string | null }> {
+        try {
+            const { error } = await supabase.rpc('cancel_account_deletion');
+            if (error) {
+                console.error("Cancel Account Deletion Error:", error);
+                return { error: error.message };
+            }
+            return { error: null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Unknown error' };
+        }
     },
 };

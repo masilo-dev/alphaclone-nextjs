@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import {
     CreditCard,
-    Settings,
-    User,
     Shield,
     Bell,
     Database,
@@ -20,7 +18,7 @@ import {
     Palette,
     Globe
 } from 'lucide-react';
-import { Button, Card, Input } from '../ui/UIComponents';
+import { Button, Card, Input, Modal } from '../ui/UIComponents';
 import { User as UserType } from '../../types';
 import { userService } from '../../services/userService';
 import toast from 'react-hot-toast';
@@ -31,7 +29,8 @@ import GmailIntegration from './business/GmailIntegration';
 
 import StripeConnectSettings from './business/StripeConnectSettings';
 import BrandingSettings from './settings/BrandingSettings';
-import { Building } from 'lucide-react';
+import { Building, Trash2 } from 'lucide-react';
+import { authService } from '../../services/authService';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -70,6 +69,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         newPassword: '',
         confirmPassword: ''
     });
+
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
     // SVG components for internal use
     const CreditCardIcon = (props: any) => (
@@ -210,6 +212,27 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const handleManageBilling = async () => {
         // Portal disabled during Beta
         toast("Billing management will be available in March.", { icon: 'ℹ️' });
+    };
+
+    const handleDeleteAccount = async () => {
+        setIsDeleting(true);
+        try {
+            const { error } = await authService.requestAccountDeletion();
+            if (error) {
+                toast.error(error);
+                return;
+            }
+            toast.success('Account deletion scheduled. You will be logged out.');
+            setDeleteModalOpen(false);
+            // Re-fetch or wait for state change to show overlay
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } catch (err) {
+            toast.error('Failed to request account deletion');
+        } finally {
+            setIsDeleting(false);
+        }
     };
 
     return (
@@ -441,6 +464,28 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                             </div>
                                         </div>
                                     </div>
+
+                                    <div className="mt-8 pt-8 border-t border-slate-800">
+                                        <h4 className="text-red-500 font-bold mb-2 flex items-center gap-2 uppercase text-xs tracking-widest">
+                                            Danger Zone
+                                        </h4>
+                                        <div className="p-4 bg-red-500/5 rounded-xl border border-red-500/10">
+                                            <h4 className="text-white font-medium mb-1 text-sm">Delete Account</h4>
+                                            <p className="text-xs text-slate-400 mb-4">
+                                                Once scheduled, your data will be kept for 30 days before permanent removal.
+                                                You can cancel this request at any time during this period.
+                                            </p>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setDeleteModalOpen(true)}
+                                                className="border-red-500/30 text-red-500 hover:bg-red-500/10 text-xs"
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5 mr-2" />
+                                                Delete My Account
+                                            </Button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -621,6 +666,52 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                     {activeSection === 'branding' && (
                         <BrandingSettings />
                     )}
+
+                    {/* Account Deletion Confirmation Modal */}
+                    <Modal
+                        isOpen={deleteModalOpen}
+                        onClose={() => setDeleteModalOpen(false)}
+                        title="Schedule Account Deletion"
+                    >
+                        <div className="space-y-4">
+                            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex gap-3 text-amber-500 text-sm">
+                                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                                <p>
+                                    Warning: This will schedule your account for permanent deletion in 30 days.
+                                    You will be logged out and access to the dashboard will be restricted.
+                                </p>
+                            </div>
+
+                            <p className="text-slate-400 text-sm">
+                                Are you sure you want to proceed? You can restore your account by cancelling this request
+                                within the 30-day grace period.
+                            </p>
+
+                            <div className="flex gap-3 pt-2">
+                                <Button
+                                    onClick={handleDeleteAccount}
+                                    disabled={isDeleting}
+                                    className="flex-1 bg-red-600 hover:bg-red-500"
+                                >
+                                    {isDeleting ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        'Confirm Deletion'
+                                    )}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setDeleteModalOpen(false)}
+                                    className="flex-1"
+                                >
+                                    Cancel
+                                </Button>
+                            </div>
+                        </div>
+                    </Modal>
                 </div>
             </div>
         </div>

@@ -84,6 +84,7 @@ import CreateInvoiceModal from './dashboard/CreateInvoiceModal';
 import { WidgetErrorBoundary } from './dashboard/WidgetErrorBoundary';
 import ResourceAllocationView from '@/components/dashboard/ResourceAllocationView';
 import { useOverdueTaskNotifier } from '../hooks/useOverdueTaskNotifier';
+import { DeletionOverlay } from './dashboard/DeletionOverlay';
 
 const ConferenceTab = React.lazy(() => import('./dashboard/ConferenceTab'));
 const AnalyticsTab = React.lazy(() => import('./dashboard/AnalyticsTab'));
@@ -1648,6 +1649,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Incoming Call Modal (Global Listener) */}
       <IncomingCallModal userId={user.id} userName={user.name} />
+
+      <DeletionOverlay />
 
       {/* Sidebar - Extracted & Memoized */}
       <Sidebar

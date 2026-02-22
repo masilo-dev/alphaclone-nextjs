@@ -3,18 +3,17 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { authService } from '../services/authService';
 import { User, UserRole } from '../types';
-import { AuthChangeEvent } from '@supabase/supabase-js';
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
     error: string | null;
     signOut: () => Promise<void>;
+    cancelAccountDeletion: () => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// ... (existing imports and interface)
 
 /**
  * Helper to get a cookie value by name.
@@ -125,6 +124,8 @@ function readSessionFromStorage(): User | null {
             name: metadata.name || metadata.full_name || user.email?.split('@')[0] || 'User',
             role: metadata.role || 'tenant_admin',
             avatar: metadata.avatar || metadata.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`,
+            account_status: metadata.account_status || 'active',
+            scheduled_deletion_at: metadata.scheduled_deletion_at,
         };
     } catch (e) {
         console.error('[AuthContext] Debug: Error reading session from storage', e);
@@ -305,8 +306,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await authService.signOut();
     };
 
+    const cancelAccountDeletion = async () => {
+        const { error } = await authService.cancelAccountDeletion();
+        if (!error) {
+            // Re-fetch to update state
+            const { user: refreshedUser } = await authService.getCurrentUser();
+            setSafeUser(refreshedUser);
+        }
+        return { error };
+    };
+
     return (
-        <AuthContext.Provider value={{ user, loading, error, signOut }}>
+        <AuthContext.Provider value={{ user, loading, error, signOut, cancelAccountDeletion }}>
             {children}
         </AuthContext.Provider>
     );
