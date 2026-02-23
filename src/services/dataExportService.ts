@@ -33,7 +33,7 @@ class DataExportService {
                 .from('profiles')
                 .select('role')
                 .eq('id', userId)
-                .single();
+                .maybeSingle();
 
             if (!user || user.role !== 'admin') {
                 return { success: false, error: 'Unauthorized' };
@@ -230,7 +230,7 @@ class DataExportService {
 
             // Fetch all user-related data
             const [profile, projects, messages, invoices, contracts, tasks] = await Promise.all([
-                supabase.from('profiles').select('*').eq('id', userId).single(),
+                supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
                 supabase.from('projects').select('*').eq('owner_id', userId),
                 supabase.from('messages').select('*').or(`sender_id.eq.${userId},recipient_id.eq.${userId}`),
                 supabase.from('invoices').select('*').eq('user_id', userId),

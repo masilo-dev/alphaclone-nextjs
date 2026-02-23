@@ -60,15 +60,24 @@ function readSessionFromStorage(): User | null {
 
         // 2. Try Cookies if Local Storage failed (standard SSR behavior / Google Sign-In)
         if (!raw) {
-            // Supabase auth cookies usually follow sb-project-auth-token or similar
-            // We search for any cookie that looks like an auth token
-            const allCookies = document.cookie.split(';').map(c => c.trim().split('=')[0]);
-            const cookieKey = allCookies.find(k => k.includes('auth-token') || k.startsWith('sb-'));
+            // Supabase auth cookies follow sb-PROJECT_ID-auth-token
+            // Project ID: ehekzoioqvtweugemktn
+            const targetCookie = 'sb-ehekzoioqvtweugemktn-auth-token';
+            raw = getCookie(targetCookie);
 
-            if (cookieKey) {
-                raw = getCookie(cookieKey);
+            if (raw) {
                 source = 'cookie';
-                console.log('[AuthContext] Debug: Found potential session in cookies', { cookieKey });
+                console.log('[AuthContext] Debug: Found session in target cookie', { targetCookie });
+            } else {
+                // Fallback: check for any cookie that looks like an auth token (legacy or different project)
+                const allCookies = document.cookie.split(';').map(c => c.trim().split('=')[0]);
+                const cookieKey = allCookies.find(k => k.includes('auth-token') || k.startsWith('sb-'));
+
+                if (cookieKey) {
+                    raw = getCookie(cookieKey);
+                    source = 'cookie';
+                    console.log('[AuthContext] Debug: Found potential session in generic cookie', { cookieKey });
+                }
             }
         }
 
@@ -82,11 +91,20 @@ function readSessionFromStorage(): User | null {
 
         let session: any = null;
         try {
-            const parsed = JSON.parse(raw);
-            session = parsed?.currentSession ?? parsed;
+            // Check if it's already an object (SSR might pass it this way)
+            if (typeof raw === 'object' && raw !== null) {
+                session = (raw as any).currentSession ?? raw;
+            } else {
+                const parsed = JSON.parse(raw);
+                session = parsed?.currentSession ?? parsed;
+            }
         } catch (e) {
-            // If it's not JSON, it might be a raw token (unlikely for Supabase but let's be safe)
-            console.warn('[AuthContext] Debug: Session data is not valid JSON', { source });
+            // If it's not JSON, it's likely a non-session cookie or corrupted data.
+            // Using debug instead of warn to reduce console noise for non-session cookies.
+            console.debug('[AuthContext] Debug: Cookie/Storage data is not valid JSON (skipping)', {
+                source,
+                preview: typeof raw === 'string' ? raw.substring(0, 20) + '...' : 'non-string'
+            });
             return null;
         }
 

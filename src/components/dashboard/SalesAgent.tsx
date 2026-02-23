@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, Search, Play, Pause, Settings, RefreshCw, Plus, Filter, Database, MessageSquare, ArrowRight, CheckCircle2, AlertCircle, UserPlus, Phone, Send, Trash2, Upload, FileSpreadsheet, X, Mail, ExternalLink, FileText, Zap } from 'lucide-react';
+import { Bot, Search, Play, Pause, Settings, RefreshCw, Plus, Filter, Database, MessageSquare, ArrowRight, CheckCircle2, AlertCircle, UserPlus, Phone, Send, Trash2, Upload, FileSpreadsheet, X, Mail, ExternalLink, FileText, Zap, Layout, CheckSquare, Clock } from 'lucide-react';
 import { generateLeads, chatWithGrowthAgent, isAnyAIConfigured } from '../../services/unifiedAIService';
 import { leadService, Lead } from '../../services/leadService';
 import { fileImportService } from '../../services/fileImportService';
@@ -314,6 +314,119 @@ const SalesAgent: React.FC = () => {
         toast.success("Deleted selected leads");
         setLeads(prev => prev.filter(l => !selectedLeads.includes(l.id)));
         setSelectedLeads([]);
+    };
+
+    const handleEnrich = async (leadId: string) => {
+        const { data: { user } } = await (await import('../../lib/supabase')).supabase.auth.getUser();
+        if (!user) return;
+
+        toast.loading('Researching business...', { id: 'enriching' });
+        try {
+            const { notes, error } = await leadService.enrichLead(leadId, user.id);
+            if (error) throw new Error(error);
+            toast.success('Business intelligence gathered!', { id: 'enriching' });
+            loadLeads();
+        } catch (error: any) {
+            toast.error('Research failed: ' + error.message, { id: 'enriching' });
+        }
+    };
+
+    const handleCreateProject = async (lead: Lead) => {
+        const { data: { user } } = await (await import('../../lib/supabase')).supabase.auth.getUser();
+        if (!user) return;
+
+        const name = window.prompt('Enter Project Name:', `Project: ${lead.businessName}`);
+        if (!name) return;
+
+        try {
+            const { projectService } = await import('../../services/projectService');
+            const { contactService } = await import('../../services/contactService');
+
+            // STEP 1: Ensure we have a contact
+            const { contactId, error: convertError } = await contactService.convertLeadToContact(lead.id, {
+                createCompany: true,
+                companyName: lead.businessName
+            });
+
+            if (convertError || !contactId) throw new Error(convertError || 'Failed to prepare contact/company');
+
+            // STEP 2: Create project
+            const { error: projectError } = await projectService.createProject({
+                ownerId: user.id,
+                ownerName: user.email?.split('@')[0] || 'User',
+                name,
+                category: 'Client Project',
+                status: 'Active',
+                currentStage: 'Initiation',
+                progress: 0,
+                team: [user.id],
+                description: `Project initialized from lead discovery. \n\nIndustry: ${lead.industry}\nIntelligence: ${lead.notes || 'None'}`,
+                clientId: contactId,
+                contractStatus: 'None',
+                startDate: new Date().toISOString().split('T')[0]
+            });
+
+            if (projectError) throw new Error(projectError);
+
+            toast.success(`🚀 Project "${name}" initialized!`);
+            loadLeads();
+        } catch (error: any) {
+            toast.error('Failed to create project: ' + error.message);
+        }
+    };
+
+    const handleCreateTask = async (lead: Lead) => {
+        const { data: { user } } = await (await import('../../lib/supabase')).supabase.auth.getUser();
+        if (!user) return;
+
+        const title = window.prompt('What needs to be done?', `Follow up with ${lead.businessName}`);
+        if (!title) return;
+
+        try {
+            const { taskService } = await import('../../services/taskService');
+            const { error } = await taskService.createTask(user.id, {
+                title,
+                relatedToLead: lead.id,
+                priority: 'medium',
+                status: 'todo'
+            });
+
+            if (error) throw new Error(error);
+            toast.success('Task created successfully');
+        } catch (error: any) {
+            toast.error('Failed to create task: ' + error.message);
+        }
+    };
+
+    const handleCreateDeal = async (lead: Lead) => {
+        const { data: { user } } = await (await import('../../lib/supabase')).supabase.auth.getUser();
+        if (!user) return;
+
+        const name = window.prompt('Enter Deal Name:', lead.businessName);
+        if (!name) return;
+
+        try {
+            const { contactService } = await import('../../services/contactService');
+            const { dealService } = await import('../../services/dealService');
+
+            const { contactId, error: convertError } = await contactService.convertLeadToContact(lead.id);
+            if (convertError || !contactId) throw new Error(convertError || 'Failed to create contact');
+
+            const { error: dealError } = await dealService.createDeal(user.id, {
+                name,
+                contactId: contactId,
+                value: lead.value,
+                stage: 'qualified',
+                probability: 25
+            });
+
+            if (dealError) throw new Error(dealError);
+
+            toast.success(`✅ Deal "${name}" created!`);
+            loadLeads();
+        } catch (error: any) {
+            toast.error('Failed to create deal: ' + error.message);
+        }
     };
 
     const addToCRM = async (id: string, currentStage: string) => {
@@ -897,19 +1010,39 @@ const SalesAgent: React.FC = () => {
                                                                         </button>
                                                                         <button
                                                                             onClick={() => {
-                                                                                // Navigate to deals with lead pre-selected
-                                                                                window.location.href = `/dashboard/deals?leadId=${lead.id}`;
+                                                                                handleCreateDeal(lead);
                                                                             }}
                                                                             className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
                                                                         >
-                                                                            <UserPlus className="w-3 h-3 text-blue-400" />
+                                                                            <Zap className="w-3 h-3 text-blue-400" />
                                                                             Create Deal
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleCreateProject(lead)}
+                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
+                                                                        >
+                                                                            <Layout className="w-3 h-3 text-teal-400" />
+                                                                            Create Project
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleCreateTask(lead)}
+                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
+                                                                        >
+                                                                            <CheckCircle2 className="w-3 h-3 text-yellow-400" />
+                                                                            Create Task
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleEnrich(lead.id)}
+                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
+                                                                        >
+                                                                            <Bot className="w-3 h-3 text-purple-400" />
+                                                                            AI Research
                                                                         </button>
                                                                         <button
                                                                             onClick={() => setSelectedLeadForDetail(lead)}
                                                                             className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
                                                                         >
-                                                                            <CheckCircle2 className="w-3 h-3 text-purple-400" />
+                                                                            <Database className="w-3 h-3 text-slate-400" />
                                                                             Manage Lead
                                                                         </button>
                                                                         <button

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckSquare, Calendar, Clock, Plus, ArrowRight, Upload, Phone, Mail, Globe, MapPin, User, FileText, Send, Bot, History as HistoryIcon } from 'lucide-react';
+import { Calendar, Clock, Plus, Phone, Mail, Globe, MapPin, User, Bot, MessageSquare, Save, UserPlus, CheckCircle2, Zap, Layout, Send, CheckSquare, ArrowRight, History } from 'lucide-react';
 import { Modal, Button, Input, Card, Badge } from '../../ui/UIComponents';
 import { Lead, leadService } from '../../../services/leadService';
 import { taskService, Task } from '../../../services/taskService';
 import { calendarService, CalendarEvent } from '../../../services/calendarService';
 import { dealService } from '../../../services/dealService';
 import { contactService } from '../../../services/contactService';
+import { projectService } from '../../../services/projectService';
 import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -40,6 +41,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
     // Notes State
     const [leadNotes, setLeadNotes] = useState(lead.notes || '');
     const [isSavingNotes, setIsSavingNotes] = useState(false);
+    const [isEnriching, setIsEnriching] = useState(false);
 
     useEffect(() => {
         if (isOpen && lead.id) {
@@ -142,10 +144,9 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
         }
     };
 
-    const handleConvert = async () => {
+    const handleConvert = async (dealName: string) => {
         if (!user) return;
-        const name = window.prompt('Enter Deal Name:', lead.businessName);
-        if (!name) return;
+        if (!dealName) return;
 
         try {
             // STEP 1: Convert lead to contact
@@ -160,7 +161,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
 
             // STEP 2: Create deal with the new contact
             const { error: dealError } = await dealService.createDeal(user.id, {
-                name,
+                name: dealName,
                 contactId: contactId, // ✅ FIXED: Now using real contact_id instead of lead.id
                 value: lead.value,
                 stage: 'qualified', // Start as qualified since lead was already qualified
@@ -173,7 +174,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
 
             if (dealError) throw new Error(dealError);
 
-            toast.success(`✅ Lead converted to contact and deal "${name}" created!`);
+            toast.success(`✅ Lead converted to contact and deal "${dealName}" created!`);
 
             // Lead status is already updated by convert_lead_to_contact() function
             if (onLeadUpdate) onLeadUpdate({ ...lead, status: 'converted' });
@@ -202,6 +203,72 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
             toast.error('Failed to save notes');
         } finally {
             setIsSavingNotes(false);
+        }
+    };
+
+    const handleEnrich = async () => {
+        if (!user) return;
+        setIsEnriching(true);
+        try {
+            const { notes, error } = await leadService.enrichLead(lead.id, user.id);
+            if (error) throw new Error(error);
+
+            if (notes) {
+                setLeadNotes(notes);
+                if (onLeadUpdate) onLeadUpdate({ ...lead, notes });
+                toast.success('Business intelligence gathered successfully!');
+                fetchRelatedData();
+            }
+        } catch (error: any) {
+            toast.error('Research failed: ' + error.message);
+        } finally {
+            setIsEnriching(false);
+        }
+    };
+
+    const handleCreateProject = async () => {
+        if (!user) return;
+        const name = window.prompt('Enter Project Name:', `Project: ${lead.businessName}`);
+        if (!name) return;
+
+        try {
+            // STEP 1: Ensure we have a contact
+            const { contactId, error: convertError } = await contactService.convertLeadToContact(lead.id, {
+                createCompany: true,
+                companyName: lead.businessName
+            });
+
+            if (convertError || !contactId) {
+                throw new Error(convertError || 'Failed to prepare contact/company for project');
+            }
+
+            // STEP 2: Create project
+            const { project, error: projectError } = await projectService.createProject({
+                ownerId: user.id,
+                ownerName: user.email?.split('@')[0] || 'User',
+                name,
+                category: 'Client Project',
+                status: 'Active',
+                currentStage: 'Initiation',
+                progress: 0,
+                team: [user.id],
+                description: `Project initialized from lead discovery. \n\nTarget Business: ${lead.businessName}\nIndustry: ${lead.industry}\nIntelligence: ${lead.notes || 'None'}`,
+                clientId: contactId, // Link to the contact
+                contractStatus: 'None',
+                startDate: new Date().toISOString().split('T')[0]
+            });
+
+            if (projectError) throw new Error(projectError);
+
+            toast.success(`🚀 Project "${name}" initialized successfully!`);
+
+            // Log activity
+            await leadService.addLeadActivity(lead.id, user.id, 'project_created', `Project created: ${name}`, { projectId: project?.id });
+
+            if (onLeadUpdate) onLeadUpdate({ ...lead, status: 'converted' });
+            onClose();
+        } catch (error: any) {
+            toast.error('Failed to create project: ' + error.message);
         }
     };
 
@@ -235,7 +302,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                             <StatusBadge status={lead.status || 'New'} />
                         </div>
                         <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-slate-400">
-                            {lead.industry && <span className="flex items-center gap-1"><FileText className="w-3 h-3" /> {lead.industry}</span>}
+                            {lead.industry && <span className="flex items-center gap-1"><User className="w-3 h-3" /> {lead.industry}</span>}
                             {lead.location && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {lead.location}</span>}
                             {lead.website && (
                                 <a href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-teal-400 transition-colors">
@@ -255,16 +322,50 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                         )}
                         <Button
                             variant="outline"
-                            className="border-slate-600 text-slate-500 cursor-not-allowed flex-1 sm:flex-none"
                             size="sm"
-                            disabled
-                            title="Quote creation will be available in a future update"
+                            onClick={handleEnrich}
+                            isLoading={isEnriching}
+                            className="flex-1 sm:flex-none border-teal-500/30 text-teal-400 hover:bg-teal-500/10"
+                            title="AI Market Intelligence"
                         >
-                            <FileText className="w-4 h-4 sm:mr-2" />
-                            <span className="hidden sm:inline">Create Quote</span>
+                            <Bot className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline text-white">Research</span>
                         </Button>
-                        <Button className="bg-teal-600 hover:bg-teal-500 flex-1 sm:flex-none" size="sm" onClick={handleConvert}>
-                            Convert to Deal
+                        <Button
+                            variant="outline"
+                            className="border-slate-700 text-slate-300 hover:bg-slate-800 flex-1 sm:flex-none"
+                            size="sm"
+                            onClick={() => {
+                                setActiveTab('tasks');
+                                setShowTaskForm(true);
+                            }}
+                            title="Quick Task"
+                        >
+                            <CheckCircle2 className="w-4 h-4 sm:mr-2 text-yellow-500" />
+                            <span className="hidden sm:inline">Task</span>
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="border-slate-700 text-slate-300 hover:bg-slate-800 flex-1 sm:flex-none"
+                            size="sm"
+                            onClick={handleCreateProject}
+                            title="Convert to Project"
+                        >
+                            <Layout className="w-4 h-4 sm:mr-2 text-teal-500" />
+                            <span className="hidden sm:inline">Project</span>
+                        </Button>
+                        <Button
+                            variant="primary"
+                            className="bg-teal-600 hover:bg-teal-500 flex-1 sm:flex-none"
+                            size="sm"
+                            onClick={() => {
+                                const name = window.prompt('Enter Deal Name:', lead.businessName);
+                                if (name) handleConvert(name);
+                            }}
+                            title="Convert to Deal"
+                        >
+                            <Zap className="w-4 h-4 sm:mr-2 text-white" />
+                            <span className="hidden sm:inline">Deal</span>
                         </Button>
                     </div>
                 </div>
@@ -535,7 +636,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                 ))}
                                 {activities.length === 0 && (
                                     <div className="text-center py-12 text-slate-500">
-                                        <HistoryIcon className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                                        <History className="w-12 h-12 mx-auto mb-3 opacity-20" />
                                         <p>No activity recorded yet for this lead.</p>
                                     </div>
                                 )}

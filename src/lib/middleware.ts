@@ -89,13 +89,17 @@ export async function updateSession(request: NextRequest) {
             }
         )
 
+        // OPTIMIZATION: Only fetch user if we strictly need it for server-side redirection.
+        // Currently, redirection is handled client-side or commented out, so we skip this to save ~500ms-2s of TTFB.
+        /*
         const {
             data: { user },
         } = await supabase.auth.getUser()
 
-        // if (request.nextUrl.pathname.startsWith('/dashboard') && !user) {
-        //     return NextResponse.redirect(new URL('/', request.url))
-        // }
+        if (request.nextUrl.pathname.startsWith('/dashboard') && !user) {
+            return NextResponse.redirect(new URL('/', request.url))
+        }
+        */
     } catch (e) {
         // Catch any other errors (e.g. Supabase connection issues) to prevent 500s
         console.error('Middleware Logic Error:', e);

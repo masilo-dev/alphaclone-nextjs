@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
 import { fileUploadService } from './fileUploadService';
+import { enrichLeadData } from './unifiedAIService';
 
 export interface Lead {
     id: string;
@@ -458,6 +459,34 @@ export const leadService = {
         } catch (err: any) {
             console.error('Error adding lead activity:', err);
             return { error: err.message };
+        }
+    },
+
+    /**
+     * Enrich a lead with AI-powered business intelligence
+     */
+    async enrichLead(id: string, userId: string): Promise<{ notes: string | null; error: string | null }> {
+        try {
+            // 1. Get lead data
+            const { lead, error: getError } = await this.getLeadById(id);
+            if (getError || !lead) throw new Error(getError || 'Lead not found');
+
+            // 2. Call AI service
+            const intelligence = await enrichLeadData(lead);
+
+            // 3. Update lead notes with intelligence
+            const { error: updateError } = await this.updateLead(id, {
+                notes: intelligence
+            });
+            if (updateError) throw new Error(updateError);
+
+            // 4. Log activity
+            await this.addLeadActivity(id, userId, 'enrichment', 'AI Intelligence Gathering Completed');
+
+            return { notes: intelligence, error: null };
+        } catch (err: any) {
+            console.error('Error enriching lead:', err);
+            return { notes: null, error: err.message };
         }
     }
 };

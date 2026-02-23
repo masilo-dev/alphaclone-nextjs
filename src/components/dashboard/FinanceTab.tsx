@@ -378,17 +378,18 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
 
     return (
         <div className="space-y-6 animate-fade-in">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                     <CreditCard className="w-6 h-6 text-teal-400" /> Financial Center
                 </h2>
                 {subTab !== 'subscription' && (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                         <Button
                             variant="secondary"
                             onClick={() => handleExport('pdf', 'revenue')}
                             isLoading={isExporting}
                             icon={<FileDown className="w-4 h-4" />}
+                            className="flex-1 sm:flex-none text-xs sm:text-sm py-1.5 px-3 h-10"
                         >
                             Export PDF
                         </Button>
@@ -397,6 +398,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                             onClick={() => handleExport('xlsx', 'revenue')}
                             isLoading={isExporting}
                             icon={<Download className="w-4 h-4" />}
+                            className="flex-1 sm:flex-none text-xs sm:text-sm py-1.5 px-3 h-10"
                         >
                             Export Excel
                         </Button>
@@ -406,11 +408,19 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                 onClick={handleGeneratePnL}
                                 isLoading={isGeneratingPnL}
                                 icon={<FileDown className="w-4 h-4" />}
+                                className="flex-1 sm:flex-none text-xs sm:text-sm py-1.5 px-3 h-10"
                             >
                                 P&L Report
                             </Button>
                         )}
-                        {isAdmin && <Button onClick={onCreateInvoice}>Create Invoice</Button>}
+                        {isAdmin && (
+                            <Button
+                                onClick={onCreateInvoice}
+                                className="flex-1 sm:flex-none text-xs sm:text-sm py-1.5 px-3 h-10"
+                            >
+                                Create Invoice
+                            </Button>
+                        )}
                     </div>
                 )}
             </div>

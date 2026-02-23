@@ -169,6 +169,28 @@ export const generateOutreachMessage = async (lead: any) => {
 };
 
 /**
+ * Perform deep business research/enrichment using AI
+ */
+export const enrichLeadData = async (lead: any): Promise<string> => {
+    const prompt = `Perform a deep business research analysis for the following company:
+    Name: ${lead.businessName}
+    Industry: ${lead.industry}
+    Location: ${lead.location}
+    Website: ${lead.website || 'N/A'}
+
+    Analyze and provide a concise, high-value summary (max 150 words) including:
+    1. Likely Technology Stack (based on industry/segment)
+    2. Primary Operational Pain Points for this specific type of business
+    3. Growth Opportunities through Automation or AI
+    4. Estimated Business Maturity/Size category
+
+    Format the output as a clean, professional intelligence report for a sales agent. Use bullet points where appropriate.`;
+
+    const { text } = await generateText(prompt, 800);
+    return text || "Intelligence gathering failed. Please try again later.";
+};
+
+/**
  * Generate leads using Manus AI (premium lead enrichment)
  */
 export const generateLeadsWithManus = async (industry: string, location: string) => {

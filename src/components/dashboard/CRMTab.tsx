@@ -67,7 +67,7 @@ interface CRMTabProps {
 
 const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
     const { currentTenant: tenant } = useTenant();
-    const [searchTerm, setSearchQuery] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
     const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -89,13 +89,12 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
         limit: 50
     });
 
-    // Form Stats
     const [formData, setFormData] = useState<Partial<BusinessClient>>({
         name: '',
         email: '',
         phone: '',
         salesStage: 'lead',
-        value: 0,
+        value: undefined,
         description: '',
         industry: '',
         location: ''
@@ -107,7 +106,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
             email: client.email || '',
             phone: client.phone || '',
             salesStage: client.salesStage,
-            value: client.value || 0,
+            value: client.value,
             description: client.description || '',
             industry: client.industry || '',
             location: client.location || ''
@@ -191,7 +190,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
         <div className="h-full flex flex-col space-y-4 md:space-y-6">
             {/* Header */}
             <div className={`flex flex-col lg:flex-row lg:items-center justify-between gap-4 ${selectedClient ? 'hidden lg:flex' : 'flex'}`}>
-                <div>
+                <div className="flex-1">
                     <h1 className="text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-3">
                         <Briefcase className="w-6 h-6 md:w-8 md:h-8 text-teal-400" />
                         Client Relations
@@ -201,31 +200,31 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                     </h1>
                     <p className="text-slate-400 text-xs md:text-sm mt-1">Manage leads, prospects, and customer relationships</p>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-2">
-                    <div className="relative flex-1 sm:flex-none">
+                <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                    <div className="relative flex-1 lg:flex-none">
                         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                         <input
                             type="text"
                             placeholder="Search clients..."
                             value={searchTerm}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9 pr-4 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm text-slate-300 focus:outline-none focus:border-teal-500 transition-colors w-full sm:w-64"
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-9 pr-4 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm text-slate-300 focus:outline-none focus:border-teal-500 transition-colors w-full lg:w-64"
                         />
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         <Button
                             onClick={() => setShowLeadImportModal(true)}
                             variant="secondary"
                             icon={<Users className="w-4 h-4" />}
-                            className="flex-1 sm:flex-none"
+                            className="flex-1 sm:flex-none text-xs sm:text-sm h-10 px-3"
                         >
-                            Import from Leads
+                            Import Leads
                         </Button>
                         <Button
                             onClick={() => setShowImportModal(true)}
                             variant="secondary"
                             icon={<Upload className="w-4 h-4" />}
-                            className="flex-1 sm:flex-none"
+                            className="flex-1 sm:flex-none text-xs sm:text-sm h-10 px-3"
                         >
                             Import CSV
                         </Button>
@@ -233,7 +232,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                             onClick={() => setShowAddModal(true)}
                             icon={<Plus className="w-4 h-4" />}
                             variant="primary"
-                            className="flex-1 sm:flex-none"
+                            className="flex-1 sm:flex-none text-xs sm:text-sm h-10 px-3"
                         >
                             Add Client
                         </Button>
@@ -488,8 +487,9 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                         <Input
                             label="Value ($)"
                             type="number"
-                            value={formData.value ?? ''}
-                            onChange={(e) => setFormData({ ...formData, value: e.target.value === '' ? 0 : (parseFloat(e.target.value) || 0) })}
+                            placeholder="0.00"
+                            value={formData.value === undefined ? '' : formData.value}
+                            onChange={(e) => setFormData({ ...formData, value: e.target.value === '' ? undefined : parseFloat(e.target.value) })}
                         />
                     </div>
                     <Input
@@ -558,8 +558,9 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                         <Input
                             label="Value ($)"
                             type="number"
-                            value={formData.value ?? ''}
-                            onChange={(e) => setFormData({ ...formData, value: e.target.value === '' ? 0 : (parseFloat(e.target.value) || 0) })}
+                            placeholder="0.00"
+                            value={formData.value === undefined ? '' : formData.value}
+                            onChange={(e) => setFormData({ ...formData, value: e.target.value === '' ? undefined : parseFloat(e.target.value) })}
                         />
                     </div>
                     <Input

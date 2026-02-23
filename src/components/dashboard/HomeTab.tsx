@@ -13,6 +13,7 @@ interface HomeTabProps {
     isLoadingProjects: boolean;
     updateProjectStage: (id: string, stage: any) => void;
     STAGES: string[];
+    onProjectClick: (id: string) => void;
 }
 
 const HomeTab: React.FC<HomeTabProps> = ({
@@ -21,7 +22,8 @@ const HomeTab: React.FC<HomeTabProps> = ({
     filteredProjects,
     isLoadingProjects,
     updateProjectStage,
-    STAGES
+    STAGES,
+    onProjectClick
 }) => {
     const router = useRouter();
 
@@ -90,16 +92,15 @@ const HomeTab: React.FC<HomeTabProps> = ({
                                     </thead>
                                     <tbody className="divide-y divide-slate-700">
                                         {filteredProjects.map((p) => (
-                                            <tr key={p.id} className="hover:bg-slate-800/40 transition-colors cursor-pointer group">
-                                                <td className="px-4 md:px-6 py-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-lg bg-slate-800 overflow-hidden border border-slate-600 group-hover:border-teal-500/50 transition-colors">
-                                                            {p.image && <img src={p.image} className="w-full h-full object-cover" alt={p.name} />}
-                                                        </div>
-                                                        <div>
-                                                            <div className="font-medium text-white group-hover:text-teal-400 transition-colors">{p.name}</div>
-                                                            <div className="text-xs text-slate-400">{p.category}</div>
-                                                        </div>
+                                            <tr
+                                                key={p.id}
+                                                className="group hover:bg-slate-900/40 border-b border-slate-900/50 transition-all cursor-pointer"
+                                                onClick={() => onProjectClick(p.id)}
+                                            >
+                                                <td className="px-6 py-4">
+                                                    <div>
+                                                        <div className="text-sm font-bold text-white group-hover:text-teal-400 transition-colors uppercase tracking-tight">{p.name}</div>
+                                                        <div className="text-[10px] text-slate-500 uppercase font-mono mt-0.5">{p.category}</div>
                                                     </div>
                                                 </td>
                                                 <td className="px-4 md:px-6 py-4">

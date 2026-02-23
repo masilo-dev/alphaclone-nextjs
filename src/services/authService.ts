@@ -69,19 +69,33 @@ export const authService = {
                     .from('profiles')
                     .select('*')
                     .eq('id', data.user.id)
-                    .single();
+                    .maybeSingle();
 
-                if (profileError || !profile) {
+                if (profileError) {
+                    console.error("AuthService: Profile fetch error", profileError);
                     return { user: null, error: 'Failed to fetch user profile' };
                 }
 
-                user = {
-                    id: profile.id,
-                    email: profile.email,
-                    name: profile.name,
-                    role: profile.role,
-                    avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.email}`,
-                };
+                if (!profile) {
+                    // If no profile yet, don't fail immediately, try to return a basic user 
+                    // and let background sync handle creation
+                    console.warn("AuthService: No profile found for user during sign in", data.user.id);
+                    user = {
+                        id: data.user.id,
+                        email: data.user.email || '',
+                        name: metadata?.name || data.user.email?.split('@')[0] || 'User',
+                        role: 'client', // Default fallback
+                        avatar: metadata?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.user.email}`,
+                    };
+                } else {
+                    user = {
+                        id: profile.id,
+                        email: profile.email,
+                        name: profile.name,
+                        role: profile.role,
+                        avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.email}`,
+                    };
+                }
 
                 // Update metadata for next login (optimization)
                 supabase.auth.updateUser({
@@ -320,7 +334,7 @@ export const authService = {
             // If we're on the dashboard, we also benefit from a small retry if session is initially missing
             const isDashboard = typeof window !== 'undefined' && window.location.pathname.startsWith('/dashboard');
 
-            const maxAttempts = isAuthCallback ? 5 : (isDashboard ? 3 : 1);
+            const maxAttempts = isAuthCallback ? 3 : 1; // Only retry during explicit auth callbacks
 
             for (let i = 0; i < maxAttempts; i++) {
                 const { data: { session: s }, error } = await supabase.auth.getSession();
@@ -330,9 +344,9 @@ export const authService = {
                     break;
                 }
                 lastError = error;
-                if ((isAuthCallback || isDashboard) && i < maxAttempts - 1) {
-                    const delay = isAuthCallback ? 1000 : 1500;
-                    console.log(`AuthService: Retrying session retrieval (${i + 1}/${maxAttempts}) in ${delay}ms...`);
+                if (isAuthCallback && i < maxAttempts - 1) {
+                    const delay = 800;
+                    console.log(`AuthService: Retrying session retrieval during callback (${i + 1}/${maxAttempts}) in ${delay}ms...`);
                     await new Promise(r => setTimeout(r, delay));
                 }
             }
@@ -381,7 +395,7 @@ export const authService = {
                         .from('profiles')
                         .select('*, account_status, scheduled_deletion_at')
                         .eq('id', session.user.id)
-                        .single();
+                        .maybeSingle();
 
                     if (!profileError && p) {
                         profile = p;

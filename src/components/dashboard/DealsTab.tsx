@@ -324,7 +324,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
     return (
         <div className="space-y-6 animate-fade-in min-h-0">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <div>
+                <div className="flex-1">
                     <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-violet-500 flex items-center gap-3">
                         <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-teal-400" /> Sales Pipeline
                     </h2>
@@ -333,16 +333,19 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                     </p>
                 </div>
                 {(userRole === 'admin' || userRole === 'tenant_admin') && (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                         <Button
                             variant="outline"
                             onClick={() => setShowCreateFromLeadModal(true)}
-                            className="border-teal-500/50 text-teal-400 hover:bg-teal-500/10"
+                            className="flex-1 sm:flex-none border-teal-500/50 text-teal-400 hover:bg-teal-500/10 text-xs sm:text-sm h-10 px-3"
                         >
-                            <UserPlus className="w-5 h-5 mr-2" /> From Lead
+                            <UserPlus className="w-4 h-4 mr-2" /> From Lead
                         </Button>
-                        <Button onClick={() => setShowCreateModal(true)}>
-                            <Plus className="w-5 h-5 mr-2" /> Create Deal
+                        <Button
+                            onClick={() => setShowCreateModal(true)}
+                            className="flex-1 sm:flex-none text-xs sm:text-sm h-10 px-3"
+                        >
+                            <Plus className="w-4 h-4 mr-2" /> Create Deal
                         </Button>
                     </div>
                 )}

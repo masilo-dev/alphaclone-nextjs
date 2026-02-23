@@ -533,9 +533,9 @@ Keep it concise, professional, and personalized to their business context. Retur
                                 )}
 
                                 {!loadingConversation && conversation.length > 0 && (
-                                    <div className="flex-shrink-0 bg-slate-900/60 border border-slate-800 rounded-xl p-3 text-center">
+                                    <div className="flex-shrink-0 bg-slate-900/60 border border-slate-800 rounded-xl p-4 text-center">
                                         <p className="text-xs text-slate-500 leading-relaxed">
-                                            🔒 <span className="font-bold text-slate-400">AlphaClone does not delete your data.</span> To delete a conversation, please go to your <span className="font-bold text-slate-300">Gmail app</span> and delete it there.
+                                            <span className="text-slate-400 font-bold">🔒 Privacy Notice:</span> AlphaClone does <span className="font-bold text-slate-300">not</span> delete or modify your Gmail data. To delete a conversation, please do so directly in your <span className="font-bold text-slate-300">Gmail app</span>.
                                         </p>
                                     </div>
                                 )}

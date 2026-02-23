@@ -51,6 +51,7 @@ export interface CreateTaskInput {
     relatedToDeal?: string;
     relatedToLead?: string;
     priority?: 'low' | 'medium' | 'high' | 'urgent';
+    status?: 'ideas' | 'todo' | 'in_progress' | 'review' | 'completed' | 'cancelled';
     dueDate?: string;
     startDate?: string;
     estimatedHours?: number;
@@ -230,6 +231,7 @@ export const taskService = {
                     related_to_deal: taskData.relatedToDeal,
                     related_to_lead: taskData.relatedToLead,
                     priority: taskData.priority || 'medium',
+                    status: taskData.status || 'todo',
                     due_date: taskData.dueDate,
                     start_date: taskData.startDate,
                     estimated_hours: taskData.estimatedHours,

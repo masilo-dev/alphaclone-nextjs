@@ -60,10 +60,14 @@ export const userService = {
                 .from('profiles')
                 .select('*')
                 .eq('id', userId)
-                .single();
+                .maybeSingle();
 
             if (error) {
                 return { user: null, error: error.message };
+            }
+
+            if (!data) {
+                return { user: null, error: null };
             }
 
             const user: User = {
@@ -179,7 +183,7 @@ export const userService = {
                 .select('id')
                 .eq('role', 'admin')
                 .limit(1)
-                .single();
+                .maybeSingle();
 
             if (error) return { adminId: null, error: error.message };
             return { adminId: data.id, error: null };
@@ -252,7 +256,7 @@ export const userService = {
                 .from('profiles')
                 .select('*')
                 .eq('id', authUser.id)
-                .single();
+                .maybeSingle();
 
             if (existingProfile) {
                 // Profile exists, ensure metadata matches

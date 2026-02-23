@@ -566,59 +566,67 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
 
     return (
         <div className="space-y-6 animate-fade-in h-full flex flex-col">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <div>
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+                <div className="flex-1">
                     <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-violet-500 flex items-center gap-3">
                         <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-teal-400" /> Quotes & Proposals
                     </h2>
                     <p className="text-slate-400 mt-1 text-xs sm:text-sm">{quotes.length} quotes found</p>
                 </div>
-                <div className="flex gap-4 flex-wrap items-center">
-                    {/* Storage Usage Indicator */}
-                    <div className="hidden sm:flex items-center gap-3 bg-slate-900/50 border border-white/5 px-3 py-1.5 rounded-xl">
-                        <div className="text-left min-w-[80px]">
-                            <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Storage</div>
-                            <div className={`text-[10px] font-bold mt-1 ${storageUsage > MAX_STORAGE * 0.9 ? 'text-red-400' : 'text-teal-400'}`}>
-                                {(storageUsage / 1024 / 1024).toFixed(1)}MB
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
+                    <div className="flex gap-4 flex-wrap items-center w-full sm:w-auto">
+                        {/* Storage Usage Indicator */}
+                        <div className="hidden sm:flex items-center gap-3 bg-slate-900/50 border border-white/5 px-3 py-1.5 rounded-xl">
+                            <div className="text-left min-w-[80px]">
+                                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Storage</div>
+                                <div className={`text-[10px] font-bold mt-1 ${storageUsage > MAX_STORAGE * 0.9 ? 'text-red-400' : 'text-teal-400'}`}>
+                                    {(storageUsage / 1024 / 1024).toFixed(1)}MB
+                                </div>
+                            </div>
+                            <div className="w-16 h-1 bg-slate-950 rounded-full overflow-hidden border border-white/5">
+                                <div
+                                    className={`h-full transition-all duration-1000 ${storageUsage > MAX_STORAGE * 0.9 ? 'bg-red-500' : 'bg-teal-500'}`}
+                                    style={{ width: `${Math.min((storageUsage / MAX_STORAGE) * 100, 100)}%` }}
+                                ></div>
                             </div>
                         </div>
-                        <div className="w-16 h-1 bg-slate-950 rounded-full overflow-hidden border border-white/5">
-                            <div
-                                className={`h-full transition-all duration-1000 ${storageUsage > MAX_STORAGE * 0.9 ? 'bg-red-500' : 'bg-teal-500'}`}
-                                style={{ width: `${Math.min((storageUsage / MAX_STORAGE) * 100, 100)}%` }}
-                            ></div>
+
+                        <div className="relative flex-1 sm:flex-none">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                            <input
+                                type="text"
+                                placeholder="Search quotes..."
+                                className="w-full sm:w-64 bg-slate-950/50 border border-white/10 rounded-xl py-2 px-10 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
                         </div>
                     </div>
 
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                        <input
-                            type="text"
-                            placeholder="Search quotes..."
-                            className="w-full sm:w-64 bg-slate-950/50 border border-white/10 rounded-xl py-2 px-10 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
+                            {['all', 'draft', 'sent', 'accepted'].map(f => (
+                                <button
+                                    key={f}
+                                    onClick={() => setFilter(f as any)}
+                                    className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter === f ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'bg-slate-950 text-slate-500 hover:text-white border border-white/5'}`}
+                                >
+                                    {f}
+                                </button>
+                            ))}
+                        </div>
+
+                        {(userRole === 'admin' || userRole === 'tenant_admin') && (
+                            <Button
+                                onClick={() => setShowCreateModal(true)}
+                                className="flex-1 sm:flex-none shadow-lg shadow-teal-500/20 h-10 px-4"
+                            >
+                                <Plus className="w-4 h-4 mr-2" /> Create
+                            </Button>
+                        )}
                     </div>
                 </div>
-
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0">
-                    {['all', 'draft', 'sent', 'accepted'].map(f => (
-                        <button
-                            key={f}
-                            onClick={() => setFilter(f as any)}
-                            className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter === f ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'bg-slate-950 text-slate-500 hover:text-white border border-white/5'}`}
-                        >
-                            {f}
-                        </button>
-                    ))}
-                </div>
-
-                {(userRole === 'admin' || userRole === 'tenant_admin') && (
-                    <Button onClick={() => setShowCreateModal(true)} className="shadow-lg shadow-teal-500/20">
-                        <Plus className="w-5 h-5 mr-2" /> Create
-                    </Button>
-                )}
             </div>
 
             {loading ? (

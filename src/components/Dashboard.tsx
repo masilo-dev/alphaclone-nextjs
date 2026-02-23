@@ -1405,6 +1405,17 @@ const Dashboard: React.FC<DashboardProps> = ({
             isLoadingProjects={isLoadingProjects}
             updateProjectStage={updateProjectStage}
             STAGES={STAGES}
+            onProjectClick={(id) => {
+              const project = filteredProjects.find(p => p.id === id);
+              if (project) {
+                if (user.role === 'admin') {
+                  setSelectedProjectForMilestones(project);
+                  setMilestoneModalOpen(true);
+                } else {
+                  router.push('/dashboard/projects');
+                }
+              }
+            }}
           />
         );
     }

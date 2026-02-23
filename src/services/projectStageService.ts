@@ -166,7 +166,7 @@ class ProjectStageService {
                 return { success: false, error: 'Project not found' };
             }
 
-            const currentStage = project.current_stage || 'Discovery';
+            const currentStage = project.current_stage || 'Initiation';
 
             // Validate transition
             const transition = this.validateTransition(currentStage, newStage, project);

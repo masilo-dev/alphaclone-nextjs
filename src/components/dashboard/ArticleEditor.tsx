@@ -1,26 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../../lib/supabase';
-import { Plus, Edit, Trash2, Eye, EyeOff, Save, X } from 'lucide-react';
-
-interface Article {
-    id: string;
-    title: string;
-    slug: string;
-    meta_description: string;
-    meta_keywords: string[];
-    content: string;
-    category: string;
-    tags: string[];
-    published: boolean;
-    views: number;
-    created_at: string;
-}
+import { Plus, Edit, Trash2, Eye, EyeOff, Save, X, Loader2 } from 'lucide-react';
+import { articleService, Article } from '../../services/articleService';
+import toast from 'react-hot-toast';
 
 const ArticleEditor: React.FC = () => {
     const [articles, setArticles] = useState<Article[]>([]);
     const [editing, setEditing] = useState<Article | null>(null);
     const [isNew, setIsNew] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
     const emptyArticle: Partial<Article> = {
         title: '',
@@ -34,12 +22,11 @@ const ArticleEditor: React.FC = () => {
     };
 
     const loadArticles = useCallback(async () => {
-        const { data, error } = await supabase
-            .from('seo_articles')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (!error && data) {
+        setLoading(true);
+        const { articles: data, error } = await articleService.getArticles();
+        if (error) {
+            toast.error(`Failed to load articles: ${error}`);
+        } else {
             setArticles(data);
         }
         setLoading(false);
@@ -51,55 +38,44 @@ const ArticleEditor: React.FC = () => {
 
     const handleSave = useCallback(async () => {
         if (!editing) return;
-
-        const articleData = {
-            ...editing,
-            slug: editing.slug || editing.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-        };
-
-        if (isNew) {
-            const { error } = await supabase
-                .from('seo_articles')
-                .insert([articleData]);
-
-            if (!error) {
-                loadArticles();
-                setEditing(null);
-                setIsNew(false);
-            }
-        } else {
-            const { error } = await supabase
-                .from('seo_articles')
-                .update(articleData)
-                .eq('id', editing.id);
-
-            if (!error) {
-                loadArticles();
-                setEditing(null);
-            }
+        if (!editing.title.trim()) {
+            toast.error('Title is required');
+            return;
         }
+
+        setIsSaving(true);
+        const { error } = await articleService.saveArticle(editing, isNew);
+
+        if (error) {
+            toast.error(`Error saving: ${error}`);
+        } else {
+            toast.success(isNew ? 'Article created!' : 'Article updated!');
+            loadArticles();
+            setEditing(null);
+            setIsNew(false);
+        }
+        setIsSaving(false);
     }, [editing, isNew, loadArticles]);
 
     const handleDelete = useCallback(async (id: string) => {
         if (!confirm('Are you sure you want to delete this article?')) return;
 
-        const { error } = await supabase
-            .from('seo_articles')
-            .delete()
-            .eq('id', id);
+        const { error } = await articleService.deleteArticle(id);
 
-        if (!error) {
+        if (error) {
+            toast.error(`Error deleting: ${error}`);
+        } else {
+            toast.success('Article deleted');
             loadArticles();
         }
     }, [loadArticles]);
 
     const togglePublished = useCallback(async (article: Article) => {
-        const { error } = await supabase
-            .from('seo_articles')
-            .update({ published: !article.published })
-            .eq('id', article.id);
+        const { error } = await articleService.togglePublished(article.id, !article.published);
 
-        if (!error) {
+        if (error) {
+            toast.error(`Error toggling status: ${error}`);
+        } else {
             loadArticles();
         }
     }, [loadArticles]);
@@ -118,10 +94,20 @@ const ArticleEditor: React.FC = () => {
                     <div className="flex gap-2">
                         <button
                             onClick={handleSave}
-                            className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600"
+                            disabled={isSaving || !editing.title.trim()}
+                            className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <Save className="w-4 h-4" />
-                            Save
+                            {isSaving ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="w-4 h-4" />
+                                    Save
+                                </>
+                            )}
                         </button>
                         <button
                             onClick={() => {
