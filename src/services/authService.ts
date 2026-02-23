@@ -334,6 +334,7 @@ export const authService = {
             // If we're on the dashboard, we also benefit from a small retry if session is initially missing
             const isDashboard = typeof window !== 'undefined' && window.location.pathname.startsWith('/dashboard');
 
+            console.time('auth:getSession');
             const maxAttempts = isAuthCallback ? 3 : 1; // Only retry during explicit auth callbacks
 
             for (let i = 0; i < maxAttempts; i++) {
@@ -350,6 +351,7 @@ export const authService = {
                     await new Promise(r => setTimeout(r, delay));
                 }
             }
+            console.timeEnd('auth:getSession');
 
             if (lastError) {
                 console.error("AuthService: getSession error", lastError);
@@ -368,6 +370,7 @@ export const authService = {
             });
 
             const startTime = Date.now();
+            console.time('auth:getProfile');
             console.log(`AuthService: Fetching profile for ${session.user.id}...`);
 
             let user: User;
@@ -474,6 +477,7 @@ export const authService = {
                 }
             }
 
+            console.timeEnd('auth:getProfile');
             console.log(`AuthService: Profile fetched in ${Date.now() - startTime}ms. Role: ${user.role}`);
             return { user, error: null };
         } catch (err) {

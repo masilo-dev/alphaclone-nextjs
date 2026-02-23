@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, ReactNod
 import { authService } from '../services/authService';
 import { User, UserRole } from '../types';
 import { AuthChangeEvent } from '@supabase/supabase-js';
+import { ENV } from '@/config/env';
 
 interface AuthContextType {
     user: User | null;
@@ -39,9 +40,14 @@ function readSessionFromStorage(): User | null {
         const allKeys = Object.keys(localStorage);
         const sbKeys = allKeys.filter(k => k.includes('sb-'));
 
+        // Derive Supabase project ID from URL for dynamic cookie discovery
+        const supabaseUrl = ENV.VITE_SUPABASE_URL || '';
+        const projectId = supabaseUrl.split('.')[0].split('//').pop();
+
         console.log('[AuthContext] Debug: Storage Inspection', {
             allKeysCount: allKeys.length,
             sbKeys: sbKeys,
+            projectId,
             cookiesPresent: !!document.cookie,
             url: window.location.href
         });
@@ -61,8 +67,8 @@ function readSessionFromStorage(): User | null {
         // 2. Try Cookies if Local Storage failed (standard SSR behavior / Google Sign-In)
         if (!raw) {
             // Supabase auth cookies follow sb-PROJECT_ID-auth-token
-            // Project ID: ehekzoioqvtweugemktn
-            const targetCookie = 'sb-ehekzoioqvtweugemktn-auth-token';
+            // Derive name dynamicially or fallback to known production ID
+            const targetCookie = projectId ? `sb-${projectId}-auth-token` : 'sb-ehekzoioqvtweugemktn-auth-token';
             raw = getCookie(targetCookie);
 
             if (raw) {
@@ -302,13 +308,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         });
 
-        // Safety net: force stop loading after 12s (increased from 8s for slower production cold starts)
+        // Safety net: force stop loading after 20s (increased from 12s for slower production cold starts)
         const safetyTimeout = setTimeout(() => {
             if (isMounted && loading) {
                 console.warn('[AuthContext] Safety timeout reached, forcing loading to false');
                 setLoading(false);
             }
-        }, 12000);
+        }, 20000);
 
         return () => {
             isMounted = false;
