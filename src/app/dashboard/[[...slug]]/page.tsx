@@ -40,9 +40,9 @@ export default function DashboardPage() {
             );
 
             // Grace period based on probable presence of session. 
-            // In cold-start or high-latency production environments, we give it a lot of time (12s) 
+            // In cold-start or high-latency production environments, we give it a lot of time (20s) 
             // to allow AuthContext to finish its async validation before failing.
-            const timeoutDuration = isAuthCallback ? 15000 : (hasLocalToken ? 12000 : 2500);
+            const timeoutDuration = isAuthCallback ? 20000 : (hasLocalToken ? 20000 : 2500);
 
             console.log(`DashboardPage: User missing, starting grace period of ${timeoutDuration}ms`, { hasLocalToken, isAuthCallback });
 

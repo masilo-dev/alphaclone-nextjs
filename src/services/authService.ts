@@ -376,105 +376,107 @@ export const authService = {
             let user: User;
 
             const metadata = session.user.user_metadata;
+
+            // FAST PATH: If we have basic metadata, return immediately and sync in background
             if (metadata?.name && metadata?.role) {
-                // Fast path: Use cached metadata
-                user = {
+                console.log("AuthService: Fast-path hit (metadata exists)");
+                const fastUser: User = {
                     id: session.user.id,
                     email: session.user.email || '',
                     name: metadata.name,
                     role: metadata.role,
                     avatar: metadata.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
                 };
-            } else {
-                // OPTIMIZATION: Reduced retry loop with transient fallback
-                // We want to fail fast and show the UI, rather than blocking for 10s.
-                let profile = null;
-                let lastError = null;
-                const maxRetries = 3; // Reduced from 10 to 3 for faster load
-                const retryDelay = 500; // Reduced from 1000ms to 500ms
 
-                for (let i = 0; i < maxRetries; i++) {
-                    const { data: p, error: profileError } = await supabase
-                        .from('profiles')
-                        .select('*, account_status, scheduled_deletion_at')
-                        .eq('id', session.user.id)
-                        .maybeSingle();
+                // Sync profile in background to ensure database is up to date
+                supabase.from('profiles').select('name, role, avatar').eq('id', session.user.id).single()
+                    .then(({ data: p }: { data: any }) => {
+                        if (p && (p.name !== fastUser.name || p.role !== fastUser.role)) {
+                            console.log("AuthService: Background sync found profile update needed");
+                        }
+                    }).catch(() => { });
 
-                    if (!profileError && p) {
-                        profile = p;
-                        break;
-                    }
+                console.timeEnd('auth:getProfile');
+                return { user: fastUser, error: null };
+            }
 
-                    lastError = profileError;
+            // If metadata is incomplete, we still want to avoid blocking for too long
+            console.log("AuthService: Metadata incomplete, entering fallback fetch/transient mode");
 
-                    // If we get a 403, it's a structural RLS issue, retrying won't help
-                    if (profileError?.code === 'PGRST301' || profileError?.message?.includes('403')) {
-                        console.error('AuthService: Profile 403 Forbidden', profileError);
-                        break;
-                    }
+            let profile = null;
+            lastError = null;
+            const maxRetries = 3;
+            const retryDelay = 500;
 
-                    // Only log if it's not the last retry
-                    if (i < maxRetries - 1) {
-                        console.log(`AuthService: Profile sync retry ${i + 1}/${maxRetries}...`);
-                        await new Promise(resolve => setTimeout(resolve, retryDelay));
-                    }
+            for (let i = 0; i < maxRetries; i++) {
+                const { data: p, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('*, account_status, scheduled_deletion_at')
+                    .eq('id', session.user.id)
+                    .maybeSingle();
+
+                if (!profileError && p) {
+                    profile = p;
+                    break;
                 }
 
-                if (!profile) {
-                    // EMERGENCY FALLBACK: If we're authenticated but the profile is still missing 
-                    // (e.g. trigger failed or network timeout), we create a transient user 
-                    // instead of returning null and triggering a redirect loop.
-                    console.warn("AuthService: Profile retrieval failed. Using transient profile.", lastError);
+                lastError = profileError;
 
-                    // SMART DEFAULT: If metadata role is missing (typical for new Google sign-ups), 
-                    // assume they are a new Tenant Admin for their own business.
-                    // If they are actually an existing client with missing metadata, the background sync below will fix it next time.
-                    const fallbackRole: UserRole = (session.user.user_metadata.role as UserRole) || 'tenant_admin';
-
-                    user = {
-                        id: session.user.id,
-                        email: session.user.email || '',
-                        name: session.user.user_metadata.full_name || session.user.email?.split('@')[0] || 'User',
-                        role: fallbackRole,
-                        avatar: session.user.user_metadata.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.id}`,
-                    };
-
-                    // Trigger background profile creation/sync to ensure consistency
-                    // This handles the case where the trigger might have been slow or failed
-                    import('./userService').then(({ userService }) => {
-                        userService.syncUserProfile(session.user).catch(err =>
-                            console.warn('Background profile sync failed:', err)
-                        );
-                    });
-
-                    return { user, error: null };
+                if (profileError?.code === 'PGRST301' || profileError?.message?.includes('403')) {
+                    console.error('AuthService: Profile 403 Forbidden', profileError);
+                    break;
                 }
 
-                console.log("AuthService: Profile retrieved successfully", profile.role);
+                if (i < maxRetries - 1) {
+                    console.log(`AuthService: Profile sync retry ${i + 1}/${maxRetries}...`);
+                    await new Promise(resolve => setTimeout(resolve, retryDelay));
+                }
+            }
+
+            if (!profile) {
+                console.warn("AuthService: Profile retrieval failed. Using transient profile.", lastError);
+                const fallbackRole: UserRole = (session.user.user_metadata.role as UserRole) || 'tenant_admin';
 
                 user = {
-                    id: profile.id,
-                    email: profile.email,
-                    name: profile.name,
-                    role: profile.role,
-                    avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.email}`,
+                    id: session.user.id,
+                    email: session.user.email || '',
+                    name: session.user.user_metadata.full_name || session.user.email?.split('@')[0] || 'User',
+                    role: fallbackRole,
+                    avatar: session.user.user_metadata.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.id}`,
                 };
 
-                // Update metadata for next time (non-blocking optimization)
-                // PREVENT INFINITE LOOP: Only update if metadata actually changed
-                if (
-                    session.user.user_metadata.name !== user.name ||
-                    session.user.user_metadata.role !== user.role ||
-                    session.user.user_metadata.avatar !== user.avatar
-                ) {
-                    supabase.auth.updateUser({
-                        data: {
-                            name: user.name,
-                            role: user.role,
-                            avatar: user.avatar,
-                        }
-                    }).catch(() => { }); // Silent fail
-                }
+                import('./userService').then(({ userService }) => {
+                    userService.syncUserProfile(session.user).catch(err =>
+                        console.warn('Background profile sync failed:', err)
+                    );
+                });
+
+                console.timeEnd('auth:getProfile');
+                return { user, error: null };
+            }
+
+            console.log("AuthService: Profile retrieved successfully", profile.role);
+
+            user = {
+                id: profile.id,
+                email: profile.email,
+                name: profile.name,
+                role: profile.role,
+                avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.email}`,
+            };
+
+            if (
+                session.user.user_metadata.name !== user.name ||
+                session.user.user_metadata.role !== user.role ||
+                session.user.user_metadata.avatar !== user.avatar
+            ) {
+                supabase.auth.updateUser({
+                    data: {
+                        name: user.name,
+                        role: user.role,
+                        avatar: user.avatar,
+                    }
+                }).catch(() => { });
             }
 
             console.timeEnd('auth:getProfile');

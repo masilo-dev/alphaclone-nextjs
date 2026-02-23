@@ -75,14 +75,20 @@ function readSessionFromStorage(): User | null {
                 source = 'cookie';
                 console.log('[AuthContext] Debug: Found session in target cookie', { targetCookie });
             } else {
-                // Fallback: check for any cookie that looks like an auth token (legacy or different project)
-                const allCookies = document.cookie.split(';').map(c => c.trim().split('=')[0]);
-                const cookieKey = allCookies.find(k => k.includes('auth-token') || k.startsWith('sb-'));
+                // FALLBACK: Generic discovery across any cookie mentioning auth-token
+                if (typeof document !== 'undefined' && document.cookie) {
+                    const allCookies = document.cookie.split(';').map(c => c.trim().split('=')[0]);
+                    const cookieKey = allCookies.find(k =>
+                        (k.includes('auth-token') || k.startsWith('sb-')) &&
+                        !k.includes('verifier') && // Avoid verifier cookies
+                        !k.includes('pkce') // Avoid PKCE cookies
+                    );
 
-                if (cookieKey) {
-                    raw = getCookie(cookieKey);
-                    source = 'cookie';
-                    console.log('[AuthContext] Debug: Found potential session in generic cookie', { cookieKey });
+                    if (cookieKey) {
+                        raw = getCookie(cookieKey);
+                        source = 'cookie';
+                        console.log('[AuthContext] Debug: Found session in generic cookie discovery', { cookieKey });
+                    }
                 }
             }
         }
@@ -282,11 +288,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         };
 
-        initSession();
-
-        // STEP 3: Subscribe to auth state changes
-        const { data: { subscription } } = authService.onAuthStateChange((u: User | null, event?: AuthChangeEvent) => {
+        // STEP 2: Async validation / Subscriber
+        // We rely on onAuthStateChange for the initial session event
+        const { data: { subscription } } = authService.onAuthStateChange(async (u: User | null, event?: AuthChangeEvent) => {
             if (!isMounted) return;
+
+            console.log(`[AuthContext] Auth State Event: ${event}`, { hasUser: !!u });
 
             if (u) {
                 setSafeUser(u);
@@ -296,17 +303,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setSafeUser(null);
                 setError(null);
                 setLoading(false);
-            } else if (event === 'INITIAL_SESSION' && !u) {
-                // Let initSession() handle this case
-                return;
+            } else if (event === 'INITIAL_SESSION') {
+                // Wait for the authService.getCurrentUser() call inside onAuthStateChange to resolve
+                // but if u is null here and it's INITIAL_SESSION, we might want to trigger a manual init 
+                // ONLY if we haven't found a user yet.
+                if (!u && !latestUserRef.current) {
+                    console.log('[AuthContext] INITIAL_SESSION returned no user, performing manual validation...');
+                    initSession();
+                }
             } else if (event === 'TOKEN_REFRESHED') {
-                // Don't clear user on token refresh
                 return;
             } else if (!u) {
                 setSafeUser(null);
                 setLoading(false);
             }
         });
+
+        // Optional: Manual init as a backup to onAuthStateChange
+        // Some browser environments or SDK versions don't reliably fire INITIAL_SESSION
+        const runBackupInit = setTimeout(() => {
+            if (isMounted && !latestUserRef.current && loading) {
+                console.log('[AuthContext] Backup init triggered...');
+                initSession();
+            }
+        }, 1500);
 
         // Safety net: force stop loading after 20s (increased from 12s for slower production cold starts)
         const safetyTimeout = setTimeout(() => {
@@ -320,6 +340,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             isMounted = false;
             subscription.unsubscribe();
             clearTimeout(safetyTimeout);
+            clearTimeout(runBackupInit);
         };
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
