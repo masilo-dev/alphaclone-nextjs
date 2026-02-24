@@ -28,12 +28,23 @@ export async function POST(req: Request) {
             .eq('is_permanent', true)
             .single();
 
+        // 1.5 Fetch user's tenant to check for a slug
+        const { data: tenant } = await supabase
+            .from('tenants')
+            .select('slug')
+            .eq('admin_user_id', userId)
+            .is('deletion_pending_at', null)
+            .single();
+
+        const slug = tenant?.slug;
+
         if (existingRoom) {
             return NextResponse.json({
                 id: existingRoom.id,
                 name: existingRoom.daily_room_name,
                 url: existingRoom.daily_room_url,
-                title: existingRoom.title
+                title: existingRoom.title,
+                slug: slug // Return the slug if available
             });
         }
 
@@ -92,7 +103,8 @@ export async function POST(req: Request) {
             id: newDbRoom.id,
             name: newDbRoom.daily_room_name,
             url: newDbRoom.daily_room_url,
-            title: newDbRoom.title
+            title: newDbRoom.title,
+            slug: slug // Return the slug if available
         });
 
     } catch (error) {

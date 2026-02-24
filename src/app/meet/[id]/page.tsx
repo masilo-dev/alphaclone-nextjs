@@ -17,8 +17,8 @@ export default function MeetPage() {
     const [loading, setLoading] = useState(true);
     const [callId, setCallId] = useState<string | null>(null);
 
-    // This ID is the database UUID, NOT the Daily room name
-    const meetingId = params.id as string;
+    // This ID is the database UUID or the business slug
+    const meetingIdOrSlug = params.id as string;
 
     // Use lazy state to generate a stable guest ID once
     const [guestId] = React.useState(() => `guest-${Date.now()}`);
@@ -38,9 +38,51 @@ export default function MeetPage() {
 
         const connectToMeeting = async () => {
             try {
+                // Utility to check if string is a valid UUID
+                const isUUID = (str: string) => {
+                    const regexExp = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
+                    return regexExp.test(str);
+                };
+
+                let targetMeetingId = meetingIdOrSlug;
+
+                // If it's not a UUID, treat it as a slug and look up the tenant
+                if (!isUUID(meetingIdOrSlug)) {
+                    // Try to resolve the tenant by slug
+                    const { data: tenant, error: tenantError } = await supabase
+                        .from('tenants')
+                        .select('admin_user_id')
+                        .eq('slug', meetingIdOrSlug)
+                        .is('deletion_pending_at', null)
+                        .single();
+
+                    if (tenantError || !tenant) {
+                        setError('Business not found or is no longer active.');
+                        setLoading(false);
+                        return;
+                    }
+
+                    // Look up the permanent room for this admin user
+                    const { data: permanentRooms, error: roomError } = await supabase
+                        .from('video_calls')
+                        .select('id')
+                        .eq('host_id', tenant.admin_user_id)
+                        .eq('is_permanent', true)
+                        .eq('status', 'active');
+
+                    if (roomError || !permanentRooms || permanentRooms.length === 0) {
+                        setError('This business has not set up a permanent meeting room yet.');
+                        setLoading(false);
+                        return;
+                    }
+
+                    // Use the first active permanent room found
+                    targetMeetingId = permanentRooms[0].id;
+                }
+
                 // 1. Fetch meeting details from OUR database
                 // This ensures we control access, status, and logic
-                const { call, error: fetchError } = await dailyService.getVideoCall(meetingId);
+                const { call, error: fetchError } = await dailyService.getVideoCall(targetMeetingId);
 
                 if (fetchError || !call) {
                     setError('Meeting not found. Please check the link and try again.');
@@ -60,7 +102,7 @@ export default function MeetPage() {
                 // 3. AUTH CHECK: Is it public or does the user have access?
                 if (!call.is_public && !user) {
                     // Redirect to login, then back here
-                    router.push(`/login?redirect=/meet/${meetingId}`);
+                    router.push(`/login?redirect=/meet/${meetingIdOrSlug}`);
                     return;
                 }
 
@@ -86,7 +128,7 @@ export default function MeetPage() {
         };
 
         connectToMeeting();
-    }, [meetingId, authLoading, user, router]);
+    }, [meetingIdOrSlug, authLoading, user, router]);
 
     if (loading || authLoading) {
         return (

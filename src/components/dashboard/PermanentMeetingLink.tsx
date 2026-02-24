@@ -54,7 +54,10 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoi
             }
 
             const data = await response.json();
-            const shareLink = `${window.location.origin}/meet/${data.id}`;
+
+            // Prefer the slug for the link, fallback to ID
+            const linkIdentifier = data.slug ? data.slug : data.id;
+            const shareLink = `${window.location.origin}/meet/${linkIdentifier}`;
 
             // Single state update with all data
             setRoomData({
