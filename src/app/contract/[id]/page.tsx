@@ -18,6 +18,7 @@ export default function PublicContractPage() {
     const [signing, setSigning] = useState(false);
     const [signed, setSigned] = useState(false);
     const [signatureData, setSignatureData] = useState<string | null>(null);
+    const [legalName, setLegalName] = useState<string>('');
 
     useEffect(() => {
         if (id) {
@@ -56,7 +57,11 @@ export default function PublicContractPage() {
 
         setSigning(true);
         try {
-            const { contract: updated, error } = await contractService.signContract(id, 'client', signatureData);
+            const { contract: updated, error } = await contractService.signContract(id, 'client', signatureData, {
+                id: 'public',
+                name: legalName,
+                email: 'public@client.com',
+            });
 
             if (error) throw error;
 
@@ -186,8 +191,14 @@ export default function PublicContractPage() {
                         <label className="block text-sm font-bold text-white mb-4 uppercase tracking-wider">Sign Below to Accept</label>
                         <div className="overflow-hidden bg-white rounded-xl">
                             <SignaturePad
-                                onSave={(data) => setSignatureData(data)}
-                                onClear={() => setSignatureData(null)}
+                                onSave={(data, fullName) => {
+                                    setSignatureData(data);
+                                    setLegalName(fullName);
+                                }}
+                                onClear={() => {
+                                    setSignatureData(null);
+                                    setLegalName('');
+                                }}
                             />
                         </div>
                         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 text-xs">

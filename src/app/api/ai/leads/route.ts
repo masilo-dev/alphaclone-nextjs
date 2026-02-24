@@ -48,26 +48,34 @@ export async function POST(req: Request) {
         // 2. If no real leads or no API key, fallback to AI generation
         if (leads.length === 0) {
             console.log('[Lead Gen] Using AI fallback for fictional leads...');
-            const prompt = `Generate EXACTLY 5 high-quality, realistic business leads for the following specification:
+            const prompt = `Generate EXACTLY 5 high-quality, highly realistic business leads for the following specification:
 Target Service/Industry: "${industry}"
 Location: "${location}"
 ${filters ? `\nADDITIONAL USER FILTERS TO STRICTLY OBEY:\n- ${filters}\n` : ''}
+
 CRITICAL REQUIREMENTS:
 - Match the SPECIFIC service description if provided.
-- All data must be plausible and realistic for ${location}.
-- Return ONLY valid JSON.
+- Business names MUST sound authentic, localized, and contextually appropriate. Avoid generic or cliché names.
+- Contact details MUST be highly realistic for the specific location (e.g., use correct local area codes for phone numbers).
+- Emails should follow professional patterns (e.g., info@domain.com, standard first.last@domain.com).
+- Websites should plausibly match the business name.
+- Return ONLY a raw JSON array. DO NOT wrap it in an object. DO NOT include any conversational text, markdown formatting, or explanations before or after the JSON.
 
-Return a JSON array of objects with these keys:
-- id: random 8-character string
-- businessName: string
-- industry: "${industry}"
-- location: "${location}"
-- phone: string
-- email: string
-- website: plausible website URL
-- facebook: string (handle only)
-- estimatedValue: number (5000-50000)
-- notes: A brief 1-sentence AI analysis of why this lead is a good fit.`;
+Return a JSON array exactly matching this schema:
+[
+  {
+    "id": "random 8-character string",
+    "businessName": "Authentic Local Business Name LLC",
+    "industry": "${industry}",
+    "location": "${location}",
+    "phone": "(XXX) XXX-XXXX",
+    "email": "contact@authenticbusiness.com",
+    "website": "https://www.authenticbusiness.com",
+    "facebook": "businesshandle",
+    "estimatedValue": 25000,
+    "notes": "A brief 1-sentence AI analysis of why this lead is a strong fit based on the location and industry."
+  }
+]`;
 
             const aiResponse = await routeAIRequest({
                 prompt,
@@ -75,13 +83,31 @@ Return a JSON array of objects with these keys:
                 temperature: 0.8,
             });
 
-            // Clean response of markdown code blocks
-            const cleanedContent = aiResponse.content
-                .replace(/```json\n?/g, '')
-                .replace(/```\n?/g, '')
-                .trim();
+            // Robust JSON parsing
+            let cleanedContent = aiResponse.content;
 
-            leads = JSON.parse(cleanedContent);
+            // Try to extract JSON array
+            const arrayMatch = cleanedContent.match(/\[[\s\S]*\]/);
+            if (arrayMatch) {
+                cleanedContent = arrayMatch[0];
+            } else {
+                // Try to extract JSON object as fallback
+                const objectMatch = cleanedContent.match(/\{[\s\S]*\}/);
+                if (objectMatch) {
+                    cleanedContent = objectMatch[0];
+                }
+            }
+
+            try {
+                const parsed = JSON.parse(cleanedContent);
+                leads = Array.isArray(parsed) ? parsed : (parsed.leads || parsed.data || [parsed]);
+            } catch (jsonError) {
+                console.error('[Lead Gen] Failed to parse AI leads JSON:', aiResponse.content);
+                // Fallback to empty array instead of crashing entirely, 
+                // client will handle empty state.
+                leads = [];
+            }
+
             source = `AI (${aiResponse.provider})`;
             provider = aiResponse.provider;
             model = aiResponse.model;

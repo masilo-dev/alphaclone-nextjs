@@ -16,7 +16,8 @@ import {
     AlertCircle,
     CheckCircle2,
     Clock,
-    Target
+    Target,
+    History
 } from 'lucide-react';
 import { taskService, Task } from '../../services/taskService';
 import { notificationService } from '../../services/dashboardService';
@@ -39,7 +40,7 @@ interface TasksTabProps {
 }
 
 const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
-    const [filter, setFilter] = useState<'all' | 'my_tasks' | 'overdue'>('all');
+    const [filter, setFilter] = useState<'all' | 'my_tasks' | 'overdue' | 'completed'>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [notesTaskId, setNotesTaskId] = useState<string | null>(null);
@@ -106,7 +107,13 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
     const filteredAndSearchedTasks = useMemo(() => {
         let result = tasks;
 
-        // Client-side filtering for 'overdue' since the hook fetches based on other params
+        if (filter === 'completed') {
+            result = result.filter(t => t.status === 'completed');
+        } else {
+            result = result.filter(t => t.status !== 'completed'); // Default: show only active
+        }
+
+        // Client-side filtering for 'overdue'
         if (filter === 'overdue') {
             const today = new Date();
             result = result.filter(
@@ -275,11 +282,20 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                         task.status === 'in_progress' ? 'text-teal-400 border-teal-500/20' : 'text-slate-400'
                                         }`}
                                 >
-                                    <option value="ideas">Standby</option>
-                                    <option value="todo">Planning</option>
-                                    <option value="in_progress">Active</option>
-                                    <option value="review">Review</option>
-                                    <option value="completed">Success</option>
+                                    {[
+                                        { value: 'ideas', label: 'Standby' },
+                                        { value: 'todo', label: 'Planning' },
+                                        { value: 'in_progress', label: 'Active' },
+                                        { value: 'review', label: 'Review' },
+                                        { value: 'completed', label: 'Success' },
+                                    ].map((stage, idx, arr) => {
+                                        const currentIdx = arr.findIndex(s => s.value === task.status);
+                                        return (
+                                            <option key={stage.value} value={stage.value} disabled={idx < currentIdx}>
+                                                {stage.label}
+                                            </option>
+                                        );
+                                    })}
                                 </select>
                             </div>
 
@@ -343,9 +359,9 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                         <div className="p-2 bg-teal-500 rounded-lg shadow-lg shadow-teal-500/20">
                             <CheckSquare className="w-6 h-6 text-slate-900" />
                         </div>
-                        MISSION CONTROL
+                        {filter === 'completed' ? 'MISSION HISTORY' : 'MISSION CONTROL'}
                         <span className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-teal-400 text-xs font-mono font-bold animate-pulse">
-                            {loading ? 'SYNCING...' : `${tasks.length} ACTIVE DIRECTIVES`}
+                            {loading ? 'SYNCING...' : `${filteredAndSearchedTasks.length} ${filter === 'completed' ? 'COMPLETED' : 'ACTIVE'} DIRECTIVES`}
                         </span>
                     </h1>
                     <p className="text-slate-400 text-xs font-mono uppercase tracking-[0.2em] mt-2 opacity-60">System Operational // Objective Tracking Interface</p>
@@ -360,6 +376,14 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                         />
                         <Target className="w-4 h-4 text-slate-600 absolute left-3 top-1/2 -translate-y-1/2 group-focus-within:text-teal-500 transition-colors" />
                     </div>
+                    <Button
+                        onClick={() => setFilter(filter === 'completed' ? 'all' : 'completed')}
+                        icon={filter === 'completed' ? <Target className="w-4 h-4" /> : <History className="w-4 h-4" />}
+                        variant="secondary"
+                        className="h-11 px-6 font-black uppercase tracking-widest text-xs bg-slate-900 border-white/10 text-slate-300 hover:text-white"
+                    >
+                        {filter === 'completed' ? 'Active' : 'History'}
+                    </Button>
                     <Button
                         onClick={() => { setEditingTask(null); resetTaskForm(); setShowCreateModal(true); }}
                         icon={<Plus className="w-4 h-4" />}

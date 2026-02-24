@@ -7,6 +7,7 @@ import { contractService } from '../../services/contractService';
 import { businessClientService, BusinessClient } from '../../services/businessClientService';
 import toast from 'react-hot-toast';
 import { User, Project } from '../../types';
+import { supabase } from '../../lib/supabase';
 
 import { useTenant } from '../../contexts/TenantContext';
 import { useBackgroundTasks } from '../../contexts/BackgroundTaskContext';
@@ -55,8 +56,8 @@ const AlphaCloneContractModal: React.FC<Props> = ({
         clientAddress: '',
         clientEmail: project.email || '',
         projectName: project.name || 'Project Name',
-        projectScope: project.description || SCOPE_TEMPLATES.web_app,
-        projectDeliverables: 'Web application with source code, documentation, and deployment',
+        projectScope: project.description || SCOPE_TEMPLATES.custom,
+        projectDeliverables: 'Professional services and deliverables as mutually agreed upon',
         totalAmount: project.budget || 10000,
         paymentSchedule: PAYMENT_SCHEDULES['50_50'],
         depositAmount: (project.budget || 10000) * 0.5,
@@ -136,9 +137,42 @@ const AlphaCloneContractModal: React.FC<Props> = ({
     };
 
     const [signature, setSignature] = useState<string | null>(null);
+    const [signatureName, setSignatureName] = useState<string>('');
 
-    const handleSignContract = async (signatureDataUrl: string) => {
-        setSignature(signatureDataUrl);
+    const handleSignContract = async (signatureData: string, fullName: string) => {
+        try {
+            if (!currentTenant?.id) {
+                toast.error('No active tenant selected');
+                return;
+            }
+
+            // We need a contract ID to sign.
+            // In creation flow, we send the contract first, which generates the ID.
+            if (!existingContractId) {
+                setSignature(signatureData); // Store for later
+                setSignatureName(fullName);
+                return;
+            }
+
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('Not authenticated');
+
+            const { error: signError } = await contractService.signContract(existingContractId, 'admin', signatureData, {
+                id: user.id,
+                name: fullName,
+                email: user.email || ''
+            });
+
+            if (signError) throw signError;
+
+            setSignature(signatureData);
+            setSignatureName(fullName);
+            toast.success('Contract signed locally. Proceed to send.');
+
+        } catch (error) {
+            console.error('Error signing contract:', error);
+            toast.error(`Failed to sign contract: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
     };
 
     const handleSendToClient = async () => {
@@ -156,17 +190,21 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                 taskName,
                 async () => {
                     try {
+                        const { data: { user: authUser } } = await supabase.auth.getUser();
+                        if (!authUser) throw new Error('Not authenticated');
+
                         if (existingContractId) {
                             await contractService.signContract(
                                 existingContractId,
                                 user.role === 'admin' ? 'admin' : 'client',
-                                signature
+                                signature,
+                                { id: authUser.id, name: signatureName || authUser.user_metadata.full_name || authUser.email || 'Admin', email: authUser.email || '' }
                             );
 
                             // Auto-save to Document Hub
                             try {
                                 const { fileUploadService } = await import('../../services/fileUploadService');
-                                const { supabase } = await import('../../lib/supabase');
+                                // const { supabase } = await import('../../lib/supabase'); // Already imported statically
                                 const { data: finalContract } = await supabase
                                     .from('contracts')
                                     .select('*, project:projects(name)')
@@ -195,11 +233,20 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                             if (error) throw new Error(error);
 
                             if (contract) {
-                                await contractService.signContract(
-                                    contract.id,
-                                    user.role === 'admin' ? 'admin' : 'client',
-                                    signature
-                                );
+                                // If pre-signed, apply signature
+                                if (signature && signatureName) {
+                                    await contractService.signContract(contract.id, 'admin', signature, {
+                                        id: authUser.id,
+                                        name: signatureName,
+                                        email: authUser.email || ''
+                                    });
+                                } else if (signature) {
+                                    await contractService.signContract(contract.id, 'admin', signature, {
+                                        id: authUser.id,
+                                        name: 'Administrator', // Fallback if signatureName is not set
+                                        email: authUser.email || ''
+                                    });
+                                }
 
                                 if (user.role === 'admin') {
                                     const { projectService } = await import('../../services/projectService');
@@ -212,7 +259,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                 // Auto-save to Document Hub
                                 try {
                                     const { fileUploadService } = await import('../../services/fileUploadService');
-                                    const { supabase } = await import('../../lib/supabase');
+                                    // const { supabase } = await import('../../lib/supabase'); // Already imported statically
                                     const { data: finalContract } = await supabase
                                         .from('contracts')
                                         .select('*, project:projects(name)')
@@ -586,11 +633,13 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                 </label>
                                 <div className="border-2 border-slate-700 rounded-xl overflow-hidden bg-white">
                                     <SignaturePad
-                                        onSave={(sig) => {
-                                            // Pre-save signature but allow confirmation
-                                            handleSignContract(sig);
+                                        onSave={(sig, name) => {
+                                            handleSignContract(sig, name);
                                         }}
-                                        onClear={() => { }}
+                                        onClear={() => {
+                                            setSignature(null);
+                                            setSignatureName('');
+                                        }}
                                     />
                                 </div>
                             </div>

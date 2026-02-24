@@ -296,6 +296,27 @@ export const leadService = {
     async updateLead(id: string, updates: Partial<Lead>): Promise<{ error: string | null }> {
         const tenantId = this.getTenantId();
 
+        // Validate forward-only progression
+        if (updates.stage) {
+            const { data: existingLead } = await supabase
+                .from('leads')
+                .select('stage')
+                .eq('id', id)
+                .eq('tenant_id', tenantId)
+                .single();
+
+            if (existingLead) {
+                const stageOrder = ['lead', 'qualified', 'proposal', 'negotiation', 'won', 'lost'];
+                const currentIdx = stageOrder.indexOf(existingLead.stage);
+                const newIdx = stageOrder.indexOf(updates.stage);
+
+                // Allow moving to lost from anywhere
+                if (newIdx < currentIdx && updates.stage !== 'lost') {
+                    return { error: 'Cannot move lead back to a previous stage' };
+                }
+            }
+        }
+
         const dbPayload: any = {};
         if (updates.businessName) dbPayload.business_name = updates.businessName;
         if (updates.industry !== undefined) dbPayload.industry = updates.industry;

@@ -335,6 +335,29 @@ export const dealService: DealService = {
      */
     async updateDeal(dealId: string, updates: Partial<Deal>): Promise<{ deal: Deal | null; error: string | null }> {
         try {
+            const tenantId = this.getTenantId();
+
+            // Validate forward-only stage progression
+            if (updates.stage) {
+                const { data: existingDeal } = await supabase
+                    .from('deals')
+                    .select('stage')
+                    .eq('id', dealId)
+                    .eq('tenant_id', tenantId)
+                    .single();
+
+                if (existingDeal) {
+                    const stageOrder: DealStage[] = ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost'];
+                    const currentIdx = stageOrder.indexOf(existingDeal.stage as DealStage);
+                    const newIdx = stageOrder.indexOf(updates.stage);
+
+                    // Allow moving to closed_lost from anywhere, but otherwise enforce forward progression
+                    if (newIdx < currentIdx && updates.stage !== 'closed_lost') {
+                        return { deal: null, error: 'Cannot move deal back to a previous stage' };
+                    }
+                }
+            }
+
             const updateData: any = {};
 
             if (updates.name !== undefined) updateData.name = updates.name;
@@ -361,8 +384,6 @@ export const dealService: DealService = {
             if ((updates.stage === 'closed_won' || updates.stage === 'closed_lost') && !updates.actualCloseDate) {
                 updateData.actual_close_date = new Date().toISOString().split('T')[0];
             }
-
-            const tenantId = this.getTenantId();
 
             const { data, error } = await supabase
                 .from('deals')

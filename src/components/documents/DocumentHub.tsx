@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Upload, Search, Trash2, FolderOpen, FileText, File as FileIcon, X,
     Download, Eye, Loader2, Plus, RotateCcw, Edit3, Save,
-    ChevronLeft, AlertTriangle, FileCheck, AlertCircle, CheckCircle2
+    ChevronLeft, AlertTriangle, FileCheck, AlertCircle, CheckCircle2,
+    Filter
 } from 'lucide-react';
 import mammoth from 'mammoth';
 import { fileUploadService } from '../../services/fileUploadService';
@@ -77,6 +78,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [documentFilter, setDocumentFilter] = useState<string>('all');
     const [viewTrash, setViewTrash] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [selectedFile, setSelectedFile] = useState<HubFile | null>(null);
@@ -310,9 +312,19 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         }
     };
 
-    const filteredFiles = files.filter(f =>
-        f.original_filename.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredFiles = files.filter(f => {
+        const matchesSearch = f.original_filename.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesFilter = documentFilter === 'all'
+            ? true
+            : documentFilter === 'pdf'
+                ? f.file_type === 'application/pdf'
+                : documentFilter === 'word'
+                    ? f.file_type.includes('word') || f.file_type.includes('officedocument')
+                    : documentFilter === 'image'
+                        ? f.file_type.includes('image')
+                        : true;
+        return matchesSearch && matchesFilter;
+    });
 
     const storagePercent = Math.min((storageUsed / (100 * BYTES_TO_MB)) * 100, 100);
 
@@ -485,16 +497,36 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                 </div>
             )}
 
-            {/* Search */}
-            <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                    type="text"
-                    placeholder={viewTrash ? 'Search trash...' : 'Search documents...'}
-                    className="w-full bg-slate-900/50 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                />
+            {/* Filter and Search */}
+            <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <input
+                        type="text"
+                        placeholder={viewTrash ? 'Search trash...' : 'Search documents...'}
+                        className="w-full bg-slate-900/50 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                    />
+                </div>
+                {!viewTrash && (
+                    <div className="relative shrink-0">
+                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                        <select
+                            value={documentFilter}
+                            onChange={(e) => setDocumentFilter(e.target.value)}
+                            className="w-full sm:w-40 bg-slate-900/50 border border-white/10 rounded-xl py-2.5 pl-10 pr-8 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none transition-all appearance-none cursor-pointer"
+                        >
+                            <option value="all">All Files</option>
+                            <option value="pdf">PDFs</option>
+                            <option value="word">Word Docs</option>
+                            <option value="image">Images</option>
+                        </select>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                            <ChevronLeft className="w-4 h-4 -rotate-90" />
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* File list */}
@@ -539,7 +571,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                             </div>
 
                             {/* Action buttons */}
-                            <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-slate-800/50 sm:border-t-0 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 sm:transition-opacity">
+                            <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-slate-800/50 sm:border-t-0 shrink-0 opacity-100 transition-opacity">
                                 {viewTrash ? (
                                     <>
                                         <button

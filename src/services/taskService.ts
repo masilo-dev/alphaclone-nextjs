@@ -294,6 +294,29 @@ export const taskService = {
      */
     async updateTask(taskId: string, updates: Partial<Task>): Promise<{ task: Task | null; error: string | null }> {
         try {
+            const tenantId = this.getTenantId();
+
+            // Validate forward-only status progression
+            if (updates.status) {
+                const { data: existingTask } = await supabase
+                    .from('tasks')
+                    .select('status')
+                    .eq('id', taskId)
+                    .eq('tenant_id', tenantId)
+                    .single();
+
+                if (existingTask) {
+                    const statusOrder = ['ideas', 'todo', 'in_progress', 'review', 'completed'];
+                    const currentIdx = statusOrder.indexOf(existingTask.status);
+                    const newIdx = statusOrder.indexOf(updates.status);
+
+                    // Allow moving to 'cancelled' from anywhere, but otherwise enforce forward progression
+                    if (newIdx < currentIdx && updates.status !== 'cancelled') {
+                        return { task: null, error: 'Cannot move task back to a previous status' };
+                    }
+                }
+            }
+
             const updateData: any = {};
 
             if (updates.title !== undefined) updateData.title = updates.title;
@@ -315,8 +338,6 @@ export const taskService = {
             if (updates.status === 'completed' && !updates.completedAt) {
                 updateData.completed_at = new Date().toISOString();
             }
-
-            const tenantId = this.getTenantId();
 
             const { data, error } = await supabase
                 .from('tasks')
