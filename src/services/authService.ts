@@ -4,6 +4,35 @@ import { User, UserRole } from '../types';
 import { signInSchema, signUpSchema } from '../schemas/validation';
 import { z } from 'zod';
 
+/**
+ * Utility to forcefully break Supabase internal storage/Web Locks API deadlocks.
+ * If a call to Supabase auth hangs for longer than the timeout, this forcefully 
+ * purges the `sb-*` cache to break the lock and throws an error so the UI recovers.
+ */
+async function withAuthTimeout<T = any>(promise: any, timeoutMs: number = 2500): Promise<T> {
+    let timeoutHandle: NodeJS.Timeout;
+    const timeoutPromise = new Promise<T>((_, reject) => {
+        timeoutHandle = setTimeout(() => {
+            // Forcefully clear storage if we hit a lock to unbrick the browser
+            if (typeof window !== 'undefined') {
+                try {
+                    console.error(`[AuthService] Timeout (${timeoutMs}ms) hit. Breaking storage lock and purging local cache!`);
+                    const keys = Object.keys(localStorage).filter(k => k.includes('sb-') || k.includes('auth-token'));
+                    keys.forEach(k => localStorage.removeItem(k));
+                } catch (e) { }
+            }
+            reject(new Error("Storage Lock Timeout: Forcefully cleared corrupted cache"));
+        }, timeoutMs);
+    });
+
+    return Promise.race([
+        promise,
+        timeoutPromise
+    ]).finally(() => {
+        clearTimeout(timeoutHandle);
+    });
+}
+
 export const authService = {
     /**
      * Sign in with email and password
@@ -13,10 +42,10 @@ export const authService = {
             // Validate input
             const validated = signInSchema.parse({ email: email.toLowerCase(), password });
 
-            const { data, error } = await supabase.auth.signInWithPassword({
+            const { data, error } = await withAuthTimeout(supabase.auth.signInWithPassword({
                 email: validated.email,
                 password: validated.password,
-            });
+            }), 5000); // 5s timeout for sign-in
 
             if (error) {
                 console.error("SignIn Error:", error);
@@ -148,7 +177,7 @@ export const authService = {
                 console.warn('Failed to fetch location for registration', e);
             }
 
-            const { data, error } = await supabase.auth.signUp({
+            const { data, error } = await withAuthTimeout(supabase.auth.signUp({
                 email: validated.email,
                 password: validated.password,
                 options: {
@@ -158,7 +187,7 @@ export const authService = {
                         registration_country: registrationCountry,
                     },
                 },
-            });
+            }), 5000);
 
             if (error) {
                 console.error("SignUp Error:", error);
@@ -199,9 +228,9 @@ export const authService = {
      */
     async resetPassword(email: string): Promise<{ error: string | null }> {
         try {
-            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            const { error } = await withAuthTimeout(supabase.auth.resetPasswordForEmail(email, {
                 redirectTo: `${window.location.origin}/auth/reset-password`,
-            });
+            }), 3000);
 
             if (error) {
                 console.error("Reset Password Error:", error);
@@ -229,7 +258,7 @@ export const authService = {
 
             passwordSchema.parse(password);
 
-            const { error } = await supabase.auth.updateUser({ password });
+            const { error } = await withAuthTimeout(supabase.auth.updateUser({ password }), 5000);
 
             if (error) {
                 console.error("Update Password Error:", error);
@@ -256,7 +285,7 @@ export const authService = {
                 sessionStorage.setItem('auth_callback_in_progress', 'true');
             }
 
-            const { error } = await supabase.auth.signInWithOAuth({
+            const { error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
                     redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
@@ -265,7 +294,7 @@ export const authService = {
                         prompt: 'consent',
                     },
                 },
-            });
+            }), 5000);
 
             if (error) {
                 console.error("Google SignIn Error:", error);
@@ -294,7 +323,7 @@ export const authService = {
                 import('./activityService').then(({ activityService }) =>
                     activityService.endLoginSession()
                 ),
-                supabase.auth.signOut()
+                withAuthTimeout(supabase.auth.signOut(), 2500)
             ]);
 
             // Check auth result (session cleanup is non-critical)
@@ -338,7 +367,7 @@ export const authService = {
             const maxAttempts = isAuthCallback ? 3 : 1; // Only retry during explicit auth callbacks
 
             for (let i = 0; i < maxAttempts; i++) {
-                const { data: { session: s }, error } = await supabase.auth.getSession();
+                const { data: { session: s }, error } = await withAuthTimeout(supabase.auth.getSession(), 2500);
                 if (s?.user) {
                     session = s;
                     if (isAuthCallback) sessionStorage.removeItem('auth_callback_in_progress');
