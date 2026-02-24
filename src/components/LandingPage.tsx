@@ -228,6 +228,22 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               Platform
                            </Link>
 
+                           <Link
+                              href="/pricing"
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="flex items-center justify-end gap-3 w-full text-right text-lg font-bold text-white hover:text-teal-400 transition-colors py-1"
+                           >
+                              Pricing
+                           </Link>
+
+                           <Link
+                              href="/docs"
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="flex items-center justify-end gap-3 w-full text-right text-lg font-bold text-white hover:text-teal-400 transition-colors py-1"
+                           >
+                              Docs
+                           </Link>
+
                            {/* Services Group */}
                            <div className="w-full flex flex-col items-end space-y-4">
                               <button
@@ -268,7 +284,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <span className="text-[10px] uppercase tracking-[0.2em] text-slate-600 font-bold mb-2">Company</span>
 
                            <Link
-                              href="/contact"
+                              href="https://alphaclone.tech/about"
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="flex items-center justify-end gap-3 w-full text-right text-base font-semibold text-slate-300 hover:text-white transition-colors py-1"
+                           >
+                              About
+                           </Link>
+
+                           <Link
+                              href="https://alphaclone.tech/contact"
                               onClick={() => setMobileMenuOpen(false)}
                               className="flex items-center justify-end gap-3 w-full text-right text-base font-semibold text-slate-300 hover:text-white transition-colors py-1"
                            >
@@ -391,7 +415,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                   <motion.div
                      initial={{ opacity: 0, y: 20 }}
                      animate={{ opacity: 1, y: 0 }}
-                     className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/80 md:bg-slate-900/50 md:backdrop-blur border border-slate-700/50 text-teal-400 text-sm font-medium mb-8 shadow-lg shadow-teal-900/20"
+                     className="invisible md:visible inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/80 md:bg-slate-900/50 md:backdrop-blur border border-slate-700/50 text-teal-400 text-sm font-medium mb-8 shadow-lg shadow-teal-900/20"
                   >
                      <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
                      The Future of Business Infrastructure

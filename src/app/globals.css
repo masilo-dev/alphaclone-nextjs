@@ -22,43 +22,46 @@
 }
 
 .font-marketing-heading {
-  font-family: var(--font-jakarta);
+  font-family: var(--font-jakarta), sans-serif;
   letter-spacing: -0.02em;
 }
 
 .font-marketing-body {
-  font-family: var(--font-inter);
+  font-family: var(--font-inter), sans-serif;
   line-height: 1.6;
 }
 
 .font-marketing-brand {
-  font-family: var(--font-sora);
+  font-family: var(--font-sora), sans-serif;
 }
 
 .font-marketing-data {
-  font-family: var(--font-jetbrains);
+  font-family: var(--font-inter), sans-serif;
+  font-feature-settings: "tnum";
 }
 
 /* Marketing Grid and Glows */
 .marketing-bg-grid {
   background-color: #020617;
   background-image:
-    radial-gradient(circle at fixed center, #0f172a 0%, #000000 100%),
-    linear-gradient(to right, rgba(30, 41, 59, 0.4) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(30, 41, 59, 0.4) 1px, transparent 1px);
-  background-size: 100% 100%, 40px 40px, 40px 40px;
+    url('/grid-pattern.svg'),
+    radial-gradient(circle at center, rgba(2, 6, 23, 1) 0%, rgba(0, 0, 0, 1) 100%);
+  background-size: 200px 200px, cover;
+  background-blend-mode: overlay;
 }
 
 .marketing-glow-hero {
   position: absolute;
-  width: 800px;
-  height: 800px;
-  background: radial-gradient(circle, rgba(45, 212, 191, 0.1) 0%, rgba(45, 212, 191, 0) 60%);
-  border-radius: 50%;
-  pointer-events: none;
-  filter: blur(60px);
+  top: 10%;
+  left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 0;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(0, 255, 255, 0.15) 0%, rgba(0, 255, 255, 0) 70%);
+  /* Teal glow */
+  filter: blur(100px);
+  z-index: -1;
+  pointer-events: none;
 }
 
 :root {
@@ -67,12 +70,84 @@
 }
 
 body {
-  background: var(--background);
+  background-color: #020617;
+  background-image: radial-gradient(at center, rgba(2, 6, 23, 1) 0%, rgba(0, 0, 0, 1) 100%);
   color: var(--foreground);
   scroll-behavior: smooth;
-  font-size: 14px;
-  /* Gmail standard */
-  line-height: 1.5;
+  font-family: var(--font-inter), sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1.6;
+  letter-spacing: normal;
+}
+
+/* Typography Overrides */
+h1 {
+  font-family: var(--font-jakarta), sans-serif;
+  font-weight: 800;
+  font-size: 48px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-family: var(--font-jakarta), sans-serif;
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+h3,
+h4 {
+  font-family: var(--font-inter), sans-serif;
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 1.4;
+}
+
+p {
+  font-family: var(--font-inter), sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+button,
+.cta {
+  font-family: var(--font-jakarta), sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+
+button:hover,
+.cta:hover {
+  font-weight: 700;
+}
+
+nav a,
+.nav-link {
+  font-family: var(--font-inter), sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1;
+}
+
+nav a:hover,
+.nav-link:hover {
+  font-weight: 700;
+}
+
+.data-metrics {
+  font-family: var(--font-inter), sans-serif;
+  font-feature-settings: "tnum";
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.4;
 }
 
 /* iPhone Safe Area Support */

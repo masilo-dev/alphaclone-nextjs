@@ -4,6 +4,8 @@ import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { PWAProvider } from "@/contexts/PWAContext";
 import ShellSwitcher from "@/components/shells/ShellSwitcher";
+import CookieConsent from "@/components/common/CookieConsent";
+import PWADownloadPrompt from "@/components/common/PWADownloadPrompt";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -85,6 +87,8 @@ export default function RootLayout({
               {children}
             </ShellSwitcher>
           </PWAProvider>
+          <CookieConsent />
+          <PWADownloadPrompt />
         </Providers>
       </body>
     </html>

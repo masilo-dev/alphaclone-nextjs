@@ -22,7 +22,7 @@ interface ReceiptGeneratorModalProps {
 export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGeneratorModalProps) {
     const { currentTenant } = useTenant();
 
-    const [receiptData, setReceiptData] = useState({
+    const [receiptData, setReceiptData] = useState(() => ({
         receiptNumber: `REC-${Date.now().toString().slice(-6)}`,
         date: new Date().toISOString().split('T')[0],
         clientName: '',
@@ -32,7 +32,7 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
         template: 'professional' as 'professional' | 'modern',
         items: [{ description: '', quantity: 1, price: 0 }] as ReceiptItem[],
         notes: 'Thank you for your business.'
-    });
+    }));
 
     const [isPreviewMode, setIsPreviewMode] = useState(false);
 
