@@ -25,13 +25,6 @@ export default function DashboardPage() {
 
         // If loading is done and no user exists, start grace period
         if (!loading && !user) {
-            // Resilient token discovery: check for any Supabase auth token (localStorage OR cookies)
-            const hasLocalToken = typeof window !== 'undefined' && (
-                Object.keys(localStorage).some(k => k.includes('auth-token') || k.startsWith('sb-')) ||
-                document.cookie.includes('auth-token') ||
-                document.cookie.includes('sb-')
-            );
-
             // Check if we are in an auth callback flow
             const isAuthCallback = typeof window !== 'undefined' && (
                 window.location.search.includes('code=') ||
@@ -39,12 +32,11 @@ export default function DashboardPage() {
                 sessionStorage.getItem('auth_callback_in_progress') === 'true'
             );
 
-            // Grace period based on probable presence of session. 
-            // In cold-start or high-latency production environments, we give it a lot of time (20s) 
-            // to allow AuthContext to finish its async validation before failing.
-            const timeoutDuration = isAuthCallback ? 20000 : (hasLocalToken ? 20000 : 2500);
+            // A short grace period to wait for any immediate state batching
+            // or fast redirects in strict mode, without hanging the browser.
+            const timeoutDuration = isAuthCallback ? 2500 : 500;
 
-            console.log(`DashboardPage: User missing, starting grace period of ${timeoutDuration}ms`, { hasLocalToken, isAuthCallback });
+            console.log(`DashboardPage: User missing, starting short grace period of ${timeoutDuration}ms`);
 
             const timer = setTimeout(() => {
                 setIsGracePeriod(false);
