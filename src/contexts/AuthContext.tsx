@@ -258,33 +258,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     } else {
                         console.warn('[AuthContext] Debug: Possible transient error. Retaining current state.');
                     }
-                    setLoading(false);
-                    return;
-                }
-
-                if (validatedUser) {
+                } else if (validatedUser) {
                     setSafeUser(validatedUser);
                     setError(null);
-                    setLoading(false);
                 } else {
                     // RACE CONDITION FIX: If onAuthStateChange already found a user, don't overwrite with null
-                    if (latestUserRef.current) return;
-
-                    // Session invalid or expired — always clear user
-                    clearAuthSession();
-                    setSafeUser(null);
-                    setError(null);
-                    setLoading(false);
+                    if (!latestUserRef.current) {
+                        // Session invalid or expired — always clear user
+                        clearAuthSession();
+                        setSafeUser(null);
+                        setError(null);
+                    }
                 }
             } catch (e) {
                 if (!isMounted) return;
-                if (e instanceof Error && e.name === 'AbortError') return;
+                console.error('[AuthContext] Debug: initSession caught exception', e);
 
                 // RACE CONDITION FIX for exception case
-                if (latestUserRef.current) return;
-
-                setSafeUser(null);
-                setLoading(false);
+                if (!latestUserRef.current) {
+                    setSafeUser(null);
+                }
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         };
 
