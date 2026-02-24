@@ -1,6 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+// Force Next.js to not statically cache this page in production
+export const dynamic = 'force-dynamic';
+
+import React, { useState, useEffect, useRef } from 'react';
 import Dashboard from '@/components/Dashboard';
 import { Project, ChatMessage, GalleryItem } from '@/types';
 import { useRouter } from 'next/navigation';
@@ -45,17 +48,22 @@ export default function DashboardPage() {
         }
     }, [user, loading]);
 
+    const redirectingRef = useRef(false);
+
     // Separate effect for the actual redirection to ensure we always use the latest state values
     useEffect(() => {
-        if (!loading && !isGracePeriod && !user) {
+        if (!loading && !isGracePeriod && !user && !redirectingRef.current) {
+            redirectingRef.current = true;
             console.warn(`Dashboard DashboardPage: Session not established after grace period. Redirecting to login...`, {
                 loading,
                 isGracePeriod,
                 hasUser: !!user
             });
-            router.replace('/auth/login');
+            // Force a full page redirect to break any possible React infinite routing loops
+            // Using a timestamp to bust Next.js aggressive production router caching
+            window.location.replace(`/auth/login?reason=unauthenticated&t=${Date.now()}`);
         }
-    }, [loading, isGracePeriod, user, router]);
+    }, [loading, isGracePeriod, user]);
 
     // Show skeleton shell immediately — never a blank screen
     if (loading || (isGracePeriod && !user)) {

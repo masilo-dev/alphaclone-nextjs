@@ -325,13 +325,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         }, 1500);
 
-        // Safety net: force stop loading after 20s (increased from 12s for slower production cold starts)
+        // Safety net: force stop loading after 3s (massively reduced from 20s to prevent hang on storage lock issues)
         const safetyTimeout = setTimeout(() => {
             if (isMounted && loading) {
-                console.warn('[AuthContext] Safety timeout reached, forcing loading to false');
+                console.warn('[AuthContext] Safety timeout reached (3s), forcing loading to false. Storage lock or network issue likely.');
                 setLoading(false);
             }
-        }, 20000);
+        }, 3000);
 
         return () => {
             isMounted = false;
