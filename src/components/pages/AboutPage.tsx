@@ -47,7 +47,7 @@ const AboutPage: React.FC = () => {
                 </Link>
 
                 <div className="text-center mb-16">
-                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6">About AlphaClone Systems</h1>
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-marketing-heading mb-6">About AlphaClone Systems</h1>
                     <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-3xl mx-auto">
                         Building enterprise software solutions with cutting-edge technology
                     </p>
@@ -56,7 +56,7 @@ const AboutPage: React.FC = () => {
                 {/* Story */}
                 <section className="mb-20">
                     <div className="bg-slate-900 p-6 sm:p-8 md:p-12 rounded-xl border border-slate-800">
-                        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-6">Our Story</h2>
+                        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold font-marketing-heading mb-6">Our Story</h2>
                         <div className="space-y-4 text-slate-300 leading-relaxed">
                             <p>
                                 AlphaClone Systems was founded with a mission to deliver enterprise-grade software solutions
@@ -90,12 +90,12 @@ const AboutPage: React.FC = () => {
 
                 {/* Values */}
                 <section>
-                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-8">Our Values</h2>
+                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold font-marketing-heading mb-8">Our Values</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {values.map((value, idx) => (
                             <div key={idx} className="bg-slate-900 p-8 rounded-xl border border-slate-800">
                                 <value.icon className="w-12 h-12 text-teal-400 mb-4" />
-                                <h3 className="text-xl font-bold mb-3">{value.title}</h3>
+                                <h3 className="text-xl font-bold font-marketing-heading mb-3">{value.title}</h3>
                                 <p className="text-slate-400">{value.description}</p>
                             </div>
                         ))}

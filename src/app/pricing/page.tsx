@@ -36,7 +36,7 @@ const plans = [
 
 export default function PricingPage() {
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-teal-500/30 overflow-hidden">
+        <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-teal-500/30 overflow-hidden">
             {/* Background Orbs */}
             <div className="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none">
                 <div className="absolute top-[10%] left-[5%] w-[500px] h-[500px] bg-teal-500/10 blur-[150px] rounded-full" />
@@ -45,12 +45,12 @@ export default function PricingPage() {
 
             <nav className="border-b border-white/5 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
-                    <Link href="/" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-500">
+                    <Link href="/" className="text-2xl font-bold font-marketing-brand bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-500">
                         AlphaClone
                     </Link>
                     <div className="flex items-center gap-6">
                         <Link href="/auth/login" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">Login</Link>
-                        <Button onClick={() => window.location.href = '/register'} className="bg-teal-500 text-slate-950 font-bold px-6">Get Started</Button>
+                        <Button onClick={() => window.location.href = '/register'} className="bg-teal-500 text-slate-950 font-bold px-6 font-marketing-heading uppercase tracking-tight">Get Started</Button>
                     </div>
                 </div>
             </nav>
@@ -65,7 +65,7 @@ export default function PricingPage() {
                         <Star className="w-4 h-4 text-teal-400 fill-teal-400" />
                         <span className="text-xs font-bold text-white uppercase tracking-widest">Enterprise Operating System</span>
                     </motion.div>
-                    <h1 className="text-5xl md:text-7xl font-black text-white mb-8 tracking-tighter">
+                    <h1 className="text-5xl md:text-7xl font-black font-marketing-heading text-white mb-8 tracking-tighter">
                         Simple Pricing. <br />
                         <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-500">Infinite Possibilities.</span>
                     </h1>
@@ -92,7 +92,7 @@ export default function PricingPage() {
                                 )}
 
                                 <div className="mb-8">
-                                    <h3 className={`text-2xl font-bold mb-2 ${plan.popular ? 'text-teal-400' : 'text-white'}`}>{plan.name}</h3>
+                                    <h3 className={`text-2xl font-bold font-marketing-heading mb-2 ${plan.popular ? 'text-teal-400' : 'text-white'}`}>{plan.name}</h3>
                                     <p className="text-slate-500 text-sm font-medium">{plan.desc}</p>
                                 </div>
 
@@ -114,7 +114,7 @@ export default function PricingPage() {
 
                                 <Button
                                     onClick={() => plan.name === 'Enterprise' ? window.location.href = '/#contact' : window.location.href = '/register'}
-                                    className={`w-full py-7 rounded-2xl font-black text-lg transition-all ${plan.popular
+                                    className={`w-full py-7 rounded-2xl font-black text-lg transition-all font-marketing-heading uppercase tracking-tight ${plan.popular
                                         ? 'bg-teal-500 hover:bg-teal-400 text-slate-950 shadow-xl shadow-teal-500/20'
                                         : 'bg-slate-900 hover:bg-slate-800 text-white border border-slate-800'
                                         }`}

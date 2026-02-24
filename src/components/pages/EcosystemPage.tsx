@@ -80,7 +80,7 @@ const EcosystemPage: React.FC = () => {
 
                     <div className="text-center mb-16">
                         <Rocket className="w-12 h-12 sm:w-16 sm:h-16 text-teal-400 mx-auto mb-6" />
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-marketing-heading mb-6">
                             Why Choose <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-teal-600">AlphaClone</span>
                         </h1>
                         <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-3xl mx-auto">
@@ -90,7 +90,7 @@ const EcosystemPage: React.FC = () => {
 
                     {/* Our Advantages */}
                     <section className="mb-20">
-                        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-8 text-center">
+                        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold font-marketing-heading mb-8 text-center">
                             The <span className="text-teal-400">AlphaClone</span> Advantage
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -100,7 +100,7 @@ const EcosystemPage: React.FC = () => {
                                     className="bg-slate-900/60 backdrop-blur-sm p-6 rounded-xl border border-slate-800 hover:border-teal-500/50 transition-all group"
                                 >
                                     <advantage.icon className="w-10 h-10 text-teal-400 mb-4 group-hover:scale-110 transition-transform" />
-                                    <h3 className="text-lg font-bold mb-2">{advantage.name}</h3>
+                                    <h3 className="text-lg font-bold font-marketing-heading mb-2">{advantage.name}</h3>
                                     <p className="text-sm text-slate-400">{advantage.description}</p>
                                 </div>
                             ))}
@@ -109,7 +109,7 @@ const EcosystemPage: React.FC = () => {
 
                     {/* Our Services */}
                     <section className="mb-20">
-                        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-8 text-center">
+                        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold font-marketing-heading mb-8 text-center">
                             Comprehensive <span className="text-teal-400">Digital Services</span>
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -118,7 +118,7 @@ const EcosystemPage: React.FC = () => {
                                     key={idx}
                                     className="bg-slate-900/60 backdrop-blur-sm p-8 rounded-xl border border-slate-800 hover:border-teal-500/30 transition-all"
                                 >
-                                    <h3 className="text-2xl font-bold mb-4 text-teal-400">{service.title}</h3>
+                                    <h3 className="text-2xl font-bold font-marketing-heading mb-4 text-teal-400">{service.title}</h3>
                                     <ul className="space-y-3">
                                         {service.features.map((feature, fIdx) => (
                                             <li key={fIdx} className="flex items-start gap-3 text-slate-300">
@@ -135,7 +135,7 @@ const EcosystemPage: React.FC = () => {
                     {/* Value Proposition */}
                     <section>
                         <div className="bg-gradient-to-br from-teal-600 to-teal-700 p-8 sm:p-12 rounded-2xl text-center">
-                            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">
+                            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-marketing-heading mb-4">
                                 Ready to Transform Your Business?
                             </h2>
                             <p className="text-lg sm:text-xl text-teal-50 mb-8 max-w-2xl mx-auto">
@@ -143,7 +143,7 @@ const EcosystemPage: React.FC = () => {
                             </p>
                             <Link
                                 href="/contact"
-                                className="inline-flex items-center gap-2 px-8 py-4 bg-white text-teal-600 font-bold rounded-lg hover:bg-slate-100 transition-colors shadow-xl"
+                                className="inline-flex items-center gap-2 px-8 py-4 bg-white text-teal-600 font-bold rounded-lg hover:bg-slate-100 transition-colors shadow-xl font-marketing-heading uppercase tracking-tight"
                             >
                                 Get Started Today
                                 <Rocket className="w-5 h-5" />

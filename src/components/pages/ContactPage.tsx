@@ -81,14 +81,14 @@ const ContactPage: React.FC = () => {
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
                             <Button
                                 onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
-                                className="bg-teal-600 hover:bg-teal-500 text-white font-bold h-12 px-8"
+                                className="bg-teal-600 hover:bg-teal-500 text-white font-bold h-12 px-8 font-marketing-heading uppercase tracking-tight"
                             >
                                 Book a Consultation
                             </Button>
                             <Button
                                 variant="outline"
                                 onClick={() => window.open('https://wa.me/48517809674', '_blank')}
-                                className="border-teal-500/50 hover:bg-teal-500/10 text-teal-400 font-bold h-12 px-8"
+                                className="border-teal-500/50 hover:bg-teal-500/10 text-teal-400 font-bold h-12 px-8 font-marketing-heading uppercase tracking-tight"
                             >
                                 Chat on WhatsApp
                             </Button>
@@ -98,7 +98,7 @@ const ContactPage: React.FC = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                         {/* Contact Info */}
                         <div>
-                            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-8">Get In Touch</h2>
+                            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold font-marketing-heading mb-8">Get In Touch</h2>
                             <div className="space-y-6 mb-8">
                                 <div className="flex items-start gap-4">
                                     <Mail className="w-6 h-6 text-teal-400 mt-1 flex-shrink-0" />
@@ -140,7 +140,7 @@ const ContactPage: React.FC = () => {
                                 </div>
                             </div>
                             <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
-                                <h3 className="font-bold mb-3">Business Hours</h3>
+                                <h3 className="font-bold font-marketing-heading mb-3">Business Hours</h3>
                                 <div className="space-y-2 text-slate-400">
                                     <div>Monday - Friday: 9:00 AM - 6:00 PM</div>
                                     <div>Saturday: 10:00 AM - 4:00 PM</div>
@@ -151,7 +151,7 @@ const ContactPage: React.FC = () => {
 
                         {/* Contact Form */}
                         <div>
-                            <h2 className="text-2xl font-bold mb-8">Send a Message</h2>
+                            <h2 className="text-2xl font-bold font-marketing-heading mb-8">Send a Message</h2>
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <Input
                                     label="Name"
@@ -203,7 +203,7 @@ const ContactPage: React.FC = () => {
                                     disabled={status === 'sending'}
                                     isLoading={status === 'sending'}
                                     size="lg"
-                                    className="w-full"
+                                    className="w-full font-marketing-heading uppercase tracking-tight"
                                 >
                                     {status === 'sending' ? 'Sending...' : 'Send Message'}
                                     {status !== 'sending' && <Send className="w-5 h-5 ml-2 inline" />}

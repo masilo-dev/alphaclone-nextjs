@@ -8,6 +8,57 @@
 @theme {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-inter: var(--font-inter);
+  --font-jakarta: var(--font-jakarta);
+  --font-sora: var(--font-sora);
+  --font-jetbrains: var(--font-jetbrains);
+}
+
+/* Marketing Theme Definitions */
+.marketing-theme {
+  --background: #020617;
+  --foreground: #f8fafc;
+  color: var(--foreground);
+}
+
+.font-marketing-heading {
+  font-family: var(--font-jakarta);
+  letter-spacing: -0.02em;
+}
+
+.font-marketing-body {
+  font-family: var(--font-inter);
+  line-height: 1.6;
+}
+
+.font-marketing-brand {
+  font-family: var(--font-sora);
+}
+
+.font-marketing-data {
+  font-family: var(--font-jetbrains);
+}
+
+/* Marketing Grid and Glows */
+.marketing-bg-grid {
+  background-color: #020617;
+  background-image:
+    radial-gradient(circle at fixed center, #0f172a 0%, #000000 100%),
+    linear-gradient(to right, rgba(30, 41, 59, 0.4) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(30, 41, 59, 0.4) 1px, transparent 1px);
+  background-size: 100% 100%, 40px 40px, 40px 40px;
+}
+
+.marketing-glow-hero {
+  position: absolute;
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(45, 212, 191, 0.1) 0%, rgba(45, 212, 191, 0) 60%);
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(60px);
+  transform: translate(-50%, -50%);
+  z-index: 0;
 }
 
 :root {

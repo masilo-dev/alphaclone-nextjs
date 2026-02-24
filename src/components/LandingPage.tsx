@@ -160,7 +160,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
 
 
    return (
-      <div className="min-h-screen text-slate-200 font-sans selection:bg-teal-500/30 relative">
+      <div className="min-h-screen text-slate-200 selection:bg-teal-500/30 relative">
          <PrismBackground />
 
          <LoginModal
@@ -307,7 +307,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                   <div className="flex items-center justify-between h-20">
                      {/* Logo */}
                      <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
-                        <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-500">
+                        <span className="text-2xl font-bold font-marketing-brand bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-500">
                            AlphaClone
                         </span>
                      </div>
@@ -401,7 +401,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      initial={{ opacity: 0, y: 20 }}
                      animate={{ opacity: 1, y: 0 }}
                      transition={{ delay: 0.1 }}
-                     className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-white mb-6 md:mb-8 leading-[1.1]"
+                     className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold font-marketing-heading tracking-tight text-white mb-6 md:mb-8 leading-[1.1]"
                   >
                      One Platform.<br />
                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 via-blue-400 to-violet-400">
@@ -427,7 +427,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      <Button
                         onClick={() => window.location.href = '/register'}
                         size="lg"
-                        className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-10 h-14 w-full sm:w-auto text-lg shadow-xl shadow-teal-500/20 hover:scale-105 transition-transform"
+                        className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-10 h-14 w-full sm:w-auto text-lg shadow-xl shadow-teal-500/20 hover:scale-105 transition-transform font-marketing-heading tracking-tight uppercase"
                      >
                         Start Free Trial
                      </Button>
@@ -435,7 +435,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         size="lg"
                         variant="outline"
                         onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
-                        className="border-slate-700 bg-slate-900/80 md:bg-slate-900/50 md:backdrop-blur hover:bg-slate-800 text-white px-10 h-14 w-full sm:w-auto text-lg hover:border-slate-500"
+                        className="border-slate-700 bg-slate-900/80 md:bg-slate-900/50 md:backdrop-blur hover:bg-slate-800 text-white px-10 h-14 w-full sm:w-auto text-lg hover:border-slate-500 font-marketing-heading tracking-tight uppercase"
                      >
                         Book a Demo
                      </Button>
@@ -462,7 +462,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      <motion.h2
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }}
-                        className="text-4xl md:text-5xl font-bold text-white mb-6"
+                        className="text-4xl md:text-5xl font-bold font-marketing-heading text-white mb-6"
                      >
                         Who We Serve
                      </motion.h2>
@@ -695,7 +695,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
             <section id="about" className="py-24 bg-slate-950/50 backdrop-blur-sm">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="text-center mb-16">
-                     <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">About AlphaClone Systems</h2>
+                     <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading text-white mb-6">About AlphaClone Systems</h2>
                      <p className="text-slate-400 max-w-2xl mx-auto text-lg">
                         We are custom development specialists who believe every business deserves technology built specifically for their unique challenges and opportunities.
                      </p>
@@ -732,7 +732,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
             <section id="services" className="py-24 bg-slate-900/50 backdrop-blur-sm">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="text-center mb-16">
-                     <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">Core Platform Capabilities</h2>
+                     <h2 className="text-4xl md:text-5xl font-bold font-marketing-heading text-white mb-4">Core Platform Capabilities</h2>
                      <p className="text-slate-400 max-w-2xl mx-auto text-lg leading-relaxed">
                         Every system you need to scale, unified into one high-performance architecture.
                      </p>
@@ -872,7 +872,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
             {/* Verified Team */}
             <section className="py-20 bg-blue-900/20 backdrop-blur-sm">
                <div className="max-w-4xl mx-auto px-4 text-center">
-                  <h2 className="text-2xl md:text-3xl font-bold text-white mb-6">Verified Professional Team</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold font-marketing-heading text-white mb-6">Verified Professional Team</h2>
                   <p className="text-slate-300 mb-10">
                      Our developers are verified professionals on leading freelance platforms.
                   </p>
@@ -901,7 +901,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
 
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="text-center mb-20">
-                     <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Simple, Transparent Pricing</h2>
+                     <h2 className="text-4xl md:text-5xl font-bold font-marketing-heading text-white mb-6">Simple, Transparent Pricing</h2>
                      <p className="text-slate-400 text-lg max-w-2xl mx-auto">
                         Scale your business with an operating system that grows with you. No hidden fees, no per-seat charges.
                      </p>
@@ -1009,7 +1009,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
                      <div>
-                        <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Start Your Custom Project</h2>
+                        <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading text-white mb-6">Start Your Custom Project</h2>
                         <p className="text-slate-400 text-lg mb-12">
                            Ready to build something extraordinary? Whether you need a complete digital transformation or a specific custom tool, our team is ready to architect your solution.
                         </p>
