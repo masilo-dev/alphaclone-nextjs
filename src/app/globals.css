@@ -414,3 +414,47 @@ body {
   height: 100% !important;
   overscroll-behavior: none !important;
 }
+
+/* Moving Border Button Animation */
+@keyframes moving-border {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-moving-border {
+  animation: moving-border 3s linear infinite;
+}
+
+/* Hero Metallic Text Gradient */
+.hero-metallic-text {
+  background: linear-gradient(135deg,
+      #0077FF 0%,
+      #60b8ff 30%,
+      #ffffff 50%,
+      #60e8d0 70%,
+      #00D2A0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Glassmorphism navbar */
+.glass-nav {
+  background: rgba(2, 8, 20, 0.65);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Scroll-progress gradient line */
+.nav-glow-line {
+  background: linear-gradient(90deg, transparent, #0077FF 30%, #00D2A0 70%, transparent);
+  height: 1px;
+  opacity: 0.6;
+}

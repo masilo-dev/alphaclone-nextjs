@@ -45,6 +45,8 @@ const InteractiveHeroPreview = React.lazy(() => import('./dashboard/InteractiveH
 const AITerminal = React.lazy(() => import('./dashboard/AITerminal'));
 const InteractiveMap = React.lazy(() => import('./dashboard/InteractiveMap'));
 const VideoExplainer = React.lazy(() => import('./dashboard/VideoExplainer'));
+const HeroBackground = React.lazy(() => import('./landing/HeroBackground'));
+import { MovingBorderButton } from './landing/MovingBorderButton';
 
 interface LandingPageProps {
    onLogin: (user: User) => void;
@@ -325,158 +327,238 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
 
          {/* Main Content Wrapper */}
          <div className="relative z-10">
-            {/* Navigation */}
-            <nav className="fixed w-full z-50 bg-slate-950/90 md:bg-slate-950/80 md:backdrop-blur-md border-b border-slate-800/50 pt-safe">
+            {/* ═══ GLASSMORPHISM NAVBAR ═══ */}
+            <nav className="fixed w-full z-50 glass-nav pt-safe">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="flex items-center justify-between h-20">
+
                      {/* Logo */}
-                     <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
-                        <span className="text-2xl font-bold font-marketing-brand bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-500">
-                           AlphaClone
+                     <div
+                        className="flex items-center gap-3 cursor-pointer group"
+                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                     >
+                        {/* Logo image provided by user */}
+                        <div className="relative w-9 h-9 flex-shrink-0">
+                           <img
+                              src="/logo.png"
+                              alt="AlphaClone Systems Logo"
+                              width={36}
+                              height={36}
+                              className="object-contain w-full h-full"
+                              onError={(e) => {
+                                 // Fallback to styled initials if image not found
+                                 e.currentTarget.style.display = 'none';
+                              }}
+                           />
+                           {/* Fallback gradient badge */}
+                           <span
+                              className="absolute inset-0 flex items-center justify-center rounded-lg text-white font-black text-sm"
+                              style={{ background: 'linear-gradient(135deg, #0077FF, #00D2A0)', display: 'none' }}
+                              aria-hidden
+                           >
+                              AS
+                           </span>
+                        </div>
+                        <span className="text-lg font-bold tracking-widest uppercase font-marketing-brand hero-metallic-text">
+                           AlphaClone<span className="opacity-60"> Systems</span>
                         </span>
                      </div>
 
-                     {/* Desktop Nav */}
+                     {/* Desktop Nav — Solutions / Technology / Contact */}
                      <div className="hidden lg:flex items-center gap-8">
-                        <Link href="/" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Home</Link>
-                        <Link href="/ecosystem" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Platform</Link>
-                        <Link href="/pricing" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Pricing</Link>
-                        <Link href="/docs" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Docs</Link>
+                        <Link
+                           href="/ecosystem"
+                           className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase"
+                        >
+                           Solutions
+                        </Link>
+                        <Link
+                           href="/services"
+                           className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase"
+                        >
+                           Technology
+                        </Link>
+                        <Link
+                           href="/contact"
+                           className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase"
+                        >
+                           Contact
+                        </Link>
 
-                        {/* Services Dropdown */}
-                        <div className="relative" onMouseEnter={() => setServicesDropdownOpen(true)} onMouseLeave={() => setServicesDropdownOpen(false)}>
-                           <Link href="/services" className="text-sm font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-1 group">
-                              Services
-                              <motion.span animate={{ rotate: servicesDropdownOpen ? 180 : 0 }}>
-                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                              </motion.span>
-                           </Link>
-
-                           <AnimatePresence>
-                              {servicesDropdownOpen && (
-                                 <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: 10 }}
-                                    className="absolute top-full left-0 w-64 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 mt-2"
-                                 >
-                                    {[
-                                       { title: 'Custom Web Apps', desc: 'High-performance Next.js builds' },
-                                       { title: 'Mobile Ecosystems', desc: 'iOS & Android native solutions' },
-                                       { title: 'AI Automation', desc: 'Custom LLMs & Sales Agents', isComingSoon: true },
-                                       { title: 'Enterprise Dashboards', desc: 'Unified business control' }
-                                    ].map((s, i) => (
-                                       <Link key={i} href="/services" className="block w-full text-left p-3 rounded-xl hover:bg-slate-800 transition-colors group mb-1">
-                                          <div className="text-sm font-bold text-white group-hover:text-teal-400">{s.title}</div>
-                                          <div className="text-[10px] text-slate-500">{s.desc}</div>
-                                       </Link>
-                                    ))}
-                                 </motion.div>
-                              )}
-                           </AnimatePresence>
-                        </div>
-
-                        <Link href="https://alphaclone.tech/about" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">About</Link>
-                        <Link href="https://alphaclone.tech/contact" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Contact</Link>
-
-                        <div className="flex items-center gap-4 ml-4">
-                           <button onClick={() => setIsLoginOpen(true)} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
+                        <div className="flex items-center gap-4 ml-6 pl-6 border-l border-white/10">
+                           <button
+                              onClick={() => setIsLoginOpen(true)}
+                              className="text-sm font-semibold text-slate-400 hover:text-white transition-colors"
+                           >
                               Login
                            </button>
-                           <Button onClick={() => window.location.href = '/register'} className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-6 shadow-lg shadow-teal-500/20">
-                              Start Today
-                           </Button>
+                           <button
+                              onClick={() => window.location.href = '/register'}
+                              className="relative px-5 py-2 text-sm font-bold uppercase tracking-wider text-white rounded-lg overflow-hidden group"
+                              style={{ background: 'linear-gradient(135deg, #0077FF, #00D2A0)' }}
+                           >
+                              <span className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-white transition-opacity" />
+                              Start Now
+                           </button>
                         </div>
                      </div>
 
-                     {/* Mobile Menu Button - Morphing Icon */}
+                     {/* Mobile Menu Button */}
                      <div className="lg:hidden relative z-[10000]">
                         <button
                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                            className={`w-12 h-12 flex items-center justify-center rounded-xl border transition-all duration-300 ${mobileMenuOpen
-                              ? 'text-teal-400 bg-slate-900 border-teal-500/50'
-                              : 'text-white bg-slate-900/50 border-slate-800 hover:border-slate-700'
+                                 ? 'text-teal-400 bg-slate-900 border-teal-500/50'
+                                 : 'text-white bg-white/5 border-white/10 hover:border-white/20'
                               }`}
-                           aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+                           aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                         >
                            <HamburgerIcon isOpen={mobileMenuOpen} />
                         </button>
                      </div>
                   </div>
                </div>
+               {/* Scroll glow line */}
+               <div className="nav-glow-line w-full" />
             </nav>
 
-            {/* Hero Section */}
-            <section id="home" className="pt-24 pb-16 lg:pt-48 lg:pb-32 relative overflow-hidden">
-               {/* Local Glow for Hero Emphasis */}
-               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-teal-500/10 blur-[60px] md:blur-[120px] -z-10 rounded-full" />
+            {/* ═══ FULL-SCREEN CINEMATIC HERO ═══ */}
+            <section
+               id="home"
+               className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
+               style={{ background: '#020D1A' }}
+            >
+               {/* Canvas Beam Background - lazy loaded, off critical path */}
+               <React.Suspense fallback={null}>
+                  <HeroBackground />
+               </React.Suspense>
 
-               <div className="max-w-5xl mx-auto px-4 text-center">
+               {/* Dark overlay to preserve text contrast */}
+               <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                     background:
+                        'linear-gradient(to bottom, rgba(2,13,26,0.55) 0%, rgba(2,13,26,0.1) 50%, rgba(2,13,26,0.85) 100%)',
+                  }}
+               />
+
+               {/* Hero Content */}
+               <div className="relative z-10 max-w-5xl mx-auto px-4 text-center flex flex-col items-center gap-8 pt-28 pb-24">
+
+                  {/* Status badge */}
                   <motion.div
-                     initial={{ opacity: 0, y: 20 }}
-                     animate={{ opacity: 1, y: 0 }}
-                     className="invisible md:visible inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/80 md:bg-slate-900/50 md:backdrop-blur border border-slate-700/50 text-teal-400 text-sm font-medium mb-8 shadow-lg shadow-teal-900/20"
+                     initial={{ opacity: 0, scale: 0.8 }}
+                     animate={{ opacity: 1, scale: 1 }}
+                     transition={{ duration: 0.5, ease: 'easeOut' }}
+                     className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full border text-xs font-bold tracking-[0.2em] uppercase"
+                     style={{
+                        background: 'rgba(0,119,255,0.08)',
+                        borderColor: 'rgba(0,119,255,0.25)',
+                        color: '#60b8ff',
+                     }}
                   >
-                     <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
-                     The Future of Business Infrastructure
+                     <span
+                        className="w-2 h-2 rounded-full animate-pulse"
+                        style={{ background: '#00D2A0', boxShadow: '0 0 8px #00D2A0' }}
+                     />
+                     System Online &nbsp;·&nbsp; AI-Powered Business OS
                   </motion.div>
 
+                  {/* Main headline — ALPHACLONE SYSTEMS */}
                   <motion.div
-                     initial={{ opacity: 0, y: 20 }}
+                     initial={{ opacity: 0, y: 50 }}
                      animate={{ opacity: 1, y: 0 }}
-                     transition={{ delay: 0.1 }}
-                     className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold font-marketing-heading tracking-tight text-white mb-6 md:mb-8 leading-[1.1]"
+                     transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+                     className="flex flex-col items-center gap-2"
                   >
-                     One Platform.<br />
-                     <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 via-blue-400 to-violet-400">
-                        Total Control.
+                     <h1
+                        className="text-5xl sm:text-6xl md:text-8xl lg:text-[90px] font-black tracking-tighter leading-none font-marketing-heading hero-metallic-text"
+                        style={{ textShadow: '0 0 80px rgba(0,119,255,0.3)' }}
+                     >
+                        ALPHACLONE
+                     </h1>
+                     <span
+                        className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-[0.3em] uppercase text-slate-300 font-marketing-brand"
+                        style={{ letterSpacing: '0.35em' }}
+                     >
+                        SYSTEMS
                      </span>
                   </motion.div>
 
+                  {/* Tagline — staggered word reveal */}
                   <motion.p
-                     initial={{ opacity: 0, y: 20 }}
+                     initial={{ opacity: 0, y: 24 }}
                      animate={{ opacity: 1, y: 0 }}
-                     transition={{ delay: 0.2 }}
-                     className="text-lg sm:text-xl md:text-2xl text-slate-400 mb-8 md:mb-12 leading-relaxed max-w-3xl mx-auto"
+                     transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
+                     className="text-base sm:text-lg md:text-xl text-slate-400 max-w-2xl leading-relaxed font-marketing-body"
                   >
-                     Replace your fragmented tech stack with AlphaClone. The high-performance Business OS that unifies your CRM, projects, and finances.
+                     Replace your fragmented tech stack with one AI-powered platform.
+                     CRM, projects, finance, contracts — unified and automated.
                   </motion.p>
 
+                  {/* Divider */}
                   <motion.div
-                     initial={{ opacity: 0, y: 20 }}
+                     initial={{ scaleX: 0 }}
+                     animate={{ scaleX: 1 }}
+                     transition={{ duration: 0.8, delay: 0.4 }}
+                     className="w-24 h-px"
+                     style={{ background: 'linear-gradient(90deg, #0077FF, #00D2A0)' }}
+                  />
+
+                  {/* CTA Buttons */}
+                  <motion.div
+                     initial={{ opacity: 0, y: 24 }}
                      animate={{ opacity: 1, y: 0 }}
-                     transition={{ delay: 0.3 }}
-                     className="flex flex-col sm:flex-row items-center justify-center gap-6 px-4 sm:px-0 mb-20"
+                     transition={{ duration: 0.6, delay: 0.5, ease: 'easeOut' }}
+                     className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center"
                   >
-                     <Button
+                     {/* Moving Border Primary CTA */}
+                     <MovingBorderButton
                         onClick={() => window.location.href = '/register'}
-                        size="lg"
-                        className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-10 h-14 w-full sm:w-auto text-lg shadow-xl shadow-teal-500/20 hover:scale-105 transition-transform font-marketing-heading tracking-tight uppercase"
+                        className="w-full sm:w-auto"
                      >
-                        Start Free Trial
-                     </Button>
-                     <Button
-                        size="lg"
-                        variant="outline"
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                           <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Initialize System
+                     </MovingBorderButton>
+
+                     {/* Ghost secondary CTA */}
+                     <button
                         onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
-                        className="border-slate-700 bg-slate-900/80 md:bg-slate-900/50 md:backdrop-blur hover:bg-slate-800 text-white px-10 h-14 w-full sm:w-auto text-lg hover:border-slate-500 font-marketing-heading tracking-tight uppercase"
+                        className="w-full sm:w-auto px-8 py-4 text-sm font-bold uppercase tracking-widest text-slate-300 rounded-xl border border-white/10 hover:border-white/20 hover:text-white backdrop-blur-sm transition-all duration-200"
+                        style={{ minWidth: '200px' }}
                      >
                         Book a Demo
-                     </Button>
+                     </button>
                   </motion.div>
 
-                  {/* Interactive Dashboard Preview */}
-                  <motion.div
-                     initial={{ opacity: 0, scale: 0.95 }}
-                     animate={{ opacity: 1, scale: 1 }}
-                     transition={{ delay: 0.4, duration: 0.8 }}
-                     className="relative z-20"
+                  {/* Trust micro-line */}
+                  <motion.p
+                     initial={{ opacity: 0 }}
+                     animate={{ opacity: 1 }}
+                     transition={{ delay: 0.9 }}
+                     className="text-xs text-slate-600 tracking-widest uppercase"
                   >
-                     <React.Suspense fallback={<div className="h-[500px] w-full bg-slate-900/50 rounded-3xl animate-pulse" />}>
-                        <InteractiveHeroPreview />
-                     </React.Suspense>
-                  </motion.div>
+                     No credit card required &nbsp;·&nbsp; 14-day free trial &nbsp;·&nbsp; Cancel anytime
+                  </motion.p>
                </div>
+
+               {/* Scroll indicator */}
+               <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.2 }}
+                  className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-10"
+               >
+                  <span className="text-[10px] tracking-[0.3em] text-slate-600 uppercase">Scroll</span>
+                  <motion.div
+                     animate={{ y: [0, 8, 0] }}
+                     transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+                     className="w-px h-8"
+                     style={{ background: 'linear-gradient(to bottom, #0077FF, transparent)' }}
+                  />
+               </motion.div>
             </section>
 
             {/* Who We Serve Section */}
