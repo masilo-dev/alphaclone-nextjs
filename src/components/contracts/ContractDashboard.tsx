@@ -2,12 +2,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FileText, Bot, Download, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, MapPin, Mail, Briefcase, ChevronRight, Loader2, Eye, Edit3, RotateCcw, Send } from 'lucide-react';
 import { businessClientService, BusinessClient } from '../../services/businessClientService';
-import { contractService } from '../../services/contractService';
+import { contractService, Contract } from '../../services/contractService';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { User as UserType } from '../../types';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import { SignaturePad } from './SignaturePad';
 
 interface ContractDashboardProps {
     user: UserType;
@@ -79,11 +80,13 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [step, setStep] = useState<'form' | 'preview' | 'sign' | 'saved'>('form');
     const [isGenerating, setIsGenerating] = useState(false);
     const [generatedContract, setGeneratedContract] = useState('');
+    const [contractId, setContractId] = useState<string>('');
     const [savedContracts, setSavedContracts] = useState<any[]>([]);
     const [loadingContracts, setLoadingContracts] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [activeView, setActiveView] = useState<'new' | 'list'>('new');
     const [signatureName, setSignatureName] = useState('');
+    const [signatureData, setSignatureData] = useState('');
     const [signatureDate] = useState(format(new Date(), 'MMMM d, yyyy'));
     const [isSigned, setIsSigned] = useState(false);
     const printRef = useRef<HTMLDivElement>(null);
@@ -164,8 +167,10 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 const data = await res.json();
                 if (data.content) {
                     setGeneratedContract(data.content);
+                    setContractId('');
                     setIsSigned(false);
                     setSignatureName('');
+                    setSignatureData('');
                     setStep('preview');
                     setIsGenerating(false);
                     return;
@@ -175,8 +180,10 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
 
         // Fallback: generate from template
         setGeneratedContract(buildTemplateContract(form));
+        setContractId('');
         setIsSigned(false);
         setSignatureName('');
+        setSignatureData('');
         setStep('preview');
         setIsGenerating(false);
     };
@@ -189,8 +196,10 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 title: `${form.projectName} — ${form.clientName}`,
                 content: generatedContract,
                 client_id: form.clientId || undefined,
-                status: 'draft',
+                status: isSigned ? 'sent' : 'draft',
                 payment_amount: parseFloat(form.totalAmount) || 0,
+                admin_signature: isSigned ? signatureData : undefined,
+                admin_signed_at: isSigned ? new Date().toISOString() : undefined,
             });
             if (error) throw new Error(error);
             toast.success('Contract saved successfully!');
@@ -204,29 +213,20 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     };
 
     const handlePrint = () => {
-        const win = window.open('', '_blank');
-        if (!win) return;
-        win.document.write(`
-            <html><head><title>${form.projectName} Contract</title>
-            <style>
-                body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.8; color: #000; margin: 0; padding: 0; }
-                .page { width: 8.5in; min-height: 11in; margin: 0 auto; padding: 1in; box-sizing: border-box; page-break-after: always; }
-                h1 { font-size: 18pt; text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
-                h2 { font-size: 13pt; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 4px; margin-top: 24px; }
-                h3 { font-size: 12pt; margin-top: 16px; }
-                p { margin: 8px 0; text-align: justify; }
-                .center { text-align: center; }
-                .sig-block { margin-top: 40px; display: flex; justify-content: space-between; }
-                .sig-line { width: 45%; border-top: 1px solid #000; padding-top: 8px; }
-                hr { border: none; border-top: 1px solid #000; margin: 20px 0; }
-                @media print { body { -webkit-print-color-adjust: exact; } }
-            </style></head><body>
-            <div class="page">${contractToHTML(generatedContract)}</div>
-            </body></html>
-        `);
-        win.document.close();
-        win.focus();
-        setTimeout(() => { win.print(); win.close(); }, 500);
+        const mockContract: Partial<Contract> = {
+            id: contractId || 'NEW',
+            title: `${form.projectName} — ${form.clientName}`,
+            content: generatedContract,
+            admin_signature: signatureData,
+            admin_signed_at: isSigned ? new Date().toISOString() : undefined,
+            status: isSigned ? 'sent' : 'draft'
+        };
+        try {
+            toast.success("PDF Download started...");
+            contractService.downloadPDF(mockContract, currentTenant || undefined);
+        } catch (e) {
+            toast.error("Failed to generate PDF");
+        }
     };
 
     const inputCls = 'w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 transition-all text-sm';
@@ -279,7 +279,15 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 </div>
                             </div>
                             <button
-                                onClick={() => { setGeneratedContract(c.content); setStep('preview'); setActiveView('new'); }}
+                                onClick={() => {
+                                    setGeneratedContract(c.content);
+                                    setContractId(c.id);
+                                    setSignatureData(c.admin_signature || '');
+                                    setSignatureName(c.admin_signature ? 'Administrator' : '');
+                                    setIsSigned(!!c.admin_signature);
+                                    setStep('preview');
+                                    setActiveView('new');
+                                }}
                                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all flex items-center gap-2"
                             >
                                 <Eye className="w-4 h-4" /> View
@@ -495,7 +503,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         </span>
                                     )}
                                 </div>
-                                <button onClick={() => { setStep('form'); setGeneratedContract(''); setIsSigned(false); setSignatureName(''); }} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl text-sm transition-all">
+                                <button onClick={() => { setStep('form'); setGeneratedContract(''); setContractId(''); setIsSigned(false); setSignatureName(''); setSignatureData(''); }} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl text-sm transition-all">
                                     <RotateCcw className="w-4 h-4" /> New Contract
                                 </button>
                             </div>
@@ -509,24 +517,21 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         </div>
                                         <div>
                                             <h3 className="text-white font-bold text-base">Sign to Proceed</h3>
-                                            <p className="text-slate-400 text-sm">Type your full name or initials to sign this contract before saving or printing.</p>
+                                            <p className="text-slate-400 text-sm">Draw your signature and type your name to sign this contract before saving or printing.</p>
                                         </div>
                                     </div>
-                                    <div className="flex gap-3">
-                                        <input
-                                            className="flex-1 bg-white/5 border border-teal-500/40 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-all text-sm font-serif italic"
-                                            placeholder="Type your full name or initials here..."
-                                            value={signatureName}
-                                            onChange={e => setSignatureName(e.target.value)}
-                                            onKeyDown={e => { if (e.key === 'Enter' && signatureName.trim().length >= 2) setIsSigned(true); }}
-                                        />
-                                        <button
-                                            onClick={() => { if (signatureName.trim().length >= 2) setIsSigned(true); else toast.error('Please enter your full name or initials'); }}
-                                            className="px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition-all flex items-center gap-2 whitespace-nowrap"
-                                        >
-                                            <CheckCircle className="w-4 h-4" /> Sign Contract
-                                        </button>
-                                    </div>
+                                    <SignaturePad
+                                        onSave={(sig, name) => {
+                                            setSignatureData(sig);
+                                            setSignatureName(name);
+                                            setIsSigned(true);
+                                        }}
+                                        onClear={() => {
+                                            setSignatureData('');
+                                            setSignatureName('');
+                                            setIsSigned(false);
+                                        }}
+                                    />
                                 </div>
                             )}
 

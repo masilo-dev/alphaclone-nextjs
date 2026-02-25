@@ -728,9 +728,27 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                             </p>
 
                             <div className="flex gap-4">
-                                <Button variant="outline" onClick={() => {
+                                <Button variant="outline" onClick={async () => {
                                     toast.success("PDF Download started...");
-                                    // In production generate PDF blob here
+                                    try {
+                                        if (existingContractId) {
+                                            const { data: contract } = await supabase.from('contracts').select('*').eq('id', existingContractId).single();
+                                            if (contract) {
+                                                contractService.downloadPDF(contract, currentTenant || undefined);
+                                            }
+                                        } else {
+                                            const mockContract = {
+                                                title: `${variables.projectName} — ${variables.clientName}`,
+                                                content: contractText,
+                                                admin_signature: signature,
+                                                admin_signed_at: new Date().toISOString(),
+                                                status: 'sent'
+                                            };
+                                            contractService.downloadPDF(mockContract, currentTenant || undefined);
+                                        }
+                                    } catch (e) {
+                                        toast.error("Failed to generate PDF");
+                                    }
                                 }}>
                                     <DollarSign className="w-4 h-4 mr-2" /> Download PDF
                                 </Button>
