@@ -205,13 +205,58 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const handleUpgrade = async (planId: string) => {
         if (!currentTenant) return;
 
-        // During Beta (until March), we don't charge
-        toast("Subscriptions will begin in March. Your account is currently in Beta mode.", { icon: 'ℹ️' });
+        try {
+            const plan = PLAN_PRICING[planId as SubscriptionPlan];
+            if (!plan.stripePriceId) {
+                toast.error("Invalid plan selected");
+                return;
+            }
+
+            const response = await fetch('/api/stripe/create-checkout-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    priceId: plan.stripePriceId,
+                    planId,
+                    tenantId: currentTenant.id,
+                    adminEmail: user.email,
+                }),
+            });
+
+            const data = await response.json();
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                throw new Error(data.error || 'Failed to create checkout session');
+            }
+        } catch (error: any) {
+            console.error('Upgrade Error:', error);
+            toast.error(error.message || 'Failed to initiate upgrade');
+        }
     };
 
     const handleManageBilling = async () => {
-        // Portal disabled during Beta
-        toast("Billing management will be available in March.", { icon: 'ℹ️' });
+        if (!currentTenant) return;
+
+        try {
+            const response = await fetch('/api/stripe/create-portal-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                }),
+            });
+
+            const data = await response.json();
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                throw new Error(data.error || 'Failed to create portal session');
+            }
+        } catch (error: any) {
+            console.error('Portal Error:', error);
+            toast.error(error.message || 'Failed to open billing portal');
+        }
     };
 
     const handleDeleteAccount = async () => {
@@ -495,9 +540,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                 <div>
                                     <div className="flex items-center justify-between mb-4">
                                         <h3 className="text-lg font-bold text-white">Subscription Plan</h3>
-                                        <div className="px-3 py-1 bg-amber-500/20 border border-amber-500/30 rounded-full text-[10px] font-black text-amber-400 uppercase tracking-widest">
-                                            BETA ACCESS ENABLED
-                                        </div>
+                                        {currentTenant?.subscription_status === 'active' && (
+                                            <div className="px-3 py-1 bg-teal-500/20 border border-teal-500/30 rounded-full text-[10px] font-black text-teal-400 uppercase tracking-widest">
+                                                ACTIVE SUBSCRIPTION
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -588,19 +635,19 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                 </div>
 
                                 <div className="pt-6 border-t border-slate-800">
-                                    <h3 className="text-lg font-bold text-white mb-4">Payment Infrastructure</h3>
+                                    <h3 className="text-lg font-bold text-white mb-4">Payment Methods</h3>
                                     <p className="text-xs text-slate-400 mb-6">
-                                        Official billing systems will be activated in **March**. No payment details are required during the Beta phase.
+                                        Manage your billing information and payment methods securely via Stripe.
                                     </p>
-                                    <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 opacity-50 grayscale">
+                                    <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                         <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                                             <div className="w-12 h-8 bg-slate-800 rounded flex items-center justify-center font-bold text-[10px] text-slate-500 border border-slate-700 flex-shrink-0">CARD</div>
                                             <div className="min-w-0">
-                                                <p className="text-white text-sm font-medium">PAYMENT UPLINK OFFLINE</p>
-                                                <p className="text-[10px] text-slate-500 uppercase tracking-widest">Activation scheduled for March</p>
+                                                <p className="text-white text-sm font-medium">STRIPE BILLING PORTAL</p>
+                                                <p className="text-[10px] text-slate-500 uppercase tracking-widest">Manage cards, invoices, and history</p>
                                             </div>
                                         </div>
-                                        <Button disabled className="w-full sm:w-auto">Link Card</Button>
+                                        <Button onClick={handleManageBilling} className="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-white">Manage Billing</Button>
                                     </div>
                                 </div>
                             </div>
