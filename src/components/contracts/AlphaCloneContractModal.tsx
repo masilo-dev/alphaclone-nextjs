@@ -8,6 +8,7 @@ import { businessClientService, BusinessClient } from '../../services/businessCl
 import toast from 'react-hot-toast';
 import { User, Project } from '../../types';
 import { supabase } from '../../lib/supabase';
+import ContractDraftingVisual from './ContractDraftingVisual';
 
 import { useTenant } from '../../contexts/TenantContext';
 import { useBackgroundTasks } from '../../contexts/BackgroundTaskContext';
@@ -39,7 +40,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
     existingContractText
 }) => {
     const { currentTenant } = useTenant();
-    const [step, setStep] = useState<'edit' | 'preview' | 'sign' | 'success'>('edit');
+    const [step, setStep] = useState<'edit' | 'drafting' | 'preview' | 'sign' | 'success'>('edit');
     const [contractText, setContractText] = useState('');
     const [comments, setComments] = useState<Comment[]>([]);
     const [newComment, setNewComment] = useState('');
@@ -147,6 +148,11 @@ const AlphaCloneContractModal: React.FC<Props> = ({
         }
 
         generateContract();
+        setStep('drafting');
+        toast.success('Initiating legal AI drafting process...');
+    };
+
+    const handleDraftingComplete = () => {
         setStep('preview');
         toast.success('Contract generated successfully');
     };
@@ -594,6 +600,17 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                     Generate Contract
                                 </Button>
                             </div>
+                        </div>
+                    )}
+
+                    {/* STEP 1.5: Drafting Visual Sequence */}
+                    {step === 'drafting' && (
+                        <div className="absolute inset-0 z-[60] bg-slate-950 flex flex-col items-center justify-center rounded-2xl overflow-hidden">
+                            <ContractDraftingVisual
+                                clientName={variables.clientCompany || variables.clientName}
+                                onComplete={handleDraftingComplete}
+                                durationMs={6000} // 6 seconds of AI processing visual
+                            />
                         </div>
                     )}
 
