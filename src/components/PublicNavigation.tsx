@@ -14,7 +14,6 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const pathname = usePathname();
 
-    // Scroll Lock Effect
     useEffect(() => {
         if (mobileMenuOpen) {
             document.body.classList.add('menu-open');
@@ -25,11 +24,14 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
     }, [mobileMenuOpen]);
 
     const navItems = [
-        { label: 'Home', path: 'https://alphaclone.tech/' },
-        { label: 'Ecosystem', path: 'https://alphaclone.tech/ecosystem' },
-        { label: 'Services', path: 'https://alphaclone.tech/services' },
-        { label: 'About', path: 'https://alphaclone.tech/about' },
-        { label: 'Contact', path: 'https://alphaclone.tech/contact' }
+        { label: 'Home', path: '/' },
+        { label: 'Services', path: '/services' },
+        { label: 'Ecosystem', path: '/ecosystem' },
+        { label: 'About', path: '/about' },
+        { label: 'Guide', path: '/guide' },
+        { label: 'Docs', path: '/docs' },
+        { label: 'Pricing', path: '/pricing' },
+        { label: 'Contact', path: '/contact' },
     ];
 
     const isActive = (path: string) => pathname === path;
@@ -39,14 +41,14 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-20">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2">
+                    <Link href="/" className="flex items-center gap-2 flex-shrink-0">
                         <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-500">
                             AlphaClone
                         </span>
                     </Link>
 
                     {/* Desktop Nav */}
-                    <div className="hidden lg:flex items-center gap-8">
+                    <div className="hidden lg:flex items-center gap-6">
                         {navItems.map((item) => (
                             <Link
                                 key={item.path}
@@ -61,12 +63,12 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                         ))}
                         <div className="flex items-center gap-4 ml-4 pl-4 border-l border-slate-800">
                             <Link
-                                href="https://alphaclone.tech/login"
+                                href="/auth/login"
                                 className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
                             >
                                 Login
                             </Link>
-                            <Link href="https://alphaclone.tech/register">
+                            <Link href="/register">
                                 <Button size="sm" className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold shadow-lg shadow-teal-500/20">
                                     Start Free Trial
                                 </Button>
@@ -74,7 +76,7 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                         </div>
                     </div>
 
-                    {/* Mobile Menu Button - High Z-Index to stay above overlay */}
+                    {/* Mobile Menu Button */}
                     <div className="lg:hidden relative z-[10000]">
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -86,19 +88,19 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                     </div>
                 </div>
 
-                {/* Mobile Nav Overlay - Block interactions behind it */}
+                {/* Mobile Nav Overlay */}
                 {mobileMenuOpen && (
                     <div
                         className="lg:hidden fixed inset-0 z-[9999] bg-slate-950/98 backdrop-blur-2xl animate-fade-in p-8 pt-24 overflow-y-auto touch-none"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="space-y-4">
+                        <div className="space-y-2">
                             {navItems.map((item) => (
                                 <Link
                                     key={item.path}
                                     href={item.path}
                                     onClick={() => setMobileMenuOpen(false)}
-                                    className={`block text-2xl font-bold py-4 border-b border-slate-900/50 transition-colors ${isActive(item.path)
+                                    className={`block text-xl font-bold py-4 border-b border-slate-900/50 transition-colors ${isActive(item.path)
                                         ? 'text-teal-400'
                                         : 'text-white hover:text-teal-400'
                                         }`}
@@ -108,12 +110,12 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                             ))}
                         </div>
                         <div className="pt-8 flex flex-col gap-4">
-                            <Link href="https://alphaclone.tech/login" onClick={() => setMobileMenuOpen(false)}>
+                            <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
                                 <Button variant="outline" className="w-full py-4 text-center font-bold text-slate-300 border border-slate-800 rounded-2xl hover:bg-slate-900 transition-colors text-lg">
                                     Login
                                 </Button>
                             </Link>
-                            <Link href="https://alphaclone.tech/register" onClick={() => setMobileMenuOpen(false)}>
+                            <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
                                 <Button className="w-full py-4 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-2xl shadow-lg shadow-teal-500/20 text-lg h-auto">
                                     Start Free Trial
                                 </Button>
@@ -127,4 +129,3 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
 };
 
 export default PublicNavigation;
-

@@ -4,23 +4,39 @@ import { seoService } from '../services/seoService';
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const baseUrl = 'https://alphaclone.tech'; // Updated domain
 
-    // 1. Static Routes
-    const staticRoutes = [
-        '',
-        '/about',
-        '/services',
-        '/contact',
+    // 1. Static Marketing Routes
+    const highPriorityRoutes = ['', '/services', '/about', '/guide', '/docs', '/pricing'].map((route) => ({
+        url: `${baseUrl}${route}`,
+        lastModified: new Date('2026-02-25'),
+        changeFrequency: 'weekly' as const,
+        priority: route === '' ? 1.0 : 0.9,
+    }));
+
+    const standardRoutes = [
+        '/ecosystem',
+        '/who-we-serve',
+        '/compare',
         '/blog',
-        '/login',
-        '/register',
-        '/privacy-policy',
-        '/terms-of-service',
+        '/contact',
     ].map((route) => ({
         url: `${baseUrl}${route}`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly' as const,
-        priority: route === '' ? 1 : 0.8,
+        lastModified: new Date('2026-02-25'),
+        changeFrequency: 'monthly' as const,
+        priority: 0.7,
     }));
+
+    const legalRoutes = [
+        '/privacy-policy',
+        '/terms-of-service',
+        '/cookie-policy',
+    ].map((route) => ({
+        url: `${baseUrl}${route}`,
+        lastModified: new Date('2026-01-01'),
+        changeFrequency: 'yearly' as const,
+        priority: 0.3,
+    }));
+
+    const staticRoutes = [...highPriorityRoutes, ...standardRoutes, ...legalRoutes];
 
     // 2. Dynamic Blog Routes
     let blogRoutes: MetadataRoute.Sitemap = [];

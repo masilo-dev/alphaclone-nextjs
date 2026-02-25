@@ -50,14 +50,31 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AlphaClone Systems | AI-Powered Enterprise OS & Custom Software",
-  description: "AlphaClone Systems: The next-generation AI-powered Business Operating System for unified enterprise operations.",
-  keywords: ["AI automation", "enterprise CRM", "custom software development", "business operating system", "Next.js development", "scalable architecture", "AlphaClone"],
-  authors: [{ name: "AlphaClone Systems" }],
+  metadataBase: new URL('https://alphaclone.tech'),
+  title: {
+    default: "AlphaClone Systems | AI-Powered Business Operating System",
+    template: "%s | AlphaClone Systems",
+  },
+  description: "AlphaClone Systems is the AI-powered Business OS that replaces 10+ SaaS tools with one unified platform. CRM, invoicing, contracts, AI growth agent, video meetings, and accounting — starting at $15/month.",
+  keywords: ["AI business operating system", "AI automation for small business", "enterprise CRM software", "all-in-one business platform", "replace QuickBooks HubSpot Zoom", "AI growth agent", "business software suite", "AlphaClone", "AI-powered CRM", "business management software"],
+  authors: [{ name: "AlphaClone Systems", url: "https://alphaclone.tech" }],
+  creator: "AlphaClone Systems",
+  publisher: "AlphaClone Systems",
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
+  alternates: { canonical: 'https://alphaclone.tech' },
   openGraph: {
-    title: "AlphaClone Systems | AI-Powered Enterprise OS",
-    description: "The all-in-one platform for modern businesses. CRM, Finance, Tasks, and Team Management unified.",
+    title: "AlphaClone Systems | AI-Powered Business Operating System",
+    description: "Replace 10+ SaaS tools with one AI-powered platform. CRM, finance, contracts, AI sales agent, video meetings — all unified. Starting at $15/month.",
     type: "website",
+    url: "https://alphaclone.tech",
+    siteName: "AlphaClone Systems",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AlphaClone Systems | AI-Powered Business Operating System",
+    description: "Replace 10+ SaaS tools with one AI-powered Business OS. CRM, finance, contracts, AI sales, meetings — unified.",
+    creator: "@AlphaCloneSys",
   },
 };
 
@@ -70,6 +87,34 @@ export const viewport: Viewport = {
 
 import { WebVitals } from "@/components/common/WebVitals";
 
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'AlphaClone Systems',
+  url: 'https://alphaclone.tech',
+  logo: 'https://alphaclone.tech/favicon.ico',
+  description: 'AlphaClone Systems is an AI-powered Business Operating System that unifies CRM, invoicing, contracts, AI growth automation, video meetings, and financial accounting into a single platform for modern businesses.',
+  foundingDate: '2020',
+  contactPoint: {
+    '@type': 'ContactPoint',
+    email: 'support@alphaclone.tech',
+    contactType: 'customer support',
+    availableLanguage: 'English',
+  },
+  sameAs: [
+    'https://www.linkedin.com/company/alphaclone-systems',
+    'https://www.g2.com/products/alphaclone',
+    'https://www.crunchbase.com/organization/alphaclone-systems',
+  ],
+  offers: {
+    '@type': 'AggregateOffer',
+    priceCurrency: 'USD',
+    lowPrice: '15',
+    highPrice: '80',
+    offerCount: '3',
+  },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -77,6 +122,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${dancingScript.variable} ${sacramento.variable} ${inter.variable} ${plusJakartaSans.variable} ${sora.variable} ${jetbrainsMono.variable} antialiased text-base subpixel-antialiased`}
       >
