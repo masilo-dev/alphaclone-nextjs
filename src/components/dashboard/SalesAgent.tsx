@@ -10,6 +10,7 @@ import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 
 import { useBackgroundTasks } from '../../contexts/BackgroundTaskContext';
+import LeadSearchVisual from './leads/LeadSearchVisual';
 
 const SalesAgent: React.FC = () => {
     const aiConfigured = isAnyAIConfigured();
@@ -18,6 +19,8 @@ const SalesAgent: React.FC = () => {
     const [searchParams, setSearchParams] = useState({ industry: '', location: '' });
     const [leads, setLeads] = useState<Lead[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [isVisualSearchActive, setIsVisualSearchActive] = useState(false);
+    const [visualSearchParams, setVisualSearchParams] = useState({ industry: '', location: '' });
     const [isLoading, setIsLoading] = useState(true);
     const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
     const [filters, setFilters] = useState({ businessSize: '', employeeCount: '' });
@@ -185,6 +188,9 @@ const SalesAgent: React.FC = () => {
 
         const taskName = `AI Lead Search for ${searchParams.industry} in ${searchParams.location}`;
 
+        setVisualSearchParams({ industry: searchParams.industry, location: searchParams.location });
+        setIsVisualSearchActive(true);
+
         startTask(
             `lead_search_${Date.now()}`,
             taskName,
@@ -239,6 +245,7 @@ const SalesAgent: React.FC = () => {
             (result) => {
                 toast.success(`🎉 Added ${result.count} leads, created ${result.processed} clients & draft quotes!`, { duration: 5000 });
                 loadLeads();
+                setIsVisualSearchActive(false);
             }
         );
 
@@ -618,6 +625,9 @@ const SalesAgent: React.FC = () => {
 
         const taskName = `AI Agent Search for ${industry} in ${location}`;
 
+        setVisualSearchParams({ industry, location });
+        setIsVisualSearchActive(true);
+
         startTask(
             `auto_search_${Date.now()}`,
             taskName,
@@ -677,6 +687,7 @@ const SalesAgent: React.FC = () => {
                     sender: 'agent',
                     text: `Done! I've discovered ${result.count} high-quality leads for ${result.industry} in ${result.location} and added them to your Lead Finder. Would you like me to analyze any of them or draft a specific outreach?`
                 }]);
+                setIsVisualSearchActive(false);
             }
         );
 
@@ -769,6 +780,12 @@ const SalesAgent: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            {isVisualSearchActive && activeTab === 'leads' && (
+                <div className="absolute inset-0 z-50">
+                    <LeadSearchVisual industry={visualSearchParams.industry} location={visualSearchParams.location} />
+                </div>
+            )}
 
             {activeTab === 'leads' ? (
                 <div className="space-y-6">
