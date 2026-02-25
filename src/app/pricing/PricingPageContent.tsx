@@ -8,7 +8,6 @@ import {
     ChevronDown, ArrowRight, Users, Brain, FileText, DollarSign,
     Video, Calendar, Mail, BarChart3, Lock, X, Minus
 } from 'lucide-react';
-import { Button } from '@/components/ui/UIComponents';
 import PublicNavigation from '@/components/PublicNavigation';
 
 const plans = [
@@ -165,6 +164,30 @@ export default function PricingPageContent() {
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-teal-500/30 overflow-hidden">
+            {/* JSON-LD Schemas */}
+            <script type="application/ld+json" dangerouslySetInnerHTML={{
+                __html: JSON.stringify({
+                    '@context': 'https://schema.org',
+                    '@type': 'FAQPage',
+                    mainEntity: [
+                        { '@type': 'Question', name: 'How much does AlphaClone cost?', acceptedAnswer: { '@type': 'Answer', text: 'AlphaClone offers three plans: Starter at $15/month (up to 5 users), Professional at $45/month (up to 25 users, includes AI Growth Agent), and Enterprise at $80/month (unlimited users, white-label, dedicated support). All plans include a 14-day free trial with no credit card required.' } },
+                        { '@type': 'Question', name: 'Is there a free trial for AlphaClone?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. All AlphaClone plans include a 14-day free trial with full access to all features in that plan. No credit card is required to start.' } },
+                        { '@type': 'Question', name: 'Can I cancel AlphaClone at any time?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. You can cancel at any time from Settings > Billing. Cancellation takes effect at the end of the current billing period. Your data is retained for 90 days after cancellation.' } },
+                        { '@type': 'Question', name: 'Does AlphaClone replace HubSpot, Zoom, DocuSign, and QuickBooks?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. AlphaClone replaces HubSpot (CRM), Zoom (video meetings), DocuSign (contracts), QuickBooks (financial management), Mailchimp (email), and several other tools for a fraction of the combined cost.' } },
+                    ]
+                })
+            }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{
+                __html: JSON.stringify({
+                    '@context': 'https://schema.org',
+                    '@type': 'BreadcrumbList',
+                    itemListElement: [
+                        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://alphaclone.tech' },
+                        { '@type': 'ListItem', position: 2, name: 'Pricing', item: 'https://alphaclone.tech/pricing' },
+                    ]
+                })
+            }} />
+
             {/* Ambient background */}
             <div className="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none">
                 <div className="absolute top-[10%] left-[5%] w-[500px] h-[500px] bg-teal-500/8 blur-[150px] rounded-full" />
