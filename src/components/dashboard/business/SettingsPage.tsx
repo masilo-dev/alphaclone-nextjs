@@ -15,7 +15,8 @@ import {
     Loader2,
     Calendar,
     Trash2,
-    X
+    X,
+    CreditCard
 } from 'lucide-react';
 import { fileUploadService } from '../../../services/fileUploadService';
 import GmailIntegration from './GmailIntegration';
@@ -169,7 +170,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         { id: 'business', label: 'Business Profile', icon: Building },
         { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'security', label: 'Security', icon: Shield },
-        { id: 'booking', label: 'Booking & Calendly', icon: Calendar }
+        { id: 'booking', label: 'Booking & Calendly', icon: Calendar },
+        { id: 'billing', label: 'Billing & Plans', icon: CreditCard }
     ];
 
     const handleDeleteAccount = async () => {
@@ -424,6 +426,60 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                 )}
 
                 {/* Booking System Tab */}
+                {activeTab === 'booking' && (
+                    <div className="space-y-12">
+                        <div className="border-b border-slate-700 pb-12">
+                            <GmailIntegration user={user} />
+                        </div>
+                        <CalendlySettings />
+                    </div>
+                )}
+
+                {/* Billing & Subscription Tab */}
+                {activeTab === 'billing' && (
+                    <div className="space-y-6">
+                        <div>
+                            <h3 className="text-xl font-bold mb-4">Subscription & Billing</h3>
+                            <p className="text-slate-400 mb-6">Manage your AlphaClone subscription plan and billing methods.</p>
+                        </div>
+                        <div className="p-6 bg-slate-800 rounded-xl border border-slate-700">
+                            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
+                                <div>
+                                    <h4 className="text-lg font-bold text-white mb-2">Current Plan</h4>
+                                    <p className="text-sm text-slate-400">
+                                        You are currently on the <span className="text-teal-400 font-bold uppercase">{currentTenant?.subscription_plan || 'Starter'}</span> plan.
+                                    </p>
+                                </div>
+                                <div className="px-3 py-1 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-full text-xs font-bold uppercase tracking-wider w-fit">
+                                    Active
+                                </div>
+                            </div>
+                            <div className="space-y-4 mb-8">
+                                <p className="text-sm text-slate-300">Features included in your plan:</p>
+                                <ul className="list-disc list-inside text-sm text-slate-400 space-y-2">
+                                    <li>Multi-tenant Users</li>
+                                    <li>Core CRM Pipeline</li>
+                                    <li>Secure Storage</li>
+                                    <li>Standard Project Management</li>
+                                </ul>
+                            </div>
+                            <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-slate-700">
+                                <button
+                                    onClick={() => toast.error('Stripe billing portal integration pending.')}
+                                    className="px-6 py-2.5 bg-teal-600 hover:bg-teal-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-teal-900/20"
+                                >
+                                    Manage Subscription
+                                </button>
+                                <button
+                                    onClick={() => window.location.href = '/pricing'}
+                                    className="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-all border border-slate-600"
+                                >
+                                    View Upgrade Options
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {activeTab === 'booking' && (
                     <div className="space-y-12">
                         <div className="border-b border-slate-700 pb-12">

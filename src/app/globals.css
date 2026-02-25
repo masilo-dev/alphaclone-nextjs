@@ -71,9 +71,13 @@
 
 body {
   background-color: #020617;
-  background-image: radial-gradient(at center, rgba(2, 6, 23, 1) 0%, rgba(0, 0, 0, 1) 100%);
   color: var(--foreground);
   scroll-behavior: smooth;
+  @apply text-sm antialiased;
+}
+
+/* Typography Overrides - Scoped to Marketing Theme */
+.marketing-theme {
   font-family: var(--font-inter), sans-serif;
   font-weight: 400;
   font-size: 18px;
@@ -81,8 +85,7 @@ body {
   letter-spacing: normal;
 }
 
-/* Typography Overrides */
-h1 {
+.marketing-theme h1 {
   font-family: var(--font-jakarta), sans-serif;
   font-weight: 800;
   font-size: 48px;
@@ -90,7 +93,7 @@ h1 {
   letter-spacing: -0.02em;
 }
 
-h2 {
+.marketing-theme h2 {
   font-family: var(--font-jakarta), sans-serif;
   font-weight: 700;
   font-size: 36px;
@@ -98,23 +101,23 @@ h2 {
   letter-spacing: -0.01em;
 }
 
-h3,
-h4 {
+.marketing-theme h3,
+.marketing-theme h4 {
   font-family: var(--font-inter), sans-serif;
   font-weight: 600;
   font-size: 24px;
   line-height: 1.4;
 }
 
-p {
+.marketing-theme p {
   font-family: var(--font-inter), sans-serif;
   font-weight: 400;
   font-size: 18px;
   line-height: 1.6;
 }
 
-button,
-.cta {
+.marketing-theme button,
+.marketing-theme .cta {
   font-family: var(--font-jakarta), sans-serif;
   font-weight: 600;
   font-size: 16px;
@@ -124,21 +127,21 @@ button,
   transition: all 0.2s ease;
 }
 
-button:hover,
-.cta:hover {
+.marketing-theme button:hover,
+.marketing-theme .cta:hover {
   font-weight: 700;
 }
 
-nav a,
-.nav-link {
+.marketing-theme nav a,
+.marketing-theme .nav-link {
   font-family: var(--font-inter), sans-serif;
   font-weight: 500;
   font-size: 16px;
   line-height: 1;
 }
 
-nav a:hover,
-.nav-link:hover {
+.marketing-theme nav a:hover,
+.marketing-theme .nav-link:hover {
   font-weight: 700;
 }
 

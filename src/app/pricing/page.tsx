@@ -113,7 +113,14 @@ export default function PricingPage() {
                                 </ul>
 
                                 <Button
-                                    onClick={() => plan.name === 'Enterprise' ? window.location.href = '/#contact' : window.location.href = '/register'}
+                                    onClick={() => {
+                                        if (plan.name === 'Enterprise') {
+                                            window.location.href = '/#contact';
+                                        } else {
+                                            const planId = plan.name === 'Professional' ? 'pro' : plan.name.toLowerCase();
+                                            window.location.href = `/auth/login?register=true&type=business&plan=${planId}`;
+                                        }
+                                    }}
                                     className={`w-full py-7 rounded-2xl font-black text-lg transition-all font-marketing-heading uppercase tracking-tight ${plan.popular
                                         ? 'bg-teal-500 hover:bg-teal-400 text-slate-950 shadow-xl shadow-teal-500/20'
                                         : 'bg-slate-900 hover:bg-slate-800 text-white border border-slate-800'

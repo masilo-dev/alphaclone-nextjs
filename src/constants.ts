@@ -100,20 +100,33 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
 
 // --- TENANT ADMIN NAVIGATION (Business Dashboard) ---
 export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
+  // 1. Overview
   { label: 'Business Home', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'CRM Directory', href: '/dashboard/crm', icon: Users },
-  { label: 'Leads & Deals', href: '/dashboard/leads', icon: TrendingUp },
-  { label: 'Quotes', href: '/dashboard/business/quotes', icon: FileText },
+
+  // 2. Acquisition & Sales Pipeline
   { label: 'Growth Agent', href: '/dashboard/sales-agent', icon: Zap },
-  { label: 'Task Center', href: '/dashboard/tasks', icon: CheckSquare },
-  { label: 'Projects', href: '/dashboard/business/projects', icon: Briefcase },
+  { label: 'Leads & Deals', href: '/dashboard/leads', icon: TrendingUp },
+  { label: 'CRM Directory', href: '/dashboard/crm', icon: Users },
+
+  // 3. Communication & Scheduling
   { label: 'Gmail', href: '/dashboard/gmail', icon: Mail },
   { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
   { label: 'Active Meetings', href: '/dashboard/business/meetings', icon: Video },
+
+  // 4. Closing & Agreements
+  { label: 'Quotes', href: '/dashboard/business/quotes', icon: FileText },
+  { label: 'Contracts', href: '/dashboard/business/contracts', icon: FileText },
+
+  // 5. Execution & Fulfillment 
+  { label: 'Projects', href: '/dashboard/business/projects', icon: Briefcase },
+  { label: 'Task Center', href: '/dashboard/tasks', icon: CheckSquare },
+
+  // 6. Finances & Records
   { label: 'Financials', href: '/dashboard/business/billing', icon: DollarSign },
   { label: 'Accounting', href: '/dashboard/accounting', icon: BarChart3 },
-  { label: 'Contracts', href: '/dashboard/business/contracts', icon: FileText },
   { label: 'Document Hub', href: '/dashboard/business/documents', icon: FolderOpen },
+
+  // 7. Administration
   { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },
 ];
 

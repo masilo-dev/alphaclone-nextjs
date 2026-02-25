@@ -242,7 +242,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                 </p>
                 <div className="flex gap-4">
                     <button
-                        onClick={() => setActiveTab('/dashboard/business/billing')}
+                        onClick={() => setActiveTab('/dashboard/business/settings?tab=billing')}
                         className="bg-teal-600 hover:bg-teal-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-teal-900/20"
                     >
                         View Upgrade Options
@@ -447,30 +447,39 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                             <Menu className="w-6 h-6" />
                         </button>
 
-                        <h2 className="text-base sm:text-lg md:text-xl font-semibold text-white truncate max-w-[150px] sm:max-w-none">
-                            {getPageTitle()}
-                        </h2>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        {/* Removed Assistant Button as requested ("remove the recording button") */}
-
-                        {activeBgTasksCount > 0 && (
-                            <div className="flex items-center gap-2 bg-slate-800/50 text-teal-400 px-3 py-1.5 rounded-full text-xs font-semibold animate-pulse border border-teal-500/30">
-                                <RefreshCw className="w-4 h-4 animate-spin" />
-                                <span className="hidden sm:inline">{activeBgTasksCount} Task(s)</span>
+                        <div className="flex items-center gap-2 sm:gap-3 md:hidden">
+                            <div className="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center overflow-hidden">
+                                {currentTenant?.logo_url ? (
+                                    <img src={currentTenant.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                                ) : (
+                                    <span className="text-teal-400 font-bold text-lg">{currentTenant?.name?.charAt(0) || 'A'}</span>
+                                )}
                             </div>
-                        )}
+                            <h1 className="text-base sm:text-lg font-bold text-white whitespace-nowrap truncate max-w-[150px] sm:max-w-none">
+                                {currentTenant?.name || 'Workspace'}
+                            </h1>
+                        </div>
 
-                        <div className="hidden md:block w-px h-6 bg-slate-800 mx-2" />
+                        <div className="flex items-center gap-4">
+                            {/* Removed Assistant Button as requested ("remove the recording button") */}
 
-                        <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 overflow-hidden">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                                src={currentTenant?.logo_url || user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
-                                alt="Profile"
-                                className="w-full h-full object-cover"
-                            />
+                            {activeBgTasksCount > 0 && (
+                                <div className="flex items-center gap-2 bg-slate-800/50 text-teal-400 px-3 py-1.5 rounded-full text-xs font-semibold animate-pulse border border-teal-500/30">
+                                    <RefreshCw className="w-4 h-4 animate-spin" />
+                                    <span className="hidden sm:inline">{activeBgTasksCount} Task(s)</span>
+                                </div>
+                            )}
+
+                            <div className="hidden md:block w-px h-6 bg-slate-800 mx-2" />
+
+                            <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 overflow-hidden">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={currentTenant?.logo_url || user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
+                                    alt="Profile"
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
                         </div>
                     </div>
                 </header>

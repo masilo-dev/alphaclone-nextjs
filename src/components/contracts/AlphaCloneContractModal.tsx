@@ -68,7 +68,11 @@ const AlphaCloneContractModal: React.FC<Props> = ({
         providerAddress: '',
         providerEmail: user.email || '',
         providerRegistration: '',
-        governingJurisdiction: '[Your State/Country Jurisdiction]'
+        governingJurisdiction: '[Your State/Country Jurisdiction]',
+        providerRepName: user.name || '',
+        providerRepTitle: 'Authorized Representative',
+        clientRepName: project.ownerName || '',
+        clientRepTitle: 'Authorized Representative'
     });
 
     useEffect(() => {
@@ -88,7 +92,8 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                     clientName: client.name,
                     clientCompany: client.name || '',
                     clientEmail: client.email || prev.clientEmail,
-                    clientAddress: client.location || ''
+                    clientAddress: client.location || '',
+                    clientRepName: client.name || prev.clientRepName
                 }));
             }
         }
@@ -115,6 +120,32 @@ const AlphaCloneContractModal: React.FC<Props> = ({
     };
 
     const handleGeneratePreview = () => {
+        // Validation for mandatory fields
+        const requiredFields = [
+            { key: variables.clientName, name: 'Client Name' },
+            { key: variables.clientEmail, name: 'Client Email' },
+            { key: variables.clientRepName, name: 'Client Authorized Representative' },
+            { key: variables.clientRepTitle, name: 'Client Signatory Title' },
+            { key: variables.providerName, name: 'Provider Business Name' },
+            { key: variables.providerEmail, name: 'Provider Email' },
+            { key: variables.providerRepName, name: 'Provider Authorized Rep.' },
+            { key: variables.providerRepTitle, name: 'Provider Signatory Title' },
+            { key: variables.governingJurisdiction, name: 'Governing Jurisdiction' },
+            { key: variables.contractDate, name: 'Contract Date' },
+            { key: variables.startDate, name: 'Start Date' },
+            { key: variables.deliveryDate, name: 'Delivery Date' },
+            { key: variables.totalAmount, name: 'Total Amount' },
+            { key: variables.projectScope, name: 'Project Scope' },
+            { key: variables.projectDeliverables, name: 'Deliverables' }
+        ];
+
+        for (const field of requiredFields) {
+            if (!field.key && field.key !== 0) {
+                toast.error(`Please fill out the mandatory field: ${field.name}`);
+                return;
+            }
+        }
+
         generateContract();
         setStep('preview');
         toast.success('Contract generated successfully');
@@ -413,6 +444,18 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                     onChange={(e) => handleVariableChange('clientAddress', e.target.value)}
                                     placeholder="Optional"
                                 />
+                                <Input
+                                    label="Client Authorized Representative *"
+                                    value={variables.clientRepName}
+                                    onChange={(e) => handleVariableChange('clientRepName', e.target.value)}
+                                    placeholder="Name of individual signing"
+                                />
+                                <Input
+                                    label="Client Signatory Title *"
+                                    value={variables.clientRepTitle}
+                                    onChange={(e) => handleVariableChange('clientRepTitle', e.target.value)}
+                                    placeholder="e.g. CEO, Founder"
+                                />
                             </div>
 
                             <div className="border-t border-slate-800 pt-4">
@@ -444,12 +487,25 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                         placeholder="e.g. State of California, USA"
                                     />
                                 </div>
-                                <div className="mt-4">
+                                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <Input
                                         label="Provider Address"
                                         value={variables.providerAddress}
                                         onChange={(e) => handleVariableChange('providerAddress', e.target.value)}
                                         placeholder="Optional but recommended"
+                                    />
+                                    <div></div>
+                                    <Input
+                                        label="Provider Authorized Rep. *"
+                                        value={variables.providerRepName}
+                                        onChange={(e) => handleVariableChange('providerRepName', e.target.value)}
+                                        placeholder="Name of individual signing"
+                                    />
+                                    <Input
+                                        label="Provider Signatory Title *"
+                                        value={variables.providerRepTitle}
+                                        onChange={(e) => handleVariableChange('providerRepTitle', e.target.value)}
+                                        placeholder="e.g. Owner, Managing Director"
                                     />
                                 </div>
                             </div>

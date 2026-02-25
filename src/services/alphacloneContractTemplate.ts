@@ -23,6 +23,10 @@ export interface ContractVariables {
     depositAmount: number;
     startDate: string;
     deliveryDate: string;
+    providerRepName: string;
+    providerRepTitle: string;
+    clientRepName: string;
+    clientRepTitle: string;
 }
 
 // Payment schedule templates
@@ -144,13 +148,15 @@ This Agreement constitutes the entire understanding between the parties and supe
 **SERVICE PROVIDER:**
 ${variables.providerName}
 Signature: [DIGITAL SIGNATURE]
-Title: Authorized Representative
+Printed Name: ${variables.providerRepName}
+Title: ${variables.providerRepTitle}
 Date: ${variables.contractDate}
  
 **CLIENT:**
 ${variables.clientName}
 Signature: [DIGITAL SIGNATURE]
-Title: Authorized Representative
+Printed Name: ${variables.clientRepName}
+Title: ${variables.clientRepTitle}
 Date: ${variables.contractDate}
  
 ---
