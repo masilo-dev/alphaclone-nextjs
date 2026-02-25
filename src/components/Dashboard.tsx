@@ -1757,7 +1757,9 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* Background decorative elements */}
             <div className="fixed top-20 left-1/3 w-96 h-96 bg-teal-600/5 rounded-full blur-3xl pointer-events-none" />
             <div className="relative z-10 max-w-7xl mx-auto min-h-full">
-              {renderContent()}
+              <WidgetErrorBoundary title="Dashboard Content Error">
+                {renderContent()}
+              </WidgetErrorBoundary>
             </div>
           </div>
         </main>

@@ -87,8 +87,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         { id: 'notifications' as const, label: 'Notifications', icon: Bell },
         { id: 'security' as const, label: 'Security', icon: Lock },
         { id: 'appearance' as const, label: 'Appearance', icon: Palette },
-        // SHOW BILLING ONLY FOR TENANT ADMINS (They are the ones who subscribe)
-        ...(user.role === 'tenant_admin' ? [
+        // SHOW BILLING FOR ALL BUSINESS USERS (EXCEPT CLIENTS)
+        ...(user.role !== 'client' ? [
             { id: 'billing' as const, label: 'Plans & Billing', icon: CreditCardIcon },
             { id: 'branding' as const, label: 'Branding', icon: Building }
         ] : []),

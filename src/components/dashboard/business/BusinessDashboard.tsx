@@ -58,6 +58,7 @@ import Sidebar from '@/components/dashboard/Sidebar';
 import { TableSkeleton } from '@/components/ui/Skeleton';
 import { TENANT_ADMIN_NAV_ITEMS } from '@/constants';
 import { PLAN_PRICING } from '../../../services/tenancy/types';
+import { WidgetErrorBoundary } from '../WidgetErrorBoundary';
 
 interface BusinessDashboardProps {
     user: User;
@@ -476,7 +477,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
 
                 {/* Dynamic Content Area */}
                 <div className={`flex-1 ${activeTab === '/dashboard/gmail' ? 'overflow-hidden p-0' : 'overflow-y-auto p-4 md:p-8'}`}>
-                    {renderBusinessContent()}
+                    <WidgetErrorBoundary title="Business Dashboard Error">
+                        {renderBusinessContent()}
+                    </WidgetErrorBoundary>
                 </div>
             </main>
 

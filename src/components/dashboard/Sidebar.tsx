@@ -101,7 +101,8 @@ const Sidebar = React.memo<SidebarProps>(({
                                 onClick={() => {
                                     if (item.comingSoon) return;
                                     if (item.href === '#') {
-                                        handleSubNavigation('/dashboard/settings');
+                                        // Parent item with subitems - do not navigate, just allow expansion
+                                        return;
                                     } else {
                                         handleNavigation(item.href);
                                     }
