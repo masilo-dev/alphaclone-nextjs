@@ -319,19 +319,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Optional: Manual init as a backup to onAuthStateChange
         // Some browser environments or SDK versions don't reliably fire INITIAL_SESSION
         const runBackupInit = setTimeout(() => {
-            if (isMounted && !latestUserRef.current && loading) {
-                console.log('[AuthContext] Backup init triggered...');
+            if (isMounted && !latestUserRef.current) {
+                console.log('[AuthContext] Backup init triggered (3s grace)...');
                 initSession();
             }
-        }, 1500);
+        }, 3000);
 
-        // Safety net: force stop loading after 3s (massively reduced from 20s to prevent hang on storage lock issues)
+        // Safety net: force stop loading after 8s — only stops the spinner, does NOT clear the user.
+        // Extended from 3s to give Supabase async validation more time before the dashboard
+        // decides there is no session and redirects.
         const safetyTimeout = setTimeout(() => {
-            if (isMounted && loading) {
-                console.warn('[AuthContext] Safety timeout reached (3s), forcing loading to false. Storage lock or network issue likely.');
+            if (isMounted) {
+                console.warn('[AuthContext] Safety timeout reached (8s). Forcing loading to false. If user state exists it is preserved.');
                 setLoading(false);
             }
-        }, 3000);
+        }, 8000);
 
         return () => {
             isMounted = false;
