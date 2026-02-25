@@ -381,18 +381,18 @@ By signing below, both parties agree to the terms of this Professional Services 
 
 **${providerName}:**
 
-Signature: (Digital Signature)
-Name: (Print Name)
-Title: (Authorized Agent)
-Date: (Date of Signing)
+Signature: [DIGITAL SIGNATURE]
+Printed Name: ${providerName}
+Title: Authorized Agent
+Date: ${today}
 
 
 **Client (${clientName}):**
 
-Signature: (Digital Signature)
-Name: (Print Name)
-Title: (Authorized Agent)
-Date: (Date of Signing)
+Signature: [DIGITAL SIGNATURE]
+Printed Name: ${clientName}
+Title: Authorized Agent
+Date: ${today}
 
 ---
 
@@ -443,9 +443,9 @@ Both parties agree to protect confidential information shared during business di
 
 **Signatures:**
 
-AlphaClone Systems: _______________________  Date: __________
+AlphaClone Systems: [DIGITAL SIGNATURE]  Date: ${today}
 
-${clientName}: _______________________  Date: __________
+${clientName}: [DIGITAL SIGNATURE]  Date: ${today}
 `.trim();
 }
 
@@ -487,8 +487,8 @@ Each deliverable will be considered complete when:
 
 **Approved by:**
 
-Authorized Provider: [DIGITAL SIGNATURE]  Date: __________
+Authorized Provider: [DIGITAL SIGNATURE]  Date: ${today}
 
-${clientName}: [DIGITAL SIGNATURE]  Date: __________
+${clientName}: [DIGITAL SIGNATURE]  Date: ${today}
 `.trim();
 }

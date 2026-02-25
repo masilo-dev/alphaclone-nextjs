@@ -620,7 +620,7 @@ Structure the contract with these sections:
 8. LIMITATION OF LIABILITY AND INDEMNIFICATION
 9. TERMINATION AND DISPUTE RESOLUTION
 10. GENERAL PROVISIONS (Force Majeure, Entire Agreement, Amendments, Severability, Assignment, Notices)
-11. SIGNATURES AND EXECUTION
+11. SIGNATURES AND EXECUTION (Use exactly the explicitly provided Provider Name, Client Full Name, and contact information. Do NOT use blank lines or underscores under any circumstances for names, dates, or titles.)
 
 Use markdown formatting: # for main title, ## for sections, **bold** for key terms. Make it exactly 5 pages worth of content. Write every clause in full — do not abbreviate or use placeholders.`;
 }
@@ -901,13 +901,13 @@ IN WITNESS WHEREOF, the Parties have executed this Master Services Agreement as 
 
 **${f.providerName}**
 
-Signature: _________________________________
+Signature: [DIGITAL SIGNATURE]
 
-Printed Name: _________________________________
+Printed Name: ${f.providerName}
 
 Title: Authorized Representative
 
-Date: _________________________________
+Date: ${today}
 
 ${f.providerAddress ? `Address: ${f.providerAddress}` : ''}
 ${f.providerEmail ? `Email: ${f.providerEmail}` : ''}
@@ -919,13 +919,13 @@ ${f.providerPhone ? `Phone: ${f.providerPhone}` : ''}
 
 **${f.clientName}**${f.clientCompany && f.clientCompany !== f.clientName ? ` (${f.clientCompany})` : ''}
 
-Signature: _________________________________
+Signature: [DIGITAL SIGNATURE]
 
-Printed Name: _________________________________
+Printed Name: ${f.clientName}
 
 Title: Authorized Representative
 
-Date: _________________________________
+Date: ${today}
 
 ${f.clientAddress ? `Address: ${f.clientAddress}` : ''}
 ${f.clientEmail ? `Email: ${f.clientEmail}` : ''}
