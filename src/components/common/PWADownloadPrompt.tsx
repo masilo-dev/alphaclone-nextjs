@@ -3,34 +3,37 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, X, Settings } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function PWADownloadPrompt() {
+    const { user } = useAuth();
     const [isPromptOpen, setIsPromptOpen] = useState(false);
     const [isIOS, setIsIOS] = useState(false);
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-
-    // Track if we're technically running outside browser shell (PWA installed)
-    const isStandalone = typeof window !== 'undefined' &&
-        window.matchMedia('(display-mode: standalone)').matches;
+    const [isStandalone, setIsStandalone] = useState(false);
 
     useEffect(() => {
-        // Only detect environment logic if we aren't already installed
-        if (isStandalone) return;
+        // Detect standalone mode (PWA already installed)
+        const standalone = window.matchMedia('(display-mode: standalone)').matches;
+        setIsStandalone(standalone);
+        if (standalone) return;
 
-        // Detect iOS
+        // Detect iOS (no beforeinstallprompt event on iOS)
         const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
         setIsIOS(isIosDevice);
 
-        // Listen for default Chrome/Android prompt installation
-        window.addEventListener('beforeinstallprompt', (e) => {
+        // Listen for Chrome/Android native install prompt
+        const handler = (e: Event) => {
             e.preventDefault();
             setDeferredPrompt(e);
-        });
+        };
+        window.addEventListener('beforeinstallprompt', handler);
+        return () => window.removeEventListener('beforeinstallprompt', handler);
+    }, []);
 
-    }, [isStandalone]);
-
-    // Don't show the setup button ever if they already installed the app
-    if (isStandalone) return null;
+    // Gate: only show if logged in, not already installed, and installable
+    const isInstallable = !isStandalone && (deferredPrompt !== null || isIOS);
+    if (!user || !isInstallable) return null;
 
     const handleInstallClick = async () => {
         if (deferredPrompt) {
