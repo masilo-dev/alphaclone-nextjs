@@ -65,7 +65,7 @@
     "react-helmet-async": "^2.0.5",
     "react-hook-form": "^7.71.1",
     "react-hot-toast": "^2.6.0",
-    "react-joyride": "^2.9.3",
+    "react-joyride": "^3.0.0-7",
     "react-markdown": "^10.1.0",
     "react-quill-new": "^3.8.3",
     "react-virtualized-auto-sizer": "^2.0.2",
