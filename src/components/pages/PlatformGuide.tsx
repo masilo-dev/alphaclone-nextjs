@@ -313,7 +313,7 @@ The invited person receives an email with a secure invitation link. When they cl
                             <BookOpen className="w-5 h-5 text-teal-400" />
                             <span className="text-teal-400 text-sm font-semibold tracking-widest uppercase">Platform Guide</span>
                         </div>
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+                        <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
                             Set Up Your Entire Business OS{' '}
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-400">
                                 in Under 30 Minutes

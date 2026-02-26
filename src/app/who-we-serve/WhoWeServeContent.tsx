@@ -58,7 +58,7 @@ export default function WhoWeServePage() {
             <section className="pt-32 pb-16 px-4">
                 <div className="max-w-4xl mx-auto text-center">
                     <AnimateIn type="fadeUp">
-                        <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
+                        <h1 className="text-3xl md:text-6xl font-bold text-white mb-6">
                             Who We Serve
                         </h1>
                     </AnimateIn>

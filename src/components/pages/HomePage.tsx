@@ -69,7 +69,7 @@ const HomePage: React.FC<HomePageProps> = ({ onLogin }) => {
                 {/* Hero Section - Critical, loads instantly */}
                 <section className="relative min-h-screen flex items-center justify-center px-4 py-20">
                     <div className="max-w-7xl mx-auto text-center">
-                        <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-teal-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+                        <h1 className="text-4xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-teal-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
                             Enterprise Software Solutions
                         </h1>
                         <p className="text-xl md:text-2xl text-slate-400 mb-8 max-w-3xl mx-auto">

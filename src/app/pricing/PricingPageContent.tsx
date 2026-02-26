@@ -200,7 +200,7 @@ export default function PricingPageContent() {
                         <Star className="w-4 h-4 text-teal-400 fill-teal-400" />
                         <span className="text-xs font-bold text-white uppercase tracking-widest">14-Day Free Trial — No Card Required</span>
                     </div>
-                    <h1 className="text-5xl md:text-7xl font-black text-white mb-6 tracking-tighter">
+                    <h1 className="text-4xl md:text-7xl font-black text-white mb-6 tracking-tighter">
                         Simple Pricing.<br />
                         <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-500">Massive Value.</span>
                     </h1>

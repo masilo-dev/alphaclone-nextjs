@@ -132,7 +132,7 @@ const AboutPage: React.FC = () => {
                             </div>
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.1}>
-                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+                            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
                                 We Built the Business OS We Wished{' '}
                                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-400">
                                     Existed

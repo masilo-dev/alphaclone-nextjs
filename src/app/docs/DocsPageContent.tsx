@@ -62,14 +62,46 @@ export default function DocsPageContent() {
                 </aside>
 
                 {/* Main Content */}
-                <main className="flex-1 max-w-4xl mx-auto px-4 py-16">
+                <main className="flex-1 max-w-4xl mx-auto px-4 py-8 lg:py-16 w-full overflow-hidden">
+                    {/* Sticky Mobile Nav */}
+                    <div className="lg:hidden sticky top-20 z-40 bg-slate-950/90 backdrop-blur-md pb-4 pt-4 border-b border-slate-800/50 mb-8 mx-[-1rem] px-4 -mt-8">
+                        <div className="relative">
+                            <select
+                                className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 appearance-none focus:outline-none focus:border-teal-500 shadow-lg"
+                                onChange={(e) => {
+                                    if (!e.target.value) return;
+                                    const element = document.getElementById(e.target.value);
+                                    if (element) {
+                                        const y = element.getBoundingClientRect().top + window.scrollY - 140; // offset for sticky headers
+                                        window.scrollTo({ top: y, behavior: 'smooth' });
+                                    }
+                                }}
+                            >
+                                <option value="">Jump to module...</option>
+                                <option value="onboarding">1. Registration & Setup</option>
+                                <option value="home">2. Business Home</option>
+                                <option value="crm">3. CRM & Deals</option>
+                                <option value="growth-agent">4. Growth Agent</option>
+                                <option value="integrations">5. Communications</option>
+                                <option value="financials">6. Financial Suite</option>
+                                <option value="contracts">7. Contracts</option>
+                                <option value="tasks">8. Tasks & Projects</option>
+                                <option value="security">9. Security</option>
+                                <option value="settings">10. Settings</option>
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                <ChevronRight className="w-5 h-5 text-slate-400 rotate-90" />
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Header */}
                     <header className="mb-16">
                         <div className="flex items-center gap-2 mb-4">
                             <BookOpen className="w-5 h-5 text-teal-400" />
                             <span className="text-teal-400 text-sm font-semibold tracking-widest uppercase">Documentation</span>
                         </div>
-                        <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">AlphaClone Business OS — Full Reference</h1>
+                        <h1 className="text-3xl md:text-5xl font-bold text-white mb-6">AlphaClone Business OS — Full Reference</h1>
                         <p className="text-slate-400 text-lg leading-relaxed max-w-2xl">
                             The complete technical and operational reference for the AlphaClone Business OS. This documentation covers every platform feature with step-by-step instructions, navigation paths, and best practices. For a guided walkthrough, visit the <Link href="/guide" className="text-teal-400 hover:underline">Platform Guide</Link>.
                         </p>
