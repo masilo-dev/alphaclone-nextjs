@@ -7,11 +7,12 @@ import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Input, Button } from '@/components/ui/UIComponents';
 import { LOGO_URL } from '@/constants';
-import { AlertCircle, LogIn, UserPlus, FileText, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, LogIn, UserPlus, FileText, CheckCircle2, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { usePWA } from '@/contexts/PWAContext';
 import { SubscriptionPlan } from '@/services/tenancy/types';
+import HumanVerification from '@/components/ui/HumanVerification';
 
 export default function LoginPage() {
     const { isPWA } = usePWA();
@@ -36,6 +37,9 @@ export default function LoginPage() {
     const [showPayment, setShowPayment] = useState(false);
     const [newTenantData, setNewTenantData] = useState<{ id: string, name: string } | null>(null);
     const [paymentProcessing, setPaymentProcessing] = useState(false);
+    const [showMfaChallenge, setShowMfaChallenge] = useState(false);
+    const [mfaCode, setMfaCode] = useState('');
+    const [humanVerified, setHumanVerified] = useState(false);
 
     const plans: { id: SubscriptionPlan, name: string, price: string, features: string[] }[] = [
         {
@@ -64,6 +68,12 @@ export default function LoginPage() {
         setIsLoading(true);
 
         try {
+            if (!humanVerified) {
+                setError('Please complete the security check to continue.');
+                setIsLoading(false);
+                return;
+            }
+
             // 1. REGISTRATION FLOW
             if (isRegistering) {
                 if (!name || !email || !password) {
@@ -142,10 +152,16 @@ export default function LoginPage() {
 
             // 2. LOGIN FLOW
             const { authService } = await import('@/services/authService');
-            const { user, error: signInError } = await authService.signIn(email, password);
+            const { user, error: signInError, needsMfa } = await authService.signIn(email, password);
 
             if (signInError) {
                 setError(signInError);
+                setIsLoading(false);
+                return;
+            }
+
+            if (needsMfa) {
+                setShowMfaChallenge(true);
                 setIsLoading(false);
                 return;
             }
@@ -196,6 +212,39 @@ export default function LoginPage() {
             setError(`Payment failed: ${err.message}. Please try again.`);
         } finally {
             setPaymentProcessing(false);
+        }
+    };
+
+    const handleMfaVerify = async () => {
+        setIsLoading(true);
+        setError('');
+        try {
+            const { supabase } = await import('@/lib/supabase');
+            const { data: factorsData } = await supabase.auth.mfa.listFactors();
+            const totpFactor = factorsData?.factors.find(f => f.factor_type === 'totp' && f.status === 'verified');
+
+            if (!totpFactor) {
+                setError('No verified MFA factor found.');
+                setIsLoading(false);
+                return;
+            }
+
+            const challengeResponse = await supabase.auth.mfa.challenge({ factorId: totpFactor.id });
+            if (challengeResponse.error) throw challengeResponse.error;
+
+            const verifyResponse = await supabase.auth.mfa.verify({
+                factorId: totpFactor.id,
+                challengeId: challengeResponse.data.id,
+                code: mfaCode,
+            });
+
+            if (verifyResponse.error) throw verifyResponse.error;
+
+            router.push('/dashboard');
+        } catch (err: any) {
+            setError(err.message || 'Invalid verification code');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -260,6 +309,67 @@ export default function LoginPage() {
                         <FileText className="w-3 h-3" />
                         Secure Payment via Stripe • Fully Encrypted
                     </p>
+                </div>
+            </div>
+        );
+    }
+
+    if (showMfaChallenge) {
+        return (
+            <div className="min-h-[100dvh] bg-slate-950 flex flex-col items-center justify-center p-4 py-12 relative overflow-x-hidden overflow-y-auto">
+                <div className="fixed inset-0 z-0 opacity-20 pointer-events-none hidden md:block">
+                    <div className="absolute top-[20%] left-[20%] w-[30vw] h-[30vw] rounded-full bg-teal-500 blur-[100px]" />
+                    <div className="absolute bottom-[20%] right-[20%] w-[30vw] h-[30vw] rounded-full bg-blue-600 blur-[100px]" />
+                </div>
+
+                <div className="max-w-md w-full bg-slate-900/80 backdrop-blur-2xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 text-center my-auto animate-slide-up">
+                    <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Shield className="w-10 h-10 text-teal-400" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white mb-2">Two-Factor Authentication</h2>
+                    <p className="text-slate-400 mb-8 text-sm">
+                        Enter the 6-digit verification code from your authenticator app to continue.
+                    </p>
+
+                    <div className="mb-6 text-left">
+                        <Input
+                            label="Verification Code"
+                            type="text"
+                            value={mfaCode}
+                            onChange={(e) => setMfaCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                            placeholder="123456"
+                            className="font-mono text-center tracking-[0.5em] text-2xl h-14"
+                        />
+                    </div>
+
+                    {error && (
+                        <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl flex items-start gap-3 text-left mb-6 animate-fade-in">
+                            <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+                            <p className="text-sm text-rose-200">{error}</p>
+                        </div>
+                    )}
+
+                    <Button
+                        onClick={handleMfaVerify}
+                        disabled={mfaCode.length !== 6 || isLoading}
+                        isLoading={isLoading}
+                        className="w-full h-12 text-base font-bold bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 rounded-xl shadow-lg shadow-teal-500/20"
+                    >
+                        Verify Identity
+                    </Button>
+
+                    <button
+                        onClick={async () => {
+                            const { supabase } = await import('@/lib/supabase');
+                            await supabase.auth.signOut();
+                            setShowMfaChallenge(false);
+                            setMfaCode('');
+                            setError('');
+                        }}
+                        className="mt-6 text-sm text-slate-500 hover:text-slate-300 transition-colors"
+                    >
+                        Back to Login
+                    </button>
                 </div>
             </div>
         );
@@ -484,7 +594,17 @@ export default function LoginPage() {
                             </div>
                         )}
 
-                        <Button type="submit" className="w-full h-12 text-base font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 shadow-lg shadow-teal-500/20" isLoading={isLoading}>
+                        <HumanVerification onVerify={() => {
+                            setHumanVerified(true);
+                            setError('');
+                        }} />
+
+                        <Button
+                            type="submit"
+                            className="w-full h-12 text-base font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 shadow-lg shadow-teal-500/20"
+                            isLoading={isLoading}
+                            disabled={!humanVerified}
+                        >
                             {isRegistering ? 'Create Account' : 'Sign In'}
                         </Button>
                     </div>

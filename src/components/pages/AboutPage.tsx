@@ -25,34 +25,24 @@ const AboutPage: React.FC = () => {
 
     const timeline = [
         {
-            year: '2020',
-            title: 'The Problem Identified',
-            desc: 'Our founders were running a digital agency and realized they were paying for 9 different software subscriptions — CRM, invoicing, contracts, video, scheduling, email, task management, lead generation, and analytics. None of them talked to each other. They spent more time managing tools than managing clients.',
-        },
-        {
-            year: '2021',
-            title: 'First Internal Version',
-            desc: 'We built the first version of AlphaClone entirely for our own agency use. Within three months, it had replaced every external tool. Our monthly SaaS bill dropped from $420 to $0. More importantly, we spent 12 fewer hours per week on administrative overhead.',
-        },
-        {
             year: '2022',
-            title: 'Opening to Early Users',
-            desc: 'After other agency owners saw how we were operating — running a multi-client business from a single dashboard — they asked for access. We opened a beta with 50 early users and used their feedback to build the features that actually mattered.',
+            title: 'Identifying the Operational Gap',
+            desc: 'We saw countless service businesses struggling with software fragmentation—paying for a CRM, invoicing tools, scheduling systems, and document signers, none of which talked to each other. Information was constantly falling through the cracks.',
         },
         {
             year: '2023',
-            title: 'AI Growth Agent Launch',
-            desc: 'The launch of the AI Growth Agent changed the trajectory of the platform. For the first time, small businesses could access the kind of automated lead generation and outreach that had previously only been available to companies with dedicated sales teams. Adoption grew 400% in six months.',
+            title: 'The Unified Platform',
+            desc: 'We launched AlphaClone as a centralized Business Operating System. By consolidating client management, financials, and project delivery into a single dashboard, our early users eliminated redundant subscriptions and saved an average of 15 hours per week in administrative overhead.',
         },
         {
             year: '2024',
-            title: 'Platform Maturity',
-            desc: 'With financial accounting, contract management, HD video meetings, and enterprise security all implemented, AlphaClone became the first genuinely complete Business Operating System available to small and medium businesses at an accessible price point.',
+            title: 'The AI Growth Agent',
+            desc: 'We introduced the AI Growth Agent, transforming AlphaClone from a management tool into a growth engine. Small businesses gained the capability to automatically discover, qualify, and engage leads 24/7 without needing a dedicated sales team.',
         },
         {
             year: '2025–26',
-            title: 'The Mission Continues',
-            desc: 'We serve hundreds of businesses across professional services, agencies, consultancies, and freelance practices. The goal remains unchanged: give every business owner — regardless of technical skill or budget — the same operational infrastructure as a Fortune 500 company.',
+            title: 'The Complete Business OS',
+            desc: 'With advanced contract drafting, enterprise-grade accounting, HD video meetings, and powerful automation now standard, AlphaClone provides professional service teams the exact same operational infrastructure as Fortune 500 companies—starting at just $15/month.',
         },
     ];
 
@@ -141,7 +131,7 @@ const AboutPage: React.FC = () => {
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.2}>
                             <p className="text-xl text-slate-300 leading-relaxed max-w-3xl mx-auto">
-                                AlphaClone Systems started as an internal tool we built out of frustration. We were running a growing agency, paying for 9 different software subscriptions, and spending more time managing tools than managing clients. So we built one platform that does it all — and made it available to every business that faces the same problem.
+                                AlphaClone Systems was built to solve the frustration of software fragmentation. Service businesses were paying for 9 different subscriptions and spending more time managing tools than clients. We built the complete platform that does it all—bringing enterprise-grade CRM, invoicing, lead generation, and operations into one unified dashboard.
                             </p>
                         </AnimateIn>
                     </div>

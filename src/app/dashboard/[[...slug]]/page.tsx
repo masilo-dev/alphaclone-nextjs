@@ -9,6 +9,7 @@ import { Project, ChatMessage, GalleryItem } from '@/types';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardShellSkeleton } from '@/components/ui/TabSkeleton';
+import { SessionTimeoutWarning, useSessionTimeoutWarning } from '@/components/SessionTimeoutWarning';
 
 export default function DashboardPage() {
     const { user, loading, signOut } = useAuth();
@@ -18,6 +19,14 @@ export default function DashboardPage() {
     const router = useRouter();
 
     const [isGracePeriod, setIsGracePeriod] = useState(true);
+
+    const handleLogout = async () => {
+        await signOut();
+        router.push('/');
+    };
+
+    // Initialize the session timeout hook (10 min timeout, 2 min warning)
+    const { showWarning, countdown, extendSession } = useSessionTimeoutWarning(handleLogout);
 
     useEffect(() => {
         // Stop checking if user exists
@@ -74,18 +83,23 @@ export default function DashboardPage() {
     if (!user) return null;
 
     return (
-        <Dashboard
-            user={user}
-            onLogout={async () => {
-                await signOut();
-                router.push('/');
-            }}
-            projects={projects}
-            setProjects={setProjects}
-            messages={messages}
-            setMessages={setMessages}
-            galleryItems={galleryItems}
-            setGalleryItems={setGalleryItems}
-        />
+        <>
+            <Dashboard
+                user={user}
+                onLogout={handleLogout}
+                projects={projects}
+                setProjects={setProjects}
+                messages={messages}
+                setMessages={setMessages}
+                galleryItems={galleryItems}
+                setGalleryItems={setGalleryItems}
+            />
+            <SessionTimeoutWarning
+                isOpen={showWarning}
+                countdown={countdown}
+                onExtendSession={extendSession}
+                onLogout={handleLogout}
+            />
+        </>
     );
 }

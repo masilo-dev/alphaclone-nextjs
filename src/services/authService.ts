@@ -9,19 +9,12 @@ import { z } from 'zod';
  * If a call to Supabase auth hangs for longer than the timeout, this forcefully 
  * purges the `sb-*` cache to break the lock and throws an error so the UI recovers.
  */
-async function withAuthTimeout<T = any>(promise: any, timeoutMs: number = 2500): Promise<T> {
+async function withAuthTimeout<T = any>(promise: any, timeoutMs: number = 8000): Promise<T> {
     let timeoutHandle: NodeJS.Timeout;
     const timeoutPromise = new Promise<T>((_, reject) => {
         timeoutHandle = setTimeout(() => {
-            // Forcefully clear storage if we hit a lock to unbrick the browser
-            if (typeof window !== 'undefined') {
-                try {
-                    console.error(`[AuthService] Timeout (${timeoutMs}ms) hit. Breaking storage lock and purging local cache!`);
-                    const keys = Object.keys(localStorage).filter(k => k.includes('sb-') || k.includes('auth-token'));
-                    keys.forEach(k => localStorage.removeItem(k));
-                } catch (e) { }
-            }
-            reject(new Error("Storage Lock Timeout: Forcefully cleared corrupted cache"));
+            console.warn(`[AuthService] Timeout (${timeoutMs}ms) hit for Auth request.`);
+            reject(new Error("Auth request timed out. Please try again."));
         }, timeoutMs);
     });
 
@@ -37,7 +30,7 @@ export const authService = {
     /**
      * Sign in with email and password
      */
-    async signIn(email: string, password: string): Promise<{ user: User | null; error: string | null }> {
+    async signIn(email: string, password: string): Promise<{ user: User | null; error: string | null; needsMfa?: boolean }> {
         try {
             // Validate input
             const validated = signInSchema.parse({ email: email.toLowerCase(), password });
@@ -147,13 +140,24 @@ export const authService = {
                 console.error("❌ Activity tracking error:", err);
             });
 
+            // Check for MFA requirement
+            let needsMfa = false;
+            try {
+                const { data: mfaData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+                if (mfaData?.nextLevel === 'aal2' && mfaData?.currentLevel === 'aal1') {
+                    needsMfa = true;
+                }
+            } catch (e) {
+                console.error("MFA check error", e);
+            }
+
             // Return user immediately without waiting for activity tracking
-            return { user, error: null };
+            return { user, error: null, needsMfa };
         } catch (err: any) {
             if (err.name === 'ZodError') {
-                return { user: null, error: err.errors[0]?.message || 'Validation failed' };
+                return { user: null, error: err.errors[0]?.message || 'Validation failed', needsMfa: false };
             }
-            return { user: null, error: err instanceof Error ? err.message : 'Unknown error' };
+            return { user: null, error: err instanceof Error ? err.message : 'Unknown error', needsMfa: false };
         }
     },
 

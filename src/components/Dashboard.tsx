@@ -1716,16 +1716,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <Menu className="w-5 h-5" />
                 </button>
 
-                {/* Desktop Sidebar Toggle */}
-                <button
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="hidden md:flex p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800"
-                  aria-label="Toggle sidebar"
-                  title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-                >
-                  <Menu className="w-5 h-5" />
-                </button>
-
                 <div className="flex items-center gap-2 sm:gap-3 md:hidden">
                   <img src={LOGO_URL} alt="Logo" className="w-8 h-8 rounded-lg flex-shrink-0" />
                   <h1 className="text-base sm:text-lg font-bold text-white whitespace-nowrap truncate max-w-[150px] sm:max-w-none">AlphaClone Systems</h1>
