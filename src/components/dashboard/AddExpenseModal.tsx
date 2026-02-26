@@ -177,35 +177,44 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                 />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-800 pt-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1">Expense Category (Debit)</label>
-                                    <select
-                                        className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
-                                        value={selectedExpenseAccount}
-                                        onChange={(e) => setSelectedExpenseAccount(e.target.value)}
-                                        disabled={expenseAccounts.length === 0}
-                                    >
-                                        <option value="">Select a category...</option>
-                                        {expenseAccounts.map(a => (
-                                            <option key={a.id} value={a.id}>{a.accountName} ({a.accountCode})</option>
-                                        ))}
-                                    </select>
-                                </div>
+                            {/* Hidden Account Selections (Handled Automatically) */}
+                            <div className="hidden">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-800 pt-4">
+                                    <div>
+                                        <select
+                                            value={selectedExpenseAccount}
+                                            onChange={(e) => setSelectedExpenseAccount(e.target.value)}
+                                            disabled={expenseAccounts.length === 0}
+                                        >
+                                            <option value="">Select a category...</option>
+                                            {expenseAccounts.map(a => (
+                                                <option key={a.id} value={a.id}>{a.accountName} ({a.accountCode})</option>
+                                            ))}
+                                        </select>
+                                    </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1">Payment Account (Credit)</label>
-                                    <select
-                                        className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
-                                        value={selectedAssetAccount}
-                                        onChange={(e) => setSelectedAssetAccount(e.target.value)}
-                                        disabled={assetAccounts.length === 0}
-                                    >
-                                        <option value="">Select a payment source...</option>
-                                        {assetAccounts.map(a => (
-                                            <option key={a.id} value={a.id}>{a.accountName} ({a.accountCode})</option>
-                                        ))}
-                                    </select>
+                                    <div>
+                                        <select
+                                            value={selectedAssetAccount}
+                                            onChange={(e) => setSelectedAssetAccount(e.target.value)}
+                                            disabled={assetAccounts.length === 0}
+                                        >
+                                            <option value="">Select a payment source...</option>
+                                            {assetAccounts.map(a => (
+                                                <option key={a.id} value={a.id}>{a.accountName} ({a.accountCode})</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Receipt Upload (UI Only for Quick Expense) */}
+                            <div className="border-t border-slate-800 pt-4 mt-2">
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Receipt (Optional)</label>
+                                <div className="border-2 border-dashed border-slate-700 rounded-lg p-6 text-center hover:bg-slate-800/50 transition-colors cursor-pointer">
+                                    <Receipt className="w-8 h-8 text-slate-500 mx-auto mb-2" />
+                                    <p className="text-sm text-slate-400">Click to upload or drag and drop</p>
+                                    <p className="text-xs text-slate-500 mt-1">PNG, JPG, PDF up to 5MB</p>
                                 </div>
                             </div>
 

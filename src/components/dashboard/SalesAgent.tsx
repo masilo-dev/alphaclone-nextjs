@@ -412,6 +412,8 @@ const SalesAgent: React.FC = () => {
         const name = window.prompt('Enter Deal Name:', lead.businessName);
         if (!name) return;
 
+        toast.loading(`Creating deal "${name}"...`, { id: 'create_deal' });
+
         try {
             const { contactService } = await import('../../services/contactService');
             const { dealService } = await import('../../services/dealService');
@@ -424,15 +426,19 @@ const SalesAgent: React.FC = () => {
                 contactId: contactId,
                 value: lead.value,
                 stage: 'qualified',
-                probability: 25
+                probability: 25,
+                metadata: {
+                    originalLeadId: lead.id,
+                    convertedAt: new Date().toISOString()
+                }
             });
 
             if (dealError) throw new Error(dealError);
 
-            toast.success(`✅ Deal "${name}" created!`);
+            toast.success(`✅ Deal "${name}" created!`, { id: 'create_deal' });
             loadLeads();
         } catch (error: any) {
-            toast.error('Failed to create deal: ' + error.message);
+            toast.error('Failed to create deal: ' + error.message, { id: 'create_deal' });
         }
     };
 
@@ -1063,11 +1069,10 @@ const SalesAgent: React.FC = () => {
                                                                             Manage Lead
                                                                         </button>
                                                                         <button
-                                                                            disabled
-                                                                            className="w-full text-left px-3 py-2 text-xs text-slate-500 cursor-not-allowed rounded flex items-center gap-2"
-                                                                            title="Quote creation available from lead detail view"
+                                                                            onClick={() => setSelectedLeadForDetail(lead)}
+                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
                                                                         >
-                                                                            <FileText className="w-3 h-3 text-slate-600" />
+                                                                            <FileText className="w-3 h-3 text-emerald-400" />
                                                                             Create Quote
                                                                         </button>
                                                                     </div>

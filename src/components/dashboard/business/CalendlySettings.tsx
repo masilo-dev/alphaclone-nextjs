@@ -118,6 +118,15 @@ const CalendlySettings: React.FC = () => {
                     <div className="flex flex-wrap gap-3">
                         {isConnected ? (
                             <>
+                                <a
+                                    href="https://calendly.com/app/scheduled_events/user/me"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 text-slate-900 text-sm font-bold rounded-lg transition-all"
+                                >
+                                    <ExternalLink className="w-4 h-4" />
+                                    Manage Events
+                                </a>
                                 <button
                                     onClick={handleConnect}
                                     className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-lg transition-all"
