@@ -248,7 +248,7 @@ export const generateLeadsWithManus = async (industry: string, location: string)
 /**
  * Generate leads using AI or Google Places (proxied through server-side route)
  */
-export const generateLeads = async (industry: string, location: string, googleApiKey?: string, mode: 'admin' | 'tenant' = 'tenant', filters?: string) => {
+export const generateLeads = async (industry: string, location: string, googleApiKey?: string, mode: 'admin' | 'tenant' = 'tenant', filters?: string): Promise<{ leads: any[], rawMapsData: any[] }> => {
     if (!industry || !location) {
         throw new Error('Industry and location are required to generate leads.');
     }
@@ -275,7 +275,7 @@ export const generateLeads = async (industry: string, location: string, googleAp
             throw new Error(errorData.error || 'Failed to generate leads');
         }
 
-        const { leads } = await response.json();
+        const { leads, rawMapsData } = await response.json();
 
         // Auto-Generate Outreach Messages for ALL leads
         console.log("📧 Generating auto-outreach messages...");
@@ -300,7 +300,7 @@ export const generateLeads = async (industry: string, location: string, googleAp
         }));
 
         console.log(`✅ Ready: ${enrichedLeads.length} leads with messages`);
-        return enrichedLeads;
+        return { leads: enrichedLeads, rawMapsData };
     } catch (error: any) {
         console.error('❌ Lead Generation failed:', error);
         throw error;

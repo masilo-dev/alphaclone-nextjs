@@ -169,7 +169,7 @@ function GrowthTab() {
     try {
       const { generateLeads } = await import('../../services/unifiedAIService');
       // Pass empty string for Google API key if not managed here
-      const results = await generateLeads(industry, location, undefined, 'admin');
+      const { leads: results } = await generateLeads(industry, location, undefined, 'admin');
       setLeads(results);
     } catch (err: any) {
       setError(err.message || 'Failed to generate leads');
