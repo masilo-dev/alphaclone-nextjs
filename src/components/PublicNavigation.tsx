@@ -12,6 +12,7 @@ interface PublicNavigationProps {
 
 const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
     const pathname = usePathname();
 
     useEffect(() => {
@@ -22,6 +23,15 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
         }
         return () => document.body.classList.remove('menu-open');
     }, [mobileMenuOpen]);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 20);
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        handleScroll(); // Initial check
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const navItems = [
         { label: 'Home', path: '/' },
@@ -37,11 +47,17 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
     const isActive = (path: string) => pathname === path;
 
     return (
-        <nav className="fixed w-full z-50 bg-slate-950/95 backdrop-blur-md border-b border-slate-800/50 pt-safe">
+        <nav className={`fixed w-full z-50 pt-safe transition-all duration-300 ${isScrolled && !mobileMenuOpen
+                ? 'max-lg:bg-transparent max-lg:border-transparent max-lg:backdrop-blur-none max-lg:pointer-events-none lg:bg-slate-950/95 lg:backdrop-blur-md lg:border-b lg:border-slate-800/50'
+                : 'bg-slate-950/95 backdrop-blur-md border-b border-slate-800/50'
+            }`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-20">
+                <div className={`flex items-center justify-between transition-all duration-300 ${isScrolled && !mobileMenuOpen ? 'h-16 lg:h-20' : 'h-20'}`}>
                     {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+                    <Link href="/" className={`flex items-center gap-2 flex-shrink-0 transition-transform transition-opacity duration-300 pointer-events-auto ${isScrolled && !mobileMenuOpen
+                            ? 'max-lg:opacity-0 max-lg:-translate-y-4 max-lg:pointer-events-none'
+                            : 'opacity-100 translate-y-0'
+                        }`}>
                         <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-500">
                             AlphaClone
                         </span>
@@ -77,10 +93,13 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                     </div>
 
                     {/* Mobile Menu Button */}
-                    <div className="lg:hidden relative z-[10000]">
+                    <div className="lg:hidden relative z-[10000] pointer-events-auto flex items-center h-full">
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className="text-white hover:text-teal-400 p-2 rounded-lg bg-slate-900/50 border border-slate-800 transition-colors"
+                            className={`p-2 rounded-lg border transition-all duration-300 ${isScrolled && !mobileMenuOpen
+                                    ? 'bg-slate-950/80 backdrop-blur-md border-slate-700 text-white shadow-lg shadow-black/50'
+                                    : 'bg-slate-900/50 border-slate-800 text-white hover:text-teal-400'
+                                }`}
                             aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                         >
                             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

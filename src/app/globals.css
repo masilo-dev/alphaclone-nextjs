@@ -458,3 +458,24 @@ body {
   height: 1px;
   opacity: 0.6;
 }
+
+/* Native App Fonts on Mobile */
+@media (max-width: 768px) {
+
+  body,
+  .marketing-theme,
+  .marketing-theme h1,
+  .marketing-theme h2,
+  .marketing-theme h3,
+  .marketing-theme h4,
+  .marketing-theme p,
+  .marketing-theme button,
+  .marketing-theme .cta,
+  .marketing-theme nav a,
+  .marketing-theme .nav-link,
+  .font-marketing-brand,
+  .font-marketing-heading,
+  .font-marketing-body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" !important;
+  }
+}

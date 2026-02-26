@@ -1,17 +1,75 @@
-import React, { useState } from 'react';
-import { Calendar, CheckCircle2, AlertCircle, ExternalLink, RefreshCw, XCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar, CheckCircle2, AlertCircle, ExternalLink, RefreshCw, XCircle, Link, Copy } from 'lucide-react';
 import { useTenant } from '../../../contexts/TenantContext';
 import { supabase } from '../../../lib/supabase';
+import { toast } from 'react-hot-toast';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const CalendlySettings: React.FC = () => {
     const { currentTenant, refreshTenants } = useTenant();
+    const { user } = useAuth();
     const [connecting, setConnecting] = useState(false);
     const [manualUrl, setManualUrl] = useState('');
     const [showManual, setShowManual] = useState(false);
     const [saving, setSaving] = useState(false);
-    const calendlyConfig = (currentTenant?.settings as any)?.calendly;
 
+    // New state for fetching event types and syncing
+    const [eventTypes, setEventTypes] = useState<any[]>([]);
+    const [loadingEvents, setLoadingEvents] = useState(false);
+    const [syncing, setSyncing] = useState(false);
+
+    const calendlyConfig = (currentTenant?.settings as any)?.calendly;
     const isConnected = calendlyConfig?.enabled && calendlyConfig?.accessToken;
+
+    useEffect(() => {
+        if (isConnected && currentTenant) {
+            fetchEventTypes();
+        }
+    }, [isConnected, currentTenant]);
+
+    const fetchEventTypes = async () => {
+        setLoadingEvents(true);
+        try {
+            const res = await fetch(`/api/calendly/event-types?tenantId=${currentTenant?.id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setEventTypes(data.eventTypes || []);
+            }
+        } catch (error) {
+            console.error('Failed to fetch event types:', error);
+        } finally {
+            setLoadingEvents(false);
+        }
+    };
+
+    const handleSyncNow = async () => {
+        if (!currentTenant || !user) return;
+        setSyncing(true);
+        try {
+            const res = await fetch('/api/calendly/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId: currentTenant.id, userId: user.id })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                toast.success(`Successfully synced ${data.syncedCount} new events!`);
+            } else {
+                toast.error(data.error || 'Failed to sync events');
+            }
+        } catch (error) {
+            console.error('Manual sync failed:', error);
+            toast.error('Failed to communicate with sync service.');
+        } finally {
+            setSyncing(false);
+        }
+    };
+
+    const handleCopyLink = (url: string) => {
+        navigator.clipboard.writeText(url);
+        toast.success('Booking link copied entirely!');
+    };
 
     const handleConnect = () => {
         if (!currentTenant) return;
@@ -32,7 +90,8 @@ const CalendlySettings: React.FC = () => {
                     accessToken: null,
                     refreshToken: null,
                     expiresAt: null,
-                    eventUrl: null
+                    eventUrl: null,
+                    calendlyUserUri: null
                 }
             };
 
@@ -43,10 +102,11 @@ const CalendlySettings: React.FC = () => {
 
             if (error) throw error;
             await refreshTenants();
-            alert('Calendly disconnected successfully.');
+            setEventTypes([]);
+            toast.success('Calendly disconnected successfully.');
         } catch (err: any) {
             console.error('Disconnect error:', err);
-            alert('Failed to disconnect Calendly');
+            toast.error('Failed to disconnect Calendly');
         }
     };
 
@@ -73,9 +133,10 @@ const CalendlySettings: React.FC = () => {
             await refreshTenants();
             setShowManual(false);
             setManualUrl('');
+            toast.success('Manual link saved!');
         } catch (err) {
             console.error('Save manual error:', err);
-            alert('Failed to save link');
+            toast.error('Failed to save link');
         } finally {
             setSaving(false);
         }
@@ -86,7 +147,7 @@ const CalendlySettings: React.FC = () => {
             <div>
                 <h3 className="text-xl font-bold mb-4">Calendly Integration</h3>
                 <p className="text-slate-400 mb-6">
-                    Connect your Calendly account to enable the automated booking system and sync events to your dashboard.
+                    Connect your Calendly account to enable the automated booking system, sync events to your dashboard, and manage your meetings.
                 </p>
             </div>
 
@@ -118,6 +179,14 @@ const CalendlySettings: React.FC = () => {
                     <div className="flex flex-wrap gap-3">
                         {isConnected ? (
                             <>
+                                <button
+                                    onClick={handleSyncNow}
+                                    disabled={syncing}
+                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold rounded-lg transition-all disabled:opacity-50"
+                                >
+                                    <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                                    {syncing ? 'Syncing...' : 'Sync Events'}
+                                </button>
                                 <a
                                     href="https://calendly.com/app/scheduled_events/user/me"
                                     target="_blank"
@@ -127,13 +196,6 @@ const CalendlySettings: React.FC = () => {
                                     <ExternalLink className="w-4 h-4" />
                                     Manage Events
                                 </a>
-                                <button
-                                    onClick={handleConnect}
-                                    className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-lg transition-all"
-                                >
-                                    <RefreshCw className="w-4 h-4" />
-                                    Reconnect
-                                </button>
                                 <button
                                     onClick={handleDisconnect}
                                     className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-bold rounded-lg transition-all"
@@ -167,6 +229,44 @@ const CalendlySettings: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Event Types Display (Authorized Only) */}
+                {isConnected && !loadingEvents && eventTypes.length > 0 && (
+                    <div className="mt-8 pt-6 border-t border-slate-800 animate-fade-in">
+                        <h5 className="text-sm font-bold text-white mb-4 uppercase tracking-wider">Your Active Event Types</h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {eventTypes.filter(et => et.active).map(et => (
+                                <div key={et.uri} className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4 flex flex-col justify-between hover:border-teal-500/30 transition-colors">
+                                    <div>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <h6 className="font-bold text-white truncate pr-2">{et.name}</h6>
+                                            <span className="text-[10px] font-bold px-2 py-1 bg-teal-500/10 text-teal-400 rounded bg-teal-500 border border-teal-500">{et.duration} min</span>
+                                        </div>
+                                        <p className="text-xs text-slate-400 line-clamp-2 mb-4 break-words">
+                                            {et.description_plain || 'No description provided.'}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-auto">
+                                        <button
+                                            onClick={() => handleCopyLink(et.scheduling_url)}
+                                            className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-lg transition-colors"
+                                        >
+                                            <Copy className="w-3 h-3" /> Copy Link
+                                        </button>
+                                        <a
+                                            href={et.scheduling_url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="px-3 py-1.5 bg-slate-800/50 hover:bg-slate-700/50 text-slate-400 hover:text-white rounded-lg transition-colors"
+                                        >
+                                            <ExternalLink className="w-3 h-3" />
+                                        </a>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {showManual && !isConnected && (
                     <div className="mt-6 pt-6 border-t border-slate-800 space-y-4 animate-fade-in">
                         <div className="flex flex-col gap-2">
@@ -197,7 +297,7 @@ const CalendlySettings: React.FC = () => {
                 {isConnected && calendlyConfig.eventUrl && (
                     <div className="mt-6 pt-6 border-t border-slate-800 flex items-center justify-between">
                         <div className="flex items-center gap-2 text-sm">
-                            <span className="text-slate-500 font-medium">Your Scheduling URL:</span>
+                            <span className="text-slate-500 font-medium">Your Default Scheduling URL:</span>
                             <a
                                 href={calendlyConfig.eventUrl}
                                 target="_blank"
@@ -212,6 +312,7 @@ const CalendlySettings: React.FC = () => {
                 )}
             </div>
 
+            {/* Informational Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
                 <div className="p-4 bg-slate-900/30 border border-slate-800/50 rounded-xl">
                     <h5 className="text-sm font-bold text-white mb-2 uppercase tracking-wider flex items-center gap-2">

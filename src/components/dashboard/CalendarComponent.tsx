@@ -234,20 +234,51 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         }
     };
 
-    const handleDeleteEvent = async (eventId: string) => {
+    const handleDeleteEvent = async (eventId: string, isCalendly: boolean = false) => {
         if (!confirm('Are you sure you want to delete this event?')) return;
 
         try {
-            const { error } = await calendarService.deleteEvent(eventId);
-            if (!error) {
-                toast.success('Event deleted successfully!');
-                setShowEventModal(false);
-                loadEvents();
+            if (isCalendly) {
+                // If it's a Calendly event, we use the specific cancellation route
+                const reason = prompt('Please provide a reason for cancellation (sent to the invitee):', 'Canceled via CRM Dashboard');
+                if (reason === null) return; // User canceled the prompt
+
+                const currentTenant = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('alpha_tenant') || '{}') : null;
+                if (!currentTenant?.id) {
+                    toast.error('Session error: No tenant ID found');
+                    return;
+                }
+
+                setIsSaving(true);
+                const res = await fetch('/api/calendly/cancel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tenantId: currentTenant.id, eventId, reason })
+                });
+
+                if (res.ok) {
+                    toast.success('Calendly meeting canceled successfully!');
+                    setShowEventModal(false);
+                    loadEvents();
+                } else {
+                    const data = await res.json();
+                    toast.error(data.error || 'Failed to cancel Calendly meeting');
+                }
+                setIsSaving(false);
             } else {
-                toast.error('Failed to delete event');
+                // Standard calendar event deletion
+                const { error } = await calendarService.deleteEvent(eventId);
+                if (!error) {
+                    toast.success('Event deleted successfully!');
+                    setShowEventModal(false);
+                    loadEvents();
+                } else {
+                    toast.error('Failed to delete event');
+                }
             }
         } catch (err) {
             toast.error('Failed to delete event');
+            setIsSaving(false);
         }
     };
 
@@ -665,9 +696,18 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                     >
                                         View {selectedEvent.type === 'task' ? 'Task' : 'Invoice'}
                                     </Button>
+                                ) : selectedEvent.metadata?.calendly_event_uri ? (
+                                    <Button
+                                        onClick={() => handleDeleteEvent(selectedEvent.id, true)}
+                                        disabled={isSaving}
+                                        className="flex-1 bg-red-600 hover:bg-red-500"
+                                    >
+                                        {isSaving ? 'Canceling...' : 'Cancel Calendly Meeting'}
+                                    </Button>
                                 ) : (
                                     <Button
-                                        onClick={() => handleDeleteEvent(selectedEvent.id)}
+                                        onClick={() => handleDeleteEvent(selectedEvent.id, false)}
+                                        disabled={isSaving}
                                         className="flex-1 bg-red-600 hover:bg-red-500"
                                     >
                                         Delete Event
