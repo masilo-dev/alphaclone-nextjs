@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Rocket, Shield, Zap, HeartHandshake, Target, TrendingUp } from 'lucide-react';
 import PublicNavigation from '../PublicNavigation';
+import AnimateIn from '../common/AnimateIn';
 
 const EcosystemPage: React.FC = () => {
     const [, setIsLoginOpen] = React.useState(false);
@@ -61,63 +62,63 @@ const EcosystemPage: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-transparent text-white relative">
-            {/* Animated Background - matching landing page */}
-            <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-                <div className="absolute inset-0 bg-slate-950" />
-                <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-teal-500/8 blur-[80px] animate-blob" style={{ animationDuration: '20s' }} />
-                <div className="absolute top-[-5%] right-[-10%] w-[45vw] h-[45vw] rounded-full bg-teal-400/6 blur-[80px] animate-blob" style={{ animationDuration: '25s', animationDelay: '2s' }} />
-                <div className="absolute bottom-[-10%] left-[10%] w-[40vw] h-[40vw] rounded-full bg-teal-600/7 blur-[80px] animate-blob" style={{ animationDuration: '30s', animationDelay: '4s' }} />
-            </div>
-
-            <div className="relative z-10">
-                <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
-                <div className="max-w-7xl mx-auto px-4 py-20 pt-32">
+        <div className="min-h-screen bg-transparent text-white">
+            <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
+            <div className="max-w-7xl mx-auto px-4 py-20 pt-32">
+                <AnimateIn type="fadeIn">
                     <Link href="/" className="inline-flex items-center text-teal-400 hover:text-teal-300 mb-8">
                         <ArrowLeft className="w-5 h-5 mr-2" />
                         Back to Home
                     </Link>
+                </AnimateIn>
 
-                    <div className="text-center mb-16">
+                <div className="text-center mb-16">
+                    <AnimateIn type="scaleIn">
                         <Rocket className="w-12 h-12 sm:w-16 sm:h-16 text-teal-400 mx-auto mb-6" />
+                    </AnimateIn>
+                    <AnimateIn type="fadeUp" delay={0.1}>
                         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-marketing-heading mb-6">
                             Why Choose <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-teal-600">AlphaClone</span>
                         </h1>
+                    </AnimateIn>
+                    <AnimateIn type="fadeUp" delay={0.2}>
                         <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-3xl mx-auto">
                             We don't just build websites and apps - we build digital experiences that drive real business results
                         </p>
-                    </div>
+                    </AnimateIn>
+                </div>
 
-                    {/* Our Advantages */}
-                    <section className="mb-20">
+                {/* Our Advantages */}
+                <section className="mb-20">
+                    <AnimateIn type="fadeUp">
                         <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold font-marketing-heading mb-8 text-center">
                             The <span className="text-teal-400">AlphaClone</span> Advantage
                         </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {advantages.map((advantage, idx) => (
-                                <div
-                                    key={idx}
-                                    className="bg-slate-900/60 backdrop-blur-sm p-6 rounded-xl border border-slate-800 hover:border-teal-500/50 transition-all group"
-                                >
+                    </AnimateIn>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {advantages.map((advantage, idx) => (
+                            <AnimateIn key={idx} type="stagger" index={idx}>
+                                <div className="bg-white/[0.04] backdrop-blur-sm p-6 rounded-xl border border-slate-700/60 hover:border-teal-500/50 transition-all group h-full">
                                     <advantage.icon className="w-10 h-10 text-teal-400 mb-4 group-hover:scale-110 transition-transform" />
                                     <h3 className="text-lg font-bold font-marketing-heading mb-2">{advantage.name}</h3>
                                     <p className="text-sm text-slate-400">{advantage.description}</p>
                                 </div>
-                            ))}
-                        </div>
-                    </section>
+                            </AnimateIn>
+                        ))}
+                    </div>
+                </section>
 
-                    {/* Our Services */}
-                    <section className="mb-20">
+                {/* Our Services */}
+                <section className="mb-20">
+                    <AnimateIn type="fadeUp">
                         <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold font-marketing-heading mb-8 text-center">
                             Comprehensive <span className="text-teal-400">Digital Services</span>
                         </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {services.map((service, idx) => (
-                                <div
-                                    key={idx}
-                                    className="bg-slate-900/60 backdrop-blur-sm p-8 rounded-xl border border-slate-800 hover:border-teal-500/30 transition-all"
-                                >
+                    </AnimateIn>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {services.map((service, idx) => (
+                            <AnimateIn key={idx} type={idx % 2 === 0 ? 'fadeLeft' : 'fadeRight'} delay={idx * 0.08}>
+                                <div className="bg-white/[0.04] backdrop-blur-sm p-8 rounded-xl border border-slate-700/60 hover:border-teal-500/30 transition-all h-full">
                                     <h3 className="text-2xl font-bold font-marketing-heading mb-4 text-teal-400">{service.title}</h3>
                                     <ul className="space-y-3">
                                         {service.features.map((feature, fIdx) => (
@@ -128,12 +129,14 @@ const EcosystemPage: React.FC = () => {
                                         ))}
                                     </ul>
                                 </div>
-                            ))}
-                        </div>
-                    </section>
+                            </AnimateIn>
+                        ))}
+                    </div>
+                </section>
 
-                    {/* Value Proposition */}
-                    <section>
+                {/* Value Proposition */}
+                <section>
+                    <AnimateIn type="scaleIn">
                         <div className="bg-gradient-to-br from-teal-600 to-teal-700 p-8 sm:p-12 rounded-2xl text-center">
                             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-marketing-heading mb-4">
                                 Ready to Transform Your Business?
@@ -149,8 +152,8 @@ const EcosystemPage: React.FC = () => {
                                 <Rocket className="w-5 h-5" />
                             </Link>
                         </div>
-                    </section>
-                </div>
+                    </AnimateIn>
+                </section>
             </div>
         </div>
     );

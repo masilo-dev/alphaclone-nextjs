@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/UIComponents';
 import PublicNavigation from '../PublicNavigation';
+import AnimateIn from '../common/AnimateIn';
 
 const ServicesPage: React.FC = () => {
     const [, setIsLoginOpen] = React.useState(false);
@@ -200,137 +201,152 @@ const ServicesPage: React.FC = () => {
 
             {/* BLUF Summary — SSR rendered above the fold */}
             <div className="pt-20">
-                <section className="bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800/50 py-16">
+                <section className="bg-gradient-to-b from-slate-900/60 to-transparent border-b border-slate-800/50 py-16">
                     <div className="max-w-4xl mx-auto px-4">
-                        <div className="flex items-center gap-2 mb-4">
-                            <div className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
-                            <span className="text-teal-400 text-sm font-semibold tracking-widest uppercase">The Bottom Line</span>
-                        </div>
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                            One Platform.{' '}
-                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-400">
-                                Ten Tools. Replaced.
-                            </span>
-                        </h1>
-                        <p className="text-xl text-slate-300 leading-relaxed max-w-3xl">
-                            {blufSummary}
-                        </p>
-                        <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                            <Link href="/register">
-                                <Button className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-8 py-4 h-auto text-lg">
-                                    Start Free Trial
-                                </Button>
-                            </Link>
-                            <Link href="/guide">
-                                <Button variant="outline" className="border-slate-700 hover:bg-slate-800 px-8 py-4 h-auto text-lg">
-                                    View Setup Guide
-                                </Button>
-                            </Link>
-                        </div>
+                        <AnimateIn type="fadeIn">
+                            <div className="flex items-center gap-2 mb-4">
+                                <div className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
+                                <span className="text-teal-400 text-sm font-semibold tracking-widest uppercase">The Bottom Line</span>
+                            </div>
+                        </AnimateIn>
+                        <AnimateIn type="fadeUp" delay={0.1}>
+                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+                                One Platform.{' '}
+                                <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-400">
+                                    Ten Tools. Replaced.
+                                </span>
+                            </h1>
+                        </AnimateIn>
+                        <AnimateIn type="fadeUp" delay={0.2}>
+                            <p className="text-xl text-slate-300 leading-relaxed max-w-3xl">
+                                {blufSummary}
+                            </p>
+                            <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                                <Link href="/register">
+                                    <Button className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-8 py-4 h-auto text-lg">
+                                        Start Free Trial
+                                    </Button>
+                                </Link>
+                                <Link href="/guide">
+                                    <Button variant="outline" className="border-slate-700 hover:bg-slate-800 px-8 py-4 h-auto text-lg">
+                                        View Setup Guide
+                                    </Button>
+                                </Link>
+                            </div>
+                        </AnimateIn>
                     </div>
                 </section>
 
                 {/* Cost Comparison Banner */}
-                <section className="py-16 bg-slate-950">
+                <section className="py-16 bg-transparent">
                     <div className="max-w-6xl mx-auto px-4">
-                        <div className="text-center mb-12">
-                            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                                Stop Paying for 8 Subscriptions
-                            </h2>
-                            <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                                The average small business spends ${totalOld}/month on the tools AlphaClone replaces. We charge $45/month for all of them.
-                            </p>
-                        </div>
+                        <AnimateIn type="fadeUp">
+                            <div className="text-center mb-12">
+                                <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                                    Stop Paying for 8 Subscriptions
+                                </h2>
+                                <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+                                    The average small business spends ${totalOld}/month on the tools AlphaClone replaces. We charge $45/month for all of them.
+                                </p>
+                            </div>
+                        </AnimateIn>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
                             {comparisonTools.map((tool, idx) => (
-                                <div key={idx} className="bg-white/[0.04] backdrop-blur-sm border border-slate-700/60 rounded-xl p-4 relative group">
-                                    <div className="absolute inset-0 bg-red-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    <div className="text-slate-500 line-through text-sm">{tool.cost}/mo</div>
-                                    <div className="font-semibold text-slate-300 text-sm mt-1">{tool.name}</div>
-                                    <div className="text-xs text-teal-500 mt-1">{tool.replaced}</div>
-                                </div>
+                                <AnimateIn key={idx} type="stagger" index={idx}>
+                                    <div className="bg-white/[0.04] backdrop-blur-sm border border-slate-700/60 rounded-xl p-4 relative group h-full">
+                                        <div className="absolute inset-0 bg-red-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <div className="text-slate-500 line-through text-sm">{tool.cost}/mo</div>
+                                        <div className="font-semibold text-slate-300 text-sm mt-1">{tool.name}</div>
+                                        <div className="text-xs text-teal-500 mt-1">{tool.replaced}</div>
+                                    </div>
+                                </AnimateIn>
                             ))}
                         </div>
-                        <div className="flex items-center justify-center gap-6 text-center p-6 bg-gradient-to-r from-teal-900/30 to-blue-900/30 rounded-2xl border border-teal-500/20">
-                            <div>
-                                <div className="text-4xl font-bold text-slate-500 line-through">${totalOld}/mo</div>
-                                <div className="text-sm text-slate-500">8 separate tools</div>
+                        <AnimateIn type="scaleIn" delay={0.2}>
+                            <div className="flex items-center justify-center gap-6 text-center p-6 bg-gradient-to-r from-teal-900/30 to-blue-900/30 rounded-2xl border border-teal-500/20">
+                                <div>
+                                    <div className="text-4xl font-bold text-slate-500 line-through">${totalOld}/mo</div>
+                                    <div className="text-sm text-slate-500">8 separate tools</div>
+                                </div>
+                                <ArrowRight className="w-8 h-8 text-teal-400 flex-shrink-0" />
+                                <div>
+                                    <div className="text-4xl font-bold text-teal-400">$45/mo</div>
+                                    <div className="text-sm text-teal-300">everything unified</div>
+                                </div>
                             </div>
-                            <ArrowRight className="w-8 h-8 text-teal-400 flex-shrink-0" />
-                            <div>
-                                <div className="text-4xl font-bold text-teal-400">$45/mo</div>
-                                <div className="text-sm text-teal-300">everything unified</div>
-                            </div>
-                        </div>
+                        </AnimateIn>
                     </div>
                 </section>
 
                 {/* Services — Full Detail */}
-                <section className="py-16 bg-slate-950">
+                <section className="py-16 bg-transparent">
                     <div className="max-w-6xl mx-auto px-4">
-                        <div className="text-center mb-16">
-                            <h2 className="text-3xl md:text-4xl font-bold mb-4">Every Service, In Depth</h2>
-                            <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                                Here's exactly what you get when you join AlphaClone — no marketing fluff, just a clear explanation of every capability and why it matters for your business.
-                            </p>
-                        </div>
+                        <AnimateIn type="fadeUp">
+                            <div className="text-center mb-16">
+                                <h2 className="text-3xl md:text-4xl font-bold mb-4">Every Service, In Depth</h2>
+                                <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+                                    Here's exactly what you get when you join AlphaClone — no marketing fluff, just a clear explanation of every capability and why it matters for your business.
+                                </p>
+                            </div>
+                        </AnimateIn>
 
                         <div className="space-y-16">
                             {services.map((service, idx) => (
-                                <div
-                                    key={idx}
-                                    className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start p-8 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition-all"
-                                >
-                                    {/* Left: Header + Description */}
-                                    <div>
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${service.color} flex items-center justify-center flex-shrink-0`}>
-                                                <service.icon className="w-6 h-6 text-white" />
+                                <AnimateIn key={idx} type={idx % 2 === 0 ? 'fadeLeft' : 'fadeRight'} delay={0.05}>
+                                    <div
+                                        className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start p-8 rounded-2xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60 hover:border-teal-500/30 transition-all"
+                                    >
+                                        {/* Left: Header + Description */}
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${service.color} flex items-center justify-center flex-shrink-0`}>
+                                                    <service.icon className="w-6 h-6 text-white" />
+                                                </div>
+                                                {service.badge && (
+                                                    <span className="px-3 py-1 bg-teal-500/10 border border-teal-500/30 rounded-full text-teal-400 text-xs font-semibold">
+                                                        {service.badge}
+                                                    </span>
+                                                )}
                                             </div>
-                                            {service.badge && (
-                                                <span className="px-3 py-1 bg-teal-500/10 border border-teal-500/30 rounded-full text-teal-400 text-xs font-semibold">
-                                                    {service.badge}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <h3 className="text-2xl font-bold mb-1">{service.title}</h3>
-                                        <p className="text-teal-400 text-sm mb-4">{service.subtitle}</p>
-                                        <p className="text-slate-300 leading-relaxed mb-4">{service.description}</p>
-                                        <p className="text-slate-400 leading-relaxed text-sm">{service.extendedDescription}</p>
-                                        <div className="mt-6 p-4 bg-teal-500/5 border border-teal-500/20 rounded-xl">
-                                            <div className="flex items-center gap-2">
-                                                <TrendingUp className="w-4 h-4 text-teal-400 flex-shrink-0" />
-                                                <span className="text-teal-300 text-sm font-semibold">{service.impact}</span>
+                                            <h3 className="text-2xl font-bold mb-1">{service.title}</h3>
+                                            <p className="text-teal-400 text-sm mb-4">{service.subtitle}</p>
+                                            <p className="text-slate-300 leading-relaxed mb-4">{service.description}</p>
+                                            <p className="text-slate-400 leading-relaxed text-sm">{service.extendedDescription}</p>
+                                            <div className="mt-6 p-4 bg-teal-500/5 border border-teal-500/20 rounded-xl">
+                                                <div className="flex items-center gap-2">
+                                                    <TrendingUp className="w-4 h-4 text-teal-400 flex-shrink-0" />
+                                                    <span className="text-teal-300 text-sm font-semibold">{service.impact}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    {/* Right: Features */}
-                                    <div>
-                                        <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">What's Included</h4>
-                                        <ul className="space-y-3">
-                                            {service.features.map((f, fi) => (
-                                                <li key={fi} className="flex items-start gap-3">
-                                                    <CheckCircle className="w-5 h-5 text-teal-400 flex-shrink-0 mt-0.5" />
-                                                    <span className="text-slate-300 text-sm leading-relaxed">{f}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                        <div className="mt-8 flex flex-col gap-3">
-                                            <Link href="/register">
-                                                <Button className="w-full bg-teal-600 hover:bg-teal-500 font-semibold">
-                                                    Try This Free
+                                        {/* Right: Features */}
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">What's Included</h4>
+                                            <ul className="space-y-3">
+                                                {service.features.map((f, fi) => (
+                                                    <li key={fi} className="flex items-start gap-3">
+                                                        <CheckCircle className="w-5 h-5 text-teal-400 flex-shrink-0 mt-0.5" />
+                                                        <span className="text-slate-300 text-sm leading-relaxed">{f}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                            <div className="mt-8 flex flex-col gap-3">
+                                                <Link href="/register">
+                                                    <Button className="w-full bg-teal-600 hover:bg-teal-500 font-semibold">
+                                                        Try This Free
+                                                    </Button>
+                                                </Link>
+                                                <Button
+                                                    variant="outline"
+                                                    className="w-full border-slate-700 hover:bg-slate-800"
+                                                    onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
+                                                >
+                                                    Book a Demo Call
                                                 </Button>
-                                            </Link>
-                                            <Button
-                                                variant="outline"
-                                                className="w-full border-slate-700 hover:bg-slate-800"
-                                                onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
-                                            >
-                                                Book a Demo Call
-                                            </Button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                </AnimateIn>
                             ))}
                         </div>
                     </div>
@@ -339,14 +355,16 @@ const ServicesPage: React.FC = () => {
                 {/* Why Not Technical Users Love AlphaClone */}
                 <section className="py-16 bg-white/[0.02] backdrop-blur-sm border-y border-slate-800/50">
                     <div className="max-w-6xl mx-auto px-4">
-                        <div className="text-center mb-12">
-                            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                                "I'm Not Technical" — That's Exactly Who This Is For
-                            </h2>
-                            <p className="text-slate-400 text-lg max-w-3xl mx-auto">
-                                AlphaClone was built specifically for business owners who want enterprise-grade software but don't have an IT department, a CTO, or a technical co-founder. If you can use Gmail, you can run AlphaClone.
-                            </p>
-                        </div>
+                        <AnimateIn type="fadeUp">
+                            <div className="text-center mb-12">
+                                <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                                    "I'm Not Technical" — That's Exactly Who This Is For
+                                </h2>
+                                <p className="text-slate-400 text-lg max-w-3xl mx-auto">
+                                    AlphaClone was built specifically for business owners who want enterprise-grade software but don't have an IT department, a CTO, or a technical co-founder. If you can use Gmail, you can run AlphaClone.
+                                </p>
+                            </div>
+                        </AnimateIn>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {[
                                 {
@@ -380,56 +398,62 @@ const ServicesPage: React.FC = () => {
                                     desc: 'AlphaClone serves agencies, consultancies, freelancers, and professional service firms. The people using it every day are accountants, designers, coaches, lawyers, and marketing agencies — not software engineers.',
                                 },
                             ].map((item, i) => (
-                                <div key={i} className="p-6 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60">
-                                    <item.icon className="w-8 h-8 text-teal-400 mb-4" />
-                                    <h3 className="text-lg font-bold mb-3">{item.title}</h3>
-                                    <p className="text-slate-400 text-sm leading-relaxed">{item.desc}</p>
-                                </div>
+                                <AnimateIn key={i} type="stagger" index={i}>
+                                    <div className="p-6 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60 h-full">
+                                        <item.icon className="w-8 h-8 text-teal-400 mb-4" />
+                                        <h3 className="text-lg font-bold mb-3">{item.title}</h3>
+                                        <p className="text-slate-400 text-sm leading-relaxed">{item.desc}</p>
+                                    </div>
+                                </AnimateIn>
                             ))}
                         </div>
                     </div>
                 </section>
 
                 {/* Testimonial / Social Proof Strip */}
-                <section className="py-12 bg-slate-950">
-                    <div className="max-w-4xl mx-auto px-4 text-center">
-                        <div className="flex justify-center gap-1 mb-4">
-                            {[...Array(5)].map((_, i) => <Star key={i} className="w-5 h-5 text-amber-400 fill-amber-400" />)}
+                <section className="py-12 bg-transparent">
+                    <AnimateIn type="scaleIn">
+                        <div className="max-w-4xl mx-auto px-4 text-center">
+                            <div className="flex justify-center gap-1 mb-4">
+                                {[...Array(5)].map((_, i) => <Star key={i} className="w-5 h-5 text-amber-400 fill-amber-400" />)}
+                            </div>
+                            <blockquote className="text-xl text-slate-200 italic leading-relaxed mb-6">
+                                "Before AlphaClone, I was paying over $300/month across six different tools, and I still felt disorganized. Now everything is in one place, my AI agent books discovery calls while I sleep, and I actually know the financial health of my business for the first time."
+                            </blockquote>
+                            <cite className="text-teal-400 font-semibold">— Agency Owner, Professional Services</cite>
                         </div>
-                        <blockquote className="text-xl text-slate-200 italic leading-relaxed mb-6">
-                            "Before AlphaClone, I was paying over $300/month across six different tools, and I still felt disorganized. Now everything is in one place, my AI agent books discovery calls while I sleep, and I actually know the financial health of my business for the first time."
-                        </blockquote>
-                        <cite className="text-teal-400 font-semibold">— Agency Owner, Professional Services</cite>
-                    </div>
+                    </AnimateIn>
                 </section>
 
                 {/* Final CTA */}
-                <section className="py-20 bg-gradient-to-b from-slate-950 to-slate-900">
+                <section className="py-20 bg-gradient-to-b from-transparent to-slate-900/40">
                     <div className="max-w-3xl mx-auto px-4 text-center">
-                        <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                            Ready to Run Your Entire Business from One Dashboard?
-                        </h2>
-                        <p className="text-slate-400 text-lg mb-10 leading-relaxed">
-                            Start your free trial today. No credit card required for the first 14 days. Cancel anytime. Most businesses see a positive ROI within the first month.
-                        </p>
-                        <div className="flex flex-col sm:flex-row justify-center gap-4">
-                            <Link href="/register">
-                                <Button className="text-lg px-10 py-4 h-auto bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold shadow-xl shadow-teal-500/20">
-                                    Start 14-Day Free Trial
+                        <AnimateIn type="scaleIn">
+                            <h2 className="text-3xl md:text-4xl font-bold mb-6">
+                                Ready to Run Your Entire Business from One Dashboard?
+                            </h2>
+                            <p className="text-slate-400 text-lg mb-10 leading-relaxed">
+                                Start your free trial today. No credit card required for the first 14 days. Cancel anytime. Most businesses see a positive ROI within the first month.
+                            </p>
+                            <div className="flex flex-col sm:flex-row justify-center gap-4">
+                                <Link href="/register">
+                                    <Button className="text-lg px-10 py-4 h-auto bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold shadow-xl shadow-teal-500/20">
+                                        Start 14-Day Free Trial
+                                    </Button>
+                                </Link>
+                                <Button
+                                    variant="outline"
+                                    className="text-lg px-10 py-4 h-auto border-slate-700 hover:bg-slate-800"
+                                    onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
+                                >
+                                    <Phone className="w-5 h-5 mr-2" />
+                                    Book a Live Demo
                                 </Button>
-                            </Link>
-                            <Button
-                                variant="outline"
-                                className="text-lg px-10 py-4 h-auto border-slate-700 hover:bg-slate-800"
-                                onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
-                            >
-                                <Phone className="w-5 h-5 mr-2" />
-                                Book a Live Demo
-                            </Button>
-                        </div>
-                        <p className="mt-6 text-slate-500 text-sm">
-                            Starter from $15/mo · Pro from $45/mo · Enterprise from $80/mo · Cancel anytime
-                        </p>
+                            </div>
+                            <p className="mt-6 text-slate-500 text-sm">
+                                Starter from $15/mo · Pro from $45/mo · Enterprise from $80/mo · Cancel anytime
+                            </p>
+                        </AnimateIn>
                     </div>
                 </section>
             </div>

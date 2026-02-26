@@ -9,6 +9,7 @@ import {
     Video, Calendar, Mail, BarChart3, Lock, X, Minus
 } from 'lucide-react';
 import PublicNavigation from '@/components/PublicNavigation';
+import AnimateIn from '@/components/common/AnimateIn';
 
 const plans = [
     {
@@ -163,7 +164,7 @@ export default function PricingPageContent() {
     const [showComparison, setShowComparison] = useState(false);
 
     return (
-        <div className="min-h-screen bg-transparent text-slate-200 selection:bg-teal-500/30 overflow-hidden">
+        <div className="min-h-screen bg-transparent text-slate-200 selection:bg-teal-500/30">
             {/* JSON-LD Schemas */}
             <script type="application/ld+json" dangerouslySetInnerHTML={{
                 __html: JSON.stringify({
@@ -188,11 +189,6 @@ export default function PricingPageContent() {
                 })
             }} />
 
-            {/* Ambient background */}
-            <div className="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none">
-                <div className="absolute top-[10%] left-[5%] w-[500px] h-[500px] bg-teal-500/8 blur-[150px] rounded-full" />
-                <div className="absolute bottom-[20%] right-[10%] w-[400px] h-[400px] bg-blue-500/8 blur-[150px] rounded-full" />
-            </div>
 
             <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
 

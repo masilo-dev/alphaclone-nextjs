@@ -7,6 +7,7 @@ import { Button, Input } from '../ui/UIComponents';
 import PublicNavigation from '../PublicNavigation';
 import { contactService } from '../../services/contactFormService';
 import { contactSchema } from '../../schemas/validation';
+import AnimateIn from '../common/AnimateIn';
 
 const ContactPage: React.FC = () => {
     const [, setIsLoginOpen] = React.useState(false);
@@ -19,7 +20,6 @@ const ContactPage: React.FC = () => {
         setStatus('sending');
         setValidationError('');
 
-        // Validate form data
         try {
             contactSchema.parse({
                 name: formData.name,
@@ -29,10 +29,7 @@ const ContactPage: React.FC = () => {
         } catch (error: any) {
             setStatus('error');
             setValidationError(error.errors[0]?.message || 'Please check your input');
-            setTimeout(() => {
-                setStatus('idle');
-                setValidationError('');
-            }, 5000);
+            setTimeout(() => { setStatus('idle'); setValidationError(''); }, 5000);
             return;
         }
 
@@ -49,31 +46,22 @@ const ContactPage: React.FC = () => {
         } else {
             setStatus('error');
             setValidationError(error);
-            setTimeout(() => {
-                setStatus('idle');
-                setValidationError('');
-            }, 5000);
+            setTimeout(() => { setStatus('idle'); setValidationError(''); }, 5000);
         }
     };
 
     return (
-        <div className="min-h-screen bg-transparent text-white relative">
-            {/* Animated Background - matching landing page */}
-            <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-                <div className="absolute inset-0 bg-slate-950" />
-                <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-teal-500/8 blur-[80px] animate-blob" style={{ animationDuration: '20s' }} />
-                <div className="absolute top-[-5%] right-[-10%] w-[45vw] h-[45vw] rounded-full bg-teal-400/6 blur-[80px] animate-blob" style={{ animationDuration: '25s', animationDelay: '2s' }} />
-                <div className="absolute bottom-[-10%] left-[10%] w-[40vw] h-[40vw] rounded-full bg-teal-600/7 blur-[80px] animate-blob" style={{ animationDuration: '30s', animationDelay: '4s' }} />
-            </div>
-
-            <div className="relative z-10">
-                <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
-                <div className="max-w-7xl mx-auto px-4 py-20 pt-32">
+        <div className="min-h-screen bg-transparent text-white">
+            <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
+            <div className="max-w-7xl mx-auto px-4 py-20 pt-32">
+                <AnimateIn type="fadeIn">
                     <Link href="/" className="inline-flex items-center text-teal-400 hover:text-teal-300 mb-8">
                         <ArrowLeft className="w-5 h-5 mr-2" />
                         Back to Home
                     </Link>
+                </AnimateIn>
 
+                <AnimateIn type="fadeUp" delay={0.1}>
                     <div className="text-center mb-16">
                         <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-3xl mx-auto mb-10">
                             Get in touch to discuss your project. For the fastest response, use WhatsApp or book a meeting directly.
@@ -94,9 +82,11 @@ const ContactPage: React.FC = () => {
                             </Button>
                         </div>
                     </div>
+                </AnimateIn>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                        {/* Contact Info */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    {/* Contact Info */}
+                    <AnimateIn type="fadeLeft" delay={0.1}>
                         <div>
                             <h2 className="text-lg sm:text-xl lg:text-2xl font-bold font-marketing-heading mb-8">Get In Touch</h2>
                             <div className="space-y-6 mb-8">
@@ -139,7 +129,7 @@ const ContactPage: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800">
+                            <div className="bg-white/[0.04] backdrop-blur-sm p-6 rounded-xl border border-slate-700/60">
                                 <h3 className="font-bold font-marketing-heading mb-3">Business Hours</h3>
                                 <div className="space-y-2 text-slate-400">
                                     <div>Monday - Friday: 9:00 AM - 6:00 PM</div>
@@ -148,8 +138,10 @@ const ContactPage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
+                    </AnimateIn>
 
-                        {/* Contact Form */}
+                    {/* Contact Form */}
+                    <AnimateIn type="fadeRight" delay={0.15}>
                         <div>
                             <h2 className="text-2xl font-bold font-marketing-heading mb-8">Send a Message</h2>
                             <form onSubmit={handleSubmit} className="space-y-6">
@@ -182,7 +174,7 @@ const ContactPage: React.FC = () => {
                                         onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                                         required
                                         rows={6}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                        className="w-full bg-white/[0.04] backdrop-blur-sm border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                         placeholder="Tell us about your project..."
                                     />
                                 </div>
@@ -210,7 +202,7 @@ const ContactPage: React.FC = () => {
                                 </Button>
                             </form>
                         </div>
-                    </div>
+                    </AnimateIn>
                 </div>
             </div>
         </div>
@@ -218,4 +210,3 @@ const ContactPage: React.FC = () => {
 };
 
 export default ContactPage;
-

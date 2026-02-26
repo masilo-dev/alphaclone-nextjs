@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/UIComponents';
 import PublicNavigation from '../PublicNavigation';
+import AnimateIn from '../common/AnimateIn';
 
 const AboutPage: React.FC = () => {
     const [, setIsLoginOpen] = React.useState(false);
@@ -122,21 +123,27 @@ const AboutPage: React.FC = () => {
 
             <div className="pt-20">
                 {/* Hero */}
-                <section className="bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800/50 py-20">
+                <section className="bg-gradient-to-b from-slate-900/60 to-transparent border-b border-slate-800/50 py-20">
                     <div className="max-w-4xl mx-auto px-4 text-center">
-                        <div className="flex items-center justify-center gap-2 mb-4">
-                            <Building2 className="w-5 h-5 text-teal-400" />
-                            <span className="text-teal-400 text-sm font-semibold tracking-widest uppercase">About AlphaClone</span>
-                        </div>
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                            We Built the Business OS We Wished{' '}
-                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-400">
-                                Existed
-                            </span>
-                        </h1>
-                        <p className="text-xl text-slate-300 leading-relaxed max-w-3xl mx-auto">
-                            AlphaClone Systems started as an internal tool we built out of frustration. We were running a growing agency, paying for 9 different software subscriptions, and spending more time managing tools than managing clients. So we built one platform that does it all — and made it available to every business that faces the same problem.
-                        </p>
+                        <AnimateIn type="fadeIn" delay={0}>
+                            <div className="flex items-center justify-center gap-2 mb-4">
+                                <Building2 className="w-5 h-5 text-teal-400" />
+                                <span className="text-teal-400 text-sm font-semibold tracking-widest uppercase">About AlphaClone</span>
+                            </div>
+                        </AnimateIn>
+                        <AnimateIn type="fadeUp" delay={0.1}>
+                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+                                We Built the Business OS We Wished{' '}
+                                <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-400">
+                                    Existed
+                                </span>
+                            </h1>
+                        </AnimateIn>
+                        <AnimateIn type="fadeUp" delay={0.2}>
+                            <p className="text-xl text-slate-300 leading-relaxed max-w-3xl mx-auto">
+                                AlphaClone Systems started as an internal tool we built out of frustration. We were running a growing agency, paying for 9 different software subscriptions, and spending more time managing tools than managing clients. So we built one platform that does it all — and made it available to every business that faces the same problem.
+                            </p>
+                        </AnimateIn>
                     </div>
                 </section>
 
@@ -145,11 +152,13 @@ const AboutPage: React.FC = () => {
                     <div className="max-w-6xl mx-auto px-4">
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                             {stats.map((stat, idx) => (
-                                <div key={idx} className="text-center p-6 bg-slate-900 rounded-xl border border-slate-800">
-                                    <div className="text-3xl font-bold text-teal-400 mb-1">{stat.value}</div>
-                                    <div className="font-semibold text-white text-sm mb-1">{stat.label}</div>
-                                    <div className="text-slate-500 text-xs">{stat.sub}</div>
-                                </div>
+                                <AnimateIn key={idx} type="stagger" index={idx}>
+                                    <div className="text-center p-6 bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-700/60 h-full">
+                                        <div className="text-3xl font-bold text-teal-400 mb-1">{stat.value}</div>
+                                        <div className="font-semibold text-white text-sm mb-1">{stat.label}</div>
+                                        <div className="text-slate-500 text-xs">{stat.sub}</div>
+                                    </div>
+                                </AnimateIn>
                             ))}
                         </div>
                     </div>
@@ -158,43 +167,51 @@ const AboutPage: React.FC = () => {
                 {/* The Mission */}
                 <section className="py-16 bg-white/[0.02] backdrop-blur-sm border-y border-slate-800/60">
                     <div className="max-w-4xl mx-auto px-4">
-                        <div className="flex items-center gap-3 mb-6">
-                            <Globe className="w-6 h-6 text-teal-400" />
-                            <h2 className="text-3xl font-bold">Our Mission</h2>
-                        </div>
-                        <div className="space-y-6 text-slate-300 leading-relaxed">
-                            <p className="text-xl">
-                                <strong className="text-white">To give every business owner — regardless of technical skill, team size, or budget — access to the same operational infrastructure as a Fortune 500 company.</strong>
-                            </p>
-                            <p>
-                                Enterprise companies have entire IT departments managing their CRM systems, finance software, communication platforms, security tools, and automation workflows. They spend hundreds of thousands of dollars annually to maintain this infrastructure. The outputs of that investment — organized client relationships, efficient financial reporting, automated lead generation, and secure data management — give enterprise businesses an enormous competitive advantage over smaller competitors.
-                            </p>
-                            <p>
-                                AlphaClone eliminates that competitive advantage gap. We've taken the same capabilities that previously required a dedicated IT team and an enterprise budget, and packaged them into a single, unified platform that a business owner with zero technical background can set up in 30 minutes. Starting at $15/month.
-                            </p>
-                            <p>
-                                The result is that a freelance marketing consultant, a boutique law firm, a growing design agency, and a business coaching practice can now operate with the same efficiency, professionalism, and data intelligence as a company 10 times their size. That's the change we're making in the world.
-                            </p>
-                        </div>
+                        <AnimateIn type="fadeLeft">
+                            <div className="flex items-center gap-3 mb-6">
+                                <Globe className="w-6 h-6 text-teal-400" />
+                                <h2 className="text-3xl font-bold">Our Mission</h2>
+                            </div>
+                        </AnimateIn>
+                        <AnimateIn type="fadeUp" delay={0.1}>
+                            <div className="space-y-6 text-slate-300 leading-relaxed">
+                                <p className="text-xl">
+                                    <strong className="text-white">To give every business owner — regardless of technical skill, team size, or budget — access to the same operational infrastructure as a Fortune 500 company.</strong>
+                                </p>
+                                <p>
+                                    Enterprise companies have entire IT departments managing their CRM systems, finance software, communication platforms, security tools, and automation workflows. They spend hundreds of thousands of dollars annually to maintain this infrastructure. The outputs of that investment — organized client relationships, efficient financial reporting, automated lead generation, and secure data management — give enterprise businesses an enormous competitive advantage over smaller competitors.
+                                </p>
+                                <p>
+                                    AlphaClone eliminates that competitive advantage gap. We've taken the same capabilities that previously required a dedicated IT team and an enterprise budget, and packaged them into a single, unified platform that a business owner with zero technical background can set up in 30 minutes. Starting at $15/month.
+                                </p>
+                                <p>
+                                    The result is that a freelance marketing consultant, a boutique law firm, a growing design agency, and a business coaching practice can now operate with the same efficiency, professionalism, and data intelligence as a company 10 times their size. That's the change we're making in the world.
+                                </p>
+                            </div>
+                        </AnimateIn>
                     </div>
                 </section>
 
                 {/* Why AlphaClone is a Game Changer */}
                 <section className="py-16 bg-transparent">
                     <div className="max-w-4xl mx-auto px-4">
-                        <div className="flex items-center gap-3 mb-8">
-                            <Zap className="w-6 h-6 text-amber-400" />
-                            <h2 className="text-3xl font-bold">{whySection[0].title}</h2>
-                        </div>
+                        <AnimateIn type="fadeLeft">
+                            <div className="flex items-center gap-3 mb-8">
+                                <Zap className="w-6 h-6 text-amber-400" />
+                                <h2 className="text-3xl font-bold">{whySection[0].title}</h2>
+                            </div>
+                        </AnimateIn>
                         <div className="space-y-8">
                             {whySection[0].points.map((point, i) => (
-                                <div key={i} className="p-6 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60">
-                                    <div className="flex items-start gap-3 mb-3">
-                                        <CheckCircle className="w-5 h-5 text-teal-400 flex-shrink-0 mt-0.5" />
-                                        <h3 className="text-lg font-bold text-white">{point.headline}</h3>
+                                <AnimateIn key={i} type="fadeUp" delay={i * 0.07}>
+                                    <div className="p-6 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60">
+                                        <div className="flex items-start gap-3 mb-3">
+                                            <CheckCircle className="w-5 h-5 text-teal-400 flex-shrink-0 mt-0.5" />
+                                            <h3 className="text-lg font-bold text-white">{point.headline}</h3>
+                                        </div>
+                                        <p className="text-slate-400 leading-relaxed pl-8">{point.body}</p>
                                     </div>
-                                    <p className="text-slate-400 leading-relaxed pl-8">{point.body}</p>
-                                </div>
+                                </AnimateIn>
                             ))}
                         </div>
                     </div>
@@ -276,23 +293,25 @@ const AboutPage: React.FC = () => {
                 {/* CTA */}
                 <section className="py-20">
                     <div className="max-w-3xl mx-auto px-4 text-center">
-                        <h2 className="text-3xl font-bold mb-6">Join the Businesses Running Smarter</h2>
-                        <p className="text-slate-400 text-lg mb-10">
-                            Start your free trial today. See in 30 minutes why hundreds of business owners have replaced their entire SaaS stack with AlphaClone.
-                        </p>
-                        <div className="flex flex-col sm:flex-row justify-center gap-4">
-                            <Link href="/register">
-                                <Button className="text-lg px-10 py-4 h-auto bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold shadow-xl shadow-teal-500/20">
-                                    Start Free Trial
-                                </Button>
-                            </Link>
-                            <Link href="/services">
-                                <Button variant="outline" className="text-lg px-10 py-4 h-auto border-slate-700 hover:bg-slate-800">
-                                    View All Services
-                                    <ArrowRight className="w-5 h-5 ml-2" />
-                                </Button>
-                            </Link>
-                        </div>
+                        <AnimateIn type="scaleIn">
+                            <h2 className="text-3xl font-bold mb-6">Join the Businesses Running Smarter</h2>
+                            <p className="text-slate-400 text-lg mb-10">
+                                Start your free trial today. See in 30 minutes why hundreds of business owners have replaced their entire SaaS stack with AlphaClone.
+                            </p>
+                            <div className="flex flex-col sm:flex-row justify-center gap-4">
+                                <Link href="/register">
+                                    <Button className="text-lg px-10 py-4 h-auto bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold shadow-xl shadow-teal-500/20">
+                                        Start Free Trial
+                                    </Button>
+                                </Link>
+                                <Link href="/services">
+                                    <Button variant="outline" className="text-lg px-10 py-4 h-auto border-slate-700 hover:bg-slate-800">
+                                        View All Services
+                                        <ArrowRight className="w-5 h-5 ml-2" />
+                                    </Button>
+                                </Link>
+                            </div>
+                        </AnimateIn>
                     </div>
                 </section>
             </div>
