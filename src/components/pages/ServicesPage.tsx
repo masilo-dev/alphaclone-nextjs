@@ -195,7 +195,7 @@ const ServicesPage: React.FC = () => {
     const totalOld = comparisonTools.reduce((sum, t) => sum + parseInt(t.cost), 0);
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white">
+        <div className="min-h-screen bg-transparent text-white">
             <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
 
             {/* BLUF Summary — SSR rendered above the fold */}
@@ -243,7 +243,7 @@ const ServicesPage: React.FC = () => {
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
                             {comparisonTools.map((tool, idx) => (
-                                <div key={idx} className="bg-slate-900 border border-slate-800 rounded-xl p-4 relative group">
+                                <div key={idx} className="bg-white/[0.04] backdrop-blur-sm border border-slate-700/60 rounded-xl p-4 relative group">
                                     <div className="absolute inset-0 bg-red-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
                                     <div className="text-slate-500 line-through text-sm">{tool.cost}/mo</div>
                                     <div className="font-semibold text-slate-300 text-sm mt-1">{tool.name}</div>
@@ -337,7 +337,7 @@ const ServicesPage: React.FC = () => {
                 </section>
 
                 {/* Why Not Technical Users Love AlphaClone */}
-                <section className="py-16 bg-slate-900/50 border-y border-slate-800">
+                <section className="py-16 bg-white/[0.02] backdrop-blur-sm border-y border-slate-800/50">
                     <div className="max-w-6xl mx-auto px-4">
                         <div className="text-center mb-12">
                             <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -380,7 +380,7 @@ const ServicesPage: React.FC = () => {
                                     desc: 'AlphaClone serves agencies, consultancies, freelancers, and professional service firms. The people using it every day are accountants, designers, coaches, lawyers, and marketing agencies — not software engineers.',
                                 },
                             ].map((item, i) => (
-                                <div key={i} className="p-6 rounded-xl bg-slate-900 border border-slate-800">
+                                <div key={i} className="p-6 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60">
                                     <item.icon className="w-8 h-8 text-teal-400 mb-4" />
                                     <h3 className="text-lg font-bold mb-3">{item.title}</h3>
                                     <p className="text-slate-400 text-sm leading-relaxed">{item.desc}</p>

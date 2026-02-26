@@ -25,7 +25,7 @@ function LegalLayout({
 }) {
    const [, setIsLoginOpen] = useState(false);
    return (
-      <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-teal-500/30">
+      <div className="min-h-screen bg-transparent text-slate-200 font-sans selection:bg-teal-500/30">
          <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
          <div className="pt-20 max-w-4xl mx-auto px-4 py-16">
             {/* Header */}
@@ -129,7 +129,7 @@ export function PrivacyPolicy() {
             <p>
                The data controller responsible for your personal information is:
             </p>
-            <div className="mt-3 p-4 bg-slate-900 rounded-xl border border-slate-800 text-sm not-italic">
+            <div className="mt-3 p-4 bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-800 text-sm not-italic">
                <p><strong className="text-white">AlphaClone Systems (Pty) Ltd</strong></p>
                <p>Email: <a href="mailto:legal@alphaclone.tech" className="text-teal-400 hover:underline">legal@alphaclone.tech</a></p>
                <p>Data Protection Contact: <a href="mailto:privacy@alphaclone.tech" className="text-teal-400 hover:underline">privacy@alphaclone.tech</a></p>
@@ -189,7 +189,7 @@ export function PrivacyPolicy() {
                   { basis: 'Legal Obligation (Art. 6(1)(c) GDPR)', desc: 'Responding to lawful government or court orders, tax compliance, and financial record-keeping obligations.' },
                   { basis: 'Consent (Art. 6(1)(a) GDPR)', desc: 'Non-essential cookies (analytics, marketing), Gmail API access, and marketing communications. You may withdraw consent at any time.' },
                ].map((item, i) => (
-                  <div key={i} className="p-4 bg-slate-900 rounded-xl border border-slate-800">
+                  <div key={i} className="p-4 bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-800">
                      <p className="text-white font-semibold text-xs mb-1">{item.basis}</p>
                      <p className="text-slate-400 text-xs">{item.desc}</p>
                   </div>
@@ -268,7 +268,7 @@ export function PrivacyPolicy() {
                   { right: 'Right to Withdraw Consent', desc: 'Withdraw consent for any consent-based processing at any time.' },
                   { right: 'Right to Lodge a Complaint', desc: 'Lodge a complaint with your local data protection authority.' },
                ].map((item, i) => (
-                  <div key={i} className="p-3 bg-slate-900 rounded-lg border border-slate-800">
+                  <div key={i} className="p-3 bg-white/[0.04] backdrop-blur-sm rounded-lg border border-slate-800">
                      <p className="text-white font-semibold text-xs mb-1">{item.right}</p>
                      <p className="text-slate-500 text-xs">{item.desc}</p>
                   </div>
@@ -306,7 +306,7 @@ export function PrivacyPolicy() {
 
          <Section id="contact" title="12. Contact Us">
             <p>For privacy-related enquiries, data subject rights requests, or complaints:</p>
-            <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 text-sm mt-3">
+            <div className="p-4 bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-800 text-sm mt-3">
                <p><strong className="text-white">Privacy & Data Protection:</strong> <a href="mailto:privacy@alphaclone.tech" className="text-teal-400 hover:underline">privacy@alphaclone.tech</a></p>
                <p><strong className="text-white">Legal Department:</strong> <a href="mailto:legal@alphaclone.tech" className="text-teal-400 hover:underline">legal@alphaclone.tech</a></p>
                <p><strong className="text-white">General Support:</strong> <a href="mailto:support@alphaclone.tech" className="text-teal-400 hover:underline">support@alphaclone.tech</a></p>
@@ -620,7 +620,7 @@ export function CookiePolicy() {
                      { name: 'Edge', url: 'https://support.microsoft.com/en-us/microsoft-edge/delete-cookies-in-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09' },
                      { name: 'Brave', url: 'https://support.brave.com/hc/en-us/articles/360022806212-How-do-I-use-Shields-while-browsing' },
                   ].map((b, i) => (
-                     <a key={i} href={b.url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-xs text-teal-400 hover:underline p-2 bg-slate-900 rounded-lg border border-slate-800">
+                     <a key={i} href={b.url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-xs text-teal-400 hover:underline p-2 bg-white/[0.04] backdrop-blur-sm rounded-lg border border-slate-800">
                         {b.name} Settings <ExternalLink className="w-3 h-3" />
                      </a>
                   ))}

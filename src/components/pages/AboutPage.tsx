@@ -117,7 +117,7 @@ const AboutPage: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white">
+        <div className="min-h-screen bg-transparent text-white">
             <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
 
             <div className="pt-20">
@@ -141,7 +141,7 @@ const AboutPage: React.FC = () => {
                 </section>
 
                 {/* Stats */}
-                <section className="py-16 bg-slate-950">
+                <section className="py-16 bg-transparent">
                     <div className="max-w-6xl mx-auto px-4">
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                             {stats.map((stat, idx) => (
@@ -156,7 +156,7 @@ const AboutPage: React.FC = () => {
                 </section>
 
                 {/* The Mission */}
-                <section className="py-16 bg-slate-900/50 border-y border-slate-800">
+                <section className="py-16 bg-white/[0.02] backdrop-blur-sm border-y border-slate-800/60">
                     <div className="max-w-4xl mx-auto px-4">
                         <div className="flex items-center gap-3 mb-6">
                             <Globe className="w-6 h-6 text-teal-400" />
@@ -180,7 +180,7 @@ const AboutPage: React.FC = () => {
                 </section>
 
                 {/* Why AlphaClone is a Game Changer */}
-                <section className="py-16 bg-slate-950">
+                <section className="py-16 bg-transparent">
                     <div className="max-w-4xl mx-auto px-4">
                         <div className="flex items-center gap-3 mb-8">
                             <Zap className="w-6 h-6 text-amber-400" />
@@ -188,7 +188,7 @@ const AboutPage: React.FC = () => {
                         </div>
                         <div className="space-y-8">
                             {whySection[0].points.map((point, i) => (
-                                <div key={i} className="p-6 rounded-xl bg-slate-900 border border-slate-800">
+                                <div key={i} className="p-6 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60">
                                     <div className="flex items-start gap-3 mb-3">
                                         <CheckCircle className="w-5 h-5 text-teal-400 flex-shrink-0 mt-0.5" />
                                         <h3 className="text-lg font-bold text-white">{point.headline}</h3>
@@ -201,7 +201,7 @@ const AboutPage: React.FC = () => {
                 </section>
 
                 {/* Our Story Timeline */}
-                <section className="py-16 bg-slate-900/50 border-y border-slate-800">
+                <section className="py-16 bg-white/[0.02] backdrop-blur-sm border-y border-slate-800/60">
                     <div className="max-w-4xl mx-auto px-4">
                         <div className="flex items-center gap-3 mb-12">
                             <Clock className="w-6 h-6 text-blue-400" />
@@ -229,7 +229,7 @@ const AboutPage: React.FC = () => {
                 </section>
 
                 {/* Values */}
-                <section className="py-16 bg-slate-950">
+                <section className="py-16 bg-transparent">
                     <div className="max-w-6xl mx-auto px-4">
                         <div className="text-center mb-12">
                             <h2 className="text-3xl font-bold mb-4">What We Believe In</h2>
@@ -239,7 +239,7 @@ const AboutPage: React.FC = () => {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {values.map((value, idx) => (
-                                <div key={idx} className="p-6 rounded-xl bg-slate-900 border border-slate-800 hover:border-teal-500/30 transition-colors">
+                                <div key={idx} className="p-6 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60 hover:border-teal-500/30 transition-colors">
                                     <value.icon className="w-8 h-8 text-teal-400 mb-4" />
                                     <h3 className="text-lg font-bold mb-3">{value.title}</h3>
                                     <p className="text-slate-400 text-sm leading-relaxed">{value.desc}</p>
@@ -250,7 +250,7 @@ const AboutPage: React.FC = () => {
                 </section>
 
                 {/* Technology Philosophy */}
-                <section className="py-16 bg-slate-900/50 border-y border-slate-800">
+                <section className="py-16 bg-white/[0.02] backdrop-blur-sm border-y border-slate-800/60">
                     <div className="max-w-4xl mx-auto px-4">
                         <div className="flex items-center gap-3 mb-8">
                             <Cpu className="w-6 h-6 text-violet-400" />

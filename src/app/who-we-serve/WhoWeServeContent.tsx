@@ -25,7 +25,7 @@ export default function WhoWeServePage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200">
+        <div className="min-h-screen bg-transparent text-slate-200">
             <LoginModal
                 isOpen={isLoginOpen}
                 onClose={() => setIsLoginOpen(false)}

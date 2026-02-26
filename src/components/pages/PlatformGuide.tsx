@@ -302,7 +302,7 @@ The invited person receives an email with a secure invitation link. When they cl
     ];
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white">
+        <div className="min-h-screen bg-transparent text-white">
             <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
 
             <div className="pt-20">
@@ -347,7 +347,7 @@ The invited person receives an email with a secure invitation link. When they cl
                         </p>
                         <div className="space-y-4">
                             {whyPoints.map((point, i) => (
-                                <div key={i} className="flex gap-4 p-5 rounded-xl bg-slate-900 border border-slate-800">
+                                <div key={i} className="flex gap-4 p-5 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60">
                                     <div className="w-10 h-10 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center flex-shrink-0">
                                         <point.icon className="w-5 h-5 text-teal-400" />
                                     </div>
@@ -362,7 +362,7 @@ The invited person receives an email with a secure invitation link. When they cl
                 </section>
 
                 {/* Step-by-Step Guide */}
-                <section className="py-16 bg-slate-900/50 border-y border-slate-800">
+                <section className="py-16 bg-white/[0.02] backdrop-blur-sm border-y border-slate-800/50">
                     <div className="max-w-4xl mx-auto px-4">
                         <h2 className="text-3xl font-bold mb-4">The Complete Setup Guide</h2>
                         <p className="text-slate-400 mb-12 text-lg">10 steps. Read each section fully before moving to the next — there are tips at the end of each step that save time.</p>
@@ -391,7 +391,7 @@ The invited person receives an email with a secure invitation link. When they cl
                                             <h3 className="text-2xl font-bold text-white mb-1">{step.title}</h3>
                                             <p className="text-teal-400 text-sm mb-6">{step.subtitle}</p>
 
-                                            <div className="bg-slate-900 rounded-xl border border-slate-800 p-6 mb-4">
+                                            <div className="bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-800 p-6 mb-4">
                                                 {step.detail.split('\n\n').map((para, pi) => (
                                                     <p key={pi} className={`text-slate-300 leading-relaxed ${pi < step.detail.split('\n\n').length - 1 ? 'mb-4' : ''}`}>
                                                         {para.split(/(\*\*[^*]+\*\*)/).map((part, bi) =>
@@ -442,7 +442,7 @@ The invited person receives an email with a secure invitation link. When they cl
                                 { name: 'Access Control (RBAC)', nav: 'Settings → Security → Access Roles', time: '5 minutes', icon: Lock },
                                 { name: 'Invoice Templates', nav: 'Finance → Settings → Invoice Template', time: '3 minutes', icon: DollarSign },
                             ].map((item, i) => (
-                                <div key={i} className="flex items-start gap-3 p-4 rounded-xl bg-slate-900 border border-slate-800">
+                                <div key={i} className="flex items-start gap-3 p-4 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60">
                                     <item.icon className="w-5 h-5 text-teal-400 flex-shrink-0 mt-0.5" />
                                     <div>
                                         <div className="font-semibold text-white text-sm">{item.name}</div>
@@ -462,7 +462,7 @@ The invited person receives an email with a secure invitation link. When they cl
                         <p className="text-slate-400 mb-8">Answers to the most common questions from new AlphaClone users:</p>
                         <div className="space-y-3">
                             {faqs.map((faq, i) => (
-                                <div key={i} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                                <div key={i} className="bg-white/[0.04] backdrop-blur-sm border border-slate-700/60 rounded-xl overflow-hidden">
                                     <button
                                         onClick={() => setOpenFaq(openFaq === i ? null : i)}
                                         className="w-full flex items-center justify-between p-5 text-left hover:bg-slate-800/50 transition-colors"

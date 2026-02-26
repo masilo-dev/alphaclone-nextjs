@@ -57,7 +57,7 @@ const ContactPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white relative">
+        <div className="min-h-screen bg-transparent text-white relative">
             {/* Animated Background - matching landing page */}
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
                 <div className="absolute inset-0 bg-slate-950" />

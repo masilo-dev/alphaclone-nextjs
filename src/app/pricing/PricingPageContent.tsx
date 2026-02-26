@@ -163,7 +163,7 @@ export default function PricingPageContent() {
     const [showComparison, setShowComparison] = useState(false);
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-teal-500/30 overflow-hidden">
+        <div className="min-h-screen bg-transparent text-slate-200 selection:bg-teal-500/30 overflow-hidden">
             {/* JSON-LD Schemas */}
             <script type="application/ld+json" dangerouslySetInnerHTML={{
                 __html: JSON.stringify({
@@ -200,7 +200,7 @@ export default function PricingPageContent() {
 
                 {/* BLUF Summary (SSR visible to crawlers) */}
                 <div className="text-center mb-20">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900 border border-slate-800 mb-6">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.04] backdrop-blur-sm border border-slate-700/60 mb-6">
                         <Star className="w-4 h-4 text-teal-400 fill-teal-400" />
                         <span className="text-xs font-bold text-white uppercase tracking-widest">14-Day Free Trial — No Card Required</span>
                     </div>
@@ -288,7 +288,7 @@ export default function PricingPageContent() {
                         { icon: MessageSquare, label: '14-Day Free Trial', sub: 'No credit card required' },
                     ].map((item, i) => (
                         <div key={i} className="flex flex-col items-center text-center gap-2">
-                            <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60 flex items-center justify-center">
                                 <item.icon className="w-5 h-5 text-teal-400" />
                             </div>
                             <p className="text-sm font-bold text-white">{item.label}</p>
