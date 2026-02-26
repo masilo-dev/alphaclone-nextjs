@@ -201,13 +201,13 @@ export default function LoginPage() {
 
     if (showPayment && newTenantData) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
-                <div className="absolute inset-0 z-0 opacity-20">
+            <div className="min-h-[100dvh] bg-slate-950 flex flex-col items-center justify-center p-4 py-12 relative overflow-x-hidden overflow-y-auto">
+                <div className="fixed inset-0 z-0 opacity-20 pointer-events-none hidden md:block">
                     <div className="absolute top-[20%] left-[20%] w-[30vw] h-[30vw] rounded-full bg-teal-500 blur-[100px]" />
                     <div className="absolute bottom-[20%] right-[20%] w-[30vw] h-[30vw] rounded-full bg-blue-600 blur-[100px]" />
                 </div>
 
-                <div className="max-w-md w-full bg-slate-900/80 backdrop-blur-2xl border border-slate-800 rounded-3xl p-8 shadow-2xl relative z-10 text-center">
+                <div className="max-w-md w-full bg-slate-900/80 backdrop-blur-2xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 text-center my-auto">
                     <div className="w-20 h-20 bg-teal-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle2 className="w-10 h-10 text-teal-400" />
                     </div>
@@ -266,15 +266,15 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="min-h-[100dvh] bg-slate-950 flex flex-col items-center p-4 pt-8 pb-16 sm:py-12 relative overflow-x-hidden overflow-y-auto">
             {/* Background Effects */}
-            <div className="absolute inset-0 z-0">
+            <div className="fixed inset-0 z-0 pointer-events-none">
                 <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-teal-500/5 blur-[80px] animate-blob" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-600/5 blur-[80px] animate-blob" style={{ animationDelay: '2s' }} />
+                <div className="absolute bottom-[10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-600/5 blur-[80px] animate-blob" style={{ animationDelay: '2s' }} />
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-5" />
             </div>
 
-            <div className={`w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl relative z-10 my-8 transition-all duration-500 ${isRegistering && isBusiness ? 'max-w-4xl' : 'max-w-md'}`}>
+            <div className={`w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-5 sm:p-8 shadow-2xl relative z-10 mt-auto mb-auto flex-shrink-0 ${isRegistering && isBusiness ? 'max-w-4xl' : 'max-w-md'}`}>
                 <div className="mb-8 text-center">
                     {isPWA ? (
                         <div className="mx-auto mb-6 flex justify-center inline-block">

@@ -17,7 +17,7 @@ import { PLAN_PRICING } from '../../services/tenancy/types';
 interface Props {
     isOpen: boolean;
     onClose: () => void;
-    project: Project;
+    project?: Partial<Project>;
     user: User;
     existingContractId?: string;
     existingContractText?: string;
@@ -47,21 +47,21 @@ const AlphaCloneContractModal: React.FC<Props> = ({
     const [showComments, setShowComments] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [clients, setClients] = useState<BusinessClient[]>([]);
-    const [selectedClientId, setSelectedClientId] = useState<string>(project.ownerId || '');
+    const [selectedClientId, setSelectedClientId] = useState<string>(project?.ownerId || '');
     const { startTask } = useBackgroundTasks();
 
     // Contract variables with defaults
     const [variables, setVariables] = useState<ContractVariables>({
-        clientName: project.ownerName || 'Client Name',
+        clientName: project?.ownerName || 'Client Name',
         clientCompany: '',
         clientAddress: '',
-        clientEmail: project.email || '',
-        projectName: project.name || 'Project Name',
-        projectScope: project.description || SCOPE_TEMPLATES.custom,
+        clientEmail: project?.email || '',
+        projectName: project?.name || 'New Contract',
+        projectScope: project?.description || SCOPE_TEMPLATES.custom,
         projectDeliverables: 'Professional services and deliverables as mutually agreed upon',
-        totalAmount: project.budget || 10000,
+        totalAmount: project?.budget || 10000,
         paymentSchedule: PAYMENT_SCHEDULES['50_50'],
-        depositAmount: (project.budget || 10000) * 0.5,
+        depositAmount: (project?.budget || 10000) * 0.5,
         startDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
         deliveryDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
         contractDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
@@ -72,7 +72,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
         governingJurisdiction: '[Your State/Country Jurisdiction]',
         providerRepName: user.name || '',
         providerRepTitle: 'Authorized Representative',
-        clientRepName: project.ownerName || '',
+        clientRepName: project?.ownerName || '',
         clientRepTitle: 'Authorized Representative'
     });
 
@@ -219,7 +219,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
         }
 
         setIsSubmitting(true);
-        const taskName = `Finalizing Contract for ${project.name}`;
+        const taskName = `Finalizing Contract for ${project?.name || 'Client'}`;
 
         try {
             startTask(
@@ -261,9 +261,9 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                             return { success: true };
                         } else {
                             const { contract, error } = await contractService.createContract({
-                                project_id: project.id,
-                                client_id: selectedClientId || project.ownerId,
-                                title: `Service Agreement - ${project.name}`,
+                                project_id: project?.id !== 'new' ? project?.id : undefined,
+                                client_id: selectedClientId || project?.ownerId,
+                                title: `Service Agreement - ${project?.name || variables.clientName || 'Standalone'}`,
                                 content: contractText,
                             });
 
@@ -285,7 +285,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                     });
                                 }
 
-                                if (user.role === 'admin') {
+                                if (user.role === 'admin' && project?.id && project.id !== 'new') {
                                     const { projectService } = await import('../../services/projectService');
                                     await projectService.updateProject(project.id, {
                                         contractStatus: 'Sent',

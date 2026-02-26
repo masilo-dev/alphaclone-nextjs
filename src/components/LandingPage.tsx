@@ -305,13 +305,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
 
                      {/* Auth Buttons Group */}
                      <div className="w-full pt-10 mt-auto flex flex-col gap-4 border-t border-white/5 px-2">
-                        <Link
-                           href="/login"
-                           onClick={() => setMobileMenuOpen(false)}
+                        <button
+                           onClick={() => {
+                              setIsLoginOpen(true);
+                              setMobileMenuOpen(false);
+                           }}
                            className="flex items-center justify-center gap-2 w-full py-3.5 text-center font-bold text-slate-300 border border-slate-800/50 rounded-xl hover:bg-slate-900 transition-colors text-sm"
                         >
                            Log In
-                        </Link>
+                        </button>
                         <Link
                            href="/register"
                            onClick={() => setMobileMenuOpen(false)}
@@ -338,13 +340,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                      >
                         {/* Logo image provided by user */}
-                        <div className="relative w-9 h-9 flex-shrink-0">
+                        <div className="relative w-9 h-9 flex-shrink-0 flex items-center justify-center">
                            <img
                               src="/logo.png"
                               alt="AlphaClone Systems Logo"
                               width={36}
                               height={36}
-                              className="object-contain w-full h-full"
+                              className="object-contain max-h-full max-w-full"
                               onError={(e) => {
                                  // Fallback to styled initials if image not found
                                  e.currentTarget.style.display = 'none';
@@ -359,31 +361,53 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               AS
                            </span>
                         </div>
-                        <span className="text-lg font-bold tracking-widest uppercase font-marketing-brand hero-metallic-text">
-                           AlphaClone<span className="opacity-60"> Systems</span>
+                        <span className="text-xl font-bold tracking-tight font-marketing-heading text-white translate-y-[1px]">
+                           AlphaClone
                         </span>
                      </div>
 
-                     {/* Desktop Nav — Solutions / Technology / Contact */}
+                     {/* Desktop Nav */}
                      <div className="hidden lg:flex items-center gap-8">
-                        <Link
-                           href="/ecosystem"
-                           className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase"
-                        >
-                           Solutions
-                        </Link>
-                        <Link
-                           href="/services"
-                           className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase"
-                        >
-                           Technology
-                        </Link>
-                        <Link
-                           href="/contact"
-                           className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase"
-                        >
-                           Contact
-                        </Link>
+                        <Link href="/" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Home</Link>
+                        <Link href="/ecosystem" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Platform</Link>
+                        <Link href="/pricing" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Pricing</Link>
+                        <Link href="/docs" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Docs</Link>
+
+                        {/* Services Dropdown */}
+                        <div className="relative" onMouseEnter={() => setServicesDropdownOpen(true)} onMouseLeave={() => setServicesDropdownOpen(false)}>
+                           <Link href="/services" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase flex items-center gap-1 group">
+                              Services
+                              <motion.span animate={{ rotate: servicesDropdownOpen ? 180 : 0 }}>
+                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                              </motion.span>
+                           </Link>
+
+                           <AnimatePresence>
+                              {servicesDropdownOpen && (
+                                 <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
+                                    className="absolute top-full left-0 w-64 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 mt-2"
+                                 >
+                                    {[
+                                       { title: 'Custom Web Apps', desc: 'High-performance Next.js builds' },
+                                       { title: 'Mobile Ecosystems', desc: 'iOS & Android native solutions' },
+                                       { title: 'AI Automation', desc: 'Custom LLMs & Sales Agents', isComingSoon: true },
+                                       { title: 'Enterprise Dashboards', desc: 'Unified business control' }
+                                    ].map((s, i) => (
+                                       <Link key={i} href="/services" className="block w-full text-left p-3 rounded-xl hover:bg-slate-800 transition-colors group mb-1 tracking-normal normal-case">
+                                          <div className="text-sm font-bold text-white group-hover:text-teal-400">{s.title}</div>
+                                          <div className="text-[10px] text-slate-500">{s.desc}</div>
+                                       </Link>
+                                    ))}
+                                 </motion.div>
+                              )}
+                           </AnimatePresence>
+                        </div>
+
+                        <Link href="https://alphaclone.tech/about" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">About</Link>
+                        <Link href="https://alphaclone.tech/contact" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Contact</Link>
 
                         <div className="flex items-center gap-4 ml-6 pl-6 border-l border-white/10">
                            <button
@@ -408,8 +432,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         <button
                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                            className={`w-12 h-12 flex items-center justify-center rounded-xl border transition-all duration-300 ${mobileMenuOpen
-                                 ? 'text-teal-400 bg-slate-900 border-teal-500/50'
-                                 : 'text-white bg-white/5 border-white/10 hover:border-white/20'
+                              ? 'text-teal-400 bg-slate-900 border-teal-500/50'
+                              : 'text-white bg-white/5 border-white/10 hover:border-white/20'
                               }`}
                            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                         >
@@ -450,18 +474,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      initial={{ opacity: 0, scale: 0.8 }}
                      animate={{ opacity: 1, scale: 1 }}
                      transition={{ duration: 0.5, ease: 'easeOut' }}
-                     className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full border text-xs font-bold tracking-[0.2em] uppercase"
-                     style={{
-                        background: 'rgba(0,119,255,0.08)',
-                        borderColor: 'rgba(0,119,255,0.25)',
-                        color: '#60b8ff',
-                     }}
+                     className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/80 md:bg-slate-900/50 md:backdrop-blur border border-slate-700/50 text-teal-400 text-sm font-medium mb-2 shadow-lg shadow-teal-900/20"
                   >
-                     <span
-                        className="w-2 h-2 rounded-full animate-pulse"
-                        style={{ background: '#00D2A0', boxShadow: '0 0 8px #00D2A0' }}
-                     />
-                     System Online &nbsp;·&nbsp; AI-Powered Business OS
+                     <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
+                     The Future of Business Infrastructure
                   </motion.div>
 
                   {/* Main headline — ALPHACLONE SYSTEMS */}
@@ -490,10 +506,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      initial={{ opacity: 0, y: 24 }}
                      animate={{ opacity: 1, y: 0 }}
                      transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
-                     className="text-base sm:text-lg md:text-xl text-slate-400 max-w-2xl leading-relaxed font-marketing-body"
+                     className="text-lg sm:text-xl md:text-2xl text-slate-400 mb-4 max-w-3xl leading-relaxed"
                   >
-                     Replace your fragmented tech stack with one AI-powered platform.
-                     CRM, projects, finance, contracts — unified and automated.
+                     Replace your fragmented tech stack with AlphaClone. The high-performance Business OS that unifies your CRM, projects, and finances.
                   </motion.p>
 
                   {/* Divider */}
@@ -510,27 +525,26 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      initial={{ opacity: 0, y: 24 }}
                      animate={{ opacity: 1, y: 0 }}
                      transition={{ duration: 0.6, delay: 0.5, ease: 'easeOut' }}
-                     className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center"
+                     className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full mb-12"
                   >
-                     {/* Moving Border Primary CTA */}
-                     <MovingBorderButton
+                     {/* Standard Primary CTA */}
+                     <Button
                         onClick={() => window.location.href = '/register'}
-                        className="w-full sm:w-auto"
+                        size="lg"
+                        className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-10 h-14 w-full sm:w-auto text-lg shadow-xl shadow-teal-500/20 hover:scale-105 transition-transform tracking-tight"
                      >
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                           <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        Initialize System
-                     </MovingBorderButton>
+                        Start Free Trial
+                     </Button>
 
                      {/* Ghost secondary CTA */}
-                     <button
+                     <Button
+                        size="lg"
+                        variant="outline"
                         onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
-                        className="w-full sm:w-auto px-8 py-4 text-sm font-bold uppercase tracking-widest text-slate-300 rounded-xl border border-white/10 hover:border-white/20 hover:text-white backdrop-blur-sm transition-all duration-200"
-                        style={{ minWidth: '200px' }}
+                        className="border-slate-700 bg-slate-900/80 md:bg-slate-900/50 md:backdrop-blur hover:bg-slate-800 text-white px-10 h-14 w-full sm:w-auto text-lg hover:border-slate-500 tracking-tight"
                      >
                         Book a Demo
-                     </button>
+                     </Button>
                   </motion.div>
 
                   {/* Trust micro-line */}
@@ -538,10 +552,28 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      initial={{ opacity: 0 }}
                      animate={{ opacity: 1 }}
                      transition={{ delay: 0.9 }}
-                     className="text-xs text-slate-600 tracking-widest uppercase"
+                     className="text-sm font-medium text-slate-300 tracking-wide mb-16"
                   >
-                     No credit card required &nbsp;·&nbsp; 14-day free trial &nbsp;·&nbsp; Cancel anytime
+                     <span className="flex items-center justify-center gap-4 flex-wrap">
+                        <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-500" /> No credit card required</span>
+                        <span className="hidden sm:inline text-slate-600">•</span>
+                        <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-500" /> 14-day free trial</span>
+                        <span className="hidden sm:inline text-slate-600">•</span>
+                        <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-500" /> Cancel anytime</span>
+                     </span>
                   </motion.p>
+
+                  {/* Interactive Dashboard Preview */}
+                  <motion.div
+                     initial={{ opacity: 0, scale: 0.95 }}
+                     animate={{ opacity: 1, scale: 1 }}
+                     transition={{ delay: 0.4, duration: 0.8 }}
+                     className="relative z-20 w-full"
+                  >
+                     <React.Suspense fallback={<div className="h-[500px] w-full bg-slate-900/50 rounded-3xl animate-pulse" />}>
+                        <InteractiveHeroPreview />
+                     </React.Suspense>
+                  </motion.div>
                </div>
 
                {/* Scroll indicator */}

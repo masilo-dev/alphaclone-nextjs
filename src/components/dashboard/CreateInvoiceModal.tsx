@@ -1,10 +1,16 @@
 import React, { useState, useRef } from 'react';
-import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download, PenLine } from 'lucide-react';
+import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download, PenLine, Copy } from 'lucide-react';
 import { Button, Input } from '../ui/UIComponents';
 import { paymentService } from '../../services/paymentService';
 import { Project } from '../../types';
 import toast from 'react-hot-toast';
 import { useTenant } from '../../contexts/TenantContext';
+
+interface LineItem {
+    description: string;
+    quantity: number;
+    rate: number;
+}
 
 interface CreateInvoiceModalProps {
     isOpen: boolean;
@@ -18,14 +24,15 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [step, setStep] = useState<'edit' | 'preview' | 'success'>('edit');
 
     // Form state
-    const [amount, setAmount] = useState('');
-    const [description, setDescription] = useState('');
+    const [lineItems, setLineItems] = useState<LineItem[]>([{ description: '', quantity: 1, rate: 0 }]);
     const [selectedProjectId, setSelectedProjectId] = useState('');
     const [selectedClientId, setSelectedClientId] = useState('');
     const [dueDate, setDueDate] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'bank' | 'mobile_money'>('stripe');
     const [bankDetails, setBankDetails] = useState('');
     const [mobileDetails, setMobileDetails] = useState('');
+    const [taxRate, setTaxRate] = useState<number>(0);
+    const [discountAmount, setDiscountAmount] = useState<number>(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [clients, setClients] = useState<any[]>([]);
     const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
@@ -88,14 +95,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     };
 
     const handleGeneratePreview = () => {
-        if (!amount || !description || !dueDate) {
-            toast.error('Please fill in required fields');
-            return;
-        }
-
-        const amountNum = parseFloat(amount);
-        if (isNaN(amountNum) || amountNum <= 0) {
-            toast.error('Please enter a valid amount');
+        if (!dueDate || lineItems.some(item => !item.description || item.rate <= 0 || item.quantity <= 0)) {
+            toast.error('Please fill in all line items with valid amounts');
             return;
         }
 
@@ -103,13 +104,19 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         toast.success('Invoice preview generated');
     };
 
+    const getSubtotal = () => lineItems.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
+    const getTaxAmount = () => getSubtotal() * (taxRate / 100);
+    const getTotal = () => Math.max(0, getSubtotal() + getTaxAmount() - discountAmount);
+
     const handleSaveInvoice = async () => {
         if (!currentTenant?.id) {
             toast.error('No active organization session');
             return;
         }
 
-        const amountNum = parseFloat(amount);
+        const invoiceSubtotal = getSubtotal();
+        const taxAmount = getTaxAmount();
+        const invoiceTotal = getTotal();
         setIsSubmitting(true);
 
         const project = projects.find(p => p.id === selectedProjectId);
@@ -120,6 +127,13 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         try {
             const { businessInvoiceService } = await import('../../services/businessInvoiceService');
 
+            const formattedLineItems = lineItems.map(item => ({
+                description: item.description,
+                quantity: item.quantity,
+                rate: item.rate,
+                amount: item.quantity * item.rate
+            }));
+
             // Map to BusinessInvoice schema
             const invoiceData = {
                 clientId: finalClientId,
@@ -127,17 +141,12 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 issueDate: new Date().toISOString().split('T')[0],
                 dueDate: dueDate,
                 status: 'draft' as const, // Always start as draft, user can send/finalize later
-                subtotal: amountNum,
-                taxRate: 0,
-                tax: 0,
-                discountAmount: 0,
-                total: amountNum,
-                lineItems: [{
-                    description: description,
-                    quantity: 1,
-                    rate: amountNum,
-                    amount: amountNum
-                }],
+                subtotal: invoiceSubtotal,
+                taxRate: taxRate,
+                tax: taxAmount,
+                discountAmount: discountAmount,
+                total: invoiceTotal,
+                lineItems: formattedLineItems,
                 // Send specific details
                 mobilePaymentDetails: mobileDetails,
                 signature: signatureType === 'draw' && signatureData ? { type: 'draw' as const, data: signatureData }
@@ -205,6 +214,15 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             const project = projects.find(p => p.id === selectedProjectId);
             const client = clients.find(c => c.id === selectedClientId);
 
+            const formattedLineItems = lineItems.map(item => ({
+                description: item.description,
+                quantity: item.quantity,
+                rate: item.rate,
+                amount: item.quantity * item.rate
+            }));
+
+            const amountNum = getSubtotal();
+
             // Build invoice object for preview/draft PDF
             const invoiceData = {
                 id: 'DRAFT',
@@ -212,15 +230,10 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 issueDate: new Date().toISOString().split('T')[0],
                 dueDate: dueDate,
                 status: 'draft' as const,
-                subtotal: parseFloat(amount),
+                subtotal: amountNum,
                 tax: 0,
-                total: parseFloat(amount),
-                lineItems: [{
-                    description: description,
-                    quantity: 1,
-                    rate: parseFloat(amount),
-                    amount: parseFloat(amount)
-                }],
+                total: amountNum,
+                lineItems: formattedLineItems,
                 bankDetails: bankDetails,
                 mobilePaymentDetails: mobileDetails,
                 client: client ? {
@@ -246,18 +259,35 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     };
 
     const resetForm = () => {
-        setAmount('');
-        setDescription('');
+        setLineItems([{ description: '', quantity: 1, rate: 0 }]);
         setSelectedProjectId('');
         setSelectedClientId('');
         setDueDate('');
         setPaymentMethod('stripe');
         setBankDetails(tenantDefaults.bank);
         setMobileDetails(tenantDefaults.mobile);
+        setTaxRate(0);
+        setDiscountAmount(0);
         setSignatureData(null);
         setSignatureType('draw');
         setTypedSignature('');
         setStep('edit');
+    };
+
+    const handleCopyPaymentLink = async () => {
+        if (!createdInvoiceId) return;
+        try {
+            const origin = window.location.origin;
+            // Enable public access by marking as public first
+            const { businessInvoiceService } = await import('../../services/businessInvoiceService');
+            await businessInvoiceService.updateInvoice(createdInvoiceId, { isPublic: true, status: 'sent' });
+            const paymentUrl = `${origin}/invoice/${createdInvoiceId}`;
+            await navigator.clipboard.writeText(paymentUrl);
+            toast.success('Payment link copied to clipboard! Share it with your client.');
+        } catch (err) {
+            console.error('Failed to copy payment link:', err);
+            toast.error('Failed to copy link');
+        }
     };
 
     const handleClose = () => {
@@ -312,8 +342,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     size="sm"
                                     className="flex-1 text-[10px] uppercase font-bold"
                                     onClick={() => {
-                                        setAmount('500');
-                                        setDescription('Standard Consultation');
+                                        setLineItems([{ description: 'Standard Consultation', quantity: 1, rate: 500 }]);
                                         setDueDate(new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]);
                                     }}
                                 >
@@ -324,8 +353,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     size="sm"
                                     className="flex-1 text-[10px] uppercase font-bold"
                                     onClick={() => {
-                                        setAmount('2500');
-                                        setDescription('Development Milestone');
+                                        setLineItems([{ description: 'Development Milestone', quantity: 1, rate: 2500 }]);
                                         setDueDate(new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0]);
                                     }}
                                 >
@@ -377,32 +405,108 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
                             {/* Invoice Details */}
                             <div className="border-t border-slate-800 pt-4">
-                                <h3 className="text-white font-bold mb-3 flex items-center gap-2">
-                                    <DollarSign className="w-5 h-5 text-green-400" />
-                                    Invoice Information
+                                <h3 className="text-white font-bold mb-3 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <DollarSign className="w-5 h-5 text-green-400" />
+                                        Line Items
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="text-[10px] uppercase"
+                                        onClick={() => setLineItems([...lineItems, { description: '', quantity: 1, rate: 0 }])}
+                                    >
+                                        + Add Item
+                                    </Button>
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <Input
-                                        label="Description *"
-                                        value={description}
-                                        onChange={(e) => setDescription(e.target.value)}
-                                        placeholder="e.g. Initial Deposit"
-                                    />
-                                    <Input
-                                        label="Amount (USD) *"
-                                        type="number"
-                                        value={amount}
-                                        onChange={(e) => setAmount(e.target.value)}
-                                        placeholder="0.00"
-                                    />
+
+                                <div className="space-y-3">
+                                    {lineItems.map((item, index) => (
+                                        <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                                            <div className="md:col-span-6">
+                                                <Input
+                                                    label={index === 0 ? "Description *" : ""}
+                                                    value={item.description}
+                                                    onChange={(e) => {
+                                                        const newItems = [...lineItems];
+                                                        newItems[index].description = e.target.value;
+                                                        setLineItems(newItems);
+                                                    }}
+                                                    placeholder="e.g. Graphic Design"
+                                                />
+                                            </div>
+                                            <div className="md:col-span-2">
+                                                <Input
+                                                    label={index === 0 ? "Qty *" : ""}
+                                                    type="number"
+                                                    value={item.quantity.toString()}
+                                                    onChange={(e) => {
+                                                        const newItems = [...lineItems];
+                                                        newItems[index].quantity = parseInt(e.target.value) || 0;
+                                                        setLineItems(newItems);
+                                                    }}
+                                                    min="1"
+                                                />
+                                            </div>
+                                            <div className="md:col-span-3">
+                                                <Input
+                                                    label={index === 0 ? "Rate *" : ""}
+                                                    type="number"
+                                                    value={item.rate.toString()}
+                                                    onChange={(e) => {
+                                                        const newItems = [...lineItems];
+                                                        newItems[index].rate = parseFloat(e.target.value) || 0;
+                                                        setLineItems(newItems);
+                                                    }}
+                                                    placeholder="0.00"
+                                                />
+                                            </div>
+                                            <div className="md:col-span-1 pb-2 flex justify-end">
+                                                {lineItems.length > 1 && (
+                                                    <button
+                                                        onClick={() => setLineItems(lineItems.filter((_, i) => i !== index))}
+                                                        className="text-red-400 hover:text-red-300 transition-colors p-2"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div className="mt-4">
-                                    <Input
-                                        label="Due Date *"
-                                        type="date"
-                                        value={dueDate}
-                                        onChange={(e) => setDueDate(e.target.value)}
-                                    />
+                                <div className="mt-4 flex justify-between items-end">
+                                    <div className="w-1/2">
+                                        <Input
+                                            label="Due Date *"
+                                            type="date"
+                                            value={dueDate}
+                                            onChange={(e) => setDueDate(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="w-24">
+                                            <Input
+                                                label="Tax (%)"
+                                                type="number"
+                                                value={taxRate.toString()}
+                                                onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
+                                                min="0"
+                                            />
+                                        </div>
+                                        <div className="w-24">
+                                            <Input
+                                                label="Discount ($)"
+                                                type="number"
+                                                value={discountAmount.toString()}
+                                                onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 0)}
+                                                min="0"
+                                            />
+                                        </div>
+                                        <div className="text-right ml-4">
+                                            <p className="text-slate-400 text-sm">Total</p>
+                                            <p className="text-xl font-bold text-white">${getTotal().toFixed(2)}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -516,15 +620,21 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     <table className="w-full text-sm">
                                         <thead className="border-b-2 border-gray-300">
                                             <tr>
-                                                <th className="text-left py-2">Description</th>
+                                                <th className="text-left py-2">Item Description</th>
+                                                <th className="text-right py-2">Qty</th>
+                                                <th className="text-right py-2">Rate</th>
                                                 <th className="text-right py-2">Amount</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr className="border-b border-gray-200">
-                                                <td className="py-3">{description}</td>
-                                                <td className="text-right py-3">${parseFloat(amount).toFixed(2)}</td>
-                                            </tr>
+                                            {lineItems.map((item, idx) => (
+                                                <tr key={idx} className="border-b border-gray-100">
+                                                    <td className="py-3 font-medium text-gray-800">{item.description}</td>
+                                                    <td className="text-right py-3">{item.quantity}</td>
+                                                    <td className="text-right py-3">${item.rate.toFixed(2)}</td>
+                                                    <td className="text-right py-3 font-semibold">${(item.quantity * item.rate).toFixed(2)}</td>
+                                                </tr>
+                                            ))}
                                         </tbody>
                                     </table>
                                 </div>
@@ -534,11 +644,23 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     <div className="w-full sm:w-64">
                                         <div className="flex justify-between py-2 text-sm">
                                             <span className="text-gray-600">Subtotal:</span>
-                                            <span>${parseFloat(amount).toFixed(2)}</span>
+                                            <span>${getSubtotal().toFixed(2)}</span>
                                         </div>
+                                        {taxRate > 0 && (
+                                            <div className="flex justify-between py-2 text-sm text-gray-600">
+                                                <span>Tax ({taxRate}%):</span>
+                                                <span>+${getTaxAmount().toFixed(2)}</span>
+                                            </div>
+                                        )}
+                                        {discountAmount > 0 && (
+                                            <div className="flex justify-between py-2 text-sm text-green-600">
+                                                <span>Discount:</span>
+                                                <span>-${discountAmount.toFixed(2)}</span>
+                                            </div>
+                                        )}
                                         <div className="flex justify-between py-2 border-t-2 border-gray-800 font-bold text-base sm:text-lg">
                                             <span>Total:</span>
-                                            <span>${parseFloat(amount).toFixed(2)} USD</span>
+                                            <span>${getTotal().toFixed(2)} USD</span>
                                         </div>
                                     </div>
                                 </div>
@@ -724,8 +846,20 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
                             <h3 className="text-2xl font-bold text-white mb-2">Invoice Created Successfully!</h3>
                             <p className="text-slate-400 max-w-md mb-8">
-                                Your invoice has been saved and is ready to send to your client.
+                                Your invoice has been saved. Download the PDF or send your client a secure payment link.
                             </p>
+
+                            {/* Share Invoice Link */}
+                            <div className="w-full max-w-sm mb-6">
+                                <button
+                                    onClick={handleCopyPaymentLink}
+                                    className="w-full py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-lg flex items-center justify-center gap-2 transition-all"
+                                >
+                                    <Copy className="w-4 h-4" />
+                                    Copy &amp; Share Invoice Link
+                                </button>
+                                <p className="text-xs text-slate-500 text-center mt-2">Clients can view the invoice and pay via bank or mobile money</p>
+                            </div>
 
                             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                                 <Button variant="outline" onClick={handleDownloadPDF} className="w-full sm:w-auto">

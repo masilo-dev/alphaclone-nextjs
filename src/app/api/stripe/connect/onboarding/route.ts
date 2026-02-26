@@ -23,8 +23,20 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
         }
 
-        // TODO: Validate that the requesting user is the admin_user_id of this tenant
-        // This requires session verification which should be handled by middleware or auth lib
+        const authHeader = req.headers.get('Authorization');
+        if (!authHeader) {
+            return NextResponse.json({ error: 'Missing Authorization header' }, { status: 401 });
+        }
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        if (tenant.admin_user_id !== user.id) {
+            return NextResponse.json({ error: 'Forbidden: Must be tenant admin' }, { status: 403 });
+        }
 
         let stripeAccountId = tenant.stripe_connect_id;
         const country = tenant.country_code || 'US';

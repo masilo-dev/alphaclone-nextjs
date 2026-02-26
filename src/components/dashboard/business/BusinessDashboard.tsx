@@ -158,14 +158,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
     const [notification, setNotification] = useState<string | null>(null);
 
     const handleOpenContract = (project?: any) => {
-        // If no project passed, create dummy one for standalone contract
-        setSelectedProjectForContract(project || {
-            id: 'new',
-            name: 'New Project',
-            ownerId: user.id, // Self as owner proxy if direct
-            ownerName: 'Client Name',
-            budget: 0
-        });
+        setSelectedProjectForContract(project || undefined);
         setShowContractModal(true);
     };
 
@@ -242,7 +235,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                 </p>
                 <div className="flex gap-4">
                     <button
-                        onClick={() => setActiveTab('/dashboard/business/settings?tab=billing')}
+                        onClick={() => setActiveTab('/dashboard/business/settings')}
                         className="bg-teal-600 hover:bg-teal-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-teal-900/20"
                     >
                         View Upgrade Options
@@ -410,7 +403,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                         </div>
                         <button
                             className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg transition-colors font-bold shadow-lg shadow-red-900/20"
-                            onClick={() => setActiveTab('/dashboard/business/billing')}
+                            onClick={() => setActiveTab('/dashboard/business/settings')}
                         >
                             Upgrade Now
                         </button>
@@ -509,7 +502,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                 </div>
             )}
             {/* Contract Modal */}
-            {showContractModal && selectedProjectForContract && (
+            {showContractModal && (
                 <AlphaCloneContractModal
                     isOpen={showContractModal}
                     onClose={() => setShowContractModal(false)}

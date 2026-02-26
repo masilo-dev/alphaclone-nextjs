@@ -35,7 +35,7 @@ interface DocumentHubProps {
     user: User;
 }
 
-type ViewMode = 'list' | 'viewer' | 'editor';
+type ViewMode = 'list' | 'viewer' | 'editor' | 'image';
 
 interface HubFile {
     id: string;
@@ -157,11 +157,16 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
 
             const isPdf = file.file_type === 'application/pdf';
             const isWord = file.file_type.includes('word') || file.file_type.includes('officedocument');
+            const isImage = file.file_type.includes('image');
 
             if (isPdf) {
                 const url = window.URL.createObjectURL(data);
                 setFileUrl(url);
                 setViewMode('viewer');
+            } else if (isImage) {
+                const url = window.URL.createObjectURL(data);
+                setFileUrl(url);
+                setViewMode('image');
             } else if (isWord) {
                 // Use mammoth to convert docx to HTML
                 const arrayBuffer = await data.arrayBuffer();
@@ -263,18 +268,36 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     const handleSaveEdits = async () => {
         if (!selectedFile) return;
         setIsSaving(true);
-        // Save editorContent as a text blob back to storage
         try {
-            const blob = new Blob([editorContent], { type: 'text/plain' });
-            const file = new File([blob], selectedFile.original_filename.replace(/\.(doc|docx)$/, '.txt'), { type: 'text/plain' });
+            const isWord = selectedFile.original_filename.match(/\.(doc|docx)$/i);
+
+            let blob: Blob;
+            let finalFilename = selectedFile.original_filename;
+
+            if (isWord) {
+                // Dynamically import to avoid SSR issues
+                const htmlDocx = (await import('html-docx-js-typescript')).default;
+                const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>${editorContent}</body></html>`;
+
+                const docData = htmlDocx.asBlob(htmlContent) as unknown as Blob;
+                blob = docData;
+                finalFilename = finalFilename.replace(/\.doc$/i, '.docx');
+            } else {
+                blob = new Blob([editorContent], { type: 'text/plain' });
+                finalFilename = finalFilename.replace(/\.(doc|docx)$/i, '.txt');
+            }
+
+            const file = new File([blob], finalFilename, { type: blob.type });
             const result = await fileUploadService.uploadFile(file, 'hub');
+
             if (result.success) {
                 toast.success('Saved as new version');
                 loadFiles();
             } else {
                 toast.error(result.error || 'Save failed');
             }
-        } catch {
+        } catch (error) {
+            console.error('Save edits error:', error);
             toast.error('Failed to save');
         } finally {
             setIsSaving(false);
@@ -387,6 +410,14 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                 initialAnnotations={selectedFile.annotations || []}
                                 onSaveAnnotations={handleSaveAnnotations}
                                 onDownload={() => handleDownload(selectedFile)}
+                            />
+                        </div>
+                    ) : viewMode === 'image' && fileUrl ? (
+                        <div className="h-full flex items-center justify-center p-6 sm:p-12 hover:bg-slate-900/50 transition-colors">
+                            <img
+                                src={fileUrl}
+                                alt={selectedFile.original_filename}
+                                className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl ring-1 ring-white/10"
                             />
                         </div>
                     ) : viewMode === 'editor' ? (
@@ -594,7 +625,9 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                             className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 hover:text-teal-300 transition-colors text-sm sm:text-xs font-bold border border-teal-500/20"
                                         >
                                             {file.file_type === 'application/pdf' ? (
-                                                <><Eye className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> View Document</>
+                                                <><Eye className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> View PDF</>
+                                            ) : file.file_type.includes('image') ? (
+                                                <><Eye className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> View Image</>
                                             ) : (
                                                 <><Edit3 className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> Open Editor</>
                                             )}

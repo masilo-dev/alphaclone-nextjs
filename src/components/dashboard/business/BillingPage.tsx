@@ -12,7 +12,8 @@ import {
     FileText,
     X,
     Trash2,
-    TrendingUp
+    TrendingUp,
+    Link as LinkIcon
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -321,7 +322,19 @@ const InvoiceCard = ({ invoice, clients, onDownload, onDelete, onStatusUpdate, s
                             </select>
                         )}
 
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 relative">
+                            {invoice.isPublic && (
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(`${window.location.origin}/invoice/${invoice.id}`);
+                                        toast.success('Payment link copied');
+                                    }}
+                                    className="p-2 bg-slate-800 hover:bg-teal-500/20 text-slate-400 hover:text-teal-400 rounded-lg transition-colors"
+                                    title="Copy Payment Link"
+                                >
+                                    <LinkIcon className="w-4 h-4" />
+                                </button>
+                            )}
                             <button
                                 onClick={() => onDownload(invoice)}
                                 className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"

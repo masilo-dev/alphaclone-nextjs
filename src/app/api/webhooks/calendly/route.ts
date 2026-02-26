@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createSupabaseServerClient, createSupabaseAdminClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-server';
 import crypto from 'crypto';
 
 // Calendly Webhook Handler
@@ -7,12 +7,67 @@ import crypto from 'crypto';
 export async function POST(req: Request) {
     try {
         const body = await req.text();
-        const payload = JSON.parse(body);
         const signature = req.headers.get('calendly-webhook-signature');
+        const signingKey = process.env.CALENDLY_WEBHOOK_SIGNING_KEY;
 
-        // TODO: Implement signature verification if CALENDLY_WEBHOOK_SIGNING_KEY is provided
-        // For now, we'll process the payload but log the event
-        console.log('Calendly Webhook Received:', payload.event);
+        // ── Signature Verification ──────────────────────────────────────────
+        if (signingKey) {
+            if (!signature) {
+                console.warn('[Calendly] Rejected: missing signature header');
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            }
+
+            // Calendly sends: "t=<timestamp>,v1=<HMAC-SHA256>"
+            const parts: Record<string, string> = {};
+            signature.split(',').forEach(part => {
+                const [key, value] = part.split('=');
+                if (key && value) parts[key] = value;
+            });
+
+            const timestamp = parts['t'];
+            const receivedHmac = parts['v1'];
+
+            if (!timestamp || !receivedHmac) {
+                console.warn('[Calendly] Rejected: malformed signature header');
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            }
+
+            // Reject if older than 5 minutes (replay attack protection)
+            const requestAge = Math.floor(Date.now() / 1000) - parseInt(timestamp, 10);
+            if (Math.abs(requestAge) > 300) {
+                console.warn('[Calendly] Rejected: timestamp too old', requestAge);
+                return NextResponse.json({ error: 'Unauthorized – Replay' }, { status: 401 });
+            }
+
+            const signedPayload = `${timestamp}.${body}`;
+            const expectedHmac = crypto
+                .createHmac('sha256', signingKey)
+                .update(signedPayload)
+                .digest('hex');
+
+            // Use timingSafeEqual to prevent timing attacks
+            let isValid = false;
+            try {
+                isValid = crypto.timingSafeEqual(
+                    Buffer.from(receivedHmac.padEnd(64, '0'), 'hex'),
+                    Buffer.from(expectedHmac, 'hex')
+                );
+            } catch {
+                isValid = false;
+            }
+
+            if (!isValid) {
+                console.warn('[Calendly] Rejected: invalid HMAC signature');
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            }
+        } else {
+            // Dev mode: log a warning but still process
+            console.warn('[Calendly] CALENDLY_WEBHOOK_SIGNING_KEY not set – skipping signature check (dev only).');
+        }
+        // ───────────────────────────────────────────────────────────────────
+
+        const payload = JSON.parse(body);
+        console.log('[Calendly] Verified webhook received:', payload.event);
 
         const supabaseAdmin = createSupabaseAdminClient();
 
@@ -34,29 +89,23 @@ async function handleInviteeCreated(payload: any, supabase: any) {
         email,
         name,
         questions_and_answers,
-        tracking,
         text_reminder_number,
         uri: inviteeUri,
         event: eventUri
     } = payload;
 
     // We need to find the tenant associated with this event
-    // The event payload doesn't directly give us the tenantId, but we can look it up 
-    // by the owner of the event or the user URI if we stored it
-
-    // Fetch event details to get the owner/user URI
-    // But since we are likely using the tokens of the tenant, we can try to find them
-    // via a metadata field if we passed it in the booking URL, or by matching the user URI.
-
-    // For simplicity, let's look for a tenant who has this calendlyUserUri in their settings
-    const { data: tenant, error: tenantError } = await supabase
+    // Look for a tenant who has this calendlyUserUri in their settings
+    const { data: tenant } = await supabase
         .from('tenants')
         .select('id, settings')
         .contains('settings', { calendly: { calendlyUserUri: payload.event_type_owner_uri || payload.owner_uri } })
         .limit(1)
         .maybeSingle();
 
-    if (!tenant) {
+    let tenantId = tenant?.id;
+
+    if (!tenantId) {
         // Fallback: search more broadly in JSONB
         const { data: allTenants } = await supabase.from('tenants').select('id, settings');
         const matchingTenant = allTenants?.find((t: any) =>
@@ -65,12 +114,11 @@ async function handleInviteeCreated(payload: any, supabase: any) {
         );
 
         if (!matchingTenant) {
-            console.error('Could not find tenant for Calendly event:', payload.event_type_owner_uri);
+            console.error('[Calendly] Could not find tenant for event owner URI:', payload.event_type_owner_uri);
             return;
         }
+        tenantId = matchingTenant.id;
     }
-
-    const tenantId = tenant?.id;
 
     // Map to bookings table
     const { data: booking, error: bookingError } = await supabase
@@ -94,53 +142,53 @@ async function handleInviteeCreated(payload: any, supabase: any) {
         .single();
 
     if (bookingError) {
-        console.error('Error inserting booking from Calendly:', bookingError);
-    } else {
-        // Also sync to video_calls so it shows in Meetings dashboard
-        // We'll use the tenant's primary user or the host if we can find them
-        const { data: userData } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('tenant_id', tenantId)
-            .eq('role', 'tenant')
-            .limit(1)
-            .maybeSingle();
+        console.error('[Calendly] Error inserting booking:', bookingError);
+        return;
+    }
 
-        if (userData) {
-            await supabase
-                .from('video_calls')
-                .insert({
-                    host_id: userData.id,
-                    title: `Calendly: ${name || 'Guest'} `,
-                    status: 'scheduled',
-                    scheduled_at: booking.start_time,
-                    daily_room_url: payload.scheduled_event?.location?.location || null, // Could be Zoom/Meet link
-                    description: questions_and_answers ? JSON.stringify(questions_and_answers) : null,
-                    metadata: {
-                        booking_id: booking.id,
-                        calendly_event_uri: eventUri
-                    }
-                });
+    // Sync to video_calls so it shows in Meetings dashboard
+    const { data: userData } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .eq('role', 'tenant')
+        .limit(1)
+        .maybeSingle();
 
-            // 3. Create entry in calendar_events so it shows in the main dashboard calendar
-            await supabase
-                .from('calendar_events')
-                .insert({
-                    tenant_id: tenantId,
-                    user_id: userData.id,
-                    title: `Calendly: ${name || 'Guest'}`,
-                    description: questions_and_answers ? JSON.stringify(questions_and_answers) : `Calendly meeting with ${name || 'Guest'}`,
-                    start_time: booking.start_time,
-                    end_time: booking.end_time,
-                    type: 'meeting',
-                    location: payload.scheduled_event?.location?.location || 'Calendly Video Link',
-                    metadata: {
-                        booking_id: booking.id,
-                        calendly_event_uri: eventUri,
-                        calendly_invitee_uri: inviteeUri
-                    }
-                });
-        }
+    if (userData) {
+        await supabase
+            .from('video_calls')
+            .insert({
+                host_id: userData.id,
+                title: `Calendly: ${name || 'Guest'}`,
+                status: 'scheduled',
+                scheduled_at: booking.start_time,
+                daily_room_url: payload.scheduled_event?.location?.location || null,
+                description: questions_and_answers ? JSON.stringify(questions_and_answers) : null,
+                metadata: {
+                    booking_id: booking.id,
+                    calendly_event_uri: eventUri
+                }
+            });
+
+        // Create entry in calendar_events so it shows in the main dashboard calendar
+        await supabase
+            .from('calendar_events')
+            .insert({
+                tenant_id: tenantId,
+                user_id: userData.id,
+                title: `Calendly: ${name || 'Guest'}`,
+                description: questions_and_answers ? JSON.stringify(questions_and_answers) : `Calendly meeting with ${name || 'Guest'}`,
+                start_time: booking.start_time,
+                end_time: booking.end_time,
+                type: 'meeting',
+                location: payload.scheduled_event?.location?.location || 'Calendly Video Link',
+                metadata: {
+                    booking_id: booking.id,
+                    calendly_event_uri: eventUri,
+                    calendly_invitee_uri: inviteeUri
+                }
+            });
     }
 }
 

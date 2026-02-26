@@ -20,6 +20,7 @@ interface FinanceTabProps {
 }
 
 import QuotesTab from './QuotesTab';
+import AddExpenseModal from './AddExpenseModal';
 
 // ─── Subscription Plans ────────────────────────────────────────────────────────
 const PLANS = [
@@ -263,6 +264,9 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
     const [pnlData, setPnlData] = React.useState<any>(null);
     const [isGeneratingPnL, setIsGeneratingPnL] = React.useState(false);
 
+    // Expenses
+    const [isExpenseModalOpen, setIsExpenseModalOpen] = React.useState(false);
+
     React.useEffect(() => {
         const fetchPnL = async () => {
             if (!tenant?.id || !isAdmin) return;
@@ -357,8 +361,8 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
     const totalRevenue = pnlData ? pnlData.totalRevenue : filteredInvoices.filter(i => i.status === 'Paid').reduce((acc, curr) => acc + curr.amount, 0);
     const outstanding = filteredInvoices.filter(i => i.status !== 'Paid').reduce((acc, curr) => acc + curr.amount, 0);
 
-    // Use fetched expenses or fallback to Mock Expenses for MVP Polish
-    const totalExpenses = pnlData ? pnlData.totalExpenses : 4500;
+    // Dynamic from backend accounting
+    const totalExpenses = pnlData ? pnlData.totalExpenses : 0;
     const netProfit = pnlData ? pnlData.netIncome : (totalRevenue - totalExpenses);
 
     // Prepare Chart Data
@@ -419,6 +423,14 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                 className="flex-1 sm:flex-none text-xs sm:text-sm py-1.5 px-3 h-10"
                             >
                                 Create Invoice
+                            </Button>
+                        )}
+                        {isAdmin && (
+                            <Button
+                                onClick={() => setIsExpenseModalOpen(true)}
+                                className="flex-1 sm:flex-none text-xs sm:text-sm py-1.5 px-3 h-10 bg-red-600 hover:bg-red-500 text-white"
+                            >
+                                Add Expense
                             </Button>
                         )}
                     </div>
@@ -589,6 +601,19 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                         </table>
                     </div>
                 </>
+            )}
+
+            {isExpenseModalOpen && (
+                <AddExpenseModal
+                    isOpen={isExpenseModalOpen}
+                    onClose={() => setIsExpenseModalOpen(false)}
+                    onExpenseAdded={() => {
+                        setIsExpenseModalOpen(false);
+                        // Refresh PnL Data by triggering the useEffect again (can trigger re-render)
+                        const event = new Event('expense-added');
+                        window.dispatchEvent(event);
+                    }}
+                />
             )}
         </div>
     );

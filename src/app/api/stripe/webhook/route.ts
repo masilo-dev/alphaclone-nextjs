@@ -262,7 +262,37 @@ export async function POST(req: Request) {
                             );
                         }
 
-                        // TODO: Send payment failed notification email
+                        // Send payment failed notification email
+                        const { data: tenantData } = await supabase
+                            .from('tenants')
+                            .select('admin_user_id, name')
+                            .eq('id', tenantId)
+                            .single();
+
+                        if (tenantData?.admin_user_id) {
+                            const { data: user } = await supabase
+                                .from('profiles')
+                                .select('email, name')
+                                .eq('id', tenantData.admin_user_id)
+                                .single();
+
+                            if (user?.email) {
+                                await emailProviderService.sendEmail({
+                                    to: user.email,
+                                    subject: 'Payment Failed - Action Required - AlphaClone',
+                                    html: `
+                                        <div style="font-family: sans-serif; color: #333;">
+                                            <h2>Payment Failed</h2>
+                                            <p>Hello ${user.name || 'there'},</p>
+                                            <p>We attempted to process your subscription payment for <strong>${tenantData.name}</strong> on the AlphaClone platform, but the payment failed.</p>
+                                            <p>Your subscription is now past due. Please update your billing details from your dashboard to avoid any service interruption.</p>
+                                            <hr />
+                                            <p style="font-size: 0.8em; color: #666;">This is an automated notification. Please do not reply to this email.</p>
+                                        </div>
+                                    `
+                                });
+                            }
+                        }
                         console.log(`Tenant ${tenantId} payment failed.`);
                     }
                 }

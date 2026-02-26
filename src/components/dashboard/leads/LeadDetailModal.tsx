@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Plus, Phone, Mail, Globe, MapPin, User, Bot, MessageSquare, Save, UserPlus, CheckCircle2, Zap, Layout, Send, CheckSquare, ArrowRight, History } from 'lucide-react';
+import { Calendar, Clock, Plus, Phone, Mail, Globe, MapPin, User, Bot, MessageSquare, Save, UserPlus, CheckCircle2, Zap, Layout, Send, CheckSquare, ArrowRight, History, FileText } from 'lucide-react';
 import { Modal, Button, Input, Card, Badge } from '../../ui/UIComponents';
 import { Lead, leadService } from '../../../services/leadService';
 import { taskService, Task } from '../../../services/taskService';
@@ -7,6 +7,7 @@ import { calendarService, CalendarEvent } from '../../../services/calendarServic
 import { dealService } from '../../../services/dealService';
 import { contactService } from '../../../services/contactService';
 import { projectService } from '../../../services/projectService';
+import { quoteService } from '../../../services/quoteService';
 import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -22,6 +23,11 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'meetings' | 'notes' | 'history'>('overview');
     const [isLoading, setIsLoading] = useState(false);
+
+    // Quote Creation State
+    const [showQuoteForm, setShowQuoteForm] = useState(false);
+    const [newQuoteName, setNewQuoteName] = useState('');
+    const [newQuoteAmount, setNewQuoteAmount] = useState('');
 
     // Data States
     const [tasks, setTasks] = useState<Task[]>([]);
@@ -114,6 +120,53 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
         } catch (error) {
             toast.error('Failed to update task');
             fetchRelatedData(); // Revert on error
+        }
+    };
+
+    const handleGenerateQuote = async () => {
+        if (!newQuoteName.trim() || !user) return;
+        setIsLoading(true);
+        try {
+            // STEP 1: Ensure we have a contact
+            const { contactId, error: convertError } = await contactService.convertLeadToContact(lead.id, {
+                createCompany: true,
+                companyName: lead.businessName
+            });
+
+            if (convertError || !contactId) {
+                throw new Error(convertError || 'Failed to prepare contact/company for quote');
+            }
+
+            const { quote, error } = await quoteService.createQuote(user.id, {
+                name: newQuoteName,
+                validForDays: 30,
+                currency: 'USD',
+                contactId: contactId,
+            });
+
+            if (error) throw new Error(error);
+
+            if (quote && newQuoteAmount) {
+                const amount = parseFloat(newQuoteAmount);
+                if (!isNaN(amount) && amount > 0) {
+                    await quoteService.addQuoteItem(quote.id, {
+                        productName: 'Professional Services',
+                        description: newQuoteName,
+                        quantity: 1,
+                        unitPrice: amount
+                    });
+                }
+            }
+
+            toast.success('Quote generated successfully!');
+            setNewQuoteName('');
+            setNewQuoteAmount('');
+            setShowQuoteForm(false);
+            // Optionally redirect to quotes tab
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to generate quote');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -356,6 +409,16 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                         </Button>
                         <Button
                             variant="primary"
+                            className="bg-indigo-600 hover:bg-indigo-500 flex-1 sm:flex-none"
+                            size="sm"
+                            onClick={() => setShowQuoteForm(true)}
+                            title="Generate Quote"
+                        >
+                            <FileText className="w-4 h-4 sm:mr-2 text-white" />
+                            <span className="hidden sm:inline">Quote</span>
+                        </Button>
+                        <Button
+                            variant="primary"
                             className="bg-teal-600 hover:bg-teal-500 flex-1 sm:flex-none"
                             size="sm"
                             onClick={() => {
@@ -369,6 +432,31 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                         </Button>
                     </div>
                 </div>
+
+                {/* Quick Quote Form Overlay/Inline */}
+                {showQuoteForm && (
+                    <div className="px-4 py-3 bg-indigo-900/20 border-b border-indigo-500/30 flex flex-wrap items-center gap-3">
+                        <FileText className="w-5 h-5 text-indigo-400" />
+                        <Input
+                            placeholder="Quote Name (e.g. Website Redesign)"
+                            value={newQuoteName}
+                            onChange={(e) => setNewQuoteName(e.target.value)}
+                            className="w-full sm:w-64"
+                            autoFocus
+                        />
+                        <Input
+                            placeholder="Amount (Opt)"
+                            type="number"
+                            value={newQuoteAmount}
+                            onChange={(e) => setNewQuoteAmount(e.target.value)}
+                            className="w-full sm:w-32"
+                        />
+                        <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0 ml-auto">
+                            <Button variant="ghost" size="sm" onClick={() => setShowQuoteForm(false)}>Cancel</Button>
+                            <Button size="sm" className="bg-indigo-600" onClick={handleGenerateQuote} isLoading={isLoading}>Generate</Button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Tabs */}
                 <div className="px-4 sm:px-6 border-b border-slate-800 bg-slate-900/50 flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide">

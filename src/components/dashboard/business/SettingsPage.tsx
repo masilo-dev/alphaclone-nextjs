@@ -16,7 +16,8 @@ import {
     Calendar,
     Trash2,
     X,
-    CreditCard
+    CreditCard,
+    CheckCircle2
 } from 'lucide-react';
 import { fileUploadService } from '../../../services/fileUploadService';
 import GmailIntegration from './GmailIntegration';
@@ -49,6 +50,64 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const [isDeleting, setIsDeleting] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const searchParams = useSearchParams();
+    const [isRedirecting, setIsRedirecting] = useState(false);
+    const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+    const [upgradeLoading, setUpgradeLoading] = useState<string | null>(null);
+
+    const handleManageSubscription = async () => {
+        if (!currentTenant) return;
+        setIsRedirecting(true);
+        const toastId = toast.loading('Redirecting to billing portal...');
+        try {
+            const response = await fetch('/api/stripe/create-portal-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId: currentTenant.id })
+            });
+            const data = await response.json();
+            if (data.url) {
+                toast.dismiss(toastId);
+                window.location.href = data.url;
+            } else {
+                toast.error(data.error || 'Failed to open billing portal', { id: toastId });
+                setIsRedirecting(false);
+            }
+        } catch (error) {
+            console.error('Portal error:', error);
+            toast.error('An error occurred. Please try again.', { id: toastId });
+            setIsRedirecting(false);
+        }
+    };
+
+    const handleUpgrade = async (planId: string, priceId: string) => {
+        if (!currentTenant) return;
+        setUpgradeLoading(planId);
+        try {
+            const response = await fetch('/api/stripe/create-checkout-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    priceId,
+                    planId,
+                    tenantId: currentTenant.id,
+                    adminEmail: user.email,
+                    successUrl: `${window.location.origin}/dashboard?tab=settings&checkout=success`,
+                    cancelUrl: `${window.location.origin}/dashboard?tab=settings&checkout=cancelled`
+                })
+            });
+            const data = await response.json();
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                toast.error(data.error || 'Failed to initiate checkout');
+                setUpgradeLoading(null);
+            }
+        } catch (error) {
+            console.error('Checkout error:', error);
+            toast.error('An error occurred. Please try again.');
+            setUpgradeLoading(null);
+        }
+    };
 
     useEffect(() => {
         const error = searchParams.get('error');
@@ -465,14 +524,17 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             </div>
                             <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-slate-700">
                                 <button
-                                    onClick={() => toast.error('Stripe billing portal integration pending.')}
-                                    className="px-6 py-2.5 bg-teal-600 hover:bg-teal-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-teal-900/20"
+                                    onClick={handleManageSubscription}
+                                    disabled={isRedirecting}
+                                    className="px-6 py-2.5 bg-teal-600 hover:bg-teal-500 disabled:bg-slate-700 disabled:text-slate-400 text-white rounded-xl font-bold transition-all shadow-lg shadow-teal-900/20 flex items-center gap-2 justify-center"
                                 >
-                                    Manage Subscription
+                                    {isRedirecting && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    {isRedirecting ? 'Redirecting...' : 'Manage Subscription'}
                                 </button>
                                 <button
-                                    onClick={() => window.location.href = '/pricing'}
-                                    className="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-all border border-slate-600"
+                                    onClick={() => setUpgradeModalOpen(true)}
+                                    disabled={isRedirecting}
+                                    className="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white rounded-xl font-bold transition-all border border-slate-600"
                                 >
                                     View Upgrade Options
                                 </button>
@@ -502,6 +564,76 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                         </button>
                     </div>
                 )}
+
+                {/* Upgrade Modal */}
+                <Modal
+                    isOpen={upgradeModalOpen}
+                    onClose={() => setUpgradeModalOpen(false)}
+                    title="Upgrade Your Plan"
+                    maxWidth="max-w-4xl"
+                >
+                    <div className="space-y-6">
+                        <p className="text-slate-400 text-center max-w-2xl mx-auto">
+                            Choose the perfect plan to scale your operations. Cancel or downgrade at any time.
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {/* Starter Plan */}
+                            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col">
+                                <h4 className="text-xl font-bold text-white mb-2">Starter</h4>
+                                <div className="text-3xl font-black text-white mb-4">$15<span className="text-sm font-normal text-slate-500">/mo</span></div>
+                                <ul className="space-y-3 mb-6 flex-1">
+                                    <li className="flex items-center gap-2 text-sm text-slate-300"><CheckCircle2 className="w-4 h-4 text-slate-500" /> Up to 5 team members</li>
+                                    <li className="flex items-center gap-2 text-sm text-slate-300"><CheckCircle2 className="w-4 h-4 text-slate-500" /> Core CRM pipeline</li>
+                                    <li className="flex items-center gap-2 text-sm text-slate-300"><CheckCircle2 className="w-4 h-4 text-slate-500" /> Invoicing & basic finance</li>
+                                </ul>
+                                <button
+                                    onClick={() => handleUpgrade('starter', 'price_1T0PCcCCIq5cPz4Hvazdrvtb')}
+                                    disabled={upgradeLoading !== null}
+                                    className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all disabled:opacity-50"
+                                >
+                                    {upgradeLoading === 'starter' ? 'Please wait...' : 'Select Starter'}
+                                </button>
+                            </div>
+
+                            {/* Pro Plan */}
+                            <div className="bg-gradient-to-b from-teal-900/40 to-slate-900 border border-teal-500/30 rounded-2xl p-6 flex flex-col relative">
+                                <div className="absolute top-0 right-0 bg-teal-500 text-slate-900 text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl">Popular</div>
+                                <h4 className="text-xl font-bold text-teal-400 mb-2">Professional</h4>
+                                <div className="text-3xl font-black text-white mb-4">$45<span className="text-sm font-normal text-slate-500">/mo</span></div>
+                                <ul className="space-y-3 mb-6 flex-1">
+                                    <li className="flex items-center gap-2 text-sm text-slate-300"><CheckCircle2 className="w-4 h-4 text-teal-400" /> Up to 25 team members</li>
+                                    <li className="flex items-center gap-2 text-sm text-slate-300"><CheckCircle2 className="w-4 h-4 text-teal-400" /> AI Growth Agent</li>
+                                    <li className="flex items-center gap-2 text-sm text-slate-300"><CheckCircle2 className="w-4 h-4 text-teal-400" /> Full financial suite</li>
+                                </ul>
+                                <button
+                                    onClick={() => handleUpgrade('pro', 'price_1T0PChCCIq5cPz4HiD85RMtD')}
+                                    disabled={upgradeLoading !== null}
+                                    className="w-full py-2.5 bg-teal-600 hover:bg-teal-500 text-white shadow-lg shadow-teal-500/20 rounded-xl font-bold transition-all disabled:opacity-50"
+                                >
+                                    {upgradeLoading === 'pro' ? 'Please wait...' : 'Select Professional'}
+                                </button>
+                            </div>
+
+                            {/* Enterprise Plan */}
+                            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col">
+                                <h4 className="text-xl font-bold text-blue-400 mb-2">Enterprise</h4>
+                                <div className="text-3xl font-black text-white mb-4">$80<span className="text-sm font-normal text-slate-500">/mo</span></div>
+                                <ul className="space-y-3 mb-6 flex-1">
+                                    <li className="flex items-center gap-2 text-sm text-slate-300"><CheckCircle2 className="w-4 h-4 text-blue-400" /> Unlimited team members</li>
+                                    <li className="flex items-center gap-2 text-sm text-slate-300"><CheckCircle2 className="w-4 h-4 text-blue-400" /> White-label branding</li>
+                                    <li className="flex items-center gap-2 text-sm text-slate-300"><CheckCircle2 className="w-4 h-4 text-blue-400" /> Document Storage</li>
+                                </ul>
+                                <button
+                                    onClick={() => handleUpgrade('enterprise', 'price_1T0PCqCCIq5cPz4HtjeFQZSG')}
+                                    disabled={upgradeLoading !== null}
+                                    className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all disabled:opacity-50"
+                                >
+                                    {upgradeLoading === 'enterprise' ? 'Please wait...' : 'Select Enterprise'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </Modal>
             </div>
         </div>
     );
