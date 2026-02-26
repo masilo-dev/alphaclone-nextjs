@@ -470,15 +470,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                <div className="relative z-10 max-w-5xl mx-auto px-4 text-center flex flex-col items-center gap-8 pt-28 pb-24">
 
                   {/* Status badge */}
-                  <motion.div
-                     initial={{ opacity: 0, scale: 0.8 }}
-                     animate={{ opacity: 1, scale: 1 }}
-                     transition={{ duration: 0.5, ease: 'easeOut' }}
-                     className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/80 md:bg-slate-900/50 md:backdrop-blur border border-slate-700/50 text-teal-400 text-sm font-medium mb-2 shadow-lg shadow-teal-900/20"
-                  >
-                     <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
-                     The Future of Business Infrastructure
-                  </motion.div>
+                  {/* Invisible spacer — preserves hero spacing without the badge text */}
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-2 opacity-0 pointer-events-none select-none" aria-hidden="true">
+                     <span className="w-2 h-2 rounded-full" />
+                     &nbsp;
+                  </div>
 
                   {/* Main headline — ALPHACLONE SYSTEMS */}
                   <motion.div
