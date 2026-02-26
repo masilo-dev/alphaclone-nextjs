@@ -47,39 +47,14 @@ const InteractiveMap = React.lazy(() => import('./dashboard/InteractiveMap'));
 const VideoExplainer = React.lazy(() => import('./dashboard/VideoExplainer'));
 const HeroBackground = React.lazy(() => import('./landing/HeroBackground'));
 import { MovingBorderButton } from './landing/MovingBorderButton';
+import PrismBackground from './common/PrismBackground';
 
 interface LandingPageProps {
    onLogin: (user: User) => void;
    projects: Project[];
 }
 
-const PrismBackground = React.memo(() => {
-   const [mounted, setMounted] = React.useState(false);
 
-   React.useEffect(() => {
-      // Defer animation start to improve initial paint
-      const timer = setTimeout(() => setMounted(true), 100);
-      return () => clearTimeout(timer);
-   }, []);
-
-   return (
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden" aria-hidden="true" style={{ contain: 'layout style paint' }}>
-         {/* Base Background */}
-         <div className="absolute inset-0 bg-slate-950" />
-
-         {/* Moving Gradient Orbs - Reduced blur for performance */}
-         {mounted && (
-            <>
-               <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-teal-500/8 blur-[40px] md:blur-[80px] animate-blob mix-blend-screen will-change-transform transform-gpu" style={{ animationDuration: '20s' }} />
-               <div className="absolute top-[20%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-600/8 blur-[40px] md:blur-[80px] animate-blob mix-blend-screen will-change-transform transform-gpu" style={{ animationDelay: '6s', animationDuration: '25s' }} />
-            </>
-         )}
-
-         {/* Grid Pattern Overlay - Simplified */}
-         <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-10" />
-      </div>
-   );
-});
 
 // Animated Hamburger Icon Component (internal)
 const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
