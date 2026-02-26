@@ -24,13 +24,16 @@ export async function POST(req: Request) {
         let provider = 'Google';
         let model = 'Places API';
 
+        let rawMapsData: any[] = [];
+
         // 1. Try real lookup first if API key is available
         if (googleApiKey) {
             console.log(`[Lead Gen] Attempting Google Places search for: ${industry} in ${location}`);
-            const { places, error: placesError } = await googlePlacesService.searchPlaces(`${industry} in ${location}`, googleApiKey);
+            const { places, rawResults, error: placesError } = await googlePlacesService.searchPlaces(`${industry} in ${location}`, googleApiKey);
 
             if (!placesError && places && places.length > 0) {
                 console.log(`[Lead Gen] ✓ Found ${places.length} real leads from Google`);
+                rawMapsData = rawResults || [];
                 leads = places.map(p => ({
                     id: Math.random().toString(36).substring(2, 10),
                     ...p,
@@ -165,6 +168,7 @@ Return a JSON object matching this schema:
             provider,
             model,
             source,
+            rawMapsData, // Include for audit
             isAIVerified: !!ENV.OPENAI_API_KEY && leads.length > 0
         });
     } catch (error: any) {

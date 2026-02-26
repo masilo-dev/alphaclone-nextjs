@@ -10,7 +10,9 @@ import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 
 import { useBackgroundTasks } from '../../contexts/BackgroundTaskContext';
-import AerialLeadNavigator from './leads/AerialLeadNavigator';
+import { AerialLeadNavigator } from './leads/AerialLeadNavigator';
+import { auditService, AuditResult } from '../../services/auditService';
+import { LeadAuditReport } from './leads/LeadAuditReport';
 
 const SalesAgent: React.FC = () => {
     const aiConfigured = isAnyAIConfigured();
@@ -40,6 +42,13 @@ const SalesAgent: React.FC = () => {
         location: '',
         value: ''
     });
+
+    // Audit State
+    const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
+    const [showAudit, setShowAudit] = useState(false);
+
+    // Filter leads for dashboard
+    const filteredLeads = leads.filter(l => !l.client_id);
 
     const handleManualAddLead = async () => {
         if (!manualLead.businessName) {
@@ -196,11 +205,21 @@ const SalesAgent: React.FC = () => {
             taskName,
             async () => {
                 console.log('🚀 Starting AI lead generation...');
-                const results = await generateLeads(searchParams.industry, searchParams.location, '', 'tenant');
+                // Assuming generateLeads now returns { leads: Lead[], rawMapsData: any[] }
+                const res = await generateLeads(searchParams.industry, searchParams.location, '', 'tenant');
 
-                if (results && results.length > 0) {
-                    console.log(`✅ Generated ${results.length} leads, saving to database...`);
-                    const leadsToAdd = results.map((r: any) => ({
+                if (res && res.leads && res.leads.length > 0) {
+                    console.log(`✅ Generated ${res.leads.length} leads, saving to database...`);
+
+                    // 2. Perform Audit
+                    if (res.rawMapsData && res.rawMapsData.length > 0) {
+                        const audit = auditService.performLeadAudit(res.leads, res.rawMapsData, searchParams.industry);
+                        setAuditResult(audit);
+                        setShowAudit(true);
+                    }
+
+                    // 3. Save leads to state and DB
+                    const leadsToAdd = res.leads.map((r: any) => ({
                         businessName: r.businessName,
                         industry: r.industry,
                         location: r.location,
@@ -220,7 +239,7 @@ const SalesAgent: React.FC = () => {
                     }
 
                     const { leads: newLeads } = await leadService.getLeads();
-                    const leadsToProcess = newLeads.slice(0, results.length);
+                    const leadsToProcess = newLeads.slice(0, res.leads.length);
                     let processed = 0;
 
                     const { supabase } = await import('../../lib/supabase');
@@ -309,7 +328,7 @@ const SalesAgent: React.FC = () => {
         if (selectedLeads.length === leads.length) {
             setSelectedLeads([]);
         } else {
-            setSelectedLeads(leads.map(l => l.id));
+            setSelectedLeleads(leads.map(l => l.id));
         }
     };
 
@@ -638,10 +657,18 @@ const SalesAgent: React.FC = () => {
             `auto_search_${Date.now()}`,
             taskName,
             async () => {
-                const results = await generateLeads(industry, location, '', 'tenant', filters);
+                // Assuming generateLeads now returns { leads: Lead[], rawMapsData: any[] }
+                const res = await generateLeads(industry, location, '', 'tenant', filters);
 
-                if (results && results.length > 0) {
-                    const leadsToAdd = results.map((r: any) => ({
+                if (res && res.leads && res.leads.length > 0) {
+                    // 2. Perform Audit
+                    if (res.rawMapsData && res.rawMapsData.length > 0) {
+                        const audit = auditService.performLeadAudit(res.leads, res.rawMapsData, industry);
+                        setAuditResult(audit);
+                        setShowAudit(true);
+                    }
+
+                    const leadsToAdd = res.leads.map((r: any) => ({
                         businessName: r.businessName,
                         industry: r.industry,
                         location: r.location,
@@ -661,7 +688,7 @@ const SalesAgent: React.FC = () => {
                     }
 
                     const { leads: newLeads } = await leadService.getLeads();
-                    const leadsToProcess = newLeads.slice(0, results.length);
+                    const leadsToProcess = newLeads.slice(0, res.leads.length);
                     let processed = 0;
 
                     const { supabase } = await import('../../lib/supabase');
@@ -787,13 +814,14 @@ const SalesAgent: React.FC = () => {
                 </div>
             </div>
 
-            {isVisualSearchActive && activeTab === 'leads' && (
-                <div className="fixed inset-0 z-[60]">
+            {/* Aerial View - Background (Enhanced for discovery) */}
+            {activeTab === 'leads' && (
+                <div className="absolute inset-0 z-0">
                     <AerialLeadNavigator
-                        leads={leads.filter(l => l.lat && l.lng)}
-                        industry={visualSearchParams.industry}
-                        location={visualSearchParams.location}
-                        onClose={() => setIsVisualSearchActive(false)}
+                        leads={leads}
+                        isSearching={isSearching}
+                        searchTopic={searchParams.industry}
+                        searchLocation={searchParams.location}
                     />
                 </div>
             )}

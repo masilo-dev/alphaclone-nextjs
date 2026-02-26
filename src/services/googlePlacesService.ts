@@ -20,7 +20,7 @@ export const googlePlacesService = {
      * @param query Search query (e.g. "Construction companies in Harare")
      * @param apiKey Google Places API Key
      */
-    async searchPlaces(query: string, apiKey: string): Promise<{ places: any[]; error: string | null }> {
+    async searchPlaces(query: string, apiKey: string): Promise<{ places: any[]; rawResults?: any[]; error: string | null }> {
         if (!apiKey) {
             return { places: [], error: 'API Key is missing' };
         }
@@ -48,7 +48,7 @@ export const googlePlacesService = {
             const data = await response.json();
 
             if (!data.places || data.places.length === 0) {
-                return { places: [], error: null };
+                return { places: [], rawResults: [], error: null };
             }
 
             // Map to our internal Lead format
@@ -63,7 +63,7 @@ export const googlePlacesService = {
                 source: 'Google Maps'
             }));
 
-            return { places: mappedPlaces, error: null };
+            return { places: mappedPlaces, rawResults: data.places, error: null };
 
         } catch (error) {
             console.error('Search Places Exception:', error);
