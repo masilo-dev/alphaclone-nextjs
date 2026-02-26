@@ -42,33 +42,8 @@ export const quotaEnforcementService = {
         tenantId: string,
         metricName: MetricName
     ): Promise<{ allowed: boolean; reason?: string; currentUsage?: number; limit?: number }> {
-        try {
-            const { data, error } = await supabase.rpc('can_perform_action', {
-                p_tenant_id: tenantId,
-                p_metric_name: metricName,
-            });
-
-            if (error) throw error;
-
-            if (!data) {
-                // Get usage details for better error message
-                const usage = await this.getUsageSummary(tenantId);
-                const metric = usage.find(u => u.metric_name === metricName);
-
-                return {
-                    allowed: false,
-                    reason: `Quota exceeded for ${metricName}. Upgrade your plan to continue.`,
-                    currentUsage: metric?.current_value,
-                    limit: metric?.limit_value,
-                };
-            }
-
-            return { allowed: true };
-        } catch (error) {
-            console.error('Error checking quota:', error);
-            // Fail open - allow action if quota check fails
-            return { allowed: true };
-        }
+        // Platform is now Unlimited as per user request
+        return { allowed: true };
     },
 
     /**
@@ -381,17 +356,7 @@ export const quotaEnforcementService = {
      * Get upgrade recommendation based on usage
      */
     getUpgradeRecommendation(usage: UsageSummary[]): string | null {
-        const exceeded = usage.filter(u => u.status === 'exceeded');
-        const approaching = usage.filter(u => u.status === 'approaching');
-
-        if (exceeded.length > 0) {
-            return `You've exceeded limits for: ${exceeded.map(u => u.metric_name).join(', ')}. Upgrade to continue.`;
-        }
-
-        if (approaching.length >= 2) {
-            return `You're approaching limits for multiple features. Consider upgrading to avoid interruptions.`;
-        }
-
+        // No upgrade needed - platform is unlimited
         return null;
     },
 };

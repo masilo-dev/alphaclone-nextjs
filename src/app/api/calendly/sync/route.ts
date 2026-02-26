@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createSupabaseAdminClient } from '@/lib/supabase-server';
 
 export async function POST(req: Request) {
     try {
@@ -9,6 +9,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing tenant ID or user ID' }, { status: 400 });
         }
 
+        const supabase = createSupabaseAdminClient();
         const { data: tenant, error } = await supabase
             .from('tenants')
             .select('settings')

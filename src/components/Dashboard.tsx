@@ -1526,7 +1526,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           )}
 
           <p className="text-center text-[10px] text-slate-500 flex items-center justify-center gap-1">
-            <ShieldCheck className="w-3 h-3" /> Payments processed securely via Stripe SSL
+            <ShieldCheck className="w-3 h-3" /> Payments processed securely via Global Payment SSL
           </p>
         </div>
       </Modal>
@@ -1679,7 +1679,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         onNavigate={() => setForceSidebarHide(true)}
       />
 
-      {forceSidebarHide && (
+      {forceSidebarHide && user.role !== 'admin' && (
         <button
           onClick={() => {
             setForceSidebarHide(false);
@@ -1707,10 +1707,10 @@ const Dashboard: React.FC<DashboardProps> = ({
           <header className={`bg-slate-900 border-b border-slate-800 sticky top-0 ${isInCall ? 'z-[110]' : 'z-30'} backdrop-blur-sm bg-slate-900/95 pt-safe`}>
             <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4">
               <div className="flex items-center gap-3 sm:gap-4">
-                {/* Mobile Menu Toggle */}
+                {/* Mobile Menu Toggle - Hidden if BottomNav handles it */}
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="p-2 sm:p-3 text-white hover:text-teal-400 transition-colors rounded-lg hover:bg-slate-800 md:hidden -ml-1"
+                  className="p-2 sm:p-3 text-white hover:text-teal-400 transition-colors rounded-lg hover:bg-slate-800 md:hidden hidden -ml-1"
                   aria-label="Toggle navigation menu"
                 >
                   <Menu className="w-5 h-5" />

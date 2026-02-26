@@ -3,7 +3,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
-import { format, isBefore } from 'date-fns'; // Added isBefore
+import { format, isBefore, addMinutes } from 'date-fns'; // Added addMinutes
 import { Calendar as CalendarIcon, Video, MapPin, X, Clock, Users as UsersIcon, Loader2, CheckSquare, CreditCard } from 'lucide-react';
 import { Card, Button, Badge, Modal, Input } from '../ui/UIComponents';
 import { calendarService, CalendarEvent } from '../../services/calendarService';
@@ -11,6 +11,27 @@ import { taskService } from '../../services/taskService'; // Added taskService
 import { User } from '../../types';
 import toast from 'react-hot-toast';
 import { PastEventPromptModal } from './PastEventPromptModal';
+
+/**
+ * Helper to parse Calendly Q&A JSON
+ */
+const parseEventQA = (description: string) => {
+    if (!description) return null;
+    if (!description.startsWith('[') && !description.startsWith('{')) return null;
+
+    try {
+        const parsed = JSON.parse(description);
+        if (Array.isArray(parsed)) {
+            return parsed.map((item: any) => ({
+                question: item.question || item.name || 'Question',
+                answer: item.answer || item.value || 'No answer provided'
+            }));
+        }
+        return null;
+    } catch (e) {
+        return null;
+    }
+};
 
 interface CalendarProps {
     user: User;
@@ -38,6 +59,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         location: string;
         is_all_day: boolean;
         attendees: string[];
+        questions: { id: string; text: string }[];
     }>({
         title: '',
         description: '',
@@ -47,6 +69,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         location: '',
         is_all_day: false,
         attendees: [],
+        questions: [{ id: '1', text: '' }] // Added questions support
     });
     const [availableUsers] = useState<any[]>([]);
     const [pastEventsPrompt, setPastEventsPrompt] = useState<CalendarEvent[]>([]);
@@ -152,10 +175,21 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
         try {
             // -- INDEPENDENT TASK CREATION LOGIC --
+            // Format questions into description if any
+            const questions = (newEvent as any).questions?.filter((q: any) => q.text.trim());
+            let description = newEvent.description || '';
+            if (questions && questions.length > 0) {
+                const qaFormat = questions.map((q: any) => ({
+                    question: q.text,
+                    answer: 'Pending...'
+                }));
+                description = JSON.stringify(qaFormat);
+            }
+
             if (newEvent.type === 'task') {
                 const { error } = await taskService.createTask(user.id, {
                     title: newEvent.title,
-                    description: newEvent.description,
+                    description,
                     assignedTo: user.id, // Assign to self
                     // No project/client needed (Independent)
                     startDate: new Date(newEvent.start_time).toISOString(),
@@ -176,10 +210,11 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                 const { error } = await calendarService.createEvent({
                     user_id: user.id,
                     ...newEvent,
+                    description,
                     attendees: newEvent.attendees || [],
                     color: getEventColor(newEvent.type, {}), // Default color
                     reminder_minutes: 15,
-                });
+                } as any);
 
                 if (!error) {
                     toast.success('Event created successfully!');
@@ -212,12 +247,33 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
         try {
             const startTime = new Date(newEvent.start_time);
-            const { error } = await calendarService.createVideoCallEvent(
-                user.id,
-                newEvent.title || 'Video Call',
-                startTime,
-                60
-            );
+
+            // Format questions into description if any
+            const questions = (newEvent as any).questions?.filter((q: any) => q.text.trim());
+            let description = 'Video call meeting';
+            if (questions && questions.length > 0) {
+                const qaFormat = questions.map((q: any) => ({
+                    question: q.text,
+                    answer: 'Pending...'
+                }));
+                description = JSON.stringify(qaFormat);
+            }
+
+            const endTime = addMinutes(startTime, 60);
+            const videoRoomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+            const { error } = await calendarService.createEvent({
+                user_id: user.id,
+                title: newEvent.title,
+                description,
+                start_time: startTime.toISOString(),
+                end_time: endTime.toISOString(),
+                type: 'call',
+                video_room_id: videoRoomId,
+                attendees: newEvent.attendees || [],
+                is_all_day: false,
+                reminder_minutes: 15,
+            } as any);
 
             if (!error) {
                 toast.success('Video call created successfully!');
@@ -292,6 +348,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             location: '',
             is_all_day: false,
             attendees: [],
+            questions: [{ id: '1', text: '' }]
         });
     };
 
@@ -618,13 +675,32 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                 </div>
                             </div>
 
-                            {/* Event Description */}
-                            {selectedEvent.description && (
-                                <div>
-                                    <div className="text-sm font-semibold text-slate-300 mb-2">Description</div>
-                                    <div className="text-slate-400 leading-relaxed">{selectedEvent.description}</div>
-                                </div>
-                            )}
+                            {/* Event Description & Q&A */}
+                            {selectedEvent.description && (() => {
+                                const qa = parseEventQA(selectedEvent.description);
+                                if (qa) {
+                                    return (
+                                        <div className="space-y-4">
+                                            <div className="text-sm font-semibold text-slate-300 border-b border-slate-700 pb-2">Questions & Answers</div>
+                                            <div className="grid gap-3">
+                                                {qa.map((item, idx) => (
+                                                    <div key={idx} className="bg-slate-900/50 p-3 rounded border border-slate-800">
+                                                        <div className="text-xs font-bold text-teal-400 uppercase tracking-wider mb-1">{item.question}</div>
+                                                        <div className="text-slate-300 text-sm whitespace-pre-wrap">{item.answer}</div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <div>
+                                        <div className="text-sm font-semibold text-slate-300 mb-2">Description</div>
+                                        <div className="text-slate-400 leading-relaxed">{selectedEvent.description}</div>
+                                    </div>
+                                );
+                            })()}
 
                             {/* Time Details */}
                             <div className="grid grid-cols-2 gap-4">
@@ -775,6 +851,49 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                 onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
                                 placeholder="Meeting location or URL"
                             />
+
+                            {/* Custom Questions Section */}
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <label className="text-sm font-medium text-slate-300">Intake Questions (Q&A)</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setNewEvent({
+                                            ...newEvent,
+                                            questions: [...(newEvent as any).questions, { id: Date.now().toString(), text: '' }]
+                                        })}
+                                        className="text-xs text-teal-400 hover:text-teal-300 font-semibold"
+                                    >
+                                        + Add Question
+                                    </button>
+                                </div>
+                                {(newEvent as any).questions?.map((q: any, idx: number) => (
+                                    <div key={q.id} className="flex gap-2">
+                                        <input
+                                            value={q.text}
+                                            onChange={(e) => {
+                                                const newQs = [...(newEvent as any).questions];
+                                                newQs[idx].text = e.target.value;
+                                                setNewEvent({ ...newEvent, questions: newQs } as any);
+                                            }}
+                                            placeholder={`Question ${idx + 1}`}
+                                            className="flex-1 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-teal-500"
+                                        />
+                                        {(newEvent as any).questions.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newQs = (newEvent as any).questions.filter((_: any, i: number) => i !== idx);
+                                                    setNewEvent({ ...newEvent, questions: newQs } as any);
+                                                }}
+                                                className="p-2 text-red-400 hover:text-red-300"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
 
                             <div className="flex gap-3 pt-4">
                                 <Button

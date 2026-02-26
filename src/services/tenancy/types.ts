@@ -196,21 +196,21 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
             'Basic Video Conferencing'
         ],
         features: {
-            maxUsers: 1,
-            maxProjects: 3,
-            maxStorage: 1,
-            maxVideoMeetingsPerMonth: 2,
-            maxVideoMinutesPerMeeting: 30,
-            contractGeneration: false,
-            paymentProcessing: false,
-            fullCRM: false,
-            advancedBookings: false,
-            workflows: false,
-            aiAssistant: false,
+            maxUsers: -1,
+            maxProjects: -1,
+            maxStorage: -1,
+            maxVideoMeetingsPerMonth: -1,
+            maxVideoMinutesPerMeeting: -1,
+            contractGeneration: true,
+            paymentProcessing: true,
+            fullCRM: true,
+            advancedBookings: true,
+            workflows: true,
+            aiAssistant: true,
             videoConferencing: true,
-            customDomain: false,
-            prioritySupport: false,
-            apiAccess: false
+            customDomain: true,
+            prioritySupport: true,
+            apiAccess: true
         }
     },
     starter: {
@@ -230,21 +230,21 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
             'Automated Workflows'
         ],
         features: {
-            maxUsers: 10,
-            maxProjects: 25,
-            maxStorage: 10,
-            maxVideoMeetingsPerMonth: 10,
-            maxVideoMinutesPerMeeting: 60,
-            contractGeneration: false,
+            maxUsers: -1,
+            maxProjects: -1,
+            maxStorage: -1,
+            maxVideoMeetingsPerMonth: -1,
+            maxVideoMinutesPerMeeting: -1,
+            contractGeneration: true,
             paymentProcessing: true,
-            fullCRM: false,
+            fullCRM: true,
             advancedBookings: true,
             workflows: true,
-            aiAssistant: false,
+            aiAssistant: true,
             videoConferencing: true,
-            customDomain: false,
-            prioritySupport: false,
-            apiAccess: false
+            customDomain: true,
+            prioritySupport: true,
+            apiAccess: true
         }
     },
     pro: {
@@ -265,11 +265,11 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
             'Priority Support'
         ],
         features: {
-            maxUsers: 50,
-            maxProjects: 100,
-            maxStorage: 50,
-            maxVideoMeetingsPerMonth: 50,
-            maxVideoMinutesPerMeeting: 90,
+            maxUsers: -1,
+            maxProjects: -1,
+            maxStorage: -1,
+            maxVideoMeetingsPerMonth: -1,
+            maxVideoMinutesPerMeeting: -1,
             contractGeneration: true,
             paymentProcessing: true,
             fullCRM: true,
@@ -301,9 +301,9 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
         features: {
             maxUsers: -1,
             maxProjects: -1,
-            maxStorage: 500,
-            maxVideoMeetingsPerMonth: 200,
-            maxVideoMinutesPerMeeting: 180,
+            maxStorage: -1,
+            maxVideoMeetingsPerMonth: -1,
+            maxVideoMinutesPerMeeting: -1,
             contractGeneration: true,
             paymentProcessing: true,
             fullCRM: true,
@@ -348,9 +348,9 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
 };
 
 export const TRIAL_LIMITS = {
-    MAX_MEETINGS: 2,
-    MAX_MEETING_DURATION_MINS: 50,
-    MAX_LEADS_PER_DAY: 20,
-    MAX_TOTAL_LEADS: 100,
-    TRIAL_DAYS: 14
+    MAX_MEETINGS: 999999,
+    MAX_MEETING_DURATION_MINS: 999999,
+    MAX_LEADS_PER_DAY: 999999,
+    MAX_TOTAL_LEADS: 999999,
+    TRIAL_DAYS: 3650
 };

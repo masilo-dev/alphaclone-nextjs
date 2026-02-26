@@ -33,7 +33,6 @@ const envSchema = z.object({
 
     // Stripe (optional - for payments)
     VITE_STRIPE_PUBLIC_KEY: z.string()
-        .startsWith('pk_', 'Invalid Stripe public key')
         .optional()
         .or(z.literal('')), // Allow empty string but it won't be used by the service
 
