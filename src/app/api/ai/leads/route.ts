@@ -19,7 +19,7 @@ export async function POST(req: Request) {
         }
 
         const googleApiKey = ENV.GOOGLE_API_KEY;
-        let leads = [];
+        let leads: any[] = [];
         let source = 'AI Simulated';
         let provider = 'Google';
         let model = 'Places API';
@@ -113,11 +113,59 @@ Return a JSON array exactly matching this schema:
             model = aiResponse.model;
         }
 
+        // 3. AI Verification Pass (using OpenAI/ChatGPT as requested)
+        if (leads.length > 0 && ENV.OPENAI_API_KEY) {
+            console.log('[Lead Gen] Running AI verification pass using OpenAI...');
+            try {
+                const verificationPrompt = `Analyze the following list of business leads for "${industry}" in "${location}".
+For each lead, determine if it is "Verified" (likely a real, active business) or "Simulated" (AI-generated placeholder).
+Also provide a "trustScore" from 0 to 100 based on its plausibility (address, phone format, web presence logic).
+
+Leads to verify:
+${JSON.stringify(leads.map(l => ({ name: l.businessName, site: l.website, phone: l.phone })), null, 2)}
+
+Return a JSON object matching this schema:
+{
+  "verifications": [
+    { "businessName": "Exact Name", "isVerified": true, "trustScore": 95, "analysis": "Brief 1-sentence verification logic" }
+  ]
+}`;
+
+                const verificationResponse = await routeAIRequest({
+                    prompt: verificationPrompt,
+                    model: 'gpt-4-turbo', // Explicitly use ChatGPT/OpenAI for this
+                    maxTokens: 1000,
+                    temperature: 0.3,
+                });
+
+                try {
+                    const vData = JSON.parse(verificationResponse.content.match(/\{[\s\S]*\}/)?.[0] || '{}');
+                    if (vData.verifications) {
+                        leads = leads.map(lead => {
+                            const v = vData.verifications.find((v: any) => v.businessName === lead.businessName);
+                            return {
+                                ...lead,
+                                isVerified: v ? v.isVerified : false,
+                                trustScore: v ? v.trustScore : 50,
+                                verificationNotes: v ? v.analysis : 'Verification pending'
+                            };
+                        });
+                        console.log('[Lead Gen] ✓ AI Verification complete');
+                    }
+                } catch (pErr) {
+                    console.warn('[Lead Gen] Verification parsing failed:', pErr);
+                }
+            } catch (vErr) {
+                console.error('[Lead Gen] Verification pass failed:', vErr);
+            }
+        }
+
         return NextResponse.json({
             leads,
             provider,
             model,
-            source
+            source,
+            isAIVerified: !!ENV.OPENAI_API_KEY && leads.length > 0
         });
     } catch (error: any) {
         console.error('Lead Generation API Error:', error);

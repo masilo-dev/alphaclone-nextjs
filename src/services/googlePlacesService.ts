@@ -11,6 +11,7 @@ interface PlaceResult {
     websiteUri?: string;
     businessStatus?: string;
     types?: string[];
+    location?: { latitude: number; longitude: number };
 }
 
 export const googlePlacesService = {
@@ -30,7 +31,7 @@ export const googlePlacesService = {
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Goog-Api-Key': apiKey,
-                    'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.businessStatus,places.types'
+                    'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.businessStatus,places.types,places.location'
                 },
                 body: JSON.stringify({
                     textQuery: query,
@@ -57,6 +58,8 @@ export const googlePlacesService = {
                 phone: place.nationalPhoneNumber || '',
                 website: place.websiteUri || '',
                 industry: humanizeType(place.types?.[0] || ''),
+                lat: place.location?.latitude,
+                lng: place.location?.longitude,
                 source: 'Google Maps'
             }));
 

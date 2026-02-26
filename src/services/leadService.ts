@@ -22,6 +22,11 @@ export interface Lead {
     created_at?: string;
     outreachMessage?: string;
     outreachStatus?: string;
+    isVerified?: boolean;
+    trustScore?: number;
+    verificationNotes?: string;
+    lat?: number;
+    lng?: number;
 }
 
 export const leadService = {
@@ -64,6 +69,11 @@ export const leadService = {
                 notes: l.notes,
                 created_at: l.created_at,
                 client_id: l.client_id, // Include client_id
+                isVerified: l.is_verified,
+                trustScore: l.trust_score,
+                verificationNotes: l.verification_notes,
+                lat: l.latitude,
+                lng: l.longitude,
                 // UI compatibility
                 status: l.stage === 'lead' ? 'New' : l.stage,
                 fb: l.website // Map website to fb/social link for display if needed
@@ -148,7 +158,12 @@ export const leadService = {
                 value: lead.value || 0,
                 notes: lead.notes,
                 outreach_message: lead.outreachMessage,
-                outreach_status: lead.outreachStatus || 'pending'
+                outreach_status: lead.outreachStatus || 'pending',
+                is_verified: lead.isVerified || false,
+                trust_score: lead.trustScore || 0,
+                verification_notes: lead.verificationNotes,
+                latitude: lead.lat,
+                longitude: lead.lng
             };
 
             const { data, error } = await supabase
@@ -176,7 +191,10 @@ export const leadService = {
                 notes: data.notes,
                 status: 'New',
                 outreachMessage: data.outreach_message,
-                outreachStatus: data.outreach_status
+                outreachStatus: data.outreach_status,
+                isVerified: data.is_verified,
+                trustScore: data.trust_score,
+                verificationNotes: data.verification_notes
             };
 
             return { lead: newLead, error: null };
@@ -267,7 +285,10 @@ export const leadService = {
                 value: l.value || 0,
                 notes: l.notes,
                 outreach_message: l.outreachMessage,
-                outreach_status: l.outreachStatus || 'pending'
+                outreach_status: l.outreachStatus || 'pending',
+                is_verified: l.isVerified || false,
+                trust_score: l.trustScore || 0,
+                verification_notes: l.verificationNotes
             }));
 
             const { data, error } = await supabase
@@ -331,6 +352,9 @@ export const leadService = {
         if (updates.client_id !== undefined) dbPayload.client_id = updates.client_id;
         if (updates.outreachMessage !== undefined) dbPayload.outreach_message = updates.outreachMessage;
         if (updates.outreachStatus !== undefined) dbPayload.outreach_status = updates.outreachStatus;
+        if (updates.isVerified !== undefined) dbPayload.is_verified = updates.isVerified;
+        if (updates.trustScore !== undefined) dbPayload.trust_score = updates.trustScore;
+        if (updates.verificationNotes !== undefined) dbPayload.verification_notes = updates.verificationNotes;
 
         const { error } = await supabase
             .from('leads')
@@ -374,7 +398,10 @@ export const leadService = {
                 status: data.stage === 'lead' ? 'New' : data.stage,
                 fb: data.website,
                 outreachMessage: data.outreach_message,
-                outreachStatus: data.outreach_status
+                outreachStatus: data.outreach_status,
+                isVerified: data.is_verified,
+                trustScore: data.trust_score,
+                verificationNotes: data.verification_notes
             };
 
             return { lead, error: null };

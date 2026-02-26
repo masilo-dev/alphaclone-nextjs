@@ -24,9 +24,10 @@ const LeadSearchVisual: React.FC<LeadSearchVisualProps> = ({ industry, location 
     }, []);
 
     useEffect(() => {
-        if (progress < 20) setStatusText(`Deploying AI Agents to ${location}...`);
-        else if (progress < 50) setStatusText(`Scanning ${industry} sectors...`);
-        else if (progress < 80) setStatusText("Extracting target profiles & contact info...");
+        if (progress < 15) setStatusText(`Deploying AI Agents to ${location}...`);
+        else if (progress < 35) setStatusText(`Scanning ${industry} sectors...`);
+        else if (progress < 60) setStatusText("Extracting target profiles & contact info...");
+        else if (progress < 85) setStatusText("Verifying lead authenticity with AI Truth Service...");
         else if (progress < 100) setStatusText("Qualifying leads & drafting outreach...");
         else setStatusText("Search complete! Finalizing results...");
     }, [progress, location, industry]);

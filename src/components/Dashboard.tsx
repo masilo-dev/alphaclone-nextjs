@@ -1679,7 +1679,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         onNavigate={() => setForceSidebarHide(true)}
       />
 
-      {forceSidebarHide && user.role !== 'admin' && (
+      {forceSidebarHide && !['admin', 'super_admin'].includes(user.role) && (
         <button
           onClick={() => {
             setForceSidebarHide(false);
@@ -1708,13 +1708,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4">
               <div className="flex items-center gap-3 sm:gap-4">
                 {/* Mobile Menu Toggle - Hidden if BottomNav handles it */}
-                <button
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="p-2 sm:p-3 text-white hover:text-teal-400 transition-colors rounded-lg hover:bg-slate-800 md:hidden hidden -ml-1"
-                  aria-label="Toggle navigation menu"
-                >
-                  <Menu className="w-5 h-5" />
-                </button>
+                {/* Mobile Menu Toggle removed - BottomNav handles it */}
 
                 <div className="flex items-center gap-2 sm:gap-3 md:hidden">
                   <img src={LOGO_URL} alt="Logo" className="w-8 h-8 rounded-lg flex-shrink-0" />

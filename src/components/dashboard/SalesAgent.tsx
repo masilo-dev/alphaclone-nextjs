@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, Search, Play, Pause, Settings, RefreshCw, Plus, Filter, Database, MessageSquare, ArrowRight, CheckCircle2, AlertCircle, UserPlus, Phone, Send, Trash2, Upload, FileSpreadsheet, X, Mail, ExternalLink, FileText, Zap, Layout, CheckSquare, Clock } from 'lucide-react';
+import { Bot, Search, Play, Pause, Settings, RefreshCw, Plus, Filter, Database, MessageSquare, ArrowRight, CheckCircle2, AlertCircle, UserPlus, Phone, Send, Trash2, Upload, FileSpreadsheet, X, Mail, ExternalLink, FileText, Zap, Layout, CheckSquare, Clock, ShieldCheck } from 'lucide-react';
 import { generateLeads, chatWithGrowthAgent, isAnyAIConfigured } from '../../services/unifiedAIService';
 import { leadService, Lead } from '../../services/leadService';
 import { fileImportService } from '../../services/fileImportService';
@@ -10,7 +10,7 @@ import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 
 import { useBackgroundTasks } from '../../contexts/BackgroundTaskContext';
-import LeadSearchVisual from './leads/LeadSearchVisual';
+import AerialLeadNavigator from './leads/AerialLeadNavigator';
 
 const SalesAgent: React.FC = () => {
     const aiConfigured = isAnyAIConfigured();
@@ -788,8 +788,13 @@ const SalesAgent: React.FC = () => {
             </div>
 
             {isVisualSearchActive && activeTab === 'leads' && (
-                <div className="absolute inset-0 z-50">
-                    <LeadSearchVisual industry={visualSearchParams.industry} location={visualSearchParams.location} />
+                <div className="fixed inset-0 z-[60]">
+                    <AerialLeadNavigator
+                        leads={leads.filter(l => l.lat && l.lng)}
+                        industry={visualSearchParams.industry}
+                        location={visualSearchParams.location}
+                        onClose={() => setIsVisualSearchActive(false)}
+                    />
                 </div>
             )}
 
@@ -929,6 +934,7 @@ const SalesAgent: React.FC = () => {
                                             <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden md:table-cell">Industry</th>
                                             <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden lg:table-cell">Location</th>
                                             <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">Contact</th>
+                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden sm:table-cell">AI Score</th>
                                             <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden sm:table-cell">Source</th>
                                             <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">Action</th>
                                         </tr>
@@ -983,6 +989,16 @@ const SalesAgent: React.FC = () => {
                                                             {lead.email && <span className="text-[10px] sm:text-xs text-blue-400 truncate max-w-[100px] sm:max-w-none">{lead.email}</span>}
                                                             {lead.website && <a href={lead.website} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[10px] sm:text-xs text-teal-400 hover:underline"><ExternalLink className="w-3 h-3" /> Website</a>}
                                                         </div>
+                                                    </td>
+                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden sm:table-cell">
+                                                        {lead.isVerified ? (
+                                                            <div className="flex items-center gap-1.5 bg-teal-500/10 border border-teal-500/20 px-2 py-1 rounded-lg w-fit">
+                                                                <ShieldCheck className="w-4 h-4 text-teal-400" />
+                                                                <span className="text-xs font-bold text-teal-400">{lead.trustScore}%</span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-[10px] text-slate-500 italic">Unverified</span>
+                                                        )}
                                                     </td>
                                                     <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden sm:table-cell">
                                                         <div className="flex flex-col gap-2">

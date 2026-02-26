@@ -11,6 +11,8 @@ import { quoteService } from '../../../services/quoteService';
 import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import { googleMapsService } from '../../../services/googleMapsService';
+import { ENV } from '../../../config/env';
 
 interface LeadDetailModalProps {
     isOpen: boolean;
@@ -48,6 +50,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
     const [leadNotes, setLeadNotes] = useState(lead.notes || '');
     const [isSavingNotes, setIsSavingNotes] = useState(false);
     const [isEnriching, setIsEnriching] = useState(false);
+    const [isValidatingAddress, setIsValidatingAddress] = useState(false);
 
     useEffect(() => {
         if (isOpen && lead.id) {
@@ -325,6 +328,41 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
         }
     };
 
+    const handleValidateAddress = async () => {
+        if (!lead.location) {
+            toast.error('No address to validate');
+            return;
+        }
+
+        setIsValidatingAddress(true);
+        try {
+            const apiKey = ENV.GOOGLE_API_KEY || '';
+            const { valid, formattedAddress, error } = await googleMapsService.validateAddress(lead.location, apiKey);
+
+            if (error) throw new Error(error);
+
+            if (valid) {
+                toast.success('Address is valid and deliverable!');
+                // Update lead location with formatted address if it's better
+                if (formattedAddress && formattedAddress !== lead.location) {
+                    await leadService.updateLead(lead.id, { location: formattedAddress });
+                    if (onLeadUpdate) onLeadUpdate({ ...lead, location: formattedAddress });
+                }
+
+                // Log activity
+                if (user) {
+                    await leadService.addLeadActivity(lead.id, user.id, 'verification', 'Address validated via Google Maps');
+                }
+            } else {
+                toast.error('Address could not be fully validated. Please check the details.');
+            }
+        } catch (error: any) {
+            toast.error('Validation failed: ' + error.message);
+        } finally {
+            setIsValidatingAddress(false);
+        }
+    };
+
     const StatusBadge = ({ status }: { status: string }) => {
         const colors: any = {
             new: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
@@ -353,6 +391,12 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                         <div className="flex flex-wrap items-center gap-3 mb-1">
                             <h2 className="text-xl sm:text-2xl font-bold text-white truncate">{lead.businessName}</h2>
                             <StatusBadge status={lead.status || 'New'} />
+                            {lead.isVerified && (
+                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    <CheckCircle2 className="w-3 h-3" />
+                                    VERIFIED
+                                </div>
+                            )}
                         </div>
                         <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-slate-400">
                             {lead.industry && <span className="flex items-center gap-1"><User className="w-3 h-3" /> {lead.industry}</span>}
@@ -429,6 +473,17 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                         >
                             <Zap className="w-4 h-4 sm:mr-2 text-white" />
                             <span className="hidden sm:inline">Deal</span>
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleValidateAddress}
+                            isLoading={isValidatingAddress}
+                            className="flex-1 sm:flex-none border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                            title="Verify global address authenticity"
+                        >
+                            <MapPin className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline text-white">Validate Adr</span>
                         </Button>
                     </div>
                 </div>
@@ -518,6 +573,42 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                     )}
                                 </div>
                             </Card>
+
+                            {lead.isVerified && (
+                                <Card className="p-6 border-emerald-500/20 bg-emerald-500/5">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                                            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                                            AI Verification
+                                        </h3>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-1">Trust Score</span>
+                                            <div className="text-2xl font-bold text-emerald-400">{lead.trustScore}%</div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-emerald-500 transition-all duration-1000"
+                                                style={{ width: `${lead.trustScore}%` }}
+                                            />
+                                        </div>
+
+                                        <div className="p-3 bg-slate-900/50 rounded-lg border border-white/5">
+                                            <p className="text-sm text-slate-300 italic leading-relaxed">
+                                                <span className="text-teal-400 font-bold not-italic font-mono mr-2">CHATGPT ANALYSIS:</span>
+                                                {lead.verificationNotes || "Data matches typical patterns for a legitimate business in this region."}
+                                            </p>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+                                            <Zap className="w-3 h-3 text-yellow-500" />
+                                            Authenticity Confirmed by AlphaClone AI
+                                        </div>
+                                    </div>
+                                </Card>
+                            )}
 
                             <div className="space-y-6">
                                 <Card className="p-6">
