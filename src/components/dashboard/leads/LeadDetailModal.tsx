@@ -595,16 +595,27 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                             />
                                         </div>
 
-                                        <div className="p-3 bg-slate-900/50 rounded-lg border border-white/5">
-                                            <p className="text-sm text-slate-300 italic leading-relaxed">
-                                                <span className="text-teal-400 font-bold not-italic font-mono mr-2">CHATGPT ANALYSIS:</span>
-                                                {lead.verificationNotes || "Data matches typical patterns for a legitimate business in this region."}
-                                            </p>
+                                        <div className="flex flex-col gap-3">
+                                            <div className="p-3 bg-slate-900/50 rounded-lg border border-white/5">
+                                                <p className="text-sm text-slate-300 italic leading-relaxed">
+                                                    <span className="text-emerald-400 font-bold not-italic font-mono mr-2 uppercase tracking-tighter">Technical Audit:</span>
+                                                    {lead.verificationNotes || "Data matches typical patterns for a legitimate business in this region."}
+                                                </p>
+                                            </div>
+
+                                            {lead.sdrInsight && (
+                                                <div className="p-3 bg-teal-500/5 rounded-lg border border-teal-500/10">
+                                                    <p className="text-sm text-slate-200 leading-relaxed">
+                                                        <span className="text-teal-400 font-bold font-mono mr-2 uppercase tracking-tighter">SDR Strategy:</span>
+                                                        {lead.sdrInsight}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="flex items-center gap-2 text-[10px] text-slate-500 uppercase tracking-widest font-bold">
                                             <Zap className="w-3 h-3 text-yellow-500" />
-                                            Authenticity Confirmed by AlphaClone AI
+                                            Authenticity Confirmed by AlphaClone Senior SDR
                                         </div>
                                     </div>
                                 </Card>

@@ -30,11 +30,12 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isNavigating, setIsNavigating] = useState(false);
     const [geocodedLeads, setGeocodedLeads] = useState<any[]>([]);
+    const [mapType, setMapType] = useState<string>('satellite');
+    const [showScanner, setShowScanner] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
 
     const apiKey = ENV.GOOGLE_API_KEY || '';
 
-    // Load Google Maps
     useEffect(() => {
         if (!apiKey) return;
 
@@ -52,6 +53,7 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
                         center: { lat: 0, lng: 0 },
                         zoom: 2,
                         mapId: '4504f8b37365c3d0', // Use a Vector Map ID for 3D tilt
+                        mapTypeId: mapType as google.maps.MapTypeId,
                         disableDefaultUI: true,
                         backgroundColor: '#020617',
                         gestureHandling: 'none' // Controlled by AI
@@ -66,6 +68,13 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
 
         initMap();
     }, [apiKey]);
+
+    // Update map type when changed
+    useEffect(() => {
+        if (map) {
+            map.setMapTypeId(mapType as google.maps.MapTypeId);
+        }
+    }, [map, mapType]);
 
     // Geocode Leads
     useEffect(() => {
@@ -203,10 +212,26 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
                     </div>
                 ) : (
                     <>
-                        <div className="absolute top-2 left-2 sm:top-4 sm:left-4 flex flex-col gap-2">
+                        <div className="absolute top-2 left-2 sm:top-4 sm:left-4 flex flex-col gap-2 pointer-events-auto">
                             <div className="bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-teal-500/30 flex items-center gap-2 max-w-fit">
                                 <div className="w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full animate-pulse" />
                                 <span className="text-white font-mono text-[8px] sm:text-[10px] tracking-widest uppercase">Live Aerial Tracking</span>
+                            </div>
+
+                            {/* Map Type Selector */}
+                            <div className="bg-slate-900/80 backdrop-blur-xl p-1 rounded-xl border border-white/10 flex gap-1">
+                                {['satellite', 'roadmap', 'hybrid', 'terrain'].map((type) => (
+                                    <button
+                                        key={type}
+                                        onClick={() => setMapType(type)}
+                                        className={`px-2 py-1 rounded-lg text-[8px] sm:text-[10px] font-mono uppercase transition-all ${mapType === type
+                                                ? 'bg-teal-500 text-black font-bold shadow-[0_0_10px_rgba(20,184,166,0.5)]'
+                                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                            }`}
+                                    >
+                                        {type}
+                                    </button>
+                                ))}
                             </div>
 
                             <AnimatePresence mode="wait">
@@ -216,7 +241,7 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: 20 }}
-                                        className="bg-slate-900/90 backdrop-blur-xl p-3 sm:p-4 rounded-xl border border-white/10 shadow-lg max-w-[200px] sm:max-w-xs pointer-events-auto"
+                                        className="bg-slate-900/90 backdrop-blur-xl p-3 sm:p-4 rounded-xl border border-white/10 shadow-lg max-w-[200px] sm:max-w-xs"
                                     >
                                         <div className="flex items-start justify-between mb-2 sm:mb-3">
                                             <div className="min-w-0 pr-2">
@@ -280,7 +305,42 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
                 <div className="w-full h-[1px] bg-white/20" />
                 <div className="h-full w-[1px] bg-white/20 absolute" />
                 <div className="w-1/2 h-1/2 border border-teal-500/40 rounded-full animate-pulse" />
+
+                {/* Scanner Beam Animation */}
+                {isNavigating && (
+                    <motion.div
+                        animate={{
+                            rotate: 360,
+                            scale: [1, 1.2, 1],
+                            opacity: [0.3, 0.6, 0.3]
+                        }}
+                        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                        className="absolute inset-0 border-[20px] border-teal-500/10 rounded-full"
+                        style={{ borderTopColor: 'rgba(20, 184, 166, 0.2)' }}
+                    />
+                )}
             </div>
+
+            {/* worker drone icons moving (decorative) */}
+            <AnimatePresence>
+                {isNavigating && Array.from({ length: 3 }).map((_, i) => (
+                    <motion.div
+                        key={`drone-${i}`}
+                        initial={{ x: -100, y: -100, opacity: 0 }}
+                        animate={{
+                            x: [Math.random() * 500, Math.random() * 800],
+                            y: [Math.random() * 500, Math.random() * 800],
+                            opacity: [0, 1, 0]
+                        }}
+                        transition={{ duration: 5 + i, repeat: Infinity, ease: "linear" }}
+                        className="absolute z-30 pointer-events-none"
+                    >
+                        <Plane className="text-teal-400 w-4 h-4 rotate-45" />
+                        <div className="text-[6px] text-teal-400/50 font-mono">SCOUT-0{i + 1}</div>
+                    </motion.div>
+                ))}
+            </AnimatePresence>
+
             {/* Scanline Effect */}
             <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] z-40" />
         </div>

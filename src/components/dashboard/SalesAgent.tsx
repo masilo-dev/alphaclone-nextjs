@@ -195,7 +195,7 @@ const SalesAgent: React.FC = () => {
             return;
         }
 
-        const taskName = `AI Lead Search for ${searchParams.industry} in ${searchParams.location}`;
+        const taskName = `AI Senior SDR & Data Scientist Lead Search for ${searchParams.industry} in ${searchParams.location}`;
 
         setVisualSearchParams({ industry: searchParams.industry, location: searchParams.location });
         setIsVisualSearchActive(true);
@@ -230,7 +230,11 @@ const SalesAgent: React.FC = () => {
                         notes: r.notes || r.aiAnalysis || r.description,
                         outreachMessage: r.outreachMessage || r.emailDraft,
                         value: r.estimatedValue || r.value,
-                        source: r.leadSource || 'AI Agent'
+                        source: r.leadSource || 'AI Agent',
+                        isVerified: r.isVerified,
+                        trustScore: r.trustScore,
+                        verificationNotes: r.verificationNotes,
+                        sdrInsight: r.sdrInsight
                     }));
 
                     const { count, error } = await leadService.addBulkLeads(leadsToAdd);
@@ -258,7 +262,7 @@ const SalesAgent: React.FC = () => {
                     }
                     return { count, processed };
                 } else {
-                    throw new Error("No leads found. Try different search criteria.");
+                    throw new Error("No leads found. AI can make mistakes or have region-specific limitations. Try being more direct with your search or adjusting the criteria.");
                 }
             },
             (result) => {
@@ -679,7 +683,11 @@ const SalesAgent: React.FC = () => {
                         notes: r.notes || r.aiAnalysis || r.description,
                         outreachMessage: r.outreachMessage || r.emailDraft,
                         value: r.estimatedValue || r.value,
-                        source: r.leadSource || 'AI Agent'
+                        source: r.leadSource || 'AI Agent',
+                        isVerified: r.isVerified,
+                        trustScore: r.trustScore,
+                        verificationNotes: r.verificationNotes,
+                        sdrInsight: r.sdrInsight
                     }));
 
                     const { count, error } = await leadService.addBulkLeads(leadsToAdd);
@@ -1132,6 +1140,20 @@ const SalesAgent: React.FC = () => {
                             </div>
                         )}
                     </div>
+
+                    {/* Integrated Aerial Lead Navigator (Shows only when searching) */}
+                    {isVisualSearchActive && (
+                        <div className="absolute inset-x-0 bottom-0 top-[200px] z-50">
+                            <div className="relative w-full h-full rounded-b-xl overflow-hidden border-t border-slate-800">
+                                <AerialLeadNavigator
+                                    leads={leads}
+                                    isSearching={true}
+                                    searchTopic={visualSearchParams.industry}
+                                    searchLocation={visualSearchParams.location}
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div className="flex-1 bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col">

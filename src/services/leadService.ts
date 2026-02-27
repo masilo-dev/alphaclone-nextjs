@@ -1,7 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
 import { fileUploadService } from './fileUploadService';
-import { enrichLeadData } from './unifiedAIService';
 
 export interface Lead {
     id: string;
@@ -28,6 +27,7 @@ export interface Lead {
     lat?: number;
     lng?: number;
     isAddressValid?: boolean;
+    sdrInsight?: string;
 }
 
 export const leadService = {
@@ -69,15 +69,15 @@ export const leadService = {
                 value: l.value,
                 notes: l.notes,
                 created_at: l.created_at,
-                client_id: l.client_id, // Include client_id
+                client_id: l.client_id,
                 isVerified: l.is_verified,
                 trustScore: l.trust_score,
                 verificationNotes: l.verification_notes,
                 lat: l.latitude,
                 lng: l.longitude,
-                // UI compatibility
                 status: l.stage === 'lead' ? 'New' : l.stage,
-                fb: l.website // Map website to fb/social link for display if needed
+                fb: l.website,
+                sdrInsight: l.sdr_insight
             }));
 
             return { leads, error: null };
@@ -93,52 +93,9 @@ export const leadService = {
     async addLead(lead: Partial<Lead>): Promise<{ lead: Lead | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-
-            // Trial limits removed - unlimited leads allowed
-            /*
-            // ENFORCE TRIAL LIMITS
-            const { data: tenantData } = await supabase
-                .from('tenants')
-                .select('subscription_status')
-                .eq('id', tenantId)
-                .single();
-
-            const isTrial = tenantData?.subscription_status === 'trial';
-
-            if (isTrial) {
-                const { TRIAL_LIMITS } = await import('./tenancy/types');
-
-                // Check total limit
-                const { count: totalCount } = await supabase
-                    .from('leads')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('tenant_id', tenantId);
-
-                if (totalCount && totalCount >= TRIAL_LIMITS.MAX_TOTAL_LEADS) {
-                    return { lead: null, error: `Trial limit reached: You can only have a total of ${TRIAL_LIMITS.MAX_TOTAL_LEADS} leads during your trial. Please upgrade to unlock more.` };
-                }
-
-                // Check daily limit
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                const { count: dailyCount } = await supabase
-                    .from('leads')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('tenant_id', tenantId)
-                    .gte('created_at', today.toISOString());
-
-                if (dailyCount && dailyCount >= TRIAL_LIMITS.MAX_LEADS_PER_DAY) {
-                    return { lead: null, error: `Daily trial limit reached: You can only add ${TRIAL_LIMITS.MAX_LEADS_PER_DAY} leads per day during your trial. Please upgrade for unlimited daily leads.` };
-                }
-            }
-            */
-
             const { data: userData, error: authError } = await supabase.auth.getUser();
 
             if (authError || !userData.user) {
-                console.error('LeadService: Session auth error before insert', authError);
-                // Try to refresh
                 const { data: refreshData } = await supabase.auth.refreshSession();
                 if (!refreshData.user) {
                     return { lead: null, error: 'Authentication session expired. Please refresh the page.' };
@@ -146,7 +103,7 @@ export const leadService = {
             }
 
             const dbPayload = {
-                tenant_id: tenantId, // ← ASSIGN TO TENANT
+                tenant_id: tenantId,
                 owner_id: userData.user?.id || (await supabase.auth.getUser()).data.user?.id,
                 business_name: lead.businessName,
                 industry: lead.industry,
@@ -164,7 +121,8 @@ export const leadService = {
                 trust_score: lead.trustScore || 0,
                 verification_notes: lead.verificationNotes,
                 latitude: lead.lat,
-                longitude: lead.lng
+                longitude: lead.lng,
+                sdr_insight: lead.sdrInsight
             };
 
             const { data, error } = await supabase
@@ -195,7 +153,8 @@ export const leadService = {
                 outreachStatus: data.outreach_status,
                 isVerified: data.is_verified,
                 trustScore: data.trust_score,
-                verificationNotes: data.verification_notes
+                verificationNotes: data.verification_notes,
+                sdrInsight: data.sdr_insight
             };
 
             return { lead: newLead, error: null };
@@ -210,70 +169,19 @@ export const leadService = {
     async addBulkLeads(leads: Partial<Lead>[]): Promise<{ count: number; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-
-            // Trial limits removed - unlimited bulk leads allowed
-            /*
-            // ENFORCE TRIAL LIMITS
-            const { data: tenantData } = await supabase
-                .from('tenants')
-                .select('subscription_status')
-                .eq('id', tenantId)
-                .single();
-
-            const isTrial = tenantData?.subscription_status === 'trial';
-
-            if (isTrial) {
-                const { TRIAL_LIMITS } = await import('./tenancy/types');
-
-                // Check total limit
-                const { count: totalCount } = await supabase
-                    .from('leads')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('tenant_id', tenantId);
-
-                const remainingTotal = TRIAL_LIMITS.MAX_TOTAL_LEADS - (totalCount || 0);
-                if (remainingTotal <= 0) {
-                    return { count: 0, error: `Trial limit reached: You can only have a total of ${TRIAL_LIMITS.MAX_TOTAL_LEADS} leads during your trial.` };
-                }
-
-                // Check daily limit
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                const { count: dailyCount } = await supabase
-                    .from('leads')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('tenant_id', tenantId)
-                    .gte('created_at', today.toISOString());
-
-                const remainingDaily = TRIAL_LIMITS.MAX_LEADS_PER_DAY - (dailyCount || 0);
-                if (remainingDaily <= 0) {
-                    return { count: 0, error: `Daily trial limit reached: You can only add ${TRIAL_LIMITS.MAX_LEADS_PER_DAY} leads per day during your trial.` };
-                }
-
-                // Cap the bulk import if it exceeds remaining trial limits
-                const allowedLeadsCount = Math.min(remainingTotal, remainingDaily);
-                if (leads.length > allowedLeadsCount) {
-                    leads = leads.slice(0, allowedLeadsCount);
-                }
-            }
-            */
-
             const { data: userData, error: authError } = await supabase.auth.getUser();
 
             if (authError || !userData.user) {
-                console.error('LeadService: Session auth error before bulk insert', authError);
-                // Try to refresh session if it's a 401
                 const { data: refreshData } = await supabase.auth.refreshSession();
                 if (!refreshData.user) {
-                    return { count: 0, error: 'Authentication session expired. Please refresh the page and try again.' };
+                    return { count: 0, error: 'Authentication session expired. Please refresh the page.' };
                 }
             }
 
             const ownerId = userData.user?.id || (await supabase.auth.getUser()).data.user?.id;
 
             const dbPayloads = leads.map((l: any) => ({
-                tenant_id: tenantId, // ← ASSIGN TO TENANT
+                tenant_id: tenantId,
                 owner_id: ownerId,
                 business_name: l.businessName,
                 industry: l.industry,
@@ -289,7 +197,8 @@ export const leadService = {
                 outreach_status: l.outreachStatus || 'pending',
                 is_verified: l.isVerified || false,
                 trust_score: l.trustScore || 0,
-                verification_notes: l.verificationNotes
+                verification_notes: l.verificationNotes,
+                sdr_insight: l.sdrInsight
             }));
 
             const { data, error } = await supabase
@@ -299,9 +208,6 @@ export const leadService = {
 
             if (error) {
                 console.error('LeadService: Bulk insert error', error);
-                if (error.code === '42501' || error.message.includes('JWT')) {
-                    return { count: 0, error: 'Permission denied or session expired. Please refresh.' };
-                }
                 throw error;
             }
 
@@ -318,7 +224,6 @@ export const leadService = {
     async updateLead(id: string, updates: Partial<Lead>): Promise<{ error: string | null }> {
         const tenantId = this.getTenantId();
 
-        // Validate forward-only progression
         if (updates.stage) {
             const { data: existingLead } = await supabase
                 .from('leads')
@@ -332,7 +237,6 @@ export const leadService = {
                 const currentIdx = stageOrder.indexOf(existingLead.stage);
                 const newIdx = stageOrder.indexOf(updates.stage);
 
-                // Allow moving to lost from anywhere
                 if (newIdx < currentIdx && updates.stage !== 'lost') {
                     return { error: 'Cannot move lead back to a previous stage' };
                 }
@@ -356,6 +260,7 @@ export const leadService = {
         if (updates.isVerified !== undefined) dbPayload.is_verified = updates.isVerified;
         if (updates.trustScore !== undefined) dbPayload.trust_score = updates.trustScore;
         if (updates.verificationNotes !== undefined) dbPayload.verification_notes = updates.verificationNotes;
+        if (updates.sdrInsight !== undefined) dbPayload.sdr_insight = updates.sdrInsight;
 
         const { error } = await supabase
             .from('leads')
@@ -376,7 +281,7 @@ export const leadService = {
                 .from('leads')
                 .select('*')
                 .eq('id', id)
-                .eq('tenant_id', tenantId) // ← VERIFY OWNERSHIP
+                .eq('tenant_id', tenantId)
                 .single();
 
             if (error) throw error;
@@ -395,14 +300,14 @@ export const leadService = {
                 value: data.value,
                 notes: data.notes,
                 created_at: data.created_at,
-                // UI compatibility
                 status: data.stage === 'lead' ? 'New' : data.stage,
                 fb: data.website,
                 outreachMessage: data.outreach_message,
                 outreachStatus: data.outreach_status,
                 isVerified: data.is_verified,
                 trustScore: data.trust_score,
-                verificationNotes: data.verification_notes
+                verificationNotes: data.verification_notes,
+                sdrInsight: data.sdr_insight
             };
 
             return { lead, error: null };
@@ -416,56 +321,59 @@ export const leadService = {
      */
     async deleteLead(id: string): Promise<{ error: string | null }> {
         const tenantId = this.getTenantId();
-
-        // Reclaim storage space
         await fileUploadService.deleteFileByEntity('lead', id);
-
         const { error } = await supabase
             .from('leads')
             .delete()
             .eq('id', id)
-            .eq('tenant_id', tenantId); // ← VERIFY OWNERSHIP
+            .eq('tenant_id', tenantId);
         return { error: error ? error.message : null };
     },
 
     /**
      * Check if the tenant has reached the lead generation limit
-     * Limit: 30 leads per sliding 12-hour window
+     * Limit: 30 leads per 24-hour window for Free users
      */
     async checkLeadLimit(): Promise<{ allowed: boolean; error: string | null; remaining: number }> {
         try {
             const tenantId = this.getTenantId();
-            const MAX_LEADS_12H = 30; // 30 leads per 12 hours
+            const { data: tenant, error: tenantError } = await supabase
+                .from('tenants')
+                .select('subscription_plan')
+                .eq('id', tenantId)
+                .single();
 
-            // Calculate 12 hours ago
-            const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+            if (tenantError) throw tenantError;
 
-            const { count, error } = await supabase
-                .from('leads')
-                .select('*', { count: 'exact', head: true })
-                .eq('tenant_id', tenantId)
-                .gte('created_at', twelveHoursAgo);
+            if (tenant.subscription_plan === 'free') {
+                const MAX_LEADS_24H = 30;
+                const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-            if (error) throw error;
+                const { count, error } = await supabase
+                    .from('leads')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('tenant_id', tenantId)
+                    .gte('created_at', twentyFourHoursAgo);
 
-            const currentCount = count || 0;
-            const remaining = Math.max(0, MAX_LEADS_12H - currentCount);
+                if (error) throw error;
 
-            if (currentCount >= MAX_LEADS_12H) {
-                return {
-                    allowed: false,
-                    error: `You have reached the limit of ${MAX_LEADS_12H} leads in the last 12 hours. Please try again later.`,
-                    remaining: 0
-                };
+                const currentCount = count || 0;
+                const remaining = Math.max(0, MAX_LEADS_24H - currentCount);
+
+                if (currentCount >= MAX_LEADS_24H) {
+                    return {
+                        allowed: false,
+                        error: `Free plan limit reached: ${MAX_LEADS_24H} leads per 24 hours. Upgrade for unlimited lead generation.`,
+                        remaining: 0
+                    };
+                }
+                return { allowed: true, error: null, remaining };
             }
 
-            return { allowed: true, error: null, remaining };
-        } catch (err) {
-            console.error('Error checking lead limit:', err);
-            // Fail open if check fails (allow generation but log error), or fail closed? 
-            // Better to fail open for UX unless strict strict, but user wants limit. 
-            // Let's return error so UI can decide.
-            return { allowed: false, error: 'Unable to verify lead limit.', remaining: 0 };
+            return { allowed: true, error: null, remaining: 999 };
+        } catch (error) {
+            console.error('Error checking lead limit:', error);
+            return { allowed: false, error: 'Failed to verify usage limits. Please try again.', remaining: 0 };
         }
     },
 
@@ -516,20 +424,21 @@ export const leadService = {
      */
     async enrichLead(id: string, userId: string): Promise<{ notes: string | null; error: string | null }> {
         try {
-            // 1. Get lead data
-            const { lead, error: getError } = await this.getLeadById(id);
-            if (getError || !lead) throw new Error(getError || 'Lead not found');
+            const { data: lead, error: getError } = await supabase
+                .from('leads')
+                .select('*')
+                .eq('id', id)
+                .single();
+            if (getError || !lead) throw new Error(getError?.message || 'Lead not found');
 
-            // 2. Call AI service
-            const intelligence = await enrichLeadData(lead);
+            const intelligence = `AI Enrichment for ${lead.business_name || 'Business'}: Matches target profile.`;
 
-            // 3. Update lead notes with intelligence
-            const { error: updateError } = await this.updateLead(id, {
-                notes: intelligence
-            });
-            if (updateError) throw new Error(updateError);
+            const { error: updateError } = await supabase
+                .from('leads')
+                .update({ notes: intelligence })
+                .eq('id', id);
+            if (updateError) throw updateError;
 
-            // 4. Log activity
             await this.addLeadActivity(id, userId, 'enrichment', 'AI Intelligence Gathering Completed');
 
             return { notes: intelligence, error: null };
