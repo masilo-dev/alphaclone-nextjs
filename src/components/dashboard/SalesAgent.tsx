@@ -814,14 +814,14 @@ const SalesAgent: React.FC = () => {
                 </div>
             </div>
 
-            {/* Aerial View - Background (Enhanced for discovery) */}
-            {activeTab === 'leads' && (
-                <div className="absolute inset-0 z-0">
+            {/* Aerial View - Mini Widget during search or navigation */}
+            {activeTab === 'leads' && (isVisualSearchActive || leads.length > 0) && (
+                <div className="fixed bottom-6 right-6 w-72 sm:w-80 h-48 sm:h-64 z-40 rounded-2xl overflow-hidden shadow-2xl border border-teal-500/30 bg-slate-950 pointer-events-none sm:pointer-events-auto">
                     <AerialLeadNavigator
                         leads={leads}
-                        isSearching={isSearching}
-                        searchTopic={searchParams.industry}
-                        searchLocation={searchParams.location}
+                        isSearching={isVisualSearchActive}
+                        searchTopic={visualSearchParams.industry || searchParams.industry}
+                        searchLocation={visualSearchParams.location || searchParams.location}
                     />
                 </div>
             )}
