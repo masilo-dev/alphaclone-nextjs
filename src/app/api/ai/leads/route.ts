@@ -163,6 +163,37 @@ Return a JSON object matching this schema:
             }
         }
 
+        // 4. Automatic Address Validation (via Google Maps)
+        if (leads.length > 0 && googleApiKey) {
+            console.log('[Lead Gen] Running automatic address validation pass via Google Maps...');
+            try {
+                // Dynamically import googleMapsService to avoid circular or early execution issues if any
+                const { googleMapsService } = await import('@/services/googleMapsService');
+
+                leads = await Promise.all(leads.map(async (lead) => {
+                    try {
+                        if (lead.location) {
+                            const { valid, formattedAddress } = await googleMapsService.validateAddress(lead.location, googleApiKey);
+                            if (valid && formattedAddress) {
+                                return {
+                                    ...lead,
+                                    location: formattedAddress, // Update with the verified format
+                                    isAddressValid: true
+                                };
+                            }
+                        }
+                        return { ...lead, isAddressValid: false };
+                    } catch (err) {
+                        console.warn(`[Lead Gen] Address validation failed for ${lead.businessName}:`, err);
+                        return { ...lead, isAddressValid: false };
+                    }
+                }));
+                console.log('[Lead Gen] ✓ Automatic address validation complete');
+            } catch (err) {
+                console.error('[Lead Gen] Bulk address validation failed:', err);
+            }
+        }
+
         return NextResponse.json({
             leads,
             provider,

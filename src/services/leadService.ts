@@ -27,6 +27,7 @@ export interface Lead {
     verificationNotes?: string;
     lat?: number;
     lng?: number;
+    isAddressValid?: boolean;
 }
 
 export const leadService = {
