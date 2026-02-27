@@ -328,7 +328,7 @@ const SalesAgent: React.FC = () => {
         if (selectedLeads.length === leads.length) {
             setSelectedLeads([]);
         } else {
-            setSelectedLeleads(leads.map(l => l.id));
+            setSelectedLeads(leads.map(l => l.id));
         }
     };
 
