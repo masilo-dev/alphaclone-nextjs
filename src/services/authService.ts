@@ -9,7 +9,7 @@ import { z } from 'zod';
  * If a call to Supabase auth hangs for longer than the timeout, this forcefully 
  * purges the `sb-*` cache to break the lock and throws an error so the UI recovers.
  */
-async function withAuthTimeout<T = any>(promise: any, timeoutMs: number = 8000): Promise<T> {
+async function withAuthTimeout<T = any>(promise: any, timeoutMs: number = 10000): Promise<T> {
     let timeoutHandle: NodeJS.Timeout;
     const timeoutPromise = new Promise<T>((_, reject) => {
         timeoutHandle = setTimeout(() => {
@@ -38,7 +38,7 @@ export const authService = {
             const { data, error } = await withAuthTimeout(supabase.auth.signInWithPassword({
                 email: validated.email,
                 password: validated.password,
-            }), 5000); // 5s timeout for sign-in
+            }), 20000); // 20s timeout for sign-in
 
             if (error) {
                 console.error("SignIn Error:", error);
@@ -371,7 +371,7 @@ export const authService = {
             const maxAttempts = isAuthCallback ? 3 : 1; // Only retry during explicit auth callbacks
 
             for (let i = 0; i < maxAttempts; i++) {
-                const { data: { session: s }, error } = await withAuthTimeout(supabase.auth.getSession(), 2500);
+                const { data: { session: s }, error } = await withAuthTimeout(supabase.auth.getSession(), 10000);
                 if (s?.user) {
                     session = s;
                     if (isAuthCallback) sessionStorage.removeItem('auth_callback_in_progress');
