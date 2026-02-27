@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 const FeaturesSection: React.FC = () => {
     const features = [
@@ -22,8 +22,10 @@ const FeaturesSection: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                     {features.map((feature, idx) => (
-                        <div key={idx} className="flex items-center gap-3">
-                            <CheckCircle2 className="w-6 h-6 text-teal-400 flex-shrink-0" />
+                        <div key={idx} className="flex items-center gap-3 group/item">
+                            <div className="w-5 h-5 rounded-full bg-teal-500/10 flex items-center justify-center flex-shrink-0 group-hover/item:bg-teal-500/20 transition-colors">
+                                <Check className="w-3 h-3 text-teal-400" />
+                            </div>
                             <span className="text-slate-300">{feature}</span>
                         </div>
                     ))}

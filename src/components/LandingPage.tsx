@@ -3,11 +3,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ServiceCard } from './landing/ServiceCard';
 import {
-   CheckCircle2,
+   Check,
    Target,
    Zap,
    Award,
-   Bot,
    Database,
    Smartphone,
    BarChart,
@@ -526,11 +525,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      className="text-sm font-medium text-slate-300 tracking-wide mb-16"
                   >
                      <span className="flex items-center justify-center gap-4 flex-wrap">
-                        <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-500" /> No credit card required</span>
+                        <span className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-full bg-teal-500/20 flex items-center justify-center flex-shrink-0"><Check className="w-2.5 h-2.5 text-teal-500" /></div> No credit card required</span>
                         <span className="hidden sm:inline text-slate-600">•</span>
-                        <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-500" /> 14-day free trial</span>
+                        <span className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-full bg-teal-500/20 flex items-center justify-center flex-shrink-0"><Check className="w-2.5 h-2.5 text-teal-500" /></div> 14-day free trial</span>
                         <span className="hidden sm:inline text-slate-600">•</span>
-                        <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-teal-500" /> Cancel anytime</span>
+                        <span className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-full bg-teal-500/20 flex items-center justify-center flex-shrink-0"><Check className="w-2.5 h-2.5 text-teal-500" /></div> Cancel anytime</span>
                      </span>
                   </motion.p>
 
@@ -603,16 +602,22 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <div>
                               <p className="text-sm font-semibold text-teal-400 mb-2">How We Help:</p>
                               <ul className="text-sm text-slate-400 space-y-1">
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
+                                 <li className="flex items-start gap-2 group/list">
+                                    <div className="w-4 h-4 rounded bg-teal-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-teal-500/20 transition-colors">
+                                       <Check className="w-3 h-3 text-teal-400" />
+                                    </div>
                                     <span>Multi-tenant architecture for unlimited clients</span>
                                  </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
+                                 <li className="flex items-start gap-2 group/list">
+                                    <div className="w-4 h-4 rounded bg-teal-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-teal-500/20 transition-colors">
+                                       <Check className="w-3 h-3 text-teal-400" />
+                                    </div>
                                     <span>Unified dashboard for all client projects</span>
                                  </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
+                                 <li className="flex items-start gap-2 group/list">
+                                    <div className="w-4 h-4 rounded bg-teal-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-teal-500/20 transition-colors">
+                                       <Check className="w-3 h-3 text-teal-400" />
+                                    </div>
                                     <span>White-label client portals</span>
                                  </li>
                               </ul>
@@ -637,16 +642,22 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <div>
                               <p className="text-sm font-semibold text-blue-400 mb-2">How We Help:</p>
                               <ul className="text-sm text-slate-400 space-y-1">
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                                 <li className="flex items-start gap-2 group/list">
+                                    <div className="w-4 h-4 rounded bg-blue-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-blue-500/20 transition-colors">
+                                       <Check className="w-3 h-3 text-blue-400" />
+                                    </div>
                                     <span>Replace $2,000+/mo in subscriptions</span>
                                  </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                                 <li className="flex items-start gap-2 group/list">
+                                    <div className="w-4 h-4 rounded bg-blue-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-blue-500/20 transition-colors">
+                                       <Check className="w-3 h-3 text-blue-400" />
+                                    </div>
                                     <span>Built-in CRM, video calls, and AI agents</span>
                                  </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                                 <li className="flex items-start gap-2 group/list">
+                                    <div className="w-4 h-4 rounded bg-blue-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-blue-500/20 transition-colors">
+                                       <Check className="w-3 h-3 text-blue-400" />
+                                    </div>
                                     <span>Self-hostable for data control</span>
                                  </li>
                               </ul>
@@ -671,17 +682,23 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <div>
                               <p className="text-sm font-semibold text-purple-400 mb-2">How We Help:</p>
                               <ul className="text-sm text-slate-400 space-y-1">
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
-                                    <span>Professional client portals</span>
+                                 <li className="flex items-start gap-2 group/list">
+                                    <div className="w-4 h-4 rounded bg-purple-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-purple-500/20 transition-colors">
+                                       <Check className="w-3 h-3 text-purple-400" />
+                                    </div>
+                                    <span>Automated contract drafting & scoping</span>
                                  </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
-                                    <span>Integrated video conferencing</span>
+                                 <li className="flex items-start gap-2 group/list">
+                                    <div className="w-4 h-4 rounded bg-purple-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-purple-500/20 transition-colors">
+                                       <Check className="w-3 h-3 text-purple-400" />
+                                    </div>
+                                    <span>Real-time billing & financial auditing</span>
                                  </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
-                                    <span>Time tracking & invoicing</span>
+                                 <li className="flex items-start gap-2 group/list">
+                                    <div className="w-4 h-4 rounded bg-purple-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-purple-500/20 transition-colors">
+                                       <Check className="w-3 h-3 text-purple-400" />
+                                    </div>
+                                    <span>Unified workflow from lead to invoice</span>
                                  </li>
                               </ul>
                            </div>
@@ -704,16 +721,22 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <div>
                               <p className="text-sm font-semibold text-orange-400 mb-2">How We Help:</p>
                               <ul className="text-sm text-slate-400 space-y-1">
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
+                                 <li className="flex items-start gap-2 group/list">
+                                    <div className="w-4 h-4 rounded bg-orange-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-orange-500/20 transition-colors">
+                                       <Check className="w-3 h-3 text-orange-400" />
+                                    </div>
                                     <span>Affordable all-in-one pricing</span>
                                  </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
+                                 <li className="flex items-start gap-2 group/list">
+                                    <div className="w-4 h-4 rounded bg-orange-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-orange-500/20 transition-colors">
+                                       <Check className="w-3 h-3 text-orange-400" />
+                                    </div>
                                     <span>No hidden fees or per-seat charges</span>
                                  </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
+                                 <li className="flex items-start gap-2 group/list">
+                                    <div className="w-4 h-4 rounded bg-orange-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-orange-500/20 transition-colors">
+                                       <Check className="w-3 h-3 text-orange-400" />
+                                    </div>
                                     <span>Full feature access from day one</span>
                                  </li>
                               </ul>
@@ -737,16 +760,22 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <div>
                               <p className="text-sm font-semibold text-green-400 mb-2">How We Help:</p>
                               <ul className="text-sm text-slate-400 space-y-1">
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                                 <li className="flex items-start gap-2 group/list">
+                                    <div className="w-4 h-4 rounded bg-green-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-green-500/20 transition-colors">
+                                       <Check className="w-3 h-3 text-green-400" />
+                                    </div>
                                     <span>Self-hostable on your infrastructure</span>
                                  </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                                 <li className="flex items-start gap-2 group/list">
+                                    <div className="w-4 h-4 rounded bg-green-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-green-500/20 transition-colors">
+                                       <Check className="w-3 h-3 text-green-400" />
+                                    </div>
                                     <span>Open-source transparency</span>
                                  </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                                 <li className="flex items-start gap-2 group/list">
+                                    <div className="w-4 h-4 rounded bg-green-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-green-500/20 transition-colors">
+                                       <Check className="w-3 h-3 text-green-400" />
+                                    </div>
                                     <span>Complete data ownership</span>
                                  </li>
                               </ul>
@@ -770,16 +799,22 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <div>
                               <p className="text-sm font-semibold text-cyan-400 mb-2">How We Help:</p>
                               <ul className="text-sm text-slate-400 space-y-1">
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
+                                 <li className="flex items-start gap-2 group/list">
+                                    <div className="w-4 h-4 rounded bg-cyan-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-cyan-500/20 transition-colors">
+                                       <Check className="w-3 h-3 text-cyan-400" />
+                                    </div>
                                     <span>Built-in video conferencing</span>
                                  </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
+                                 <li className="flex items-start gap-2 group/list">
+                                    <div className="w-4 h-4 rounded bg-cyan-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-cyan-500/20 transition-colors">
+                                       <Check className="w-3 h-3 text-cyan-400" />
+                                    </div>
                                     <span>Real-time collaboration tools</span>
                                  </li>
-                                 <li className="flex items-start gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
+                                 <li className="flex items-start gap-2 group/list">
+                                    <div className="w-4 h-4 rounded bg-cyan-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-cyan-500/20 transition-colors">
+                                       <Check className="w-3 h-3 text-cyan-400" />
+                                    </div>
                                     <span>Unified communication hub</span>
                                  </li>
                               </ul>
@@ -851,7 +886,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      {[
                         {
                            id: 'ai-agents',
-                           icon: Bot,
+                           icon: Zap,
                            color: 'teal',
                            title: 'AI Sales Agents',
                            isComingSoon: true,
@@ -918,7 +953,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         },
                         {
                            id: 'tasks',
-                           icon: CheckCircle2,
+                           icon: FileCheck,
                            color: 'cyan',
                            title: 'Contract Logic',
                            summary: 'Technical contract management simplified. Deploy, track, and manage complex agreements with built-in validation and team signatures.',
@@ -1033,8 +1068,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         </div>
                         <ul className="space-y-4 mb-10 flex-grow">
                            {['5 Multi-tenant Users', 'Core CRM Pipeline', '5GB Secure Storage', 'Standard Project MGMT', '2 Video Meetings/Mo'].map((feat) => (
-                              <li key={feat} className="flex items-center gap-3 text-sm text-slate-300">
-                                 <CheckCircle2 className="w-4 h-4 text-teal-500" />
+                              <li key={feat} className="flex items-center gap-3 text-sm text-slate-300 group/feat">
+                                 <div className="w-4 h-4 rounded-full bg-teal-500/10 flex items-center justify-center flex-shrink-0 group-hover/feat:bg-teal-500/20 transition-colors">
+                                    <Check className="w-2.5 h-2.5 text-teal-400" />
+                                 </div>
                                  {feat}
                               </li>
                            ))}
@@ -1065,8 +1102,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         </div>
                         <ul className="space-y-4 mb-10 flex-grow">
                            {['25 Multi-tenant Users', 'Infinite CRM Pipelines', 'AI Sales Automation', '25GB Secure Storage', 'Priority Meeting Support', 'Custom Branding'].map((feat) => (
-                              <li key={feat} className="flex items-center gap-3 text-sm text-slate-200">
-                                 <CheckCircle2 className="w-5 h-5 text-teal-400" />
+                              <li key={feat} className="flex items-center gap-3 text-sm text-slate-200 group/feat">
+                                 <div className="w-5 h-5 rounded-full bg-teal-500/10 flex items-center justify-center flex-shrink-0 group-hover/feat:bg-teal-500/20 transition-colors">
+                                    <Check className="w-3 h-3 text-teal-400" />
+                                 </div>
                                  {feat}
                               </li>
                            ))}
@@ -1095,8 +1134,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         </div>
                         <ul className="space-y-4 mb-10 flex-grow">
                            {['Unlimited Users', 'Dedicated DB Instance', 'White-labeled Ecosystem', 'API Access', '24/7 Priority Engineer', 'On-premise Options'].map((feat) => (
-                              <li key={feat} className="flex items-center gap-3 text-sm text-slate-300">
-                                 <CheckCircle2 className="w-4 h-4 text-blue-500" />
+                              <li key={feat} className="flex items-center gap-3 text-sm text-slate-300 group/feat">
+                                 <div className="w-4 h-4 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0 group-hover/feat:bg-blue-500/20 transition-colors">
+                                    <Check className="w-2.5 h-2.5 text-blue-400" />
+                                 </div>
                                  {feat}
                               </li>
                            ))}
@@ -1131,8 +1172,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               <div>
                                  <h4 className="text-white font-bold mb-1">Email Us</h4>
                                  <div className="flex flex-col gap-1">
-                                    <a href="mailto:info@alphaclone.tech" className="text-slate-400 hover:text-white transition-colors">General: info@alphaclone.tech</a>
-                                    <a href="mailto:sales@alphaclone.tech" className="text-slate-400 hover:text-white transition-colors">Sales: sales@alphaclone.tech</a>
+                                    <a href="mailto:info@alphaclone.tech" className="hover:text-white transition-colors">General: info@alphaclone.tech</a>
+                                    <a href="mailto:sales@alphaclone.tech" className="hover:text-white transition-colors">Sales: sales@alphaclone.tech</a>
                                  </div>
                               </div>
                            </div>
@@ -1163,7 +1204,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         {formStatus === 'success' ? (
                            <div className="h-full flex flex-col items-center justify-center text-center py-12">
                               <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mb-6">
-                                 <CheckCircle2 className="w-10 h-10 text-green-500" />
+                                 <Check className="w-10 h-10 text-green-500" />
                               </div>
                               <h3 className="text-2xl font-bold text-white mb-2">Message Sent</h3>
                               <p className="text-slate-400">We'll be in touch with you shortly to discuss your project.</p>

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Rocket, Shield, Zap, HeartHandshake, Target, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Rocket, Shield, Zap, HeartHandshake, Target, TrendingUp, Check } from 'lucide-react';
 import PublicNavigation from '../PublicNavigation';
 import AnimateIn from '../common/AnimateIn';
 
@@ -122,8 +122,10 @@ const EcosystemPage: React.FC = () => {
                                     <h3 className="text-2xl font-bold font-marketing-heading mb-4 text-teal-400">{service.title}</h3>
                                     <ul className="space-y-3">
                                         {service.features.map((feature, fIdx) => (
-                                            <li key={fIdx} className="flex items-start gap-3 text-slate-300">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-teal-400 mt-2 flex-shrink-0" />
+                                            <li key={fIdx} className="flex items-start gap-3 text-slate-300 group/feature">
+                                                <div className="w-5 h-5 rounded bg-teal-500/10 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover/feature:bg-teal-500/20 transition-colors">
+                                                    <Check className="w-3 h-3 text-teal-400" />
+                                                </div>
                                                 <span>{feature}</span>
                                             </li>
                                         ))}

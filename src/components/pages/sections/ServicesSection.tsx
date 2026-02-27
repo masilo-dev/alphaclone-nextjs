@@ -1,5 +1,5 @@
 import React from 'react';
-import { Code, Smartphone, Bot, Database, Shield, Zap } from 'lucide-react';
+import { Code, Smartphone, Zap, Database, Shield } from 'lucide-react';
 
 const ServicesSection: React.FC = () => {
     const services = [
@@ -16,7 +16,7 @@ const ServicesSection: React.FC = () => {
             color: 'text-purple-400'
         },
         {
-            icon: Bot,
+            icon: Zap,
             title: 'AI Integration',
             description: 'Intelligent automation and AI-powered features for your business.',
             color: 'text-teal-400'

@@ -3,10 +3,10 @@
 import React from 'react';
 import Link from 'next/link';
 import {
-    Bot, Database, Shield, Zap, BarChart3, Settings, Globe,
-    CheckCircle, ArrowRight, Star, Clock, Users, DollarSign,
+    Zap, Database, Shield, BarChart3, Settings, Globe,
+    ArrowRight, Star, Clock, Users, DollarSign,
     Mail, Video, FileText, Calendar, TrendingUp, Layers,
-    Award, Lock, RefreshCw, Phone
+    Award, Lock, RefreshCw, Phone, Check, ChevronRight
 } from 'lucide-react';
 import { Button } from '../ui/UIComponents';
 import PublicNavigation from '../PublicNavigation';
@@ -19,7 +19,7 @@ const ServicesPage: React.FC = () => {
 
     const services = [
         {
-            icon: Bot,
+            icon: Zap,
             title: 'AI Growth Agent',
             subtitle: 'Your always-on automated sales partner',
             color: 'from-teal-500 to-emerald-500',
@@ -322,10 +322,12 @@ const ServicesPage: React.FC = () => {
                                         {/* Right: Features */}
                                         <div>
                                             <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">What's Included</h4>
-                                            <ul className="space-y-3">
+                                            <ul className="space-y-4">
                                                 {service.features.map((f, fi) => (
-                                                    <li key={fi} className="flex items-start gap-3">
-                                                        <CheckCircle className="w-5 h-5 text-teal-400 flex-shrink-0 mt-0.5" />
+                                                    <li key={fi} className="flex items-start gap-3 group/item">
+                                                        <div className="flex-shrink-0 w-5 h-5 rounded-md bg-teal-500/10 border border-teal-500/20 flex items-center justify-center mt-0.5 group-hover/item:bg-teal-500/20 transition-colors">
+                                                            <Check className="w-3.5 h-3.5 text-teal-400" />
+                                                        </div>
                                                         <span className="text-slate-300 text-sm leading-relaxed">{f}</span>
                                                     </li>
                                                 ))}

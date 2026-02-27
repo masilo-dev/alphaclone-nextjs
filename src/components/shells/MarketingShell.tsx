@@ -19,7 +19,7 @@ export default function MarketingShell({ children }: { children: React.ReactNode
         pathname?.startsWith('/invoice');
 
     // Pass-through shell for standard web users.
-    // Exit-intent modal only shows on web (not PWA)
+    // Exit-intent modal removed from here (only shows in dashboard)
     return (
         <>
             {!isDashboardOrApp ? (
@@ -32,7 +32,6 @@ export default function MarketingShell({ children }: { children: React.ReactNode
             ) : (
                 children
             )}
-            <ExitIntentModal user={user} />
         </>
     );
 }

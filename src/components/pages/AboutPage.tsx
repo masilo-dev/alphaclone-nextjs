@@ -4,8 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import {
     Target, Users, Award, TrendingUp, Zap, Shield, Globe,
-    CheckCircle, ArrowRight, Heart, Lightbulb, Building2,
-    Clock, Star, BarChart3, Cpu, Lock, Layers
+    Check, ArrowRight, Heart, Lightbulb, Building2,
+    Clock, Star, BarChart3, CircuitBoard, Lock, Layers
 } from 'lucide-react';
 import { Button } from '../ui/UIComponents';
 import PublicNavigation from '../PublicNavigation';
@@ -68,7 +68,7 @@ const AboutPage: React.FC = () => {
             desc: 'Your business data — your clients, your contracts, your financials — is more sensitive than most people treat it. We protect it with enterprise-grade encryption, strict access controls, and transparent data governance. We never sell your data.',
         },
         {
-            icon: Cpu,
+            icon: CircuitBoard,
             title: 'AI That Serves, Not Replaces',
             desc: 'We believe AI should amplify human capability, not replace human judgment. Our AI Growth Agent finds leads and starts conversations, but you close the deal. Our contract AI drafts, but you review. The AI does the repetitive work; you do the high-value work.',
         },
@@ -195,11 +195,13 @@ const AboutPage: React.FC = () => {
                             {whySection[0].points.map((point, i) => (
                                 <AnimateIn key={i} type="fadeUp" delay={i * 0.07}>
                                     <div className="p-6 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60">
-                                        <div className="flex items-start gap-3 mb-3">
-                                            <CheckCircle className="w-5 h-5 text-teal-400 flex-shrink-0 mt-0.5" />
+                                        <div className="flex items-start gap-4 mb-3 group/item">
+                                            <div className="w-5 h-5 rounded-full bg-teal-500/10 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover/item:bg-teal-500/20 transition-colors">
+                                                <Check className="w-3 h-3 text-teal-400" />
+                                            </div>
                                             <h3 className="text-lg font-bold text-white">{point.headline}</h3>
                                         </div>
-                                        <p className="text-slate-400 leading-relaxed pl-8">{point.body}</p>
+                                        <p className="text-slate-400 leading-relaxed pl-9">{point.body}</p>
                                     </div>
                                 </AnimateIn>
                             ))}
@@ -260,7 +262,7 @@ const AboutPage: React.FC = () => {
                 <section className="py-16 bg-white/[0.02] backdrop-blur-sm border-y border-slate-800/60">
                     <div className="max-w-4xl mx-auto px-4">
                         <div className="flex items-center gap-3 mb-8">
-                            <Cpu className="w-6 h-6 text-violet-400" />
+                            <CircuitBoard className="w-6 h-6 text-violet-400" />
                             <h2 className="text-3xl font-bold">Our Technology Philosophy</h2>
                         </div>
                         <div className="space-y-6 text-slate-400 leading-relaxed">

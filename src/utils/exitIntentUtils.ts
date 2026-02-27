@@ -6,6 +6,7 @@
  */
 
 const EXIT_INTENT_KEY = 'exit_improvement_completed';
+const EXIT_INTENT_MONTH_KEY = 'exit_improvement_month';
 const EXIT_INTENT_TIMESTAMP_KEY = 'exit_improvement_timestamp';
 
 /**
@@ -24,22 +25,30 @@ export const isPWA = (): boolean => {
 };
 
 /**
- * Check if exit-intent has been completed in localStorage
+ * Check if exit-intent has been completed in localStorage for the CURRENT month
  */
 export const hasCompletedExitIntent = (): boolean => {
     if (typeof window === 'undefined') return true;
 
     const completed = localStorage.getItem(EXIT_INTENT_KEY);
-    return completed === 'true';
+    const lastMonth = localStorage.getItem(EXIT_INTENT_MONTH_KEY);
+
+    // Get current month identifier (e.g., "2024-02")
+    const currentMonth = new Date().toISOString().slice(0, 7);
+
+    // If marked as completed AND it was done in the current month, don't show again
+    return completed === 'true' && lastMonth === currentMonth;
 };
 
 /**
- * Mark exit-intent as completed in localStorage
+ * Mark exit-intent as completed in localStorage with current month
  */
 export const markExitIntentCompleted = (): void => {
     if (typeof window === 'undefined') return;
 
+    const currentMonth = new Date().toISOString().slice(0, 7);
     localStorage.setItem(EXIT_INTENT_KEY, 'true');
+    localStorage.setItem(EXIT_INTENT_MONTH_KEY, currentMonth);
     localStorage.setItem(EXIT_INTENT_TIMESTAMP_KEY, new Date().toISOString());
 };
 
