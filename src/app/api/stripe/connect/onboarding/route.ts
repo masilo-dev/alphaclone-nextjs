@@ -27,11 +27,30 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Create a service client to bypass RLS and fetch the tenant details
+        // Create a service client to bypass RLS and fetch details
         const serviceClient = createClient(
             ENV.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
             process.env.SUPABASE_SERVICE_ROLE_KEY || ''
         );
+
+        // Fetch user profile to check for super admin role
+        const { data: profile } = await serviceClient
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        const isSuperAdmin = profile?.role === 'admin';
+
+        // Check if user belongs to this tenant in tenant_users table
+        const { data: tenantUser } = await serviceClient
+            .from('tenant_users')
+            .select('id')
+            .eq('tenant_id', tenantId)
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        const belongsToTenant = !!tenantUser;
 
         // 1. Get tenant details
         const { data: tenant, error: tenantError } = await serviceClient
@@ -44,8 +63,9 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
         }
 
-        if (tenant.admin_user_id !== user.id) {
-            return NextResponse.json({ error: 'Forbidden: Must be tenant admin' }, { status: 403 });
+        // Allow access if user is Super Admin OR belongs to the tenant
+        if (!isSuperAdmin && !belongsToTenant) {
+            return NextResponse.json({ error: 'Forbidden: Must be part of the business' }, { status: 403 });
         }
 
         let stripeAccountId = tenant.stripe_connect_id;

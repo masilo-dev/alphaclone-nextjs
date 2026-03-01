@@ -1,6 +1,6 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, ChevronDown, Menu } from 'lucide-react';
+import { LogOut, ChevronDown, Menu, ShieldAlert } from 'lucide-react';
 import { LOGO_URL } from '../../constants';
 import { User } from '../../types';
 
@@ -78,7 +78,7 @@ const Sidebar = React.memo<SidebarProps>(({
 
             <aside className={`
                 fixed lg:relative z-[60] h-full bg-slate-900 border-r border-slate-800 flex flex-col transition-all duration-300 shadow-2xl overflow-hidden will-change-transform
-                ${sidebarOpen ? 'translate-x-0 w-64 pb-safe lg:pb-0' : '-translate-x-full lg:translate-x-0 w-0 lg:w-20'}
+                ${sidebarOpen || (user.role === 'admin' && typeof window !== 'undefined' && window.innerWidth >= 1024) ? 'translate-x-0 w-64 pb-safe lg:pb-0' : '-translate-x-full lg:translate-x-0 w-0 lg:w-20'}
                 ${isInCall ? 'z-[110]' : 'z-[60]'}
             `}>
                 <div className="h-20 flex items-center px-6 border-b border-slate-800 bg-slate-900">
@@ -95,6 +95,17 @@ const Sidebar = React.memo<SidebarProps>(({
                 </div>
 
                 <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1.5 custom-scrollbar transform-gpu">
+                    {user.role === 'admin' && (
+                        <div className="mb-4 px-2">
+                            <button
+                                onClick={() => handleNavigation('/dashboard/admin/tenants')}
+                                className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-1'} py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 bg-gradient-to-r from-purple-600/20 to-teal-600/20 border border-teal-500/30 text-teal-400 hover:from-purple-600/30 hover:to-teal-600/30 hover:border-teal-400 shadow-lg shadow-teal-500/10 mb-2`}
+                            >
+                                <ShieldAlert className={`w-5 h-5 flex-shrink-0`} />
+                                <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'} transition-all`}>Global Command</span>
+                            </button>
+                        </div>
+                    )}
                     {navItems.map((item, idx) => (
                         <div key={idx}>
                             <button

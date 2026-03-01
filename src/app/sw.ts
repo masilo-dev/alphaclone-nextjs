@@ -18,9 +18,13 @@ const serwist = new Serwist({
     navigationPreload: true,
     runtimeCaching: [
         {
-            // Bypass service worker for daily.co WebRTC signaling and data
+            // Bypass service worker for critical API calls and Daily.co
             matcher({ url }) {
-                return url.hostname.includes('daily.co') || url.hostname.includes('wss://');
+                return (
+                    url.pathname.startsWith("/api/") ||
+                    url.hostname.includes("daily.co") ||
+                    url.hostname.includes("wss://")
+                );
             },
             handler: new NetworkOnly(),
         },

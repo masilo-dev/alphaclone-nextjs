@@ -189,7 +189,8 @@ const SalesAgent: React.FC = () => {
         }
 
         // CHECK LEAD LIMIT BEFORE GENERATING
-        const limitCheck = await leadService.checkLeadLimit();
+        const { data: { user: authUsr } } = await (await import('../../lib/supabase')).supabase.auth.getUser();
+        const limitCheck = await leadService.checkLeadLimit((authUsr as any)?.role);
         if (!limitCheck.allowed) {
             toast.error(limitCheck.error || 'Daily lead limit reached.');
             return;
@@ -646,7 +647,8 @@ const SalesAgent: React.FC = () => {
         if (!industry.trim() || !location.trim()) return;
 
         // CHECK LEAD LIMIT BEFORE GENERATING
-        const limitCheck = await leadService.checkLeadLimit();
+        const { data: { user } } = await (await import('../../lib/supabase')).supabase.auth.getUser();
+        const limitCheck = await leadService.checkLeadLimit((user as any)?.role);
         if (!limitCheck.allowed) {
             toast.error(limitCheck.error || 'Daily lead limit reached.');
             return;

@@ -94,6 +94,7 @@ const FinanceTab = React.lazy(() => import('./dashboard/FinanceTab'));
 const ArticleEditor = React.lazy(() => import('./dashboard/ArticleEditor'));
 const CalendarComponent = React.lazy(() => import('./dashboard/CalendarComponent'));
 const SuperAdminTenantsTab = React.lazy(() => import('./dashboard/admin/SuperAdminTenantsTab'));
+const SuperAdminUsersTab = React.lazy(() => import('./dashboard/admin/SuperAdminUsersTab'));
 const ImprovementsPage = React.lazy(() => import('./dashboard/admin/ImprovementsPage'));
 const ContactSubmissionsTab = React.lazy(() => import('./dashboard/ContactSubmissionsTab'));
 const TasksTab = React.lazy(() => import('./dashboard/TasksTab'));
@@ -1052,6 +1053,13 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         );
 
+      case '/dashboard/admin/users':
+        return (
+          <React.Suspense fallback={<TableSkeleton rows={10} columns={4} />}>
+            <SuperAdminUsersTab />
+          </React.Suspense>
+        );
+
       case '/dashboard/admin/improvements':
         return (
           <React.Suspense fallback={<TableSkeleton rows={10} columns={4} />}>
@@ -1679,18 +1687,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         onNavigate={() => setForceSidebarHide(true)}
       />
 
-      {forceSidebarHide && !['admin', 'super_admin'].includes(user.role) && (
-        <button
-          onClick={() => {
-            setForceSidebarHide(false);
-            if (typeof window !== 'undefined') localStorage.removeItem('dashboard_focus_mode_trigger');
-          }}
-          className="fixed top-6 left-6 z-[70] p-3 bg-slate-900/80 backdrop-blur border border-white/10 rounded-full text-white hover:bg-teal-600 transition-all shadow-xl active:scale-95"
-          title="Back to Navigation"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-      )}
+      {/* Removed "Back to Navigation" button as per user request */}
 
       {/* Mobile Bottom Navigation */}
       <BottomNav

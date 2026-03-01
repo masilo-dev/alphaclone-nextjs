@@ -312,5 +312,100 @@ export const userService = {
         } catch (err) {
             console.error('Background Profile Sync Error:', err);
         }
+    },
+
+    /**
+     * Suspend a user account (Super Admin only)
+     */
+    async suspendUser(userId: string): Promise<{ error: string | null }> {
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({
+                    status: 'suspended',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', userId);
+
+            if (error) throw error;
+            return { error: null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Failed to suspend user' };
+        }
+    },
+
+    /**
+     * Restore a suspended user account (Super Admin only)
+     */
+    async restoreUser(userId: string): Promise<{ error: string | null }> {
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({
+                    status: 'active',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', userId);
+
+            if (error) throw error;
+            return { error: null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Failed to restore user' };
+        }
+    },
+
+    /**
+     * Delete a user account (Super Admin only)
+     */
+    async deleteUser(userId: string): Promise<{ error: string | null }> {
+        try {
+            // 1. Remove from tenant_users
+            const { error: tuError } = await supabase
+                .from('tenant_users')
+                .delete()
+                .eq('user_id', userId);
+
+            if (tuError) throw tuError;
+
+            // 2. Delete profile
+            const { error: pError } = await supabase
+                .from('profiles')
+                .delete()
+                .eq('id', userId);
+
+            if (pError) throw pError;
+
+            // Note: In production, we'd also call a server-side function to delete from auth.users
+            return { error: null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Failed to delete user' };
+        }
+    },
+
+    /**
+     * Get all users across the entire platform (Super Admin only)
+     */
+    async getAllPlatformUsers(): Promise<{ users: User[]; error: string | null }> {
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            const users: User[] = (data || []).map((p: any) => ({
+                id: p.id,
+                email: p.email,
+                name: p.name,
+                role: p.role as UserRole,
+                status: p.status || 'active',
+                avatar: p.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=random`
+            }));
+
+            return { users, error: null };
+        } catch (err) {
+            return { users: [], error: err instanceof Error ? err.message : 'Failed to fetch platform users' };
+        }
     }
 };

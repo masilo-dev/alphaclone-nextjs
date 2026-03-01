@@ -334,8 +334,13 @@ export const leadService = {
      * Check if the tenant has reached the lead generation limit
      * Limit: 30 leads per 24-hour window for Free users
      */
-    async checkLeadLimit(): Promise<{ allowed: boolean; error: string | null; remaining: number }> {
+    async checkLeadLimit(userRole?: string): Promise<{ allowed: boolean; error: string | null; remaining: number }> {
         try {
+            // Super Admin bypass
+            if (userRole === 'admin') {
+                return { allowed: true, error: null, remaining: 9999 };
+            }
+
             const tenantId = this.getTenantId();
             const { data: tenant, error: tenantError } = await supabase
                 .from('tenants')
