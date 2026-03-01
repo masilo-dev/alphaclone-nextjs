@@ -10,6 +10,8 @@ export interface ContractVariables {
     providerAddress?: string;
     providerEmail?: string;
     providerRegistration?: string;
+    providerCompanyName?: string; // New field
+    providerPersonalName?: string; // New field
     governingJurisdiction: string;
     clientName: string;
     clientCompany: string;
@@ -56,7 +58,7 @@ export function generateAlphaCloneContract(variables: ContractVariables): string
 
 **BETWEEN:**
 
-**1. ${variables.providerName}** ("Service Provider")
+**1. ${variables.providerCompanyName || variables.providerName}** ("Service Provider")${variables.providerPersonalName ? ` represented by ${variables.providerPersonalName}` : ''}
 **2. ${variables.clientName}**${variables.clientCompany ? ` (representing ${variables.clientCompany})` : ''} ("Client")
 
 **Service Provider Contact:**
@@ -146,9 +148,9 @@ This Agreement constitutes the entire understanding between the parties and supe
 **IN WITNESS WHEREOF**, the parties have executed this Agreement as of the date first above written.
  
 **SERVICE PROVIDER:**
-${variables.providerName}
+${variables.providerCompanyName || variables.providerName}
 Signature: [DIGITAL SIGNATURE]
-Printed Name: ${variables.providerRepName}
+Printed Name: ${variables.providerPersonalName || variables.providerRepName}
 Title: ${variables.providerRepTitle}
 Date: ${variables.contractDate}
  

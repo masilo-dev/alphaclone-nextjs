@@ -66,6 +66,8 @@ const AlphaCloneContractModal: React.FC<Props> = ({
         deliveryDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
         contractDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
         providerName: currentTenant?.name || 'Authorized Service Provider',
+        providerCompanyName: currentTenant?.name || '', // New field
+        providerPersonalName: user.name || '', // New field
         providerAddress: '',
         providerEmail: user.email || '',
         providerRegistration: '',
@@ -127,7 +129,9 @@ const AlphaCloneContractModal: React.FC<Props> = ({
             { key: variables.clientEmail, name: 'Client Email' },
             { key: variables.clientRepName, name: 'Client Authorized Representative' },
             { key: variables.clientRepTitle, name: 'Client Signatory Title' },
-            { key: variables.providerName, name: 'Provider Business Name' },
+            { key: variables.providerCompanyName, name: 'Provider Company Name' },
+            { key: variables.providerPersonalName, name: 'Provider Personal Name' },
+            { key: variables.providerName, name: 'Provider Name' },
             { key: variables.providerEmail, name: 'Provider Email' },
             { key: variables.providerRepName, name: 'Provider Authorized Rep.' },
             { key: variables.providerRepTitle, name: 'Provider Signatory Title' },
@@ -474,6 +478,19 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                         label="Provider Business Name *"
                                         value={variables.providerName}
                                         onChange={(e) => handleVariableChange('providerName', e.target.value)}
+                                        placeholder="Display fallback"
+                                    />
+                                    <Input
+                                        label="Company/Legal Name *"
+                                        value={variables.providerCompanyName}
+                                        onChange={(e) => handleVariableChange('providerCompanyName', e.target.value)}
+                                        placeholder="Full Legal Company Name"
+                                    />
+                                    <Input
+                                        label="Personal Name (Sender) *"
+                                        value={variables.providerPersonalName}
+                                        onChange={(e) => handleVariableChange('providerPersonalName', e.target.value)}
+                                        placeholder="Your Full Legal Name"
                                     />
                                     <Input
                                         label="Business Registration #"
@@ -492,15 +509,12 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                         onChange={(e) => handleVariableChange('governingJurisdiction', e.target.value)}
                                         placeholder="e.g. State of California, USA"
                                     />
-                                </div>
-                                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <Input
                                         label="Provider Address"
                                         value={variables.providerAddress}
                                         onChange={(e) => handleVariableChange('providerAddress', e.target.value)}
                                         placeholder="Optional but recommended"
                                     />
-                                    <div></div>
                                     <Input
                                         label="Provider Authorized Rep. *"
                                         value={variables.providerRepName}

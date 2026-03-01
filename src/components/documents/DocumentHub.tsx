@@ -247,6 +247,15 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     };
 
     const handleDownload = async (file: HubFile) => {
+        const hasAnnotations = file.annotations && file.annotations.length > 0;
+
+        if (hasAnnotations && file.file_type === 'application/pdf') {
+            const confirmFlatten = window.confirm('This document has signatures or notes. Would you like to download it with these saved annotations?');
+            if (confirmFlatten) {
+                return handleDownloadAsPDF(true);
+            }
+        }
+
         try {
             const { data, error } = await supabase.storage.from('uploads').download(file.storage_path);
             if (error) throw error;
@@ -304,14 +313,26 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         }
     };
 
-    const handleDownloadAsPDF = async () => {
+    const handleDownloadAsPDF = async (flattenViewer = false) => {
         if (!selectedFile) return;
         setIsSaving(true);
         const toastId = toast.loading('Generating PDF...');
         try {
             // Dynamically import html2pdf to avoid SSR issues
             const html2pdf = (await import('html2pdf.js')).default;
-            const element = document.getElementById('editor-pdf-content');
+
+            let element: HTMLElement | null = null;
+
+            if (flattenViewer && viewMode === 'viewer') {
+                // We'll target the entire DocumentViewer container which includes the iframe + annotations
+                // However, iframe content won't be captured by html2canvas easily.
+                // For "Viewer" mode (PDF), we actually want to render the annotations OVER the PDF content.
+                // The current editor logic uses 'editor-pdf-content'.
+                element = document.querySelector('.document-viewer-container') as HTMLElement;
+            } else {
+                element = document.getElementById('editor-pdf-content');
+            }
+
             if (!element) {
                 toast.error('Could not find content to print', { id: toastId });
                 return;
@@ -321,7 +342,12 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                 margin: 0.5,
                 filename: selectedFile.original_filename.replace(/\.(doc|docx|txt)$/i, '.pdf'),
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    letterRendering: true
+                },
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
 
@@ -374,7 +400,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                         {viewMode === 'editor' && (
                             <>
                                 <button
-                                    onClick={handleDownloadAsPDF}
+                                    onClick={() => handleDownloadAsPDF(false)}
                                     disabled={isSaving}
                                     className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-[10px] sm:text-xs font-bold transition-all shadow-lg shadow-orange-500/20 disabled:opacity-50"
                                 >
@@ -403,7 +429,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                 {/* Content Area */}
                 <div className="flex-1 overflow-hidden bg-slate-950">
                     {isPdf && fileUrl ? (
-                        <div className="h-full">
+                        <div className="h-full document-viewer-container">
                             <DocumentViewer
                                 url={fileUrl}
                                 userName={user.name || 'User'}
