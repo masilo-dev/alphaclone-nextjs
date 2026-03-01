@@ -81,17 +81,17 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
     }, []);
 
     // -- PERSISTENT VIDEO CALL STATE --
-    const [activeCallUrl, setActiveCallUrl] = useState<string | null>(null);
+    const [activeCallId, setActiveCallId] = useState<string | null>(null);
     const [isCallMinimized, setIsCallMinimized] = useState(false);
     const { tasks: bgTasks } = useBackgroundTasks();
     const activeBgTasksCount = bgTasks.filter(t => t.status === 'running').length;
 
     // Explicitly typed handlers
-    const handleJoinCall = (url: string) => {
-        if (!url) return;
-        setActiveCallUrl(url);
+    const handleJoinCall = (callId: string) => {
+        setActiveCallId(callId);
         setIsCallMinimized(false);
     };
+
 
     const handleInitiateCallToClient = async (clientId: string) => {
         const toastId = toast.loading('Initiating secure call...');
@@ -139,7 +139,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             toast.success('Calling client...', { id: toastId });
 
             // 5. Join Room
-            handleJoinCall(call.daily_room_url);
+            handleJoinCall(call.id);
 
         } catch (error) {
             console.error('Call failed:', error);
@@ -148,9 +148,10 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
     };
 
     const handleLeaveCall = () => {
-        setActiveCallUrl(null);
+        setActiveCallId(null);
         setIsCallMinimized(false);
     };
+
 
     // Contract Modal State
     const [showContractModal, setShowContractModal] = useState(false);
@@ -384,7 +385,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             <Sidebar
                 sidebarOpen={sidebarOpen}
                 setSidebarOpen={setSidebarOpen}
-                isInCall={!!activeCallUrl}
+                isInCall={!!activeCallId}
                 showSidebarDuringCall={true}
                 user={user}
                 navItems={TENANT_ADMIN_NAV_ITEMS}
@@ -490,17 +491,18 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             </main>
 
             {/* Persistent Video Room Overlay */}
-            {activeCallUrl && (
+            {activeCallId && (
                 <div className={isCallMinimized ? 'pointer-events-none fixed inset-0 z-[200]' : 'fixed inset-0 z-[100]'}>
                     <div className={isCallMinimized ? 'pointer-events-auto' : 'h-full w-full'}>
                         <React.Suspense fallback={null}>
                             <CustomVideoRoom
                                 user={user}
-                                roomUrl={activeCallUrl}
+                                callId={activeCallId}
                                 onLeave={handleLeaveCall}
                                 isMinimized={isCallMinimized}
                                 onToggleMinimize={() => setIsCallMinimized(!isCallMinimized)}
                             />
+
                         </React.Suspense>
                     </div>
                 </div>

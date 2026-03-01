@@ -12,8 +12,8 @@ import { ChevronRight, ChevronLeft, Minimize2, Maximize2, X, Mic, MicOff, Video,
 
 interface CustomVideoRoomProps {
     user: User;
-    roomUrl: string;
-    callId?: string;
+    roomUrl?: string;
+    callId: string;
     onLeave: () => void;
     onToggleSidebar?: () => void;
     showSidebar?: boolean;
@@ -35,7 +35,7 @@ const isUserAdmin = (user: User): boolean => {
  */
 const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     user,
-    roomUrl,
+    roomUrl: providedRoomUrl,
     callId,
     onLeave,
     onToggleSidebar,
@@ -43,6 +43,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     isMinimized = false,
     onToggleMinimize
 }) => {
+    const [resolvedRoomUrl, setResolvedRoomUrl] = useState<string | null>(providedRoomUrl || null);
     const {
         isJoined,
         isJoining,
@@ -121,15 +122,36 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         }
     }, [callStartTime, callId, leave, onLeave]);
 
-    // Join meeting on mount
+    // Resolve Room URL if not provided
     useEffect(() => {
-        if (joinAttemptedRef.current || isJoining || isJoined) return;
+        if (resolvedRoomUrl) return;
+
+        const resolveUrl = async () => {
+            try {
+                const { call, error } = await dailyService.getVideoCall(callId);
+                if (error || !call?.daily_room_url) {
+                    throw new Error(error || 'Failed to resolve meeting URL');
+                }
+                setResolvedRoomUrl(call.daily_room_url);
+            } catch (err) {
+                console.error('Error resolving video URL:', err);
+                toast.error('Failed to connect to the secure meeting channel');
+                setTimeout(onLeave, 2000);
+            }
+        };
+
+        resolveUrl();
+    }, [callId, resolvedRoomUrl, onLeave]);
+
+    // Join meeting on mount or when URL is resolved
+    useEffect(() => {
+        if (joinAttemptedRef.current || isJoining || isJoined || !resolvedRoomUrl) return;
         joinAttemptedRef.current = true;
 
         const joinMeeting = async () => {
             try {
                 await join({
-                    url: roomUrl,
+                    url: resolvedRoomUrl,
                     userName: user.name || 'Guest',
                 });
 
@@ -157,7 +179,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 handleLeave();
             }
         };
-    }, [roomUrl, user.name, callId, onLeave, join, isJoining, isJoined, handleLeave]);
+    }, [resolvedRoomUrl, user.name, callId, onLeave, join, isJoining, isJoined, handleLeave]);
 
     useEffect(() => {
         isJoinedRef.current = isJoined;
@@ -386,7 +408,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 onToggleChat={() => setShowChat(!showChat)}
                 onEndForAll={isUserAdmin(user) ? handleEndMeetingForAll : undefined}
                 isAdmin={isUserAdmin(user)}
-                roomUrl={roomUrl}
+                roomUrl={resolvedRoomUrl || ''}
                 callId={callId}
             />
 

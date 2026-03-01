@@ -11,7 +11,7 @@ import { Button, Card, Badge } from '@/components/ui/UIComponents';
 
 interface MeetingsPageProps {
     user: User;
-    onJoinRoom?: (url: string) => void;
+    onJoinRoom?: (callId: string) => void;
 }
 
 const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
@@ -127,9 +127,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
 
                         <Button
                             onClick={() => {
-                                const wrappedUrl = dailyService.getWrappedMeetingUrl(nextMeeting.id);
-                                onJoinRoom?.(wrappedUrl);
-                                window.open(wrappedUrl, '_blank');
+                                onJoinRoom?.(nextMeeting.id);
                             }}
                             className="w-full md:w-auto px-8 py-4 text-lg bg-teal-500 hover:bg-teal-400 text-white shadow-lg shadow-teal-900/40 rounded-2xl transition-all hover:scale-105"
                         >
@@ -191,9 +189,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                                                 size="sm"
                                                 variant="secondary"
                                                 onClick={() => {
-                                                    const wrappedUrl = dailyService.getWrappedMeetingUrl(meeting.id);
-                                                    onJoinRoom?.(wrappedUrl);
-                                                    window.open(wrappedUrl, '_blank');
+                                                    onJoinRoom?.(meeting.id);
                                                 }}
                                                 className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                                             >

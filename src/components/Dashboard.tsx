@@ -162,7 +162,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [activeTab, setActiveTab] = useState(location || '/dashboard');
 
   // -- PERSISTENT VIDEO CALL STATE --
-  const [activeCallUrl, setActiveCallUrl] = useState<string | null>(null);
+  const [activeCallId, setActiveCallId] = useState<string | null>(null);
   const [isCallMinimized, setIsCallMinimized] = useState(false);
   const [isInCall, setIsInCall] = useState(false); // Kept for backward compatibility if needed, or synced
   const [showSidebarDuringCall, setShowSidebarDuringCall] = useState(false);
@@ -179,17 +179,18 @@ const Dashboard: React.FC<DashboardProps> = ({
     // We removed the else { setForceSidebarHide(false) } to allow the "Focus Mode" to persist
   }, [activeTab]);
 
-  const handleJoinCall = (url: string) => {
-    setActiveCallUrl(url);
+  const handleJoinCall = (callId: string) => {
+    setActiveCallId(callId);
     setIsCallMinimized(false); // Default to full screen
     setIsInCall(true);
   };
 
   const handleLeaveCall = () => {
-    setActiveCallUrl(null);
+    setActiveCallId(null);
     setIsCallMinimized(false);
     setIsInCall(false);
   };
+
 
   // Sync activeTab with URL changes
   useEffect(() => {
@@ -1747,13 +1748,13 @@ const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* Persistent Video Room Overlay */}
-      {activeCallUrl && (
+      {activeCallId && (
         <div className={isCallMinimized ? 'pointer-events-none fixed inset-0 z-[200]' : 'fixed inset-0 z-[100]'}>
           <div className={isCallMinimized ? 'pointer-events-auto' : 'h-full w-full'}>
             <React.Suspense fallback={null}>
               <CustomVideoRoom
                 user={user}
-                roomUrl={activeCallUrl}
+                callId={activeCallId}
                 onLeave={handleLeaveCall}
                 onToggleSidebar={() => setShowSidebarDuringCall(!showSidebarDuringCall)}
                 showSidebar={showSidebarDuringCall}
@@ -1764,6 +1765,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
       )}
+
 
       {/* Dashboard Global Elements */}
       <CommandPalette

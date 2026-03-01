@@ -8,7 +8,7 @@ interface Props {
     onCallStateChange?: (isInCall: boolean) => void;
     onToggleSidebar?: () => void;
     showSidebar?: boolean;
-    onJoinRoom?: (url: string) => void;
+    onJoinRoom?: (callId: string) => void;
 }
 
 /**
@@ -17,11 +17,12 @@ interface Props {
  */
 const ConferenceTab: React.FC<Props> = ({ user, onCallStateChange, onToggleSidebar, showSidebar, onJoinRoom }) => {
 
-    const handleJoin = useCallback((roomUrl: string) => {
+    const handleJoin = useCallback((callId: string) => {
         if (onJoinRoom) {
-            onJoinRoom(roomUrl);
+            onJoinRoom(callId);
         }
     }, [onJoinRoom]);
+
 
     // Main conference tab view
     return (

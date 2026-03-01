@@ -10,10 +10,11 @@ import { supabase } from '@/lib/supabase'; // Added supabase for direct query
 
 interface SimpleVideoMeetingProps {
     user: User;
-    onJoinRoom: (roomUrl: string) => void;
+    onJoinRoom: (callId: string) => void;
 }
 
 interface MeetingRoom {
+    id: string;
     name: string;
     url: string;
     shareLink: string;
@@ -87,11 +88,11 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                 permanentCall = call;
             }
 
-            // Always use the slug for the shareable link to ensure consistency
-            const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://alphaclone.tech';
-            const shareLink = `${baseUrl}/meet/${currentTenant.slug}`;
+            // Always use the branded link for the shareable link to ensure consistency
+            const shareLink = dailyService.getWrappedMeetingUrl(permanentCall.id);
 
             setRoom({
+                id: permanentCall.id,
                 name: permanentCall.daily_room_name || `room-${permanentCall.id}`,
                 url: permanentCall.daily_room_url || '',
                 shareLink: shareLink
@@ -120,13 +121,15 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
     const handleJoin = async () => {
         if (!room) return;
         try {
-            window.open(room.shareLink, '_blank', 'noopener,noreferrer');
-            toast.success('Meeting opened in a new tab!');
+            // Internal dashboard experience uses onJoinRoom with just the callId
+            onJoinRoom(room.id);
+            toast.success('Joining meeting...');
         } catch (err) {
             console.error('Failed to join:', err);
-            onJoinRoom(room.url);
+            toast.error('Failed to join meeting');
         }
     };
+
 
     const handleCreateNew = () => {
         toast('This is your personal permanent room. No need to create a new one!', { icon: 'ℹ️' });
