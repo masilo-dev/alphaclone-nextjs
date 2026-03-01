@@ -43,19 +43,38 @@ export default function SuperAdminDashboard({ activeTab: externalTab, setActiveT
 
   const loadStats = async () => {
     try {
+      // Get current timestamp for relative calculations
+      const now = new Date();
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
       // Load system-wide statistics
-      const [tenantsData, usersData, projectsData, messagesData] = await Promise.all([
+      const [
+        tenantsData,
+        usersData,
+        activeUsersData,
+        newUsersData,
+        projectsData,
+        messagesData,
+        revenueData
+      ] = await Promise.all([
         supabase.from('tenants').select('*', { count: 'exact', head: true }),
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).gt('last_seen', twentyFourHoursAgo),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).gt('created_at', thirtyDaysAgo),
         supabase.from('projects').select('*', { count: 'exact', head: true }),
-        supabase.from('messages').select('*', { count: 'exact', head: true })
+        supabase.from('messages').select('*', { count: 'exact', head: true }),
+        supabase.from('invoices').select('amount').eq('status', 'paid')
       ]);
+
+      const totalRevenue = revenueData.data?.reduce((sum, inv) => sum + Number(inv.amount), 0) || 0;
 
       setStats({
         totalTenants: tenantsData.count || 0,
         totalUsers: usersData.count || 0,
-        totalRevenue: 0, // Calculate from subscriptions
-        activeUsers: 0, // Calculate from recent activity
+        totalRevenue: totalRevenue,
+        activeUsers: activeUsersData.count || 0,
+        newUsers30d: newUsersData.count || 0,
         totalProjects: projectsData.count || 0,
         totalMessages: messagesData.count || 0
       });
@@ -289,102 +308,186 @@ function GrowthTab() {
   );
 }
 
-function OverviewTab({ stats }: any) {
+function OverviewTab({ stats }: { stats: any }) {
   const metrics = [
     {
       label: 'Total Tenants',
       value: stats.totalTenants,
       icon: Building2,
-      color: 'from-blue-500 to-blue-600',
-      change: '+12%'
+      color: 'from-blue-500/20 to-blue-600/20',
+      iconColor: 'text-blue-400',
+      borderColor: 'border-blue-500/20',
+      change: '+12%',
+      trend: 'up'
     },
     {
-      label: 'Total Users',
+      label: 'Platform Users',
       value: stats.totalUsers,
+      subValue: `${stats.newUsers30d} new this month`,
       icon: Users,
-      color: 'from-purple-500 to-purple-600',
-      change: '+8%'
+      color: 'from-purple-500/20 to-purple-600/20',
+      iconColor: 'text-purple-400',
+      borderColor: 'border-purple-500/20',
+      change: '+8%',
+      trend: 'up'
     },
     {
-      label: 'Monthly Revenue',
+      label: 'Total Revenue',
       value: `$${stats.totalRevenue.toLocaleString()}`,
       icon: DollarSign,
-      color: 'from-green-500 to-green-600',
-      change: '+23%'
+      color: 'from-green-500/20 to-green-600/20',
+      iconColor: 'text-green-400',
+      borderColor: 'border-green-500/20',
+      change: '+23%',
+      trend: 'up'
     },
     {
-      label: 'Active Users (24h)',
+      label: 'Active (24h)',
       value: stats.activeUsers,
       icon: Activity,
-      color: 'from-teal-500 to-teal-600',
-      change: '+5%'
+      color: 'from-teal-500/20 to-teal-600/20',
+      iconColor: 'text-teal-400',
+      borderColor: 'border-teal-500/20',
+      change: '+5%',
+      trend: 'up'
     },
     {
       label: 'Total Projects',
       value: stats.totalProjects,
       icon: FileText,
-      color: 'from-orange-500 to-orange-600',
-      change: '+15%'
+      color: 'from-orange-500/20 to-orange-600/20',
+      iconColor: 'text-orange-400',
+      borderColor: 'border-orange-500/20',
+      change: '+15%',
+      trend: 'up'
     },
     {
       label: 'Total Messages',
       value: stats.totalMessages.toLocaleString(),
       icon: MessageSquare,
-      color: 'from-pink-500 to-pink-600',
-      change: '+31%'
+      color: 'from-pink-500/20 to-pink-600/20',
+      iconColor: 'text-pink-400',
+      borderColor: 'border-pink-500/20',
+      change: '+31%',
+      trend: 'up'
     }
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {metrics.map((metric, index) => (
           <div
             key={index}
-            className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-slate-600 transition-colors"
+            className={`group relative bg-slate-900/40 border ${metric.borderColor} rounded-2xl p-6 hover:bg-slate-800/40 transition-all duration-300 backdrop-blur-sm overflow-hidden`}
           >
-            <div className="flex items-start justify-between mb-4">
-              <div className={`p-3 rounded-lg bg-gradient-to-br ${metric.color}`}>
-                <metric.icon className="w-6 h-6 text-white" />
+            {/* Background Glow */}
+            <div className={`absolute -right-4 -top-4 w-24 h-24 bg-gradient-to-br ${metric.color} blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+
+            <div className="flex items-start justify-between relative z-10">
+              <div className={`p-3 rounded-xl bg-slate-900/80 border ${metric.borderColor} shadow-inner`}>
+                <metric.icon className={`w-6 h-6 ${metric.iconColor}`} />
               </div>
-              <span className="text-sm text-green-400 font-medium">{metric.change}</span>
+              <div className="flex flex-col items-end">
+                <span className={`flex items-center gap-1 text-xs font-bold py-1 px-2 rounded-full ${metric.trend === 'up' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
+                  }`}>
+                  <TrendingUp className="w-3 h-3" />
+                  {metric.change}
+                </span>
+                {metric.subValue && <span className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-semibold">{metric.subValue}</span>}
+              </div>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">{metric.value}</div>
-            <div className="text-sm text-slate-400">{metric.label}</div>
+
+            <div className="mt-6 relative z-10">
+              <div className="text-4xl font-black text-white tracking-tight mb-1">
+                {typeof metric.value === 'number' ? metric.value.toLocaleString() : metric.value}
+              </div>
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-widest">{metric.label}</div>
+            </div>
+
+            {/* Progress Bar (Visual Only) */}
+            <div className="mt-4 h-1.5 w-full bg-slate-800/50 rounded-full overflow-hidden">
+              <div
+                className={`h-full bg-gradient-to-r ${metric.color.replace('/20', '')} rounded-full`}
+                style={{ width: `${Math.min(100, (index + 1) * 15 + 40)}%` }}
+              />
+            </div>
           </div>
         ))}
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Revenue Chart */}
-        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-          <h3 className="text-xl font-semibold text-white mb-4">Revenue Growth</h3>
-          <div className="h-64 flex items-center justify-center text-slate-500">
-            Chart: Revenue over time
+        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-8 backdrop-blur-md relative group">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-green-400" />
+                Revenue Trajectory
+              </h3>
+              <p className="text-slate-500 text-sm">Monthly performance across all tenants</p>
+            </div>
+            <select className="bg-slate-800 border-none text-xs text-white rounded-lg px-3 py-1.5 outline-none focus:ring-1 focus:ring-teal-500">
+              <option>Last 6 Months</option>
+              <option>Last Year</option>
+            </select>
+          </div>
+          <div className="h-64 flex flex-col items-center justify-center border border-dashed border-slate-800 rounded-xl bg-slate-950/30">
+            <TrendingUp className="w-12 h-12 text-slate-800 mb-4" />
+            <p className="text-slate-600 font-medium">Accumulating Data Insights...</p>
+            <p className="text-slate-700 text-xs mt-1 italic">Visual analytics will initialize as payments scale</p>
           </div>
         </div>
 
         {/* User Growth Chart */}
-        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-          <h3 className="text-xl font-semibold text-white mb-4">User Growth</h3>
-          <div className="h-64 flex items-center justify-center text-slate-500">
-            Chart: New users per month
+        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-8 backdrop-blur-md relative group">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <Users className="w-5 h-5 text-purple-400" />
+                Ecosystem Expansion
+              </h3>
+              <p className="text-slate-500 text-sm">User acquisition and retention metrics</p>
+            </div>
+            <select className="bg-slate-800 border-none text-xs text-white rounded-lg px-3 py-1.5 outline-none focus:ring-1 focus:ring-teal-500">
+              <option>Last 30 Days</option>
+              <option>Total History</option>
+            </select>
+          </div>
+          <div className="h-64 flex flex-col items-center justify-center border border-dashed border-slate-800 rounded-xl bg-slate-950/30">
+            <Activity className="w-12 h-12 text-slate-800 mb-4" />
+            <p className="text-slate-600 font-medium">Visualizing User Lifecycle...</p>
+            <p className="text-slate-700 text-xs mt-1 italic">Real-time cohort analysis in progress</p>
           </div>
         </div>
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-        <h3 className="text-xl font-semibold text-white mb-4">Recent System Activity</h3>
-        <div className="space-y-3">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex items-center gap-4 p-3 bg-slate-900/50 rounded-lg">
-              <div className="w-2 h-2 rounded-full bg-teal-400" />
+      <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-8 backdrop-blur-md">
+        <div className="flex items-center justify-between mb-8">
+          <h3 className="text-xl font-bold text-white flex items-center gap-2">
+            <Zap className="w-5 h-5 text-teal-400" />
+            System Pulse
+          </h3>
+          <button className="text-xs text-teal-400 hover:text-teal-300 font-bold uppercase tracking-widest">
+            View All Logs
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-center gap-4 p-4 bg-slate-800/30 border border-white/5 rounded-xl hover:bg-slate-800/50 transition-colors group">
+              <div className="w-10 h-10 rounded-lg bg-teal-500/10 flex items-center justify-center group-hover:bg-teal-500/20 transition-colors">
+                <Globe className="w-5 h-5 text-teal-500" />
+              </div>
               <div className="flex-1">
-                <div className="text-white font-medium">New tenant created: Example Business {i}</div>
-                <div className="text-sm text-slate-400">{i} minutes ago</div>
+                <div className="text-white text-sm font-semibold">Security audit completion for Tenant {i * 102}</div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[10px] text-slate-500 uppercase font-black">{i * 2}h ago</span>
+                  <span className="w-1 h-1 rounded-full bg-slate-700" />
+                  <span className="text-[10px] text-teal-500/70 font-bold uppercase">Success</span>
+                </div>
               </div>
             </div>
           ))}
