@@ -37,6 +37,7 @@ export default function SuperAdminDashboard({ activeTab: externalTab, setActiveT
     totalUsers: 0,
     totalRevenue: 0,
     activeUsers: 0,
+    newUsers30d: 0,
     totalProjects: 0,
     totalMessages: 0
   });
@@ -67,7 +68,7 @@ export default function SuperAdminDashboard({ activeTab: externalTab, setActiveT
         supabase.from('invoices').select('amount').eq('status', 'paid')
       ]);
 
-      const totalRevenue = revenueData.data?.reduce((sum, inv) => sum + Number(inv.amount), 0) || 0;
+      const totalRevenue = revenueData.data?.reduce((sum: number, inv: { amount: number | string }) => sum + Number(inv.amount), 0) || 0;
 
       setStats({
         totalTenants: tenantsData.count || 0,
