@@ -177,14 +177,14 @@ export const projectService = {
     /**
      * Create a new project (with tenant assignment)
      */
-    async createProject(project: Omit<Project, 'id'>): Promise<{ project: Project | null; error: string | null }> {
+    async createProject(project: Omit<Project, 'id'>, templateId?: string): Promise<{ project: Project | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
 
             const { data, error } = await supabase
                 .from('projects')
                 .insert({
-                    tenant_id: tenantId || null, // ← ASSIGN TO TENANT (null if no tenant)
+                    tenant_id: tenantId || null,
                     owner_id: project.ownerId,
                     owner_name: project.ownerName,
                     name: project.name,
@@ -241,13 +241,20 @@ export const projectService = {
                 createdAt: data.created_at,
             };
 
+            // If a template is provided, apply it to the new project
+            if (templateId) {
+                const { projectTemplateService } = await import('./projectTemplateService');
+                await projectTemplateService.applyTemplateToProject(newProject.id, templateId);
+            }
+
             // Log activity
             if (project.ownerId) {
                 activityService.logActivity(project.ownerId, 'Project Created', {
                     projectId: newProject.id,
                     projectName: newProject.name,
                     category: newProject.category,
-                    status: newProject.status
+                    status: newProject.status,
+                    templateApplied: !!templateId
                 }).catch(err => console.error('Failed to log activity:', err));
             }
 

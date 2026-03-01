@@ -59,6 +59,7 @@ const AutoSizer = dynamic(
 import { ClientImportModal } from './crm/ClientImport';
 import { LeadImportModal } from './crm/LeadImportModal';
 import { useQueryClient } from '@tanstack/react-query';
+import ProjectModal from './projects/ProjectModal';
 
 interface CRMTabProps {
     userId: string;
@@ -73,6 +74,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
     const [showLeadImportModal, setShowLeadImportModal] = useState(false);
+    const [showProjectModal, setShowProjectModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
     const queryClient = useQueryClient();
@@ -318,6 +320,15 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                                 <div className="absolute top-4 right-4 flex gap-2">
                                     <Button size="sm" variant="danger" onClick={() => handleDeleteClient(selectedClient.id)} icon={<Trash2 className="w-3 h-3" />}>Delete</Button>
                                     <Button size="sm" variant="secondary" onClick={() => handleEditClient(selectedClient)} icon={<Edit2 className="w-3 h-3" />}>Edit</Button>
+                                    <Button
+                                        size="sm"
+                                        variant="primary"
+                                        onClick={() => setShowProjectModal(true)}
+                                        icon={<Plus className="w-3 h-3" />}
+                                        className="bg-teal-600 hover:bg-teal-500"
+                                    >
+                                        Launch Project
+                                    </Button>
                                 </div>
                             </div>
 
@@ -594,6 +605,19 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                 onClose={() => setShowLeadImportModal(false)}
                 onImportComplete={() => {
                     queryClient.invalidateQueries({ queryKey: ['clients'] });
+                }}
+            />
+
+            {/* Launch Project Modal */}
+            <ProjectModal
+                isOpen={showProjectModal}
+                onClose={() => setShowProjectModal(false)}
+                clientId={selectedClient?.id || null}
+                ownerId={userId}
+                ownerName={selectedClient?.name || 'Client'} // Using client name as reference
+                onSuccess={(project) => {
+                    toast.success(`Project ${project.name} initialized!`);
+                    // We could redirect to projects tab here or just close
                 }}
             />
         </div>

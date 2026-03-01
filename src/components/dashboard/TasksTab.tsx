@@ -20,6 +20,7 @@ import {
     History
 } from 'lucide-react';
 import { taskService, Task } from '../../services/taskService';
+import { taskRecurrenceService, RecurrenceFrequency } from '../../services/taskRecurrenceService';
 import { notificationService } from '../../services/dashboardService';
 import { Button, Modal, Input } from '../ui/UIComponents';
 import { TaskCountdown } from './tasks/TaskCountdown';
@@ -64,7 +65,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         limit: 50
     });
 
-    // Fetch related data for relational fields - Optimize: Only fetch when modal is open
+    // Fetch related data for relational fields
     const { data: userData } = useQuery({
         queryKey: ['users'],
         queryFn: () => userService.getUsers(),
@@ -90,7 +91,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
     const projects = projectData?.projects || [];
     const leads = leadData?.leads || [];
 
-    // Create task form state
+    // Form state
     const [taskForm, setTaskForm] = useState({
         title: '',
         description: '',
@@ -100,27 +101,24 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         relatedToLead: '',
         dueDate: '',
         startDate: new Date().toISOString().split('T')[0],
-        estimatedHours: ''
+        estimatedHours: '',
+        isRecurring: false,
+        recurrenceFrequency: 'Weekly' as RecurrenceFrequency,
+        recurrenceInterval: '1'
     });
 
     // Computed Tasks
     const filteredAndSearchedTasks = useMemo(() => {
-        let result = tasks;
-
+        let result = tasks || [];
         if (filter === 'completed') {
             result = result.filter(t => t.status === 'completed');
         } else {
-            result = result.filter(t => t.status !== 'completed'); // Default: show only active
+            result = result.filter(t => t.status !== 'completed');
         }
-
-        // Client-side filtering for 'overdue'
         if (filter === 'overdue') {
             const today = new Date();
-            result = result.filter(
-                (t) => t.dueDate && new Date(t.dueDate) < today && t.status !== 'completed'
-            );
+            result = result.filter(t => t.dueDate && new Date(t.dueDate) < today && t.status !== 'completed');
         }
-
         if (!searchQuery.trim()) return result;
         const query = searchQuery.toLowerCase();
         return result.filter(t =>
@@ -129,13 +127,23 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         );
     }, [tasks, searchQuery, filter]);
 
-
     const handleStatusChange = async (taskId: string, newStatus: Task['status']) => {
         try {
             await updateTaskMutation.mutateAsync({ taskId, updates: { status: newStatus } });
             toast.success('Task status updated');
         } catch (err) {
             toast.error('Failed to update task');
+        }
+    };
+
+    const handleRecurrencePersistence = async (taskId: string) => {
+        if (taskForm.isRecurring) {
+            await taskRecurrenceService.setRecurrence(taskId, {
+                frequency: taskForm.recurrenceFrequency,
+                interval: parseInt(taskForm.recurrenceInterval) || 1,
+            });
+        } else if (editingTask) {
+            await taskRecurrenceService.removeRecurrence(taskId);
         }
     };
 
@@ -161,9 +169,10 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                         estimatedHours: taskForm.estimatedHours ? parseFloat(taskForm.estimatedHours) : undefined
                     }
                 });
+                await handleRecurrencePersistence(editingTask.id);
                 toast.success('Task updated successfully!');
             } else {
-                await createTaskMutation.mutateAsync({
+                const result = await createTaskMutation.mutateAsync({
                     userId,
                     taskData: {
                         title: taskForm.title,
@@ -177,6 +186,10 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                         estimatedHours: taskForm.estimatedHours ? parseFloat(taskForm.estimatedHours) : undefined
                     }
                 });
+
+                if (result?.id) {
+                    await handleRecurrencePersistence(result.id);
+                }
                 toast.success('Task created successfully!');
             }
             setShowCreateModal(false);
@@ -199,12 +212,19 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
             relatedToLead: '',
             dueDate: '',
             startDate: new Date().toISOString().split('T')[0],
-            estimatedHours: ''
+            estimatedHours: '',
+            isRecurring: false,
+            recurrenceFrequency: 'Weekly',
+            recurrenceInterval: '1'
         } as any);
     };
 
-    const openEditModal = (task: Task) => {
+    const openEditModal = async (task: Task) => {
         setEditingTask(task);
+
+        // Fetch recurrence info
+        const { data: recurrenceData } = await taskRecurrenceService.getRecurrence(task.id);
+
         setTaskForm({
             title: task.title,
             description: task.description || '',
@@ -214,7 +234,10 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
             relatedToLead: task.relatedToLead || '',
             dueDate: task.dueDate || '',
             startDate: task.startDate || '',
-            estimatedHours: task.estimatedHours?.toString() || ''
+            estimatedHours: task.estimatedHours?.toString() || '',
+            isRecurring: !!recurrenceData,
+            recurrenceFrequency: recurrenceData?.frequency || 'Weekly',
+            recurrenceInterval: recurrenceData?.interval?.toString() || '1'
         });
         setShowCreateModal(true);
     };
@@ -485,6 +508,50 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                     onChange={(e) => setTaskForm({ ...taskForm, estimatedHours: e.target.value })}
                                     className="bg-slate-950/50 border-white/10 h-12 text-slate-300 font-mono text-xs"
                                 />
+                            </div>
+
+                            {/* Recurrence Settings */}
+                            <div className="md:col-span-2 pt-4 mt-2 border-t border-white/5">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <input
+                                        type="checkbox"
+                                        id="isRecurring"
+                                        checked={taskForm.isRecurring}
+                                        onChange={(e) => setTaskForm({ ...taskForm, isRecurring: e.target.checked })}
+                                        className="w-4 h-4 rounded border-white/10 bg-slate-950/50 text-teal-500 focus:ring-teal-500"
+                                    />
+                                    <label htmlFor="isRecurring" className="text-[10px] font-black text-slate-300 uppercase tracking-widest font-mono cursor-pointer">
+                                        Recurring Directive (Auto-generate next mission)
+                                    </label>
+                                </div>
+
+                                {taskForm.isRecurring && (
+                                    <div className="grid grid-cols-2 gap-4 animate-fade-in">
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Frequency</label>
+                                            <select
+                                                value={taskForm.recurrenceFrequency}
+                                                onChange={(e) => setTaskForm({ ...taskForm, recurrenceFrequency: e.target.value as any })}
+                                                className="w-full bg-slate-950/50 border border-white/10 rounded-xl h-12 px-4 text-slate-300 focus:border-teal-500 outline-none transition-all text-xs font-mono"
+                                            >
+                                                <option value="Daily">Daily</option>
+                                                <option value="Weekly">Weekly</option>
+                                                <option value="Monthly">Monthly</option>
+                                                <option value="Yearly">Yearly</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Interval (Every X {taskForm.recurrenceFrequency.slice(0, -2).toLowerCase() + 's'})</label>
+                                            <Input
+                                                type="number"
+                                                min="1"
+                                                value={taskForm.recurrenceInterval}
+                                                onChange={(e) => setTaskForm({ ...taskForm, recurrenceInterval: e.target.value })}
+                                                className="bg-slate-950/50 border-white/10 h-12 text-slate-300 font-mono text-xs"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* New Relational Fields */}
