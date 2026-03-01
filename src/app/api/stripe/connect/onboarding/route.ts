@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+import { ENV } from '@/config/env';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,8 +14,27 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
         }
 
-        // 1. Get tenant details and check permissions
-        const { data: tenant, error: tenantError } = await supabase
+        const authHeader = req.headers.get('Authorization');
+        if (!authHeader) {
+            return NextResponse.json({ error: 'Missing Authorization header' }, { status: 401 });
+        }
+        const token = authHeader.replace('Bearer ', '');
+
+        // Use regular client for auth verification
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // Create a service client to bypass RLS and fetch the tenant details
+        const serviceClient = createClient(
+            ENV.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
+            process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+        );
+
+        // 1. Get tenant details
+        const { data: tenant, error: tenantError } = await serviceClient
             .from('tenants')
             .select('*')
             .eq('id', tenantId)
@@ -21,17 +42,6 @@ export async function POST(req: Request) {
 
         if (tenantError || !tenant) {
             return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
-        }
-
-        const authHeader = req.headers.get('Authorization');
-        if (!authHeader) {
-            return NextResponse.json({ error: 'Missing Authorization header' }, { status: 401 });
-        }
-        const token = authHeader.replace('Bearer ', '');
-        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-        if (authError || !user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         if (tenant.admin_user_id !== user.id) {

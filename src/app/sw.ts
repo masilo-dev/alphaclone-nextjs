@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { Serwist } from "serwist";
+import { Serwist, NetworkOnly } from "serwist";
 
 declare global {
     interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -16,7 +16,16 @@ const serwist = new Serwist({
     skipWaiting: true,
     clientsClaim: true,
     navigationPreload: true,
-    runtimeCaching: defaultCache,
+    runtimeCaching: [
+        {
+            // Bypass service worker for daily.co WebRTC signaling and data
+            matcher({ url }) {
+                return url.hostname.includes('daily.co') || url.hostname.includes('wss://');
+            },
+            handler: new NetworkOnly(),
+        },
+        ...defaultCache,
+    ],
 });
 
 serwist.addEventListeners();

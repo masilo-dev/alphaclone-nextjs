@@ -99,6 +99,8 @@ export async function POST(req: Request) {
                 let desc = event.name;
                 const eventUuid = event.uri.split('/').pop();
 
+                let inviteeData: any = null;
+
                 try {
                     const inviteesRes = await fetch(`https://api.calendly.com/scheduled_events/${eventUuid}/invitees`, {
                         headers: {
@@ -106,14 +108,22 @@ export async function POST(req: Request) {
                         }
                     });
                     if (inviteesRes.ok) {
-                        const inviteesData = await inviteesRes.json();
-                        const invitee = inviteesData.collection?.[0];
+                        const data = await inviteesRes.json();
+                        const invitee = data.collection?.[0];
                         if (invitee) {
                             desc = `Calendly meeting with ${invitee.name || invitee.email}`;
+                            inviteeData = {
+                                name: invitee.name,
+                                email: invitee.email,
+                                cancel_url: invitee.cancel_url,
+                                reschedule_url: invitee.reschedule_url,
+                                questions_and_responses: invitee.questions_and_responses,
+                                timezone: invitee.timezone
+                            };
                         }
                     }
                 } catch (e) {
-                    // Ignore invitee fetch errors
+                    console.error('Error fetching invitee data:', e);
                 }
 
                 await supabase.from('calendar_events').insert({
@@ -129,7 +139,8 @@ export async function POST(req: Request) {
                     reminder_minutes: 15,
                     metadata: {
                         calendly_event_uri: event.uri,
-                        calendly_status: event.status
+                        calendly_status: event.status,
+                        invitee: inviteeData
                     }
                 });
 

@@ -146,51 +146,123 @@ const BookingTab: React.FC = () => {
                                 <div key={i} className="h-24 bg-slate-900/50 rounded-2xl animate-pulse border border-slate-800" />
                             ))}
                         </div>
-                    ) : scheduledEvents.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {scheduledEvents.map((event: any) => {
-                                const start = new Date(event.start_time);
-                                return (
-                                    <Card key={event.id} className="p-5 bg-slate-900/40 border-slate-800 hover:border-teal-500/30 transition-all flex flex-col justify-between group">
-                                        <div>
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400 group-hover:scale-110 transition-transform">
-                                                    <Calendar className="w-5 h-5" />
-                                                </div>
-                                                <span className="text-[10px] font-bold px-2 py-1 bg-slate-800 text-slate-400 rounded-lg border border-slate-700">
-                                                    Scheduled
-                                                </span>
-                                            </div>
-                                            <h4 className="font-bold text-white mb-1 group-hover:text-teal-400 transition-colors line-clamp-1">{event.title}</h4>
-                                            <div className="flex items-center gap-2 text-xs text-slate-500 mb-4">
-                                                <Clock className="w-3 h-3 text-teal-500/50" />
-                                                {start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at {start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </div>
-                                        </div>
-                                        <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center">
-                                                    <User className="w-3 h-3 text-slate-500" />
-                                                </div>
-                                                <span className="text-[10px] text-slate-400">1 Invitee</span>
-                                            </div>
-                                            <button
-                                                onClick={() => window.location.href = '/dashboard/business/calendar'}
-                                                className="text-[10px] font-bold text-teal-400 hover:underline"
-                                            >
-                                                View in Calendar
-                                            </button>
-                                        </div>
-                                    </Card>
-                                );
-                            })}
-                        </div>
                     ) : (
-                        <div className="flex flex-col items-center justify-center py-16 bg-slate-900/20 border border-slate-800 border-dashed rounded-3xl">
-                            <Calendar className="w-10 h-10 text-slate-700 mb-4" />
-                            <p className="text-slate-500 font-medium text-sm">No upcoming appointments found.</p>
-                            <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-widest">Bookings sync automatically</p>
-                        </div>
+                        <>
+                            <Card className="bg-slate-900/60 border-slate-800 p-4 mb-6 flex items-start gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center shrink-0 text-teal-400">
+                                    <AlertCircle className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-white text-sm mb-1">Managing Your Availability & Payments</h4>
+                                    <p className="text-xs text-slate-400 leading-relaxed mb-3">
+                                        Your availability rules, event types, and <strong>payment collection (via Stripe)</strong> are configured securely within your Calendly dashboard. We sync your data here so you can view your schedule without leaving the platform.
+                                    </p>
+                                    <a
+                                        href="https://help.calendly.com/hc/en-us/articles/223145167-How-to-collect-payments-with-Stripe"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs font-bold text-teal-400 hover:text-teal-300 flex items-center gap-1 w-max"
+                                    >
+                                        Learn how to set up Stripe payments on Calendly <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                </div>
+                            </Card>
+
+                            {scheduledEvents.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {scheduledEvents.map((event: any) => {
+                                        const start = new Date(event.start_time);
+                                        const invitee = event.metadata?.invitee;
+                                        const hasActions = invitee?.cancel_url || invitee?.reschedule_url;
+
+                                        return (
+                                            <Card key={event.id} className="p-5 bg-slate-900/40 border-slate-800 hover:border-teal-500/30 transition-all flex flex-col justify-between group">
+                                                <div>
+                                                    <div className="flex justify-between items-start mb-3">
+                                                        <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400 group-hover:scale-110 transition-transform">
+                                                            <Calendar className="w-5 h-5" />
+                                                        </div>
+                                                        <span className="text-[10px] font-bold px-2 py-1 bg-slate-800 text-slate-400 rounded-lg border border-slate-700">
+                                                            Scheduled
+                                                        </span>
+                                                    </div>
+                                                    <h4 className="font-bold text-white mb-1 group-hover:text-teal-400 transition-colors line-clamp-1">{event.title}</h4>
+                                                    <div className="flex items-center gap-2 text-xs text-slate-500 mb-4">
+                                                        <Clock className="w-3 h-3 text-teal-500/50" />
+                                                        {start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at {start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+
+                                                    {invitee && (
+                                                        <div className="bg-slate-950/50 rounded-xl p-3 mb-4 space-y-2 border border-slate-800/50">
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-xs text-slate-500">Participant</span>
+                                                                <span className="text-xs font-medium text-slate-200">{invitee.name}</span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-xs text-slate-500">Email</span>
+                                                                <span className="text-xs text-slate-300">{invitee.email}</span>
+                                                            </div>
+                                                            {invitee.questions_and_responses && invitee.questions_and_responses.length > 0 && (
+                                                                <div className="pt-2 mt-2 border-t border-slate-800/50">
+                                                                    <span className="text-xs text-slate-500 mb-1 block">Notes / Answers</span>
+                                                                    <p className="text-xs text-slate-300 line-clamp-2">
+                                                                        {invitee.questions_and_responses[0]?.response}
+                                                                    </p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="pt-4 border-t border-slate-800 flex flex-col gap-3">
+                                                    {hasActions && (
+                                                        <div className="flex items-center gap-2">
+                                                            {invitee.reschedule_url && (
+                                                                <button
+                                                                    onClick={() => window.open(invitee.reschedule_url, '_blank')}
+                                                                    className="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold uppercase tracking-wide rounded-lg transition-colors text-center"
+                                                                >
+                                                                    Reschedule
+                                                                </button>
+                                                            )}
+                                                            {invitee.cancel_url && (
+                                                                <button
+                                                                    onClick={() => window.open(invitee.cancel_url, '_blank')}
+                                                                    className="flex-1 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-bold uppercase tracking-wide rounded-lg transition-colors text-center"
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center">
+                                                                <User className="w-3 h-3 text-slate-500" />
+                                                            </div>
+                                                            <span className="text-[10px] text-slate-400">1 Invitee</span>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => window.location.href = '/dashboard/business/calendar'}
+                                                            className="text-[10px] font-bold text-teal-400 hover:underline"
+                                                        >
+                                                            View in Calendar
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </Card>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-16 bg-slate-900/20 border border-slate-800 border-dashed rounded-3xl">
+                                    <Calendar className="w-10 h-10 text-slate-700 mb-4" />
+                                    <p className="text-slate-500 font-medium text-sm">No upcoming appointments found.</p>
+                                    <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-widest">Bookings sync automatically</p>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             ) : (

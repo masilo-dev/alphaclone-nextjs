@@ -17,7 +17,8 @@ import {
     Trash2,
     X,
     CreditCard,
-    CheckCircle2
+    CheckCircle2,
+    AlertCircle
 } from 'lucide-react';
 import { fileUploadService } from '../../../services/fileUploadService';
 import GmailIntegration from './GmailIntegration';
@@ -54,6 +55,44 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const [isRedirecting, setIsRedirecting] = useState(false);
     const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
     const [upgradeLoading, setUpgradeLoading] = useState<string | null>(null);
+    const [connectLoading, setConnectLoading] = useState(false);
+
+    const handleStripeConnect = async () => {
+        if (!currentTenant) return;
+        setConnectLoading(true);
+        const toastId = toast.loading('Initiating Stripe connection...');
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) throw new Error('No active session');
+
+            const response = await fetch('/api/stripe/connect/onboarding', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                    returnUrl: `${window.location.origin}/api/stripe/connect/callback?tenantId=${currentTenant.id}`,
+                    refreshUrl: `${window.location.origin}/dashboard?tab=billing&connect=refresh`
+                })
+            });
+            const data = await response.json();
+
+            if (data.url) {
+                toast.dismiss(toastId);
+                window.location.href = data.url;
+            } else {
+                throw new Error(data.error || 'Failed to initiate connection');
+            }
+        } catch (error: any) {
+            console.error('Stripe connect error:', error);
+            toast.error(error.message || 'An error occurred. Please try again.', { id: toastId });
+        } finally {
+            setConnectLoading(false);
+        }
+    };
 
     const handleManageSubscription = async () => {
         if (!currentTenant) return;
@@ -526,6 +565,47 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                     className="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white rounded-xl font-bold transition-all border border-slate-600"
                                 >
                                     View Upgrade Options
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Stripe Connect Section */}
+                        <div className="p-6 bg-slate-800 rounded-xl border border-slate-700">
+                            <div className="flex items-start gap-4 mb-4">
+                                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0">
+                                    <CreditCard className="w-5 h-5 text-indigo-400" />
+                                </div>
+                                <div>
+                                    <h4 className="text-lg font-bold text-white mb-1">Receive Payments (Stripe Connect)</h4>
+                                    <p className="text-sm text-slate-400 leading-relaxed">
+                                        Connect your Stripe account to receive payments directly through the platform.
+                                        This enables you to charge clients via our native invoicing and checkout features.
+                                        {currentTenant?.stripe_connect_onboarded ? (
+                                            <span className="block mt-2 text-teal-400 font-medium flex items-center gap-1.5 text-xs bg-teal-500/10 w-fit px-2 py-1 rounded-md">
+                                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                                Stripe Account Connected
+                                            </span>
+                                        ) : (
+                                            <span className="block mt-2 text-amber-500 font-medium flex items-center gap-1.5 text-xs bg-amber-500/10 w-fit px-2 py-1 rounded-md">
+                                                <AlertCircle className="w-3.5 h-3.5" />
+                                                Action Required: Connect to start receiving payments.
+                                            </span>
+                                        )}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="pt-4 border-t border-slate-700">
+                                <button
+                                    onClick={handleStripeConnect}
+                                    disabled={connectLoading}
+                                    className={`px-5 py-2 rounded-xl font-bold flex items-center gap-2 transition-all text-sm ${currentTenant?.stripe_connect_onboarded
+                                        ? 'bg-slate-700 hover:bg-slate-600 text-white'
+                                        : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
+                                        }`}
+                                >
+                                    {connectLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    {currentTenant?.stripe_connect_onboarded ? 'Manage Stripe Account' : 'Connect Stripe Account'}
                                 </button>
                             </div>
                         </div>
