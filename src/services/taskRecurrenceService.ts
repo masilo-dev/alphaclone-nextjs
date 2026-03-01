@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 
 export type RecurrenceFrequency = 'Daily' | 'Weekly' | 'Monthly' | 'Yearly';
