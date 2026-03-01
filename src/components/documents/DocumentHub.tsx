@@ -323,14 +323,12 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
 
             let element: HTMLElement | null = null;
 
-            if (flattenViewer && viewMode === 'viewer') {
-                // We'll target the entire DocumentViewer container which includes the iframe + annotations
-                // However, iframe content won't be captured by html2canvas easily.
-                // For "Viewer" mode (PDF), we actually want to render the annotations OVER the PDF content.
-                // The current editor logic uses 'editor-pdf-content'.
+            // Search for our dedicated content container
+            element = document.getElementById('editor-pdf-content');
+
+            if (!element) {
+                // Fallback to the viewer wrapper if specific ID not found
                 element = document.querySelector('.document-viewer-container') as HTMLElement;
-            } else {
-                element = document.getElementById('editor-pdf-content');
             }
 
             if (!element) {
@@ -339,19 +337,20 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
             }
 
             const opt: any = {
-                margin: 0.5,
+                margin: 0,
                 filename: selectedFile.original_filename.replace(/\.(doc|docx|txt)$/i, '.pdf'),
-                image: { type: 'jpeg', quality: 0.98 },
+                image: { type: 'jpeg', quality: 1 },
                 html2canvas: {
-                    scale: 2,
+                    scale: 3, // Higher scale for better quality
                     useCORS: true,
                     logging: false,
-                    letterRendering: true
+                    letterRendering: true,
+                    backgroundColor: '#ffffff' // Ensure white background
                 },
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
 
-            await html2pdf().set(opt).from(element).save();
+            await html2pdf().from(element).set(opt).save();
             toast.success('Downloaded as PDF', { id: toastId });
         } catch (error) {
             console.error('PDF generation error:', error);
