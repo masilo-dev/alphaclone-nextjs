@@ -99,7 +99,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeFilters, setActiveFilters] = useState<Set<CalendarEvent['source']>>(
-        new Set(['event', 'task', 'project'])
+        new Set(['event', 'task', 'project', 'booking'])
     );
     const [isGoogleConnected, setIsGoogleConnected] = useState(false);
 
@@ -125,16 +125,35 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
             });
         } catch (_) { /* silent */ }
 
-        // 2. Calendly bookings from DB
+        // 2. Calendly bookings (Legacy & New Sync)
         try {
-            const { data: bookings } = await supabase
-                .from('bookings')
-                .select('*')
-                .eq('tenant_id', currentTenant.id)
-                .neq('status', 'canceled')
-                .order('start_time', { ascending: true });
+            const [bookingRes, syncedRes] = await Promise.all([
+                supabase
+                    .from('bookings')
+                    .select('*')
+                    .eq('tenant_id', currentTenant.id)
+                    .neq('status', 'canceled'),
+                supabase
+                    .from('calendar_events')
+                    .select('*')
+                    .eq('tenant_id', currentTenant.id)
+                    .not('metadata->>calendly_event_uri', 'is', null)
+            ]) as [any, any];
 
-            (bookings || []).forEach((b: any) => {
+            const allBookings = [
+                ...(bookingRes.data || []),
+                ...(syncedRes.data || []).map((event: any) => ({
+                    id: event.id,
+                    client_name: event.title,
+                    start_time: event.start_time,
+                    end_time: event.end_time,
+                    status: 'confirmed',
+                    source: 'calendly',
+                    client_notes: event.description
+                }))
+            ];
+
+            allBookings.forEach((b: any) => {
                 unified.push({
                     id: `booking-${b.id}`,
                     title: `📅 ${b.client_name || 'Booking'}`,
