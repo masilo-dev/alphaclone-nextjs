@@ -108,9 +108,18 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error('Stripe Connect onboarding error:', error);
+
+        let errorMessage = error.message || 'Internal Server Error';
+        let statusCode = 500;
+
+        if (error.message?.includes('responsibilities of managing losses')) {
+            errorMessage = 'Compliance Required: Please visit your Stripe Dashboard (Settings > Connect > Platform Profile) to acknowledge responsibility for connected account losses.';
+            statusCode = 400; // Use 400 for client/setup level resolution
+        }
+
         return NextResponse.json(
-            { error: error.message || 'Internal Server Error' },
-            { status: 500 }
+            { error: errorMessage },
+            { status: statusCode }
         );
     }
 }
