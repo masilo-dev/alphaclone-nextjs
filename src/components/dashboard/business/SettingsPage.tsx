@@ -598,14 +598,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             <div className="pt-4 border-t border-slate-700">
                                 <button
                                     onClick={handleStripeConnect}
-                                    disabled={connectLoading}
-                                    className={`px-5 py-2 rounded-xl font-bold flex items-center gap-2 transition-all text-sm ${currentTenant?.stripe_connect_onboarded
-                                        ? 'bg-slate-700 hover:bg-slate-600 text-white'
-                                        : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
-                                        }`}
+                                    disabled={true}
+                                    className="px-5 py-2 bg-slate-800 text-slate-500 cursor-not-allowed rounded-xl font-bold flex items-center gap-2 transition-all text-sm border border-slate-700"
                                 >
-                                    {connectLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                                    {currentTenant?.stripe_connect_onboarded ? 'Manage Stripe Account' : 'Connect Stripe Account'}
+                                    <CreditCard className="w-4 h-4" />
+                                    COMING SOON
                                 </button>
                             </div>
                         </div>

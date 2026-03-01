@@ -67,7 +67,12 @@ const StripeConnectSettings: React.FC = () => {
     return (
         <div className="space-y-6">
             <div>
-                <h3 className="text-xl font-bold mb-4">Payment Processing (Stripe Connect)</h3>
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    Payment Processing (Stripe Connect)
+                    <span className="px-2 py-0.5 bg-indigo-500/20 text-indigo-400 text-[10px] font-bold rounded uppercase tracking-wider border border-indigo-500/30">
+                        Coming Soon
+                    </span>
+                </h3>
                 <p className="text-slate-400 mb-6">
                     Connect your Stripe account to receive payments directly from your clients. AlphaClone does not take any percentage of your transactions.
                 </p>
@@ -103,33 +108,13 @@ const StripeConnectSettings: React.FC = () => {
                     </div>
 
                     <div className="flex flex-wrap gap-3">
-                        {isConnected ? (
-                            <button
-                                onClick={handleLogin}
-                                disabled={loginLoading}
-                                className="flex items-center gap-2 px-6 py-2.5 bg-teal-500 hover:bg-teal-600 text-slate-900 font-black text-sm uppercase tracking-widest rounded-xl shadow-lg shadow-teal-500/20 transition-all active:scale-95 disabled:opacity-50"
-                            >
-                                {loginLoading ? (
-                                    <RefreshCw className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    <ExternalLink className="w-4 h-4" />
-                                )}
-                                {loginLoading ? 'OPENING...' : 'STRIPE DASHBOARD'}
-                            </button>
-                        ) : (
-                            <button
-                                onClick={handleConnect}
-                                disabled={loading}
-                                className="flex items-center gap-2 px-6 py-2.5 bg-teal-500 hover:bg-teal-600 text-slate-900 font-black text-sm uppercase tracking-widest rounded-xl shadow-lg shadow-teal-500/20 transition-all active:scale-95 disabled:opacity-50"
-                            >
-                                {loading ? (
-                                    <RefreshCw className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    <CheckCircle2 className="w-4 h-4" />
-                                )}
-                                {loading ? 'INITIATING...' : isPending ? 'FINISH SETUP' : 'CONNECT STRIPE'}
-                            </button>
-                        )}
+                        <button
+                            disabled={true}
+                            className="flex items-center gap-2 px-6 py-2.5 bg-slate-800 text-slate-500 font-black text-sm uppercase tracking-widest rounded-xl border border-slate-700 cursor-not-allowed transition-all"
+                        >
+                            <CreditCard className="w-4 h-4" />
+                            COMING SOON
+                        </button>
                     </div>
                 </div>
             </div>
