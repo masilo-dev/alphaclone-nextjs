@@ -146,6 +146,12 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                 {/* Secondary Actions (More Menu) */}
                 {showMoreActions && isMobile && (
                     <div className="mb-4 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl p-4 grid grid-cols-3 gap-4 animate-fade-in-up w-full shadow-2xl">
+                        <ControlButton
+                            onClick={() => { onToggleScreenShare(); setShowMoreActions(false); }}
+                            highlight={isScreenSharing}
+                            icon={isScreenSharing ? MonitorOff : Monitor}
+                            label={isScreenSharing ? "Stop Share" : "Share"}
+                        />
                         {onToggleChat && (
                             <ControlButton
                                 onClick={() => { onToggleChat(); setShowMoreActions(false); }}
@@ -197,15 +203,18 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                         />
                     </div>
 
-                    <div className="w-px h-10 bg-white/10" />
-
-                    {/* Share Section - Works on Mobile now */}
-                    <ControlButton
-                        onClick={onToggleScreenShare}
-                        highlight={isScreenSharing}
-                        icon={isScreenSharing ? MonitorOff : Monitor}
-                        label={isScreenSharing ? "Stop Share" : "Share"}
-                    />
+                    {/* Share Section - Hidden on Mobile main bar to satisfy "not a lot of button" requirement */}
+                    {!isMobile && (
+                        <>
+                            <div className="w-px h-10 bg-white/10" />
+                            <ControlButton
+                                onClick={onToggleScreenShare}
+                                highlight={isScreenSharing}
+                                icon={isScreenSharing ? MonitorOff : Monitor}
+                                label={isScreenSharing ? "Stop Share" : "Share"}
+                            />
+                        </>
+                    )}
 
                     {/* End Call Section */}
                     <ControlButton

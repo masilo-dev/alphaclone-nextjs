@@ -121,12 +121,13 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
     const handleJoin = async () => {
         if (!room) return;
         try {
-            // Internal dashboard experience uses onJoinRoom with just the callId
-            onJoinRoom(room.id);
-            toast.success('Joining meeting...');
+            // Open in our own secure independent route for multitasking
+            const meetingUrl = `${window.location.origin}/meet/${room.id}`;
+            window.open(meetingUrl, '_blank', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
+            toast.success('Opening secure meeting page...');
         } catch (err) {
-            console.error('Failed to join:', err);
-            toast.error('Failed to join meeting');
+            console.error('Join error:', err);
+            toast.error('Failed to open meeting room');
         }
     };
 

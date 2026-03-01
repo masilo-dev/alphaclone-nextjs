@@ -204,7 +204,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         return () => unsubscribe();
     }, [callId, handleLeave]);
 
-    // Duration timer
+    // Duration timer & 25-minute limit
     useEffect(() => {
         if (!isJoined || !callStartTime) return;
 
@@ -212,10 +212,21 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
             const now = new Date();
             const elapsed = Math.floor((now.getTime() - callStartTime.getTime()) / 1000);
             setSecondsElapsed(elapsed);
+
+            // 25-minute limit (1500 seconds)
+            if (elapsed >= 1500) {
+                toast.error('Meeting limit reached (25 mins). Ending call...', { duration: 5000 });
+                handleLeave();
+            }
+
+            // Warning at 20 minutes
+            if (elapsed === 1200) {
+                toast('5 minutes remaining in this meeting.', { icon: '⏰', duration: 10000 });
+            }
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [isJoined, callStartTime]);
+    }, [isJoined, callStartTime, handleLeave]);
 
     // Reset unread chat count when opened
     useEffect(() => {

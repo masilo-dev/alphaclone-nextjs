@@ -57,26 +57,53 @@ export const generateText = async (prompt: string, maxTokens: number = 2048, mod
  * Specialized chat for the Growth Agent (Sales Agent)
  * Includes system instructions for lead discovery intent detection
  */
+const GROWTH_AGENT_SYSTEM_PROMPT = `
+You are the AlphaClone Growth Agent, a world-class SDR and Business Growth strategist.
+Your objective is to identify expansion opportunities, find high-intent leads, and provide strategic intelligence.
+
+### OPERATIONAL MODES:
+1. **Lead Discovery:** When the user wants to find businesses (e.g., "Find me plumbers in London").
+2. **Business Intelligence:** When analyzing a specific lead (e.g., "Tell me more about this company").
+3. **Strategic Outreach:** Crafting messaging that converts.
+
+### INTENT DETECTION & COMMANDS:
+You have access to specialized internal commands. If you detect a specific intent, you MUST append the command to your response.
+
+**Command: Lead Search**
+Trigger: Any request to find, search, or get lists of businesses/leads.
+Format: [SEARCH_COMMAND: {"industry": "precise industry", "location": "city/region", "filters": "optional constraints"}]
+
+**Command: Deep Research**
+Trigger: When asked for more details, tech stack, or "intel" on a specific business name.
+Format: [RESEARCH_COMMAND: {"businessName": "Company Name", "context": "focus area"}]
+
+### TONE:
+Professional, proactive, and data-driven. Always explain *why* a lead is good.
+If a location is missing for a search, ask for it before issuing the command.
+`;
+
+/**
+ * Parses any commands hidden in the AI's natural language response
+ */
+export const parseGrowthAgentCommands = (text: string) => {
+    const searchMatch = text.match(/\[SEARCH_COMMAND:\s*({.*?})\]/);
+    const researchMatch = text.match(/\[RESEARCH_COMMAND:\s*({.*?})\]/);
+
+    return {
+        search: searchMatch ? JSON.parse(searchMatch[1]) : null,
+        research: researchMatch ? JSON.parse(researchMatch[1]) : null,
+        cleanText: text.replace(/\[.*?COMMAND:.*?\]/g, '').trim()
+    };
+};
+
+/**
+ * Specialized chat for the Growth Agent (Sales Agent)
+ * Includes system instructions for lead discovery intent detection
+ */
 export const chatWithGrowthAgent = async (
     history: { role: string; text: string }[],
     message: string
-): Promise<{ text: string; grounding: any }> => {
-    const systemPrompt = `You are the AlphaClone Growth Agent. Your goal is to help users find high-quality leads and grow their business.
-    
-    INTENT DETECTION:
-    If a user asks to "find", "search", "get", or "discover" leads/businesses for a specific service/industry in a specific location, you MUST respond with a specialized command at the end of your text.
-    
-    COMMAND FORMAT: [SEARCH_COMMAND: {"industry": "precise service name", "location": "city or country", "filters": "any additional requirements like 'no website', 'size', etc."}]
-    
-    EXAMPLES:
-    - User: "Find me plumbers in London who don't have a website" 
-      AI: "Certainly! I'll search for plumbers in London without websites for you right now. [SEARCH_COMMAND: {"industry": "Plumbing Services", "location": "London", "filters": "no website"}]"
-    - User: "I need graphic designers in NY"
-      AI: "Great choice. Searching for graphic designers in New York... [SEARCH_COMMAND: {"industry": "Graphic Design", "location": "New York", "filters": ""}]"
-    
-    If information is missing (like location), ask the user for it first.
-    Be proactive, premium, and concise.`;
-
+): Promise<{ text: string; commands: any; grounding: any }> => {
     try {
         const response = await fetch('/api/ai/chat', {
             method: 'POST',
@@ -86,7 +113,7 @@ export const chatWithGrowthAgent = async (
             body: JSON.stringify({
                 history,
                 message,
-                systemPrompt
+                systemPrompt: GROWTH_AGENT_SYSTEM_PROMPT
             })
         });
 
@@ -95,7 +122,14 @@ export const chatWithGrowthAgent = async (
             throw new Error(errorData.error || 'Failed to get response from Growth Agent');
         }
 
-        return await response.json();
+        const data = await response.json();
+        const parsed = parseGrowthAgentCommands(data.text);
+
+        return {
+            text: parsed.cleanText,
+            commands: { search: parsed.search, research: parsed.research },
+            grounding: data.grounding
+        };
     } catch (error: any) {
         console.error('❌ Growth Agent Chat failed:', error);
         throw error;

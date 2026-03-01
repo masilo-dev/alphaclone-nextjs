@@ -600,32 +600,41 @@ const SalesAgent: React.FC = () => {
             }));
 
             // Get specialized Growth Agent response
-            const { text } = await chatWithGrowthAgent(history, userMessage);
+            const { text, commands } = await chatWithGrowthAgent(history, userMessage);
 
             if (!text) throw new Error("No response from AI");
-
-            // --- Intent Extraction (Manus AI Style) ---
-            const commandMatch = text.match(/\[SEARCH_COMMAND:\s*({.*?})\]/);
 
             setMessages(prev => [...prev, {
                 id: prev.length + 1,
                 sender: 'agent',
-                text: text.replace(/\[SEARCH_COMMAND:.*?\]/, '').trim() // Hide command from user
+                text: text
             }]);
 
-            if (commandMatch) {
-                try {
-                    const searchData = JSON.parse(commandMatch[1]);
-                    if (searchData.industry && searchData.location) {
-                        toast.success(`🤖 Intent detected: Drafting search parameters...`);
-                        setPendingSearch({
-                            industry: searchData.industry,
-                            location: searchData.location,
-                            filters: searchData.filters
-                        });
-                    }
-                } catch (e) {
-                    console.error("Failed to parse search command", e);
+            // --- Command Handling (Manus AI Style) ---
+            if (commands.search) {
+                const { industry, location, filters } = commands.search;
+                if (industry && location) {
+                    toast.success(`🤖 Intent detected: Searching for ${industry}...`);
+                    handleAutoSearch(industry, location, filters);
+                }
+            }
+
+            if (commands.research) {
+                const { businessName, context } = commands.research;
+                // Find visible lead with this name if possible
+                const matchingLead = leads.find(l =>
+                    l.businessName.toLowerCase().includes(businessName.toLowerCase())
+                );
+
+                if (matchingLead) {
+                    toast.success(`🔬 Researching "${businessName}"...`);
+                    handleEnrich(matchingLead.id);
+                } else {
+                    setMessages(prev => [...prev, {
+                        id: prev.length + 1,
+                        sender: 'agent',
+                        text: `I'd love to research ${businessName} for you, but I don't see them in your current lead list. Would you like me to find them first?`
+                    }]);
                 }
             }
         } catch (error: any) {
