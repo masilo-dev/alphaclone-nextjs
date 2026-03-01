@@ -40,6 +40,7 @@ import BillingPage from './BillingPage';
 import ReportsPage from './ReportsPage';
 import SettingsPage from './SettingsPage';
 import MeetingsPage from './MeetingsPage';
+import BookingTab from './BookingTab';
 // New CRM Components - Lazy loaded to prevent Error #306
 const CRMTab = React.lazy(() => import('../CRMTab'));
 const TasksTab = React.lazy(() => import('../TasksTab'));
@@ -255,6 +256,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                 return <MessagesPage user={user} />;
             case '/dashboard/business/calendar':
                 return <CalendarPage user={user} />;
+            case '/dashboard/business/booking':
+                return <BookingTab />;
             case '/dashboard/business/billing':
                 return <BillingPage user={user} />;
             case '/dashboard/business/reports':
@@ -332,6 +335,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             case '/dashboard/business/contracts': return 'Contracts';
             case '/dashboard/business/documents': return 'Document Hub';
             case '/dashboard/business/quotes': return 'Quotes & Proposals';
+            case '/dashboard/business/booking': return 'Scheduling & Booking';
             case '/dashboard/crm': return 'CRM';
             case '/dashboard/tasks': return 'Tasks';
             case '/dashboard/sales-agent': return 'Sales Agent';

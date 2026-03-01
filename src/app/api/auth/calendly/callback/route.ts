@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')} `
+                'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`
             },
             body: new URLSearchParams({
                 grant_type: 'authorization_code',
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
         // Get Calendly User Info
         const userResponse = await fetch('https://api.calendly.com/users/me', {
             headers: {
-                'Authorization': `Bearer ${tokens.access_token} `
+                'Authorization': `Bearer ${tokens.access_token}`
             }
         });
 

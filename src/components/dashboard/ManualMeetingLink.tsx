@@ -14,28 +14,29 @@ interface ManualMeetingLinkProps {
  * Uses pre-created Daily.co rooms
  */
 const ManualMeetingLink: React.FC<ManualMeetingLinkProps> = ({ user, onJoinRoom }) => {
-    const [dailyUrl, setDailyUrl] = useState('');
+    const [meetingUrl, setMeetingUrl] = useState('');
     const [copied, setCopied] = useState(false);
 
     const handleJoin = () => {
-        if (!dailyUrl.trim()) {
-            toast.error('Please enter a Daily.co room URL');
+        if (!meetingUrl.trim()) {
+            toast.error('Please enter a meeting room URL');
             return;
         }
 
-        if (!dailyUrl.includes('daily.co')) {
-            toast.error('Please enter a valid Daily.co URL');
+        // Keep the check but make it generic or check for alpha-clone/daily
+        if (!meetingUrl.includes('daily.co') && !meetingUrl.includes('alphaclone')) {
+            toast.error('Please enter a valid AlphaClone Meeting URL');
             return;
         }
 
-        onJoinRoom(dailyUrl);
+        onJoinRoom(meetingUrl);
     };
 
     const handleCopy = async () => {
-        if (!dailyUrl.trim()) return;
+        if (!meetingUrl.trim()) return;
 
         try {
-            await navigator.clipboard.writeText(dailyUrl);
+            await navigator.clipboard.writeText(meetingUrl);
             setCopied(true);
             toast.success('Link copied!');
             setTimeout(() => setCopied(false), 2000);
@@ -45,76 +46,60 @@ const ManualMeetingLink: React.FC<ManualMeetingLinkProps> = ({ user, onJoinRoom 
     };
 
     return (
-        <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 rounded-xl p-6 border-2 border-blue-500/30">
+        <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 rounded-xl p-6 border-2 border-blue-500/30 transition-all duration-300">
             <div className="flex items-start gap-4 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
                     <Video className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1">
                     <h3 className="text-xl font-bold text-white mb-1">
-                        Use Daily.co Room URL
+                        Manual Meeting Access
                     </h3>
                     <p className="text-sm text-gray-300">
-                        Create a room at <a href="https://dashboard.daily.co/rooms" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">Daily.co Dashboard</a> and paste the URL here
+                        Paste a direct meeting link below to join instantly.
                     </p>
                 </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
                 <div>
-                    <label className="block text-sm text-gray-400 mb-2">
-                        Daily.co Room URL
+                    <label className="block text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2 px-1">
+                        Secure Room URL
                     </label>
                     <input
                         type="text"
-                        value={dailyUrl}
-                        onChange={(e) => setDailyUrl(e.target.value)}
-                        placeholder="https://your-domain.daily.co/room-name"
-                        className="w-full bg-gray-900/50 border-2 border-blue-500/50 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-400"
+                        value={meetingUrl}
+                        onChange={(e) => setMeetingUrl(e.target.value)}
+                        placeholder="https://alphaclone.tech/meet/room-name"
+                        className="w-full bg-gray-900/50 border border-blue-500/30 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-blue-400 transition-all shadow-inner"
                     />
                 </div>
 
                 <div className="flex gap-3">
-                    <Button
+                    <button
                         onClick={handleJoin}
-                        disabled={!dailyUrl.trim()}
-                        className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500"
+                        disabled={!meetingUrl.trim()}
+                        className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-blue-600/20"
                     >
-                        <Video className="w-4 h-4 mr-2" />
-                        Join Meeting
-                    </Button>
+                        <Video className="w-4 h-4" />
+                        Join Session
+                    </button>
 
-                    {dailyUrl.trim() && (
-                        <Button
+                    {meetingUrl.trim() && (
+                        <button
                             onClick={handleCopy}
-                            variant="outline"
-                            className="border-blue-500/50 hover:bg-blue-500/10"
+                            className="px-4 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white rounded-xl transition-all active:scale-95"
                         >
-                            {copied ? (
-                                <>
-                                    <Check className="w-4 h-4 mr-1" />
-                                    Copied
-                                </>
-                            ) : (
-                                <>
-                                    <Copy className="w-4 h-4 mr-1" />
-                                    Copy
-                                </>
-                            )}
-                        </Button>
+                            {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                        </button>
                     )}
                 </div>
             </div>
 
-            <div className="mt-4 bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
-                <p className="text-xs text-gray-300">
-                    <strong className="text-white">How to create a room:</strong>
-                    <br />
-                    1. Go to <a href="https://dashboard.daily.co/rooms" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">Daily.co Dashboard</a>
-                    <br />
-                    2. Click "Create Room"
-                    <br />
-                    3. Copy the room URL and paste it above
+            <div className="mt-6 bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">Protocol Instructions</p>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                    Enter the full URL provided by your business host. Ensure the meeting link follows the <strong className="text-white">alphaclone.tech/meet/</strong> format for optimal security and video performance.
                 </p>
             </div>
         </div>

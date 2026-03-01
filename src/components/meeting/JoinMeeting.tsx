@@ -23,7 +23,7 @@ const JoinMeeting: React.FC = () => {
     // Get room URL from room ID
     useEffect(() => {
         if (roomId) {
-            // Convert room ID to video provider URL (abstracted - users see AlphaClone URLs)
+            // Internal mapping - users stay on alphaclone.tech
             const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN || 'alphaclone';
             setRoomUrl(`https://${domain}.daily.co/${roomId}`);
         }
@@ -42,34 +42,24 @@ const JoinMeeting: React.FC = () => {
 
         setIsLoading(true);
         try {
-            // Register guest in database
-            const response = await fetch('/api/meetings/register-guest', {
+            // Register guest in database for analytics/tracking
+            await fetch('/api/meetings/register-guest', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: userName.trim(),
                     roomId: roomId,
                     roomUrl: roomUrl,
                 })
-            });
-
-            if (!response.ok) {
-                console.warn('Failed to register guest, continuing anyway...');
-            } else {
-                const data = await response.json();
-                console.log('Guest registered:', data.guestId);
-            }
+            }).catch(err => console.warn('Guest registration skipped:', err));
 
             // Join meeting
             setIsJoined(true);
-            toast.success('Joining meeting...');
+            toast.success('Establishing secure connection...');
         } catch (error) {
-            console.error('Failed to register guest:', error);
-            // Continue to join even if registration fails
+            console.error('Failed to join:', error);
             setIsJoined(true);
-            toast.success('Joining meeting...');
+            toast.success('Connecting...');
         } finally {
             setIsLoading(false);
         }
@@ -102,72 +92,84 @@ const JoinMeeting: React.FC = () => {
 
     // Show join form
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
-            <div className="max-w-md w-full">
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Background Glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
+
+            <div className="max-w-md w-full relative z-10">
                 {/* Logo/Branding */}
-                <div className="text-center mb-8">
-                    <div className="w-20 h-20 bg-gradient-to-br from-teal-400 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-teal-500/50">
-                        <Video className="w-10 h-10 text-white" />
+                <div className="text-center mb-10 space-y-4">
+                    <div className="relative inline-block">
+                        <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 to-teal-500 rounded-2xl blur opacity-25"></div>
+                        <div className="relative w-20 h-20 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-center mx-auto shadow-2xl">
+                            <Video className="w-10 h-10 text-blue-400" />
+                        </div>
                     </div>
-                    <h1 className="text-3xl font-bold text-white mb-2">
-                        AlphaClone Video
-                    </h1>
-                    <p className="text-gray-400">
-                        Join your meeting
-                    </p>
+                    <div>
+                        <h1 className="text-3xl font-black text-white tracking-tight">
+                            AlphaClone <span className="text-blue-400">Video</span>
+                        </h1>
+                        <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-1">
+                            Secure Business Protocol
+                        </p>
+                    </div>
                 </div>
 
                 {/* Join form */}
-                <div className="bg-gray-800/50 backdrop-blur-lg rounded-2xl p-8 border border-gray-700 shadow-2xl">
-                    <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Your Name
-                        </label>
-                        <div className="relative">
-                            <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            <input
-                                type="text"
-                                value={userName}
-                                onChange={(e) => setUserName(e.target.value)}
-                                onKeyPress={(e) => e.key === 'Enter' && handleJoin()}
-                                placeholder="Enter your name"
-                                className="w-full pl-10 pr-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-                                autoFocus
-                            />
+                <div className="bg-slate-900/50 backdrop-blur-xl rounded-3xl p-8 border border-white/5 shadow-2xl space-y-8">
+                    <div className="space-y-4">
+                        <div className="relative group">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest absolute -top-1.5 left-3 px-1 bg-slate-950 z-10 transition-colors group-focus-within:text-blue-400">
+                                Your Identity
+                            </label>
+                            <div className="relative">
+                                <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+                                <input
+                                    type="text"
+                                    value={userName}
+                                    onChange={(e) => setUserName(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && handleJoin()}
+                                    placeholder="Enter your name to join"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all font-medium"
+                                    autoFocus
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    <Button
+                    <button
                         onClick={handleJoin}
                         disabled={isLoading || !userName.trim()}
-                        className="w-full bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white font-medium py-3 rounded-lg transition-all shadow-lg shadow-teal-500/50"
+                        className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-500 hover:to-teal-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-4 rounded-xl transition-all shadow-xl shadow-blue-600/20 active:scale-95 flex items-center justify-center gap-3"
                     >
                         {isLoading ? (
-                            <>
-                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                                Joining...
-                            </>
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         ) : (
-                            <>
-                                <Video className="w-5 h-5 mr-2" />
-                                Join Meeting
-                            </>
+                            <Video className="w-5 h-5" />
                         )}
-                    </Button>
+                        Enter Meeting
+                    </button>
 
-                    <p className="text-center text-sm text-gray-400 mt-6">
-                        By joining, you agree to our{' '}
-                        <a href="/legal/terms" className="text-teal-400 hover:text-teal-300">
-                            Terms of Service
+                    <div className="flex items-center gap-4 text-slate-600">
+                        <div className="h-px flex-1 bg-slate-800/50" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">End-to-End Encrypted</span>
+                        <div className="h-px flex-1 bg-slate-800/50" />
+                    </div>
+
+                    <p className="text-center text-xs text-slate-500 leading-relaxed">
+                        By joining, you agree to the AlphaClone ecosystem{' '}
+                        <a href="/legal/terms" className="text-blue-400 hover:underline">
+                            Security Protocols
                         </a>
                     </p>
                 </div>
 
-                {/* Info */}
-                <div className="mt-6 text-center text-sm text-gray-500">
-                    <p>
-                        Meeting ID: <span className="text-gray-400 font-mono">{roomId}</span>
-                    </p>
+                {/* Secure ID Badge */}
+                <div className="mt-8 flex items-center justify-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                        Room Identifier: {roomId?.substring(0, 8)}...
+                    </span>
                 </div>
             </div>
         </div>

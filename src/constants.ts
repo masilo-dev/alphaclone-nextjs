@@ -111,6 +111,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   // 3. Communication & Scheduling
   { label: 'Gmail', href: '/dashboard/gmail', icon: Mail },
   { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
+  { label: 'Booking', href: '/dashboard/business/booking', icon: Clock },
   { label: 'Active Meetings', href: '/dashboard/business/meetings', icon: Video },
 
   // 4. Closing & Agreements

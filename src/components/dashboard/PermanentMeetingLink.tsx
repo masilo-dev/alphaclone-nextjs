@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '../ui/UIComponents';
 import { Copy, Check, Video, ExternalLink, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { dailyService } from '../../services/dailyService';
+import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { User } from '../../types';
 
@@ -60,7 +62,7 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoi
 
             // Prefer the slug for the link, fallback to ID
             const linkIdentifier = data.slug ? data.slug : data.id;
-            const shareLink = `${window.location.origin}/meet/${linkIdentifier}`;
+            const shareLink = dailyService.getWrappedMeetingUrl(linkIdentifier);
 
             // Single state update with all data
             setRoomData({

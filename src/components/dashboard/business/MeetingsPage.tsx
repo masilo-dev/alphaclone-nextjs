@@ -127,16 +127,13 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
 
                         <Button
                             onClick={() => {
-                                const externalUrl = nextMeeting.daily_room_url || nextMeeting.metadata?.calendly_event?.location?.location;
-                                if (externalUrl && !externalUrl.includes(window.location.hostname)) {
-                                    window.open(externalUrl, '_blank');
-                                } else {
-                                    onJoinRoom?.(`/meet/${nextMeeting.id}`);
-                                }
+                                const wrappedUrl = dailyService.getWrappedMeetingUrl(nextMeeting.id);
+                                onJoinRoom?.(wrappedUrl);
+                                window.open(wrappedUrl, '_blank');
                             }}
                             className="w-full md:w-auto px-8 py-4 text-lg bg-teal-500 hover:bg-teal-400 text-white shadow-lg shadow-teal-900/40 rounded-2xl transition-all hover:scale-105"
                         >
-                            {nextMeeting.daily_room_url && !nextMeeting.daily_room_url.includes(window.location.hostname) ? 'Open Meeting Link' : 'Join Meeting Now'}
+                            Join Meeting Now
                         </Button>
                     </div>
                 </div>
@@ -194,23 +191,20 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                                                 size="sm"
                                                 variant="secondary"
                                                 onClick={() => {
-                                                    const externalUrl = meeting.daily_room_url || meeting.metadata?.calendly_event?.location?.location;
-                                                    if (externalUrl && !externalUrl.includes(window.location.hostname)) {
-                                                        window.open(externalUrl, '_blank');
-                                                    } else {
-                                                        onJoinRoom?.(`/meet/${meeting.id}`);
-                                                    }
+                                                    const wrappedUrl = dailyService.getWrappedMeetingUrl(meeting.id);
+                                                    onJoinRoom?.(wrappedUrl);
+                                                    window.open(wrappedUrl, '_blank');
                                                 }}
                                                 className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                                             >
-                                                {meeting.daily_room_url && !meeting.daily_room_url.includes(window.location.hostname) ? 'Open Link' : 'Join'}
+                                                Join
                                             </Button>
                                             <button
                                                 onClick={() => handleDeleteMeeting(meeting.id)}
                                                 title={deletingId === meeting.id ? 'Click again to confirm' : 'Delete meeting'}
                                                 className={`p-2 rounded-lg transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 ${deletingId === meeting.id
-                                                        ? 'bg-red-500/20 text-red-400 ring-1 ring-red-500/50 animate-pulse'
-                                                        : 'bg-slate-800 hover:bg-red-500/20 text-slate-500 hover:text-red-400'
+                                                    ? 'bg-red-500/20 text-red-400 ring-1 ring-red-500/50 animate-pulse'
+                                                    : 'bg-slate-800 hover:bg-red-500/20 text-slate-500 hover:text-red-400'
                                                     }`}
                                             >
                                                 <Trash2 className="w-4 h-4" />

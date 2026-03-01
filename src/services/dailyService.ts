@@ -56,6 +56,32 @@ export interface VideoCall {
 
 class DailyService {
     /**
+     * Get a masked meeting URL for the application
+     */
+    getWrappedMeetingUrl(id: string): string {
+        // Return exactly alphaclone.tech as requested by the user
+        return `https://alphaclone.tech/meet/${id}`;
+    }
+
+    /**
+     * Finds Daily.co URLs in text and replaces them with a branded version or placeholder.
+     */
+    maskMeetingLinks(text: string): string {
+        if (!text) return text;
+
+        // Match daily.co URLs
+        const dailyRegex = /https:\/\/[a-z0-9-]+\.daily\.co\/[a-z0-9-]+/gi;
+
+        return text.replace(dailyRegex, (url) => {
+            // We can't easily look up the DB ID synchronously here, 
+            // so we'll point to a general redirector or a "Coming Soon" placeholder if requested
+            // For now, let's use the branding requested.
+            const baseUrl = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech';
+            return `${baseUrl}/meet/active`; // Placeholder redirector or just the domain
+        });
+    }
+
+    /**
      * Create a new Daily.co room via backend API
      */
     async createRoom(options: {

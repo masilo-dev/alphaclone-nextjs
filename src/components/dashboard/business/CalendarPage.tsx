@@ -99,7 +99,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeFilters, setActiveFilters] = useState<Set<CalendarEvent['source']>>(
-        new Set(['event', 'task', 'project', 'deal', 'booking', 'google'])
+        new Set(['event', 'task', 'project'])
     );
     const [isGoogleConnected, setIsGoogleConnected] = useState(false);
 

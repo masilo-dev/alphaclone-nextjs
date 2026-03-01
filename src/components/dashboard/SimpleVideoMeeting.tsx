@@ -57,10 +57,10 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
             });
 
             if (error || !call) {
-                throw new Error(error || 'Failed to initialize video service');
+                throw new Error(error || 'Failed to create room');
             }
 
-            const shareLink = `${window.location.origin}/meet/${call.id}`;
+            const shareLink = dailyService.getWrappedMeetingUrl(call.id);
 
             setRoom({
                 name: call.daily_room_name || `room-${call.id}`,
@@ -91,9 +91,8 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
     const handleJoin = async () => {
         if (!room) return;
         try {
-            // Open meeting in a new tab so the dashboard stays accessible
-            const meetingId = room.shareLink.split('/').pop();
-            window.open(`/meet/${meetingId}`, '_blank', 'noopener,noreferrer');
+            // Use the wrapped share link
+            window.open(room.shareLink, '_blank', 'noopener,noreferrer');
             toast.success('Meeting opened in a new tab!');
         } catch (err) {
             console.error('Failed to join:', err);
