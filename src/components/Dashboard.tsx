@@ -155,11 +155,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [activeTab, setActiveTab] = useState(location || '/dashboard');
 
   // -- PERSISTENT VIDEO CALL STATE --
-  const [activeCallId, setActiveCallId] = useState<string | null>(null);
-  const [isCallMinimized, setIsCallMinimized] = useState(false);
-  const [isInCall, setIsInCall] = useState(false); // Kept for backward compatibility if needed, or synced
-  const [showSidebarDuringCall, setShowSidebarDuringCall] = useState(false);
-  const [forceSidebarHide, setForceSidebarHide] = useState(false);
+  // Note: Video calls now use dedicated pages (/meet/[id])
 
   // Auto-hide sidebar on specific views or states
   useEffect(() => {
@@ -171,15 +167,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [activeTab]);
 
   const handleJoinCall = (callId: string) => {
-    setActiveCallId(callId);
-    setIsCallMinimized(false); // Default to full screen
-    setIsInCall(true);
-  };
-
-  const handleLeaveCall = () => {
-    setActiveCallId(null);
-    setIsCallMinimized(false);
-    setIsInCall(false);
+    router.push(`/meet/${callId}`);
   };
 
 
@@ -1004,9 +992,6 @@ const Dashboard: React.FC<DashboardProps> = ({
             <WidgetErrorBoundary title={activeTab === '/dashboard/meetings' ? 'Meetings' : 'Video Conference'}>
               <ConferenceTab
                 user={user}
-                onCallStateChange={setIsInCall}
-                onToggleSidebar={() => setShowSidebarDuringCall(prev => !prev)}
-                showSidebar={showSidebarDuringCall}
                 onJoinRoom={handleJoinCall}
               />
             </WidgetErrorBoundary>
@@ -1667,8 +1652,6 @@ const Dashboard: React.FC<DashboardProps> = ({
       <Sidebar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
-        isInCall={isInCall && !isCallMinimized}
-        showSidebarDuringCall={showSidebarDuringCall}
         user={user}
         navItems={NAV_ITEMS}
         activeTab={activeTab}
@@ -1689,37 +1672,35 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-950">
-        {/* Header - Hidden during video calls unless manually toggled */}
-        {(!isInCall || showSidebarDuringCall) && (
-          <header className={`bg-slate-900 border-b border-slate-800 sticky top-0 ${isInCall ? 'z-[110]' : 'z-30'} backdrop-blur-sm bg-slate-900/95 pt-safe`}>
-            <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4">
-              <div className="flex items-center gap-3 sm:gap-4">
-                {/* Mobile Menu Toggle - Hidden if BottomNav handles it */}
-                {/* Mobile Menu Toggle removed - BottomNav handles it */}
+        {/* Header - Visible in all dashboard views */}
+        <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 backdrop-blur-sm bg-slate-900/95 pt-safe">
+          <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4">
+            <div className="flex items-center gap-3 sm:gap-4">
+              {/* Mobile Menu Toggle - Hidden if BottomNav handles it */}
+              {/* Mobile Menu Toggle removed - BottomNav handles it */}
 
-                <div className="flex items-center gap-2 sm:gap-3 md:hidden">
-                  <img src={LOGO_URL} alt="Logo" className="w-8 h-8 rounded-lg flex-shrink-0" />
-                  <h1 className="text-base sm:text-lg font-bold text-white whitespace-nowrap truncate max-w-[150px] sm:max-w-none">AlphaClone Systems</h1>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 sm:gap-3">
-                {activeBgTasksCount > 0 && (
-                  <div className="flex items-center gap-2 bg-slate-800/50 text-teal-400 px-3 py-1.5 rounded-full text-xs font-semibold animate-pulse border border-teal-500/30">
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span className="hidden sm:inline">{activeBgTasksCount} Task(s)</span>
-                  </div>
-                )}
-                <EnhancedGlobalSearch
-                  user={user}
-                  onNavigate={router.push}
-                />
-                <ThemeToggle userId={user.id} />
-                <NotificationCenter userId={user.id} />
+              <div className="flex items-center gap-2 sm:gap-3 md:hidden">
+                <img src={LOGO_URL} alt="Logo" className="w-8 h-8 rounded-lg flex-shrink-0" />
+                <h1 className="text-base sm:text-lg font-bold text-white whitespace-nowrap truncate max-w-[150px] sm:max-w-none">AlphaClone Systems</h1>
               </div>
             </div>
-          </header>
-        )}
+
+            <div className="flex items-center gap-2 sm:gap-3">
+              {activeBgTasksCount > 0 && (
+                <div className="flex items-center gap-2 bg-slate-800/50 text-teal-400 px-3 py-1.5 rounded-full text-xs font-semibold animate-pulse border border-teal-500/30">
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span className="hidden sm:inline">{activeBgTasksCount} Task(s)</span>
+                </div>
+              )}
+              <EnhancedGlobalSearch
+                user={user}
+                onNavigate={router.push}
+              />
+              <ThemeToggle userId={user.id} />
+              <NotificationCenter userId={user.id} />
+            </div>
+          </div>
+        </header>
 
         {/* Main Content Area */}
         <main id="main-content" className={`flex-1 ${activeTab === '/dashboard/gmail' ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'} w-full bg-slate-950 scroll-smooth relative pb-safe md:pb-0`} role="main">
@@ -1736,24 +1717,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         </main>
       </div>
 
-      {/* Persistent Video Room Overlay */}
-      {activeCallId && (
-        <div className={isCallMinimized ? 'pointer-events-none fixed inset-0 z-[200]' : 'fixed inset-0 z-[100]'}>
-          <div className={isCallMinimized ? 'pointer-events-auto' : 'h-full w-full'}>
-            <React.Suspense fallback={null}>
-              <CustomVideoRoom
-                user={user}
-                callId={activeCallId}
-                onLeave={handleLeaveCall}
-                onToggleSidebar={() => setShowSidebarDuringCall(!showSidebarDuringCall)}
-                showSidebar={showSidebarDuringCall}
-                isMinimized={isCallMinimized}
-                onToggleMinimize={() => setIsCallMinimized(!isCallMinimized)}
-              />
-            </React.Suspense>
-          </div>
-        </div>
-      )}
 
 
       {/* Dashboard Global Elements */}

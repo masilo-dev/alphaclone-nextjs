@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
     LayoutDashboard,
@@ -69,6 +70,7 @@ interface BusinessDashboardProps {
 }
 
 const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, activeTab, setActiveTab }) => {
+    const router = useRouter();
     const { currentTenant, isLoading: tenantLoading, getDashboardStats } = useTenant();
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [dashboardStats, setDashboardStats] = useState<any>(null);
@@ -81,15 +83,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
     }, []);
 
     // -- PERSISTENT VIDEO CALL STATE --
-    const [activeCallId, setActiveCallId] = useState<string | null>(null);
-    const [isCallMinimized, setIsCallMinimized] = useState(false);
+    // Note: Video calls now use dedicated pages (/meet/[id])
     const { tasks: bgTasks } = useBackgroundTasks();
     const activeBgTasksCount = bgTasks.filter(t => t.status === 'running').length;
 
     // Explicitly typed handlers
     const handleJoinCall = (callId: string) => {
-        setActiveCallId(callId);
-        setIsCallMinimized(false);
+        router.push(`/meet/${callId}`);
     };
 
 
@@ -146,12 +146,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             toast.error(error instanceof Error ? error.message : 'Failed to start call.', { id: toastId });
         }
     };
-
-    const handleLeaveCall = () => {
-        setActiveCallId(null);
-        setIsCallMinimized(false);
-    };
-
 
     // Contract Modal State
     const [showContractModal, setShowContractModal] = useState(false);
@@ -385,8 +379,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             <Sidebar
                 sidebarOpen={sidebarOpen}
                 setSidebarOpen={setSidebarOpen}
-                isInCall={!!activeCallId}
-                showSidebarDuringCall={true}
                 user={user}
                 navItems={TENANT_ADMIN_NAV_ITEMS}
                 activeTab={activeTab}
@@ -490,23 +482,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                 </div>
             </main>
 
-            {/* Persistent Video Room Overlay */}
-            {activeCallId && (
-                <div className={isCallMinimized ? 'pointer-events-none fixed inset-0 z-[200]' : 'fixed inset-0 z-[100]'}>
-                    <div className={isCallMinimized ? 'pointer-events-auto' : 'h-full w-full'}>
-                        <React.Suspense fallback={null}>
-                            <CustomVideoRoom
-                                user={user}
-                                callId={activeCallId}
-                                onLeave={handleLeaveCall}
-                                isMinimized={isCallMinimized}
-                                onToggleMinimize={() => setIsCallMinimized(!isCallMinimized)}
-                            />
-
-                        </React.Suspense>
-                    </div>
-                </div>
-            )}
             {/* Contract Modal */}
             {showContractModal && (
                 <AlphaCloneContractModal

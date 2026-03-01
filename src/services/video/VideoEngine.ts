@@ -249,34 +249,29 @@ export class VideoEngine {
             throw new Error('Cannot share screen: not in call');
         }
 
-        // Detect mobile devices
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-        // Check if screen share is supported
+        // Check if screen share is supported by the browser
         if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-            if (isMobile) {
-                throw new Error('Screen sharing is not supported on mobile devices. Please use a desktop browser.');
-            } else {
-                throw new Error('Screen sharing is not supported in this browser. Please use Chrome, Firefox, or Edge.');
-            }
+            throw new Error('Screen sharing is not supported by this browser or device. Please try using a modern browser like Chrome or Safari.');
         }
 
         try {
             await this.callObject.startScreenShare();
         } catch (error: any) {
             // Handle specific error cases with user-friendly messages
-            if (error?.errorMsg === 'User cancelled screen share prompt') {
+            const errorMsg = error?.errorMsg || error?.message || '';
+
+            if (errorMsg === 'User cancelled screen share prompt') {
                 throw new Error('Screen sharing was cancelled. Click the screen share button to try again.');
-            } else if (error?.errorMsg?.includes('Permission denied')) {
+            } else if (errorMsg.includes('Permission denied')) {
                 throw new Error('Screen sharing permission was denied. Please allow screen sharing in your browser settings.');
-            } else if (error?.errorMsg?.includes('NotAllowedError')) {
+            } else if (errorMsg.includes('NotAllowedError')) {
                 throw new Error('Permission denied. Please allow screen sharing when prompted.');
-            } else if (error?.errorMsg?.includes('NotSupportedError')) {
-                throw new Error('Screen sharing is not supported on this device.');
-            } else if (error?.errorMsg?.includes('NotFoundError')) {
+            } else if (errorMsg.includes('NotSupportedError')) {
+                throw new Error('Screen sharing is not supported on this device or platform.');
+            } else if (errorMsg.includes('NotFoundError')) {
                 throw new Error('No screen available to share. Please check your display settings.');
             } else {
-                throw new Error(`Screen sharing failed: ${error?.errorMsg || error?.message || 'Unknown error'}`);
+                throw new Error(`Screen sharing failed: ${errorMsg || 'Unknown error'}`);
             }
         }
     }

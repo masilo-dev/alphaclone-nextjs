@@ -37,11 +37,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     user,
     roomUrl: providedRoomUrl,
     callId,
-    onLeave,
-    onToggleSidebar,
-    showSidebar,
-    isMinimized = false,
-    onToggleMinimize
+    onLeave
 }) => {
     const [resolvedRoomUrl, setResolvedRoomUrl] = useState<string | null>(providedRoomUrl || null);
     const {
@@ -74,8 +70,17 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     const [unreadChatCount, setUnreadChatCount] = useState(0);
     const [viewMode, setViewMode] = useState<'grid' | 'speaker'>('speaker');
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+    const [isMobile, setIsMobile] = useState(false);
+
     const joinAttemptedRef = useRef(false);
     const isJoinedRef = useRef(isJoined);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     // Circuit breaker: Detect rapid re-renders
     const renderTimestampsRef = useRef<number[]>([]);
@@ -199,7 +204,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         return () => unsubscribe();
     }, [callId, handleLeave]);
 
-    // Duration timer - removed limit per user request
+    // Duration timer
     useEffect(() => {
         if (!isJoined || !callStartTime) return;
 
@@ -211,6 +216,11 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
 
         return () => clearInterval(interval);
     }, [isJoined, callStartTime]);
+
+    // Reset unread chat count when opened
+    useEffect(() => {
+        if (showChat) setUnreadChatCount(0);
+    }, [showChat]);
 
     // Error handling
     useEffect(() => {
@@ -287,7 +297,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 setChatMessages(prev => [...prev, newMessage]);
                 if (!showChat) {
                     setUnreadChatCount(prev => prev + 1);
-                    toast.success(`New message from ${data.sender}`);
+                    toast(`New message from ${data.sender}`, { icon: '💬' });
                 }
             }
         };
@@ -299,103 +309,128 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     const gridClass = useMemo(() => {
         const count = participants.length;
         if (count === 1) return 'grid-cols-1';
-        if (count === 2) return 'grid-cols-1 sm:grid-cols-2';
+        if (count === 2) return isMobile ? 'grid-cols-1' : 'grid-cols-2';
         if (count <= 4) return 'grid-cols-2';
-        if (count <= 9) return 'grid-cols-3';
-        return 'grid-cols-4';
-    }, [participants.length]);
+        if (count <= 6) return isMobile ? 'grid-cols-2' : 'grid-cols-3';
+        return isMobile ? 'grid-cols-2' : 'grid-cols-3 lg:grid-cols-4';
+    }, [participants.length, isMobile]);
+
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
 
     if ((isJoining || !isJoined) && !localParticipant) {
         return (
-            <div className="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-teal-500 mx-auto mb-6"></div>
-                    <p className="text-white text-xl font-medium">Connecting...</p>
-                </div>
-            </div>
-        );
-    }
-
-    if (isMinimized) {
-        return (
-            <div className="fixed bottom-4 right-4 z-[200] w-80 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
-                <div className="bg-slate-800 p-2 flex items-center justify-between">
-                    <span className="text-xs font-bold text-white">Live Call ({participants.length})</span>
-                    <div className="flex gap-1">
-                        <button onClick={onToggleMinimize} className="p-1 text-slate-400 hover:text-white"><Maximize2 className="w-4 h-4" /></button>
-                        <button onClick={handleLeave} className="p-1 text-red-400"><X className="w-4 h-4" /></button>
+            <div className="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center z-50 overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-teal-500/10 via-transparent to-transparent opacity-50" />
+                <div className="relative text-center">
+                    <div className="relative w-24 h-24 mx-auto mb-8">
+                        <div className="absolute inset-0 rounded-full border-4 border-teal-500/20" />
+                        <div className="absolute inset-0 rounded-full border-4 border-teal-500 border-t-transparent animate-spin" />
                     </div>
-                </div>
-                <div className="aspect-video bg-black relative">
-                    {participants.length > 0 ? (
-                        <CustomVideoTile participant={participants.find(p => !p.isLocal) || participants[0]} isLocal={!participants.find(p => !p.isLocal)} isAdmin={false} />
-                    ) : null}
-                </div>
-                <div className="p-3 flex justify-center gap-4">
-                    <button onClick={handleToggleAudio} className={`p-2 rounded-full ${!isAudioEnabled ? 'bg-red-500/20 text-red-400' : 'bg-slate-800 text-white'}`}><Mic className="w-4 h-4" /></button>
-                    <button onClick={handleToggleVideo} className={`p-2 rounded-full ${!isVideoEnabled ? 'bg-red-500/20 text-red-400' : 'bg-slate-800 text-white'}`}><Video className="w-4 h-4" /></button>
+                    <h2 className="text-white text-2xl font-bold tracking-tight mb-2">Connecting to meeting...</h2>
+                    <p className="text-slate-400 font-medium">Securing your encrypted channel</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="fixed inset-0 bg-gray-900 z-[100]">
-            <div className="absolute top-4 right-4 z-[120] flex gap-2">
-                {onToggleMinimize && <button onClick={onToggleMinimize} className="p-2 bg-gray-800/90 rounded-lg text-white"><Minimize2 className="w-5 h-5" /></button>}
-            </div>
-
-            {onToggleSidebar && (
-                <button onClick={onToggleSidebar} className="fixed top-4 left-4 z-[120] p-3 bg-gray-800/90 rounded-full text-white">
-                    {showSidebar ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                </button>
-            )}
-
-            <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black/80 to-transparent z-[110] flex items-center justify-between px-6">
-                <div className="flex items-center space-x-2 bg-teal-500/10 px-3 py-1 rounded-full border border-teal-500/30">
-                    <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-                    <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">Live Meeting</span>
+        <div className="fixed inset-0 bg-slate-950 z-[100] text-white flex flex-col overflow-hidden select-none">
+            {/* Immersive Header */}
+            <header className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/60 to-transparent z-[110] px-6 flex items-center justify-between pointer-events-none">
+                <div className="flex items-center gap-4 pointer-events-auto">
+                    <div className="flex items-center gap-2 bg-slate-900/60 backdrop-blur-md border border-white/10 px-4 py-2 rounded-2xl">
+                        <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">REC • {formatTime(secondsElapsed)}</span>
+                    </div>
+                    {/* Signal Indicator visual */}
+                    <div className="flex items-end gap-0.5 h-3">
+                        <div className="w-0.5 h-full bg-teal-500 rounded-full" />
+                        <div className="w-0.5 h-4/5 bg-teal-500 rounded-full" />
+                        <div className="w-0.5 h-3/5 bg-teal-500 rounded-full" />
+                    </div>
                 </div>
-                <div className="flex bg-black/40 backdrop-blur-xl rounded-full border border-white/10 p-0.5">
-                    <button onClick={() => setViewMode('grid')} className={`px-3 py-1 rounded-full text-[10px] font-bold ${viewMode === 'grid' ? 'bg-teal-500 text-white' : 'text-slate-400'}`}>Grid</button>
-                    <button onClick={() => setViewMode('speaker')} className={`px-3 py-1 rounded-full text-[10px] font-bold ${viewMode === 'speaker' ? 'bg-teal-500 text-white' : 'text-slate-400'}`}>Stage</button>
-                </div>
-            </div>
 
-            <div className={`absolute inset-0 pt-16 pb-24 overflow-hidden flex flex-col ${viewMode === 'grid' ? 'p-4' : ''}`}>
+                <div className="flex items-center gap-2 pointer-events-auto">
+                    <div className="flex bg-slate-900/40 backdrop-blur-xl rounded-2xl border border-white/10 p-1">
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${viewMode === 'grid' ? 'bg-white text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                        >
+                            Grid
+                        </button>
+                        <button
+                            onClick={() => setViewMode('speaker')}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${viewMode === 'speaker' ? 'bg-white text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                        >
+                            Speaker
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            {/* Main Stage */}
+            <main className={`flex-1 relative mt-16 mb-24 overflow-hidden ${viewMode === 'grid' ? 'p-4 sm:p-6' : ''}`}>
                 {viewMode === 'grid' ? (
-                    <div className={`grid gap-4 w-full h-full ${gridClass}`}>
+                    <div className={`grid gap-3 sm:gap-6 w-full h-full ${gridClass}`}>
                         {participants.map(p => (
-                            <div key={p.sessionId} className="relative rounded-2xl overflow-hidden bg-slate-900 border border-slate-800">
+                            <div key={p.sessionId} className="relative rounded-3xl overflow-hidden bg-slate-900 ring-1 ring-white/5 shadow-2xl transition-transform duration-500">
                                 <CustomVideoTile participant={p} isLocal={p.isLocal} isAdmin={isUserAdmin(user)} variant="stage" />
-                                <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-xs text-white">{p.userName}</div>
+                                <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
+                                    {!p.audio.enabled && <MicOff className="w-3.5 h-3.5 text-red-500" />}
+                                    <span className="text-xs font-semibold">{p.isLocal ? "You" : p.userName}</span>
+                                </div>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <>
-                        <div className="flex-1 flex flex-col min-h-0">
-                            <div className="flex-1 p-4 flex items-center justify-center min-h-0">
-                                {participants.length > 0 ? (
-                                    <div className="w-full h-full max-w-5xl">
-                                        <CustomVideoTile participant={remoteParticipants[0] || localParticipant!} isLocal={remoteParticipants.length === 0} isAdmin={isUserAdmin(user)} variant="stage" />
-                                    </div>
-                                ) : <p className="text-slate-500">Waiting...</p>}
-                            </div>
+                    <div className="w-full h-full flex flex-col gap-4">
+                        {/* Speaker View - Big area */}
+                        <div className="flex-1 flex items-center justify-center p-2 min-h-0">
+                            {participants.length > 0 ? (
+                                <div className="w-full h-full max-w-6xl rounded-3xl overflow-hidden ring-1 ring-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)]">
+                                    <CustomVideoTile
+                                        participant={remoteParticipants[0] || localParticipant!}
+                                        isLocal={remoteParticipants.length === 0}
+                                        isAdmin={isUserAdmin(user)}
+                                        variant="stage"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="animate-pulse flex flex-col items-center">
+                                    <div className="w-16 h-16 bg-slate-800 rounded-full mb-4" />
+                                    <div className="w-48 h-4 bg-slate-800 rounded-full" />
+                                </div>
+                            )}
                         </div>
+
+                        {/* Filmstrip - other participants */}
                         {participants.length > 1 && (
-                            <div className="h-28 sm:h-36 bg-black/20 border-t border-white/5 flex gap-2 p-2 overflow-x-auto">
-                                {participants.filter(p => p.sessionId !== (remoteParticipants[0]?.sessionId || localParticipant?.sessionId)).map(p => (
-                                    <div key={p.sessionId} className="h-full aspect-video flex-shrink-0">
-                                        <CustomVideoTile participant={p} isLocal={p.isLocal} isAdmin={isUserAdmin(user)} variant="sidecar" onMuteParticipant={handleMuteParticipant} onRemoveParticipant={handleRemoveParticipant} />
-                                    </div>
-                                ))}
+                            <div className="h-32 sm:h-44 flex gap-4 p-4 overflow-x-auto scrollbar-hide">
+                                {participants
+                                    .filter(p => p.sessionId !== (remoteParticipants[0]?.sessionId || localParticipant?.sessionId))
+                                    .map(p => (
+                                        <div key={p.sessionId} className="h-full aspect-video flex-shrink-0 rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-xl group cursor-pointer active:scale-95 transition-transform">
+                                            <CustomVideoTile
+                                                participant={p}
+                                                isLocal={p.isLocal}
+                                                isAdmin={isUserAdmin(user)}
+                                                variant="sidecar"
+                                                onMuteParticipant={handleMuteParticipant}
+                                                onRemoveParticipant={handleRemoveParticipant}
+                                            />
+                                        </div>
+                                    ))}
                             </div>
                         )}
-                    </>
+                    </div>
                 )}
-            </div>
+            </main>
 
+            {/* Bottom Controls */}
             <VideoControls
                 isMuted={!isAudioEnabled}
                 isVideoOff={!isVideoEnabled}
@@ -410,9 +445,17 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 isAdmin={isUserAdmin(user)}
                 roomUrl={resolvedRoomUrl || ''}
                 callId={callId}
+                unreadMessageCount={unreadChatCount}
             />
 
-            <MeetingChat user={user} isOpen={showChat} onClose={() => setShowChat(false)} onSendMessage={handleSendChatMessage} messages={chatMessages} />
+            {/* Overlay Panels */}
+            <MeetingChat
+                user={user}
+                isOpen={showChat}
+                onClose={() => setShowChat(false)}
+                onSendMessage={handleSendChatMessage}
+                messages={chatMessages}
+            />
         </div>
     );
 };

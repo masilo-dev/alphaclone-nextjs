@@ -7,8 +7,6 @@ import { User } from '../../types';
 interface SidebarProps {
     sidebarOpen: boolean;
     setSidebarOpen: (open: boolean) => void;
-    isInCall: boolean;
-    showSidebarDuringCall: boolean;
     user: User;
     navItems: any[];
     activeTab: string;
@@ -22,8 +20,6 @@ interface SidebarProps {
 const Sidebar = React.memo<SidebarProps>(({
     sidebarOpen,
     setSidebarOpen,
-    isInCall,
-    showSidebarDuringCall,
     user,
     navItems,
     activeTab,
@@ -35,8 +31,8 @@ const Sidebar = React.memo<SidebarProps>(({
 }) => {
     const router = useRouter();
 
-    // Hidden during video calls unless manually toggled or forcibly hidden
-    if ((isInCall && !showSidebarDuringCall) || forceHidden) return null;
+    // Hidden if forcibly hidden (e.g. via parent routing logic)
+    if (forceHidden) return null;
 
     const handleNavigation = (href: string) => {
         if (href !== '#') {
@@ -73,7 +69,6 @@ const Sidebar = React.memo<SidebarProps>(({
             <aside className={`
                 fixed lg:relative z-[60] h-full bg-slate-900 border-r border-slate-800 flex flex-col transition-all duration-300 shadow-2xl overflow-hidden will-change-transform
                 ${sidebarOpen || (typeof window !== 'undefined' && window.innerWidth >= 1024) ? 'translate-x-0 w-64 pb-safe lg:pb-0' : '-translate-x-full lg:translate-x-0 w-0 lg:w-20'}
-                ${isInCall ? 'z-[110]' : 'z-[60]'}
             `}>
                 <div className="h-20 flex items-center px-6 border-b border-slate-800 bg-slate-900">
                     <div className="flex items-center gap-3 overflow-hidden">
