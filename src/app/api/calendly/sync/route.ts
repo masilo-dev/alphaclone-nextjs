@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { ENV } from '@/config/env';
 
 export async function POST(req: Request) {
     try {
@@ -25,8 +26,42 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Calendly OAuth is not configured for this tenant' }, { status: 400 });
         }
 
-        // Fetch Scheduled Events from Calendly
-        const minStartTime = new Date().toISOString();
+        let { accessToken, refreshToken, expiresAt, calendlyUserUri } = config;
+
+        // Refresh token if expired or expiring within 5 minutes
+        if (refreshToken && expiresAt && new Date(expiresAt).getTime() < Date.now() + 5 * 60000) {
+            const tokenRes = await fetch('https://auth.calendly.com/oauth/token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    grant_type: 'refresh_token',
+                    refresh_token: refreshToken,
+                    client_id: ENV.VITE_CALENDLY_CLIENT_ID,
+                    client_secret: ENV.CALENDLY_CLIENT_SECRET
+                })
+            });
+
+            if (tokenRes.ok) {
+                const tokens = await tokenRes.json();
+                accessToken = tokens.access_token;
+                refreshToken = tokens.refresh_token;
+                expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
+
+                tenant.settings.calendly = {
+                    ...tenant.settings.calendly,
+                    accessToken,
+                    refreshToken,
+                    expiresAt
+                };
+                await supabase.from('tenants').update({ settings: tenant.settings }).eq('id', tenantId);
+            } else {
+                console.error('Failed to refresh Calendly token:', await tokenRes.text());
+                return NextResponse.json({ error: 'Calendly token expired and refresh failed. Please reconnect.' }, { status: 401 });
+            }
+        }
+
+        // Fetch Scheduled Events from Calendly (syncing past 30 days to future)
+        const minStartTime = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
         let allEvents: any[] = [];
         let nextPage = `https://api.calendly.com/scheduled_events?user=${encodeURIComponent(config.calendlyUserUri)}&min_start_time=${encodeURIComponent(minStartTime)}&status=active`;
 
