@@ -46,7 +46,8 @@ export default function DashboardPage() {
 
             // A short grace period to wait for any immediate state batching
             // or fast redirects in strict mode, without hanging the browser.
-            const timeoutDuration = isAuthCallback ? 2500 : 500;
+            // Increased to 5000ms to allow for Supabase auth initialization (10s timeout)
+            const timeoutDuration = isAuthCallback ? 5000 : 5000;
 
             console.log(`DashboardPage: User missing, starting short grace period of ${timeoutDuration}ms`);
 

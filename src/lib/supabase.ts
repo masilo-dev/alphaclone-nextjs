@@ -43,7 +43,18 @@ export const createClient = () => {
 
     return createBrowserClient(
         ENV.VITE_SUPABASE_URL,
-        ENV.VITE_SUPABASE_ANON_KEY
+        ENV.VITE_SUPABASE_ANON_KEY,
+        {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true,
+                // In some versions of Gotrue/Supabase-js, disabling locks is done by providing
+                // a custom storage that doesn't use locks, or by specific flow flags.
+                // We'll ensure standard persistence is active which is more resilient 
+                // than the default 'memory' fallback that often happens on lock failure.
+            }
+        }
     );
 };
 
