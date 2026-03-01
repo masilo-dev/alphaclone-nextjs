@@ -5,6 +5,8 @@ import toast from 'react-hot-toast';
 import { User } from '../../types';
 import { dailyService } from '../../services/dailyService';
 import { useRouter } from 'next/navigation';
+import { useTenant } from '../../contexts/TenantContext'; // Added useTenant
+import { supabase } from '@/lib/supabase'; // Added supabase for direct query
 
 interface SimpleVideoMeetingProps {
     user: User;
@@ -20,51 +22,78 @@ interface MeetingRoom {
 /**
  * Simple Video Meeting Component - Enhanced
  *
- * Auto-initializes on load.
- * Checks for API configuration.
- * Timeouts after 5 seconds if no response.
+ * Checks for a permanent room and auto-initializes if missing.
  */
 const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoom }) => {
     const router = useRouter();
+    const { currentTenant } = useTenant();
     const [room, setRoom] = useState<MeetingRoom | null>(null);
-    const [status, setStatus] = useState<'idle' | 'initializing' | 'ready' | 'error'>('initializing'); // Start initializing
+    const [status, setStatus] = useState<'idle' | 'initializing' | 'ready' | 'error'>('initializing');
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
 
-    // Use ref to prevent double-firing strict mode
     const initRef = useRef(false);
 
     useEffect(() => {
-        if (initRef.current) return;
+        if (initRef.current || !currentTenant) return;
         initRef.current = true;
 
         initializeVideoService();
-    }, []);
+    }, [currentTenant]); // Re-run if tenant changes, but initRef prevents loops
 
     const initializeVideoService = async () => {
+        if (!currentTenant) return;
+
         setStatus('initializing');
         setErrorMsg(null);
 
         try {
-            // Use dailyService to create a database-backed video call
-            const { call, error } = await dailyService.createVideoCall({
-                hostId: user.id || 'system',
-                title: `${user.name || 'Admin'}'s Instant Meeting`,
-                isPublic: true, // Allow guests to join
-                maxParticipants: 10,
-                screenShareEnabled: true,
-                chatEnabled: true
-            });
+            // 1. Check if a permanent room exists for this tenant
+            const { data: permanentRooms, error: lookupError } = await supabase
+                .from('video_calls')
+                .select('*')
+                .eq('tenant_id', currentTenant.id)
+                .eq('is_permanent', true)
+                .eq('status', 'active');
 
-            if (error || !call) {
-                throw new Error(error || 'Failed to create room');
+            let permanentCall = permanentRooms && permanentRooms.length > 0 ? permanentRooms[0] : null;
+
+            // 2. If it doesn't exist, create it
+            if (!permanentCall) {
+                const { call, error } = await dailyService.createVideoCall({
+                    hostId: user.id || 'system',
+                    title: `${currentTenant.name}'s Permanent Meeting Room`,
+                    isPublic: true,
+                    maxParticipants: 10,
+                    screenShareEnabled: true,
+                    chatEnabled: true,
+                    tenantId: currentTenant.id
+                });
+
+                if (error || !call) {
+                    throw new Error(error || 'Failed to create room');
+                }
+
+                // Mark it as permanent
+                const { error: updateError } = await supabase
+                    .from('video_calls')
+                    .update({ is_permanent: true })
+                    .eq('id', call.id);
+
+                if (updateError) {
+                    console.error('Failed to mark room as permanent:', updateError);
+                }
+
+                permanentCall = call;
             }
 
-            const shareLink = dailyService.getWrappedMeetingUrl(call.id);
+            // Always use the slug for the shareable link to ensure consistency
+            const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://alphaclone.tech';
+            const shareLink = `${baseUrl}/meet/${currentTenant.slug}`;
 
             setRoom({
-                name: call.daily_room_name || `room-${call.id}`,
-                url: call.daily_room_url || '',
+                name: permanentCall.daily_room_name || `room-${permanentCall.id}`,
+                url: permanentCall.daily_room_url || '',
                 shareLink: shareLink
             });
             setStatus('ready');
@@ -91,7 +120,6 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
     const handleJoin = async () => {
         if (!room) return;
         try {
-            // Use the wrapped share link
             window.open(room.shareLink, '_blank', 'noopener,noreferrer');
             toast.success('Meeting opened in a new tab!');
         } catch (err) {
@@ -101,8 +129,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
     };
 
     const handleCreateNew = () => {
-        // Reset and re-init
-        initializeVideoService();
+        toast('This is your personal permanent room. No need to create a new one!', { icon: 'ℹ️' });
     };
 
     // --- RENDER STATES ---

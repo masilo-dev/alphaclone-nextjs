@@ -121,14 +121,23 @@ const BookingTab: React.FC = () => {
                             <Clock className="w-4 h-4" />
                             Upcoming Appointments
                         </h3>
-                        <button
-                            onClick={handleSyncNow}
-                            disabled={syncing}
-                            className="flex items-center gap-2 text-xs font-bold text-teal-400 hover:text-teal-300 transition-colors bg-teal-500/5 px-3 py-1.5 rounded-lg border border-teal-500/20 disabled:opacity-50"
-                        >
-                            <RefreshCw className={`w-3 h-3 ${syncing ? 'animate-spin' : ''}`} />
-                            {syncing ? 'Syncing...' : 'Sync Now'}
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => window.open('https://calendly.com/app/scheduled_events/user/me', '_blank')}
+                                className="flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white transition-colors bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700"
+                            >
+                                <ExternalLink className="w-3 h-3" />
+                                Manage Availability
+                            </button>
+                            <button
+                                onClick={handleSyncNow}
+                                disabled={syncing}
+                                className="flex items-center gap-1.5 text-xs font-bold text-teal-400 hover:text-teal-300 transition-colors bg-teal-500/5 px-3 py-1.5 rounded-lg border border-teal-500/20 disabled:opacity-50"
+                            >
+                                <RefreshCw className={`w-3 h-3 ${syncing ? 'animate-spin' : ''}`} />
+                                {syncing ? 'Syncing...' : 'Sync Now'}
+                            </button>
+                        </div>
                     </div>
 
                     {loadingEvents ? (
@@ -192,18 +201,27 @@ const BookingTab: React.FC = () => {
                                 <AlertCircle className="w-4 h-4" />
                             </div>
                             <p className="text-xs text-slate-300">
-                                You are viewing your <span className="text-white font-bold">Public Booking Link</span> as a client would see it.
+                                This is your <span className="text-white font-bold">Public Booking Link</span> (how clients see it). Calendly <span className="underline">does not</span> allow embedding their private admin dashboard.
                             </p>
                         </div>
-                        <button
-                            onClick={() => {
-                                navigator.clipboard.writeText(calendlyUrl);
-                                toast.success('Link copied!');
-                            }}
-                            className="px-3 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all"
-                        >
-                            Copy Link
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => window.open('https://calendly.com/app', '_blank')}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all"
+                            >
+                                <ExternalLink className="w-3 h-3" />
+                                Open Calendly Admin
+                            </button>
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(calendlyUrl);
+                                    toast.success('Link copied!');
+                                }}
+                                className="px-3 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all"
+                            >
+                                Copy Link
+                            </button>
+                        </div>
                     </div>
 
                     <Card className="p-0 overflow-hidden bg-slate-950 border-slate-800 border-2" style={{ height: 'calc(100vh - 300px)', minHeight: '600px' }}>
