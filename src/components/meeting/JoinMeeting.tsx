@@ -85,6 +85,7 @@ const JoinMeeting: React.FC = () => {
             <CustomVideoRoom
                 user={guestUser}
                 roomUrl={roomUrl}
+                callId={roomId}
                 onLeave={handleLeave}
             />
         );
