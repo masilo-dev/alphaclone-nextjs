@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { PWAProvider } from "@/contexts/PWAContext";
 import ShellSwitcher from "@/components/shells/ShellSwitcher";
+import { Analytics } from "@vercel/analytics/next";
 import CookieConsent from "@/components/common/CookieConsent";
 
 const geistSans = Geist({
@@ -139,6 +140,7 @@ export default function RootLayout({
           </PWAProvider>
           <CookieConsent />
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
