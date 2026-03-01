@@ -21,7 +21,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
     // Configure worker with a more reliable CDN fallback for the specific version
     // Using unpkg.com as it often handles versioned sub-paths better than cdnjs for pdfjs-dist
-    const PDF_WORKER_URL = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+    const PDF_WORKER_URL = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
     pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_URL;
 }
 
