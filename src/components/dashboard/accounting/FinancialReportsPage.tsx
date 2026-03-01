@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { generalLedgerService, TrialBalance, FinancialStatement } from '../../../services/accounting/generalLedgerService';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTenant } from '../../../contexts/TenantContext';
+import { generatePnLPDF, generateBalanceSheetPDF } from '../../../utils/pdfGenerator';
+import toast from 'react-hot-toast';
+import { FileDown } from 'lucide-react';
 
 type ReportType = 'trial_balance' | 'balance_sheet' | 'profit_loss';
 
@@ -62,6 +65,35 @@ export function FinancialReportsPage() {
 
     const handleRefresh = async () => {
         await loadReport();
+    };
+
+    const [isExporting, setIsExporting] = useState(false);
+
+    const handleExportPDF = async () => {
+        if (!currentTenant) return;
+        setIsExporting(true);
+        const toastId = toast.loading('Generating PDF report...');
+
+        try {
+            if (selectedReport === 'profit_loss' && profitLoss) {
+                const doc = generatePnLPDF(profitLoss, currentTenant, plStartDate, plEndDate);
+                doc.save(`Profit_Loss_${plStartDate}_to_${plEndDate}.pdf`);
+                toast.success('Profit & Loss statement exported', { id: toastId });
+            } else if (selectedReport === 'balance_sheet' && balanceSheet) {
+                const doc = generateBalanceSheetPDF(balanceSheet, currentTenant, bsAsOfDate);
+                doc.save(`Balance_Sheet_${bsAsOfDate}.pdf`);
+                toast.success('Balance Sheet exported', { id: toastId });
+            } else if (selectedReport === 'trial_balance') {
+                toast.error('Export for Trial Balance not yet implemented', { id: toastId });
+            } else {
+                toast.error('Please generate the report first', { id: toastId });
+            }
+        } catch (err: any) {
+            console.error('Export error:', err);
+            toast.error('Failed to export PDF: ' + err.message, { id: toastId });
+        } finally {
+            setIsExporting(false);
+        }
     };
 
     const renderTrialBalance = () => {
@@ -365,12 +397,22 @@ export function FinancialReportsPage() {
                     <h1 className="text-2xl font-bold text-white">Financial Reports</h1>
                     <p className="text-slate-300 mt-1">View accounting reports and financial statements</p>
                 </div>
-                <button
-                    onClick={handleRefresh}
-                    className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
-                >
-                    Reload Data
-                </button>
+                <div className="flex flex-wrap gap-3">
+                    <button
+                        onClick={handleExportPDF}
+                        disabled={loading || isExporting}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    >
+                        <FileDown className="w-4 h-4" />
+                        Export PDF
+                    </button>
+                    <button
+                        onClick={handleRefresh}
+                        className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
+                    >
+                        Reload Data
+                    </button>
+                </div>
             </div>
 
             {error && (

@@ -179,6 +179,15 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess }: Recei
                                             />
                                         </div>
                                     </div>
+                                    <div>
+                                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Category</label>
+                                        <Input
+                                            value={extractedData.category || ''}
+                                            onChange={(e) => setExtractedData({ ...extractedData, category: e.target.value })}
+                                            placeholder="e.g. Office Supplies, Travel, Software..."
+                                            className="bg-slate-900"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>

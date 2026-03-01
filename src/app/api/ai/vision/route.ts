@@ -42,7 +42,10 @@ export async function POST(req: NextRequest) {
         {
           "date": "YYYY-MM-DD", (if no exact date, output null)
           "description": "Store name or brief description of items",
-          "amount": 123.45 (pure number, no currency symbols)
+          "amount": 123.45, (pure number, no currency symbols)
+          "currency": "USD", (detected currency code)
+          "category": "Suggest a tax category (e.g., Office Supplies, Meals, Travel, Marketing, Utilities)",
+          "confidence": 0-1
         }
         Do not output ANY markdown wrappers (\`\`\`json), just the raw JSON object. If you cannot determine a value, leave it null.`;
 
@@ -141,6 +144,7 @@ export async function POST(req: NextRequest) {
                 date: extractedData.date || new Date().toISOString().split('T')[0],
                 description: extractedData.description,
                 amount: extractedData.amount,
+                category: extractedData.category,
                 receiptUrl: fileUrl
             }
         });

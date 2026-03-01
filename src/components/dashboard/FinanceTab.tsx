@@ -365,20 +365,31 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
     const totalExpenses = pnlData ? pnlData.totalExpenses : 0;
     const netProfit = pnlData ? pnlData.netIncome : (totalRevenue - totalExpenses);
 
-    // Prepare Chart Data
-    const chartData = React.useMemo(() => {
-        const last6Months = Array.from({ length: 6 }, (_, i) => {
-            const d = new Date();
-            d.setMonth(d.getMonth() - i);
-            return d.toLocaleString('default', { month: 'short' });
-        }).reverse();
+    const [chartData, setChartData] = React.useState<any[]>([]);
+    const [isLoadingChart, setIsLoadingChart] = React.useState(true);
 
-        return last6Months.map(month => ({
-            name: month,
-            revenue: Math.floor(Math.random() * 5000) + 1000 + (totalRevenue / 12),
-            expenses: Math.floor(Math.random() * 2000) + 500
-        }));
-    }, [totalRevenue]);
+    React.useEffect(() => {
+        const fetchChartData = async () => {
+            if (!tenant?.id) return;
+            setIsLoadingChart(true);
+            try {
+                const { generalLedgerService } = await import('../../services/accounting/generalLedgerService');
+                const { data, error } = await generalLedgerService.getMonthlyFinancialSummary(6);
+                if (!error && data) {
+                    setChartData(data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch chart data", err);
+            } finally {
+                setIsLoadingChart(false);
+            }
+        };
+        fetchChartData();
+
+        const handleRefresh = () => fetchChartData();
+        window.addEventListener('expense-added', handleRefresh);
+        return () => window.removeEventListener('expense-added', handleRefresh);
+    }, [tenant?.id]);
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -491,10 +502,9 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                 <p className="text-2xl font-bold text-orange-400">${outstanding.toLocaleString()}</p>
                             </div>
                             <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-                                <p className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Expenses {!pnlData && '(Est)'}</p>
+                                <p className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Expenses</p>
                                 <p className="text-2xl font-bold text-red-400 flex items-center gap-2">
                                     ${totalExpenses.toLocaleString()}
-                                    {!pnlData && <span className="text-xs text-slate-500 font-normal bg-slate-800 px-1.5 py-0.5 rounded">Placeholder</span>}
                                 </p>
                             </div>
                             <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl relative overflow-hidden">
@@ -513,7 +523,15 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                             <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                                 <TrendingUp className="w-5 h-5 text-teal-400" /> Revenue vs Expenses
                             </h3>
-                            <div className="h-[300px] w-full min-h-[300px]">
+                            <div className="h-[300px] w-full min-h-[300px] relative">
+                                {isLoadingChart && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-slate-900/50 z-10 rounded-2xl">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="w-8 h-8 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div>
+                                            <p className="text-xs text-slate-400 font-medium tracking-wide">Retrieving Financial Data...</p>
+                                        </div>
+                                    </div>
+                                )}
                                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
                                     <AreaChart data={chartData}>
                                         <defs>

@@ -387,6 +387,43 @@ export const generalLedgerService = {
     },
 
     /**
+     * Get monthly financial summary for a range of months
+     */
+    async getMonthlyFinancialSummary(monthsCount: number = 6): Promise<{ data: Array<{ name: string, revenue: number, expenses: number }>; error: string | null }> {
+        try {
+            const result = [];
+
+            // Generate last N months ranges
+            for (let i = monthsCount - 1; i >= 0; i--) {
+                const date = new Date();
+                date.setMonth(date.getMonth() - i);
+                const monthName = date.toLocaleString('default', { month: 'short' });
+
+                const start = new Date(date.getFullYear(), date.getMonth(), 1);
+                const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+
+                const startDate = start.toISOString().split('T')[0];
+                const endDate = end.toISOString().split('T')[0];
+
+                const { statement, error } = await this.getProfitLossData(startDate, endDate);
+
+                if (error) throw new Error(error);
+
+                result.push({
+                    name: monthName,
+                    revenue: statement?.totalRevenue || 0,
+                    expenses: statement?.totalExpenses || 0
+                });
+            }
+
+            return { data: result, error: null };
+        } catch (err: any) {
+            console.error('Error fetching monthly summary:', err);
+            return { data: [], error: err.message };
+        }
+    },
+
+    /**
      * Refresh general ledger materialized view
      */
     async refreshGeneralLedger(): Promise<{ success: boolean; error: string | null }> {

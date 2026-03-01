@@ -188,6 +188,9 @@ export const generateQuotePDF = (quote: Quote, items: QuoteItem[], tenant: Tenan
     return doc;
 };
 
+/**
+ * Profit & Loss Statement PDF
+ */
 export const generatePnLPDF = (
     statement: any,
     tenant: Tenant,
@@ -196,89 +199,150 @@ export const generatePnLPDF = (
 ) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
-    const pageHeight = doc.internal.pageSize.height;
-
     const brandColor = tenant.brand_color_primary || '#0f172a';
 
     // Header
-    doc.setFontSize(20);
+    doc.setFontSize(22);
     doc.setTextColor(brandColor);
-    doc.text(tenant.legal_name || tenant.name, 20, 20);
+    doc.text(tenant.legal_name || tenant.name, 20, 25);
 
     doc.setFontSize(16);
     doc.setTextColor(33, 33, 33);
-    doc.text('Profit & Loss Statement', 20, 30);
+    doc.text('Profit & Loss Statement', 20, 35);
 
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
-    doc.text(`Period: ${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()}`, 20, 38);
+    doc.text(`Period: ${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()}`, 20, 42);
+
+    const currencyFormatter = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
 
     // Revenue Section
-    doc.setFontSize(12);
-    doc.setTextColor(brandColor);
-    doc.text('Revenue', 20, 50);
+    const revenueRows = (statement.revenue || []).map((acc: any) => [acc.accountName, currencyFormatter(acc.balance)]);
+    autoTable(doc, {
+        head: [['REVENUE ACCOUNT', 'BALANCE']],
+        body: revenueRows,
+        startY: 50,
+        theme: 'striped',
+        headStyles: { fillColor: brandColor },
+        foot: [['TOTAL REVENUE', currencyFormatter(statement.totalRevenue)]],
+        footStyles: { fillColor: [20, 184, 166], textColor: [255, 255, 255] } // Teal-500
+    });
 
-    let currentY = 58;
-    const currencyFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
-
-    if (statement.revenue && statement.revenue.length > 0) {
-        statement.revenue.forEach((acc: any) => {
-            doc.setFontSize(10);
-            doc.setTextColor(60, 60, 60);
-            doc.text(acc.accountName, 25, currentY);
-            doc.text(currencyFormatter.format(acc.balance), pageWidth - 20, currentY, { align: 'right' });
-            currentY += 8;
-        });
-    } else {
-        doc.setFontSize(10);
-        doc.setTextColor(100, 100, 100);
-        doc.text('No revenue recorded.', 25, currentY);
-        currentY += 8;
-    }
-
-    // Total Revenue
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text('Total Revenue', 20, currentY + 5);
-    doc.text(currencyFormatter.format(statement.totalRevenue), pageWidth - 20, currentY + 5, { align: 'right' });
-    currentY += 20;
+    let currentY = (doc as any).lastAutoTable.finalY + 10;
 
     // Expenses Section
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(12);
-    doc.setTextColor(brandColor);
-    doc.text('Expenses', 20, currentY);
-    currentY += 8;
+    const expenseRows = (statement.expenses || []).map((acc: any) => [acc.accountName, currencyFormatter(acc.balance)]);
+    autoTable(doc, {
+        head: [['EXPENSE ACCOUNT', 'BALANCE']],
+        body: expenseRows,
+        startY: currentY,
+        theme: 'striped',
+        headStyles: { fillColor: '#ef4444' }, // Red-500
+        foot: [['TOTAL EXPENSES', currencyFormatter(statement.totalExpenses)]],
+        footStyles: { fillColor: [244, 63, 94], textColor: [255, 255, 255] } // Rose-500
+    });
 
-    if (statement.expenses && statement.expenses.length > 0) {
-        statement.expenses.forEach((acc: any) => {
-            doc.setFontSize(10);
-            doc.setTextColor(60, 60, 60);
-            doc.text(acc.accountName, 25, currentY);
-            doc.text(currencyFormatter.format(acc.balance), pageWidth - 20, currentY, { align: 'right' });
-            currentY += 8;
-        });
-    } else {
-        doc.setFontSize(10);
-        doc.setTextColor(100, 100, 100);
-        doc.text('No expenses recorded.', 25, currentY);
-        currentY += 8;
-    }
-
-    // Total Expenses
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text('Total Expenses', 20, currentY + 5);
-    doc.text(currencyFormatter.format(statement.totalExpenses), pageWidth - 20, currentY + 5, { align: 'right' });
-    currentY += 20;
+    currentY = (doc as any).lastAutoTable.finalY + 15;
 
     // Net Income
     doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(statement.netIncome >= 0 ? '#14b8a6' : '#ef4444');
-    doc.text('Net Income', 20, currentY);
-    doc.text(currencyFormatter.format(statement.netIncome), pageWidth - 20, currentY, { align: 'right' });
+    doc.text('NET INCOME:', 20, currentY);
+    doc.text(currencyFormatter(statement.netIncome), pageWidth - 20, currentY, { align: 'right' });
 
-    // Footer
+    addFooter(doc, pageWidth, doc.internal.pageSize.height);
+
+    return doc;
+};
+
+/**
+ * Balance Sheet PDF
+ */
+export const generateBalanceSheetPDF = (
+    statement: any,
+    tenant: Tenant,
+    asOfDate: string
+) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    const brandColor = tenant.brand_color_primary || '#0f172a';
+
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(brandColor);
+    doc.text(tenant.legal_name || tenant.name, 20, 25);
+
+    doc.setFontSize(16);
+    doc.setTextColor(33, 33, 33);
+    doc.text('Balance Sheet', 20, 35);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`As of: ${new Date(asOfDate).toLocaleDateString()}`, 20, 42);
+
+    const currencyFormatter = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+
+    // Assets Table
+    const assetRows = (statement.assets || []).map((acc: any) => [acc.accountName, currencyFormatter(acc.balance)]);
+    autoTable(doc, {
+        head: [['ASSETS', 'BALANCE']],
+        body: assetRows,
+        startY: 50,
+        theme: 'grid',
+        headStyles: { fillColor: brandColor },
+        foot: [['TOTAL ASSETS', currencyFormatter(statement.totalAssets)]],
+        footStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255] }
+    });
+
+    let currentY = (doc as any).lastAutoTable.finalY + 10;
+
+    // Liabilities Table
+    const liabilityRows = (statement.liabilities || []).map((acc: any) => [acc.accountName, currencyFormatter(acc.balance)]);
+    autoTable(doc, {
+        head: [['LIABILITIES', 'BALANCE']],
+        body: liabilityRows,
+        startY: currentY,
+        theme: 'grid',
+        headStyles: { fillColor: '#ef4444' },
+        foot: [['TOTAL LIABILITIES', currencyFormatter(statement.totalLiabilities)]],
+    });
+
+    currentY = (doc as any).lastAutoTable.finalY + 10;
+
+    // Equity Table
+    const equityRows = (statement.equity || []).map((acc: any) => [acc.accountName, currencyFormatter(acc.balance)]);
+    equityRows.push(['Net Income (Current Period)', currencyFormatter(statement.netIncome)]);
+
+    autoTable(doc, {
+        head: [['EQUITY', 'BALANCE']],
+        body: equityRows,
+        startY: currentY,
+        theme: 'grid',
+        headStyles: { fillColor: '#6366f1' }, // Indigo-500
+        foot: [['TOTAL EQUITY', currencyFormatter(statement.totalEquity)]],
+    });
+
+    currentY = (doc as any).lastAutoTable.finalY + 15;
+
+    // Summary
+    const totalLiabilitiesAndEquity = statement.totalLiabilities + statement.totalEquity;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text('TOTAL LIABILITIES & EQUITY:', 20, currentY);
+    doc.text(currencyFormatter(totalLiabilitiesAndEquity), pageWidth - 20, currentY, { align: 'right' });
+
+    addFooter(doc, pageWidth, doc.internal.pageSize.height);
+
+    return doc;
+};
+
+/**
+ * Common PDF Footer
+ */
+const addFooter = (doc: jsPDF, pageWidth: number, pageHeight: number) => {
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
     const footerText = "Generated by AlphaClone Systems";
@@ -288,6 +352,4 @@ export const generatePnLPDF = (
         doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: 'center' });
         doc.text(`Page ${i} of ${pageCount}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
     }
-
-    return doc;
 };

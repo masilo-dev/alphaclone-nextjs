@@ -9,6 +9,7 @@ import { chartOfAccountsService, ChartOfAccount } from '../../../services/accoun
 import toast from 'react-hot-toast';
 import { JournalEntryModal } from './JournalEntryModal';
 import ReceiptGeneratorModal from './ReceiptGeneratorModal';
+import { generalLedgerService } from '../../../services/accounting/generalLedgerService';
 
 // A simplified Accounting Dashboard focused on cash flow, revenue, and automated AI receipt tracking.
 export default function AccountingDashboard() {
@@ -34,38 +35,19 @@ export default function AccountingDashboard() {
             setLoading(true);
 
             try {
-                // 1. Fetch Paid Invoices for Revenue
-                const { data: paidInvoices } = await supabase
-                    .from('business_invoices')
-                    .select('total')
-                    .eq('tenant_id', currentTenant.id)
-                    .eq('status', 'paid');
+                const now = new Date();
+                const startOfYear = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
+                const endOfToday = now.toISOString().split('T')[0];
 
-                const revenue = (paidInvoices || []).reduce((sum: number, inv: any) => sum + (inv.total || 0), 0);
+                // 1. Fetch Profit and Loss for Revenue/Expenses
+                const { statement, error: pnlError } = await generalLedgerService.getProfitLossData(startOfYear, endOfToday);
+                if (pnlError) console.error('P&L Error:', pnlError);
 
-                // 3. Fetch Total Expenses (from journal entries hitting expense accounts - simplified heuristic)
-                const { data: expenses } = await supabase
-                    .from('journal_entry_lines')
-                    .select('amount, account:chart_of_accounts(account_type)')
-                    .eq('tenant_id', currentTenant.id);
+                // 2. Fetch Trial Balance for Cash Balance
+                const { trialBalance, error: tbError } = await generalLedgerService.getTrialBalance(endOfToday);
+                if (tbError) console.error('TB Error:', tbError);
 
-                const totalExp = (expenses || [])
-                    .filter((line: any) => line.account?.account_type === 'expense')
-                    .reduce((sum: number, line: any) => sum + (line.amount || 0), 0);
-
-                // 4. Calculate approximate Cash Balance
-                const { data: cashLines } = await supabase
-                    .from('journal_entry_lines')
-                    .select('amount, is_debit, account:chart_of_accounts(account_type, account_code)')
-                    .eq('tenant_id', currentTenant.id);
-
-                const cashBalance = (cashLines || [])
-                    .filter((line: any) => line.account?.account_type === 'asset' && line.account?.account_code?.startsWith('10'))
-                    .reduce((sum: number, line: any) => {
-                        return line.is_debit ? sum + Number(line.amount) : sum - Number(line.amount);
-                    }, 0);
-
-                // 2. Fetch Pending/Overdue Invoices
+                // 3. Fetch Pending/Overdue Invoices (Sales Metric)
                 const { data: pendingInvoices } = await supabase
                     .from('business_invoices')
                     .select('total')
@@ -73,6 +55,15 @@ export default function AccountingDashboard() {
                     .in('status', ['draft', 'sent', 'overdue']);
 
                 const pending = (pendingInvoices || []).reduce((sum: number, inv: any) => sum + (inv.total || 0), 0);
+
+                // Calculate stats from service data
+                const revenue = statement?.totalRevenue || 0;
+                const totalExp = statement?.totalExpenses || 0;
+
+                // Cash accounts are generally 10xx in COA
+                const cashBalance = (trialBalance?.accounts || [])
+                    .filter(a => a.accountType === 'asset' && (a.accountCode?.startsWith('10') || a.accountName.toLowerCase().includes('cash') || a.accountName.toLowerCase().includes('bank')))
+                    .reduce((sum, a) => sum + (a.debitBalance - a.creditBalance), 0);
 
                 // 3. Fetch Recent Transactions (Journal Entries mapped simply)
                 const { data: entries } = await supabase
@@ -126,13 +117,27 @@ export default function AccountingDashboard() {
         setIsUploadOpen(false);
         const loadToast = toast.loading('Saving expense record...');
         try {
-            // Get Office Supplies or General Expense Account
-            const { account: expenseAccount } = await chartOfAccountsService.getAccountByCode('6100'); // Assuming Office Supplies
-            const { account: cashAccount } = await chartOfAccountsService.getAccountByCode('1000'); // Assuming Cash/Bank
+            // 1. Dynamic Account Mapping based on AI category
+            // We search through our fetched accounts for the best expense match
+            let expenseAccount = accounts.find(a =>
+                a.accountType === 'expense' &&
+                extractedData.category &&
+                (a.accountName.toLowerCase().includes(extractedData.category.toLowerCase()) ||
+                    extractedData.category.toLowerCase().includes(a.accountName.toLowerCase()))
+            );
+
+            // 2. Fallbacks if no direct match
+            if (!expenseAccount) {
+                // Try to find "Office Supplies" or any Expense account
+                expenseAccount = accounts.find(a => a.accountCode === '6100') ||
+                    accounts.find(a => a.accountType === 'expense');
+            }
+
+            const cashAccount = accounts.find(a => a.accountCode === '1000') ||
+                accounts.find(a => a.accountType === 'asset' && a.accountName.toLowerCase().includes('cash'));
 
             if (!expenseAccount || !cashAccount) {
-                toast.error('Required Chart of Accounts missing. Expense saved as draft equivalent.', { id: loadToast });
-                // You might want to create a rough fallback here if the GL isn't initialized
+                toast.error('Could not find suitable accounts for this transaction. Please create them in the Chart of Accounts.', { id: loadToast });
                 return;
             }
 
