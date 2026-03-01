@@ -150,13 +150,6 @@ const Dashboard: React.FC<DashboardProps> = ({
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setSidebarOpen(window.innerWidth >= 768);
-
-      // Check if we navigated here with intent to hide sidebar (Focus Mode)
-      if (localStorage.getItem('dashboard_focus_mode_trigger') === 'true') {
-        setForceSidebarHide(true);
-        // We do NOT remove it here, to ensure it persists across reloads/Strict Mode
-        // It will be removed when the user clicks the "Back" button
-      }
     }
   }, []);
   const [activeTab, setActiveTab] = useState(location || '/dashboard');
@@ -169,14 +162,12 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [forceSidebarHide, setForceSidebarHide] = useState(false);
 
   // Auto-hide sidebar on specific views or states
-  // Auto-hide sidebar on specific views or states
   useEffect(() => {
     // Only force hide on initial load of conference, otherwise respect user/nav state
     const hiddenRoutes = ['/dashboard/conference'];
     if (hiddenRoutes.includes(activeTab)) {
-      // checks if we just landed here
+      setSidebarOpen(false);
     }
-    // We removed the else { setForceSidebarHide(false) } to allow the "Focus Mode" to persist
   }, [activeTab]);
 
   const handleJoinCall = (callId: string) => {
@@ -1684,8 +1675,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         setActiveTab={setActiveTab}
         unreadMessageCount={unreadMessageCount}
         onLogout={onLogout}
-        forceHidden={forceSidebarHide}
-        onNavigate={() => setForceSidebarHide(true)}
       />
 
       {/* Removed "Back to Navigation" button as per user request */}

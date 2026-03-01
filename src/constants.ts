@@ -36,7 +36,7 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
   { label: 'Project Calendar', href: '/dashboard/calendar', icon: Calendar },
   { label: 'Conferencing', href: '/dashboard/conference', icon: Video },
   { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
-  { label: 'Gmail', href: '/dashboard/gmail', icon: Mail },
+  { label: 'Gmail (Coming Soon)', href: '/dashboard/gmail', icon: Mail, comingSoon: true },
   { label: 'Invoices & Payments', href: '/dashboard/finance', icon: DollarSign },
   { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
   { label: 'AI Studio', href: '/dashboard/ai-studio', icon: Palette, comingSoon: true },
@@ -68,7 +68,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'Calendar', href: '/dashboard/calendar' },
       { label: 'Meetings', href: '/dashboard/meetings' },
-      { label: 'Gmail', href: '/dashboard/gmail' },
+      { label: 'Gmail (Coming Soon)', href: '/dashboard/gmail', comingSoon: true },
       { label: 'Inbox', href: '/dashboard/messages' },
     ]
   },
@@ -109,7 +109,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'CRM Directory', href: '/dashboard/crm', icon: Users },
 
   // 3. Communication & Scheduling
-  { label: 'Gmail', href: '/dashboard/gmail', icon: Mail },
+  { label: 'Gmail (Coming Soon)', href: '/dashboard/gmail', icon: Mail, comingSoon: true },
   { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
   { label: 'Booking', href: '/dashboard/business/booking', icon: Clock },
   { label: 'Active Meetings', href: '/dashboard/business/meetings', icon: Video },
