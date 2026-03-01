@@ -8,7 +8,8 @@ import * as pdfjsLib from 'pdfjs-dist';
 // This often requires setting the workerSrc to a public URL or a local file
 // For simplicity in this environment, we'll try to use the CDN if global worker isn't set
 if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+    // Use unpkg as a reliable CDN for pdfjs-dist worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 }
 
 
