@@ -220,21 +220,21 @@ const SalesAgent: React.FC = () => {
 
                     // 3. Save leads to state and DB
                     const leadsToAdd = res.leads.map((r: any) => ({
-                        businessName: r.businessName,
-                        industry: r.industry,
-                        location: r.location,
-                        phone: r.phone,
-                        email: r.email,
-                        website: r.website,
-                        fb: r.facebook || r.fb,
-                        notes: r.notes || r.aiAnalysis || r.description,
-                        outreachMessage: r.outreachMessage || r.emailDraft,
-                        value: r.estimatedValue || r.value,
-                        source: r.leadSource || 'AI Agent',
-                        isVerified: r.isVerified,
-                        trustScore: r.trustScore,
-                        verificationNotes: r.verificationNotes,
-                        sdrInsight: r.sdrInsight
+                        businessName: r.businessName || r.business_name || r.name || r.company || 'Unknown Business',
+                        industry: r.industry || r.category || 'Discovery',
+                        location: r.location || r.city || r.address || 'Unknown',
+                        phone: r.phone || r.phone_number || r.contact_phone || '',
+                        email: r.email || r.contact_email || '',
+                        website: r.website || r.url || r.websiteUri || r.link || '',
+                        fb: r.facebook || r.fb || '',
+                        notes: r.notes || r.aiAnalysis || r.description || r.intelligence || '',
+                        outreachMessage: r.outreachMessage || r.emailDraft || r.message || '',
+                        value: r.estimatedValue || r.value || 0,
+                        source: r.leadSource || r.source || 'AI Agent',
+                        isVerified: r.isVerified || false,
+                        trustScore: r.trustScore || 0,
+                        verificationNotes: r.verificationNotes || r.reasoning || '',
+                        sdrInsight: r.sdrInsight || r.insight || ''
                     }));
 
                     const { count, error } = await leadService.addBulkLeads(leadsToAdd);
@@ -673,21 +673,21 @@ const SalesAgent: React.FC = () => {
                     }
 
                     const leadsToAdd = res.leads.map((r: any) => ({
-                        businessName: r.businessName,
-                        industry: r.industry,
-                        location: r.location,
-                        phone: r.phone,
-                        email: r.email,
-                        website: r.website,
-                        fb: r.facebook || r.fb,
-                        notes: r.notes || r.aiAnalysis || r.description,
-                        outreachMessage: r.outreachMessage || r.emailDraft,
-                        value: r.estimatedValue || r.value,
-                        source: r.leadSource || 'AI Agent',
-                        isVerified: r.isVerified,
-                        trustScore: r.trustScore,
-                        verificationNotes: r.verificationNotes,
-                        sdrInsight: r.sdrInsight
+                        businessName: r.businessName || r.business_name || r.name || r.company || 'Unknown Business',
+                        industry: r.industry || r.category || 'Discovery',
+                        location: r.location || r.city || r.address || 'Unknown',
+                        phone: r.phone || r.phone_number || r.contact_phone || '',
+                        email: r.email || r.contact_email || '',
+                        website: r.website || r.url || r.websiteUri || r.link || '',
+                        fb: r.facebook || r.fb || '',
+                        notes: r.notes || r.aiAnalysis || r.description || r.intelligence || '',
+                        outreachMessage: r.outreachMessage || r.emailDraft || r.message || '',
+                        value: r.estimatedValue || r.value || 0,
+                        source: r.leadSource || r.source || 'AI Agent',
+                        isVerified: r.isVerified || false,
+                        trustScore: r.trustScore || 0,
+                        verificationNotes: r.verificationNotes || r.reasoning || '',
+                        sdrInsight: r.sdrInsight || r.insight || ''
                     }));
 
                     const { count, error } = await leadService.addBulkLeads(leadsToAdd);

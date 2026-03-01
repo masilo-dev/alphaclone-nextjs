@@ -442,22 +442,30 @@ export const authService = {
             const retryDelay = 500;
 
             for (let i = 0; i < maxRetries; i++) {
-                const { data: p, error: profileError } = await supabase
-                    .from('profiles')
-                    .select('*, account_status, scheduled_deletion_at')
-                    .eq('id', session.user.id)
-                    .maybeSingle();
+                try {
+                    const { data: p, error: profileError } = await withAuthTimeout(
+                        supabase
+                            .from('profiles')
+                            .select('*, account_status, scheduled_deletion_at')
+                            .eq('id', session.user.id)
+                            .maybeSingle(),
+                        5000 // 5s timeout for profile fetch
+                    );
 
-                if (!profileError && p) {
-                    profile = p;
-                    break;
-                }
+                    if (!profileError && p) {
+                        profile = p;
+                        break;
+                    }
 
-                lastError = profileError;
+                    lastError = profileError;
 
-                if (profileError?.code === 'PGRST301' || profileError?.message?.includes('403')) {
-                    console.error('AuthService: Profile 403 Forbidden', profileError);
-                    break;
+                    if (profileError?.code === 'PGRST301' || profileError?.message?.includes('403')) {
+                        console.error('AuthService: Profile 403 Forbidden', profileError);
+                        break;
+                    }
+                } catch (timeoutErr) {
+                    console.warn(`AuthService: Profile fetch attempt ${i + 1} timed out`);
+                    lastError = { message: 'Profile fetch timed out' };
                 }
 
                 if (i < maxRetries - 1) {

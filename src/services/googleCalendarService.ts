@@ -22,7 +22,7 @@ export const googleCalendarService = {
             .from('google_calendar_tokens')
             .select('*')
             .eq('user_id', userId)
-            .single();
+            .maybeSingle();
 
         if (error || !data) return null;
 
