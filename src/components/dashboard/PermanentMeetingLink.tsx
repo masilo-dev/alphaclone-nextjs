@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '../ui/UIComponents';
 import { Copy, Check, Video, ExternalLink, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTenant } from '../../contexts/TenantContext';
 import { User } from '../../types';
 
 interface PermanentMeetingLinkProps {
@@ -19,6 +20,7 @@ interface PermanentMeetingLinkProps {
  * - Single API call on mount
  */
 const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoinRoom }) => {
+    const { currentTenant } = useTenant(); // Added useTenant hook
     const [roomData, setRoomData] = useState<{
         link: string;
         url: string;
@@ -45,6 +47,7 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoi
                 body: JSON.stringify({
                     userId: user.id,
                     userName: user.name,
+                    tenantId: currentTenant?.id, // Added tenantId to the API call
                 })
             });
 

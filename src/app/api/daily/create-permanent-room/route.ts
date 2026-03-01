@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     }
 
     try {
-        const { userId, userName } = await req.json();
+        const { userId, userName, tenantId } = await req.json();
 
         if (!userId) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
@@ -20,11 +20,11 @@ export async function POST(req: Request) {
 
         const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
 
-        // 1. Check if user already has a permanent room
+        // 1. Check if this tenant already has a permanent room
         const { data: existingRoom } = await supabase
             .from('video_calls')
             .select('*')
-            .eq('host_id', userId)
+            .eq('tenant_id', tenantId || userId) // Fallback to userId if tenantId not provided
             .eq('is_permanent', true)
             .single();
 
@@ -49,7 +49,9 @@ export async function POST(req: Request) {
         }
 
         // 2. Create new Daily room
-        const roomName = `perm-${userId.substring(0, 8)}-${Math.random().toString(36).substring(7)}`;
+        // Use a deterministic name based on tenant/user to avoid duplicates and allow recovery
+        const cleanId = (tenantId || userId).replace(/[^a-zA-Z0-9]/g, '').substring(0, 16);
+        const roomName = `perm-${cleanId}`;
 
         const response = await fetch(`${DAILY_API_URL}/rooms`, {
             method: 'POST',
@@ -84,13 +86,15 @@ export async function POST(req: Request) {
                 daily_room_url: dailyRoom.url,
                 daily_room_name: dailyRoom.name,
                 host_id: userId,
+                tenant_id: tenantId || userId,
                 title: `${userName}'s Permanent Office`,
                 status: 'active',
                 is_permanent: true,
-                is_public: true, // Permanent rooms are typically joinable via link
+                is_public: true,
                 max_participants: 10,
                 chat_enabled: true,
-                screen_share_enabled: true
+                screen_share_enabled: true,
+                duration_limit_minutes: 1440 // 24 hours for permanent rooms
             })
             .select()
             .single();

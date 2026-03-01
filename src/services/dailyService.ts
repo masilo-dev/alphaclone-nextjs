@@ -25,6 +25,7 @@ export interface DailyRoom {
 export interface VideoCall {
     id: string;
     room_id: string;
+    tenant_id?: string;
     daily_room_url?: string;
     daily_room_name?: string;
     host_id: string;
@@ -152,6 +153,7 @@ class DailyService {
         allowClientCancellation?: boolean;
         duration?: number;
         isPublic?: boolean;
+        tenantId?: string;
     }): Promise<{ call: VideoCall | null; error: string | null }> {
         try {
             // ENFORCE PLAN LIMITS
@@ -230,6 +232,7 @@ class DailyService {
                 .from('video_calls')
                 .insert({
                     room_id: room.name,
+                    tenant_id: data.tenantId || tenantId,
                     daily_room_url: room.url,
                     daily_room_name: room.name,
                     host_id: data.hostId,

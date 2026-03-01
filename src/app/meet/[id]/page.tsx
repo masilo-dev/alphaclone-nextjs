@@ -51,7 +51,7 @@ export default function MeetPage() {
                     // Try to resolve the tenant by slug
                     const { data: tenant, error: tenantError } = await supabase
                         .from('tenants')
-                        .select('admin_user_id')
+                        .select('id, admin_user_id')
                         .eq('slug', meetingIdOrSlug)
                         .is('deletion_pending_at', null)
                         .single();
@@ -62,11 +62,11 @@ export default function MeetPage() {
                         return;
                     }
 
-                    // Look up the permanent room for this admin user
+                    // Look up the permanent room for this tenant
                     const { data: permanentRooms, error: roomError } = await supabase
                         .from('video_calls')
                         .select('id')
-                        .eq('host_id', tenant.admin_user_id)
+                        .eq('tenant_id', tenant.id)
                         .eq('is_permanent', true)
                         .eq('status', 'active');
 
