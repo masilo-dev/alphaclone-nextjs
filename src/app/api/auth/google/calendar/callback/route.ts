@@ -50,7 +50,10 @@ export async function GET(req: NextRequest) {
         }
 
         const { access_token, refresh_token, expires_in } = tokens;
-        const expiresAt = new Date(Date.now() + expires_in * 1000).toISOString();
+
+        // Safety guard for expires_in to prevent NaN date crashes
+        const secondsToExpiry = typeof expires_in === 'number' ? expires_in : parseInt(expires_in) || 3600;
+        const expiresAt = new Date(Date.now() + secondsToExpiry * 1000).toISOString();
 
         // 3. Save tokens
         const { error: upsertError } = await supabaseAdmin

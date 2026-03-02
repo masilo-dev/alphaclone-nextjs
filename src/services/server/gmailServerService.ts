@@ -46,7 +46,9 @@ export const gmailServerService = {
             const data = await response.json();
             if (data.error) throw new Error(data.error);
 
-            const expiresAt = new Date(Date.now() + data.expires_in * 1000).toISOString();
+            // Safety guard for expires_in to prevent NaN date crashes
+            const secondsToExpiry = typeof data.expires_in === 'number' ? data.expires_in : parseInt(data.expires_in) || 3600;
+            const expiresAt = new Date(Date.now() + secondsToExpiry * 1000).toISOString();
 
             const supabaseAdmin = createSupabaseAdminClient();
             await supabaseAdmin

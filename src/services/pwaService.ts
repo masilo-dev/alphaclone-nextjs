@@ -2,8 +2,8 @@
  * PWA Service - Handles Progressive Web App features
  */
 
-import { supabase } from '../lib/supabase';
-import { ENV } from '../config/env';
+import { supabase } from '@/lib/supabase';
+import { ENV } from '@/config/env';
 
 /**
  * Helper to convert VAPID key

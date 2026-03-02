@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { ENV } from '../../config/env';
-import { supabase } from '../../lib/supabase';
-import { tenantService } from '../tenancy/TenantService';
+import { ENV } from '@/config/env';
+import { supabase } from '@/lib/supabase';
+import { tenantService } from '@/services/tenancy/TenantService';
 
 const GEMINI_API_KEY = ENV.VITE_GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
