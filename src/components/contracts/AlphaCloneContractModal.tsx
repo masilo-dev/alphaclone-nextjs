@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { X, Calendar, DollarSign, FileText, Send, MessageCircle, CheckCircle, Edit3, Save, Printer, Share2 } from 'lucide-react';
 import { Button, Input, Badge } from '../ui/UIComponents';
 import { SignaturePad } from './SignaturePad';
