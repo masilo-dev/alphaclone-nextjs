@@ -3,28 +3,24 @@ import { ENV } from '@/config/env';
 
 export const googleDriveService = {
     async getTokens(userId: string) {
-        // We reuse the google_calendar_tokens table or create a new one?
-        // Let's assume we use a generic google_tokens table if it exists, 
-        // but based on googleCalendarService, it uses google_calendar_tokens.
-        // For now, let's use a similar pattern or check for a generic table.
-
-        const { data, error } = await supabase
-            .from('google_tokens') // Assuming a more generic table for all Google services
+        // Try Gmail tokens first
+        let { data, error } = await supabase
+            .from('gmail_sync_tokens')
             .select('*')
             .eq('user_id', userId)
             .maybeSingle();
 
-        if (error || !data) {
-            // Fallback to calendar tokens if generic doesn't exist (legacy)
+        // If not found, try Calendar tokens
+        if (!data) {
             const { data: calData } = await supabase
                 .from('google_calendar_tokens')
                 .select('*')
                 .eq('user_id', userId)
                 .maybeSingle();
-
-            if (!calData) return null;
-            return calData;
+            data = calData;
         }
+
+        if (!data) return null;
 
         // Check if token is expired (giving 5 min buffer)
         const expiresAt = new Date(data.expires_at);
@@ -56,12 +52,13 @@ export const googleDriveService = {
             const { access_token, expires_in } = tokens;
             const expiresAt = new Date(Date.now() + expires_in * 1000).toISOString();
 
-            // Try to update both potential tables
+            // Update Gmail tokens if they exist
             await supabase
-                .from('google_tokens')
+                .from('gmail_sync_tokens')
                 .update({ access_token, expires_at: expiresAt })
                 .eq('user_id', userId);
 
+            // Update Calendar tokens if they exist
             const { data, error } = await supabase
                 .from('google_calendar_tokens')
                 .update({ access_token, expires_at: expiresAt })
@@ -69,7 +66,10 @@ export const googleDriveService = {
                 .select('*')
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                // Return a mock object if update failed but we have the new token
+                return { access_token, expires_at: expiresAt, refresh_token: refreshToken };
+            }
             return data;
         } catch (err) {
             console.error('Failed to refresh Google tokens:', err);
