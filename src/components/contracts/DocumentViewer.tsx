@@ -12,7 +12,8 @@ import {
     PenLine,
     Loader2,
     Printer,
-    Share2
+    Share2,
+    Download
 } from 'lucide-react';
 import { Button } from '../ui/UIComponents';
 import { toast } from 'react-hot-toast';
