@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { X, Calendar, DollarSign, FileText, Send, MessageCircle, CheckCircle, Edit3, Save } from 'lucide-react';
+import { X, Calendar, DollarSign, FileText, Send, MessageCircle, CheckCircle, Edit3, Save, Printer, Share2 } from 'lucide-react';
 import { Button, Input, Badge } from '../ui/UIComponents';
 import { SignaturePad } from './SignaturePad';
 import { generateAlphaCloneContract, ContractVariables, PAYMENT_SCHEDULES, SCOPE_TEMPLATES } from '../../services/alphacloneContractTemplate';
 import { contractService } from '../../services/contractService';
 import { businessClientService, BusinessClient } from '../../services/businessClientService';
+import { googleDriveService } from '../../services/googleDriveService';
 import toast from 'react-hot-toast';
 import { User, Project } from '../../types';
 import { supabase } from '../../lib/supabase';
@@ -46,6 +46,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
     const [newComment, setNewComment] = useState('');
     const [showComments, setShowComments] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSavingToDrive, setIsSavingToDrive] = useState(false);
     const [clients, setClients] = useState<BusinessClient[]>([]);
     const [selectedClientId, setSelectedClientId] = useState<string>(project?.ownerId || '');
     const { startTask } = useBackgroundTasks();
@@ -335,6 +336,52 @@ const AlphaCloneContractModal: React.FC<Props> = ({
             toast.error('Failed to initiate contract processing');
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleSaveToDrive = async () => {
+        setIsSavingToDrive(true);
+        const toastId = toast.loading('Exporting to Google Drive...');
+
+        try {
+            const { data: { user: authUser } } = await supabase.auth.getUser();
+            if (!authUser) throw new Error('Not authenticated');
+
+            let finalContract;
+            if (existingContractId) {
+                const { data } = await supabase
+                    .from('contracts')
+                    .select('*, project:projects(name)')
+                    .eq('id', existingContractId)
+                    .single();
+                finalContract = data;
+            } else {
+                finalContract = {
+                    title: `${variables.projectName} — ${variables.clientName}`,
+                    content: contractText,
+                    admin_signature: signature,
+                    admin_signed_at: new Date().toISOString(),
+                    status: 'sent'
+                };
+            }
+
+            if (!finalContract) throw new Error('Contract data not found');
+
+            const doc = contractService.generateProfessionalPDF(finalContract, currentTenant);
+            const pdfBlob = doc.output('blob');
+
+            await googleDriveService.uploadFile(
+                authUser.id,
+                pdfBlob,
+                `Contract-${finalContract.title || 'Untitled'}.pdf`
+            );
+
+            toast.success('Successfully saved to Google Drive!', { id: toastId });
+        } catch (err: any) {
+            console.error('Google Drive Export Error:', err);
+            toast.error(err.message || 'Failed to save to Google Drive', { id: toastId });
+        } finally {
+            setIsSavingToDrive(false);
         }
     };
 
@@ -758,7 +805,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                 The contract has been securely saved and logged. A notification has been sent to all parties.
                             </p>
 
-                            <div className="flex gap-4">
+                            <div className="flex flex-wrap justify-center gap-4">
                                 <Button variant="outline" onClick={async () => {
                                     toast.success("PDF Download started...");
                                     try {
@@ -781,9 +828,28 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                         toast.error("Failed to generate PDF");
                                     }
                                 }}>
-                                    <DollarSign className="w-4 h-4 mr-2" /> Download PDF
+                                    <FileText className="w-4 h-4 mr-2" /> Download PDF
                                 </Button>
-                                <Button onClick={onClose} className="bg-teal-600 hover:bg-teal-500">
+
+                                <Button
+                                    variant="outline"
+                                    onClick={() => window.print()}
+                                    className="border-slate-700 text-slate-300 hover:text-white"
+                                >
+                                    <Printer className="w-4 h-4 mr-2" /> Print Contract
+                                </Button>
+
+                                <Button
+                                    variant="outline"
+                                    onClick={handleSaveToDrive}
+                                    disabled={isSavingToDrive}
+                                    className="border-slate-700 text-slate-300 hover:text-white"
+                                >
+                                    <Share2 className={`w-4 h-4 mr-2 ${isSavingToDrive ? 'animate-spin' : ''}`} />
+                                    {isSavingToDrive ? 'Saving...' : 'Save to Drive'}
+                                </Button>
+
+                                <Button onClick={onClose} className="bg-teal-600 hover:bg-teal-500 min-w-[120px]">
                                     Close Window
                                 </Button>
                             </div>
