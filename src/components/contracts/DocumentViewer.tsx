@@ -9,13 +9,17 @@ import {
     Eraser,
     Type,
     MousePointer2,
-    Download,
     PenLine,
-    Loader2
+    Loader2,
+    Printer,
+    Share2
 } from 'lucide-react';
 import { Button } from '../ui/UIComponents';
 import { toast } from 'react-hot-toast';
 import * as pdfjsLib from 'pdfjs-dist';
+import { googleDriveService } from '../../services/googleDriveService';
+import { useAuth } from '../../contexts/AuthContext';
+import { jsPDF } from 'jspdf';
 
 // Configure PDFJS worker
 if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
@@ -63,6 +67,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     const [pdf, setPdf] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [renderScale, setRenderScale] = useState(1.5);
+    const { user } = useAuth();
+    const [isSavingToDrive, setIsSavingToDrive] = useState(false);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const pageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
@@ -128,6 +134,36 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         }
     };
 
+    const handlePrint = () => {
+        window.print();
+    };
+
+    const handleSaveToDrive = async () => {
+        if (!user) {
+            toast.error('You must be logged in to save to Google Drive');
+            return;
+        }
+
+        setIsSavingToDrive(true);
+        const toastId = toast.loading('Saving to Google Drive...');
+        try {
+            // Fetch the PDF content as a blob
+            const response = await fetch(url);
+            const blob = await response.blob();
+
+            // Extract filename from URL or use a default
+            const filename = url.split('/').pop() || 'document.pdf';
+
+            await googleDriveService.uploadFile(user.id, blob, filename);
+            toast.success('Successfully saved to Google Drive!', { id: toastId });
+        } catch (error: any) {
+            console.error('Drive upload error:', error);
+            toast.error(error.message || 'Failed to save to Google Drive', { id: toastId });
+        } finally {
+            setIsSavingToDrive(false);
+        }
+    };
+
     return (
         <div className={`relative flex flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden ${isFullscreen ? 'fixed inset-0 z-[60] m-0 rounded-none' : 'h-[750px] shadow-2xl'}`}>
             {/* Toolbar */}
@@ -165,14 +201,20 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                         </Button>
                     </div>
                     {onDownload && (
-                        <Button size="sm" variant="outline" onClick={onDownload} className="w-10 h-10 p-0">
+                        <Button size="sm" variant="outline" onClick={onDownload} title="Download" className="w-10 h-10 p-0 no-print">
                             <Download className="w-4 h-4" />
                         </Button>
                     )}
-                    <Button size="sm" variant="outline" onClick={() => setIsFullscreen(!isFullscreen)} className="w-10 h-10 p-0">
+                    <Button size="sm" variant="outline" onClick={handlePrint} title="Print" className="w-10 h-10 p-0 no-print">
+                        <Printer className="w-4 h-4" />
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={handleSaveToDrive} disabled={isSavingToDrive} title="Save to Google Drive" className="w-10 h-10 p-0 no-print">
+                        {isSavingToDrive ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setIsFullscreen(!isFullscreen)} title="Fullscreen" className="w-10 h-10 p-0 no-print">
                         {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                     </Button>
-                    <Button size="sm" variant="primary" onClick={handleSave} className="bg-teal-600 hover:bg-teal-500 shadow-lg shadow-teal-500/20 px-4">
+                    <Button size="sm" variant="primary" onClick={handleSave} className="bg-teal-600 hover:bg-teal-500 shadow-lg shadow-teal-500/20 px-4 no-print">
                         <Save className="w-4 h-4 sm:mr-2" />
                         <span className="hidden sm:inline">Commit Edits</span>
                     </Button>

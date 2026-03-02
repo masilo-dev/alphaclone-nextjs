@@ -479,3 +479,50 @@ body {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" !important;
   }
 }
+
+/* Print Styles */
+@media print {
+
+  /* Hide UI elements that shouldn't be printed */
+  nav,
+  aside,
+  footer,
+  button,
+  .no-print,
+  .sidebar,
+  .toolbar,
+  .floating-action-bar,
+  .toast,
+  [role="button"] {
+    display: none !important;
+  }
+
+  /* Reset margins and backgrounds for printing */
+  body {
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Ensure the document content is visible and takes full width */
+  .print-content,
+  #editor-pdf-content,
+  .document-viewer-container {
+    width: 100% !important;
+    height: auto !important;
+    display: block !important;
+    position: static !important;
+    overflow: visible !important;
+  }
+
+  /* Avoid page breaks inside important sections */
+  section,
+  p,
+  h1,
+  h2,
+  h3,
+  .card {
+    page-break-inside: avoid;
+  }
+}

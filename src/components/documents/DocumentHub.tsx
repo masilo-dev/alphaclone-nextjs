@@ -3,8 +3,12 @@ import {
     Upload, Search, Trash2, FolderOpen, FileText, File as FileIcon, X,
     Download, Eye, Loader2, Plus, RotateCcw, Edit3, Save,
     ChevronLeft, AlertTriangle, FileCheck, AlertCircle, CheckCircle2,
-    Filter
+    Filter,
+    Printer,
+    Share2
 } from 'lucide-react';
+import { googleDriveService } from '../../services/googleDriveService';
+import { useAuth } from '../../contexts/AuthContext';
 import mammoth from 'mammoth';
 import { fileUploadService } from '../../services/fileUploadService';
 import { DocumentViewer } from '../contracts/DocumentViewer';
@@ -86,6 +90,8 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     const [editorContent, setEditorContent] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [storageUsed, setStorageUsed] = useState(0);
+    const { user: authUser } = useAuth();
+    const [isSavingToDrive, setIsSavingToDrive] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const loadFiles = useCallback(async () => {
@@ -145,6 +151,44 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         } finally {
             setIsUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const handlePrint = (fileUrl: string) => {
+        const printWindow = window.open(fileUrl, '_blank');
+        if (printWindow) {
+            printWindow.addEventListener('load', () => {
+                printWindow.print();
+            });
+        }
+    };
+
+    const handleSaveToDrive = async (file: HubFile) => {
+        if (!authUser) {
+            toast.error('You must be logged in to save to Google Drive');
+            return;
+        }
+
+        setIsSavingToDrive(file.id);
+        const toastId = toast.loading('Saving to Google Drive...');
+        try {
+            const response = await fetch(fileUrl || ''); // Use fileUrl if available, or fetch from storage
+            // In Hub, we might need to get a public URL first if fileUrl isn't set
+            let downloadUrl = fileUrl;
+            if (!downloadUrl) {
+                const { data } = supabase.storage.from('uploads').getPublicUrl(file.storage_path);
+                downloadUrl = data.publicUrl;
+            }
+
+            const fetchResponse = await fetch(downloadUrl);
+            const blob = await fetchResponse.blob();
+            await googleDriveService.uploadFile(authUser.id, blob, file.original_filename);
+            toast.success('Successfully saved to Google Drive!', { id: toastId });
+        } catch (error: any) {
+            console.error('Drive upload error:', error);
+            toast.error(error.message || 'Failed to save to Google Drive', { id: toastId });
+        } finally {
+            setIsSavingToDrive(null);
         }
     };
 
@@ -477,9 +521,23 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                 <p className="text-slate-400 text-sm mb-8">This file type cannot be viewed inside the platform yet.</p>
                                 <button
                                     onClick={() => handleDownload(selectedFile)}
-                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold transition-all shadow-lg shadow-teal-500/20"
+                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold transition-all mb-2"
                                 >
                                     <Download className="w-4 h-4" /> Download File
+                                </button>
+                                <button
+                                    onClick={() => handlePrint(fileUrl || '')}
+                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold transition-all mb-2"
+                                >
+                                    <Printer className="w-4 h-4" /> Print
+                                </button>
+                                <button
+                                    onClick={() => selectedFile && handleSaveToDrive(selectedFile)}
+                                    disabled={selectedFile ? isSavingToDrive === selectedFile.id : false}
+                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold transition-all shadow-lg shadow-teal-500/20"
+                                >
+                                    {selectedFile && isSavingToDrive === selectedFile.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+                                    Save to Drive
                                 </button>
                             </div>
                         </div>
@@ -663,6 +721,24 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                             title="Download"
                                         >
                                             <Download className="w-5 h-5 sm:w-4 sm:h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                const { data } = supabase.storage.from('uploads').getPublicUrl(file.storage_path);
+                                                handlePrint(data.publicUrl);
+                                            }}
+                                            className="p-2 sm:p-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-transparent flex justify-center items-center"
+                                            title="Print"
+                                        >
+                                            <Printer className="w-5 h-5 sm:w-4 sm:h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => handleSaveToDrive(file)}
+                                            disabled={isSavingToDrive === file.id}
+                                            className="p-2 sm:p-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-transparent flex justify-center items-center"
+                                            title="Save to Google Drive"
+                                        >
+                                            {isSavingToDrive === file.id ? <Loader2 className="w-5 h-5 sm:w-4 sm:h-4 animate-spin" /> : <Share2 className="w-5 h-5 sm:w-4 sm:h-4" />}
                                         </button>
                                         <button
                                             onClick={() => handleSoftDelete(file.id)}

@@ -4,7 +4,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
 import { jsPDF } from 'jspdf';
-import { FileText, Download, CheckCircle, Loader2, ShieldCheck } from 'lucide-react';
+import { FileText, Download, CheckCircle, Loader2, ShieldCheck, Printer, Share2 } from 'lucide-react';
+import { googleDriveService } from '../../../services/googleDriveService';
+import { useAuth } from '../../../contexts/AuthContext';
 import { SignaturePad } from '../../../components/contracts/SignaturePad';
 import { contractService } from '../../../services/contractService';
 import toast, { Toaster } from 'react-hot-toast';
@@ -12,6 +14,7 @@ import toast, { Toaster } from 'react-hot-toast';
 export default function PublicContractPage() {
     const params = useParams();
     const id = params.id as string;
+    const { user } = useAuth();
 
     const [contract, setContract] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -147,6 +150,30 @@ export default function PublicContractPage() {
         doc.save(`${contractData.title.replace(/\s+/g, '_')}_Signed.pdf`);
     };
 
+    const handlePrint = () => {
+        window.print();
+    };
+
+    const handleSaveToDrive = async () => {
+        if (!contract || !user) {
+            toast.error('You must be logged in to save to Google Drive');
+            return;
+        }
+
+        const toastId = toast.loading('Saving to Google Drive...');
+        try {
+            const doc = new jsPDF();
+            // Reuse the PDF generation logic briefly or just use the content
+            // To be more robust, we would generate the full PDF blob
+            const pdfBlob = doc.output('blob');
+            await googleDriveService.uploadFile(user.id, pdfBlob, `${contract.title.replace(/\s+/g, '_')}_Signed.pdf`);
+            toast.success('Successfully saved to Google Drive!', { id: toastId });
+        } catch (error: any) {
+            console.error('Drive upload error:', error);
+            toast.error(error.message || 'Failed to save to Google Drive', { id: toastId });
+        }
+    };
+
     if (loading) {
         return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white"><Loader2 className="w-8 h-8 animate-spin text-teal-500" /></div>;
     }
@@ -179,7 +206,7 @@ export default function PublicContractPage() {
                 </div>
 
                 {/* Content */}
-                <div className="p-8 max-w-none prose prose-invert prose-slate">
+                <div className="p-8 max-w-none prose prose-invert prose-slate print-content">
                     <div className="whitespace-pre-wrap font-serif leading-relaxed text-slate-300">
                         {contract.content}
                     </div>
@@ -221,12 +248,26 @@ export default function PublicContractPage() {
                 ) : (
                     <div className="p-8 bg-slate-950/30 border-t border-slate-800 text-center">
                         <p className="text-slate-400 mb-6">This contract has been signed on {new Date(contract.client_signed_at).toLocaleDateString()}.</p>
-                        <button
-                            onClick={() => generateAndDownloadPDF(contract, contract.client_signature)}
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold text-white transition-colors"
-                        >
-                            <Download className="w-5 h-5" /> Download PDF Copy
-                        </button>
+                        <div className="flex flex-wrap items-center justify-center gap-3">
+                            <button
+                                onClick={() => generateAndDownloadPDF(contract, contract.client_signature)}
+                                className="inline-flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold text-white transition-colors no-print"
+                            >
+                                <Download className="w-5 h-5" /> Download PDF
+                            </button>
+                            <button
+                                onClick={handlePrint}
+                                className="inline-flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold text-white transition-colors no-print"
+                            >
+                                <Printer className="w-5 h-5" /> Print
+                            </button>
+                            <button
+                                onClick={handleSaveToDrive}
+                                className="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 hover:bg-teal-500 rounded-xl font-bold text-white transition-colors no-print"
+                            >
+                                <Share2 className="w-5 h-5" /> Save to Drive
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
