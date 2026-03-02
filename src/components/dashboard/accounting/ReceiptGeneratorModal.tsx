@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import { Button } from '../../ui/UIComponents';
-import { X, Download, Eye, FileText } from 'lucide-react';
+import { X, Download, Eye, FileText, Printer, Share2 } from 'lucide-react';
 import { useTenant } from '../../../contexts/TenantContext';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { googleDriveService } from '../../../services/googleDriveService';
+import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 
 interface ReceiptItem {
@@ -35,6 +37,7 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
     }));
 
     const [isPreviewMode, setIsPreviewMode] = useState(false);
+    const [isSavingToDrive, setIsSavingToDrive] = useState(false);
 
     if (!isOpen) return null;
 
@@ -66,7 +69,46 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
         return calculateSubtotal(); // Add tax logic here if needed
     };
 
-    const generatePDF = (mode: 'download' | 'preview') => {
+    const handleSaveToDrive = async () => {
+        if (!receiptData.clientName) {
+            toast.error('Client name is required');
+            return;
+        }
+
+        setIsSavingToDrive(true);
+        const toastId = toast.loading('Exporting to Google Drive...');
+
+        try {
+            const { data: { user: authUser } } = await supabase.auth.getUser();
+            if (!authUser) throw new Error('Not authenticated');
+
+            const doc = new jsPDF();
+            // We need to re-generate the PDF content for the blob
+            // Using the same logic as in generatePDF
+            // For brevity, I'll extract a helper or just re-run the professional template logic here
+            // since that's the default and most professional.
+
+            // To be DRY, let's just use the generatePDF logic but return the doc instead of saving
+            const docToSave = generatePDF('blob') as jsPDF;
+            if (!docToSave) throw new Error('Failed to generate document');
+
+            const pdfBlob = docToSave.output('blob');
+            await googleDriveService.uploadFile(
+                authUser.id,
+                pdfBlob,
+                `Receipt_${receiptData.receiptNumber}.pdf`
+            );
+
+            toast.success('Successfully saved to Google Drive!', { id: toastId });
+        } catch (err: any) {
+            console.error('Google Drive Export Error:', err);
+            toast.error(err.message || 'Failed to save to Google Drive', { id: toastId });
+        } finally {
+            setIsSavingToDrive(false);
+        }
+    };
+
+    const generatePDF = (mode: 'download' | 'preview' | 'blob') => {
         if (!receiptData.clientName) {
             toast.error('Client name is required');
             return;
@@ -243,7 +285,7 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                 doc.save(`Receipt_${receiptData.receiptNumber}.pdf`);
                 toast.success('Receipt downloaded successfully!');
                 onClose();
-            } else {
+            } else if (mode === 'preview') {
                 // Preview mode (Opens in new tab)
                 const pdfDataUri = doc.output('datauristring');
                 const win = window.open();
@@ -252,6 +294,8 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                 } else {
                     toast.error('Could not open preview. Please allow popups.');
                 }
+            } else if (mode === 'blob') {
+                return doc;
             }
         } catch (error) {
             console.error("PDF Generation error:", error);
@@ -479,9 +523,17 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
 
                 </div>
 
-                <div className="px-6 py-4 border-t border-slate-800 flex justify-end gap-3 bg-slate-900/95 rounded-b-xl shrink-0">
+                <div className="px-6 py-4 border-t border-slate-800 flex flex-wrap justify-end gap-3 bg-slate-900/95 rounded-b-xl shrink-0">
                     <Button variant="outline" onClick={onClose} className="border-slate-700 hover:bg-slate-800 text-white">
                         Cancel
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => window.print()}
+                        className="border-slate-700 text-slate-300 hover:text-white"
+                    >
+                        <Printer className="w-4 h-4 mr-2" />
+                        Print
                     </Button>
                     <Button
                         onClick={() => generatePDF('preview')}
@@ -489,7 +541,16 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                         disabled={!receiptData.clientName}
                     >
                         <Eye className="w-4 h-4 mr-2" />
-                        Preview PDF
+                        Preview
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={handleSaveToDrive}
+                        disabled={isSavingToDrive || !receiptData.clientName}
+                        className="border-slate-700 text-slate-300 hover:text-white"
+                    >
+                        <Share2 className={`w-4 h-4 mr-2 ${isSavingToDrive ? 'animate-spin' : ''}`} />
+                        {isSavingToDrive ? 'Saving...' : 'To Drive'}
                     </Button>
                     <Button
                         onClick={() => generatePDF('download')}
@@ -497,7 +558,7 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                         disabled={!receiptData.clientName}
                     >
                         <Download className="w-4 h-4 mr-2" />
-                        Download Receipt
+                        Download
                     </Button>
                 </div>
             </div>
