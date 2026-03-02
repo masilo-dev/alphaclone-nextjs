@@ -172,12 +172,15 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         setIsSavingToDrive(file.id);
         const toastId = toast.loading('Saving to Google Drive...');
         try {
-            const response = await fetch(fileUrl || ''); // Use fileUrl if available, or fetch from storage
             // In Hub, we might need to get a public URL first if fileUrl isn't set
             let downloadUrl = fileUrl;
             if (!downloadUrl) {
                 const { data } = supabase.storage.from('uploads').getPublicUrl(file.storage_path);
                 downloadUrl = data.publicUrl;
+            }
+
+            if (!downloadUrl) {
+                throw new Error('Could not generate download URL');
             }
 
             const fetchResponse = await fetch(downloadUrl);
