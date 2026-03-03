@@ -998,7 +998,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       case '/dashboard/gmail':
         return (
           <React.Suspense fallback={<TabSkeleton rows={4} showStats={false} />}>
-            <GmailTab />
+            <GmailTab user={user} />
           </React.Suspense>
         );
 

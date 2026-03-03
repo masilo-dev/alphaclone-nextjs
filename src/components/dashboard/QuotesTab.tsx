@@ -11,6 +11,7 @@ import { Button, Modal, Input } from '../ui/UIComponents';
 import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import toast from 'react-hot-toast';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface QuotesTabProps {
     userId: string;
@@ -19,6 +20,7 @@ interface QuotesTabProps {
 
 const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
     const { currentTenant } = useTenant();
+    const { format, currencyCode } = useCurrency();
     const [quotes, setQuotes] = useState<Quote[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'draft' | 'sent' | 'accepted'>('all');
@@ -42,7 +44,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
         name: '',
         validForDays: '30',
         notes: '',
-        currency: 'USD',
+        currency: currencyCode,
         contactId: '',
         dealId: ''
     });
@@ -145,8 +147,8 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
         }
     };
 
-    const formatCurrency = (value: number, currency = 'USD') => {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(value);
+    const formatCurrency = (value: number, currency = currencyCode) => {
+        return format(value, { currencyOverride: currency });
     };
 
     const handleCreateQuote = async () => {
@@ -215,7 +217,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                     name: '',
                     validForDays: '30',
                     notes: '',
-                    currency: 'USD',
+                    currency: currencyCode,
                     contactId: '',
                     dealId: ''
                 });
@@ -673,7 +675,6 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                                 </div>
 
                                 <div className="flex items-center gap-2 text-teal-400 text-2xl font-bold mb-4">
-                                    <DollarSign className="w-6 h-6" />
                                     {formatCurrency(quote.totalAmount, quote.currency)}
                                 </div>
 

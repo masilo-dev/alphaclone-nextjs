@@ -84,6 +84,9 @@ export interface TenantSettings {
         eventUrl?: string; // Default event link for the tenant
     };
     billing_email?: string;
+    billing?: {
+        currency: string;
+    };
 }
 
 // Subscription Plans

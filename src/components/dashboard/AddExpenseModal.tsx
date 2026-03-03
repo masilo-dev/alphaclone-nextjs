@@ -3,6 +3,7 @@ import { X, Receipt, CheckCircle, Save } from 'lucide-react';
 import { Button, Input } from '../ui/UIComponents';
 import toast from 'react-hot-toast';
 import { useTenant } from '../../contexts/TenantContext';
+import { useCurrency } from '../../hooks/useCurrency';
 
 interface AddExpenseModalProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ interface AddExpenseModalProps {
 
 const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onExpenseAdded }) => {
     const { currentTenant } = useTenant();
+    const { currencyCode } = useCurrency();
 
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [description, setDescription] = useState('');
@@ -160,7 +162,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                     onChange={(e) => setDate(e.target.value)}
                                 />
                                 <Input
-                                    label="Amount (USD) *"
+                                    label={`Amount (${currencyCode}) *`}
                                     type="number"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}

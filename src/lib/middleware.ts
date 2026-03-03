@@ -6,29 +6,27 @@ export async function updateSession(request: NextRequest) {
     // Apply rate limiting based on route
     const pathname = request.nextUrl.pathname;
 
-    // Authentication routes - rate limiting removed as per user request
-    /*
-    if (pathname.startsWith('/api/auth/login') || pathname.startsWith('/auth/login')) {
+    // Authentication routes - enabled for Phase 1 hardening
+    if (pathname.includes('/api/auth/login') || pathname.includes('/auth/login')) {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.auth.login);
         if (rateLimitResponse && rateLimitResponse.status === 429) {
             return rateLimitResponse;
         }
     }
 
-    if (pathname.startsWith('/api/auth/signup') || pathname.startsWith('/auth/signup')) {
+    if (pathname.includes('/api/auth/signup') || pathname.includes('/auth/signup') || pathname.includes('/auth/register')) {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.auth.signup);
         if (rateLimitResponse && rateLimitResponse.status === 429) {
             return rateLimitResponse;
         }
     }
 
-    if (pathname.includes('password-reset') || pathname.includes('reset-password')) {
+    if (pathname.includes('password-reset') || pathname.includes('reset-password') || pathname.includes('/api/auth/reset')) {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.auth.passwordReset);
         if (rateLimitResponse && rateLimitResponse.status === 429) {
             return rateLimitResponse;
         }
     }
-    */
 
     // API routes - moderate rate limiting
     if (pathname.startsWith('/api/')) {

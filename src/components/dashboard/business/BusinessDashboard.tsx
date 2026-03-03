@@ -298,7 +298,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             case '/dashboard/gmail':
                 return (
                     <React.Suspense fallback={<div>Loading Gmail...</div>}>
-                        <GmailTab />
+                        <GmailTab user={user} />
                     </React.Suspense>
                 );
 

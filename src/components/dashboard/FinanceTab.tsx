@@ -6,6 +6,7 @@ import { CreditCard, CheckCircle, Download, TrendingUp, TrendingDown, DollarSign
 import { User, Invoice } from '../../types';
 import { paymentService } from '../../services/paymentService';
 import { useTenant } from '@/contexts/TenantContext';
+import { useCurrency } from '@/hooks/useCurrency';
 import { TIER_PRICING } from '../../services/subscriptionService';
 import toast from 'react-hot-toast';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -119,6 +120,7 @@ interface SubscriptionSectionProps {
 
 const SubscriptionSection: React.FC<SubscriptionSectionProps> = ({ user, tenantId, tenantEmail }) => {
     const [loadingPlan, setLoadingPlan] = React.useState<string | null>(null);
+    const { format } = useCurrency();
 
     const handleSubscribe = async (plan: typeof PLANS[0]) => {
         setLoadingPlan(plan.id);
@@ -199,7 +201,7 @@ const SubscriptionSection: React.FC<SubscriptionSectionProps> = ({ user, tenantI
 
                             <div className="mb-6">
                                 <div className="flex items-end gap-1">
-                                    <span className="text-4xl font-black text-white">${plan.monthlyPrice}</span>
+                                    <span className="text-4xl font-black text-white">{format(plan.monthlyPrice)}</span>
                                     <span className="text-slate-500 text-sm mb-1">/month</span>
                                 </div>
                                 <p className="text-xs text-slate-500 mt-0.5">Billed monthly · Cancel anytime</p>
@@ -256,6 +258,7 @@ const SubscriptionSection: React.FC<SubscriptionSectionProps> = ({ user, tenantI
 // ─── Main Finance Tab ──────────────────────────────────────────────────────────
 const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handlePayClick, onCreateInvoice, initialSubTab = 'invoices' }) => {
     const { currentTenant: tenant } = useTenant();
+    const { format } = useCurrency();
     const [isExporting, setIsExporting] = React.useState(false);
     const [subTab, setSubTab] = React.useState<'invoices' | 'quotes' | 'subscription'>(initialSubTab);
 
@@ -495,16 +498,16 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                         <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
                                 <p className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Total Revenue</p>
-                                <p className="text-2xl font-bold text-white">${totalRevenue.toLocaleString()}</p>
+                                <p className="text-2xl font-bold text-white">{format(totalRevenue)}</p>
                             </div>
                             <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
                                 <p className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Outstanding</p>
-                                <p className="text-2xl font-bold text-orange-400">${outstanding.toLocaleString()}</p>
+                                <p className="text-2xl font-bold text-orange-400">{format(outstanding)}</p>
                             </div>
                             <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
                                 <p className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Expenses</p>
                                 <p className="text-2xl font-bold text-red-400 flex items-center gap-2">
-                                    ${totalExpenses.toLocaleString()}
+                                    {format(totalExpenses)}
                                 </p>
                             </div>
                             <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl relative overflow-hidden">
@@ -513,7 +516,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                 </div>
                                 <p className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Net Profit</p>
                                 <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-teal-400' : 'text-red-400'}`}>
-                                    ${netProfit.toLocaleString()}
+                                    {format(netProfit)}
                                 </p>
                             </div>
                         </div>
@@ -546,7 +549,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                                         <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                                        <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                                        <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => format(value, { maximumSignificantDigits: 3 })} />
                                         <Tooltip
                                             contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '8px' }}
                                             itemStyle={{ color: '#e2e8f0' }}
@@ -579,7 +582,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                             <div className="text-white font-medium">{inv.projectName}</div>
                                             <div className="text-xs text-slate-500">{inv.description}</div>
                                         </td>
-                                        <td className="px-6 py-4 text-white font-bold">${inv.amount.toLocaleString()}</td>
+                                        <td className="px-6 py-4 text-white font-bold">{format(inv.amount)}</td>
                                         <td className="px-6 py-4">{inv.dueDate}</td>
                                         <td className="px-6 py-4">
                                             <Badge variant={inv.status === 'Paid' ? 'success' : inv.status === 'Overdue' ? 'error' : 'warning'}>
