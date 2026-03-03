@@ -25,8 +25,10 @@ import {
     AlertCircle,
     Activity,
     Zap,
-    LayoutList
+    LayoutList,
+    Download
 } from 'lucide-react';
+import { exportToCSV } from '../../../utils/exportUtils';
 import { TaskCountdown } from '../tasks/TaskCountdown';
 import { ProjectStage } from '../../../types';
 
@@ -236,6 +238,13 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                         </button>
                     </div>
 
+                    <button
+                        onClick={() => exportToCSV(projects, 'Projects')}
+                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white hover:bg-slate-800 rounded-2xl font-black text-xs uppercase tracking-widest transition-all border border-white/5"
+                    >
+                        <Download className="w-4 h-4" />
+                        Export CSV
+                    </button>
                     <button
                         onClick={() => setShowAddModal(true)}
                         className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white text-slate-900 hover:bg-violet-50 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl hover:shadow-white/10 active:scale-95"

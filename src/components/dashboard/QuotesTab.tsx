@@ -12,6 +12,7 @@ import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import toast from 'react-hot-toast';
 import { useCurrency } from '../../hooks/useCurrency';
+import { exportToCSV } from '../../utils/exportUtils';
 
 interface QuotesTabProps {
     userId: string;
@@ -620,12 +621,22 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                         </div>
 
                         {(userRole === 'admin' || userRole === 'tenant_admin') && (
-                            <Button
-                                onClick={() => setShowCreateModal(true)}
-                                className="flex-1 sm:flex-none shadow-lg shadow-teal-500/20 h-10 px-4"
-                            >
-                                <Plus className="w-4 h-4 mr-2" /> Create
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="secondary"
+                                    onClick={() => exportToCSV(quotes, 'Quotes')}
+                                    className="h-10 px-4"
+                                    icon={<Download className="w-4 h-4" />}
+                                >
+                                    Export CSV
+                                </Button>
+                                <Button
+                                    onClick={() => setShowCreateModal(true)}
+                                    className="flex-1 sm:flex-none shadow-lg shadow-teal-500/20 h-10 px-4"
+                                >
+                                    <Plus className="w-4 h-4 mr-2" /> Create
+                                </Button>
+                            </div>
                         )}
                     </div>
                 </div>

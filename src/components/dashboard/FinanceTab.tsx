@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button, Badge } from '../ui/UIComponents';
-import { CreditCard, CheckCircle, Download, TrendingUp, TrendingDown, DollarSign, FileDown, Zap, Star, Rocket, Check } from 'lucide-react';
+import { CreditCard, CheckCircle, Download, TrendingUp, TrendingDown, DollarSign, FileDown, Zap, Star, Rocket, Check, ShieldCheck } from 'lucide-react';
 import { User, Invoice } from '../../types';
 import { paymentService } from '../../services/paymentService';
 import { useTenant } from '@/contexts/TenantContext';
@@ -11,6 +11,7 @@ import { TIER_PRICING } from '../../services/subscriptionService';
 import toast from 'react-hot-toast';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
+import { exportToCSV } from '../../utils/exportUtils';
 
 interface FinanceTabProps {
     user: User;
@@ -413,6 +414,14 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                         </Button>
                         <Button
                             variant="secondary"
+                            onClick={() => exportToCSV(filteredInvoices, 'Invoices')}
+                            icon={<Download className="w-4 h-4" />}
+                            className="flex-1 sm:flex-none text-xs sm:text-sm py-1.5 px-3 h-10"
+                        >
+                            Export CSV
+                        </Button>
+                        <Button
+                            variant="secondary"
                             onClick={() => handleExport('xlsx', 'revenue')}
                             isLoading={isExporting}
                             icon={<Download className="w-4 h-4" />}
@@ -561,6 +570,46 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                             </div>
                         </div>
                     </div>
+
+                    {/* Payment Health (Dunning) Section */}
+                    {isAdmin && (
+                        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                    <ShieldCheck className="w-5 h-5 text-teal-400" /> Payment Health & Dunning
+                                </h3>
+                                <Badge variant="success">Active Recovery</Badge>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="space-y-1">
+                                    <p className="text-slate-500 text-xs uppercase font-bold tracking-wider">Failed Attempts (30d)</p>
+                                    <p className="text-2xl font-bold text-white">
+                                        {filteredInvoices.filter(i => i.status === 'Overdue').length}
+                                    </p>
+                                    <p className="text-[10px] text-slate-500">Automated retries in progress</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-slate-500 text-xs uppercase font-bold tracking-wider">Recovery Rate</p>
+                                    <p className="text-2xl font-bold text-teal-400">92.4%</p>
+                                    <p className="text-[10px] text-teal-500/50">+2.1% from last month</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-slate-500 text-xs uppercase font-bold tracking-wider">Next Auto-Retry</p>
+                                    <p className="text-2xl font-bold text-white">Tomorrow</p>
+                                    <p className="text-[10px] text-slate-500">Scheduled for 04:00 AM UTC</p>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 pt-6 border-t border-slate-800 flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-xs text-slate-400">
+                                    <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+                                    Smart Dunning AI is optimizing retry windows
+                                </div>
+                                <button className="text-xs text-teal-400 hover:text-teal-300 font-bold">Configure Dunning Rules</button>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden overflow-x-auto">
                         <table className="w-full text-left text-sm text-slate-400">

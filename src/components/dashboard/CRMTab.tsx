@@ -21,7 +21,8 @@ import {
     Edit2,
     Upload,
     CheckCircle2,
-    MessageCircle
+    MessageCircle,
+    Download
 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -60,6 +61,7 @@ import { ClientImportModal } from './crm/ClientImport';
 import { LeadImportModal } from './crm/LeadImportModal';
 import { useQueryClient } from '@tanstack/react-query';
 import ProjectModal from './projects/ProjectModal';
+import { exportToCSV } from '../../utils/exportUtils';
 
 interface CRMTabProps {
     userId: string;
@@ -229,6 +231,14 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                             className="flex-1 sm:flex-none text-xs sm:text-sm h-10 px-3"
                         >
                             Import CSV
+                        </Button>
+                        <Button
+                            onClick={() => exportToCSV(clients, 'CRM_Clients')}
+                            variant="secondary"
+                            icon={<Download className="w-4 h-4" />}
+                            className="flex-1 sm:flex-none text-xs sm:text-sm h-10 px-3"
+                        >
+                            Export CSV
                         </Button>
                         <Button
                             onClick={() => setShowAddModal(true)}
