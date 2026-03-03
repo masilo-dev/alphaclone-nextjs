@@ -7,10 +7,10 @@ import { NextResponse } from 'next/server';
  */
 export async function GET(
     request: Request,
-    { params }: { params: { bucket: string; path: string[] } }
+    { params }: { params: Promise<{ bucket: string; path: string[] }> }
 ) {
     try {
-        const { bucket, path } = params;
+        const { bucket, path } = await params;
         const filePath = path.join('/');
 
         if (!bucket || !filePath) {
