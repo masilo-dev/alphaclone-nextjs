@@ -27,63 +27,13 @@ class RateLimitService {
         userRole: string,
         generationType: 'logo' | 'image' | 'content'
     ): Promise<RateLimitCheck> {
-        // Admin has unlimited
-        if (userRole === 'admin') {
-            return {
-                allowed: true,
-                remaining: 999,
-                limit: 999,
-                resetAt: this.getNextMidnight()
-            };
-        }
-
-        try {
-            // Check via database function
-            const { data, error } = await supabase.rpc('check_generation_limit', {
-                p_user_id: userId,
-                p_generation_type: generationType,
-                p_user_role: userRole
-            });
-
-            if (error) {
-                console.error('Rate limit check error:', error);
-                return {
-                    allowed: false,
-                    remaining: 0,
-                    limit: this.CLIENT_DAILY_LIMIT,
-                    resetAt: this.getNextMidnight()
-                };
-            }
-
-            const allowed = data as boolean;
-
-            // Get current count
-            const { data: usageData } = await supabase
-                .from('generation_usage')
-                .select('count')
-                .eq('user_id', userId)
-                .eq('generation_type', generationType)
-                .eq('date', new Date().toISOString().split('T')[0])
-                .single();
-
-            const currentCount = usageData?.count || 0;
-            const remaining = Math.max(0, this.CLIENT_DAILY_LIMIT - currentCount);
-
-            return {
-                allowed,
-                remaining,
-                limit: this.CLIENT_DAILY_LIMIT,
-                resetAt: this.getNextMidnight()
-            };
-        } catch (err) {
-            console.error('Rate limit check error:', err);
-            return {
-                allowed: false,
-                remaining: 0,
-                limit: this.CLIENT_DAILY_LIMIT,
-                resetAt: this.getNextMidnight()
-            };
-        }
+        // RATE LIMITS REMOVED - Unlimited for everyone
+        return {
+            allowed: true,
+            remaining: 999,
+            limit: 999,
+            resetAt: this.getNextMidnight()
+        };
     }
 
     /**
@@ -119,26 +69,8 @@ class RateLimitService {
         userRole: string,
         generationType: 'logo' | 'image' | 'content'
     ): Promise<number> {
-        // Admin has unlimited
-        if (userRole === 'admin') return 999;
-
-        try {
-            const { data, error } = await supabase.rpc('get_remaining_generations', {
-                p_user_id: userId,
-                p_generation_type: generationType,
-                p_user_role: userRole
-            });
-
-            if (error) {
-                console.error('Get remaining error:', error);
-                return 0;
-            }
-
-            return data as number;
-        } catch (err) {
-            console.error('Get remaining error:', err);
-            return 0;
-        }
+        // RATE LIMITS REMOVED - Unlimited for everyone
+        return 999;
     }
 
     /**

@@ -145,61 +145,13 @@ export async function rateLimit(
     reset: number;
     limit: number;
 }> {
-    // Get identifier (IP address or custom identifier)
-    const ip =
-        request.headers.get('x-forwarded-for')?.split(',')[0] ||
-        request.headers.get('x-real-ip') ||
-        'unknown';
-
-    const key = identifier || `ip:${ip}`;
-
-    try {
-        if (redis) {
-            // Use Upstash rate limiting
-            const limiter = createRateLimiter(config.limit, config.window);
-            if (!limiter) {
-                throw new Error('Failed to create rate limiter');
-            }
-
-            const result = await limiter.limit(key);
-
-            // Log rate limit violation to Supabase
-            if (!result.success) {
-                await logRateLimitViolation(key, ip, request.nextUrl.pathname);
-            }
-
-            return {
-                success: result.success,
-                remaining: result.remaining,
-                reset: result.reset,
-                limit: config.limit,
-            };
-        } else {
-            // Use in-memory fallback
-            console.warn('Redis not configured, using in-memory rate limiting');
-            const windowMs = parseWindow(config.window);
-            const result = checkInMemoryRateLimit(key, config.limit, windowMs);
-
-            // Log rate limit violation to Supabase
-            if (!result.success) {
-                await logRateLimitViolation(key, ip, request.nextUrl.pathname);
-            }
-
-            return {
-                ...result,
-                limit: config.limit,
-            };
-        }
-    } catch (error) {
-        console.error('Rate limit error:', error);
-        // On error, allow the request through (fail open)
-        return {
-            success: true,
-            remaining: config.limit,
-            reset: Date.now() + parseWindow(config.window),
-            limit: config.limit,
-        };
-    }
+    // RATE LIMITING DISABLED
+    return {
+        success: true,
+        remaining: config.limit,
+        reset: Date.now() + 60000,
+        limit: config.limit,
+    };
 }
 
 /**
