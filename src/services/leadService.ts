@@ -30,6 +30,19 @@ export interface Lead {
     sdrInsight?: string;
 }
 
+export interface GrowthAgentTarget {
+    id: string;
+    tenant_id: string;
+    name: string;
+    industry?: string;
+    location?: string;
+    filters?: string;
+    automated_outreach: boolean;
+    last_run_at?: string;
+    created_at: string;
+    updated_at: string;
+}
+
 export const leadService = {
     /**
      * Get tenant ID (required for all operations)
@@ -436,7 +449,14 @@ export const leadService = {
                 .single();
             if (getError || !lead) throw new Error(getError?.message || 'Lead not found');
 
-            const intelligence = `AI Enrichment for ${lead.business_name || 'Business'}: Matches target profile.`;
+            // Use the unified AI service for deep business research
+            const { enrichLeadData } = await import('./unifiedAIService');
+            const intelligence = await enrichLeadData({
+                businessName: lead.business_name || lead.name,
+                industry: lead.industry,
+                location: lead.location || lead.city,
+                website: lead.website
+            });
 
             const { error: updateError } = await supabase
                 .from('leads')
@@ -450,6 +470,96 @@ export const leadService = {
         } catch (err: any) {
             console.error('Error enriching lead:', err);
             return { notes: null, error: err.message };
+        }
+    },
+
+    /**
+     * Get all target criteria for the Growth Agent
+     */
+    async getGrowthAgentTargets(): Promise<{ targets: GrowthAgentTarget[]; error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            const { data, error } = await supabase
+                .from('growth_agent_targets')
+                .select('*')
+                .eq('tenant_id', tenantId)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            return { targets: data || [], error: null };
+        } catch (err: any) {
+            console.error('Error fetching growth agent targets:', err);
+            return { targets: [], error: err.message };
+        }
+    },
+
+    /**
+     * Define new target criteria for the Growth Agent
+     */
+    async createGrowthAgentTarget(target: Partial<GrowthAgentTarget>): Promise<{ target: GrowthAgentTarget | null; error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            const { data, error } = await supabase
+                .from('growth_agent_targets')
+                .insert({
+                    tenant_id: tenantId,
+                    name: target.name,
+                    industry: target.industry,
+                    location: target.location,
+                    filters: target.filters,
+                    automated_outreach: target.automated_outreach || false
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+            return { target: data, error: null };
+        } catch (err: any) {
+            console.error('Error creating growth agent target:', err);
+            return { target: null, error: err.message };
+        }
+    },
+
+    /**
+     * Update existing target criteria
+     */
+    async updateGrowthAgentTarget(id: string, updates: Partial<GrowthAgentTarget>): Promise<{ error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            const { error } = await supabase
+                .from('growth_agent_targets')
+                .update({
+                    ...updates,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', id)
+                .eq('tenant_id', tenantId);
+
+            if (error) throw error;
+            return { error: null };
+        } catch (err: any) {
+            console.error('Error updating growth agent target:', err);
+            return { error: err.message };
+        }
+    },
+
+    /**
+     * Remove target criteria
+     */
+    async deleteGrowthAgentTarget(id: string): Promise<{ error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            const { error } = await supabase
+                .from('growth_agent_targets')
+                .delete()
+                .eq('id', id)
+                .eq('tenant_id', tenantId);
+
+            if (error) throw error;
+            return { error: null };
+        } catch (err: any) {
+            console.error('Error deleting growth agent target:', err);
+            return { error: err.message };
         }
     }
 };

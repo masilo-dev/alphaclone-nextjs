@@ -31,6 +31,9 @@ export interface FileUploadResult {
     fileId?: string;
     url?: string;
     proxiedUrl?: string; // New: Proxied URL for better security
+    tags?: string[];
+    category?: string;
+    aiSummary?: string;
     error?: string;
 }
 
@@ -132,7 +135,8 @@ class FileUploadService {
         entityType?: string,
         entityId?: string,
         explicitUserId?: string,
-        explicitTenantId?: string
+        explicitTenantId?: string,
+        metadata?: { tags?: string[]; category?: string; aiSummary?: string }
     ): Promise<FileUploadResult> {
         try {
             // Validate file
@@ -200,6 +204,9 @@ class FileUploadService {
                     entity_type: entityType,
                     entity_id: entityId,
                     tenant_id: finalTenantId,
+                    tags: metadata?.tags || [],
+                    category: metadata?.category || null,
+                    ai_summary: metadata?.aiSummary || null,
                 })
                 .select()
                 .single();

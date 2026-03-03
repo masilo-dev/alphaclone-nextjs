@@ -74,6 +74,7 @@ export interface Project {
   isPublic?: boolean;
   showInPortfolio?: boolean;
   clientId?: string;
+  location?: string;
   risk?: 'Low' | 'Medium' | 'High';
   health?: 'On Track' | 'At Risk' | 'Delayed';
   resources?: string[];

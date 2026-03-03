@@ -26,6 +26,8 @@ const envSchema = z.object({
     VITE_GEMINI_API_KEY: z.string().optional(),
     // Google General Services (Places, Maps, etc.)
     GOOGLE_API_KEY: z.string().optional(),
+    // Manus AI (Leads)
+    MANUS_API_KEY: z.string().optional(),
 
     // Daily.co (optional - for video calls, domain is required if using video)
     VITE_DAILY_DOMAIN: z.string().optional(),
@@ -72,6 +74,7 @@ function validateEnv() {
         OPENAI_API_KEY: process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY,
         VITE_GEMINI_API_KEY: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_KEY || process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_API_KEY,
         GOOGLE_API_KEY: process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || process.env.VITE_GOOGLE_API_KEY || process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_AI_KEY,
+        MANUS_API_KEY: process.env.MANUS_API_KEY || process.env.NEXT_PUBLIC_MANUS_API_KEY || process.env.VITE_MANUS_API_KEY,
 
         VITE_DAILY_DOMAIN: process.env.NEXT_PUBLIC_DAILY_DOMAIN || process.env.VITE_DAILY_DOMAIN,
         DAILY_API_KEY: process.env.DAILY_API_KEY || process.env.NEXT_PUBLIC_DAILY_API_KEY,

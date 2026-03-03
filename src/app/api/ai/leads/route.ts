@@ -52,7 +52,7 @@ export async function POST(req: Request) {
         // Now acting as a Senior SDR & Data Scientist using Advanced Orchestration
         if (leads.length === 0) {
             console.log('[Lead Gen] Using AI (Senior SDR Persona) for high-fidelity discovery...');
-            const prompt = `You are a Senior Sales Development Representative (SDR) and Lead Data Scientist at AlphaClone.
+            const prompt = `You are a Senior Sales Development Representative (SDR) and Data Scientist Auditor at AlphaClone, powered by Claude.
 Your task is to identify EXACTLY 5 high-fidelity business leads.
 
 SEARCH SPECIFICATION:
@@ -63,7 +63,8 @@ ${filters ? `- Required Constraints: "${filters}"\n` : ''}
 DATA QUALITY REQUIREMENTS (Senior SDR Standard):
 - Match the SPECIFIC service niche. If the user is looking for "injury lawyers", don't just return "legal services".
 - Business names MUST be realistic for the "${location}" market. 
-- Contact details MUST follow real-world patterns for this region (phone formats, email structures).
+- Contact details MUST follow real-world patterns for this region (phone formats).
+- **WEBSITE URL POLICY (CRITICAL)**: ONLY include a "website" if you are CERTAIN it is the real, active domain for the business. DO NOT guess or hallucinate links. If the URL is unknown or uncertain, return an empty string or null.
 - Verification: Cross-reference internal patterns to ensure these businesses are "Lead-Ready".
 - Output only valid JSON. No conversational fluff.
 
@@ -75,8 +76,8 @@ Strict Schema:
     "industry": "${industry}",
     "location": "${location}",
     "phone": "Localized String",
-    "email": "Realistic Email",
-    "website": "Consistent URL",
+    "email": "Realistic Email (only if highly probable)",
+    "website": "REAL URL ONLY",
     "estimatedValue": numeric_value,
     "notes": "SDR INSIGHT: Why this lead is a high-value target for this search."
   }

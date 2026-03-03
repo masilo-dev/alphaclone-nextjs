@@ -203,6 +203,7 @@ export const projectService = {
                     is_public: project.isPublic,
                     show_in_portfolio: project.showInPortfolio,
                     client_id: project.clientId || null,
+                    location: project.location,
                     budget: project.budget,
                     risk: project.risk,
                     health: project.health,

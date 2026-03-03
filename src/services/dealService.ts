@@ -19,6 +19,7 @@ export interface Deal {
     expectedCloseDate?: string;
     actualCloseDate?: string;
     source?: DealSource;
+    leadSource?: string; // New: map to lead_source column
     sourceDetails?: string;
     competitorInfo?: string;
     nextStep?: string;
@@ -240,6 +241,7 @@ export const dealService: DealService = {
                 expectedCloseDate: data.expected_close_date,
                 actualCloseDate: data.actual_close_date,
                 source: data.source,
+                leadSource: data.lead_source,
                 sourceDetails: data.source_details,
                 competitorInfo: data.competitor_info,
                 nextStep: data.next_step,
@@ -280,6 +282,7 @@ export const dealService: DealService = {
                     probability: dealData.probability || 0,
                     expected_close_date: dealData.expectedCloseDate,
                     source: dealData.source,
+                    lead_source: (dealData as any).leadSource || dealData.source, // Map to new column
                     source_details: dealData.sourceDetails,
                     next_step: dealData.nextStep,
                     description: dealData.description,

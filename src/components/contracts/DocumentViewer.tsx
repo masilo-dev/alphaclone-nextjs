@@ -24,10 +24,10 @@ import { jsPDF } from 'jspdf';
 
 // Configure PDFJS worker
 if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-    // Configure worker with a more reliable CDN fallback for the specific version
-    // Using unpkg.com as it often handles versioned sub-paths better than cdnjs for pdfjs-dist
-    const PDF_WORKER_URL = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-    pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_URL;
+    // Use a standard versioned worker from cdnjs which is more reliable for production environments
+    // The version matches the installed pdfjs-dist version
+    const WORKER_URL = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER_URL;
 }
 
 export interface Annotation {
