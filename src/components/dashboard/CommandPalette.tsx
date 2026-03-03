@@ -11,21 +11,37 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-interface Command {
-    id: string;
-    title: string;
-    description: string;
-    icon: any;
-    category: 'Actions' | 'Navigate' | 'Finance' | 'CRM' | 'Internal';
-    shortcut?: string;
-    action: () => void;
+interface CommandPaletteProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+    onCreateInvoice?: () => void;
+    onCreateTask?: () => void;
+    onCreateProject?: () => void;
 }
 
-export const CommandPalette: React.FC = () => {
-    const [isOpen, setIsOpen] = useState(false);
+export const CommandPalette: React.FC<CommandPaletteProps> = ({
+    isOpen: externalIsOpen,
+    onClose,
+    onCreateInvoice,
+    onCreateTask,
+    onCreateProject
+}) => {
+    const [internalIsOpen, setInternalIsOpen] = useState(false);
     const [search, setSearch] = useState('');
     const [selectedIndex, setSelectedIndex] = useState(0);
     const router = useRouter();
+
+    const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+    const setIsOpen = (value: boolean | ((prev: boolean) => boolean)) => {
+        if (typeof value === 'function') {
+            const nextValue = value(isOpen);
+            if (onClose && !nextValue) onClose();
+            setInternalIsOpen(nextValue);
+        } else {
+            if (onClose && !value) onClose();
+            setInternalIsOpen(value);
+        }
+    };
 
     const commands: Command[] = useMemo(() => [
         // --- NAVIGATION ---
@@ -47,13 +63,39 @@ export const CommandPalette: React.FC = () => {
         { id: 'ops-deals', title: 'Deals & Opportunities', description: 'High-value pipelines', icon: DollarSign, category: 'CRM', action: () => router.push('/dashboard?tab=deals') },
 
         // --- ACTIONS ---
-        { id: 'act-invoice', title: 'Create New Invoice', description: 'Generate billing fast', icon: Plus, category: 'Actions', shortcut: 'I', action: () => router.push('/dashboard?tab=finance&action=new-invoice') },
+        {
+            id: 'act-invoice',
+            title: 'Create New Invoice',
+            description: 'Generate billing fast',
+            icon: Plus,
+            category: 'Actions',
+            shortcut: 'I',
+            action: () => onCreateInvoice ? onCreateInvoice() : router.push('/dashboard?tab=finance&action=new-invoice')
+        },
+        {
+            id: 'act-task',
+            title: 'Create New Task',
+            description: ' neural capture engine',
+            icon: Plus,
+            category: 'Actions',
+            shortcut: 'T',
+            action: () => onCreateTask ? onCreateTask() : router.push('/dashboard?tab=tasks&action=new-task')
+        },
+        {
+            id: 'act-project',
+            title: 'Sumbit New Project',
+            description: 'Start a new consultation',
+            icon: Plus,
+            category: 'Actions',
+            shortcut: 'P',
+            action: () => onCreateProject ? onCreateProject() : router.push('/dashboard?tab=projects&action=new-project')
+        },
         { id: 'act-lead', title: 'Manual Lead Entry', description: 'Add a new prospect', icon: Plus, category: 'Actions', shortcut: 'L', action: () => router.push('/dashboard?tab=crm&action=new-lead') },
 
         // --- INTERNAL ---
         { id: 'int-settings', title: 'Platform Settings', description: 'Identity & profile', icon: Settings, category: 'Internal', action: () => router.push('/dashboard?tab=settings') },
         { id: 'int-security', title: 'Security Dashboard', description: 'Access & logs', icon: Shield, category: 'Internal', action: () => router.push('/dashboard?tab=settings&section=security') },
-    ], [router]);
+    ], [router, onCreateInvoice, onCreateTask, onCreateProject]);
 
     const filteredCommands = commands.filter(cmd =>
         cmd.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -71,13 +113,13 @@ export const CommandPalette: React.FC = () => {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
+    }, [isOpen]); // Added isOpen to dependencies to ensure setIsOpen refers to current state source
 
     const handleAction = useCallback((cmd: Command) => {
         cmd.action();
         setIsOpen(false);
         setSearch('');
-    }, []);
+    }, [setIsOpen]);
 
     useEffect(() => {
         if (isOpen) {
