@@ -11,6 +11,16 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+interface Command {
+    id: string;
+    title: string;
+    description: string;
+    icon: any;
+    category: 'Actions' | 'Navigate' | 'Finance' | 'CRM' | 'Internal';
+    shortcut?: string;
+    action: () => void;
+}
+
 interface CommandPaletteProps {
     isOpen?: boolean;
     onClose?: () => void;
