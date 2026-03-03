@@ -10,6 +10,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import { Button } from '../ui/UIComponents';
 import { Download, FileDown } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useCurrency } from '../../hooks/useCurrency';
 
 const AnalyticsTab: React.FC = () => {
     const { currentTenant: tenant } = useTenant();
@@ -19,6 +20,7 @@ const AnalyticsTab: React.FC = () => {
     const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
     const [error, setError] = useState<string | null>(null);
     const [isExporting, setIsExporting] = useState(false);
+    const { format: formatCurrency } = useCurrency();
 
     const handleExport = async (type: 'pdf' | 'xlsx', category: string) => {
         if (!tenant?.id) {
@@ -202,9 +204,9 @@ const AnalyticsTab: React.FC = () => {
                         </div>
                     </div>
                     <div>
-                        <h3 className="text-2xl sm:text-3xl font-bold text-white mb-1">${analytics.revenue.thisMonth.toLocaleString()}</h3>
+                        <h3 className="text-2xl sm:text-3xl font-bold text-white mb-1">{formatCurrency(analytics.revenue.thisMonth)}</h3>
                         <p className="text-xs sm:text-sm text-slate-500">Revenue (This Month)</p>
-                        <p className="text-xs text-slate-600 mt-1">${analytics.revenue.total.toLocaleString()} total</p>
+                        <p className="text-xs text-slate-600 mt-1">{formatCurrency(analytics.revenue.total)} total</p>
                     </div>
                 </Card>
 

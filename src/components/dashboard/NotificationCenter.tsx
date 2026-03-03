@@ -1,13 +1,33 @@
+'use client';
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { Bell, X, Check, Trash2, ExternalLink } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import {
+    Bell, X, Check, Trash2, ExternalLink,
+    MessageCircle, FolderOpen, CreditCard, Settings, AlertTriangle, BellOff
+} from 'lucide-react';
+import { formatDistanceToNow, isToday, isYesterday } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface NotificationCenterProps {
     userId: string;
 }
 
-// Inline type definition
 import { notificationService, Notification } from '../../services/dashboardService';
+
+const TYPE_CONFIG: Record<string, { Icon: any; color: string; bg: string; label: string }> = {
+    message: { Icon: MessageCircle, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20', label: 'Message' },
+    project: { Icon: FolderOpen, color: 'text-violet-400', bg: 'bg-violet-500/10 border-violet-500/20', label: 'Project' },
+    payment: { Icon: CreditCard, color: 'text-teal-400', bg: 'bg-teal-500/10 border-teal-500/20', label: 'Payment' },
+    system: { Icon: Settings, color: 'text-slate-400', bg: 'bg-slate-500/10 border-slate-500/20', label: 'System' },
+    alert: { Icon: AlertTriangle, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20', label: 'Alert' },
+};
+
+const getGroup = (dateStr: string): string => {
+    const d = new Date(dateStr);
+    if (isToday(d)) return 'Today';
+    if (isYesterday(d)) return 'Yesterday';
+    return 'Earlier';
+};
 
 const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -16,208 +36,233 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
     const loadNotifications = useCallback(async () => {
-        const { notifications: loaded, error } = await notificationService.getNotifications(userId);
-        if (loaded) {
-            setNotifications(loaded);
-        }
+        const { notifications: loaded } = await notificationService.getNotifications(userId);
+        if (loaded) setNotifications(loaded);
     }, [userId]);
 
-    const handleMarkAsRead = useCallback(async (notificationId: string) => {
-        // Optimistic update
-        setNotifications(prev =>
-            prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
-        );
-
-        await notificationService.markAsRead(notificationId);
+    const handleMarkAsRead = useCallback(async (id: string) => {
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+        await notificationService.markAsRead(id);
     }, []);
 
     const handleMarkAllAsRead = useCallback(async () => {
-        // Optimistic update
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-
         await notificationService.markAllAsRead(userId);
     }, [userId]);
 
-    const handleDelete = useCallback(async (notificationId: string) => {
-        // Optimistic update
-        setNotifications(prev => prev.filter(n => n.id !== notificationId));
-
-        await notificationService.deleteNotification(notificationId);
+    const handleDelete = useCallback(async (id: string) => {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+        await notificationService.deleteNotification(id);
     }, []);
 
     useEffect(() => {
         if (!userId) return;
-
         loadNotifications();
 
-        // Realtime subscription
-        const unsubscribe = notificationService.subscribeToNotifications(userId, (newNotification: Notification) => {
-            setNotifications(prev => [newNotification, ...prev]);
-            setUnreadCount(prev => prev + 1);
+        const unsubscribe = notificationService.subscribeToNotifications(userId, (newNotif: Notification) => {
+            setNotifications(prev => [newNotif, ...prev]);
         });
 
-        return () => {
-            unsubscribe();
-        };
+        return () => { unsubscribe(); };
     }, [userId, loadNotifications]);
 
     useEffect(() => {
         setUnreadCount(notifications.filter(n => !n.read).length);
     }, [notifications]);
 
-    const getNotificationIcon = (type: string) => {
-        const icons: Record<string, string> = {
-            message: '💬',
-            project: '📁',
-            payment: '💰',
-            system: '⚙️',
-            alert: '⚠️',
-        };
-        return icons[type] || '🔔';
-    };
-
     const filteredNotifications = filter === 'unread'
         ? notifications.filter(n => !n.read)
         : notifications;
 
+    // Group by date
+    const groups: Record<string, Notification[]> = {};
+    for (const n of filteredNotifications) {
+        const g = getGroup(n.created_at);
+        if (!groups[g]) groups[g] = [];
+        groups[g].push(n);
+    }
+    const groupOrder = ['Today', 'Yesterday', 'Earlier'];
+
     return (
         <div className="relative">
-            {/* Bell Icon */}
+            {/* Bell Trigger */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800"
+                className="relative p-2 text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-slate-800"
+                aria-label="Open notifications"
             >
                 <Bell className="w-5 h-5" />
-                {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                        {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                )}
+                <AnimatePresence>
+                    {unreadCount > 0 && (
+                        <motion.span
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0 }}
+                            className="absolute -top-0.5 -right-0.5 bg-gradient-to-br from-teal-400 to-violet-500 text-white text-[10px] font-black rounded-full w-4 h-4 flex items-center justify-center shadow-lg shadow-teal-500/30"
+                        >
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                        </motion.span>
+                    )}
+                </AnimatePresence>
             </button>
 
-            {/* Notification Panel */}
-            {isOpen && (
-                <>
-                    <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setIsOpen(false)}
-                    />
-                    <div className="absolute right-0 mt-2 w-screen max-w-md sm:w-96 max-h-[80vh] sm:max-h-[600px] bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col mx-2 sm:mx-0">
-                        {/* Header */}
-                        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-                            <div>
-                                <h3 className="text-lg font-bold text-white">Notifications</h3>
-                                <p className="text-xs text-slate-400">{unreadCount} unread</p>
-                            </div>
-                            <div className="flex gap-2">
-                                {unreadCount > 0 && (
-                                    <button
-                                        onClick={handleMarkAllAsRead}
-                                        className="text-xs text-teal-400 hover:text-teal-300 transition-colors"
-                                    >
-                                        Mark all read
-                                    </button>
-                                )}
-                                <button
-                                    onClick={() => setIsOpen(false)}
-                                    className="text-slate-400 hover:text-white transition-colors"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-                        </div>
+            {/* Backdrop */}
+            <AnimatePresence>
+                {isOpen && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-40 bg-slate-950/20 backdrop-blur-[1px]"
+                            onClick={() => setIsOpen(false)}
+                        />
 
-                        {/* Filter Tabs */}
-                        <div className="flex border-b border-slate-800">
-                            <button
-                                onClick={() => setFilter('all')}
-                                className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${filter === 'all'
-                                    ? 'text-teal-400 border-b-2 border-teal-400'
-                                    : 'text-slate-400 hover:text-white'
-                                    }`}
-                            >
-                                All
-                            </button>
-                            <button
-                                onClick={() => setFilter('unread')}
-                                className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${filter === 'unread'
-                                    ? 'text-teal-400 border-b-2 border-teal-400'
-                                    : 'text-slate-400 hover:text-white'
-                                    }`}
-                            >
-                                Unread ({unreadCount})
-                            </button>
-                        </div>
-
-                        {/* Notifications List */}
-                        <div className="flex-1 overflow-y-auto">
-                            {filteredNotifications.length === 0 ? (
-                                <div className="p-8 text-center text-slate-400">
-                                    <Bell className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                                    <p>No notifications</p>
+                        {/* Panel */}
+                        <motion.div
+                            initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 400 }}
+                            className="absolute right-0 mt-2 w-[22rem] sm:w-96 max-h-[75vh] sm:max-h-[600px] bg-slate-950 border border-white/10 rounded-2xl shadow-2xl shadow-black/50 z-50 flex flex-col overflow-hidden"
+                        >
+                            {/* Header */}
+                            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-slate-900 to-slate-950">
+                                <div>
+                                    <h3 className="text-sm font-black text-white uppercase tracking-widest">Notifications</h3>
+                                    <p className="text-[10px] text-slate-500 mt-0.5">
+                                        {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
+                                    </p>
                                 </div>
-                            ) : (
-                                filteredNotifications.map((notification) => (
-                                    <div
-                                        key={notification.id}
-                                        className={`p-4 border-b border-slate-800 hover:bg-slate-800/50 transition-colors ${!notification.read ? 'bg-slate-800/30' : ''
+                                <div className="flex gap-2 items-center">
+                                    {unreadCount > 0 && (
+                                        <button
+                                            onClick={handleMarkAllAsRead}
+                                            className="text-[10px] font-bold text-teal-400 hover:text-teal-300 transition-colors px-2 py-1 rounded-lg hover:bg-teal-500/10"
+                                        >
+                                            Mark all read
+                                        </button>
+                                    )}
+                                    <button onClick={() => setIsOpen(false)} className="p-1.5 text-slate-500 hover:text-white transition-colors rounded-lg hover:bg-white/5">
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Filter Pills */}
+                            <div className="flex gap-2 px-4 py-2 border-b border-white/5 bg-slate-950">
+                                {(['all', 'unread'] as const).map(f => (
+                                    <button
+                                        key={f}
+                                        onClick={() => setFilter(f)}
+                                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${filter === f
+                                            ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20'
+                                            : 'text-slate-500 hover:text-slate-300 bg-white/5'
                                             }`}
                                     >
-                                        <div className="flex gap-3">
-                                            <div className="text-2xl flex-shrink-0">
-                                                {getNotificationIcon(notification.type)}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <h4 className="font-semibold text-white text-sm">
-                                                        {notification.title}
-                                                    </h4>
-                                                    {!notification.read && (
-                                                        <button
-                                                            onClick={() => handleMarkAsRead(notification.id)}
-                                                            className="text-teal-400 hover:text-teal-300 transition-colors flex-shrink-0"
-                                                            title="Mark as read"
-                                                        >
-                                                            <Check className="w-4 h-4" />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                                {notification.message && (
-                                                    <p className="text-sm text-slate-400 mt-1 line-clamp-2">
-                                                        {notification.message}
-                                                    </p>
-                                                )}
-                                                <div className="flex items-center justify-between mt-2">
-                                                    <span className="text-xs text-slate-500">
-                                                        {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                                                    </span>
-                                                    <div className="flex gap-2">
-                                                        {notification.link && (
-                                                            <a
-                                                                href={notification.link}
-                                                                className="text-teal-400 hover:text-teal-300 transition-colors"
-                                                                onClick={() => setIsOpen(false)}
-                                                            >
-                                                                <ExternalLink className="w-4 h-4" />
-                                                            </a>
-                                                        )}
-                                                        <button
-                                                            onClick={() => handleDelete(notification.id)}
-                                                            className="text-slate-500 hover:text-red-400 transition-colors"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        {f === 'all' ? 'All' : `Unread (${unreadCount})`}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* List */}
+                            <div className="flex-1 overflow-y-auto custom-scrollbar">
+                                {filteredNotifications.length === 0 ? (
+                                    <div className="py-16 flex flex-col items-center justify-center text-slate-600">
+                                        <BellOff className="w-10 h-10 mb-3 opacity-40" />
+                                        <p className="text-xs font-bold uppercase tracking-widest">
+                                            {filter === 'unread' ? 'All caught up!' : 'No notifications'}
+                                        </p>
                                     </div>
-                                ))
+                                ) : (
+                                    groupOrder.map(group => {
+                                        if (!groups[group]?.length) return null;
+                                        return (
+                                            <div key={group}>
+                                                <div className="px-4 py-2 text-[9px] font-black uppercase tracking-[0.2em] text-slate-600 bg-slate-950 sticky top-0 z-10">
+                                                    {group}
+                                                </div>
+                                                {groups[group].map((n) => {
+                                                    const cfg = TYPE_CONFIG[n.type] || TYPE_CONFIG.system;
+                                                    const Icon = cfg.Icon;
+                                                    return (
+                                                        <motion.div
+                                                            key={n.id}
+                                                            layout
+                                                            initial={{ opacity: 0 }}
+                                                            animate={{ opacity: 1 }}
+                                                            exit={{ opacity: 0 }}
+                                                            className={`group px-4 py-3.5 border-b border-white/[0.03] hover:bg-white/[0.03] transition-all ${!n.read ? 'bg-white/[0.02]' : ''}`}
+                                                        >
+                                                            <div className="flex gap-3 items-start">
+                                                                {/* Icon */}
+                                                                <div className={`mt-0.5 w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 border ${cfg.bg}`}>
+                                                                    <Icon className={`w-4 h-4 ${cfg.color}`} />
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex items-start justify-between gap-1">
+                                                                        <p className={`text-xs font-bold leading-snug ${n.read ? 'text-slate-400' : 'text-white'}`}>
+                                                                            {n.title}
+                                                                        </p>
+                                                                        {!n.read && (
+                                                                            <div className="w-2 h-2 rounded-full bg-teal-400 flex-shrink-0 mt-1 shadow-[0_0_6px_rgba(45,212,191,0.6)]" />
+                                                                        )}
+                                                                    </div>
+                                                                    {n.message && (
+                                                                        <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{n.message}</p>
+                                                                    )}
+                                                                    <div className="flex items-center justify-between mt-2">
+                                                                        <span className="text-[10px] text-slate-600">
+                                                                            {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+                                                                        </span>
+                                                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                            {!n.read && (
+                                                                                <button
+                                                                                    onClick={() => handleMarkAsRead(n.id)}
+                                                                                    className="p-1 rounded-md hover:bg-teal-500/10 text-slate-500 hover:text-teal-400 transition-colors"
+                                                                                    title="Mark as read"
+                                                                                >
+                                                                                    <Check className="w-3 h-3" />
+                                                                                </button>
+                                                                            )}
+                                                                            {n.link && (
+                                                                                <a
+                                                                                    href={n.link}
+                                                                                    className="p-1 rounded-md hover:bg-violet-500/10 text-slate-500 hover:text-violet-400 transition-colors"
+                                                                                    onClick={() => setIsOpen(false)}
+                                                                                >
+                                                                                    <ExternalLink className="w-3 h-3" />
+                                                                                </a>
+                                                                            )}
+                                                                            <button
+                                                                                onClick={() => handleDelete(n.id)}
+                                                                                className="p-1 rounded-md hover:bg-red-500/10 text-slate-600 hover:text-red-400 transition-colors"
+                                                                            >
+                                                                                <Trash2 className="w-3 h-3" />
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </motion.div>
+                                                    );
+                                                })}
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+
+                            {/* Footer */}
+                            {notifications.length > 0 && (
+                                <div className="p-3 border-t border-white/5 bg-slate-950 text-center">
+                                    <p className="text-[10px] text-slate-600 font-mono">{notifications.length} total notifications</p>
+                                </div>
                             )}
-                        </div>
-                    </div>
-                </>
-            )}
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
