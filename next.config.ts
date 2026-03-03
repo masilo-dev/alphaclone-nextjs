@@ -71,6 +71,29 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    const supabaseUrl = process.env.VITE_SUPABASE_URL;
+    if (!supabaseUrl) return [];
+
+    return [
+      {
+        source: '/auth/v1/:path*',
+        destination: `${supabaseUrl}/auth/v1/:path*`,
+      },
+      {
+        source: '/rest/v1/:path*',
+        destination: `${supabaseUrl}/rest/v1/:path*`,
+      },
+      {
+        source: '/storage/v1/:path*',
+        destination: `${supabaseUrl}/storage/v1/:path*`,
+      },
+      {
+        source: '/realtime/v1/:path*',
+        destination: `${supabaseUrl}/realtime/v1/:path*`,
+      },
+    ];
+  },
 };
 
 export default withSerwist(nextConfig);

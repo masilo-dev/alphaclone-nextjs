@@ -336,10 +336,12 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                             placeholder="+1 (555) 000-0000"
                                         />
                                         <Input
-                                            label="Company"
+                                            label="Company Name"
                                             value={profileData.company}
                                             onChange={(e: any) => setProfileData({ ...profileData, company: e.target.value })}
                                             placeholder="Your company name"
+                                            disabled={!!user.company}
+                                            hint={user.company ? "Company name is locked after registration." : "Set your official business name."}
                                         />
                                         <div>
                                             <label className="block text-sm font-medium text-slate-300 mb-1.5">Timezone</label>

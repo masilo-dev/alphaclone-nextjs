@@ -7,57 +7,55 @@ import { Loader2, Upload, Save, Building, Palette, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Tenant } from '../../../services/tenancy/types';
 import { tenantService } from '../../../services/tenancy/TenantService';
+import { logoService } from '@/services/logoService';
 
 const BrandingSettings = () => {
     const { currentTenant, refreshTenants } = useTenant();
     const [loading, setLoading] = useState(false);
-    const [uploading, setUploading] = useState(false);
 
     // Form State
-    const [branding, setBranding] = useState({
-        legal_name: '',
-        tax_id: '',
-        business_address: '',
-        brand_color_primary: '#0f172a',
-        brand_color_secondary: '#14b8a6',
-        logo_url: ''
+    const [branding, setBranding] = useState<any>(currentTenant?.settings?.branding || {
+        primaryColor: currentTenant?.brand_color_primary || '#0d9488',
+        secondaryColor: currentTenant?.brand_color_secondary || '#0f172a',
+        logo_url: currentTenant?.logo_url || '',
+        legal_name: currentTenant?.legal_name || '',
+        tax_id: currentTenant?.tax_id || '',
+        address: currentTenant?.business_address || ''
     });
 
-    // Load initial data
-    useEffect(() => {
-        if (currentTenant) {
-            setBranding({
-                legal_name: currentTenant.legal_name || currentTenant.name || '',
-                tax_id: currentTenant.tax_id || '',
-                business_address: currentTenant.business_address || '',
-                brand_color_primary: currentTenant.brand_color_primary || '#0f172a',
-                brand_color_secondary: currentTenant.brand_color_secondary || '#14b8a6',
-                logo_url: currentTenant.logo_url || ''
-            });
-        }
-    }, [currentTenant]);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    // Load initial data - This useEffect is now redundant due to direct useState initialization
+    // useEffect(() => {
+    //     if (currentTenant) {
+    //         setBranding({
+    //             legal_name: currentTenant.legal_name || currentTenant.name || '',
+    //             tax_id: currentTenant.tax_id || '',
+    //             business_address: currentTenant.business_address || '',
+    //             brand_color_primary: currentTenant.brand_color_primary || '#0f172a',
+    //             brand_color_secondary: currentTenant.brand_color_secondary || '#14b8a6',
+    //             logo_url: currentTenant.logo_url || ''
+    //         });
+    //     }
+    // }, [currentTenant]);
 
     // Handle Logo Upload
     const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        setUploading(true);
+        setIsUploading(true);
         try {
-            // Upload to 'branding' folder or general uploads
-            const result = await fileUploadService.uploadFile(file, 'tenant_logo', currentTenant?.id);
+            const { url, error } = await logoService.uploadLogo(file);
+            if (error) throw new Error(error);
 
-            if (result.success && result.url) {
-                setBranding(prev => ({ ...prev, logo_url: result.url! }));
-                toast.success("Logo uploaded successfully");
-            } else {
-                toast.error(result.error || "Failed to upload logo");
-            }
-        } catch (err) {
-            console.error(err);
-            toast.error("Error uploading logo");
+            setBranding({ ...branding, logo_url: url });
+            toast.success('Logo updated successfully');
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to upload logo');
         } finally {
-            setUploading(false);
+            setIsUploading(false);
         }
     };
 
@@ -69,9 +67,9 @@ const BrandingSettings = () => {
             await tenantService.updateTenant(currentTenant.id, {
                 legal_name: branding.legal_name,
                 tax_id: branding.tax_id,
-                business_address: branding.business_address,
-                brand_color_primary: branding.brand_color_primary,
-                brand_color_secondary: branding.brand_color_secondary,
+                business_address: branding.address, // Changed to branding.address
+                brand_color_primary: branding.primaryColor, // Changed to branding.primaryColor
+                brand_color_secondary: branding.secondaryColor, // Changed to branding.secondaryColor
                 logo_url: branding.logo_url
             });
             await refreshTenants();
@@ -98,21 +96,31 @@ const BrandingSettings = () => {
                     <div className="mb-6">
                         <label className="block text-sm font-medium text-slate-400 mb-2">Organization Logo</label>
                         <div className="flex items-center gap-4">
-                            <div className="w-20 h-20 bg-slate-800 rounded-xl border border-white/10 flex items-center justify-center overflow-hidden">
-                                {branding.logo_url ? (
-                                    <img src={branding.logo_url} alt="Logo" className="w-full h-full object-contain" />
+                            <div className="w-24 h-24 rounded-2xl bg-slate-950/50 border border-white/10 flex items-center justify-center overflow-hidden relative group">
+                                {isUploading ? (
+                                    <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
+                                ) : branding.logo_url ? (
+                                    <img src={branding.logo_url} alt="Logo" className="w-full h-full object-cover" />
                                 ) : (
-                                    <Building className="w-8 h-8 text-slate-600" />
+                                    <Building className="w-8 h-8 text-slate-700" />
                                 )}
+                                {!isUploading && (
+                                    <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                                    >
+                                        <Upload className="w-5 h-5 text-white" />
+                                    </button>
+                                )}
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleLogoUpload}
+                                    accept="image/*"
+                                    className="hidden"
+                                />
                             </div>
                             <div>
-                                <label className="cursor-pointer">
-                                    <input type="file" className="hidden" accept="image/png,image/jpeg,image/svg+xml" onChange={handleLogoUpload} />
-                                    <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm transition-colors">
-                                        {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                                        Upload Logo
-                                    </div>
-                                </label>
                                 <p className="text-xs text-slate-500 mt-2">Recommended: PNG or SVG, max 2MB.</p>
                             </div>
                         </div>
@@ -169,9 +177,15 @@ const BrandingSettings = () => {
                                 type="text"
                                 value={branding.legal_name}
                                 onChange={(e) => setBranding({ ...branding, legal_name: e.target.value })}
-                                className="w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-teal-500/50 outline-none"
+                                className={`w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-teal-500/50 outline-none ${currentTenant?.legal_name ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 placeholder="Legal Entity Name"
+                                disabled={!!currentTenant?.legal_name}
                             />
+                            {currentTenant?.legal_name && (
+                                <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1 italic">
+                                    <Building className="w-3 h-3" /> Business identity is locked. Contact support to change.
+                                </p>
+                            )}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-400 mb-1">Tax ID / VAT Number</label>

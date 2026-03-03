@@ -34,6 +34,13 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
     const [replyBody, setReplyBody] = useState('');
     const [isSending, setIsSending] = useState(false);
 
+    // Simplified content cleaner for "Coming Soon" phase
+    const cleanEmailBody = (html?: string) => {
+        if (!html) return '';
+        // Replace broken cid: images with a clean placeholder to avoid "broken image" icons
+        return html.replace(/src="cid:[^"]+"/g, 'src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" style="display:none;"');
+    };
+
     const fetchThreads = async () => {
         setIsLoading(true);
         try {
@@ -66,29 +73,7 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
     };
 
     const handleSendReply = async () => {
-        if (!replyBody.trim() || !selectedThreadId || threadMessages.length === 0) return;
-
-        setIsSending(true);
-        const lastMsg = threadMessages[threadMessages.length - 1];
-        try {
-            await gmailService.sendMessage(
-                userId,
-                lastMsg.from || '',
-                `Re: ${lastMsg.subject || 'No Subject'}`,
-                replyBody,
-                selectedThreadId
-            );
-            toast.success('Message sent');
-            setReplyBody('');
-            // Refresh thread
-            const updatedMessages = await gmailService.getThread(userId, selectedThreadId);
-            setThreadMessages(updatedMessages);
-        } catch (err: any) {
-            console.error('Failed to send reply:', err);
-            toast.error('Failed to send message');
-        } finally {
-            setIsSending(false);
-        }
+        toast.success("Reply drafting UI enabled. Sending is coming in the next update.");
     };
 
     const handleBackToList = () => {
@@ -200,8 +185,8 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
                                                     <span className="text-[10px] text-slate-500">{msg.date}</span>
                                                 </div>
                                                 <div
-                                                    className="text-sm text-slate-300 leading-relaxed gmail-body-content"
-                                                    dangerouslySetInnerHTML={{ __html: msg.body || msg.snippet }}
+                                                    className="prose prose-invert max-w-none text-slate-300 text-sm overflow-x-auto"
+                                                    dangerouslySetInnerHTML={{ __html: cleanEmailBody(msg.body) }}
                                                 />
                                             </div>
                                         </div>

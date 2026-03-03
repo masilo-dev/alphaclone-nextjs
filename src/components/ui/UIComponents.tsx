@@ -94,6 +94,7 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', cla
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLTextAreaElement> {
   label?: string;
   error?: string;
+  hint?: string;
   textarea?: boolean;
 }
 
@@ -113,6 +114,7 @@ export const Input: React.FC<InputProps> = ({ label, error, className = '', text
         />
       )}
       {error && <p className="mt-1 text-xs text-red-400">{error}</p>}
+      {!error && (props as any).hint && <p className="mt-1 text-[10px] text-slate-500 italic">{(props as any).hint}</p>}
     </div>
   );
 };

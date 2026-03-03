@@ -10,6 +10,7 @@ export interface User {
   role: UserRole;
   avatar: string;
   user_metadata?: any;
+  company?: string;
   account_status?: 'active' | 'pending_deletion';
   scheduled_deletion_at?: string;
 }

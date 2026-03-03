@@ -7,6 +7,7 @@ import { DollarSign, TrendingUp, TrendingDown, Target } from 'lucide-react';
 import { forecastingService, ForecastSummary } from '../../services/forecastingService';
 import { dealService, PipelineStats } from '../../services/dealService';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCurrency } from '@/hooks/useCurrency';
 
 const SalesForecastTab = () => {
     const { user } = useAuth();
@@ -15,6 +16,7 @@ const SalesForecastTab = () => {
     const [pipelineStats, setPipelineStats] = useState<PipelineStats[]>([]);
     const [winRate, setWinRate] = useState(0);
     const [chartData, setChartData] = useState<any[]>([]);
+    const { format } = useCurrency();
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -86,7 +88,7 @@ const SalesForecastTab = () => {
                         <div className="p-2 bg-green-500/10 rounded-lg text-green-400"><DollarSign className="w-5 h-5" /></div>
                         <span className="text-xs text-green-400 flex items-center gap-1">+12.5% <TrendingUp className="w-3 h-3" /></span>
                     </div>
-                    <div className="text-2xl font-bold text-white">${summary?.totalWeightedPipeline.toLocaleString() || '0'}</div>
+                    <div className="text-2xl font-bold text-white">{format(summary?.totalWeightedPipeline || 0)}</div>
                     <div className="text-xs text-slate-500">Weighted Pipeline</div>
                 </Card>
 
@@ -95,7 +97,7 @@ const SalesForecastTab = () => {
                         <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400"><Target className="w-5 h-5" /></div>
                         <span className="text-xs text-slate-400">{summary?.achievementRate.toFixed(1)}% to Goal</span>
                     </div>
-                    <div className="text-2xl font-bold text-white">${summary?.totalForecastedRevenue.toLocaleString() || '0'}</div>
+                    <div className="text-2xl font-bold text-white">{format(summary?.totalForecastedRevenue || 0)}</div>
                     <div className="text-xs text-slate-500">Revenue Target</div>
                 </Card>
 
@@ -127,7 +129,7 @@ const SalesForecastTab = () => {
                             <LineChart data={chartData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                                 <XAxis dataKey="month" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value / 1000}k`} />
+                                <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => format(value, { notation: 'compact' } as any)} />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#f8fafc' }}
                                     itemStyle={{ color: '#f8fafc' }}
@@ -147,7 +149,7 @@ const SalesForecastTab = () => {
                         <ResponsiveContainer width="100%" height={320} minWidth={0} minHeight={320} debounce={50}>
                             <BarChart data={pipelineChartData} layout="vertical" margin={{ left: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
-                                <XAxis type="number" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value / 1000}k`} />
+                                <XAxis type="number" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => format(value, { notation: 'compact' } as any)} />
                                 <YAxis dataKey="stage" type="category" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} width={80} />
                                 <Tooltip
                                     cursor={{ fill: 'transparent' }}

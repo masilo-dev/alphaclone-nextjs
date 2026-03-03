@@ -1,5 +1,4 @@
 'use client';
-// @ts-nocheck
 
 import React, { useEffect, useState, useMemo } from 'react';
 import {
@@ -238,7 +237,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
             isRecurring: !!recurrenceData,
             recurrenceFrequency: recurrenceData?.frequency || 'Weekly',
             recurrenceInterval: recurrenceData?.interval?.toString() || '1'
-        });
+        } as any);
         setShowCreateModal(true);
     };
 
