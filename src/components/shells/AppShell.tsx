@@ -48,12 +48,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <div className="flex flex-col h-screen w-screen bg-[#050B1E] overflow-hidden overscroll-none text-white">
+        <div className="flex flex-col h-screen w-screen bg-[#020617] overflow-hidden overscroll-none text-white fixed inset-0">
             {/* 
          Here we could add a PWA-specific top bar or navigation if needed for the 'App' 
          For now, we render children (Dashboard or Login) 
        */}
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-y-auto app-viewport ios-scroll">
                 {children}
             </div>
         </div>

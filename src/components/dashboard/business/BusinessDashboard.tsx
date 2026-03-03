@@ -72,13 +72,13 @@ interface BusinessDashboardProps {
 const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, activeTab, setActiveTab }) => {
     const router = useRouter();
     const { currentTenant, isLoading: tenantLoading, getDashboardStats } = useTenant();
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [dashboardStats, setDashboardStats] = useState<any>(null);
 
     // Sync sidebar on mount to avoid hydration mismatch
     React.useEffect(() => {
         if (typeof window !== 'undefined') {
-            setSidebarOpen(window.innerWidth >= 768);
+            setSidebarOpen(window.innerWidth >= 1024);
         }
     }, []);
 
@@ -475,7 +475,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                 </header>
 
                 {/* Dynamic Content Area */}
-                <div className={`flex-1 ${activeTab === '/dashboard/gmail' ? 'overflow-hidden p-0' : 'overflow-y-auto p-4 md:p-8'}`}>
+                <div className={`flex-1 ${activeTab === '/dashboard/gmail' ? 'overflow-hidden p-0' : 'overflow-y-auto p-4 md:p-8 dashboard-content-padding'}`}>
                     <WidgetErrorBoundary title="Business Dashboard Error">
                         {renderBusinessContent()}
                     </WidgetErrorBoundary>

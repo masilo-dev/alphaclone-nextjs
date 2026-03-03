@@ -370,10 +370,24 @@ a {
   border-radius: 10px;
 }
 
-/* Prevent overscroll bounce on iOS */
+/* Prevent overscroll bounce on iOS, but allow pull-to-refresh on specific containers */
 html,
 body {
   overscroll-behavior-y: none;
+  background-color: #020617;
+  height: 100%;
+  width: 100%;
+  position: fixed;
+  overflow: hidden;
+}
+
+/* Main scrollable area */
+.app-viewport {
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Fix for iOS input zoom - Mobile Only */
@@ -477,6 +491,26 @@ body {
   .font-marketing-heading,
   .font-marketing-body {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" !important;
+  }
+}
+
+/* Tablet Responsive Adjustments */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .tablet-hide {
+    display: none !important;
+  }
+
+  .tablet-grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
+
+  .tablet-grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .dashboard-content-padding {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
   }
 }
 

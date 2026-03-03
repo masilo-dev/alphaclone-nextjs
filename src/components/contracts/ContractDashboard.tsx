@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FileText, Bot, Download, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, MapPin, Mail, Briefcase, ChevronRight, Loader2, Eye, Edit3, RotateCcw, Send } from 'lucide-react';
 import { businessClientService, BusinessClient } from '../../services/businessClientService';
 import { contractService, Contract } from '../../services/contractService';
+import { fileUploadService } from '../../services/fileUploadService';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { User as UserType } from '../../types';
@@ -285,6 +286,12 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     setSignatureData(c.admin_signature || '');
                                     setSignatureName(c.admin_signature ? 'Administrator' : '');
                                     setIsSigned(!!c.admin_signature);
+
+                                    // Use proxied URL if available
+                                    if (c.document_url) {
+                                        c.document_url = fileUploadService.convertToProxiedUrl(c.document_url);
+                                    }
+
                                     setStep('preview');
                                     setActiveView('new');
                                 }}

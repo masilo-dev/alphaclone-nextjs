@@ -23,9 +23,9 @@ export default function MarketingShell({ children }: { children: React.ReactNode
     return (
         <>
             {!isDashboardOrApp ? (
-                <div className="marketing-theme relative min-h-screen font-marketing-body text-slate-300 overflow-x-hidden w-full">
+                <div className="marketing-theme fixed inset-0 font-marketing-body text-slate-300 overflow-hidden w-full h-full bg-[#020617]">
                     <PrismBackground />
-                    <div className="relative z-10 w-full overflow-x-hidden">
+                    <div className="relative z-10 w-full h-full overflow-y-auto app-viewport ios-scroll">
                         {children}
                     </div>
                 </div>

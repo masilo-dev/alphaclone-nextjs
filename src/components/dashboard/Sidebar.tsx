@@ -68,7 +68,7 @@ const Sidebar = React.memo<SidebarProps>(({
 
             <aside className={`
                 fixed lg:relative z-[60] h-full bg-slate-900 border-r border-slate-800 flex flex-col transition-all duration-300 shadow-2xl overflow-hidden will-change-transform
-                ${sidebarOpen || (typeof window !== 'undefined' && window.innerWidth >= 1024) ? 'translate-x-0 w-64 pb-safe lg:pb-0' : '-translate-x-full lg:translate-x-0 w-0 lg:w-20'}
+                ${sidebarOpen ? 'translate-x-0 w-64 pb-safe lg:pb-0' : '-translate-x-full lg:translate-x-0 w-0 lg:w-20'}
             `}>
                 <div className="h-20 flex items-center px-6 border-b border-slate-800 bg-slate-900">
                     <div className="flex items-center gap-3 overflow-hidden">

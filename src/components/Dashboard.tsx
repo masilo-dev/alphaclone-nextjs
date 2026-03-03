@@ -3,36 +3,18 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { ConnectionStatus } from './ConnectionStatus';
+import CustomContextMenu from './common/CustomContextMenu';
 import {
-  Menu,
-  LogOut,
-  ChevronDown,
-  Plus,
-  User as UserIcon,
-  Briefcase,
-  Cpu,
-  ShieldCheck,
-  Activity,
-  Users,
-  Edit2,
-  DollarSign,
-  FileCheck,
-  CreditCard,
-  Wallet,
-  Code,
-  Layers,
-  Copy,
-  Clock,
-  MessageSquare,
-  Video,
-  ListChecks,
-  Share2,
-  AlertCircle,
-  Zap,
-  ArrowLeft,
-  List,
-  LayoutGrid,
-  RefreshCw
+  Plus, Search, Filter, Settings, Bell, LogOut, ChevronRight,
+  MessageSquare, Calendar, FileText, PieChart, Users,
+  Briefcase, CheckCircle2, Clock, AlertCircle, Menu, X,
+  Globe, Layout, Smartphone, Mail, Phone, MapPin,
+  Shield, CreditCard, Wallet, Zap, Brain, Rocket,
+  Sparkles, Star, Target, TrendingUp, BarChart3,
+  ChevronDown, ArrowRight, Download, Share2, Trash2,
+  Copy, Edit, Trash, Eye, MoreVertical, LayoutGrid,
+  List, RefreshCw, Cpu, Layers, Code, ShieldCheck,
+  Edit2, ListChecks, FileCheck, Video, DollarSign, User as UserIcon
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import MilestoneManager from './dashboard/projects/MilestoneManager';
@@ -85,6 +67,7 @@ import { WidgetErrorBoundary } from './dashboard/WidgetErrorBoundary';
 import ResourceAllocationView from '@/components/dashboard/ResourceAllocationView';
 import { useOverdueTaskNotifier } from '../hooks/useOverdueTaskNotifier';
 import { DeletionOverlay } from './dashboard/DeletionOverlay';
+import PullToRefresh from './common/PullToRefresh';
 
 const ConferenceTab = React.lazy(() => import('./dashboard/ConferenceTab'));
 const AnalyticsTab = React.lazy(() => import('./dashboard/AnalyticsTab'));
@@ -149,7 +132,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Sync sidebar on mount to avoid hydration mismatch
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setSidebarOpen(window.innerWidth >= 768);
+      setSidebarOpen(window.innerWidth >= 1024);
     }
   }, []);
   const [activeTab, setActiveTab] = useState(location || '/dashboard');
@@ -1186,137 +1169,148 @@ const Dashboard: React.FC<DashboardProps> = ({
             {projectViewMode === 'grid' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredProjects.map(p => (
-                  <div key={p.id} className={`group relative bg-slate-900 rounded-xl overflow-hidden border transition-all flex flex-col ${p.status === 'Declined' ? 'border-red-900 opacity-60' : 'border-slate-800 hover:border-teal-500/50'}`}>
-                    <div className="aspect-video relative">
-                      <img src={p.image} className="w-full h-full object-cover" />
-                      <div className={`absolute top-2 right-2 backdrop-blur px-2 py-1 rounded text-xs text-white font-bold border ${p.status === 'Active' ? 'bg-green-500/20 border-green-500/50' : p.status === 'Declined' ? 'bg-red-500/20 border-red-500' : 'bg-black/60 border-white/10'}`}>
-                        {p.status}
-                      </div>
-                    </div>
-                    <div className="p-3 flex-1 flex flex-col">
-                      <div className="flex justify-between items-start">
-                        <h4 className="font-bold text-white text-sm leading-tight">{p.name}</h4>
-                        {user.role === 'admin' && (
-                          <div className="flex gap-1">
-                            <button onClick={() => openArchitectTool(p)} className="text-slate-500 hover:text-teal-400 p-1" title="AI Architect"><Cpu className="w-3.5 h-3.5" /></button>
-                            <button onClick={() => startEditProject(p)} className="text-slate-500 hover:text-white p-1" title="Edit"><Edit2 className="w-3.5 h-3.5" /></button>
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-xs text-slate-400 mb-2">{p.category}</p>
-
-                      {/* Stage Indicator */}
-                      <div className="mt-2 mb-4">
-                        <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wider mb-1">
-                          <span>Current Stage</span>
-                          <span className="text-teal-400">{p.currentStage}</span>
-                        </div>
-                        <div className="w-full h-1.5 bg-slate-800 rounded-full flex gap-0.5">
-                          {STAGES.map((s, i) => {
-                            const stageIndex = STAGES.indexOf(p.currentStage || 'Initiation');
-                            return (
-                              <div
-                                key={s}
-                                className={`h-full flex-1 rounded-full ${i <= stageIndex ? 'bg-teal-500' : 'bg-slate-700'}`}
-                              />
-                            );
-                          })}
+                  <CustomContextMenu
+                    key={p.id}
+                    items={[
+                      { label: 'AI Architect', icon: <Cpu className="w-4 h-4" />, onClick: () => openArchitectTool(p) },
+                      { label: 'Edit Project', icon: <Edit2 className="w-4 h-4" />, onClick: () => startEditProject(p) },
+                      { label: 'Manage Phases', icon: <ListChecks className="w-4 h-4" />, onClick: () => { setSelectedProjectForMilestones(p); setMilestoneModalOpen(true); } },
+                      { label: 'Share Link', icon: <Share2 className="w-4 h-4" />, onClick: () => handleShareProject(p.id) },
+                      { label: 'Message Client', icon: <MessageSquare className="w-4 h-4" />, onClick: () => router.push(`/dashboard/messages?selectedClientId=${p.ownerId}`) },
+                      { label: 'Decline Project', icon: <X className="w-4 h-4" />, onClick: () => declineProject(p), destructive: true },
+                    ]}
+                  >
+                    <div className={`group relative bg-slate-900 rounded-xl overflow-hidden border transition-all flex flex-col h-full ${p.status === 'Declined' ? 'border-red-900 opacity-60' : 'border-slate-800 hover:border-teal-500/50'}`}>
+                      <div className="aspect-video relative">
+                        <img src={p.image} className="w-full h-full object-cover" />
+                        <div className={`absolute top-2 right-2 backdrop-blur px-2 py-1 rounded text-xs text-white font-bold border ${p.status === 'Active' ? 'bg-green-500/20 border-green-500/50' : p.status === 'Declined' ? 'bg-red-500/20 border-red-500' : 'bg-black/60 border-white/10'}`}>
+                          {p.status}
                         </div>
                       </div>
-
-                      <div className="mt-auto pt-4 border-t border-slate-800">
-                        {/* Quick Communication Actions */}
-                        <div className="flex gap-2 mb-3">
-                          {user.role === 'admin' ? (
-                            <button
-                              onClick={() => router.push(`/dashboard/messages?selectedClientId=${p.ownerId}`)}
-                              className="flex-1 px-2 py-1 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 text-[10px] rounded-lg border border-teal-500/20 transition-colors flex items-center justify-center gap-1"
-                              title="Message client about this project"
-                            >
-                              <MessageSquare className="w-3 h-3" />
-                              Message
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => router.push('/dashboard/messages')}
-                              className="flex-1 px-2 py-1 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 text-[10px] rounded-lg border border-teal-500/20 transition-colors flex items-center justify-center gap-1"
-                              title="Message admin about this project"
-                            >
-                              <MessageSquare className="w-3 h-3" />
-                              Message Admin
-                            </button>
-                          )}
-                          <button
-                            onClick={() => router.push('/dashboard/conference')}
-                            className="flex-1 px-2 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-[10px] rounded-lg border border-blue-500/20 transition-colors flex items-center justify-center gap-1"
-                            title="Start video call"
-                          >
-                            <Video className="w-3 h-3" />
-                            Call
-                          </button>
-                        </div>
-                        {user.role === 'admin' && (
-                          <div className="space-y-3 mb-3">
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => {
-                                  setSelectedProjectForMilestones(p);
-                                  setMilestoneModalOpen(true);
-                                }}
-                                className="flex-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-700 transition-colors flex items-center justify-center gap-1"
-                                title="Manage Project Phases"
-                              >
-                                <ListChecks className="w-3 h-3" />
-                                Phases
-                              </button>
-                              <button
-                                onClick={() => handleShareProject(p.id)}
-                                className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs rounded-lg border border-blue-500/20 transition-colors flex items-center justify-center gap-1"
-                                title="Copy Public Link"
-                              >
-                                <Share2 className="w-3 h-3" />
-                              </button>
+                      <div className="p-3 flex-1 flex flex-col">
+                        <div className="flex justify-between items-start">
+                          <h4 className="font-bold text-white text-sm leading-tight">{p.name}</h4>
+                          {user.role === 'admin' && (
+                            <div className="flex gap-1">
+                              <button onClick={() => openArchitectTool(p)} className="text-slate-500 hover:text-teal-400 p-1" title="AI Architect"><Cpu className="w-3.5 h-3.5" /></button>
+                              <button onClick={() => startEditProject(p)} className="text-slate-500 hover:text-white p-1" title="Edit"><Edit2 className="w-3.5 h-3.5" /></button>
                             </div>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-400 mb-2">{p.category}</p>
 
-                            {p.status === 'Active' && (
+                        {/* Stage Indicator */}
+                        <div className="mt-2 mb-4">
+                          <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wider mb-1">
+                            <span>Current Stage</span>
+                            <span className="text-teal-400">{p.currentStage}</span>
+                          </div>
+                          <div className="w-full h-1.5 bg-slate-800 rounded-full flex gap-0.5">
+                            {STAGES.map((s, i) => {
+                              const stageIndex = STAGES.indexOf(p.currentStage || 'Initiation');
+                              return (
+                                <div
+                                  key={s}
+                                  className={`h-full flex-1 rounded-full ${i <= stageIndex ? 'bg-teal-500' : 'bg-slate-700'}`}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="mt-auto pt-4 border-t border-slate-800">
+                          {/* Quick Communication Actions */}
+                          <div className="flex gap-2 mb-3">
+                            {user.role === 'admin' ? (
                               <button
-                                onClick={() => openContractGenerator(p)}
-                                className="w-full px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-xs rounded-lg border border-purple-500/20 transition-colors flex items-center justify-center gap-1"
-                                title="Generate or edit contract"
+                                onClick={() => router.push(`/dashboard/messages?selectedClientId=${p.ownerId}`)}
+                                className="flex-1 px-2 py-1 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 text-[10px] rounded-lg border border-teal-500/20 transition-colors flex items-center justify-center gap-1"
+                                title="Message client about this project"
                               >
-                                <FileCheck className="w-3 h-3" />
-                                {p.contractStatus === 'Sent' || p.contractStatus === 'Signed' ? 'View Contract' : 'Generate Contract'}
+                                <MessageSquare className="w-3 h-3" />
+                                Message
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => router.push('/dashboard/messages')}
+                                className="flex-1 px-2 py-1 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 text-[10px] rounded-lg border border-teal-500/20 transition-colors flex items-center justify-center gap-1"
+                                title="Message admin about this project"
+                              >
+                                <MessageSquare className="w-3 h-3" />
+                                Message Admin
                               </button>
                             )}
+                            <button
+                              onClick={() => router.push('/dashboard/conference')}
+                              className="flex-1 px-2 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-[10px] rounded-lg border border-blue-500/20 transition-colors flex items-center justify-center gap-1"
+                              title="Start video call"
+                            >
+                              <Video className="w-3 h-3" />
+                              Call
+                            </button>
                           </div>
-                        )}
+                          {user.role === 'admin' && (
+                            <div className="space-y-3 mb-3">
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setSelectedProjectForMilestones(p);
+                                    setMilestoneModalOpen(true);
+                                  }}
+                                  className="flex-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-700 transition-colors flex items-center justify-center gap-1"
+                                  title="Manage Project Phases"
+                                >
+                                  <ListChecks className="w-3 h-3" />
+                                  Phases
+                                </button>
+                                <button
+                                  onClick={() => handleShareProject(p.id)}
+                                  className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs rounded-lg border border-blue-500/20 transition-colors flex items-center justify-center gap-1"
+                                  title="Copy Public Link"
+                                >
+                                  <Share2 className="w-3 h-3" />
+                                </button>
+                              </div>
 
-                        {/* Kept for reference but hidden/removed if above block covers it, but line 1102 was the start of the condition */}
-                        {user.role === 'admin' ? (
-                          <div className="space-y-2">
-                            <div className="flex justify-between items-center">
-                              <label className="text-xs text-slate-500">Update Stage</label>
-                              {p.status === 'Pending' && (
-                                <button onClick={() => declineProject(p)} className="text-[10px] text-red-400 hover:underline">Decline</button>
+                              {p.status === 'Active' && (
+                                <button
+                                  onClick={() => openContractGenerator(p)}
+                                  className="w-full px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-xs rounded-lg border border-purple-500/20 transition-colors flex items-center justify-center gap-1"
+                                  title="Generate or edit contract"
+                                >
+                                  <FileCheck className="w-3 h-3" />
+                                  {p.contractStatus === 'Sent' || p.contractStatus === 'Signed' ? 'View Contract' : 'Generate Contract'}
+                                </button>
                               )}
                             </div>
-                            <select
-                              className="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white"
-                              value={p.currentStage || 'Initiation'}
-                              onChange={(e) => updateProjectStage(p.id, e.target.value as ProjectStage)}
-                            >
-                              {STAGES.map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
-                          </div>
-                        ) : (
-                          <div className="flex justify-between items-end mb-1">
-                            <span className="text-xs text-slate-500">Progress</span>
-                            <span className="text-sm font-bold text-teal-400">{p.progress}%</span>
-                          </div>
-                        )}
+                          )}
+
+                          {user.role === 'admin' ? (
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center">
+                                <label className="text-xs text-slate-500">Update Stage</label>
+                                {p.status === 'Pending' && (
+                                  <button onClick={() => declineProject(p)} className="text-[10px] text-red-400 hover:underline">Decline</button>
+                                )}
+                              </div>
+                              <select
+                                className="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white"
+                                value={p.currentStage || 'Initiation'}
+                                onChange={(e) => updateProjectStage(p.id, e.target.value as ProjectStage)}
+                              >
+                                {STAGES.map(s => <option key={s} value={s}>{s}</option>)}
+                              </select>
+                            </div>
+                          ) : (
+                            <div className="flex justify-between items-end mb-1">
+                              <span className="text-xs text-slate-500">Progress</span>
+                              <span className="text-sm font-bold text-teal-400">{p.progress}%</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </CustomContextMenu>
                 ))}
               </div>
             ) : (
@@ -1332,47 +1326,60 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </thead>
                   <tbody className="divide-y divide-white/5">
                     {filteredProjects.map(p => (
-                      <tr key={p.id} className="group hover:bg-slate-800/40 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <img src={p.image} className="w-10 h-10 rounded-lg object-cover border border-white/5" />
-                            <div>
-                              <span className="text-sm font-bold text-slate-200 block">{p.name}</span>
-                              <span className="text-[10px] text-slate-500 uppercase font-mono">{p.category}</span>
+                      <CustomContextMenu
+                        as="tr"
+                        key={p.id}
+                        items={[
+                          { label: 'AI Architect', icon: <Cpu className="w-4 h-4" />, onClick: () => openArchitectTool(p) },
+                          { label: 'Edit Project', icon: <Edit2 className="w-4 h-4" />, onClick: () => startEditProject(p) },
+                          { label: 'Manage Phases', icon: <ListChecks className="w-4 h-4" />, onClick: () => { setSelectedProjectForMilestones(p); setMilestoneModalOpen(true); } },
+                          { label: 'Share Link', icon: <Share2 className="w-4 h-4" />, onClick: () => handleShareProject(p.id) },
+                          { label: 'Message Client', icon: <MessageSquare className="w-4 h-4" />, onClick: () => router.push(`/dashboard/messages?selectedClientId=${p.ownerId}`) },
+                          { label: 'Decline Project', icon: <X className="w-4 h-4" />, onClick: () => declineProject(p), destructive: true },
+                        ]}
+                      >
+                        <tr className="group hover:bg-slate-800/40 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <img src={p.image} className="w-10 h-10 rounded-lg object-cover border border-white/5" />
+                              <div>
+                                <span className="text-sm font-bold text-slate-200 block">{p.name}</span>
+                                <span className="text-[10px] text-slate-500 uppercase font-mono">{p.category}</span>
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-0.5 text-[10px] rounded-md font-bold uppercase tracking-wider ${p.status === 'Active' ? 'bg-green-500/20 text-green-400' :
-                            p.status === 'Declined' ? 'bg-red-500/20 text-red-400' :
-                              'bg-slate-700 text-slate-400'
-                            }`}>
-                            {p.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-xs font-bold text-teal-400 bg-teal-500/10 px-2 py-1 rounded-md border border-teal-500/20">
-                            {p.currentStage || 'Initiation'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-xs text-slate-500">
-                          <div className="flex items-center gap-2">
-                            {user.role === 'admin' && (
-                              <>
-                                <button onClick={() => openArchitectTool(p)} className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors" title="AI Architect"><Cpu className="w-3.5 h-3.5" /></button>
-                                <button onClick={() => startEditProject(p)} className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors" title="Edit"><Edit2 className="w-3.5 h-3.5" /></button>
-                              </>
-                            )}
-                            <button
-                              onClick={() => router.push(user.role === 'admin' ? `/dashboard/messages?selectedClientId=${p.ownerId}` : '/dashboard/messages')}
-                              className="p-1.5 hover:bg-teal-500/10 text-teal-400 rounded-lg transition-colors"
-                              title="Message"
-                            >
-                              <MessageSquare className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-0.5 text-[10px] rounded-md font-bold uppercase tracking-wider ${p.status === 'Active' ? 'bg-green-500/20 text-green-400' :
+                              p.status === 'Declined' ? 'bg-red-500/20 text-red-400' :
+                                'bg-slate-700 text-slate-400'
+                              }`}>
+                              {p.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-xs font-bold text-teal-400 bg-teal-500/10 px-2 py-1 rounded-md border border-teal-500/20">
+                              {p.currentStage || 'Initiation'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-xs text-slate-500">
+                            <div className="flex items-center gap-2">
+                              {user.role === 'admin' && (
+                                <>
+                                  <button onClick={() => openArchitectTool(p)} className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors" title="AI Architect"><Cpu className="w-3.5 h-3.5" /></button>
+                                  <button onClick={() => startEditProject(p)} className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors" title="Edit"><Edit2 className="w-3.5 h-3.5" /></button>
+                                </>
+                              )}
+                              <button
+                                onClick={() => router.push(user.role === 'admin' ? `/dashboard/messages?selectedClientId=${p.ownerId}` : '/dashboard/messages')}
+                                className="p-1.5 hover:bg-teal-500/10 text-teal-400 rounded-lg transition-colors"
+                                title="Message"
+                              >
+                                <MessageSquare className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      </CustomContextMenu>
                     ))}
                   </tbody>
                 </table>
@@ -1705,7 +1712,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         {/* Main Content Area */}
         <main id="main-content" className={`flex-1 ${activeTab === '/dashboard/gmail' ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'} w-full bg-slate-950 scroll-smooth relative pb-safe md:pb-0`} role="main">
           {/* Content Wrapper for Max Width & Padding */}
-          <div className={`max-w-[1240px] mx-auto p-4 md:p-8 pb-24 md:pb-8 ${activeTab === '/dashboard/gmail' || activeTab === '/dashboard/messages' ? 'h-full flex flex-col' : 'min-h-full'}`}>
+          <div className={`max-w-[1240px] mx-auto p-4 md:p-8 dashboard-content-padding pb-24 md:pb-8 ${activeTab === '/dashboard/gmail' || activeTab === '/dashboard/messages' ? 'h-full flex flex-col' : 'min-h-full'}`}>
             {/* Background decorative elements */}
             <div className="fixed top-20 left-1/3 w-96 h-96 bg-teal-600/5 rounded-full blur-3xl pointer-events-none" />
             <div className="relative z-10 max-w-7xl mx-auto min-h-full">

@@ -30,10 +30,34 @@ export interface FileUploadResult {
     success: boolean;
     fileId?: string;
     url?: string;
+    proxiedUrl?: string; // New: Proxied URL for better security
     error?: string;
 }
 
 class FileUploadService {
+    /**
+     * Get a proxied URL for a file in Supabase storage
+     */
+    getProxiedUrl(bucket: string, path: string): string {
+        // Construct URL for the storage proxy API
+        return `/api/storage/${bucket}/${path}`;
+    }
+
+    /**
+     * Convert a direct Supabase URL to a proxied URL if applicable
+     */
+    convertToProxiedUrl(url: string, bucket: string = 'uploads'): string {
+        if (!url || !url.includes('supabase.co')) return url;
+
+        // Extract the path after the bucket name
+        const parts = url.split(`/${bucket}/`);
+        if (parts.length > 1) {
+            return this.getProxiedUrl(bucket, parts[1]);
+        }
+
+        return url;
+    }
+
     /**
      * Get current user storage usage in bytes
      */
@@ -220,6 +244,7 @@ class FileUploadService {
                 success: true,
                 fileId: fileRecord.id,
                 url: urlData.publicUrl,
+                proxiedUrl: this.getProxiedUrl('uploads', filename),
             };
         } catch (error) {
             console.error('File upload error:', error);
