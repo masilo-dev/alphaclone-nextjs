@@ -39,6 +39,7 @@ import Link from 'next/link';
 import { contactService } from '../services/contactFormService';
 import { projectService } from '../services/projectService';
 import InfiniteTicker from './InfiniteTicker';
+import MarketingFooter from './landing/MarketingFooter';
 const PortfolioShowcase = React.lazy(() => import('./dashboard/PortfolioShowcase'));
 const InteractiveHeroPreview = React.lazy(() => import('./dashboard/InteractiveHeroPreview'));
 const AITerminal = React.lazy(() => import('./dashboard/AITerminal'));
@@ -1262,56 +1263,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
             {/* Ticker */}
             <InfiniteTicker />
 
-            {/* Footer */}
-            <footer className="bg-slate-950/90 border-t border-slate-900/50 pt-20 pb-10 backdrop-blur-md">
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-16">
-                     <div className="col-span-2">
-                        <div className="flex items-center gap-2 mb-6">
-                           <span className="text-2xl font-bold text-white">AlphaClone</span>
-                        </div>
-                        <p className="text-slate-400 text-sm max-w-xs leading-relaxed">
-                           Custom development solutions built for success. Specializing in high-performance web, mobile, and AI applications.
-                        </p>
-                     </div>
-                     {/* Integrations Column Removed */}
-                     <div>
-                        <h4 className="text-white font-bold mb-6">Services</h4>
-                        <ul className="space-y-4 text-sm text-slate-400">
-                           <li><Link href="https://alphaclone.tech/services" className="hover:text-teal-400">Web Development</Link></li>
-                           <li><Link href="https://alphaclone.tech/services" className="hover:text-teal-400">Mobile Apps</Link></li>
-                           <li><Link href="https://alphaclone.tech/services" className="hover:text-teal-400">AI Solutions</Link></li>
-                           <li><Link href="https://alphaclone.tech/services" className="hover:text-teal-400">Dashboards</Link></li>
-                        </ul>
-                     </div>
-                     <div>
-                        <h4 className="text-white font-bold mb-6">Company</h4>
-                        <ul className="space-y-4 text-sm text-slate-400">
-                           <li><Link href="https://alphaclone.tech/about" className="hover:text-teal-400">About AlphaClone Systems</Link></li>
-                           <li><Link href="https://alphaclone.tech/contact" className="hover:text-teal-400">Contact Us</Link></li>
-                           <li><Link href="https://alphaclone.tech/pricing" className="hover:text-teal-400">AlphaClone Pricing</Link></li>
-                           <li><Link href="https://alphaclone.tech/login" className="hover:text-teal-400 block mt-2 text-slate-500">Member Login</Link></li>
-                           <li><Link href="https://alphaclone.tech/register" className="hover:text-teal-400 text-slate-500">Sign Up</Link></li>
-                        </ul>
-                     </div>
-                     <div>
-                        <h4 className="text-white font-bold mb-6">Legal</h4>
-                        <ul className="space-y-4 text-sm text-slate-400">
-                           <li><Link href="/privacy-policy" className="hover:text-teal-400">Privacy Policy</Link></li>
-                           <li><Link href="/terms-of-service" className="hover:text-teal-400">Terms of Service</Link></li>
-                           <li><Link href="/cookie-policy" className="hover:text-teal-400">Cookie Policy</Link></li>
-                           <li><a href="mailto:security@alphaclone.tech" className="hover:text-teal-400 text-teal-500/80">Security Reporting</a></li>
-                        </ul>
-                     </div>
-                  </div>
-                  <div className="pt-8 border-t border-slate-900 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
-                     <div className="flex gap-6">
-                        <span className="text-slate-600">Secure & Compliant</span>
-                     </div>
-                     <p suppressHydrationWarning>&copy; {new Date().getFullYear()} AlphaClone Systems. All rights reserved.</p>
-                  </div>
-               </div>
-            </footer>
+            <MarketingFooter />
          </div >
       </div >
    );

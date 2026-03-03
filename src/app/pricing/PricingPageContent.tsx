@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import PublicNavigation from '@/components/PublicNavigation';
 import AnimateIn from '@/components/common/AnimateIn';
+import MarketingFooter from '@/components/landing/MarketingFooter';
 
 const plans = [
     {
@@ -433,6 +434,7 @@ export default function PricingPageContent() {
                     <p className="text-xs text-slate-600 mt-4">No credit card required · Cancel anytime · 14-day free trial</p>
                 </div>
             </main>
+            <MarketingFooter />
         </div>
     );
 }

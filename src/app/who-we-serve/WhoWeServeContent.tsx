@@ -16,6 +16,7 @@ import LoginModal from '@/components/auth/LoginModal';
 import { User } from '@/types';
 import Link from 'next/link';
 import AnimateIn from '@/components/common/AnimateIn';
+import MarketingFooter from '@/components/landing/MarketingFooter';
 
 export default function WhoWeServePage() {
     const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -333,12 +334,7 @@ export default function WhoWeServePage() {
                 </AnimateIn>
             </section>
 
-            {/* Footer */}
-            <footer className="border-t border-slate-800 py-8 px-4">
-                <div className="max-w-7xl mx-auto text-center text-slate-500 text-sm">
-                    <p>&copy; 2026 AlphaClone Systems. All rights reserved.</p>
-                </div>
-            </footer>
+            <MarketingFooter />
         </div>
     );
 }

@@ -10,6 +10,7 @@ import {
 import { Button } from '../ui/UIComponents';
 import PublicNavigation from '../PublicNavigation';
 import AnimateIn from '../common/AnimateIn';
+import MarketingFooter from '../landing/MarketingFooter';
 
 const AboutPage: React.FC = () => {
     const [, setIsLoginOpen] = React.useState(false);
@@ -155,30 +156,46 @@ const AboutPage: React.FC = () => {
                 </section>
 
                 {/* The Mission */}
-                <section className="py-16 bg-white/[0.02] backdrop-blur-sm border-y border-slate-800/60">
-                    <div className="max-w-4xl mx-auto px-4">
-                        <AnimateIn type="fadeLeft">
-                            <div className="flex items-center gap-3 mb-6">
-                                <Globe className="w-6 h-6 text-teal-400" />
-                                <h2 className="text-3xl font-bold">Our Mission</h2>
+                <section className="py-24 bg-white/[0.02] backdrop-blur-sm border-y border-slate-800/60 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/5 blur-[120px] -z-10" />
+                    <div className="max-w-6xl mx-auto px-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                            <div>
+                                <AnimateIn type="fadeLeft">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <Globe className="w-6 h-6 text-teal-400" />
+                                        <h2 className="text-3xl font-bold">Our Mission</h2>
+                                    </div>
+                                </AnimateIn>
+                                <AnimateIn type="fadeUp" delay={0.1}>
+                                    <div className="space-y-6 text-slate-300 leading-relaxed text-lg">
+                                        <p>
+                                            <strong className="text-white text-2xl block mb-4">To level the playing field for every business owner.</strong>
+                                            Enterprise companies have entire IT departments and hundreds of thousands of dollars to spend on infrastructure. They get organized client relationships, automated lead generation, and secure data management as a default.
+                                        </p>
+                                        <p>
+                                            We've taken that same high-end operational power and packaged it into a single, unified platform that any business owner can set up in 30 minutes. Starting at $15/month.
+                                        </p>
+                                    </div>
+                                </AnimateIn>
                             </div>
-                        </AnimateIn>
-                        <AnimateIn type="fadeUp" delay={0.1}>
-                            <div className="space-y-6 text-slate-300 leading-relaxed">
-                                <p className="text-xl">
-                                    <strong className="text-white">To give every business owner — regardless of technical skill, team size, or budget — access to the same operational infrastructure as a Fortune 500 company.</strong>
-                                </p>
-                                <p>
-                                    Enterprise companies have entire IT departments managing their CRM systems, finance software, communication platforms, security tools, and automation workflows. They spend hundreds of thousands of dollars annually to maintain this infrastructure. The outputs of that investment — organized client relationships, efficient financial reporting, automated lead generation, and secure data management — give enterprise businesses an enormous competitive advantage over smaller competitors.
-                                </p>
-                                <p>
-                                    AlphaClone eliminates that competitive advantage gap. We've taken the same capabilities that previously required a dedicated IT team and an enterprise budget, and packaged them into a single, unified platform that a business owner with zero technical background can set up in 30 minutes. Starting at $15/month.
-                                </p>
-                                <p>
-                                    The result is that a freelance marketing consultant, a boutique law firm, a growing design agency, and a business coaching practice can now operate with the same efficiency, professionalism, and data intelligence as a company 10 times their size. That's the change we're making in the world.
-                                </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                {[
+                                    { title: 'Democratizing Tech', desc: 'Enterprise power without the enterprise price tag.', icon: Zap },
+                                    { title: 'Eliminating Friction', desc: 'No more context switching between 10 different apps.', icon: Layers },
+                                    { title: 'Human Centric', desc: 'AI that serves your workflows, not replaces them.', icon: Users },
+                                    { title: 'Data Sovereignty', desc: 'Your data, your control, protected by AES-256.', icon: Lock }
+                                ].map((item, i) => (
+                                    <AnimateIn key={i} type="stagger" index={i}>
+                                        <div className="p-6 rounded-2xl bg-white/[0.04] border border-slate-700/50 backdrop-blur-sm">
+                                            <item.icon className="w-8 h-8 text-teal-400 mb-4" />
+                                            <h3 className="text-white font-bold mb-2">{item.title}</h3>
+                                            <p className="text-slate-400 text-sm">{item.desc}</p>
+                                        </div>
+                                    </AnimateIn>
+                                ))}
                             </div>
-                        </AnimateIn>
+                        </div>
                     </div>
                 </section>
 
@@ -283,7 +300,7 @@ const AboutPage: React.FC = () => {
                 </section>
 
                 {/* CTA */}
-                <section className="py-20">
+                <section className="py-24">
                     <div className="max-w-3xl mx-auto px-4 text-center">
                         <AnimateIn type="scaleIn">
                             <h2 className="text-3xl font-bold mb-6">Join the Businesses Running Smarter</h2>
@@ -307,6 +324,7 @@ const AboutPage: React.FC = () => {
                     </div>
                 </section>
             </div>
+            <MarketingFooter />
         </div>
     );
 };

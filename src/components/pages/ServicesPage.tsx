@@ -11,6 +11,7 @@ import {
 import { Button } from '../ui/UIComponents';
 import PublicNavigation from '../PublicNavigation';
 import AnimateIn from '../common/AnimateIn';
+import MarketingFooter from '../landing/MarketingFooter';
 
 const ServicesPage: React.FC = () => {
     const [, setIsLoginOpen] = React.useState(false);
@@ -459,6 +460,7 @@ const ServicesPage: React.FC = () => {
                     </div>
                 </section>
             </div>
+            <MarketingFooter />
         </div>
     );
 };

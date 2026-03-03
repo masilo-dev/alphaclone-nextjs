@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, Rocket, Shield, Zap, HeartHandshake, Target, TrendingUp, Check } from 'lucide-react';
 import PublicNavigation from '../PublicNavigation';
 import AnimateIn from '../common/AnimateIn';
+import MarketingFooter from '../landing/MarketingFooter';
 
 const EcosystemPage: React.FC = () => {
     const [, setIsLoginOpen] = React.useState(false);
@@ -157,6 +158,7 @@ const EcosystemPage: React.FC = () => {
                     </AnimateIn>
                 </section>
             </div>
+            <MarketingFooter />
         </div>
     );
 };
