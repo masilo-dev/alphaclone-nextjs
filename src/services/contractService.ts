@@ -126,32 +126,34 @@ export const contractService = {
             // Remove markdown headers (####, ###, ##, #)
             .replace(/^#{1,6}\s+/gm, '')
             // Remove bold (**text** or __text__)
-            .replace(/\*\*(.+?)\*\*/g, '$1')
-            .replace(/__(.+?)__/g, '$1')
+            .replace(/\*\*(.*?)\*\*/g, '$1')
+            .replace(/__(.*?)__/g, '$1')
             // Remove italic (*text* or _text_)
-            .replace(/\*(.+?)\*/g, '$1')
-            .replace(/_(.+?)_/g, '$1')
+            .replace(/\*(.*?)\*/g, '$1')
+            .replace(/_(.*?)_/g, '$1')
             // Remove strikethrough (~~text~~)
-            .replace(/~~(.+?)~~/g, '$1')
+            .replace(/~~(.*?)~~/g, '$1')
             // Remove code blocks (```text```)
             .replace(/```[\s\S]*?```/g, '')
             .replace(/`(.+?)`/g, '$1')
             // Remove markdown links [text](url)
-            .replace(/\[(.+?)\]\(.+?\)/g, '$1')
+            .replace(/\[(.*?)\]\(.*?\)/g, '$1')
             // Remove markdown images ![alt](url)
-            .replace(/!\[.*?\]\(.+?\)/g, '')
+            .replace(/!\[.*?\]\(.*?\)/g, '')
             // Remove horizontal rules (---, ***, ___)
             .replace(/^[-*_]{3,}$/gm, '')
-            // Remove bullet points and list markers (-, *, +)
-            .replace(/^[\s]*[-*+]\s+/gm, '')
-            // Remove numbered lists (1., 2., etc.)
-            .replace(/^[\s]*\d+\.\s+/gm, '')
+            // Remove bullet points and list markers (-, *, +) at start of lines
+            .replace(/^[\s]*[-*+]\s+/gm, '• ')
+            // Remove numbered lists (1., 2., etc.) but keep the number
+            .replace(/^[\s]*(\d+)\.\s+/gm, '$1. ')
             // Remove blockquotes (>)
             .replace(/^>\s+/gm, '')
-            // Remove extra asterisks, tildes, hashes
-            .replace(/[*~#]+/g, '')
+            // Remove remaining leading/trailing hashes, asterisks or tildes that might be stuck
+            .replace(/^[#*~_\s]+|[#*~_\s]+$/gm, '')
+            // Final pass: remove any stray double asterisks or triple asterisks
+            .replace(/\*{2,}/g, '')
             // Clean up multiple spaces
-            .replace(/\s{2,}/g, ' ')
+            .replace(/[ \t]{2,}/g, ' ')
             // Clean up multiple newlines (keep max 2)
             .replace(/\n{3,}/g, '\n\n')
             .trim();
@@ -343,7 +345,8 @@ export const contractService = {
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
 
-        const content = typeof contract.content === 'string' ? contract.content : 'No content provided';
+        const rawContent = typeof contract.content === 'string' ? contract.content : 'No content provided';
+        const content = this.cleanMarkdown(rawContent);
         const splitText = doc.splitTextToSize(content, 170);
 
         splitText.forEach((line: string) => {

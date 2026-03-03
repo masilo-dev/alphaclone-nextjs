@@ -160,9 +160,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
             setUploadProgress(80);
 
             // Get public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from('project-images')
-                .getPublicUrl(fileName);
+            const publicUrl = `/api/storage/project-images/${fileName}`;
 
             setUploadProgress(100);
 

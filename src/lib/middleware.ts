@@ -6,26 +6,26 @@ export async function updateSession(request: NextRequest) {
     // Apply rate limiting based on route
     const pathname = request.nextUrl.pathname;
 
+    // DIRECT BYPASS: Ensure direct Supabase Auth and Storage calls are never intercepted by application middleware logic
+    // This is a safety layer for the "Unexpected end of JSON input" error and prevents binary corruption
+    if (pathname.includes('/auth/v1/') || pathname.includes('/storage/v1/')) {
+        return NextResponse.next();
+    }
+
     // Authentication routes - enabled for Phase 1 hardening
     if (pathname.includes('/api/auth/login') || pathname.includes('/auth/login')) {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.auth.login);
-        if (rateLimitResponse && rateLimitResponse.status === 429) {
-            return rateLimitResponse;
-        }
+        if (rateLimitResponse) return rateLimitResponse;
     }
 
     if (pathname.includes('/api/auth/signup') || pathname.includes('/auth/signup') || pathname.includes('/auth/register')) {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.auth.signup);
-        if (rateLimitResponse && rateLimitResponse.status === 429) {
-            return rateLimitResponse;
-        }
+        if (rateLimitResponse) return rateLimitResponse;
     }
 
     if (pathname.includes('password-reset') || pathname.includes('reset-password') || pathname.includes('/api/auth/reset')) {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.auth.passwordReset);
-        if (rateLimitResponse && rateLimitResponse.status === 429) {
-            return rateLimitResponse;
-        }
+        if (rateLimitResponse) return rateLimitResponse;
     }
 
     // API routes - moderate rate limiting
@@ -33,17 +33,13 @@ export async function updateSession(request: NextRequest) {
         const isHeavyEndpoint = pathname.includes('/ai/') || pathname.includes('/export') || pathname.includes('/generate');
         const config = isHeavyEndpoint ? rateLimitConfigs.api.heavy : rateLimitConfigs.api.standard;
         const rateLimitResponse = await rateLimitMiddleware(request, config);
-        if (rateLimitResponse && rateLimitResponse.status === 429) {
-            return rateLimitResponse;
-        }
+        if (rateLimitResponse) return rateLimitResponse;
     }
 
     // Contact form - prevent spam
     if (pathname.includes('/contact') && request.method === 'POST') {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.public.contact);
-        if (rateLimitResponse && rateLimitResponse.status === 429) {
-            return rateLimitResponse;
-        }
+        if (rateLimitResponse) return rateLimitResponse;
     }
 
     let response = NextResponse.next({

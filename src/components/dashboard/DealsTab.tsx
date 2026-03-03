@@ -806,8 +806,8 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                         <div className="flex gap-1 shrink-0">
                                             <button
                                                 onClick={() => {
-                                                    const { data } = supabase.storage.from('uploads').getPublicUrl(doc.storage_path);
-                                                    window.open(data.publicUrl, '_blank');
+                                                    const proxiedUrl = fileUploadService.getProxiedUrl('uploads', doc.storage_path);
+                                                    window.open(proxiedUrl, '_blank');
                                                 }}
                                                 className="p-2 text-slate-400 hover:text-teal-400 transition-colors"
                                                 title="View"

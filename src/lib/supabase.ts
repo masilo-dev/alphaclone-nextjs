@@ -41,7 +41,10 @@ export const createClient = () => {
         }
     }
 
-    const supabaseUrl = typeof window !== 'undefined' ? window.location.origin : ENV.VITE_SUPABASE_URL;
+    // Force using the direct Supabase URL even on the client
+    // This bypasses the Next.js middleware for Auth calls, avoiding "Unexpected end of JSON input" errors
+    // caused by middleware interception/proxying issues
+    const supabaseUrl = ENV.VITE_SUPABASE_URL;
 
     return createBrowserClient(
         supabaseUrl,

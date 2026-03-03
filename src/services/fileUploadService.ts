@@ -186,9 +186,8 @@ class FileUploadService {
             }
 
             // Get public URL
-            const { data: urlData } = supabase.storage
-                .from('uploads')
-                .getPublicUrl(filename);
+            const publicUrl = this.getProxiedUrl('uploads', filename);
+            const urlData = { publicUrl };
 
             // Record upload in database
             const { data: fileRecord, error: dbError } = await supabase

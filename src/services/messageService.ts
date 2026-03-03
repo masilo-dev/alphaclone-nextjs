@@ -401,14 +401,12 @@ export const messageService = {
                 return { url: '', id: '', type: 'file', name: '', error: error.message };
             }
 
-            const { data: { publicUrl } } = supabase.storage
-                .from('chat-attachments')
-                .getPublicUrl(filePath);
+            const url = `/api/storage/chat-attachments/${filePath}`;
 
             const type = file.type.startsWith('image/') ? 'image' : 'file';
 
             return {
-                url: publicUrl,
+                url: url,
                 id: filePath,
                 type,
                 name: file.name,

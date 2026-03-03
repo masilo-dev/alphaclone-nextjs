@@ -172,12 +172,8 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         setIsSavingToDrive(file.id);
         const toastId = toast.loading('Saving to Google Drive...');
         try {
-            // In Hub, we might need to get a public URL first if fileUrl isn't set
-            let downloadUrl = fileUrl;
-            if (!downloadUrl) {
-                const { data } = supabase.storage.from('uploads').getPublicUrl(file.storage_path);
-                downloadUrl = data.publicUrl;
-            }
+            // Use proxied URL to hide Supabase origin
+            const downloadUrl = fileUploadService.getProxiedUrl('uploads', file.storage_path);
 
             if (!downloadUrl) {
                 throw new Error('Could not generate download URL');
@@ -199,8 +195,15 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         setSelectedFile(file);
 
         try {
-            const { data, error } = await supabase.storage.from('uploads').download(file.storage_path);
-            if (error) throw error;
+            // Use proxied URL instead of direct Supabase download
+            const proxiedUrl = fileUploadService.getProxiedUrl('uploads', file.storage_path);
+            const response = await fetch(proxiedUrl);
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch file: ${response.statusText}`);
+            }
+
+            const data = await response.blob();
 
             const isPdf = file.file_type === 'application/pdf';
             const isWord = file.file_type.includes('word') || file.file_type.includes('officedocument');
@@ -304,8 +307,15 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         }
 
         try {
-            const { data, error } = await supabase.storage.from('uploads').download(file.storage_path);
-            if (error) throw error;
+            // Use proxied URL instead of direct Supabase download
+            const proxiedUrl = fileUploadService.getProxiedUrl('uploads', file.storage_path);
+            const response = await fetch(proxiedUrl);
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch file: ${response.statusText}`);
+            }
+
+            const data = await response.blob();
 
             const url = window.URL.createObjectURL(data);
             const a = document.createElement('a');
@@ -727,8 +737,8 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                         </button>
                                         <button
                                             onClick={() => {
-                                                const { data } = supabase.storage.from('uploads').getPublicUrl(file.storage_path);
-                                                handlePrint(data.publicUrl);
+                                                const proxiedUrl = fileUploadService.getProxiedUrl('uploads', file.storage_path);
+                                                handlePrint(proxiedUrl);
                                             }}
                                             className="p-2 sm:p-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-transparent flex justify-center items-center"
                                             title="Print"

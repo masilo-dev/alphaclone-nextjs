@@ -133,8 +133,8 @@ export async function POST(req: NextRequest) {
 
         let fileUrl = null;
         if (!uploadError && uploadData) {
-            const { data } = supabase.storage.from('documents').getPublicUrl(filePath);
-            fileUrl = data.publicUrl;
+            // Use proxied URL instead of direct Supabase URL
+            fileUrl = `/api/storage/documents/${filePath}`;
         }
 
         // Return extracted data + receipt URL

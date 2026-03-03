@@ -236,14 +236,8 @@ export async function rateLimitMiddleware(
         );
     }
 
-    // Add rate limit headers to successful response
-    return NextResponse.next({
-        headers: {
-            'X-RateLimit-Limit': result.limit.toString(),
-            'X-RateLimit-Remaining': result.remaining.toString(),
-            'X-RateLimit-Reset': result.reset.toString(),
-        },
-    });
+    // Return null to indicate "pass through"
+    return null;
 }
 
 /**
