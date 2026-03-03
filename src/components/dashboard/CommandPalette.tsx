@@ -214,3 +214,5 @@ export const CommandPalette: React.FC = () => {
         </AnimatePresence>
     );
 };
+
+export default CommandPalette;
