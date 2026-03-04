@@ -296,7 +296,7 @@ const BookingTab: React.FC = () => {
                         </div>
                     </div>
 
-                    <Card className="p-0 overflow-hidden bg-slate-950 border-slate-800 border-2" style={{ height: 'calc(100vh - 300px)', minHeight: '600px' }}>
+                    <Card className="p-0 overflow-hidden bg-slate-950 border-slate-800 border-2 flex-1" style={{ height: 'calc(100dvh - 200px)', touchAction: 'pan-y' }}>
                         <CalendlyEmbed
                             url={calendlyUrl}
                             branding={{

@@ -441,14 +441,19 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                         <div className="flex items-center gap-2 sm:gap-3 md:hidden">
                             <div className="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center overflow-hidden">
                                 {currentTenant?.logo_url ? (
-                                    <img src={currentTenant.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                                    <img
+                                        src={currentTenant.logo_url}
+                                        alt="Logo"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            e.currentTarget.style.display = 'none';
+                                            e.currentTarget.parentElement!.innerHTML = `<span class="text-teal-400 font-bold text-lg">${currentTenant?.name?.charAt(0) || 'A'}</span>`;
+                                        }}
+                                    />
                                 ) : (
                                     <span className="text-teal-400 font-bold text-lg">{currentTenant?.name?.charAt(0) || 'A'}</span>
                                 )}
                             </div>
-                            <h1 className="text-base sm:text-lg font-bold text-white whitespace-nowrap truncate max-w-[150px] sm:max-w-none">
-                                {currentTenant?.name || 'Workspace'}
-                            </h1>
                         </div>
 
                         {/* Breadcrumb or Title for Desktop */}
@@ -472,12 +477,15 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
 
                         <div className="flex items-center gap-3 sm:gap-4">
                             <NotificationCenter userId={user.id} />
-                            <div className="w-9 h-9 rounded-full bg-slate-800 border-2 border-slate-700 overflow-hidden shadow-lg shadow-black/20 ring-2 ring-transparent hover:ring-teal-500/50 transition-all cursor-pointer">
+                            <div className="w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-700/50 overflow-hidden shadow-lg shadow-teal-500/10 ring-2 ring-transparent hover:ring-teal-500/50 transition-all cursor-pointer group">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
-                                    src={user.avatar || currentTenant?.logo_url || `https://ui-avatars.com/api/?name=${user.name}&background=random&color=fff&size=128`}
+                                    src={user.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.email || user.name || 'user'}`}
                                     alt="Profile"
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                    onError={(e) => {
+                                        e.currentTarget.src = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.email || user.name || 'user'}`;
+                                    }}
                                 />
                             </div>
                         </div>

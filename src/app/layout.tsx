@@ -7,7 +7,6 @@ import ShellSwitcher from "@/components/shells/ShellSwitcher";
 import { Analytics } from "@vercel/analytics/next";
 import CookieConsent from "@/components/common/CookieConsent";
 import NativeInteractions from "@/components/common/NativeInteractions";
-import PWADownloadPrompt from "@/components/common/PWADownloadPrompt";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -137,7 +136,6 @@ export default function RootLayout({
         <Providers>
           <PWAProvider>
             <NativeInteractions />
-            <PWADownloadPrompt />
             <ShellSwitcher>
               {children}
             </ShellSwitcher>

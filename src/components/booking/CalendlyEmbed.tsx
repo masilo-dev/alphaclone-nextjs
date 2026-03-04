@@ -24,7 +24,7 @@ const CalendlyEmbed: React.FC<CalendlyEmbedProps> = ({ url, prefill, branding })
     const backgroundColor = branding?.backgroundColor?.replace('#', '') || '0f172a';
 
     return (
-        <div className="w-full h-full min-h-[700px]">
+        <div className="w-full h-full sm:min-h-[700px] min-h-[500px] overflow-hidden">
             <InlineWidget
                 url={url}
                 styles={{

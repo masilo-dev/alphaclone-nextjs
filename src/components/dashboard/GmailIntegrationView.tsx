@@ -172,8 +172,8 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
                 </div>
             </div>
 
-            {/* Main Content: Conversation View */}
-            <div className={`flex-1 flex flex-col bg-slate-900/20 ${!selectedThreadId ? 'hidden md:flex' : 'flex'}`}>
+            {/* Main Content: Conversation View - Removed bg-slate-900/20 for "on top" feel */}
+            <div className={`flex-1 flex flex-col bg-slate-950 ${!selectedThreadId ? 'hidden md:flex' : 'flex'}`}>
                 {selectedThreadId ? (
                     <>
                         {/* Thread Header */}
@@ -197,8 +197,8 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
                             </div>
                         </div>
 
-                        {/* Messages List */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+                        {/* Messages List - Increased padding and removed recessed backgrounds */}
+                        <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-12 custom-scrollbar bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900/10">
                             {isThreadLoading ? (
                                 <div className="flex flex-col items-center justify-center h-full gap-4">
                                     <div className="w-10 h-10 border-2 border-teal-500/20 border-t-teal-500 rounded-full animate-spin"></div>
@@ -211,23 +211,31 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: idx * 0.05 }}
-                                        className="relative group gap-4 flex flex-col"
+                                        className="relative flex flex-col"
                                     >
-                                        <div className="flex items-start gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-950">
-                                                <UserIcon className="w-5 h-5 text-slate-500" />
+                                        <div className="flex items-start gap-6">
+                                            <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-950 shadow-xl ring-1 ring-white/5">
+                                                <UserIcon className="w-6 h-6 text-teal-400" />
                                             </div>
-                                            <div className="flex-1 group-hover:bg-slate-900/50 rounded-2xl p-4 transition-all -m-4">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <span className="text-sm font-bold text-white">{msg.from}</span>
-                                                    <span className="text-[10px] text-slate-500">{msg.date}</span>
+                                            <div className="flex-1 rounded-2xl p-0 transition-all">
+                                                <div className="flex justify-between items-center mb-3">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-base font-bold text-white tracking-wide">{msg.from}</span>
+                                                        <span className="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">{msg.date}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button className="p-2 text-slate-500 hover:text-teal-400 transition-colors bg-slate-900/50 rounded-lg border border-slate-800"><Star className="w-3.5 h-3.5" /></button>
+                                                    </div>
                                                 </div>
                                                 <div
-                                                    className="prose prose-invert max-w-none text-slate-300 text-sm overflow-x-auto"
+                                                    className="prose prose-invert max-w-none text-slate-200 text-[15px] leading-relaxed overflow-x-auto selection:bg-teal-500/30 font-medium"
                                                     dangerouslySetInnerHTML={{ __html: cleanEmailBody(msg.body) }}
                                                 />
                                             </div>
                                         </div>
+                                        {idx < threadMessages.length - 1 && (
+                                            <div className="absolute left-6 top-16 bottom-[-32px] w-px bg-gradient-to-b from-slate-800 to-transparent opacity-30" />
+                                        )}
                                     </motion.div>
                                 ))
                             )}
