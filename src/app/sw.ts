@@ -18,12 +18,16 @@ const serwist = new Serwist({
     navigationPreload: true,
     runtimeCaching: [
         {
-            // Bypass service worker for critical API calls and Daily.co
+            // Bypass service worker for critical API calls, Supabase, and Daily.co
             matcher({ url }) {
                 return (
                     url.pathname.startsWith("/api/") ||
+                    url.hostname.includes("supabase.co") ||
                     url.hostname.includes("daily.co") ||
-                    url.hostname.includes("wss://")
+                    url.pathname.includes("/auth/v1/") ||
+                    url.pathname.includes("/rest/v1/") ||
+                    url.protocol === 'wss:' ||
+                    url.protocol === 'ws:'
                 );
             },
             handler: new NetworkOnly(),

@@ -243,20 +243,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (authError) {
                     console.error('[AuthContext] Debug: getCurrentUser returned error', authError);
 
-                    // CRITICAL FIX: Only clear the session if it's a definitive auth failure.
-                    // Network errors or transient server issues should NOT trigger a logout.
                     const isAuthError = authError.toLowerCase().includes('invalid') ||
                         authError.toLowerCase().includes('expired') ||
                         authError.toLowerCase().includes('unauthorized') ||
-                        authError.toLowerCase().includes('not found');
+                        authError.toLowerCase().includes('not found') ||
+                        authError.toLowerCase().includes('abort') || // Handle AbortError
+                        authError.toLowerCase().includes('canceled');
 
                     if (isAuthError) {
-                        // Session invalid or expired — always clear user
-                        clearAuthSession();
-                        setSafeUser(null);
-                        setError(authError);
+                        // For definitive auth errors or aborts/cancels, we handle them carefully.
+                        // If it's an abort, it might be a transient client-side interruption.
+                        if (authError.toLowerCase().includes('abort')) {
+                            console.log('[AuthContext] Debug: Auth request was aborted. Retaining current state.');
+                        } else {
+                            clearAuthSession();
+                            setSafeUser(null);
+                            setError(authError);
+                        }
                     } else {
-                        console.warn('[AuthContext] Debug: Possible transient error. Retaining current state.');
+                        console.warn('[AuthContext] Debug: Possible transient error. Retaining current state.', authError);
                     }
                 } else if (validatedUser) {
                     setSafeUser(validatedUser);
@@ -270,12 +275,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         setError(null);
                     }
                 }
-            } catch (e) {
+            } catch (e: any) {
                 if (!isMounted) return;
                 console.error('[AuthContext] Debug: initSession caught exception', e);
 
-                // RACE CONDITION FIX for exception case
-                if (!latestUserRef.current) {
+                // Specifically check for AbortError at the exception level
+                if (e.name === 'AbortError' || e.message?.includes('abort')) {
+                    console.log('[AuthContext] Debug: initSession was aborted by signal.');
+                } else if (!latestUserRef.current) {
                     setSafeUser(null);
                 }
             } finally {

@@ -58,6 +58,9 @@ export const createClient = () => {
                 // a custom storage that doesn't use locks, or by specific flow flags.
                 // We'll ensure standard persistence is active which is more resilient 
                 // than the default 'memory' fallback that often happens on lock failure.
+            },
+            global: {
+                fetch: (...args) => fetch(...args), // Ensure we use the global fetch
             }
         }
     );
