@@ -18,8 +18,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         const handleRedirection = async () => {
             if (!user) {
                 // Not authenticated
-                if (pathname !== '/auth/login' && !pathname.startsWith('/auth/')) {
-                    console.log('AppShell: No user, redirecting to login');
+                const isAuthCallback = typeof window !== 'undefined' && (
+                    window.location.search.includes('code=') ||
+                    window.location.pathname.includes('/auth/callback') ||
+                    sessionStorage.getItem('auth_callback_in_progress') === 'true'
+                );
+
+                if (pathname !== '/auth/login' && !pathname.startsWith('/auth/') && !isAuthCallback) {
+                    console.log('AppShell: No user and not in auth callback, redirecting to login');
                     setIsRedirecting(true);
                     await router.replace('/auth/login');
                 } else {

@@ -445,7 +445,15 @@ export const projectService = {
                     callback(project);
                 }
             )
-            .subscribe();
+            .subscribe((status: string, err?: Error) => {
+                if (status === 'SUBSCRIBED') {
+                    console.log('✅ Subscribed to real-time project updates');
+                } else if (status === 'CHANNEL_ERROR') {
+                    console.error('❌ Failed to subscribe to projects:', err?.message || 'Unknown channel error');
+                } else if (status === 'TIMED_OUT') {
+                    console.error('❌ Project subscription timed out');
+                }
+            });
 
         return () => {
             supabase.removeChannel(channel);

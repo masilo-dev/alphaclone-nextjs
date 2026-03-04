@@ -330,13 +330,18 @@ export const messageService = {
                     callback(message, 'UPDATE');
                 }
             )
-            .subscribe((status: string) => {
+            .subscribe((status: string, err?: Error) => {
                 if (status === 'SUBSCRIBED') {
                     console.log('✅ Subscribed to real-time messages (INSERT + UPDATE)');
                 } else if (status === 'CHANNEL_ERROR') {
-                    console.error('❌ Failed to subscribe to messages');
+                    console.error('❌ Failed to subscribe to messages:', err?.message || 'Unknown channel error');
+                    if (err?.message?.includes('insecure')) {
+                        console.error('WebSocket Error: Insecure connection detected. Ensure you are using HTTPS.');
+                    }
                 } else if (status === 'CLOSED') {
                     console.warn('⚠️ Message subscription closed');
+                } else if (status === 'TIMED_OUT') {
+                    console.error('❌ Message subscription timed out');
                 }
             });
 

@@ -61,6 +61,7 @@ import { TableSkeleton } from '@/components/ui/Skeleton';
 import { TENANT_ADMIN_NAV_ITEMS } from '@/constants';
 import { PLAN_PRICING } from '../../../services/tenancy/types';
 import { WidgetErrorBoundary } from '../WidgetErrorBoundary';
+import NotificationCenter from '../NotificationCenter';
 
 interface BusinessDashboardProps {
     user: User;
@@ -462,13 +463,16 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
 
                             <div className="hidden md:block w-px h-6 bg-slate-800 mx-2" />
 
-                            <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 overflow-hidden">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                    src={currentTenant?.logo_url || user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
-                                    alt="Profile"
-                                    className="w-full h-full object-cover"
-                                />
+                            <div className="flex items-center gap-2">
+                                <NotificationCenter userId={user.id} />
+                                <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 overflow-hidden">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                        src={currentTenant?.logo_url || user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
+                                        alt="Profile"
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>

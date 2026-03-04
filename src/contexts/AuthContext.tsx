@@ -301,12 +301,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setError(null);
                 setLoading(false);
             } else if (event === 'INITIAL_SESSION') {
+                // Check if we are in an auth callback flow
+                const isAuthCallback = typeof window !== 'undefined' && (
+                    window.location.search.includes('code=') ||
+                    window.location.pathname.includes('/auth/callback') ||
+                    sessionStorage.getItem('auth_callback_in_progress') === 'true'
+                );
+
                 // Wait for the authService.getCurrentUser() call inside onAuthStateChange to resolve
                 // but if u is null here and it's INITIAL_SESSION, we might want to trigger a manual init 
                 // ONLY if we haven't found a user yet.
                 if (!u && !latestUserRef.current) {
-                    console.log('[AuthContext] INITIAL_SESSION returned no user, performing manual validation...');
-                    initSession();
+                    if (isAuthCallback) {
+                        console.log('[AuthContext] INITIAL_SESSION: No user yet but auth callback in progress, holding loading state...');
+                        // Don't call initSession immediately, let the async flow or subsequent events handle it
+                        // This prevents AppShell from seeing loading=false and redirecting out prematurely
+                    } else {
+                        console.log('[AuthContext] INITIAL_SESSION returned no user, performing manual validation...');
+                        initSession();
+                    }
                 }
             } else if (event === 'TOKEN_REFRESHED') {
                 return;
