@@ -28,7 +28,7 @@ export default function MFAEnrollment() {
             if (factorsError) throw factorsError;
 
             // Supabase returns { data: { all: Factor[], active: Factor[] } }
-            const allFactors = (factorsData as any).all || [];
+            const allFactors = (factorsData as any)?.all || [];
             const totpFactor = allFactors.find((f: any) => f.factor_type === 'totp' && f.status === 'verified');
 
             if (totpFactor) {

@@ -35,15 +35,17 @@ const nextConfig: NextConfig = {
   async headers() {
     const cspHeader = `
       default-src 'self';
-      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.supabase.co https://*.stripe.com;
+      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.supabase.co https://*.stripe.com https://unpkg.com;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       img-src 'self' blob: data: https://*.supabase.co https://api.dicebear.com https://*.stripe.com https://img.logo.dev;
-      font-src 'self' https://fonts.gstatic.com;
+      font-src 'self' data: https://fonts.gstatic.com;
       object-src 'none';
       base-uri 'self';
       form-action 'self';
       frame-ancestors 'none';
-      connect-src 'self' https://*.supabase.co https://*.upstash.io https://*.stripe.com;
+      frame-src 'self' https://*.stripe.com https://js.stripe.com;
+      connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.upstash.io https://*.stripe.com;
+      worker-src 'self' blob: https://unpkg.com;
       upgrade-insecure-requests;
     `.replace(/\s{2,}/g, ' ').trim();
 

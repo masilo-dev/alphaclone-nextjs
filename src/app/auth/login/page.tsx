@@ -221,7 +221,9 @@ export default function LoginPage() {
         try {
             const { supabase } = await import('@/lib/supabase');
             const { data: factorsData } = await supabase.auth.mfa.listFactors();
-            const totpFactor = factorsData?.factors.find((f: any) => f.factor_type === 'totp' && f.status === 'verified');
+            // Supabase returns { data: { all: Factor[], active: Factor[] } }
+            const allFactors = (factorsData as any)?.all || [];
+            const totpFactor = allFactors.find((f: any) => f.factor_type === 'totp' && f.status === 'verified');
 
             if (!totpFactor) {
                 setError('No verified MFA factor found.');
