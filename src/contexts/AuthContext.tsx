@@ -340,10 +340,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Some browser environments or SDK versions don't reliably fire INITIAL_SESSION
         const runBackupInit = setTimeout(() => {
             if (isMounted && !latestUserRef.current) {
-                console.log('[AuthContext] Backup init triggered (5s grace)...');
+                console.log('[AuthContext] Backup init triggered (2s grace)...');
                 initSession();
             }
-        }, 5000);
+        }, 2000);
 
         // Safety net: force stop loading after 8s — only stops the spinner, does NOT clear the user.
         // Extended from 3s to give Supabase async validation more time before the dashboard

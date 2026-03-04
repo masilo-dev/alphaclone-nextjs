@@ -44,7 +44,7 @@ const nextConfig: NextConfig = {
       form-action 'self';
       frame-ancestors 'none';
       frame-src 'self' https://*.stripe.com https://js.stripe.com;
-      connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.upstash.io https://*.stripe.com;
+      connect-src 'self' *.supabase.co *.upstash.io *.stripe.com;
       worker-src 'self' blob: https://unpkg.com;
       upgrade-insecure-requests;
     `.replace(/\s{2,}/g, ' ').trim();
