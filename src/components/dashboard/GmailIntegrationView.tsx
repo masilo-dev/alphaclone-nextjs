@@ -21,6 +21,13 @@ import { gmailService, GmailMessage } from '../../services/gmailService';
 import { toast } from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
 
+const LABELS = [
+    { id: 'INBOX', label: 'Inbox', Icon: Mail },
+    { id: 'SENT', label: 'Sent', Icon: Send },
+    { id: 'TRASH', label: 'Trash', Icon: Trash2 },
+    { id: 'STARRED', label: 'Starred', Icon: Star },
+];
+
 interface GmailIntegrationViewProps {
     userId: string;
 }
@@ -33,6 +40,7 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
     const [isThreadLoading, setIsThreadLoading] = useState(false);
     const [replyBody, setReplyBody] = useState('');
     const [isSending, setIsSending] = useState(false);
+    const [activeLabel, setActiveLabel] = useState('INBOX');
 
     // Simplified content cleaner for "Coming Soon" phase
     const cleanEmailBody = (html?: string) => {
@@ -41,22 +49,22 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
         return html.replace(/src="cid:[^"]+"/g, 'src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" style="display:none;"');
     };
 
-    const fetchThreads = async () => {
+    const fetchThreads = async (labelId: string = activeLabel) => {
         setIsLoading(true);
         try {
-            const { threads: fetchedThreads } = await gmailService.listThreads(userId);
+            const { threads: fetchedThreads } = await gmailService.listThreads(userId, 20, undefined, [labelId]);
             setThreads(fetchedThreads);
         } catch (err: any) {
             console.error('Failed to fetch Gmail threads:', err);
-            toast.error(err.message || 'Failed to load inbox');
+            toast.error(err.message || 'Failed to load emails');
         } finally {
             setIsLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchThreads();
-    }, [userId]);
+        fetchThreads(activeLabel);
+    }, [userId, activeLabel]);
 
     const handleThreadSelect = async (threadId: string) => {
         setSelectedThreadId(threadId);
@@ -83,13 +91,41 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
 
     return (
         <div className="flex h-[calc(100vh-280px)] bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+            {/* Folder Sidebar */}
+            <div className="w-16 sm:w-20 md:w-24 border-r border-slate-800 flex flex-col items-center py-6 gap-6 bg-slate-950/50">
+                {LABELS.map(({ id, Icon, label }) => (
+                    <button
+                        key={id}
+                        onClick={() => {
+                            setActiveLabel(id);
+                            setSelectedThreadId(null);
+                        }}
+                        className={`group relative p-3 rounded-2xl transition-all ${activeLabel === id
+                            ? 'bg-teal-500 text-slate-950 shadow-lg shadow-teal-500/20'
+                            : 'text-slate-500 hover:text-white hover:bg-slate-900'
+                            }`}
+                        title={label}
+                    >
+                        <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                        <span className="absolute left-full ml-4 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none whitespace-nowrap font-bold uppercase tracking-widest">
+                            {label}
+                        </span>
+                    </button>
+                ))}
+            </div>
+
             {/* Sidebar: Thread List */}
             <div className={`w-full md:w-80 lg:w-96 border-r border-slate-800 flex flex-col ${selectedThreadId ? 'hidden md:flex' : 'flex'}`}>
                 <div className="p-4 border-b border-slate-800 flex items-center justify-between">
                     <h3 className="text-white font-bold flex items-center gap-2">
-                        <Mail className="w-5 h-5 text-teal-400" /> Inbox
+                        {(() => {
+                            const current = LABELS.find(l => l.id === activeLabel);
+                            const Icon = current?.Icon || Mail;
+                            return <Icon className="w-5 h-5 text-teal-400" />;
+                        })()}
+                        {LABELS.find(l => l.id === activeLabel)?.label || 'Inbox'}
                     </h3>
-                    <Button variant="secondary" size="sm" onClick={fetchThreads} isLoading={isLoading}>
+                    <Button variant="secondary" size="sm" onClick={() => fetchThreads(activeLabel)} isLoading={isLoading}>
                         <RefreshCw className="w-4 h-4" />
                     </Button>
                 </div>
@@ -102,7 +138,7 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
                     ) : threads.length === 0 ? (
                         <div className="text-center py-12 text-slate-500">
                             <Mail className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                            <p className="text-sm">No emails found in INBOX</p>
+                            <p className="text-sm">No emails found in {LABELS.find(l => l.id === activeLabel)?.label}</p>
                         </div>
                     ) : (
                         threads.map((thread) => (
@@ -116,7 +152,9 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
                             >
                                 <div className="flex justify-between items-start mb-1">
                                     <span className="text-xs font-bold text-teal-400 truncate max-w-[140px] uppercase tracking-wider">
-                                        {thread.from?.split('<')[0].trim() || 'Unknown'}
+                                        {activeLabel === 'SENT'
+                                            ? (thread.subject?.slice(0, 15) || 'Sent Message')
+                                            : (thread.from?.split('<')[0].trim() || 'Unknown')}
                                     </span>
                                     <span className="text-[10px] text-slate-500 whitespace-nowrap">
                                         {thread.date ? formatDistanceToNow(new Date(thread.date), { addSuffix: true }) : ''}

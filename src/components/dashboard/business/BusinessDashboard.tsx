@@ -428,9 +428,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                 )}
 
                 {/* Header */}
-                <header className="h-16 border-b border-slate-800/50 flex items-center justify-between px-4 md:px-8 bg-slate-950/95 sticky top-0 z-10">
-                    <div className="flex items-center gap-4 flex-1">
-                        {/* Mobile Menu Toggle */}
+                <header className="h-16 border-b border-slate-800/50 flex items-center justify-between px-4 md:px-8 bg-slate-950/95 sticky top-0 z-10 w-full">
+                    {/* Left: Menu & Mobile Logo */}
+                    <div className="flex items-center gap-4">
                         <button
                             onClick={() => setSidebarOpen(!sidebarOpen)}
                             className="md:hidden p-2 text-white hover:text-teal-400 transition-colors rounded-lg hover:bg-slate-800"
@@ -451,28 +451,34 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                             </h1>
                         </div>
 
-                        <div className="flex items-center gap-4">
-                            {/* Removed Assistant Button as requested ("remove the recording button") */}
+                        {/* Breadcrumb or Title for Desktop */}
+                        <div className="hidden md:block">
+                            <h1 className="text-lg font-bold text-white/90 tracking-tight">
+                                {getPageTitle()}
+                            </h1>
+                        </div>
+                    </div>
 
-                            {activeBgTasksCount > 0 && (
-                                <div className="flex items-center gap-2 bg-slate-800/50 text-teal-400 px-3 py-1.5 rounded-full text-xs font-semibold animate-pulse border border-teal-500/30">
-                                    <RefreshCw className="w-4 h-4 animate-spin" />
-                                    <span className="hidden sm:inline">{activeBgTasksCount} Task(s)</span>
-                                </div>
-                            )}
+                    {/* Right: Actions, Notifications, Profile */}
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        {activeBgTasksCount > 0 && (
+                            <div className="flex items-center gap-2 bg-slate-800/50 text-teal-400 px-3 py-1.5 rounded-full text-xs font-semibold animate-pulse border border-teal-500/30">
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                <span className="hidden sm:inline">{activeBgTasksCount} Task(s)</span>
+                            </div>
+                        )}
 
-                            <div className="hidden md:block w-px h-6 bg-slate-800 mx-2" />
+                        <div className="hidden sm:block w-px h-6 bg-slate-800 mx-1" />
 
-                            <div className="flex items-center gap-2">
-                                <NotificationCenter userId={user.id} />
-                                <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 overflow-hidden">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                        src={currentTenant?.logo_url || user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
-                                        alt="Profile"
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <NotificationCenter userId={user.id} />
+                            <div className="w-9 h-9 rounded-full bg-slate-800 border-2 border-slate-700 overflow-hidden shadow-lg shadow-black/20 ring-2 ring-transparent hover:ring-teal-500/50 transition-all cursor-pointer">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={user.avatar || currentTenant?.logo_url || `https://ui-avatars.com/api/?name=${user.name}&background=random&color=fff&size=128`}
+                                    alt="Profile"
+                                    className="w-full h-full object-cover"
+                                />
                             </div>
                         </div>
                     </div>
