@@ -364,14 +364,24 @@ export default function BusinessDashboard({ currentTenant, user, onLogout, setAc
                 <div id="main-content" className="text-center max-w-md p-8">
                     <div className="text-slate-300 text-xl mb-4">No Organization Found</div>
                     <div className="text-slate-400 mb-6">
-                        Unable to load your organization. This may be a temporary issue.
+                        {error || (user.role === 'client'
+                            ? "You don't have access to this business dashboard. If you're a business owner, please contact support."
+                            : "Unable to load your organization. This may be a temporary issue.")}
                     </div>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors"
-                    >
-                        Retry
-                    </button>
+                    <div className="flex flex-col gap-3">
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors font-medium border border-teal-400/20"
+                        >
+                            Retry Loading
+                        </button>
+                        <button
+                            onClick={() => onLogout()}
+                            className="text-slate-500 hover:text-slate-400 text-sm transition-colors py-1"
+                        >
+                            Log out and switch account
+                        </button>
+                    </div>
                 </div>
             </div>
         );

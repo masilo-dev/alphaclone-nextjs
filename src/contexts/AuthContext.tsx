@@ -245,12 +245,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             didOptimisticRead.current = true;
             const cachedUser = readSessionFromStorage();
             if (cachedUser && isMounted) {
-                console.log('[AuthContext] Found cached user in storage, setting immediately');
+                console.log('[AuthContext] Found cached user in storage, setting immediately (but still loading async validation)');
                 setSafeUser(cachedUser);
-                setLoading(false);
+                // Keep loading = true until initSession finishes to be safe on Vercel
             } else {
-                // If no cached user, we don't set loading to false yet.
-                // We wait for initSession (async validation) to finish.
                 console.log('[AuthContext] No cached user found, waiting for async validation...');
             }
         }

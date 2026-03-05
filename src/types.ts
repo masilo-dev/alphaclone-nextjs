@@ -1,7 +1,7 @@
 
 import React from 'react';
 
-export type UserRole = 'admin' | 'client' | 'visitor' | 'tenant_admin';
+export type UserRole = 'admin' | 'client' | 'visitor' | 'tenant_admin' | 'business_dashboard';
 
 export interface User {
   id: string;

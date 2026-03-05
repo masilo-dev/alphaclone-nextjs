@@ -91,7 +91,16 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       // Clear timeout on successful load
       if (timeoutId) clearTimeout(timeoutId);
 
+      if (tenants.length === 0 && !timeoutId) {
+        // If no tenants found, and this is the first attempt, try once more with a small delay
+        // This handles replication lag or transient database issues during rapid redirects
+        console.log('[TenantContext] No tenants found on first attempt, retrying in 1s...');
+        await new Promise(r => setTimeout(r, 1000));
+        return await loadUserTenants(undefined); // undefined to mark it as the retry
+      }
+
       if (tenants.length > 0) {
+        console.log(`[TenantContext] Successfully loaded ${tenants.length} tenants for user:`, user.id);
         // Try to load saved tenant from localStorage
         const savedTenantId = tenantService.getCurrentTenantId();
 
@@ -99,6 +108,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         const savedTenant = tenants.find(t => t.id === savedTenantId);
 
         if (savedTenant) {
+          console.log('[TenantContext] Using saved tenant:', savedTenant.id);
           setCurrentTenant(savedTenant);
           // Refresh the full object cache
           tenantService.setCurrentTenant(savedTenant);
@@ -106,13 +116,15 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         } else {
           // Default to first tenant
           const firstTenant = tenants[0];
+          console.log('[TenantContext] No saved tenant valid, defaulting to:', firstTenant.id);
           setCurrentTenant(firstTenant);
           tenantService.setCurrentTenant(firstTenant);
           setIsLoading(false);
         }
-      } else if (user.role === 'admin' || user.role === 'tenant_admin') {
-        // User has no tenants - auto-create a default one only for admins/tenant_admins
-        console.log('No tenants found for admin/tenant_admin user, creating default tenant...');
+      } else if (user.role === 'admin' || user.role === 'tenant_admin' || user.role === 'business_dashboard') {
+        // User has no tenants - auto-create a default one only for authorized creators
+        console.log(`[TenantContext] No tenants found for user with role ${user.role} after potential retry, auto-creating...`);
+        // ... (rest of creation logic)
 
         try {
           // Generate tenant name based on role
@@ -159,8 +171,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           return;
         }
       } else {
-        // No tenants and not an admin - just stop loading
-        console.log('No tenants found for non-admin user.');
+        // No tenants and not an admin/creator
+        console.warn(`[TenantContext] No tenants found for user: ${user.id} (Role: ${user.role}) after retry.`);
         setCurrentTenant(null);
         setIsLoading(false);
       }
