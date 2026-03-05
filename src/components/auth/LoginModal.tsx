@@ -4,6 +4,7 @@ import { Button, Input, Modal } from '../ui/UIComponents';
 import { User } from '../../types';
 import { UserPlus, LogIn, AlertCircle, ShieldCheck } from 'lucide-react';
 import { LOGO_URL } from '../../constants';
+import { useTenant } from '../../contexts/TenantContext';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface LoginModalProps {
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => {
+  const { refreshTenants } = useTenant();
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -103,10 +105,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
                 slug: slug,
                 adminUserId: user.id
               });
+
+              // Refresh tenants in context to ensure the new organization is loaded
+              // before we trigger the onLogin/redirect flow
+              await refreshTenants();
             } catch (tenantErr) {
               console.error("Tenant Creation Error:", tenantErr);
-              // We don't block the user if tenant creation fails, but we should probably inform them
-              // setError('Account created but business setup failed. Contact support.');
             }
           }
           onLogin(user);

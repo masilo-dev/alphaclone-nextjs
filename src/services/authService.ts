@@ -9,7 +9,7 @@ import { z } from 'zod';
  * If a call to Supabase auth hangs for longer than the timeout, this forcefully 
  * purges the `sb-*` cache to break the lock and throws an error so the UI recovers.
  */
-async function withAuthTimeout<T = any>(promise: any, timeoutMs: number = 10000): Promise<T> {
+async function withAuthTimeout<T = any>(promise: any, timeoutMs: number = 30000): Promise<T> {
     let timeoutHandle: NodeJS.Timeout;
     const timeoutPromise = new Promise<T>((_, reject) => {
         timeoutHandle = setTimeout(() => {
@@ -191,7 +191,7 @@ export const authService = {
                         registration_country: registrationCountry,
                     },
                 },
-            }), 5000);
+            }));
 
             if (error) {
                 console.error("SignUp Error:", error);
@@ -234,7 +234,7 @@ export const authService = {
         try {
             const { error } = await withAuthTimeout(supabase.auth.resetPasswordForEmail(email, {
                 redirectTo: `${window.location.origin}/auth/reset-password`,
-            }), 3000);
+            }));
 
             if (error) {
                 console.error("Reset Password Error:", error);
@@ -262,7 +262,7 @@ export const authService = {
 
             passwordSchema.parse(password);
 
-            const { error } = await withAuthTimeout(supabase.auth.updateUser({ password }), 5000);
+            const { error } = await withAuthTimeout(supabase.auth.updateUser({ password }));
 
             if (error) {
                 console.error("Update Password Error:", error);
@@ -327,7 +327,7 @@ export const authService = {
                 import('./activityService').then(({ activityService }) =>
                     activityService.endLoginSession()
                 ),
-                withAuthTimeout(supabase.auth.signOut(), 2500)
+                withAuthTimeout(supabase.auth.signOut())
             ]);
 
             // Check auth result (session cleanup is non-critical)
@@ -371,7 +371,7 @@ export const authService = {
             const maxAttempts = isAuthCallback ? 3 : 1; // Only retry during explicit auth callbacks
 
             for (let i = 0; i < maxAttempts; i++) {
-                const { data: { session: s }, error } = await withAuthTimeout(supabase.auth.getSession(), 10000);
+                const { data: { session: s }, error } = await withAuthTimeout(supabase.auth.getSession());
                 if (s?.user) {
                     session = s;
                     if (isAuthCallback) sessionStorage.removeItem('auth_callback_in_progress');

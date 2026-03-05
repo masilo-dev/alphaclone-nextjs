@@ -370,19 +370,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 initSession();
             }
         }, 2000);
-
-        // Safety net: force stop loading after 8s — only stops the spinner, does NOT clear the user.
-        // Extended from 3s to give Supabase async validation more time before the dashboard
-        // decides there is no session and redirects.
-        // Safety net: force stop loading after 15s — only stops the spinner, does NOT clear the user.
-        // Reduced from 45s to 15s as 45s is too long for a user to wait if something is genuinely stuck,
-        // but long enough to cover most slow auth initializations.
+        // Safety net: force stop loading after 30s — only stops the spinner, does NOT clear the user.
+        // Increased to 30s to cover slow auth initializations and tenant creations on Vercel cold starts.
         const safetyTimeout = setTimeout(() => {
             if (isMounted) {
-                console.warn('[AuthContext] Safety timeout reached (15s). Forcing loading to false. If user state exists it is preserved.');
+                console.warn('[AuthContext] Safety timeout reached (30s). Forcing loading to false. If user state exists it is preserved.');
                 setLoading(false);
             }
-        }, 15000);
+        }, 30000);
 
         return () => {
             isMounted = false;
