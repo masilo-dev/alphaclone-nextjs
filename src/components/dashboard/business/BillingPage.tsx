@@ -13,8 +13,11 @@ import {
     X,
     Trash2,
     TrendingUp,
-    Link as LinkIcon
+    Link as LinkIcon,
+    Eye,
+    ChevronLeft
 } from 'lucide-react';
+import { DocumentViewer } from '../../contracts/DocumentViewer';
 import jsPDF from 'jspdf';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import toast from 'react-hot-toast';
@@ -32,6 +35,8 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
     const [filter, setFilter] = useState<string>('all');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [selectedInvoice, setSelectedInvoice] = useState<BusinessInvoice | null>(null);
+    const [viewerUrl, setViewerUrl] = useState<string | null>(null);
 
     const loadData = useCallback(async () => {
         if (!currentTenant) return;
@@ -82,6 +87,22 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
         } catch (e) {
             console.error('PDF Generation Error:', e);
             toast.error('Failed to generate PDF');
+        }
+    }, [clients, currentTenant]);
+
+    const handleViewInvoice = useCallback((invoice: BusinessInvoice) => {
+        const client = clients.find(c => c.id === invoice.clientId) || {};
+        const tenant = currentTenant || { name: 'AlphaClone Business' };
+
+        try {
+            const doc = businessInvoiceService.generatePDF(invoice, tenant, client);
+            const blob = doc.output('blob');
+            const url = URL.createObjectURL(blob);
+            setViewerUrl(url);
+            setSelectedInvoice(invoice);
+        } catch (e) {
+            console.error('PDF Preview Error:', e);
+            toast.error('Failed to generate preview');
         }
     }, [clients, currentTenant]);
 
@@ -235,12 +256,44 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
                         invoice={invoice}
                         clients={clients}
                         onDownload={handleDownloadPDF}
+                        onView={handleViewInvoice}
                         onDelete={handleDeleteInvoice}
                         onStatusUpdate={handleUpdateInvoiceStatus}
                         statusOrder={STATUS_ORDER}
                     />
                 ))}
             </div>
+
+            {/* Document Viewer Modal */}
+            {selectedInvoice && viewerUrl && (
+                <div className="fixed inset-0 z-[100] flex flex-col bg-slate-950 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-slate-900 shrink-0 shadow-2xl">
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => { setSelectedInvoice(null); setViewerUrl(null); }}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all text-sm font-bold"
+                            >
+                                <ChevronLeft className="w-4 h-4" /> Close Viewer
+                            </button>
+                            <div className="w-px h-6 bg-white/10" />
+                            <span className="text-white font-bold text-sm">{selectedInvoice.invoiceNumber}</span>
+                        </div>
+                        <button
+                            onClick={() => handleDownloadPDF(selectedInvoice)}
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all shadow-lg shadow-teal-500/20"
+                        >
+                            <Download className="w-4 h-4" /> Download PDF
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-hidden p-4 sm:p-8 bg-slate-950">
+                        <DocumentViewer
+                            url={viewerUrl}
+                            userName={user.name || 'User'}
+                            onDownload={() => handleDownloadPDF(selectedInvoice)}
+                        />
+                    </div>
+                </div>
+            )}
 
             {filteredInvoices.length === 0 && (
                 <div className="text-center py-12 text-slate-400">
@@ -263,7 +316,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
     );
 };
 
-const InvoiceCard = ({ invoice, clients, onDownload, onDelete, onStatusUpdate, statusOrder }: any) => {
+const InvoiceCard = ({ invoice, clients, onDownload, onView, onDelete, onStatusUpdate, statusOrder }: any) => {
     const client = clients.find((c: any) => c.id === invoice.clientId);
 
     const statusColors: Record<string, string> = {
@@ -335,6 +388,13 @@ const InvoiceCard = ({ invoice, clients, onDownload, onDelete, onStatusUpdate, s
                                     <LinkIcon className="w-4 h-4" />
                                 </button>
                             )}
+                            <button
+                                onClick={() => onView(invoice)}
+                                className="p-2 bg-slate-800 hover:bg-teal-500/20 text-slate-400 hover:text-teal-400 rounded-lg transition-colors"
+                                title="View Invoice"
+                            >
+                                <Eye className="w-4 h-4" />
+                            </button>
                             <button
                                 onClick={() => onDownload(invoice)}
                                 className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"

@@ -33,9 +33,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 }
             } else {
                 // Authenticated
+                // Check for MFA requirement
+                const { needsMfa } = (await import('@/contexts/AuthContext')).useAuth();
+
+                if (needsMfa && pathname !== '/auth/login' && !pathname.startsWith('/auth/')) {
+                    console.log('AppShell: MFA required, redirecting to login challenge');
+                    setIsRedirecting(true);
+                    await router.replace('/auth/login?reason=mfa_required');
+                    return;
+                }
+
                 // Prevent access to landing page (root) and login page in PWA mode
-                if (pathname === '/' || pathname === '/auth/login') {
-                    console.log('AppShell: Logged in, redirecting to dashboard');
+                // UNLESS needsMfa is true (in which case we stay on login for the challenge)
+                if ((pathname === '/' || pathname === '/auth/login') && !needsMfa) {
+                    console.log('AppShell: Logged in and MFA satisfied, redirecting to dashboard');
                     setIsRedirecting(true);
                     await router.replace('/dashboard');
                 } else {

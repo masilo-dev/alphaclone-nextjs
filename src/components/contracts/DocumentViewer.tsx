@@ -308,16 +308,24 @@ const PDFPage = React.forwardRef<HTMLDivElement, PDFPageProps>(({
                 const canvas = canvasRef.current;
                 const context = canvas.getContext('2d');
 
+                if (!context) return;
+
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
 
+                // Clear previous content
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                context.fillStyle = '#ffffff';
+                context.fillRect(0, 0, canvas.width, canvas.height);
+
                 const renderContext = {
-                    canvasContext: context!,
+                    canvasContext: context,
                     viewport: viewport,
-                    canvas: canvasRef.current!
+                    canvas: canvas!
                 };
 
-                await page.render(renderContext).promise;
+                const renderTask = page.render(renderContext);
+                await renderTask.promise;
             } catch (error) {
                 console.error('Page Render Error:', error);
             } finally {

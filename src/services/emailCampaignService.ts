@@ -68,6 +68,15 @@ export interface CampaignRecipient {
     createdAt: string;
 }
 
+export interface RecipientData {
+    id: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    company?: string;
+    [key: string]: any;
+}
+
 export const emailCampaignService = {
     /**
      * Get all email templates
@@ -498,6 +507,27 @@ export const emailCampaignService = {
     },
 
     /**
+     * Inject variables into template
+     */
+    injectVariables(content: string, recipient: RecipientData): string {
+        let injected = content;
+        const variables = {
+            firstName: recipient.firstName || '',
+            lastName: recipient.lastName || '',
+            company: recipient.company || '',
+            name: recipient.firstName ? (recipient.firstName + (recipient.lastName ? ' ' + recipient.lastName : '')) : recipient.email,
+            ...recipient
+        };
+
+        Object.entries(variables).forEach(([key, value]) => {
+            const regex = new RegExp(`{{${key}}}`, 'g');
+            injected = injected.replace(regex, String(value || ''));
+        });
+
+        return injected;
+    },
+
+    /**
      * Send email campaign
      */
     async sendCampaign(campaignId: string): Promise<{ success: boolean; error: string | null }> {
@@ -531,10 +561,33 @@ export const emailCampaignService = {
             let failCount = 0;
 
             for (const recipient of recipients) {
+                // 3a. Get contact data for personalization
+                const { data: contact } = await supabase
+                    .from('contacts')
+                    .select('*')
+                    .eq('id', recipient.contact_id)
+                    .single();
+
+                const recipientData: RecipientData = {
+                    id: recipient.contact_id,
+                    email: recipient.email,
+                    firstName: contact?.first_name,
+                    lastName: contact?.last_name,
+                    company: contact?.company_name,
+                    ...(contact?.metadata || {})
+                };
+
+                const personalizedHtml = this.injectVariables(
+                    campaign.metadata?.bodyHtml || campaign.body_html || 'Empty email body',
+                    recipientData
+                );
+
+                const personalizedSubject = this.injectVariables(campaign.subject, recipientData);
+
                 const result = await emailProviderService.sendEmail({
                     to: recipient.email,
-                    subject: campaign.subject,
-                    html: campaign.metadata?.bodyHtml || campaign.body_html || 'Empty email body',
+                    subject: personalizedSubject,
+                    html: personalizedHtml,
                     fromName: campaign.from_name,
                     from: campaign.from_email,
                     replyTo: campaign.reply_to

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button, Input, Modal } from '../ui/UIComponents';
 import { User } from '../../types';
-import { UserPlus, LogIn, AlertCircle } from 'lucide-react';
+import { UserPlus, LogIn, AlertCircle, ShieldCheck } from 'lucide-react';
 import { LOGO_URL } from '../../constants';
 
 interface LoginModalProps {
@@ -20,6 +20,52 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
   const [isBusiness, setIsBusiness] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showMfaChallenge, setShowMfaChallenge] = useState(false);
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaChallengeId, setMfaChallengeId] = useState<string | null>(null);
+
+  const handleMfaVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (mfaCode.length !== 6) return;
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const { supabase } = await import('../../lib/supabase');
+      const challenges = await supabase.auth.mfa.listFactors();
+      if (challenges.error) throw challenges.error;
+
+      const factor = (challenges.data.all as any[]).find((f: any) => f.status === 'verified');
+      if (!factor) throw new Error('No verified MFA factor found');
+
+      const challenge = await supabase.auth.mfa.challenge({ factorId: factor.id });
+      if (challenge.error) throw challenge.error;
+
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+        challengeId: challenge.data.id,
+        code: mfaCode
+      });
+
+      if (verifyError) {
+        setError(verifyError);
+        setIsLoading(false);
+        return;
+      }
+
+      const { authService } = await import('../../services/authService');
+      const { user } = await authService.getCurrentUser();
+      if (user) {
+        onLogin(user);
+      } else {
+        setError('Failed to retrieve user after MFA verification');
+      }
+    } catch (err) {
+      setError('MFA verification failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,10 +117,16 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
 
       // 2. LOGIN FLOW
       const { authService } = await import('../../services/authService');
-      const { user, error: signInError } = await authService.signIn(email, password);
+      const { user, needsMfa, error: signInError } = await authService.signIn(email, password);
 
       if (signInError) {
         setError('Invalid credentials. Please verify your email and password.');
+        setIsLoading(false);
+        return;
+      }
+
+      if (needsMfa) {
+        setShowMfaChallenge(true);
         setIsLoading(false);
         return;
       }
@@ -106,75 +158,113 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {isRegistering && (
-          <div className="animate-slide-up space-y-4">
-            <div className="flex p-1 bg-slate-800/50 rounded-lg border border-slate-700/50 mb-4">
-              <button
-                type="button"
-                onClick={() => setIsBusiness(false)}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${!isBusiness ? 'bg-teal-500 text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
-              >
-                CLIENT ACCOUNT
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsBusiness(true)}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${isBusiness ? 'bg-teal-500 text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
-              >
-                BUSINESS OS
-              </button>
+        {showMfaChallenge ? (
+          <div className="animate-slide-up space-y-5">
+            <div className="text-center space-y-2">
+              <ShieldCheck className="w-12 h-12 text-teal-400 mx-auto" />
+              <h5 className="font-bold text-white">Security Verification</h5>
+              <p className="text-sm text-slate-400">Enter the 6-digit code from your authenticator app.</p>
             </div>
 
             <Input
-              label="Full Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="John Doe"
-              required={isRegistering}
+              label="Verification Code"
+              value={mfaCode}
+              onChange={(e) => setMfaCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+              placeholder="000000"
+              required
+              className="text-center text-2xl tracking-[0.5em] font-bold"
             />
 
-            {isBusiness && (
-              <div className="animate-slide-up">
+            <Button
+              onClick={handleMfaVerify}
+              className="w-full h-12 text-base font-semibold bg-teal-500 hover:bg-teal-400"
+              isLoading={isLoading}
+              disabled={mfaCode.length !== 6 || isLoading}
+            >
+              Verify & Continue
+            </Button>
+
+            <button
+              type="button"
+              onClick={() => setShowMfaChallenge(false)}
+              className="w-full text-xs text-slate-500 hover:text-slate-400"
+            >
+              Back to Login
+            </button>
+          </div>
+        ) : (
+          <>
+            {isRegistering && (
+              <div className="animate-slide-up space-y-4">
+                <div className="flex p-1 bg-slate-800/50 rounded-lg border border-slate-700/50 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsBusiness(false)}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${!isBusiness ? 'bg-teal-500 text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+                  >
+                    CLIENT ACCOUNT
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsBusiness(true)}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${isBusiness ? 'bg-teal-500 text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+                  >
+                    BUSINESS OS
+                  </button>
+                </div>
+
                 <Input
-                  label="Business Name"
-                  value={businessName}
-                  onChange={(e) => setBusinessName(e.target.value)}
-                  placeholder="AlphaCorp Industries"
-                  required={isBusiness}
+                  label="Full Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="John Doe"
+                  required={isRegistering}
                 />
+
+                {isBusiness && (
+                  <div className="animate-slide-up">
+                    <Input
+                      label="Business Name"
+                      value={businessName}
+                      onChange={(e) => setBusinessName(e.target.value)}
+                      placeholder="AlphaCorp Industries"
+                      required={isBusiness}
+                    />
+                  </div>
+                )}
               </div>
             )}
-          </div>
+
+            <Input
+              label="Email Address"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@company.com"
+              required
+            />
+
+            <Input
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+            />
+
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm flex items-start gap-2 animate-fade-in">
+                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <Button type="submit" className="w-full h-12 text-base font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400" isLoading={isLoading}>
+              {isRegistering ? 'Create Account' : 'Authenticate & Enter'}
+            </Button>
+          </>
         )}
-
-        <Input
-          label="Email Address"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="name@company.com"
-          required
-        />
-
-        <Input
-          label="Password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="••••••••"
-          required
-        />
-
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm flex items-start gap-2 animate-fade-in">
-            <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        <Button type="submit" className="w-full h-12 text-base font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400" isLoading={isLoading}>
-          {isRegistering ? 'Create Account' : 'Authenticate & Enter'}
-        </Button>
 
         <div className="relative my-4">
           <div className="absolute inset-0 flex items-center">

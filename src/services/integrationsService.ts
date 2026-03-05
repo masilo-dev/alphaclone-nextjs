@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export interface IntegrationConfig {
     id: string;
-    type: 'slack' | 'github' | 'google_calendar' | 'discord' | 'jira' | 'linear' | 'zapier';
+    type: 'slack' | 'github' | 'google_calendar' | 'discord' | 'jira' | 'linear' | 'zapier' | 'zoho';
     name: string;
     enabled: boolean;
     config: Record<string, any>;
@@ -28,6 +28,14 @@ export interface GoogleCalendarConfig {
     clientSecret: string;
     refreshToken: string;
     calendarId?: string;
+}
+
+export interface ZohoConfig {
+    accountId: string;
+    accessToken: string;
+    refreshToken: string;
+    expiryDate: string;
+    email: string;
 }
 
 export const integrationsService = {
@@ -322,6 +330,7 @@ export const integrationsService = {
             jira: 'Jira',
             linear: 'Linear',
             zapier: 'Zapier',
+            zoho: 'Zoho Mail',
         };
         return names[type] || type;
     },

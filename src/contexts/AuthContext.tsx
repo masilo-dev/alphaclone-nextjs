@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { authService } from '../services/authService';
 import { User, UserRole } from '../types';
+import { supabase } from '../lib/supabase';
 import { AuthChangeEvent } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 
@@ -10,6 +11,8 @@ interface AuthContextType {
     user: User | null;
     loading: boolean;
     error: string | null;
+    mfaLevel: 'aal1' | 'aal2' | null;
+    needsMfa: boolean;
     signOut: () => Promise<void>;
     cancelAccountDeletion: () => Promise<{ error: string | null }>;
 }
@@ -202,10 +205,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [mfaLevel, setMfaLevel] = useState<'aal1' | 'aal2' | null>(null);
+    const [needsMfa, setNeedsMfa] = useState(false);
     // Track whether we've already done the optimistic read to avoid double-render
     const didOptimisticRead = useRef(false);
     // Track the latest user state to prevent race conditions between initSession and onAuthStateChange
     const latestUserRef = useRef<User | null>(null);
+
+    // Fetch and set MFA level
+    const refreshMfaLevel = async () => {
+        try {
+            const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+            if (error) {
+                console.error('[AuthContext] Error getting MFA level:', error);
+                return;
+            }
+            console.log('[AuthContext] MFA Level:', data);
+            setMfaLevel(data.currentLevel as 'aal1' | 'aal2');
+            // If nextLevel exists and is aal2, it means the user has MFA enabled but hasn't verified yet
+            setNeedsMfa(data.nextLevel === 'aal2' && data.currentLevel !== 'aal2');
+        } catch (err) {
+            console.error('[AuthContext] Unexpected error fetching MFA level:', err);
+        }
+    };
 
     // Wrapper to set user and update ref
     const setSafeUser = (u: User | null) => {
@@ -266,6 +288,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 } else if (validatedUser) {
                     setSafeUser(validatedUser);
                     setError(null);
+                    await refreshMfaLevel();
                 } else {
                     // RACE CONDITION FIX: If onAuthStateChange already found a user, don't overwrite with null
                     if (!latestUserRef.current) {
@@ -303,9 +326,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setSafeUser(u);
                 setError(null);
                 setLoading(false);
+                refreshMfaLevel();
             } else if (event === 'SIGNED_OUT') {
                 setSafeUser(null);
                 setError(null);
+                setMfaLevel(null);
+                setNeedsMfa(false);
                 setLoading(false);
             } else if (event === 'INITIAL_SESSION') {
                 // Check if we are in an auth callback flow
@@ -385,7 +411,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, error, signOut, cancelAccountDeletion }}>
+        <AuthContext.Provider value={{ user, loading, error, mfaLevel, needsMfa, signOut, cancelAccountDeletion }}>
             {children}
         </AuthContext.Provider>
     );

@@ -52,6 +52,10 @@ const envSchema = z.object({
     GOOGLE_CLIENT_ID: z.string().min(1, 'Google Client ID is required').optional(),
     GOOGLE_CLIENT_SECRET: z.string().min(1, 'Google Client Secret is required').optional(),
 
+    // Zoho OAuth
+    ZOHO_CLIENT_ID: z.string().optional(),
+    ZOHO_CLIENT_SECRET: z.string().optional(),
+
     // Supabase Admin
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'Supabase service role key is required').optional(),
 });
@@ -88,6 +92,10 @@ function validateEnv() {
         // Google OAuth
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
         GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET,
+
+        // Zoho OAuth
+        ZOHO_CLIENT_ID: process.env.ZOHO_CLIENT_ID || process.env.NEXT_PUBLIC_ZOHO_CLIENT_ID || process.env.VITE_ZOHO_CLIENT_ID,
+        ZOHO_CLIENT_SECRET: process.env.ZOHO_CLIENT_SECRET || process.env.NEXT_PUBLIC_ZOHO_CLIENT_SECRET || process.env.VITE_ZOHO_CLIENT_SECRET,
 
         // Supabase Admin
         SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,

@@ -36,7 +36,7 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
   { label: 'Operations Calendar', href: '/dashboard/calendar', icon: Calendar },
   { label: 'High-Definition Ops', href: '/dashboard/conference', icon: Video },
   { label: 'Communication Hub', href: '/dashboard/messages', icon: MessageSquare },
-  { label: 'Email Sync (Gmail)', href: '/dashboard/gmail', icon: Mail },
+  { label: 'Email Sync', href: '/dashboard/gmail', icon: Mail },
   { label: 'Revenue & Payments', href: '/dashboard/finance', icon: DollarSign },
   { label: 'Agreement Lifecycle', href: '/dashboard/contracts', icon: FileText },
   { label: 'Creative Intel Lab', href: '/dashboard/ai-studio', icon: Palette, comingSoon: true },
@@ -68,7 +68,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'Calendar', href: '/dashboard/calendar' },
       { label: 'Meetings', href: '/dashboard/meetings' },
-      { label: 'Gmail', href: '/dashboard/gmail' },
+      { label: 'Email', href: '/dashboard/gmail' },
       { label: 'Inbox', href: '/dashboard/messages' },
     ]
   },
@@ -78,7 +78,6 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     icon: Layers,
     subItems: [
       { label: 'SEO Engine', href: '/dashboard/articles' },
-      { label: 'Portfolio Ops', href: '/dashboard/portfolio-manager' },
       { label: 'Resource Allocation', href: '/dashboard/allocation' },
       { label: 'System Improvements', href: '/dashboard/admin/improvements' },
     ]

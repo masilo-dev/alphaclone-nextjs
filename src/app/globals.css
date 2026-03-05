@@ -369,15 +369,12 @@ a {
   border-radius: 10px;
 }
 
-/* Prevent overscroll bounce on iOS, but allow pull-to-refresh on specific containers */
 html,
 body {
   overscroll-behavior-y: none;
   background-color: #020617;
-  height: 100%;
+  min-height: 100%;
   width: 100%;
-  position: fixed;
-  overflow: hidden;
 }
 
 /* Main scrollable area */

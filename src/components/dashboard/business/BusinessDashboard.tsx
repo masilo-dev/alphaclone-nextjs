@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
     LayoutDashboard,
@@ -68,11 +68,15 @@ interface BusinessDashboardProps {
     onLogout: () => void;
     activeTab: string;
     setActiveTab: (tab: string) => void;
+    currentTenant?: any; // optional — component fetches via useTenant() context
 }
 
-const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, activeTab, setActiveTab }) => {
+export default function BusinessDashboard({ currentTenant, user, onLogout, setActiveTab, activeTab }: BusinessDashboardProps) {
     const router = useRouter();
-    const { currentTenant, isLoading: tenantLoading, getDashboardStats } = useTenant();
+    const searchParams = useSearchParams();
+    const { isLoading: tenantLoading, getDashboardStats } = useTenant();
+    // Default active section within settings
+    const [activeSection, setActiveSection] = useState('profile');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [dashboardStats, setDashboardStats] = useState<any>(null);
 
@@ -517,6 +521,5 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             )}
         </div>
     );
-};
+}
 
-export default BusinessDashboard;

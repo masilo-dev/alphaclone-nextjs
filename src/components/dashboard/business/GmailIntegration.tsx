@@ -33,7 +33,7 @@ const GmailIntegration: React.FC<GmailIntegrationProps> = ({ user }) => {
             const connected = await gmailService.checkIntegration(user.id);
             setIsConnected(connected);
         } catch (err) {
-            console.error('Check Gmail connection error:', err);
+            console.error('Check email connection error:', err);
         } finally {
             setLoading(false);
         }
@@ -47,7 +47,7 @@ const GmailIntegration: React.FC<GmailIntegrationProps> = ({ user }) => {
     };
 
     const handleDisconnect = async () => {
-        if (!user || !window.confirm('Are you sure you want to disconnect Gmail? You will no longer be able to read or send emails from AlphaClone.')) return;
+        if (!user || !window.confirm('Are you sure you want to disconnect your email? You will no longer be able to read or send emails from AlphaClone.')) return;
 
         try {
             const { error } = await supabase
@@ -57,28 +57,19 @@ const GmailIntegration: React.FC<GmailIntegrationProps> = ({ user }) => {
 
             if (error) throw error;
             setIsConnected(false);
-            toast.success('Gmail disconnected successfully.');
+            toast.success('Email disconnected successfully.');
         } catch (err: any) {
             console.error('Disconnect error:', err);
-            toast.error('Failed to disconnect Gmail');
+            toast.error('Failed to disconnect email');
         }
     };
-
-    // Non-blocking loading
-    // if (loading) {
-    //     return (
-    //         <div className="flex items-center justify-center p-8 bg-slate-900/50 rounded-2xl border border-slate-800">
-    //             <RefreshCw className="w-5 h-5 animate-spin text-teal-500" />
-    //         </div>
-    //     );
-    // }
 
     return (
         <div className="space-y-6">
             <div>
-                <h3 className="text-xl font-bold mb-4">Gmail Integration</h3>
+                <h3 className="text-xl font-bold mb-4">Email Integration</h3>
                 <p className="text-slate-400 mb-6">
-                    Connect your individual Gmail account to manage your communications directly within the AlphaClone Business OS.
+                    Connect your individual email account to manage your communications directly within the AlphaClone Business OS.
                 </p>
             </div>
 
@@ -91,7 +82,7 @@ const GmailIntegration: React.FC<GmailIntegrationProps> = ({ user }) => {
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <h4 className="font-bold text-white">
-                                    Gmail Integration
+                                    Email Integration
                                 </h4>
                                 {isConnected ? (
                                     <CheckCircle2 className="w-4 h-4 text-teal-400" />
@@ -101,8 +92,8 @@ const GmailIntegration: React.FC<GmailIntegrationProps> = ({ user }) => {
                             </div>
                             <p className="text-sm text-slate-400 max-w-md">
                                 {isConnected
-                                    ? "Your Gmail account is connected. You can now manage your emails directly from the dashboard."
-                                    : "Link your Gmail account to read and send emails directly within the AlphaClone Business OS."
+                                    ? "Your email account is connected. You can now manage your emails directly from the dashboard."
+                                    : "Link your email account to read and send emails directly within the AlphaClone Business OS."
                                 }
                             </p>
                         </div>
@@ -124,7 +115,7 @@ const GmailIntegration: React.FC<GmailIntegrationProps> = ({ user }) => {
                                 className="flex items-center gap-2 px-6 py-2.5 bg-teal-500 hover:bg-teal-400 text-slate-900 font-black text-sm uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-teal-500/20 disabled:opacity-50"
                             >
                                 {connecting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-                                {connecting ? 'CONNECTING...' : 'CONNECT GMAIL'}
+                                {connecting ? 'CONNECTING...' : 'CONNECT EMAIL'}
                             </button>
                         )}
                     </div>

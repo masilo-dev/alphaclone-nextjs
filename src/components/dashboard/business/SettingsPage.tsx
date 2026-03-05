@@ -5,6 +5,7 @@ import { useTenant } from '../../../contexts/TenantContext';
 import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 import CalendlySettings from './CalendlySettings';
+import ZohoIntegration from './ZohoIntegration';
 import {
     Building,
     Palette,
@@ -18,7 +19,8 @@ import {
     X,
     CreditCard,
     CheckCircle2,
-    AlertCircle
+    AlertCircle,
+    Mail
 } from 'lucide-react';
 import { fileUploadService } from '../../../services/fileUploadService';
 import GmailIntegration from './GmailIntegration';
@@ -168,6 +170,15 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
             toast.success('Calendly connected successfully!');
             setActiveTab('booking');
         }
+
+        const zoho = searchParams.get('zoho');
+        if (zoho === 'connected') {
+            toast.success('Zoho Mail connected successfully!');
+            setActiveTab('integrations');
+        } else if (zoho === 'error') {
+            const reason = searchParams.get('reason') || 'unknown';
+            toast.error(`Zoho connection failed: ${reason}`);
+        }
     }, [searchParams]);
 
     useEffect(() => {
@@ -270,6 +281,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'security', label: 'Security', icon: Shield },
         { id: 'booking', label: 'Booking & Calendly', icon: Calendar },
+        { id: 'integrations', label: 'Email & Integrations', icon: Mail },
         { id: 'billing', label: 'Billing & Plans', icon: CreditCard }
     ];
 
@@ -516,6 +528,56 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                 {activeTab === 'booking' && (
                     <div className="space-y-12">
                         <CalendlySettings />
+                    </div>
+                )}
+
+                {/* Email & Integrations Tab */}
+                {activeTab === 'integrations' && (
+                    <div className="space-y-6">
+                        <div>
+                            <h3 className="text-xl font-bold mb-1">Email Integrations</h3>
+                            <p className="text-slate-400 mb-6">Connect your professional email accounts for unified inbox management.</p>
+                        </div>
+
+                        <ZohoIntegration />
+
+                        {/* AI Autonomous Response Card */}
+                        <div className="p-5 bg-slate-800/50 rounded-2xl border border-slate-700">
+                            <div className="flex items-start gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-teal-500/10 flex items-center justify-center shrink-0">
+                                    <span className="text-2xl">🤖</span>
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="text-lg font-bold text-white mb-1">AI Autonomous Responses</h4>
+                                    <p className="text-sm text-slate-400 leading-relaxed">
+                                        Automatically respond to professional emails using AI. Filters out no-reply, transactional, and automated messages.
+                                    </p>
+                                    <div className="mt-4 p-3 bg-slate-900/50 rounded-xl border border-slate-700 text-xs text-slate-400 space-y-1">
+                                        <p className="text-teal-400 font-semibold">✅ Will respond to:</p>
+                                        <p>Client inquiries, sales prospects, support requests</p>
+                                        <p className="text-red-400 font-semibold mt-2">🚫 Will skip:</p>
+                                        <p>No-reply emails, Google/Microsoft notifications, billing confirmations, newsletters</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Campaign info card */}
+                        <div className="p-5 bg-slate-800/50 rounded-2xl border border-slate-700">
+                            <div className="flex items-start gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+                                    <span className="text-2xl">📧</span>
+                                </div>
+                                <div>
+                                    <h4 className="text-lg font-bold text-white mb-1">Bulk Email Campaigns</h4>
+                                    <p className="text-sm text-slate-400 leading-relaxed">
+                                        Plan, schedule, and send personalized bulk email campaigns to your clients and prospects.
+                                        Use variables like <code className="text-teal-400 bg-teal-500/10 px-1 rounded">{'{{name}}'}</code>, <code className="text-teal-400 bg-teal-500/10 px-1 rounded">{'{{company}}'}</code> for personalization.
+                                    </p>
+                                    <p className="text-xs text-slate-500 mt-3">Access from: Dashboard → Messages → Campaigns</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
 
