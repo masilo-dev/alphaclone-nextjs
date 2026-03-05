@@ -38,19 +38,32 @@ const sora = Sora({
 export const metadata: Metadata = {
   metadataBase: new URL('https://alphaclone.tech'),
   title: {
-    default: "AlphaClone Systems | AI-Powered Business Operating System",
+    default: "AlphaClone Systems | Unified AI Business Operating System",
     template: "%s | AlphaClone Systems",
   },
-  description: "AlphaClone Systems is the AI-powered Business OS that replaces 10+ SaaS tools with one unified platform. CRM, invoicing, contracts, AI growth agent, video meetings, and accounting — starting at $15/month.",
-  keywords: ["AI business operating system", "AI automation for small business", "enterprise CRM software", "all-in-one business platform", "replace QuickBooks HubSpot Zoom", "AI growth agent", "business software suite", "AlphaClone", "AI-powered CRM", "business management software"],
+  description: "Eliminate SaaS bloat and operational friction with AlphaClone. The technically superior, AI-powered Business OS that unifies CRM, invoicing, contracts, AI growth automation, video meetings, and accounting into one high-performance architecture.",
+  keywords: [
+    "AI Business OS",
+    "Unified Business Platform",
+    "Autonomous Growth Agent",
+    "Enterprise CRM Intelligence",
+    "Mission Control Software",
+    "SaaS Consolidation",
+    "Operational Excellence AI",
+    "AlphaClone Systems",
+    "Business Automation",
+    "Project Operations Hub",
+    "Data Sovereignty",
+    "Custom AI Integration"
+  ],
   authors: [{ name: "AlphaClone Systems", url: "https://alphaclone.tech" }],
   creator: "AlphaClone Systems",
   publisher: "AlphaClone Systems",
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
   alternates: { canonical: 'https://alphaclone.tech' },
   openGraph: {
-    title: "AlphaClone Systems | AI-Powered Business Operating System",
-    description: "Replace 10+ SaaS tools with one AI-powered platform. CRM, finance, contracts, AI sales agent, video meetings — all unified. Starting at $15/month.",
+    title: "AlphaClone Systems | Unified AI Business Operating System",
+    description: "Eliminate SaaS bloat and operational friction. Replace 10+ tools with one unified AI Business OS. CRM, finance, contracts, AI sales agent, video meetings — unified.",
     type: "website",
     url: "https://alphaclone.tech",
     siteName: "AlphaClone Systems",
@@ -58,8 +71,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "AlphaClone Systems | AI-Powered Business Operating System",
-    description: "Replace 10+ SaaS tools with one AI-powered Business OS. CRM, finance, contracts, AI sales, meetings — unified.",
+    title: "AlphaClone Systems | Unified AI Business Operating System",
+    description: "Eliminate SaaS bloat with the AI-powered Business OS. Replace 10+ tools with one unified platform. CRM, finance, contracts, AI sales, meetings — unified.",
     creator: "@AlphaCloneSys",
   },
 };
@@ -75,23 +88,13 @@ import { WebVitals } from "@/components/common/WebVitals";
 
 const organizationSchema = {
   '@context': 'https://schema.org',
-  '@type': 'Organization',
-  name: 'AlphaClone Systems',
+  '@type': 'SoftwareApplication',
+  name: 'AlphaClone Systems Business OS',
+  operatingSystem: 'Web-based',
+  applicationCategory: 'BusinessApplication',
   url: 'https://alphaclone.tech',
   logo: 'https://alphaclone.tech/favicon.ico',
-  description: 'AlphaClone Systems is an AI-powered Business Operating System that unifies CRM, invoicing, contracts, AI growth automation, video meetings, and financial accounting into a single platform for modern businesses.',
-  foundingDate: '2020',
-  contactPoint: {
-    '@type': 'ContactPoint',
-    email: 'support@alphaclone.tech',
-    contactType: 'customer support',
-    availableLanguage: 'English',
-  },
-  sameAs: [
-    'https://www.linkedin.com/company/alphaclone-systems',
-    'https://www.g2.com/products/alphaclone',
-    'https://www.crunchbase.com/organization/alphaclone-systems',
-  ],
+  description: 'Unified AI-powered Business Operating System that unifies CRM, invoicing, contracts, AI growth automation, video meetings, and financial accounting into a single high-performance architecture.',
   offers: {
     '@type': 'AggregateOffer',
     priceCurrency: 'USD',
@@ -99,6 +102,22 @@ const organizationSchema = {
     highPrice: '80',
     offerCount: '3',
   },
+  aggregateRating: {
+    '@type': 'AggregateRating',
+    ratingValue: '4.9',
+    ratingCount: '125',
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: 'AlphaClone Systems',
+    url: 'https://alphaclone.tech',
+    logo: 'https://alphaclone.tech/favicon.ico',
+    sameAs: [
+      'https://www.linkedin.com/company/alphaclone-systems',
+      'https://www.g2.com/products/alphaclone',
+      'https://www.crunchbase.com/organization/alphaclone-systems',
+    ],
+  }
 };
 
 export default function RootLayout({

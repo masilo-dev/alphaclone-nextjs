@@ -2,15 +2,29 @@ import type { Metadata } from 'next';
 import EcosystemPage from '@/components/pages/EcosystemPage';
 
 export const metadata: Metadata = {
-    title: 'AlphaClone Ecosystem | Business OS Platform, Integrations & Digital Services',
-    description: "Discover the AlphaClone ecosystem — an all-in-one AI-powered Business OS integrating CRM, invoicing, video meetings, contracts, task management, and growth automation into one platform. Explore what is inside.",
-    keywords: ['AlphaClone ecosystem', 'business OS integrations', 'CRM ecosystem', 'AI business platform', 'all-in-one business software', 'AlphaClone platform overview'],
+    title: 'The AlphaClone Ecosystem | One Unified Business OS Architecture',
+    description: 'Explore the AlphaClone Business OS ecosystem. Nine integrated modules — Autonomous Growth, Unified CRM, Mission Control, Revenue Center, Agreement Lifecycle, and more — operating as one high-performance architecture. No SaaS bloat. One platform.',
+    keywords: [
+        'AlphaClone ecosystem',
+        'unified business OS architecture',
+        'AI business platform modules',
+        'SaaS consolidation platform',
+        'Autonomous Growth Agent',
+        'Mission Control software',
+        'Unified CRM Intelligence',
+        'revenue operations platform',
+    ],
     alternates: { canonical: 'https://alphaclone.tech/ecosystem' },
     openGraph: {
-        title: 'AlphaClone Ecosystem | Business OS Platform & Integrations',
-        description: 'Explore the full AlphaClone ecosystem — 9 integrated tools replacing $330/month of separate SaaS subscriptions.',
+        title: 'The AlphaClone Ecosystem | Unified Business OS Architecture',
+        description: 'Nine integrated modules. One unified Business OS. No SaaS bloat. Explore the full AlphaClone architecture.',
         url: 'https://alphaclone.tech/ecosystem',
         type: 'website',
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'The AlphaClone Ecosystem | Unified Business OS',
+        description: 'Nine integrated modules. One unified platform. Explore the full AlphaClone Business OS architecture.',
     },
     robots: { index: true, follow: true },
 };

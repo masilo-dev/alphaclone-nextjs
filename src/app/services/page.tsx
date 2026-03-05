@@ -2,25 +2,33 @@ import type { Metadata } from 'next';
 import ServicesPage from '@/components/pages/ServicesPage';
 
 export const metadata: Metadata = {
-    title: 'AI-Powered Business Services | CRM, Finance, Automation & More',
-    description: 'AlphaClone Systems offers AI-powered business services including enterprise CRM, automated invoicing, AI sales agents, contract generation, video meetings, and financial accounting — all in one platform. Replace 10+ tools with one subscription.',
+    title: 'Solutions | The Unified AI Business OS — Kill SaaS Bloat',
+    description: 'AlphaClone Systems is the AI-powered Business OS that eliminates operational friction. One platform replaces your CRM, invoicing, AI sales agent, contracts, video meetings, and accounting. Built for high-performance teams.',
     keywords: [
-        'AI business services', 'enterprise CRM software', 'AI sales automation', 'business operating system',
-        'contract generation software', 'automated invoicing', 'AI growth agent', 'small business software',
-        'all-in-one business platform', 'replace HubSpot QuickBooks Zoom', 'business management software',
-        'AI-powered CRM', 'financial management software', 'client management system',
+        'AI business operating system',
+        'eliminate SaaS bloat',
+        'Autonomous Growth Agent',
+        'Unified CRM intelligence',
+        'Mission Control software',
+        'Agreement Lifecycle management',
+        'Revenue automation',
+        'AI-powered business platform',
+        'operational excellence software',
+        'replace HubSpot QuickBooks Zoom',
+        'all-in-one business software',
+        'Data Sovereignty',
     ],
     alternates: { canonical: 'https://alphaclone.tech/services' },
     openGraph: {
-        title: 'AI-Powered Business Services | AlphaClone Systems',
-        description: 'From AI-driven lead generation to automated invoicing and contract management — AlphaClone replaces your entire SaaS stack. Starting at $15/month.',
+        title: 'Solutions | AlphaClone Unified AI Business OS',
+        description: 'Eliminate SaaS bloat with one unified architecture. Autonomous Growth, Unified CRM, Mission Control, Revenue Center — all in AlphaClone.',
         url: 'https://alphaclone.tech/services',
         type: 'website',
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'AI-Powered Business Services | AlphaClone Systems',
-        description: 'CRM, AI sales agent, invoicing, contracts, video meetings, accounting — one platform. Starting at $15/month.',
+        title: 'Solutions | AlphaClone Unified AI Business OS',
+        description: 'Eliminate SaaS bloat. One unified platform: AI Sales, CRM, Projects, Invoicing, Contracts, Meetings. Starting at $15/month.',
     },
 };
 

@@ -7,7 +7,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // 1. Static Marketing Routes
     const highPriorityRoutes = ['', '/services', '/about', '/guide', '/docs', '/pricing'].map((route) => ({
         url: `${baseUrl}${route}`,
-        lastModified: new Date('2026-02-25'),
+        lastModified: new Date('2026-03-05'),
         changeFrequency: 'weekly' as const,
         priority: route === '' ? 1.0 : 0.9,
     }));
@@ -20,7 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         '/contact',
     ].map((route) => ({
         url: `${baseUrl}${route}`,
-        lastModified: new Date('2026-02-25'),
+        lastModified: new Date('2026-03-05'),
         changeFrequency: 'monthly' as const,
         priority: 0.7,
     }));

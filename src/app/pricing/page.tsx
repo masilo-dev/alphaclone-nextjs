@@ -2,15 +2,28 @@ import type { Metadata } from 'next';
 import PricingPageContent from './PricingPageContent';
 
 export const metadata: Metadata = {
-    title: 'Pricing | AlphaClone Business OS — Plans from $15/month',
-    description: 'AlphaClone pricing plans: Starter ($15/mo), Professional ($45/mo), Enterprise ($80/mo). All plans include a 14-day free trial. Replace $330+/month of separate SaaS subscriptions with one all-in-one Business OS.',
-    keywords: ['AlphaClone pricing', 'business OS pricing', 'CRM software pricing', 'affordable business software', 'SaaS alternative pricing', 'AI business platform cost'],
+    title: 'Pricing | AlphaClone Business OS — End SaaS Bloat from $15/month',
+    description: 'Stop paying $330+/month for fragmented SaaS tools. AlphaClone\'s Unified Business OS starts at $15/month. One AI-powered platform: Autonomous Growth, Unified CRM, Mission Control, Revenue Center, and more.',
+    keywords: [
+        'AlphaClone pricing',
+        'Business OS pricing',
+        'end SaaS bloat cost',
+        'affordable AI business platform',
+        'unified business software pricing',
+        'replace HubSpot QuickBooks Zoom cost',
+        'AI growth agent pricing',
+    ],
     alternates: { canonical: 'https://alphaclone.tech/pricing' },
     openGraph: {
         title: 'Pricing | AlphaClone Business OS — From $15/month',
-        description: 'Replace $330+/month of separate tools with one AlphaClone plan. 14-day free trial, no credit card required.',
+        description: 'End SaaS bloat. One unified AI Business OS starting at $15/month. 14-day free trial, no credit card required.',
         url: 'https://alphaclone.tech/pricing',
         type: 'website',
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Pricing | AlphaClone Business OS — From $15/month',
+        description: 'One unified AI Business OS from $15/month. Replace $330+/month in SaaS tools. 14-day free trial.',
     },
     robots: { index: true, follow: true },
 };
