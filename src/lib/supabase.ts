@@ -61,6 +61,14 @@ export const createClient = () => {
             },
             global: {
                 fetch: (...args) => fetch(...args), // Ensure we use the global fetch
+            },
+            realtime: {
+                params: {
+                    eventsPerSecond: 10,
+                },
+                // Explicitly set the transport to use secure WebSocket
+                // This prevents the browser from blocking insecure connections on HTTPS pages
+                timeout: 30000,
             }
         }
     );

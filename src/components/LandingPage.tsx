@@ -519,7 +519,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                   </motion.div>
 
                   {/* Trust micro-line */}
-                  <motion.p
+                  <motion.div
                      initial={{ opacity: 0 }}
                      animate={{ opacity: 1 }}
                      transition={{ delay: 0.9 }}
@@ -532,7 +532,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         <span className="hidden sm:inline text-slate-600">•</span>
                         <span className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-full bg-teal-500/20 flex items-center justify-center flex-shrink-0"><Check className="w-2.5 h-2.5 text-teal-500" /></div> Cancel anytime</span>
                      </span>
-                  </motion.p>
+                  </motion.div>
 
                   {/* Interactive Dashboard Preview */}
                   <motion.div

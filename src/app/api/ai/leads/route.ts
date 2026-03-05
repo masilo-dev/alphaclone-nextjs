@@ -4,6 +4,7 @@ import { googlePlacesService } from '@/services/googlePlacesService';
 import { ENV } from '@/config/env';
 
 export const runtime = 'nodejs';
+export const maxDuration = 60; // Maximize serverless timeout for heavy LLM operations
 
 /**
  * AI Lead Generation API Route

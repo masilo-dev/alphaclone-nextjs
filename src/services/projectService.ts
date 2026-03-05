@@ -445,13 +445,15 @@ export const projectService = {
                     callback(project);
                 }
             )
-            .subscribe((status: string, err?: Error) => {
+            .subscribe(async (status: string, err?: Error) => {
                 if (status === 'SUBSCRIBED') {
                     console.log('✅ Subscribed to real-time project updates');
                 } else if (status === 'CHANNEL_ERROR') {
                     console.error('❌ Failed to subscribe to projects:', err?.message || 'Unknown channel error');
+                    // Proactive check: if we get a channel error, it's likely RLS or Realtime configuration
                 } else if (status === 'TIMED_OUT') {
-                    console.error('❌ Project subscription timed out');
+                    console.error('❌ Project subscription timed out - retrying in 5s...');
+                    setTimeout(() => projectService.subscribeToProjects(callback), 5000);
                 }
             });
 

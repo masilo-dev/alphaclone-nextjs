@@ -1,0 +1,41 @@
+﻿
+> alphaclone-nextjs@0.1.0 dev
+> next dev --turbo
+
+Ôû▓ Next.js 16.1.3 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://169.254.129.108:3000
+- Environments: .env
+- Experiments (use with caution):
+  Ô£ô scrollRestoration
+
+Ô£ô Starting...
+node.exe : Ô¿» Unable 
+to acquire lock at 
+C:\Users\Alphacone IO\a
+lphaclone-nextjs-6\.nex
+t\dev\lock, is another 
+instance of next dev 
+running?
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Ô¿» Unable to   
+  a...xt dev runnin    
+g?:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+  Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
+[?25h

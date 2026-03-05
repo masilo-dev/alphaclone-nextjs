@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { routeAIChat } from '@/services/aiRouter';
 
 export const runtime = 'nodejs';
+export const maxDuration = 60; // Maximize serverless timeout for heavy LLM operations
 
 /**
  * AI Chat API Route

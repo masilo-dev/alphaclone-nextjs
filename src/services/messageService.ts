@@ -330,7 +330,7 @@ export const messageService = {
                     callback(message, 'UPDATE');
                 }
             )
-            .subscribe((status: string, err?: Error) => {
+            .subscribe(async (status: string, err?: Error) => {
                 if (status === 'SUBSCRIBED') {
                     console.log('✅ Subscribed to real-time messages (INSERT + UPDATE)');
                 } else if (status === 'CHANNEL_ERROR') {
@@ -341,7 +341,8 @@ export const messageService = {
                 } else if (status === 'CLOSED') {
                     console.warn('⚠️ Message subscription closed');
                 } else if (status === 'TIMED_OUT') {
-                    console.error('❌ Message subscription timed out');
+                    console.error('❌ Message subscription timed out - retrying in 5s...');
+                    setTimeout(() => messageService.subscribeToMessages(userId, isAdmin, callback), 5000);
                 }
             });
 

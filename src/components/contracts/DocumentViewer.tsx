@@ -17,18 +17,12 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/UIComponents';
 import { toast } from 'react-hot-toast';
-import * as pdfjsLib from 'pdfjs-dist';
+import type * as pdfjsLibType from 'pdfjs-dist';
 import { googleDriveService } from '../../services/googleDriveService';
 import { useAuth } from '../../contexts/AuthContext';
 import { jsPDF } from 'jspdf';
 
-// Configure PDFJS worker
-if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-    // Use a standard versioned worker from cdnjs which is more reliable for production environments
-    // The version matches the installed pdfjs-dist version
-    const WORKER_URL = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-    pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER_URL;
-}
+// PDFJS is loaded dynamically when needed to prevent Next.js client-side Webpack errors
 
 export interface Annotation {
     id: string;
@@ -65,7 +59,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [activeAnnotation, setActiveAnnotation] = useState<string | null>(null);
     const [numPages, setNumPages] = useState<number>(0);
-    const [pdf, setPdf] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
+    const [pdf, setPdf] = useState<pdfjsLibType.PDFDocumentProxy | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [renderScale, setRenderScale] = useState(1.5);
     const { user } = useAuth();
@@ -79,7 +73,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         const loadPdf = async () => {
             setIsLoading(true);
             try {
-                const loadingTask = pdfjsLib.getDocument(url);
+                // @ts-ignore
+                const pdfjs = await import(/* webpackIgnore: true */ 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.mjs');
+                if (typeof window !== 'undefined' && !pdfjs.GlobalWorkerOptions.workerSrc) {
+                    const WORKER_URL = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+                    pdfjs.GlobalWorkerOptions.workerSrc = WORKER_URL;
+                }
+                const loadingTask = pdfjs.getDocument(url);
                 const pdfDoc = await loadingTask.promise;
                 setPdf(pdfDoc);
                 setNumPages(pdfDoc.numPages);
@@ -281,7 +281,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 // ── PDF PAGE RENDERER ─────────────────────────────────────────────────────
 
 interface PDFPageProps {
-    pdf: pdfjsLib.PDFDocumentProxy;
+    pdf: pdfjsLibType.PDFDocumentProxy;
     pageNumber: number;
     scale: number;
     onPageClick: (e: React.MouseEvent) => void;

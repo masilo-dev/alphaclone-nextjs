@@ -1,16 +1,6 @@
 
 import * as XLSX from 'xlsx';
-// Import PDFJS
-import * as pdfjsLib from 'pdfjs-dist';
-
-// Configure PDFJS worker
-// In a Next.js environment, we need to ensure the worker is loaded correctly
-// This often requires setting the workerSrc to a public URL or a local file
-// For simplicity in this environment, we'll try to use the CDN if global worker isn't set
-if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-    // Use unpkg as a reliable CDN for pdfjs-dist worker
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-}
+// PDFJS is loaded dynamically when needed to prevent Next.js client-side Webpack errors
 
 
 export interface ParsedContact {
@@ -112,6 +102,14 @@ export const fileImportService = {
     async extractTextFromPDF(file: File): Promise<string> {
         return new Promise(async (resolve, reject) => {
             try {
+                // Dynamically import pdfjs-dist via CDN to avoid SSR and Webpack evaluation crashes
+                // @ts-ignore
+                const pdfjsLib = await import(/* webpackIgnore: true */ 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.mjs');
+
+                if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.mjs`;
+                }
+
                 const arrayBuffer = await file.arrayBuffer();
                 const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
                 const pdf = await loadingTask.promise;

@@ -51,7 +51,7 @@ export const notificationService = {
 
     // Subscribe to realtime notifications
     subscribe(userId: string, callback: (notification: Notification) => void) {
-        return supabase
+        const channel = supabase
             .channel(`notifications:${userId}`)
             .on(
                 'postgres_changes',
@@ -65,7 +65,18 @@ export const notificationService = {
                     callback(payload.new as Notification);
                 }
             )
-            .subscribe();
+            .subscribe((status: string, err?: Error) => {
+                if (status === 'SUBSCRIBED') {
+                    console.log('✅ Subscribed to real-time notifications');
+                } else if (status === 'CHANNEL_ERROR') {
+                    console.error('❌ Notification subscription error:', err?.message || 'Unknown error');
+                } else if (status === 'TIMED_OUT') {
+                    console.error('❌ Notification subscription timed out - retrying in 5s...');
+                    setTimeout(() => notificationService.subscribe(userId, callback), 5000);
+                }
+            });
+
+        return channel;
     },
 
     unsubscribe(channel: any) {
