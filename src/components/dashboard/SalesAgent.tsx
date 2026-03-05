@@ -150,10 +150,79 @@ const SalesAgent: React.FC = () => {
             return { success: false, error: err.message };
         }
     };
+    const handleExecuteLead = async (lead: Lead) => {
+        const { supabase } = await import('../../lib/supabase');
+        const { data: { user } } = await supabase.auth.getUser();
 
+        if (!user) {
+            toast.error("You must be logged in to execute leads");
+            return;
+        }
 
+        const { tenantService } = await import('../../services/tenancy/TenantService');
+        const tenantId = tenantService.getCurrentTenantId();
 
-    // Initial Load
+        if (!tenantId) {
+            toast.error("No active organization found");
+            return;
+        }
+
+        const toastId = toast.loading(`Executing flow for ${lead.businessName}...`);
+
+        const result = await processLeadHelper(lead, user.id, tenantId);
+
+        if (result.success) {
+            toast.success(`Successfully converted ${lead.businessName} to Client with Deal and Draft Quote!`, { id: toastId });
+            loadLeads();
+        } else {
+            toast.error(`Execution failed: ${result.error}`, { id: toastId });
+        }
+    };
+
+    const handleBulkExecute = async () => {
+        if (selectedLeads.length === 0) {
+            toast.error("Please select leads to execute");
+            return;
+        }
+
+        const { supabase } = await import('../../lib/supabase');
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            toast.error("You must be logged in to execute leads");
+            return;
+        }
+
+        const { tenantService } = await import('../../services/tenancy/TenantService');
+        const tenantId = tenantService.getCurrentTenantId();
+
+        if (!tenantId) {
+            toast.error("No active organization found");
+            return;
+        }
+
+        const toastId = toast.loading(`Executing flow for ${selectedLeads.length} leads...`);
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const leadId of selectedLeads) {
+            const lead = leads.find(l => l.id === leadId);
+            if (lead) {
+                const result = await processLeadHelper(lead, user.id, tenantId);
+                if (result.success) successCount++;
+                else failCount++;
+            }
+        }
+
+        if (failCount === 0) {
+            toast.success(`Successfully executed all ${successCount} leads!`, { id: toastId });
+        } else {
+            toast.success(`Execution complete. Success: ${successCount}, Failed: ${failCount}`, { id: toastId });
+        }
+
+        setSelectedLeads([]);
+        loadLeads();
+    };
     useEffect(() => {
         loadLeads();
     }, []);
@@ -919,9 +988,16 @@ const SalesAgent: React.FC = () => {
                                 {selectedLeads.length > 0 && (
                                     <>
                                         <Button
-                                            onClick={bulkAddLeadsToCRM}
+                                            onClick={handleBulkExecute}
                                             variant="primary"
-                                            className="flex-1 sm:flex-initial bg-teal-600 hover:bg-teal-500"
+                                            className="flex-1 sm:flex-initial bg-indigo-600 hover:bg-indigo-500"
+                                        >
+                                            <Zap className="w-4 h-4 sm:mr-2" /> Execute Selected ({selectedLeads.length})
+                                        </Button>
+                                        <Button
+                                            onClick={bulkAddLeadsToCRM}
+                                            variant="outline"
+                                            className="flex-1 sm:flex-initial border-slate-700 hover:border-teal-500 hover:text-teal-400"
                                         >
                                             <UserPlus className="w-4 h-4 sm:mr-2" /> Add Selection to CRM ({selectedLeads.length})
                                         </Button>

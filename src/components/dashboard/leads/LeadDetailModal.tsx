@@ -328,6 +328,90 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
         }
     };
 
+    const handleExecuteFullFlow = async () => {
+        const { supabase } = await import('../../../lib/supabase');
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+
+        if (!authUser) {
+            toast.error("You must be logged in to execute leads");
+            return;
+        }
+
+        const { tenantService } = await import('../../../services/tenancy/TenantService');
+        const tenantId = tenantService.getCurrentTenantId();
+
+        if (!tenantId) {
+            toast.error("No active organization found");
+            return;
+        }
+
+        const toastId = toast.loading(`Executing full flow for ${lead.businessName}...`);
+        setIsLoading(true);
+
+        try {
+            // Re-use logic from SalesAgent or implement here. 
+            // For simplicity and to avoid circular deps if SalesAgent is a large component, 
+            // we'll implement the direct service calls.
+
+            // 1. Convert Lead to Client/Contact
+            const { contactId, error: conversionError } = await contactService.convertLeadToContact(lead.id, { createCompany: true });
+            if (conversionError) throw new Error(conversionError);
+            if (!contactId) throw new Error("Conversion failed to return a contact ID");
+
+            // 2. Create Deal
+            const { deal, error: dealError } = await dealService.createDeal(authUser.id, {
+                name: `${lead.businessName} Deal`,
+                value: lead.value || 0,
+                stage: 'lead',
+                contactId: contactId
+            });
+            if (dealError) throw new Error(dealError);
+            if (!deal) throw new Error("Deal creation failed");
+
+            // 3. Create Quote
+            const { quote, error: quoteError } = await quoteService.createQuote(authUser.id, {
+                name: `${lead.businessName} Quote`,
+                contactId: contactId,
+                dealId: deal.id,
+                currency: 'USD',
+                validForDays: 30
+            });
+            if (quoteError) throw new Error(quoteError);
+            if (!quote) throw new Error("Quote creation failed");
+
+            // 4. Add initial quote item
+            await quoteService.addQuoteItem(quote.id, {
+                productName: 'Consultation Services',
+                description: 'Initial consultation and requirements gathering',
+                quantity: 1,
+                unitPrice: 0
+            });
+
+            // 5. Create Project
+            await projectService.createProject({
+                ownerId: authUser.id,
+                ownerName: authUser.user_metadata?.name || authUser.email || 'System',
+                name: `${lead.businessName} Implementation`,
+                description: `Project for ${lead.businessName} initiated from lead execution flow.`,
+                status: 'Active',
+                category: lead.industry || 'General',
+                currentStage: 'Planning',
+                progress: 0,
+                team: [],
+                clientId: contactId
+            });
+
+            toast.success(`Successfully converted ${lead.businessName}!`, { id: toastId });
+            if (onLeadUpdate) onLeadUpdate({ ...lead, stage: 'converted' });
+            onClose();
+        } catch (err: any) {
+            console.error("Execution error", err);
+            toast.error(`Execution failed: ${err.message}`, { id: toastId });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleValidateAddress = async () => {
         if (!lead.location) {
             toast.error('No address to validate');
@@ -411,6 +495,16 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
 
                     {/* Actions */}
                     <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                        <Button
+                            variant="primary"
+                            className="bg-indigo-900 border border-indigo-500/50 hover:bg-indigo-800 flex-1 sm:flex-none"
+                            size="sm"
+                            onClick={handleExecuteFullFlow}
+                            isLoading={isLoading}
+                        >
+                            <Zap className="w-4 h-4 mr-2 text-indigo-400" />
+                            Execute Full Flow
+                        </Button>
                         {lead.email && (
                             <Button variant="outline" size="sm" onClick={() => window.open(`mailto:${lead.email}`)} className="flex-1 sm:flex-none">
                                 <Mail className="w-4 h-4 sm:mr-2" />
