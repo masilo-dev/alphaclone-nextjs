@@ -219,7 +219,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (user?.id) {
-      // Timeout safeguard: Force loading to false after 8 seconds (reduced from 15s)
+      // Timeout safeguard: Force loading to false after 15 seconds to allow Vercel cold starts
       const timeoutId = setTimeout(() => {
         console.warn('TenantContext: Loading timeout reached, forcing isLoading to false');
         // If we have a cached tenant, we're probably fine to proceed anyway
@@ -229,7 +229,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         }
         setError('Loading timeout - please check your connection and refresh');
         setIsLoading(false);
-      }, 8000);
+      }, 15000);
 
       loadUserTenants(timeoutId);
 

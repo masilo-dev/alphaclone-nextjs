@@ -308,6 +308,11 @@ class TenantService {
     }
 
     async getDashboardStats(tenantId: string): Promise<{ stats: any | null; error: string | null }> {
+        if (!tenantId) {
+            console.warn('getDashboardStats called without a valid tenantId');
+            return { stats: null, error: 'No tenant ID provided' };
+        }
+
         const { data, error } = await supabase.rpc('get_tenant_dashboard_stats', {
             tenant_id_param: tenantId
         });

@@ -44,7 +44,7 @@ function readSessionFromStorage(): User | null {
         const sbKeys = allKeys.filter(k => k.includes('sb-'));
 
         // Derive Supabase project ID from URL for dynamic cookie discovery
-        const supabaseUrl = ENV.VITE_SUPABASE_URL || '';
+        const supabaseUrl = ENV.NEXT_PUBLIC_SUPABASE_URL || ENV.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
         const projectId = supabaseUrl.split('.')[0].split('//').pop();
 
         console.log('[AuthContext] Debug: Storage Inspection', {
