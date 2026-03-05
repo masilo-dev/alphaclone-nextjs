@@ -195,7 +195,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     }
 
     return (
-        <div className="h-full flex flex-col space-y-6 bg-slate-950/20 p-4 lg:p-6 rounded-[2.5rem] border border-white/5 backdrop-blur-sm">
+        <div className="h-full flex flex-col space-y-6 p-8 overflow-y-auto custom-scrollbar">
             {/* Header */}
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                 <div>

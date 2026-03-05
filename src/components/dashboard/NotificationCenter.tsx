@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface NotificationCenterProps {
     userId: string;
+    tenantId: string;
 }
 
 import { notificationService, Notification } from '../../services/dashboardService';
@@ -29,16 +30,16 @@ const getGroup = (dateStr: string): string => {
     return 'Earlier';
 };
 
-const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
+const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantId }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
     const loadNotifications = useCallback(async () => {
-        const { notifications: loaded } = await notificationService.getNotifications(userId);
+        const { notifications: loaded } = await notificationService.getNotifications(userId, tenantId);
         if (loaded) setNotifications(loaded);
-    }, [userId]);
+    }, [userId, tenantId]);
 
     const handleMarkAsRead = useCallback(async (id: string) => {
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
@@ -47,8 +48,8 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
 
     const handleMarkAllAsRead = useCallback(async () => {
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-        await notificationService.markAllAsRead(userId);
-    }, [userId]);
+        await notificationService.markAllAsRead(userId, tenantId);
+    }, [userId, tenantId]);
 
     const handleDelete = useCallback(async (id: string) => {
         setNotifications(prev => prev.filter(n => n.id !== id));
@@ -59,7 +60,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
         if (!userId) return;
         loadNotifications();
 
-        const unsubscribe = notificationService.subscribeToNotifications(userId, (newNotif: Notification) => {
+        const unsubscribe = notificationService.subscribeToNotifications(userId, tenantId, (newNotif: Notification) => {
             setNotifications(prev => [newNotif, ...prev]);
         });
 

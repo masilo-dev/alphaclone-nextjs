@@ -74,9 +74,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             setIsLoading(true);
             try {
                 // @ts-ignore
-                const pdfjs = await import(/* webpackIgnore: true */ 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.mjs');
+                const pdfjs = await import('pdfjs-dist');
                 if (typeof window !== 'undefined' && !pdfjs.GlobalWorkerOptions.workerSrc) {
-                    const WORKER_URL = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+                    const WORKER_URL = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
                     pdfjs.GlobalWorkerOptions.workerSrc = WORKER_URL;
                 }
                 const loadingTask = pdfjs.getDocument(url);

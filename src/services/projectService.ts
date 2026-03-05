@@ -256,7 +256,7 @@ export const projectService = {
                     category: newProject.category,
                     status: newProject.status,
                     templateApplied: !!templateId
-                }).catch(err => console.error('Failed to log activity:', err));
+                }, tenantId || undefined).catch(err => console.error('Failed to log activity:', err));
             }
 
             return { project: newProject, error: null };
@@ -324,7 +324,7 @@ export const projectService = {
                     projectId: projectId,
                     projectName: data.name,
                     updatedFields: changedFields
-                }).catch(err => console.error('Failed to log activity:', err));
+                }, tenantId || undefined).catch(err => console.error('Failed to log activity:', err));
             }
 
             return { error: null };

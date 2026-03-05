@@ -51,10 +51,10 @@ export const activityService = {
     /**
      * Log user activity
      */
-    async logActivity(userId: string, action: string, metadata: Record<string, unknown> = {}) {
+    async logActivity(userId: string, action: string, metadata: Record<string, unknown> = {}, passedTenantId?: string) {
         const locationData = await getLocationData();
         const { browser, deviceType } = parseUserAgent(navigator.userAgent);
-        const tenantId = tenantService.getCurrentTenantId();
+        const tenantId = passedTenantId || tenantService.getCurrentTenantId();
 
         const { error } = await supabase.from('activity_logs').insert({
             user_id: userId,

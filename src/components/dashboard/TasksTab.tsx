@@ -373,7 +373,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
     );
 
     return (
-        <div className="h-full flex flex-col space-y-6">
+        <div className="h-full flex flex-col space-y-6 p-8 overflow-y-auto custom-scrollbar">
             {/* Mission Interface Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/5">
                 <div>

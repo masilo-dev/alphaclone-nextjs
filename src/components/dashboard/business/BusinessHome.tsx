@@ -16,7 +16,12 @@ import {
     ArrowRight,
     Calendar,
     BarChart2,
-    Target
+    Target,
+    Video,
+    CheckSquare,
+    FileText,
+    UserPlus,
+    Zap
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
@@ -121,8 +126,8 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
             </div>
 
             {/* Charts & Upcoming Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm lg:col-span-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="bg-transparent border-t border-white/5 pt-6 lg:col-span-2">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                         <TrendingUp className="w-5 h-5 text-teal-400" />
                         Revenue Trend
@@ -144,7 +149,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
                 </div>
 
                 {/* Sales Pipeline Widget */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm lg:col-span-2">
+                <div className="bg-transparent border-t border-white/5 pt-6 lg:col-span-2">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-lg font-semibold flex items-center gap-2">
                             <BarChart2 className="w-5 h-5 text-violet-400" />
@@ -220,33 +225,56 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
             </div>
 
             {/* Bottom Row: Recent Activity & Quick Actions */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Recent Activity */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                <div className="bg-transparent border-t border-white/5 pt-6">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                         <Clock className="w-5 h-5 text-violet-400" />
                         Recent Activity
                     </h3>
                     <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
-                        {recentActivity.map((activity, index) => (
-                            <div key={index} className="flex items-start gap-3 p-3 bg-slate-800/50 rounded-lg">
-                                <div className={`w-2 h-2 rounded-full mt-2 ${activity.type === 'client' ? 'bg-teal-400' :
-                                    activity.type === 'project' ? 'bg-violet-400' :
-                                        'bg-orange-400'
-                                    }`} />
-                                <div className="flex-1">
-                                    <p className="text-sm text-slate-300">{activity.text}</p>
-                                    <p className="text-xs text-slate-500 mt-1">
-                                        {activity.time ? new Date(activity.time).toLocaleDateString() : 'Recent'}
-                                    </p>
-                                </div>
+                        {recentActivity.length === 0 ? (
+                            <div className="flex items-center justify-center py-10 text-slate-500 text-sm">
+                                No recent activity yet.
                             </div>
-                        ))}
+                        ) : recentActivity.map((activity, index) => {
+                            const iconMap: Record<string, { Icon: any; color: string; bg: string }> = {
+                                client: { Icon: UserPlus, color: 'text-teal-400', bg: 'bg-teal-500/10' },
+                                lead: { Icon: Target, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+                                project: { Icon: Briefcase, color: 'text-violet-400', bg: 'bg-violet-500/10' },
+                                project_update: { Icon: TrendingUp, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+                                invoice: { Icon: DollarSign, color: 'text-orange-400', bg: 'bg-orange-500/10' },
+                                invoice_status: { Icon: DollarSign, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+                                payment: { Icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+                                meeting: { Icon: Calendar, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+                                booking: { Icon: Calendar, color: 'text-sky-400', bg: 'bg-sky-500/10' },
+                                task: { Icon: CheckSquare, color: 'text-green-400', bg: 'bg-green-500/10' },
+                                task_check: { Icon: CheckCircle, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+                                contract: { Icon: FileText, color: 'text-pink-400', bg: 'bg-pink-500/10' },
+                                contract_update: { Icon: FileText, color: 'text-rose-400', bg: 'bg-rose-500/10' },
+                                lead_conversion: { Icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
+                            };
+                            const { Icon, color, bg } = iconMap[activity.type] || iconMap.client;
+                            const label = activity.text || activity.title || 'Activity';
+                            return (
+                                <div key={index} className="flex items-start gap-3 p-3 bg-slate-800/50 rounded-xl hover:bg-slate-800 transition-colors">
+                                    <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}>
+                                        <Icon className={`w-4 h-4 ${color}`} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm text-slate-200 truncate">{label}</p>
+                                        <p className="text-xs text-slate-500 mt-0.5">
+                                            {activity.time || activity.date ? new Date(activity.time || activity.date).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'Recent'}
+                                        </p>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
                 {/* Quick Actions */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                <div className="bg-transparent border-t border-white/5 pt-6">
                     <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
                     <div className="grid grid-cols-1 gap-3">
                         <QuickActionButton

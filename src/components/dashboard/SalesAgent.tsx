@@ -874,7 +874,7 @@ const SalesAgent: React.FC = () => {
     };
 
     return (
-        <div className="space-y-4 sm:space-y-6 animate-fade-in h-full flex flex-col">
+        <div className="space-y-4 sm:space-y-6 animate-fade-in h-full flex flex-col p-8 overflow-y-auto custom-scrollbar">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 sm:mb-6">
                 <div className="min-w-0">
                     <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500 flex items-center gap-2 sm:gap-3">
@@ -917,7 +917,7 @@ const SalesAgent: React.FC = () => {
             {activeTab === 'leads' ? (
                 <div className="space-y-6">
                     {/* Search Bar */}
-                    <Card className="bg-slate-900 border-slate-800">
+                    <div className="bg-transparent mb-8">
                         <div className="flex flex-col gap-3 sm:gap-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div className="w-full">
@@ -1032,10 +1032,10 @@ const SalesAgent: React.FC = () => {
                                 </label>
                             </div>
                         )}
-                    </Card>
+                    </div>
 
                     {/* Results */}
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl min-h-[400px]">
+                    <div className="bg-transparent border-t border-white/5 min-h-[400px]">
                         {isLoading || isSearching ? (
                             <div className="p-4 sm:p-6">
                                 <TableSkeleton rows={5} />
@@ -1243,7 +1243,7 @@ const SalesAgent: React.FC = () => {
                     )}
                 </div>
             ) : (
-                <div className="flex-1 bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col">
+                <div className="flex-1 bg-transparent flex flex-col">
                     {/* Chat Area */}
                     <div className="flex-1 p-3 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto">
                         {messages.map((msg) => (

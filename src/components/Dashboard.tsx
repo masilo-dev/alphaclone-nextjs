@@ -676,7 +676,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             hasAttachments: attachments.length > 0,
             priority: priority,
             textLength: text.length
-          }).catch(err => console.error('Failed to log activity:', err));
+          }, currentTenant?.id).catch(err => console.error('Failed to log activity:', err));
         });
       } else {
         // No message returned but no error - still rollback
@@ -935,12 +935,12 @@ const Dashboard: React.FC<DashboardProps> = ({
       if ('requestIdleCallback' in window) {
         requestIdleCallback(() => {
           import('../services/activityService').then(({ activityService }) => {
-            activityService.logActivity(user.id, `Navigated to ${activeTab}`, { path: activeTab }).catch(() => { });
+            activityService.logActivity(user.id, `Navigated to ${activeTab}`, { path: activeTab }, currentTenant?.id).catch(() => { });
           });
         }, { timeout: 3000 });
       } else {
         import('../services/activityService').then(({ activityService }) => {
-          activityService.logActivity(user.id, `Navigated to ${activeTab}`, { path: activeTab }).catch(() => { });
+          activityService.logActivity(user.id, `Navigated to ${activeTab}`, { path: activeTab }, currentTenant?.id).catch(() => { });
         });
       }
     }, 1000); // Wait 1 second before tracking to ensure they actually landed on the tab
@@ -952,7 +952,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   useEffect(() => {
     const heartbeatInterval = setInterval(() => {
       import('../services/activityService').then(({ activityService }) => {
-        activityService.logActivity(user.id, 'User Active', { source: 'dashboard_heartbeat' }).catch(() => { });
+        activityService.logActivity(user.id, 'User Active', { source: 'dashboard_heartbeat' }, currentTenant?.id).catch(() => { });
       });
     }, 5 * 60 * 1000); // 5 minutes instead of 2 minutes to reduce DB load
 
@@ -1704,7 +1704,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 onNavigate={router.push}
               />
               <ThemeToggle userId={user.id} />
-              <NotificationCenter userId={user.id} />
+              <NotificationCenter userId={user.id} tenantId={currentTenant?.id || ''} />
             </div>
           </div>
         </header>

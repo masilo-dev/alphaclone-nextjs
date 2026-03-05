@@ -249,7 +249,7 @@ export const taskService = {
             await activityService.logActivity(userId, 'Task Created', {
                 taskId: data.id,
                 taskTitle: taskData.title,
-            });
+            }, tenantId);
 
             // Trigger project progress recalculation if linked to a project
             if (data.related_to_project) {
@@ -354,12 +354,12 @@ export const taskService = {
                 await activityService.logActivity(data.created_by, 'Task Completed', {
                     taskId: data.id,
                     taskTitle: data.title,
-                });
+                }, tenantId);
             } else if (updateData.status) {
                 await activityService.logActivity(data.created_by, `Task Status: ${updateData.status}`, {
                     taskId: data.id,
                     taskTitle: data.title,
-                });
+                }, tenantId);
             }
 
             // Trigger project progress recalculation if linked to a project
@@ -452,7 +452,7 @@ export const taskService = {
             if (user) {
                 await activityService.logActivity(user.id, 'Task Deleted', {
                     taskId: taskId,
-                });
+                }, tenantId);
             }
 
             // Trigger project progress recalculation if it was linked to a project

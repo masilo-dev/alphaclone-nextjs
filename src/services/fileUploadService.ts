@@ -222,7 +222,7 @@ class FileUploadService {
                 fileId: fileRecord.id,
                 filename: file.name,
                 entityType,
-            });
+            }, finalTenantId || undefined);
 
             // Audit log
             auditLoggingService.logAction(

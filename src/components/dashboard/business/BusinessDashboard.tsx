@@ -476,7 +476,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                         <div className="hidden sm:block w-px h-6 bg-slate-800 mx-1" />
 
                         <div className="flex items-center gap-3 sm:gap-4">
-                            <NotificationCenter userId={user.id} />
+                            <NotificationCenter userId={user.id} tenantId={currentTenant.id} />
                             <div className="w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-700/50 overflow-hidden shadow-lg shadow-teal-500/10 ring-2 ring-transparent hover:ring-teal-500/50 transition-all cursor-pointer group">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
@@ -493,7 +493,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                 </header>
 
                 {/* Dynamic Content Area */}
-                <div className={`flex-1 ${activeTab === '/dashboard/gmail' ? 'overflow-hidden p-0' : 'overflow-y-auto p-4 md:p-8 dashboard-content-padding'}`}>
+                <div className={`flex-1 ${[
+                    '/dashboard/gmail',
+                    '/dashboard/business/projects',
+                    '/dashboard/tasks',
+                    '/dashboard/sales-agent',
+                    '/dashboard/crm'
+                ].includes(activeTab) ? 'overflow-hidden p-0' : 'overflow-y-auto p-4 md:p-8 dashboard-content-padding'}`}>
                     <WidgetErrorBoundary title="Business Dashboard Error">
                         {renderBusinessContent()}
                     </WidgetErrorBoundary>

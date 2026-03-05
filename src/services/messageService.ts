@@ -362,10 +362,11 @@ export const messageService = {
 
             // Log activity - recipient read the message
             if (!error && data?.recipient_id) {
+                const tenantId = this.getTenantId();
                 activityService.logActivity(data.recipient_id, 'Message Read', {
                     messageId: messageId,
                     senderId: data.sender_id
-                }).catch(err => console.error('Failed to log activity:', err));
+                }, tenantId || undefined).catch(err => console.error('Failed to log activity:', err));
             }
 
             return { error: error ? error.message : null };

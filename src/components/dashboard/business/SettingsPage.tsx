@@ -515,9 +515,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                 {/* Booking System Tab */}
                 {activeTab === 'booking' && (
                     <div className="space-y-12">
-                        <div className="border-b border-slate-700 pb-12">
-                            <GmailIntegration user={user} />
-                        </div>
                         <CalendlySettings />
                     </div>
                 )}
@@ -608,14 +605,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                         </div>
                     </div>
                 )}
-                {activeTab === 'booking' && (
-                    <div className="space-y-12">
-                        <div className="border-b border-slate-700 pb-12">
-                            <GmailIntegration user={user} />
-                        </div>
-                        <CalendlySettings />
-                    </div>
-                )}
+
 
                 {/* Save Button for Forms */}
                 {(activeTab === 'business') && (

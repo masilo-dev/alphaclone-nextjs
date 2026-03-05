@@ -191,7 +191,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
 
 
     return (
-        <div className="h-full flex flex-col space-y-4 md:space-y-6">
+        <div className="h-full flex flex-col p-8 overflow-y-auto custom-scrollbar space-y-4 md:space-y-6">
             {/* Header */}
             <div className={`flex flex-col lg:flex-row lg:items-center justify-between gap-4 ${selectedClient ? 'hidden lg:flex' : 'flex'}`}>
                 <div className="flex-1">

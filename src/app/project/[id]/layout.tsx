@@ -10,8 +10,9 @@ async function getProject(id: string) {
     return data;
 }
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-    const project = await getProject(params.id);
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+    const { id } = await params;
+    const project = await getProject(id);
 
     if (!project) {
         return {

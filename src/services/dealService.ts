@@ -299,7 +299,7 @@ export const dealService: DealService = {
                 dealId: data.id,
                 dealName: dealData.name,
                 dealValue: dealData.value,
-            });
+            }, tenantId);
 
             const deal: Deal = {
                 id: data.id,

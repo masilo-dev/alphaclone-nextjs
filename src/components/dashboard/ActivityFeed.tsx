@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Activity, Clock, FileText, MessageSquare, DollarSign, User } from 'lucide-react';
 import { activityService, ActivityLog } from '../../services/dashboardService';
+import { tenantService } from '../../services/tenancy/TenantService';
 import { formatDistanceToNow } from 'date-fns';
 
 interface ActivityFeedProps {
@@ -14,7 +15,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ userId, limit = 20 }) => {
 
     const loadActivities = useCallback(async () => {
         setIsLoading(true);
-        const { logs } = await activityService.getActivityLogs(userId, limit);
+        const tenantId = tenantService.getCurrentTenantId() || '';
+        const { logs } = await activityService.getActivityLogs(userId, tenantId, limit);
         if (logs) setActivities(logs);
         setIsLoading(false);
     }, [userId, limit]);

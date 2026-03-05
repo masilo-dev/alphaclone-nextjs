@@ -7,6 +7,7 @@ import { Project } from '../../types';
 import { Button, Modal, Input } from '../ui/UIComponents';
 import { projectService } from '../../services/projectService';
 import { notificationService } from '../../services/dashboardService';
+import { tenantService } from '../../services/tenancy/TenantService';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -264,6 +265,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                         else {
                             notificationService.createNotification({
                                 user_id: userId || 'unknown',
+                                tenant_id: tenantService.getCurrentTenantId() || '',
                                 type: 'project',
                                 title: 'Project Updated',
                                 message: `Project "${formData.name}" has been updated.`,
@@ -300,6 +302,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                         else {
                             notificationService.createNotification({
                                 user_id: finalOwnerId,
+                                tenant_id: tenantService.getCurrentTenantId() || '',
                                 type: 'project',
                                 title: 'Project Created',
                                 message: `Project "${formData.name}" has been added to the portfolio.`,

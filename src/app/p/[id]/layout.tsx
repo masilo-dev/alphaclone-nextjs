@@ -1,8 +1,9 @@
 import { Metadata } from 'next';
 import { projectService } from '@/services/projectService';
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-    const { project } = await projectService.getPublicProjectStatus(params.id);
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+    const { id } = await params;
+    const { project } = await projectService.getPublicProjectStatus(id);
 
     if (!project) {
         return {

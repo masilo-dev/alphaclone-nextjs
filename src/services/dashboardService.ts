@@ -4,6 +4,7 @@ import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 export interface Notification {
     id: string;
     user_id: string;
+    tenant_id: string;
     type: 'message' | 'project' | 'payment' | 'system' | 'alert';
     title: string;
     message?: string;
@@ -17,6 +18,7 @@ export interface Notification {
 export interface ActivityLog {
     id: string;
     user_id: string;
+    tenant_id: string;
     action: string;
     entity_type?: 'project' | 'message' | 'payment' | 'contract' | 'user' | 'system';
     entity_id?: string;
@@ -45,22 +47,24 @@ export interface UserPreferences {
 }
 
 export const notificationService = {
-    async getNotifications(userId: string, limit = 50) {
+    async getNotifications(userId: string, tenantId: string, limit = 50) {
         const { data, error } = await supabase
             .from('notifications')
             .select('*')
             .eq('user_id', userId)
+            .eq('tenant_id', tenantId)
             .order('created_at', { ascending: false })
             .limit(limit);
 
         return { notifications: data, error };
     },
 
-    async getUnreadCount(userId: string) {
+    async getUnreadCount(userId: string, tenantId: string) {
         const { count, error } = await supabase
             .from('notifications')
             .select('*', { count: 'exact', head: true })
             .eq('user_id', userId)
+            .eq('tenant_id', tenantId)
             .eq('read', false);
 
         return { count: count || 0, error };
@@ -75,11 +79,12 @@ export const notificationService = {
         return { error };
     },
 
-    async markAllAsRead(userId: string) {
+    async markAllAsRead(userId: string, tenantId: string) {
         const { error } = await supabase
             .from('notifications')
             .update({ read: true })
             .eq('user_id', userId)
+            .eq('tenant_id', tenantId)
             .eq('read', false);
 
         return { error };
@@ -104,19 +109,21 @@ export const notificationService = {
         return { notification: data, error };
     },
 
-    subscribeToNotifications(userId: string, callback: (notification: Notification) => void) {
+    subscribeToNotifications(userId: string, tenantId: string, callback: (notification: Notification) => void) {
         const subscription = supabase
-            .channel('notifications')
+            .channel(`notifications:${userId}:${tenantId}`)
             .on(
                 'postgres_changes',
                 {
                     event: 'INSERT',
                     schema: 'public',
                     table: 'notifications',
-                    filter: `user_id=eq.${userId}`,
+                    filter: `user_id=eq.${userId}`, // Note: Realtime filter only supports one column usually, but we check tenant in client if needed. However, since we filter by user_id AND it's a private channel name, it's safer.
                 },
                 (payload: RealtimePostgresChangesPayload<Notification>) => {
-                    callback(payload.new as Notification);
+                    if (payload.new && 'tenant_id' in payload.new && payload.new.tenant_id === tenantId) {
+                        callback(payload.new as Notification);
+                    }
                 }
             )
             .subscribe();
@@ -128,34 +135,41 @@ export const notificationService = {
 };
 
 export const activityService = {
-    async getActivityLogs(userId: string, limit = 100) {
+    async getActivityLogs(userId: string, tenantId: string, limit = 100) {
         const { data, error } = await supabase
             .from('activity_logs')
             .select('*')
             .eq('user_id', userId)
+            .eq('tenant_id', tenantId)
             .order('created_at', { ascending: false })
             .limit(limit);
 
         return { logs: data, error };
     },
 
-    async logActivity(log: Omit<ActivityLog, 'id' | 'created_at'>) {
+    async logActivity(userId: string, action: string, metadata: any = {}, tenantId?: string) {
         const { data, error } = await supabase
             .from('activity_logs')
-            .insert(log)
+            .insert({
+                user_id: userId,
+                tenant_id: tenantId,
+                action: action,
+                metadata: metadata
+            })
             .select()
             .single();
 
         return { log: data, error };
     },
 
-    async getRecentActivity(userId: string, hours = 24) {
+    async getRecentActivity(userId: string, tenantId: string, hours = 24) {
         const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 
         const { data, error } = await supabase
             .from('activity_logs')
             .select('*')
             .eq('user_id', userId)
+            .eq('tenant_id', tenantId)
             .gte('created_at', since)
             .order('created_at', { ascending: false });
 

@@ -134,6 +134,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                 // Create Notification
                 await notificationService.createNotification({
                     user_id: user.id,
+                    tenant_id: currentTenant?.id || '',
                     type: 'system',
                     title: 'Document Uploaded',
                     message: `File "${file.name}" has been uploaded to the Document Hub.`,

@@ -32,6 +32,7 @@ const nextConfig: NextConfig = {
   experimental: {
     scrollRestoration: true,
   },
+  turbopack: {},
   async headers() {
     const cspHeader = `
       default-src 'self';

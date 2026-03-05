@@ -189,7 +189,7 @@ export const businessInvoiceService = {
                         invoiceId: newInvoice.id,
                         invoiceNumber: newInvoice.invoiceNumber,
                         amount: newInvoice.total
-                    });
+                    }, newInvoice.tenantId);
                 }
             }
 
@@ -436,9 +436,11 @@ export const businessInvoiceService = {
             // Log activity
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
+                // Get tenantId for the invoice
+                const { data: invoice } = await supabase.from('business_invoices').select('tenant_id').eq('id', invoiceId).single();
                 await activityService.logActivity(user.id, 'Invoice Paid', {
                     invoiceId: invoiceId
-                });
+                }, invoice?.tenant_id);
             }
 
             return { error: null };

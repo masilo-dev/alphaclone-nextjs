@@ -84,7 +84,7 @@ export const paymentService = {
                     amount: invoice.amount,
                     currency: invoice.currency,
                     projectId: invoice.project_id
-                }).catch(err => console.error('Failed to log activity:', err));
+                }, tenantId).catch(err => console.error('Failed to log activity:', err));
             }
 
             // Audit log
@@ -434,7 +434,7 @@ export const paymentService = {
                 amount: data.amount,
                 currency: data.currency,
                 paymentIntentId: paymentIntentId
-            }).catch(err => console.error('Failed to log activity:', err));
+            }, data.tenant_id).catch(err => console.error('Failed to log activity:', err));
 
             // Audit log
             auditLoggingService.logAction(
