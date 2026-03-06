@@ -201,13 +201,13 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                         key={lead.id}
                                         onClick={() => toggleLead(lead.id)}
                                         className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center gap-4 ${selectedLeads.includes(lead.id)
-                                                ? 'bg-[#f5d400]/10 border-[#f5d400]/40 translate-x-1'
-                                                : 'bg-slate-900/20 border-slate-800 hover:bg-slate-900/50'
+                                            ? 'bg-[#f5d400]/10 border-[#f5d400]/40 translate-x-1'
+                                            : 'bg-slate-900/20 border-slate-800 hover:bg-slate-900/50'
                                             }`}
                                     >
                                         <div className={`w-6 h-6 rounded-lg flex items-center justify-center border ${selectedLeads.includes(lead.id)
-                                                ? 'bg-[#f5d400] border-[#f5d400]'
-                                                : 'border-slate-700'
+                                            ? 'bg-[#f5d400] border-[#f5d400]'
+                                            : 'border-slate-700'
                                             }`}>
                                             {selectedLeads.includes(lead.id) && <Check className="w-4 h-4 text-slate-900" />}
                                         </div>
@@ -237,12 +237,12 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                 <div className="space-y-2">
                                     {results.map((res, i) => (
                                         <div key={i} className={`p-4 rounded-2xl border ${res.status === 'success'
-                                                ? 'bg-green-500/10 border-green-500/20'
-                                                : 'bg-red-500/10 border-red-500/20'
+                                            ? 'bg-green-500/10 border-green-500/20'
+                                            : 'bg-red-500/10 border-red-500/20'
                                             }`}>
                                             <div className="flex justify-between items-center">
                                                 <span className="text-sm font-bold text-white">{res.name}</span>
-                                                <Badge variant={res.status === 'success' ? 'active' : 'neutral'} size="sm">
+                                                <Badge variant={res.status === 'success' ? 'success' : 'neutral'}>
                                                     {res.status === 'success' ? 'Sent' : 'Failed'}
                                                 </Badge>
                                             </div>
@@ -271,8 +271,8 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                                 key={tone.id}
                                                 onClick={() => setSelectedTone(tone.id)}
                                                 className={`p-4 rounded-3xl border transition-all text-left ${selectedTone === tone.id
-                                                        ? 'bg-[#f5d400]/10 border-[#f5d400]/40 ring-1 ring-[#f5d400]/20'
-                                                        : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'
+                                                    ? 'bg-[#f5d400]/10 border-[#f5d400]/40 ring-1 ring-[#f5d400]/20'
+                                                    : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'
                                                     }`}
                                             >
                                                 <p className={`text-xs font-black uppercase tracking-widest ${selectedTone === tone.id ? 'text-[#f5d400]' : 'text-slate-400'}`}>
