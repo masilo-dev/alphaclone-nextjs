@@ -37,7 +37,8 @@ export async function GET(req: NextRequest) {
 
         const stateNonce = stateRecord.id;
         const clientId = ENV.ZOHO_CLIENT_ID;
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech';
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin || 'https://alphaclone.tech';
+
         const redirectUri = `${appUrl}/api/auth/zoho/callback`;
 
         // Zoho Mail scopes

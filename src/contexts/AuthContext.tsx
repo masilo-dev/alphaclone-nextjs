@@ -245,9 +245,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             didOptimisticRead.current = true;
             const cachedUser = readSessionFromStorage();
             if (cachedUser && isMounted) {
-                console.log('[AuthContext] Found cached user in storage, setting immediately (but still loading async validation)');
+                console.log('[AuthContext] Found cached user in storage — rendering immediately, validating async...');
                 setSafeUser(cachedUser);
-                // Keep loading = true until initSession finishes to be safe on Vercel
+                // Set loading=false immediately so the UI renders — async validation still runs in background
+                setLoading(false);
             } else {
                 console.log('[AuthContext] No cached user found, waiting for async validation...');
             }
@@ -261,25 +262,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (!isMounted) return;
 
                 if (authError) {
+                    // Silently ignore abort/cancel — happens in React StrictMode dev double-mount
+                    const isAbort = authError.toLowerCase().includes('abort') ||
+                        authError.toLowerCase().includes('cancel') ||
+                        authError.toLowerCase().includes('signal');
+                    if (isAbort) {
+                        console.log('[AuthContext] Auth request aborted (expected in dev StrictMode). Retaining current state.');
+                        return;
+                    }
+
                     console.error('[AuthContext] Debug: getCurrentUser returned error', authError);
 
                     const isAuthError = authError.toLowerCase().includes('invalid') ||
                         authError.toLowerCase().includes('expired') ||
                         authError.toLowerCase().includes('unauthorized') ||
-                        authError.toLowerCase().includes('not found') ||
-                        authError.toLowerCase().includes('abort') || // Handle AbortError
-                        authError.toLowerCase().includes('canceled');
+                        authError.toLowerCase().includes('not found');
 
                     if (isAuthError) {
-                        // For definitive auth errors or aborts/cancels, we handle them carefully.
-                        // If it's an abort, it might be a transient client-side interruption.
-                        if (authError.toLowerCase().includes('abort')) {
-                            console.log('[AuthContext] Debug: Auth request was aborted. Retaining current state.');
-                        } else {
-                            clearAuthSession();
-                            setSafeUser(null);
-                            setError(authError);
-                        }
+                        clearAuthSession();
+                        setSafeUser(null);
+                        setError(authError);
                     } else {
                         console.warn('[AuthContext] Debug: Possible transient error. Retaining current state.', authError);
                     }

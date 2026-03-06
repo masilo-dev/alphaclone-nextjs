@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -123,9 +123,6 @@ const Dashboard: React.FC<DashboardProps> = ({
   const router = useRouter();
   const { currentTenant, getDashboardStats, error: tenantError } = useTenant();
   const [dashboardStats, setDashboardStats] = useState<any>(null);
-  // Prevent duplicate data loads when TenantContext resolves after initial render
-  const dataLoadedRef = useRef(false);
-  const lastTenantIdRef = useRef<string | undefined>(undefined);
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -376,12 +373,9 @@ const Dashboard: React.FC<DashboardProps> = ({
     }
   }, [user.id, user.role, setInvoices]);
 
-  // OPTIMIZED: Load core data ONCE on mount (projects, invoices, messages)
+  // OPTIMIZED: Load ALL critical data in parallel for fastest loading, with Caching
   useEffect(() => {
-    if (dataLoadedRef.current) return; // prevent double-fire in StrictMode/dev
-    dataLoadedRef.current = true;
-
-    // 1. Restore from cache immediately for instant UI
+    // 1. Load from cache immediately
     try {
       const cachedProjects = localStorage.getItem(`dashboard_projects_${user.id}`);
       if (cachedProjects) setProjects(JSON.parse(cachedProjects));
@@ -394,11 +388,16 @@ const Dashboard: React.FC<DashboardProps> = ({
     } catch (e) { console.error('Cache load error', e); }
 
     const loadAllData = async () => {
+      // NON-BLOCKING: Start fetching user data immediately. 
+      // Only tenant-specific data (Stats) will wait for tenant ID.
+
       const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
 
+      // Load everything in parallel - don't wait for one to finish before starting another
       const promises: Promise<any>[] = [
         refreshProjects(),
         refreshInvoices(),
+        // Load fewer messages initially (10 instead of 30) for faster load
         messageService.getMessages(user.id, isAdmin, 10).then(({ messages: fetchedMessages, error }) => {
           if (!error && fetchedMessages) {
             setMessages(fetchedMessages);
@@ -406,6 +405,13 @@ const Dashboard: React.FC<DashboardProps> = ({
           }
         })
       ];
+
+      // Fetch consolidated stats if tenant is available
+      if (currentTenant?.id) {
+        promises.push(getDashboardStats(currentTenant.id).then(({ stats }) => {
+          if (stats) setDashboardStats(stats);
+        }));
+      }
 
       if (user.role === 'admin') {
         promises.push(userService.getUsers().then(({ users, error }) => {
@@ -420,19 +426,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     };
 
     loadAllData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user.id]); // Only re-run if user changes (not on every tenant update)
-
-  // Load dashboard stats separately — re-runs only when tenant ID changes
-  useEffect(() => {
-    if (!currentTenant?.id) return;
-    if (lastTenantIdRef.current === currentTenant.id) return; // already loaded for this tenant
-    lastTenantIdRef.current = currentTenant.id;
-
-    getDashboardStats(currentTenant.id).then(({ stats }) => {
-      if (stats) setDashboardStats(stats);
-    }).catch(() => { /* stats are non-critical */ });
-  }, [currentTenant?.id]);
+  }, [user.id, user.role, currentTenant?.id]);
 
   // PRELOAD: Prefetch the most-visited lazy tabs sequentially in the background after mount
   // so they're already downloaded when the user clicks them (eliminates Suspense delay)
@@ -473,7 +467,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Subscribe to real-time messages with filtering for performance
   useEffect(() => {
     const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
-    // ✅ Now uses filtered subscription - gets INSERT + UPDATE for instant read receipts
+    // Ô£à Now uses filtered subscription - gets INSERT + UPDATE for instant read receipts
     const unsubscribe = messageService.subscribeToMessages(
       user.id,
       isAdmin,
@@ -682,7 +676,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             hasAttachments: attachments.length > 0,
             priority: priority,
             textLength: text.length
-          }, currentTenant?.id).catch(err => console.error('Failed to log activity:', err));
+          }).catch(err => console.error('Failed to log activity:', err));
         });
       } else {
         // No message returned but no error - still rollback
@@ -941,12 +935,12 @@ const Dashboard: React.FC<DashboardProps> = ({
       if ('requestIdleCallback' in window) {
         requestIdleCallback(() => {
           import('../services/activityService').then(({ activityService }) => {
-            activityService.logActivity(user.id, `Navigated to ${activeTab}`, { path: activeTab }, currentTenant?.id).catch(() => { });
+            activityService.logActivity(user.id, `Navigated to ${activeTab}`, { path: activeTab }).catch(() => { });
           });
         }, { timeout: 3000 });
       } else {
         import('../services/activityService').then(({ activityService }) => {
-          activityService.logActivity(user.id, `Navigated to ${activeTab}`, { path: activeTab }, currentTenant?.id).catch(() => { });
+          activityService.logActivity(user.id, `Navigated to ${activeTab}`, { path: activeTab }).catch(() => { });
         });
       }
     }, 1000); // Wait 1 second before tracking to ensure they actually landed on the tab
@@ -958,7 +952,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   useEffect(() => {
     const heartbeatInterval = setInterval(() => {
       import('../services/activityService').then(({ activityService }) => {
-        activityService.logActivity(user.id, 'User Active', { source: 'dashboard_heartbeat' }, currentTenant?.id).catch(() => { });
+        activityService.logActivity(user.id, 'User Active', { source: 'dashboard_heartbeat' }).catch(() => { });
       });
     }, 5 * 60 * 1000); // 5 minutes instead of 2 minutes to reduce DB load
 
@@ -1425,7 +1419,6 @@ const Dashboard: React.FC<DashboardProps> = ({
     return (
       <BusinessDashboard
         user={user}
-        currentTenant={currentTenant}
         onLogout={onLogout}
         activeTab={location || '/dashboard'}
         setActiveTab={(tab) => router.push(tab)}
@@ -1711,7 +1704,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 onNavigate={router.push}
               />
               <ThemeToggle userId={user.id} />
-              <NotificationCenter userId={user.id} tenantId={currentTenant?.id || ''} />
+              <NotificationCenter userId={user.id} />
             </div>
           </div>
         </header>

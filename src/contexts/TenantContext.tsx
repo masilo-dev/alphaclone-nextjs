@@ -121,9 +121,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           tenantService.setCurrentTenant(firstTenant);
           setIsLoading(false);
         }
-      } else if (user.role === 'admin' || user.role === 'tenant_admin' || user.role === 'business_dashboard') {
-        // User has no tenants - auto-create a default one only for authorized creators
-        console.log(`[TenantContext] No tenants found for user with role ${user.role} after potential retry, auto-creating...`);
+      } else if (user.role !== 'client') {
+        // Any non-client user with no tenants gets a default org auto-created
+        console.log(`[TenantContext] No tenants found for user with role ${user.role}, auto-creating...`);
         // ... (rest of creation logic)
 
         try {

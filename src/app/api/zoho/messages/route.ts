@@ -5,12 +5,33 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('userId');
     const folderId = searchParams.get('folderId') || 'inbox';
+    const messageId = searchParams.get('messageId');
 
     if (!userId) {
         return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
     try {
+        // If messageId is provided, fetch specific message details
+        if (messageId) {
+            const endpoint = `messages/${messageId}`;
+            const data = await zohoServerService.proxyRequest(userId, endpoint);
+
+            // Map Zoho detail response
+            const msg = data.data || {};
+            return NextResponse.json({
+                message: {
+                    id: msg.messageId,
+                    subject: msg.subject,
+                    content: msg.content,
+                    from: msg.sender,
+                    to: msg.toAddress,
+                    date: msg.sentTime
+                }
+            });
+        }
+
+        // Otherwise list messages
         const endpoint = `messages/view?folderId=${folderId}`;
         const data = await zohoServerService.proxyRequest(userId, endpoint);
 

@@ -101,7 +101,15 @@ export default function LoginPage() {
 
                 if (signUpError) {
                     console.error("SignUp Error:", signUpError);
-                    setError(signUpError);
+                    if (signUpError.toLowerCase().includes('user already registered') ||
+                        signUpError.toLowerCase().includes('already exists') ||
+                        signUpError.toLowerCase().includes('already been registered')) {
+                        setError('An account with this email already exists. Please sign in instead, or reset your password if you\'ve forgotten it.');
+                    } else if (signUpError.toLowerCase().includes('password')) {
+                        setError('Your password does not meet the security requirements. Please use at least 8 characters with uppercase, lowercase, a number, and a special character.');
+                    } else {
+                        setError(signUpError);
+                    }
                     setIsLoading(false);
                     return;
                 }
@@ -155,7 +163,17 @@ export default function LoginPage() {
             const { user, error: signInError, needsMfa } = await authService.signIn(email, password);
 
             if (signInError) {
-                setError(signInError);
+                // Map Supabase raw errors to user-friendly messages
+                if (signInError.toLowerCase().includes('invalid login credentials') ||
+                    signInError.toLowerCase().includes('invalid credentials')) {
+                    setError('Incorrect email or password. Please check your details and try again, or use "Forgot?" to reset your password.');
+                } else if (signInError.toLowerCase().includes('email not confirmed')) {
+                    setError('Please check your inbox and confirm your email address before signing in.');
+                } else if (signInError.toLowerCase().includes('too many requests') || signInError.toLowerCase().includes('rate limit')) {
+                    setError('Too many login attempts. Please wait a few minutes before trying again.');
+                } else {
+                    setError(signInError);
+                }
                 setIsLoading(false);
                 return;
             }
@@ -596,10 +614,12 @@ export default function LoginPage() {
                             </div>
                         )}
 
-                        <HumanVerification onVerify={() => {
-                            setHumanVerified(true);
-                            setError('');
-                        }} />
+                        <HumanVerification
+                            verified={humanVerified}
+                            onVerify={() => {
+                                setHumanVerified(true);
+                                setError('');
+                            }} />
 
                         <Button
                             type="submit"

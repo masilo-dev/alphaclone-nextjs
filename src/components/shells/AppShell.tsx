@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Splash from '@/components/pwa/Splash';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading, needsMfa } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
     const [isRedirecting, setIsRedirecting] = useState(false);
@@ -32,10 +32,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     setIsRedirecting(false);
                 }
             } else {
-                // Authenticated
-                // Check for MFA requirement
-                const { needsMfa } = (await import('@/contexts/AuthContext')).useAuth();
-
+                // Authenticated — needsMfa already available from top-level useAuth()
                 if (needsMfa && pathname !== '/auth/login' && !pathname.startsWith('/auth/')) {
                     console.log('AppShell: MFA required, redirecting to login challenge');
                     setIsRedirecting(true);
@@ -57,7 +54,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         };
 
         handleRedirection();
-    }, [user, authLoading, pathname, router]);
+    }, [user, authLoading, needsMfa, pathname, router]);
 
     // Show splash during initial auth load OR while redirecting
     if (authLoading || isRedirecting) {

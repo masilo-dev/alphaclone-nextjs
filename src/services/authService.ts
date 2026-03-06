@@ -26,6 +26,9 @@ async function withAuthTimeout<T = any>(promise: any, timeoutMs: number = 30000)
     });
 }
 
+// In-flight deduplication: if getCurrentUser() is already running, return the same promise
+let _getCurrentUserInflight: Promise<{ user: User | null; error: string | null }> | null = null;
+
 export const authService = {
     /**
      * Sign in with email and password
@@ -352,10 +355,21 @@ export const authService = {
 
     /**
      * Get current session
+     * Deduplicated: concurrent calls share the same in-flight promise.
      */
     async getCurrentUser(): Promise<{ user: User | null; error: string | null }> {
+        // If a call is already in-flight, reuse it instead of stacking up parallel requests
+        if (_getCurrentUserInflight) {
+            return _getCurrentUserInflight;
+        }
+        _getCurrentUserInflight = this._doGetCurrentUser().finally(() => {
+            _getCurrentUserInflight = null;
+        });
+        return _getCurrentUserInflight;
+    },
+
+    async _doGetCurrentUser(): Promise<{ user: User | null; error: string | null }> {
         try {
-            // OPTIMIZATION: Small wait/retry for OAuth redirects where cookies might not be ready
             let session = null;
             let lastError = null;
 
@@ -364,11 +378,8 @@ export const authService = {
                     window.location.pathname.includes('/auth/callback') ||
                     sessionStorage.getItem('auth_callback_in_progress') === 'true');
 
-            // If we're on the dashboard, we also benefit from a small retry if session is initially missing
-            const isDashboard = typeof window !== 'undefined' && window.location.pathname.startsWith('/dashboard');
-
-            console.time('auth:getSession');
-            const maxAttempts = isAuthCallback ? 3 : 1; // Only retry during explicit auth callbacks
+            const t0 = Date.now();
+            const maxAttempts = isAuthCallback ? 3 : 1;
 
             for (let i = 0; i < maxAttempts; i++) {
                 const { data: { session: s }, error } = await withAuthTimeout(supabase.auth.getSession());
@@ -384,7 +395,7 @@ export const authService = {
                     await new Promise(r => setTimeout(r, delay));
                 }
             }
-            console.timeEnd('auth:getSession');
+            console.log(`auth:getSession: ${Date.now() - t0}ms`);
 
             if (lastError) {
                 console.error("AuthService: getSession error", lastError);
@@ -403,7 +414,6 @@ export const authService = {
             });
 
             const startTime = Date.now();
-            console.time('auth:getProfile');
             console.log(`AuthService: Fetching profile for ${session.user.id}...`);
 
             let user: User;
@@ -429,7 +439,7 @@ export const authService = {
                         }
                     }).catch(() => { });
 
-                console.timeEnd('auth:getProfile');
+                console.log(`auth:getProfile: ${Date.now() - startTime}ms (fast-path)`);
                 return { user: fastUser, error: null };
             }
 
@@ -492,7 +502,7 @@ export const authService = {
                     );
                 });
 
-                console.timeEnd('auth:getProfile');
+                console.log(`auth:getProfile: ${Date.now() - startTime}ms (fallback)`);
                 return { user, error: null };
             }
 
@@ -520,8 +530,7 @@ export const authService = {
                 }).catch(() => { });
             }
 
-            console.timeEnd('auth:getProfile');
-            console.log(`AuthService: Profile fetched in ${Date.now() - startTime}ms. Role: ${user.role}`);
+            console.log(`auth:getProfile: ${Date.now() - startTime}ms. Role: ${user.role}`);
             return { user, error: null };
         } catch (err) {
             return { user: null, error: err instanceof Error ? err.message : 'Unknown error' };
@@ -560,17 +569,31 @@ export const authService = {
 
     /**
      * Listen to auth state changes
+     * Debounced: rapid SIGNED_IN bursts (e.g. session refresh) are collapsed into one callback.
      */
     onAuthStateChange(callback: (user: User | null, event?: AuthChangeEvent) => void) {
+        let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+        let pendingEvent: { event: AuthChangeEvent; session: Session | null } | null = null;
+
         return supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
             console.log(`AuthService: State changed - Event: ${event}, UserID: ${session?.user?.id}`);
 
-            if (session?.user) {
-                const { user } = await this.getCurrentUser();
-                callback(user, event);
-            } else {
-                callback(null, event);
-            }
+            // Collapse rapid bursts of the same event (e.g. multiple SIGNED_IN on refresh)
+            if (debounceTimer) clearTimeout(debounceTimer);
+            pendingEvent = { event, session };
+
+            debounceTimer = setTimeout(async () => {
+                const { event: e, session: s } = pendingEvent!;
+                pendingEvent = null;
+                debounceTimer = null;
+
+                if (s?.user) {
+                    const { user } = await this.getCurrentUser();
+                    callback(user, e);
+                } else {
+                    callback(null, e);
+                }
+            }, 50); // 50ms debounce window
         });
     },
 

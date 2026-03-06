@@ -7,7 +7,9 @@ export async function GET(req: NextRequest) {
     const code = searchParams.get('code');
     const stateNonce = searchParams.get('state');
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech';
+    // Use the request's own origin so local dev redirects go back to localhost
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin || 'https://alphaclone.tech';
+
 
     if (!code || !stateNonce) {
         return NextResponse.redirect(`${appUrl}/dashboard/settings?zoho=error&reason=missing_params`);

@@ -107,12 +107,55 @@ class TenantService {
      * Get user's tenants
      */
     async getUserTenants(userId: string): Promise<Array<Tenant & { role: TenantRole }>> {
-        const { data, error } = await supabase.rpc('get_user_tenants', {
-            p_user_id: userId
-        });
+        // Try RPC first
+        try {
+            const { data, error } = await supabase.rpc('get_user_tenants', {
+                p_user_id: userId
+            });
 
-        if (error) throw error;
-        return data || [];
+            if (!error && data && data.length > 0) {
+                return data;
+            }
+
+            if (error) {
+                console.warn('[TenantService] get_user_tenants RPC failed, falling back to direct query:', error.message);
+            }
+        } catch (rpcErr: any) {
+            console.warn('[TenantService] get_user_tenants RPC threw, falling back:', rpcErr?.message);
+        }
+
+        // Fallback: query tenant_users + tenants directly
+        try {
+            const { data: tuData, error: tuError } = await supabase
+                .from('tenant_users')
+                .select(`
+                    role,
+                    joined_at,
+                    tenant:tenant_id (
+                        id, name, slug, domain, logo_url, settings,
+                        subscription_plan, subscription_status, trial_ends_at,
+                        created_at, updated_at
+                    )
+                `)
+                .eq('user_id', userId)
+                .order('joined_at', { ascending: false });
+
+            if (tuError) {
+                console.error('[TenantService] Direct tenant lookup also failed:', tuError.message);
+                return [];
+            }
+
+            return (tuData || [])
+                .filter((row: any) => row.tenant)
+                .map((row: any) => ({
+                    ...row.tenant,
+                    role: row.role as TenantRole,
+                    joined_at: row.joined_at
+                }));
+        } catch (fallbackErr: any) {
+            console.error('[TenantService] All tenant lookups failed:', fallbackErr?.message);
+            return [];
+        }
     }
 
     /**
@@ -313,36 +356,91 @@ class TenantService {
             return { stats: null, error: 'No tenant ID provided' };
         }
 
-        const { data, error } = await supabase.rpc('get_tenant_dashboard_stats', {
-            tenant_id_param: tenantId
-        });
+        // --- Return cached stats immediately if fresh (< 60s old) ---
+        const CACHE_KEY = `dashboard_stats_${tenantId}`;
+        const CACHE_TTL = 60_000; // 60 seconds
+        try {
+            if (typeof window !== 'undefined') {
+                const cached = localStorage.getItem(CACHE_KEY);
+                if (cached) {
+                    const { ts, stats } = JSON.parse(cached);
+                    if (Date.now() - ts < CACHE_TTL) {
+                        console.log('[TenantService] Returning cached dashboard stats');
+                        // Refresh in background after returning
+                        setTimeout(() => this.fetchAndCacheStats(tenantId, CACHE_KEY), 0);
+                        return { stats, error: null };
+                    }
+                }
+            }
+        } catch (_) { /* ignore cache read errors */ }
 
-        if (error) {
-            console.error('Error fetching dashboard stats:', error);
-            return { stats: null, error: error.message };
-        }
+        return this.fetchAndCacheStats(tenantId, CACHE_KEY);
+    }
 
-        const raw = data as any;
-        const stats = {
-            totalRevenue: raw.total_revenue || 0,
-            clientCount: raw.total_clients || 0,
-            activeProjects: raw.total_projects || 0,
-            pendingInvoices: raw.pending_invoices || 0,
-            totalMessages: raw.total_messages || 0,
-            pendingRevenue: raw.pending_revenue || 0,
-            recentActivity: (raw.recent_activity || []).map((a: any) => ({
-                type: a.type,
-                text: a.text || a.title, // Support both 'text' from RPC and 'title' if fallback needed
-                time: a.time || a.date // Support both 'time' from RPC and 'date' if fallback needed
-            })),
-            monthlyRevenue: (raw.monthly_revenue || []).map((m: any) => ({
-                month: m.month,
-                amount: m.amount
-            })),
-            pipeline: raw.pipeline || {}
+    private async fetchAndCacheStats(tenantId: string, cacheKey: string): Promise<{ stats: any | null; error: string | null }> {
+        const EMPTY_STATS = {
+            totalRevenue: 0, clientCount: 0, activeProjects: 0,
+            pendingInvoices: 0, totalMessages: 0, pendingRevenue: 0,
+            totalLeads: 0, totalDeals: 0, recentActivity: [], monthlyRevenue: [], pipeline: {}
         };
 
-        return { stats, error: null };
+        try {
+            // Race all queries against an 8-second timeout
+            const timeout = new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error('Stats query timeout')), 8000)
+            );
+
+            const queries = Promise.all([
+                supabase.from('projects').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+                supabase.from('business_clients').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+                supabase.from('leads').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+                supabase.from('deals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+                supabase.from('invoices').select('id, status, amount').eq('tenant_id', tenantId),
+            ]);
+
+            const [
+                { count: totalProjects },
+                { count: totalClients },
+                { count: totalLeads },
+                { count: totalDeals },
+                { data: invoiceData },
+            ] = await Promise.race([queries, timeout]) as any;
+
+            const invoices = invoiceData || [];
+            const totalRevenue = invoices
+                .filter((i: any) => i.status === 'paid')
+                .reduce((sum: number, i: any) => sum + (i.amount || 0), 0);
+            const pendingInvoices = invoices.filter((i: any) => i.status === 'pending').length;
+            const pendingRevenue = invoices
+                .filter((i: any) => ['pending', 'sent'].includes(i.status))
+                .reduce((sum: number, i: any) => sum + (i.amount || 0), 0);
+
+            const stats = {
+                totalRevenue,
+                clientCount: totalClients || 0,
+                activeProjects: totalProjects || 0,
+                pendingInvoices,
+                totalMessages: 0,
+                pendingRevenue,
+                totalLeads: totalLeads || 0,
+                totalDeals: totalDeals || 0,
+                recentActivity: [],
+                monthlyRevenue: [],
+                pipeline: {}
+            };
+
+            // Cache the fresh stats
+            try {
+                if (typeof window !== 'undefined') {
+                    localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), stats }));
+                }
+            } catch (_) { /* ignore cache write errors */ }
+
+            return { stats, error: null };
+        } catch (err: any) {
+            console.error('Error fetching dashboard stats:', err?.message);
+            return { stats: EMPTY_STATS, error: err?.message || 'Failed to load stats' };
+        }
     }
 
     /**

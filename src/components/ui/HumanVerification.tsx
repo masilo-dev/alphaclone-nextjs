@@ -4,10 +4,12 @@ import { Key, Lock, CheckCircle2 } from 'lucide-react';
 
 interface HumanVerificationProps {
     onVerify: () => void;
+    verified?: boolean; // Optional controlled prop — survives parent re-renders
 }
 
-export default function HumanVerification({ onVerify }: HumanVerificationProps) {
-    const [isVerified, setIsVerified] = useState(false);
+export default function HumanVerification({ onVerify, verified }: HumanVerificationProps) {
+    const [internalVerified, setInternalVerified] = useState(false);
+    const isVerified = verified !== undefined ? verified : internalVerified;
     const containerRef = useRef<HTMLDivElement>(null);
     const [containerWidth, setContainerWidth] = useState(0);
 
@@ -31,7 +33,7 @@ export default function HumanVerification({ onVerify }: HumanVerificationProps) 
         // The thumb width is 48px, so we account for that
         const threshold = containerWidth - 48 - 32; // Container width minus thumb minus padding
         if (info.offset.x >= threshold * 0.8) {
-            setIsVerified(true);
+            setInternalVerified(true);
             onVerify();
         }
     };
@@ -82,3 +84,4 @@ export default function HumanVerification({ onVerify }: HumanVerificationProps) 
         </div>
     );
 }
+

@@ -1,0 +1,16 @@
+﻿diff --git a/src/services/tenancy/TenantService.ts b/src/services/tenancy/TenantService.ts
+index fff17b0..3ee3132 100644
+--- a/src/services/tenancy/TenantService.ts
++++ b/src/services/tenancy/TenantService.ts
+@@ -308,6 +308,11 @@ class TenantService {
+     }
+ 
+     async getDashboardStats(tenantId: string): Promise<{ stats: any | null; error: string | null }> {
++        if (!tenantId) {
++            console.warn('getDashboardStats called without a valid tenantId');
++            return { stats: null, error: 'No tenant ID provided' };
++        }
++
+         const { data, error } = await supabase.rpc('get_tenant_dashboard_stats', {
+             tenant_id_param: tenantId
+         });

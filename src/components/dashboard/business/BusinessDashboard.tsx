@@ -35,13 +35,14 @@ import { useBackgroundTasks } from '../../../contexts/BackgroundTaskContext';
 import BusinessHome from './BusinessHome';
 import ProjectsPage from './ProjectsPage';
 import TeamPage from './TeamPage';
-import MessagesPage from './MessagesPage';
-import CalendarPage from './CalendarPage';
-import BillingPage from './BillingPage';
-import ReportsPage from './ReportsPage';
-import SettingsPage from './SettingsPage';
-import MeetingsPage from './MeetingsPage';
-import BookingTab from './BookingTab';
+// Lazy load heavier tabs that aren't needed on dashboard mount
+const MessagesPage = React.lazy(() => import('./MessagesPage'));
+const CalendarPage = React.lazy(() => import('./CalendarPage'));
+const BillingPage = React.lazy(() => import('./BillingPage'));
+const ReportsPage = React.lazy(() => import('./ReportsPage'));
+const SettingsPage = React.lazy(() => import('./SettingsPage'));
+const MeetingsPage = React.lazy(() => import('./MeetingsPage'));
+const BookingTab = React.lazy(() => import('./BookingTab'));
 // New CRM Components - Lazy loaded to prevent Error #306
 const CRMTab = React.lazy(() => import('../CRMTab'));
 const TasksTab = React.lazy(() => import('../TasksTab'));
@@ -71,10 +72,11 @@ interface BusinessDashboardProps {
     currentTenant?: any; // optional — component fetches via useTenant() context
 }
 
-export default function BusinessDashboard({ currentTenant, user, onLogout, setActiveTab, activeTab }: BusinessDashboardProps) {
+export default function BusinessDashboard({ currentTenant: propTenant, user, onLogout, setActiveTab, activeTab }: BusinessDashboardProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { isLoading: tenantLoading, getDashboardStats } = useTenant();
+    const { currentTenant: contextTenant, isLoading: tenantLoading, getDashboardStats } = useTenant();
+    const currentTenant = propTenant || contextTenant;
     // Default active section within settings
     const [activeSection, setActiveSection] = useState('profile');
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -201,11 +203,11 @@ export default function BusinessDashboard({ currentTenant, user, onLogout, setAc
 
         // Fetch consolidated stats
         if (currentTenant?.id && !dashboardStats) {
-            getDashboardStats(currentTenant.id).then(({ stats }) => {
-                if (stats) setDashboardStats(stats);
+            getDashboardStats(currentTenant.id).then((result) => {
+                if (result && result.stats) setDashboardStats(result.stats);
             });
         }
-    }, [user, currentTenant, dashboardStats]);
+    }, [user, currentTenant, dashboardStats, getDashboardStats]);
 
     // Trial Logic - DISABLED as per user request for full access
     const isTrialExpired = React.useMemo(() => {
@@ -253,19 +255,47 @@ export default function BusinessDashboard({ currentTenant, user, onLogout, setAc
             case '/dashboard/business/team':
                 return <TeamPage user={user} />;
             case '/dashboard/business/messages':
-                return <MessagesPage user={user} />;
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <MessagesPage user={user} />
+                    </React.Suspense>
+                );
             case '/dashboard/business/calendar':
-                return <CalendarPage user={user} />;
+                return (
+                    <React.Suspense fallback={<div className="p-8"><TableSkeleton rows={10} columns={7} /></div>}>
+                        <CalendarPage user={user} />
+                    </React.Suspense>
+                );
             case '/dashboard/business/booking':
-                return <BookingTab />;
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <BookingTab />
+                    </React.Suspense>
+                );
             case '/dashboard/business/billing':
-                return <BillingPage user={user} />;
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <BillingPage user={user} />
+                    </React.Suspense>
+                );
             case '/dashboard/business/reports':
-                return <ReportsPage user={user} />;
+                return (
+                    <React.Suspense fallback={<div className="p-8"><TableSkeleton rows={4} columns={2} /></div>}>
+                        <ReportsPage user={user} />
+                    </React.Suspense>
+                );
             case '/dashboard/business/settings':
-                return <SettingsPage user={user} />;
+                return (
+                    <React.Suspense fallback={<div className="p-8"><TableSkeleton rows={8} columns={2} /></div>}>
+                        <SettingsPage user={user} />
+                    </React.Suspense>
+                );
             case '/dashboard/business/meetings':
-                return <MeetingsPage user={user} onJoinRoom={handleJoinCall} />;
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <MeetingsPage user={user} onJoinRoom={handleJoinCall} />
+                    </React.Suspense>
+                );
 
             // New Routes
             case '/dashboard/crm':
@@ -364,9 +394,9 @@ export default function BusinessDashboard({ currentTenant, user, onLogout, setAc
                 <div id="main-content" className="text-center max-w-md p-8">
                     <div className="text-slate-300 text-xl mb-4">No Organization Found</div>
                     <div className="text-slate-400 mb-6">
-                        {error || (user.role === 'client'
+                        {user.role === 'client'
                             ? "You don't have access to this business dashboard. If you're a business owner, please contact support."
-                            : "Unable to load your organization. This may be a temporary issue.")}
+                            : "Unable to load your organization. This may be a temporary issue."}
                     </div>
                     <div className="flex flex-col gap-3">
                         <button
@@ -498,7 +528,10 @@ export default function BusinessDashboard({ currentTenant, user, onLogout, setAc
                                     alt="Profile"
                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                     onError={(e) => {
-                                        e.currentTarget.src = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.email || user.name || 'user'}`;
+                                        // Prevent infinite loop — fall back to inline initials SVG, never dicebear again
+                                        e.currentTarget.onerror = null;
+                                        const initials = (user.name || user.email || 'U').charAt(0).toUpperCase();
+                                        e.currentTarget.src = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><rect width='40' height='40' fill='%230f766e'/><text x='50%' y='50%' font-size='18' fill='white' text-anchor='middle' dominant-baseline='central' font-family='sans-serif'>${initials}</text></svg>`)}`;
                                     }}
                                 />
                             </div>

@@ -33,6 +33,11 @@ const nextConfig: NextConfig = {
     scrollRestoration: true,
   },
   turbopack: {},
+  webpack: (config) => {
+    // Increase chunk load timeout to prevent ChunkLoadError during slow dev compilations
+    config.output.chunkLoadTimeout = 180000; // 3 minutes (default is 120s)
+    return config;
+  },
   async headers() {
     const cspHeader = `
       default-src 'self';
@@ -45,7 +50,7 @@ const nextConfig: NextConfig = {
       form-action 'self';
       frame-ancestors 'none';
       frame-src 'self' https://*.stripe.com https://js.stripe.com;
-      connect-src 'self' https://*.supabase.co wss://*.supabase.co *.upstash.io *.stripe.com;
+      connect-src 'self' https://*.supabase.co wss://*.supabase.co *.upstash.io *.stripe.com https://api.dicebear.com;
       worker-src 'self' blob: https://unpkg.com https://cdnjs.cloudflare.com;
       upgrade-insecure-requests;
     `.replace(/\s{2,}/g, ' ').trim();
@@ -74,29 +79,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  async rewrites() {
-    const supabaseUrl = process.env.VITE_SUPABASE_URL;
-    if (!supabaseUrl) return [];
 
-    return [
-      {
-        source: '/auth/v1/:path*',
-        destination: `${supabaseUrl}/auth/v1/:path*`,
-      },
-      {
-        source: '/rest/v1/:path*',
-        destination: `${supabaseUrl}/rest/v1/:path*`,
-      },
-      {
-        source: '/storage/v1/:path*',
-        destination: `${supabaseUrl}/storage/v1/:path*`,
-      },
-      {
-        source: '/realtime/v1/:path*',
-        destination: `${supabaseUrl}/realtime/v1/:path*`,
-      },
-    ];
-  },
 };
 
 export default withSerwist(nextConfig);

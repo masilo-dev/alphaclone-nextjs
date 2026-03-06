@@ -1,269 +1,210 @@
-import React, { useState, useEffect, useCallback } from 'react';
+'use client';
+
+import React, { useState, useEffect, Suspense } from 'react';
 import { User } from '../../../types';
-import { useTenant } from '../../../contexts/TenantContext';
-import { messageService } from '../../../services/messageService';
-import toast from 'react-hot-toast';
-import {
-    Send,
-    Paperclip,
-    Search,
-    MoreVertical,
-    ArrowLeft,
-    Bot
-} from 'lucide-react';
+import { supabase } from '../../../lib/supabase';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, Loader2, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+
+// Lazy-load the heavy email views
+const GmailIntegrationView = React.lazy(() =>
+    import('../GmailIntegrationView').then(m => ({ default: m.GmailIntegrationView }))
+);
+const ZohoMailView = React.lazy(() => import('./ZohoMailView'));
 
 interface MessagesPageProps {
     user: User;
 }
 
+type MailProvider = 'gmail' | 'zoho';
+
 const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
-    const { currentTenant } = useTenant();
-    const [conversations, setConversations] = useState<any[]>([]);
-    const [selectedConversation, setSelectedConversation] = useState<any>(null);
-    const [messages, setMessages] = useState<any[]>([]);
-    const [newMessage, setNewMessage] = useState('');
-    const [loading, setLoading] = useState(true);
-
-    const loadConversations = useCallback(async () => {
-        setLoading(true);
-        // Load conversations from messageService
-        const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
-        const { messages: allMessages } = await messageService.getMessages(user.id, isAdmin);
-
-        // Group by conversation (simplified)
-        const convos = allMessages.slice(0, 5).map((msg, idx) => ({
-            id: `conv-${idx}`,
-            name: msg.senderName || 'Unknown',
-            lastMessage: msg.text,
-            unread: !msg.readAt,
-            timestamp: msg.timestamp
-        }));
-
-        setConversations(convos);
-        if (convos.length > 0) {
-            setSelectedConversation(convos[0]);
-        }
-        setLoading(false);
-    }, [user.id, user.role]);
-
-    const loadMessages = useCallback(async (conversationId: string) => {
-        // Load messages for conversation
-        const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
-        const { messages: msgs } = await messageService.getMessages(user.id, isAdmin);
-        setMessages(msgs.slice(0, 10));
-    }, [user.id, user.role]);
+    const router = useRouter();
+    const [checking, setChecking] = useState(true);
+    const [gmailConnected, setGmailConnected] = useState(false);
+    const [zohoConnected, setZohoConnected] = useState(false);
+    const [activeProvider, setActiveProvider] = useState<MailProvider | null>(null);
 
     useEffect(() => {
-        if (currentTenant) {
-            loadConversations();
-        }
-    }, [currentTenant, loadConversations]);
+        const check = async () => {
+            if (!user?.id) return;
+            try {
+                const { data } = await supabase
+                    .from('integrations')
+                    .select('type, enabled')
+                    .eq('user_id', user.id)
+                    .in('type', ['gmail', 'zoho']);
 
-    useEffect(() => {
-        if (selectedConversation) {
-            loadMessages(selectedConversation.id);
-        }
-    }, [selectedConversation, loadMessages]);
+                const rows = data || [];
+                const gmail = rows.some((r: any) => r.type === 'gmail' && r.enabled);
+                const zoho = rows.some((r: any) => r.type === 'zoho' && r.enabled);
+                setGmailConnected(gmail);
+                setZohoConnected(zoho);
 
-    const handleSendMessage = useCallback(async () => {
-        if (!newMessage.trim() || !selectedConversation) return;
-
-        await messageService.sendMessage(
-            user.id,
-            user.name,
-            user.role === 'admin' || user.role === 'tenant_admin' ? 'model' : 'user',
-            newMessage,
-            'recipient-id' // In production, get from conversation
-        );
-
-        setNewMessage('');
-        loadMessages(selectedConversation.id);
-    }, [newMessage, selectedConversation, user.id, user.name, user.role, loadMessages]);
-
-    const [autoPilotEnabled, setAutoPilotEnabled] = useState(false);
-
-    // Watch for new messages to trigger Auto-Pilot
-    useEffect(() => {
-        if (!autoPilotEnabled || !messages.length) return;
-
-        const lastMessage = messages[messages.length - 1]; // Messages are likely loaded via loadMessages which might be reverse order or not. 
-        // Logic check: Messages from `loadMessages` are slice(0, 10).
-        // Messages in state `messages` are sorted? 
-        // Existing code: `setMessages(msgs.slice(0, 10));` ... `msgs` comes from `messageService.getMessages` ... which does `.reverse()`. 
-        // So `messages[messages.length - 1]` is the NEWEST message.
-
-        // If newest message is from USER and we haven't replied yet (naive check: last message is user)
-        if (lastMessage.senderId !== user.id && lastMessage.senderId !== 'ai-agent' && lastMessage.role === 'user') {
-            const replyId = `reply-to-${lastMessage.id}`;
-            // Prevent duplicate replies loop - in real app use DB 'replied' flag or local Set
-            const alreadyReplied = sessionStorage.getItem(replyId);
-
-            if (!alreadyReplied) {
-                console.log('🤖 Auto-Pilot Triggered for:', lastMessage.text);
-                sessionStorage.setItem(replyId, 'processing');
-
-                // Trigger AI
-                messageService.processIncomingMessage(
-                    currentTenant?.id || '',
-                    lastMessage,
-                    selectedConversation?.name || 'Client'
-                ).then(({ autoReply }) => {
-                    if (autoReply) {
-                        toast.success('AI Auto-Replied to client');
-                        // Add to local state immediately
-                        setMessages(prev => [...prev, autoReply]);
-                        sessionStorage.setItem(replyId, 'done');
-                    }
-                });
+                // Auto-select whichever is connected, prefer gmail
+                if (gmail) setActiveProvider('gmail');
+                else if (zoho) setActiveProvider('zoho');
+            } catch (err) {
+                console.error('MessagesPage: integration check failed', err);
+            } finally {
+                setChecking(false);
             }
-        }
-    }, [messages, autoPilotEnabled, user.id, currentTenant, selectedConversation]);
+        };
+        check();
+    }, [user?.id]);
 
-    if (loading) {
-        return <div className="flex items-center justify-center h-full"><div className="text-slate-400">Loading messages...</div></div>;
+    if (checking) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full gap-4">
+                <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
+                <p className="text-slate-400 text-sm animate-pulse">Loading mail hub...</p>
+            </div>
+        );
     }
 
-    return (
-        <div className="h-full flex md:gap-4 relative">
-            {/* Conversations List */}
-            <div className={`w-full md:w-80 bg-slate-900/50 border border-slate-800 rounded-2xl flex-col ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
-                <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950/30 rounded-t-2xl">
-                    <h3 className="font-bold text-white">Messages</h3>
-                    {/* Auto-Pilot Toggle */}
+    const hasAny = gmailConnected || zohoConnected;
+
+    // No providers connected — show setup prompt
+    if (!hasAny) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-12 max-w-xl shadow-2xl relative overflow-hidden"
+                >
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-teal-500/60 to-transparent" />
+                    <div className="w-20 h-20 bg-teal-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-teal-500/20">
+                        <Mail className="w-10 h-10 text-teal-400" />
+                    </div>
+                    <h2 className="text-2xl font-black text-white mb-3">Connect Your Mail</h2>
+                    <p className="text-slate-400 mb-8 leading-relaxed">
+                        Connect Gmail or Zoho Mail to manage your inbox, send replies, and let AI handle routine correspondence — all from here.
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                        {/* Gmail option */}
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5 text-left">
+                            <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center mb-3">
+                                <span className="text-xl">📧</span>
+                            </div>
+                            <h4 className="text-white font-bold mb-1">Gmail</h4>
+                            <p className="text-slate-400 text-xs leading-relaxed mb-4">
+                                Connect your Google Workspace or Gmail account for full inbox access.
+                            </p>
+                            <div className="flex items-center gap-1.5 text-amber-500 text-xs">
+                                <AlertCircle className="w-3.5 h-3.5" />
+                                Not connected
+                            </div>
+                        </div>
+
+                        {/* Zoho option */}
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5 text-left">
+                            <div className="w-10 h-10 rounded-xl bg-[#f5d400]/10 flex items-center justify-center mb-3">
+                                <span className="text-xl">✉️</span>
+                            </div>
+                            <h4 className="text-white font-bold mb-1">Zoho Mail</h4>
+                            <p className="text-slate-400 text-xs leading-relaxed mb-4">
+                                Connect your professional Zoho Mail account for business comms.
+                            </p>
+                            <div className="flex items-center gap-1.5 text-amber-500 text-xs">
+                                <AlertCircle className="w-3.5 h-3.5" />
+                                Not connected
+                            </div>
+                        </div>
+                    </div>
+
                     <button
-                        onClick={() => {
-                            const newState = !autoPilotEnabled;
-                            setAutoPilotEnabled(newState);
-                            toast(newState ? "AI Auto-Pilot ACTIVATED 🤖" : "AI Auto-Pilot Deactivated", { icon: newState ? '🟢' : '⚪️' });
-                        }}
-                        className={`flex items-center gap-2 text-[10px] uppercase font-bold px-3 py-1.5 rounded-full border transition-all ${autoPilotEnabled
-                            ? 'bg-teal-500/20 text-teal-400 border-teal-500/50 shadow-lg shadow-teal-500/10'
-                            : 'bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-600'
+                        onClick={() => router.push('/dashboard/business/settings?tab=integrations')}
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-teal-900/20"
+                    >
+                        Go to Integrations <ArrowRight className="w-4 h-4" />
+                    </button>
+                </motion.div>
+            </div>
+        );
+    }
+
+    // Provider tab toggle (only show tabs if both are connected)
+    const showTabs = gmailConnected && zohoConnected;
+
+    return (
+        <div className="flex flex-col h-full">
+            {/* Provider switcher */}
+            {showTabs && (
+                <div className="flex items-center gap-2 mb-4 p-1 bg-slate-900/50 rounded-2xl border border-slate-800 w-fit">
+                    <button
+                        onClick={() => setActiveProvider('gmail')}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${activeProvider === 'gmail'
+                            ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/20'
+                            : 'text-slate-400 hover:text-white'
                             }`}
                     >
-                        <Bot className={`w-3 h-3 ${autoPilotEnabled ? 'animate-pulse' : ''}`} />
-                        {autoPilotEnabled ? 'Auto-Pilot ON' : 'Auto-Pilot OFF'}
+                        <span>📧</span> Gmail
+                        {gmailConnected && (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-teal-300 opacity-80" />
+                        )}
+                    </button>
+                    <button
+                        onClick={() => setActiveProvider('zoho')}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${activeProvider === 'zoho'
+                            ? 'bg-[#f5d400] text-slate-900 shadow-lg shadow-yellow-900/20'
+                            : 'text-slate-400 hover:text-white'
+                            }`}
+                    >
+                        <span>✉️</span> Zoho Mail
+                        {zohoConnected && (
+                            <CheckCircle2 className="w-3.5 h-3.5 opacity-60" />
+                        )}
                     </button>
                 </div>
+            )}
 
-                <div className="p-4 pt-2 border-b border-slate-800">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder="Search messages..."
-                            className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 text-sm transition-all"
-                        />
-                    </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto">
-                    {conversations.map(conv => (
-                        <div
-                            key={conv.id}
-                            onClick={() => setSelectedConversation(conv)}
-                            className={`p-4 border-b border-slate-800 cursor-pointer transition-colors ${selectedConversation?.id === conv.id
-                                ? 'bg-teal-500/10 border-l-4 border-l-teal-500'
-                                : 'hover:bg-slate-800/50'
-                                }`}
+            {/* Provider content */}
+            <div className="flex-1 min-h-0 relative">
+                <AnimatePresence mode="wait">
+                    {activeProvider === 'gmail' && (
+                        <motion.div
+                            key="gmail"
+                            initial={{ opacity: 0, x: -10, scale: 0.99 }}
+                            animate={{ opacity: 1, x: 0, scale: 1 }}
+                            exit={{ opacity: 0, x: 10, scale: 0.99 }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
+                            className="h-full absolute inset-0"
                         >
-                            <div className="flex items-start gap-3">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold flex-shrink-0">
-                                    {conv.name.charAt(0)}
+                            <Suspense fallback={
+                                <div className="flex flex-col items-center justify-center h-full gap-3">
+                                    <Loader2 className="w-6 h-6 animate-spin text-teal-400" />
+                                    <p className="text-xs text-slate-500">Loading Gmail...</p>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <h4 className="font-medium text-sm truncate">{conv.name}</h4>
-                                        {conv.unread && (
-                                            <div className="w-2 h-2 bg-teal-500 rounded-full" />
-                                        )}
-                                    </div>
-                                    <p className="text-xs text-slate-400 truncate">{conv.lastMessage}</p>
+                            }>
+                                <GmailIntegrationView userId={user.id} />
+                            </Suspense>
+                        </motion.div>
+                    )}
+                    {activeProvider === 'zoho' && (
+                        <motion.div
+                            key="zoho"
+                            initial={{ opacity: 0, x: 10, scale: 0.99 }}
+                            animate={{ opacity: 1, x: 0, scale: 1 }}
+                            exit={{ opacity: 0, x: -10, scale: 0.99 }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
+                            className="h-full absolute inset-0"
+                        >
+                            <Suspense fallback={
+                                <div className="flex flex-col items-center justify-center h-full gap-3">
+                                    <Loader2 className="w-6 h-6 animate-spin text-[#f5d400]" />
+                                    <p className="text-xs text-slate-500">Loading Zoho...</p>
                                 </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                            }>
+                                <ZohoMailView userId={user.id} />
+                            </Suspense>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
-
-            {/* Messages Area - Mobile Only (when active) OR Desktop */}
-            <div className={`flex-1 bg-slate-900/50 border border-slate-800 rounded-2xl flex-col ${selectedConversation ? 'flex' : 'hidden md:flex'}`}>
-                {selectedConversation ? (
-                    <>
-                        {/* Header */}
-                        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <button
-                                    onClick={() => setSelectedConversation(null)}
-                                    className="md:hidden p-2 -ml-2 hover:bg-slate-800 rounded-full transition-colors"
-                                >
-                                    <ArrowLeft className="w-5 h-5 text-slate-400" />
-                                </button>
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold">
-                                    {selectedConversation.name.charAt(0)}
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold">{selectedConversation.name}</h3>
-                                    <p className="text-xs text-slate-400">Online</p>
-                                </div>
-                            </div>
-                            <button className="p-2 hover:bg-slate-800 rounded">
-                                <MoreVertical className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        {/* Messages */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                            {messages.map((msg, idx) => (
-                                <div
-                                    key={idx}
-                                    className={`flex ${msg.senderId === user.id ? 'justify-end' : 'justify-start'}`}
-                                >
-                                    <div
-                                        className={`max-w-md px-5 py-3 rounded-2xl ${msg.senderId === user.id
-                                            ? 'bg-teal-500 text-white rounded-br-none'
-                                            : 'bg-slate-800 text-slate-100 rounded-bl-none'
-                                            }`}
-                                    >
-                                        <p className="text-sm">{msg.text}</p>
-                                        <p className="text-xs opacity-70 mt-1">
-                                            {new Date(msg.timestamp).toLocaleTimeString()}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Input */}
-                        <div className="p-4 border-t border-slate-800">
-                            <div className="flex items-center gap-3">
-                                <button className="p-2 hover:bg-slate-800 rounded">
-                                    <Paperclip className="w-5 h-5 text-slate-400" />
-                                </button>
-                                <input
-                                    type="text"
-                                    value={newMessage}
-                                    onChange={(e) => setNewMessage(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                                    placeholder="Type a message..."
-                                    className="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all"
-                                />
-                                <button
-                                    onClick={handleSendMessage}
-                                    className="p-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors"
-                                >
-                                    <Send className="w-5 h-5" />
-                                </button>
-                            </div>
-                        </div>
-                    </>
-                ) : (
-                    <div className="flex items-center justify-center h-full text-slate-400">
-                        Select a conversation to start messaging
-                    </div>
-                )}
-            </div>
-        </div >
+        </div>
     );
 };
 

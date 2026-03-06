@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import LandingPage from '@/components/LandingPage';
 import { User, Project } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,12 +10,14 @@ export default function Home() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
+  const hasRedirected = useRef(false);
 
-  // Auto-redirect authenticated users to dashboard
+  // Auto-redirect authenticated users to dashboard (once auth state is settled)
   useEffect(() => {
-    if (!loading && user) {
+    if (!loading && user && !hasRedirected.current) {
+      hasRedirected.current = true;
       console.log('Authenticated user detected on homepage, redirecting to dashboard...');
-      router.push('/dashboard');
+      router.replace('/dashboard');
     }
   }, [user, loading, router]);
 

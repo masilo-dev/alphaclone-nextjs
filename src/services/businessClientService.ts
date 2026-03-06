@@ -253,33 +253,41 @@ export const businessClientService = {
      */
     async getDashboardStats(tenantId: string): Promise<{ stats: DashboardStats | null; error: string | null }> {
         try {
-            const { data, error } = await supabase
-                .rpc('get_tenant_dashboard_stats', { tenant_id_param: tenantId }); // Fixed parameter name
+            // Query tables directly — avoids dependency on the missing RPC function
+            const [
+                { count: totalProjects },
+                { count: totalClients },
+                { count: totalLeads },
+                { count: totalDeals },
+                { data: invoiceData },
+            ] = await Promise.all([
+                supabase.from('projects').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+                supabase.from('business_clients').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+                supabase.from('leads').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+                supabase.from('deals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+                supabase.from('invoices').select('id, status, amount').eq('tenant_id', tenantId),
+            ]);
 
-            if (error) throw error;
+            const invoices = invoiceData || [];
+            const totalRevenue = invoices
+                .filter((i: any) => i.status === 'paid')
+                .reduce((sum: number, i: any) => sum + (i.amount || 0), 0);
+            const pendingInvoices = invoices.filter((i: any) => i.status === 'pending').length;
 
-            const raw = data as any;
             const stats: DashboardStats = {
-                totalRevenue: raw.total_revenue || 0,
-                clientCount: raw.total_clients || 0,
-                activeProjects: raw.total_projects || 0,
-                pendingInvoices: raw.pending_invoices || 0,
-                recentActivity: (raw.recent_activity || []).map((a: any) => ({
-                    type: a.type,
-                    title: a.title,
-                    date: a.date
-                })),
-                monthlyRevenue: (raw.monthly_revenue || []).map((m: any) => ({
-                    month: m.month,
-                    amount: m.amount
-                })),
-                pipeline: raw.pipeline || {}
+                totalRevenue,
+                clientCount: totalClients || 0,
+                activeProjects: totalProjects || 0,
+                pendingInvoices,
+                recentActivity: [],
+                monthlyRevenue: [],
+                pipeline: {}
             };
 
             return { stats, error: null };
         } catch (err: any) {
-            console.error('Error fetching dashboard stats:', err);
-            return { stats: null, error: err.message };
+            console.error('Error fetching dashboard stats:', err?.message);
+            return { stats: null, error: err?.message || 'Failed to load stats' };
         }
     }
 };
