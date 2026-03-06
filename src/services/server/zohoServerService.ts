@@ -173,5 +173,24 @@ export const zohoServerService = {
         }
 
         return await response.json();
+    },
+
+    /**
+     * Send email via Zoho Mail API
+     */
+    async sendMessage(userId: string, data: {
+        toAddress: string;
+        subject: string;
+        content: string;
+    }) {
+        return this.proxyRequest(userId, 'messages', {
+            method: 'POST',
+            body: JSON.stringify({
+                toAddress: data.toAddress,
+                subject: data.subject,
+                content: data.content,
+                mailFormat: 'html'
+            }),
+        });
     }
 };

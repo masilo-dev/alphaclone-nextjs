@@ -15,11 +15,15 @@ import {
     Archive,
     CheckCircle2,
     AlertCircle,
-    ExternalLink
+    ExternalLink,
+    Plus,
+    Sparkles
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { Button, Badge } from '../../ui/UIComponents';
 import toast from 'react-hot-toast';
+import AIOutreachModal from './AIOutreachModal';
+import ComposeEmailModal from './ComposeEmailModal';
 
 const FOLDERS = [
     { id: 'inbox', label: 'Inbox', icon: Mail },
@@ -52,6 +56,8 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
     const [replyBody, setReplyBody] = useState('');
     const [sending, setSending] = useState(false);
     const [accountEmail, setAccountEmail] = useState('');
+    const [isOutreachOpen, setIsOutreachOpen] = useState(false);
+    const [isComposeOpen, setIsComposeOpen] = useState(false); // For future single compose
 
     const fetchEmails = async (folder: string = activeFolder) => {
         setLoading(true);
@@ -166,6 +172,25 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
         <div className="flex h-[calc(100vh-120px)] min-h-[600px] w-full bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
             {/* Icon sidebar */}
             <div className="w-16 sm:w-20 border-r border-slate-800 flex flex-col items-center py-6 gap-5 bg-slate-950/50">
+                {/* Primary Actions */}
+                <button
+                    onClick={() => setIsOutreachOpen(true)}
+                    title="AI Bulk Outreach"
+                    className="p-3 rounded-2xl bg-[#f5d400] text-slate-900 shadow-lg shadow-yellow-500/20 hover:scale-110 active:scale-95 transition-all mb-2"
+                >
+                    <Sparkles className="w-5 h-5 fill-current" />
+                </button>
+
+                <button
+                    onClick={() => setIsComposeOpen(true)}
+                    title="Compose New Email"
+                    className="p-3 rounded-2xl bg-slate-900 border border-slate-800 text-white hover:border-[#f5d400]/40 transition-all mb-4"
+                >
+                    <Plus className="w-5 h-5" />
+                </button>
+
+                <div className="w-8 h-[1px] bg-slate-800 mb-2" />
+
                 {FOLDERS.map(({ id, icon: Icon, label }) => (
                     <button
                         key={id}
@@ -341,6 +366,17 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
                     </div>
                 )}
             </div>
+            {/* Modals */}
+            <AIOutreachModal
+                isOpen={isOutreachOpen}
+                onClose={() => setIsOutreachOpen(false)}
+                userId={userId}
+            />
+            <ComposeEmailModal
+                isOpen={isComposeOpen}
+                onClose={() => setIsComposeOpen(false)}
+                userId={userId}
+            />
         </div>
     );
 };
