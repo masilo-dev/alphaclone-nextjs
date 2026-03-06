@@ -106,7 +106,9 @@ export async function GET(req: NextRequest) {
                     accessToken: access_token,
                     refreshToken: refresh_token,
                     expiryDate: expiresAt,
-                    email
+                    email,
+                    accountsServer,
+                    mailApiHost
                 }
             }, {
                 onConflict: 'user_id,type'

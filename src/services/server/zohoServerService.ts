@@ -32,9 +32,18 @@ export const zohoServerService = {
      */
     async refreshToken(userId: string, refreshToken: string, integrationId: string): Promise<string | null> {
         try {
-            // Zoho OAuth refresh endpoints vary by region (.com, .eu, .in, etc.)
-            // We'll default to .com but this might need to be dynamic or configured
-            const response = await fetch('https://accounts.zoho.com/oauth/v2/token', {
+            const supabaseAdmin = createSupabaseAdminClient();
+
+            // Get current config to merge and find the right accountsServer
+            const { data: currentIntegration } = await supabaseAdmin
+                .from('integrations')
+                .select('config')
+                .eq('id', integrationId)
+                .single();
+
+            const accountsServer = currentIntegration?.config?.accountsServer || 'https://accounts.zoho.com';
+
+            const response = await fetch(`${accountsServer}/oauth/v2/token`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({
@@ -49,15 +58,6 @@ export const zohoServerService = {
             if (data.error) throw new Error(data.error);
 
             const expiresAt = new Date(Date.now() + (data.expires_in || 3600) * 1000).toISOString();
-
-            const supabaseAdmin = createSupabaseAdminClient();
-
-            // Get current config to merge
-            const { data: currentIntegration } = await supabaseAdmin
-                .from('integrations')
-                .select('config')
-                .eq('id', integrationId)
-                .single();
 
             const updatedConfig = {
                 ...(currentIntegration?.config || {}),
@@ -98,7 +98,8 @@ export const zohoServerService = {
             throw new Error('Zoho account ID not found');
         }
 
-        const baseUrl = 'https://mail.zoho.com/api/accounts';
+        const mailApiHost = integration?.config?.mailApiHost || 'mail.zoho.com';
+        const baseUrl = `https://${mailApiHost}/api/accounts`;
         const url = endpoint.startsWith('http')
             ? endpoint
             : accountId
