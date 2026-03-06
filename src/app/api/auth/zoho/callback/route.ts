@@ -35,9 +35,17 @@ export async function GET(req: NextRequest) {
         // 2. Exchange authorization code for tokens
         const clientId = ENV.ZOHO_CLIENT_ID;
         const clientSecret = ENV.ZOHO_CLIENT_SECRET;
+
+        // Detect Zoho DC (Data Center) from accounts-server if available, or default to .com
+        const accountsServer = searchParams.get('accounts-server') || 'https://accounts.zoho.com';
+        const tokenEndpoint = `${accountsServer}/oauth/v2/token`;
+
         const redirectUri = `${appUrl}/api/auth/zoho/callback`;
 
-        const tokenResponse = await fetch('https://accounts.zoho.com/oauth/v2/token', {
+        console.log(`[Zoho Callback] Exchanging code for tokens at: ${tokenEndpoint}`);
+        console.log(`[Zoho Callback] Using Redirect URI: ${redirectUri}`);
+
+        const tokenResponse = await fetch(tokenEndpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
@@ -52,14 +60,25 @@ export async function GET(req: NextRequest) {
         const tokens = await tokenResponse.json();
 
         if (tokens.error) {
-            throw new Error(tokens.error_description || 'Failed to exchange token');
+            console.error('[Zoho Token Error]', tokens);
+            throw new Error(tokens.error_description || tokens.error || 'Failed to exchange token');
         }
 
         const { access_token, refresh_token, expires_in } = tokens;
         const expiresAt = new Date(Date.now() + (expires_in || 3600) * 1000).toISOString();
 
         // 3. Fetch Zoho Account ID (required for Mail API)
-        const accountResponse = await fetch('https://mail.zoho.com/api/accounts', {
+        // Adjust Mail API endpoint based on accounts-server region
+        let mailApiHost = 'mail.zoho.com';
+        if (accountsServer.includes('.eu')) mailApiHost = 'mail.zoho.eu';
+        else if (accountsServer.includes('.in')) mailApiHost = 'mail.zoho.in';
+        else if (accountsServer.includes('.com.au')) mailApiHost = 'mail.zoho.com.au';
+        else if (accountsServer.includes('.jp')) mailApiHost = 'mail.zoho.jp';
+        else if (accountsServer.includes('.ca')) mailApiHost = 'mail.zoho.ca';
+
+        console.log(`[Zoho Callback] Fetching account data from: https://${mailApiHost}/api/accounts`);
+
+        const accountResponse = await fetch(`https://${mailApiHost}/api/accounts`, {
             headers: {
                 Authorization: `Zoho-oauthtoken ${access_token}`
             }

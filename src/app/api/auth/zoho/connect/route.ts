@@ -41,13 +41,17 @@ export async function GET(req: NextRequest) {
 
         const redirectUri = `${appUrl}/api/auth/zoho/callback`;
 
+        // Support for different Zoho DCs (US, EU, IN, AU, JP, CA)
+        const region = searchParams.get('region') || 'com';
+        const accountsDomain = region === 'com' ? 'accounts.zoho.com' : `accounts.zoho.${region}`;
+
         // Zoho Mail scopes
         const scopes = [
             'ZohoMail.messages.ALL',
             'ZohoMail.accounts.READ'
         ].join(',');
 
-        const authUrl = `https://accounts.zoho.com/oauth/v2/auth?` +
+        const authUrl = `https://${accountsDomain}/oauth/v2/auth?` +
             `client_id=${clientId}&` +
             `redirect_uri=${encodeURIComponent(redirectUri)}&` +
             `response_type=code&` +
