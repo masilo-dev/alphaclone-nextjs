@@ -1,0 +1,99 @@
+﻿old_business_home.tsx(4,22): error TS2307: Cannot find module '../../../types' or its corresponding type declarations.
+old_business_home.tsx(5,27): error TS2307: Cannot find module '../../../contexts/TenantContext' or its corresponding type declarations.
+old_business_home.tsx(6,39): error TS2307: Cannot find module '../../../services/businessClientService' or its corresponding type declarations.
+old_business_home.tsx(7,30): error TS2307: Cannot find module '../../../services/dailyService' or its corresponding type declarations.
+old_dashboard.tsx(5,34): error TS2307: Cannot find module './ConnectionStatus' or its corresponding type declarations.
+old_dashboard.tsx(6,31): error TS2307: Cannot find module './common/CustomContextMenu' or its corresponding type declarations.
+old_dashboard.tsx(20,30): error TS2307: Cannot find module './dashboard/projects/MilestoneManager' or its corresponding type declarations.
+old_dashboard.tsx(21,44): error TS2307: Cannot find module './ui/UIComponents' or its corresponding type declarations.
+old_dashboard.tsx(22,85): error TS2307: Cannot find module '../constants' or its corresponding type declarations.
+old_dashboard.tsx(23,105): error TS2307: Cannot find module '../types' or its corresponding type declarations.
+old_dashboard.tsx(24,31): error TS2307: Cannot find module './dashboard/business/BusinessDashboard' or its corresponding type declarations.
+old_dashboard.tsx(25,27): error TS2307: Cannot find module '../contexts/TenantContext' or its corresponding type declarations.
+old_dashboard.tsx(27,22): error TS2307: Cannot find module './dashboard/AIStudio' or its corresponding type declarations.
+old_dashboard.tsx(28,32): error TS2307: Cannot find module './dashboard/NotificationCenter' or its corresponding type declarations.
+old_dashboard.tsx(29,25): error TS2307: Cannot find module './ThemeToggle' or its corresponding type declarations.
+old_dashboard.tsx(30,34): error TS2307: Cannot find module './dashboard/EnhancedGlobalSearch' or its corresponding type declarations.
+old_dashboard.tsx(31,21): error TS2307: Cannot find module './dashboard/Sidebar' or its corresponding type declarations.
+old_dashboard.tsx(32,23): error TS2307: Cannot find module './dashboard/BottomNav' or its corresponding type declarations.
+old_dashboard.tsx(33,28): error TS2307: Cannot find module './dashboard/CommandPalette' or its corresponding type declarations.
+old_dashboard.tsx(34,21): error TS2307: Cannot find module './dashboard/HomeTab' or its corresponding type declarations.
+old_dashboard.tsx(35,30): error TS2307: Cannot find module './dashboard/ProjectSubmitTab' or its corresponding type declarations.
+old_dashboard.tsx(36,29): error TS2307: Cannot find module './ExitIntentModal' or its corresponding type declarations.
+old_dashboard.tsx(37,31): error TS2307: Cannot find module './dashboard/video/IncomingCallModal' or its corresponding type declarations.
+old_dashboard.tsx(38,80): error TS2307: Cannot find module '../services/geminiService' or its corresponding type declarations.
+old_dashboard.tsx(49,36): error TS2307: Cannot find module '../contexts/BackgroundTaskContext' or its corresponding type declarations.
+old_dashboard.tsx(51,51): error TS2307: Cannot find module '../services/dashboardService' or its corresponding type declarations.
+old_dashboard.tsx(52,32): error TS2307: Cannot find module '../services/projectService' or its corresponding type declarations.
+old_dashboard.tsx(53,32): error TS2307: Cannot find module '../services/messageService' or its corresponding type declarations.
+old_dashboard.tsx(54,32): error TS2307: Cannot find module '../services/paymentService' or its corresponding type declarations.
+old_dashboard.tsx(55,29): error TS2307: Cannot find module '../services/userService' or its corresponding type declarations.
+old_dashboard.tsx(56,31): error TS2307: Cannot find module './dashboard/SecurityDashboard' or its corresponding type declarations.
+old_dashboard.tsx(57,31): error TS2307: Cannot find module './contracts/ContractDashboard' or its corresponding type declarations.
+old_dashboard.tsx(58,37): error TS2307: Cannot find module './contracts/AlphaCloneContractModal' or its corresponding type declarations.
+old_dashboard.tsx(59,26): error TS2307: Cannot find module './dashboard/SettingsPage' or its corresponding type declarations.
+old_dashboard.tsx(60,33): error TS2307: Cannot find module './dashboard/OnboardingPipelines' or its corresponding type declarations.
+old_dashboard.tsx(61,31): error TS2307: Cannot find module './dashboard/PortfolioShowcase' or its corresponding type declarations.
+old_dashboard.tsx(62,24): error TS2307: Cannot find module './dashboard/SalesAgent' or its corresponding type declarations.
+old_dashboard.tsx(63,26): error TS2307: Cannot find module './dashboard/WelcomeModal' or its corresponding type declarations.
+old_dashboard.tsx(64,28): error TS2307: Cannot find module './onboarding/OnboardingFlow' or its corresponding type declarations.
+old_dashboard.tsx(65,32): error TS2307: Cannot find module './dashboard/CreateInvoiceModal' or its corresponding type declarations.
+old_dashboard.tsx(66,37): error TS2307: Cannot find module './dashboard/WidgetErrorBoundary' or its corresponding type declarations.
+old_dashboard.tsx(68,40): error TS2307: Cannot find module '../hooks/useOverdueTaskNotifier' or its corresponding type declarations.
+old_dashboard.tsx(69,33): error TS2307: Cannot find module './dashboard/DeletionOverlay' or its corresponding type declarations.
+old_dashboard.tsx(70,27): error TS2307: Cannot find module './common/PullToRefresh' or its corresponding type declarations.
+old_dashboard.tsx(72,47): error TS2307: Cannot find module './dashboard/ConferenceTab' or its corresponding type declarations.
+old_dashboard.tsx(73,46): error TS2307: Cannot find module './dashboard/AnalyticsTab' or its corresponding type declarations.
+old_dashboard.tsx(74,40): error TS2307: Cannot find module './dashboard/CRMTab' or its corresponding type declarations.
+old_dashboard.tsx(75,45): error TS2307: Cannot find module './dashboard/MessagesTab' or its corresponding type declarations.
+old_dashboard.tsx(76,44): error TS2307: Cannot find module './dashboard/FinanceTab' or its corresponding type declarations.
+old_dashboard.tsx(77,47): error TS2307: Cannot find module './dashboard/ArticleEditor' or its corresponding type declarations.
+old_dashboard.tsx(78,51): error TS2307: Cannot find module './dashboard/CalendarComponent' or its corresponding type declarations.
+old_dashboard.tsx(79,54): error TS2307: Cannot find module './dashboard/admin/SuperAdminTenantsTab' or its corresponding type declarations.
+old_dashboard.tsx(80,52): error TS2307: Cannot find module './dashboard/admin/SuperAdminUsersTab' or its corresponding type declarations.
+old_dashboard.tsx(81,50): error TS2307: Cannot find module './dashboard/admin/ImprovementsPage' or its corresponding type declarations.
+old_dashboard.tsx(82,55): error TS2307: Cannot find module './dashboard/ContactSubmissionsTab' or its corresponding type declarations.
+old_dashboard.tsx(83,42): error TS2307: Cannot find module './dashboard/TasksTab' or its corresponding type declarations.
+old_dashboard.tsx(84,42): error TS2307: Cannot find module './dashboard/DealsTab' or its corresponding type declarations.
+old_dashboard.tsx(85,43): error TS2307: Cannot find module './dashboard/QuotesTab' or its corresponding type declarations.
+old_dashboard.tsx(86,50): error TS2307: Cannot find module './dashboard/SalesForecastTab' or its corresponding type declarations.
+old_dashboard.tsx(87,51): error TS2307: Cannot find module './dashboard/admin/UserLocationTable' or its corresponding type declarations.
+old_dashboard.tsx(88,42): error TS2307: Cannot find module './dashboard/GmailTab' or its corresponding type declarations.
+old_dashboard.tsx(90,49): error TS2307: Cannot find module './dashboard/video/CustomVideoRoom' or its corresponding type declarations.
+old_dashboard.tsx(93,31): error TS2307: Cannot find module './ui/Skeleton' or its corresponding type declarations.
+old_dashboard.tsx(94,29): error TS2307: Cannot find module './ui/TabSkeleton' or its corresponding type declarations.
+old_dashboard.tsx(95,28): error TS2307: Cannot find module './ui/EmptyState' or its corresponding type declarations.
+old_dashboard.tsx(219,45): error TS7006: Parameter 't' implicitly has an 'any' type.
+old_dashboard.tsx(401,76): error TS7031: Binding element 'fetchedMessages' implicitly has an 'any' type.
+old_dashboard.tsx(401,93): error TS7031: Binding element 'error' implicitly has an 'any' type.
+old_dashboard.tsx(411,67): error TS7031: Binding element 'stats' implicitly has an 'any' type.
+old_dashboard.tsx(417,54): error TS7031: Binding element 'users' implicitly has an 'any' type.
+old_dashboard.tsx(417,61): error TS7031: Binding element 'error' implicitly has an 'any' type.
+old_dashboard.tsx(419,40): error TS7006: Parameter 'u' implicitly has an 'any' type.
+old_dashboard.tsx(436,22): error TS2307: Cannot find module './dashboard/CRMTab' or its corresponding type declarations.
+old_dashboard.tsx(437,22): error TS2307: Cannot find module './dashboard/FinanceTab' or its corresponding type declarations.
+old_dashboard.tsx(438,22): error TS2307: Cannot find module './dashboard/TasksTab' or its corresponding type declarations.
+old_dashboard.tsx(439,22): error TS2307: Cannot find module './dashboard/QuotesTab' or its corresponding type declarations.
+old_dashboard.tsx(440,22): error TS2307: Cannot find module './dashboard/DealsTab' or its corresponding type declarations.
+old_dashboard.tsx(441,22): error TS2307: Cannot find module './dashboard/AnalyticsTab' or its corresponding type declarations.
+old_dashboard.tsx(474,8): error TS7006: Parameter 'newMessage' implicitly has an 'any' type.
+old_dashboard.tsx(474,20): error TS7006: Parameter 'eventType' implicitly has an 'any' type.
+old_dashboard.tsx(509,16): error TS2307: Cannot find module '../services/activityService' or its corresponding type declarations.
+old_dashboard.tsx(515,16): error TS2307: Cannot find module '../services/activityService' or its corresponding type declarations.
+old_dashboard.tsx(524,61): error TS7006: Parameter 'updatedProject' implicitly has an 'any' type.
+old_dashboard.tsx(585,46): error TS2307: Cannot find module '../services/userService' or its corresponding type declarations.
+old_dashboard.tsx(672,16): error TS2307: Cannot find module '../services/activityService' or its corresponding type declarations.
+old_dashboard.tsx(679,20): error TS7006: Parameter 'err' implicitly has an 'any' type.
+old_dashboard.tsx(781,41): error TS2307: Cannot find module '../services/alphacloneContractTemplate' or its corresponding type declarations.
+old_dashboard.tsx(799,39): error TS2307: Cannot find module '../services/alphacloneContractTemplate' or its corresponding type declarations.
+old_dashboard.tsx(907,69): error TS7006: Parameter 'err' implicitly has an 'any' type.
+old_dashboard.tsx(937,18): error TS2307: Cannot find module '../services/activityService' or its corresponding type declarations.
+old_dashboard.tsx(942,16): error TS2307: Cannot find module '../services/activityService' or its corresponding type declarations.
+old_dashboard.tsx(954,14): error TS2307: Cannot find module '../services/activityService' or its corresponding type declarations.
+old_dashboard.tsx(1400,30): error TS7006: Parameter 'id' implicitly has an 'any' type.
+old_dashboard.tsx(1424,24): error TS7006: Parameter 'tab' implicitly has an 'any' type.
+old_dashboard.tsx(1599,26): error TS7006: Parameter 'e' implicitly has an 'any' type.
+old_dashboard.tsx(1637,26): error TS7006: Parameter 'e' implicitly has an 'any' type.
+old_dashboard.tsx(1675,22): error TS7006: Parameter 'href' implicitly has an 'any' type.
+old_tenant_service.ts(6,26): error TS2307: Cannot find module '../../lib/supabase' or its corresponding type declarations.
+old_tenant_service.ts(13,8): error TS2307: Cannot find module './types' or its corresponding type declarations.

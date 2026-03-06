@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, CheckCircle2, ShieldCheck, Zap, Globe, Link2, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
 import { zohoService } from '../../services/zohoService';
 import ZohoMailView from './business/ZohoMailView';
@@ -13,6 +14,7 @@ interface MailTabProps {
 }
 
 const MailTab: React.FC<MailTabProps> = ({ user }) => {
+    const searchParams = useSearchParams();
     const [isZohoIntegrated, setIsZohoIntegrated] = useState<boolean | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isConnecting, setIsConnecting] = useState(false);
@@ -23,6 +25,12 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
         try {
             const connected = await zohoService.checkIntegration(user.id);
             setIsZohoIntegrated(connected);
+            if (connected && searchParams.get('zoho') === 'connected') {
+                toast.success('Zoho Mail Connected Successfully!', {
+                    icon: '🚀',
+                    duration: 5000,
+                });
+            }
         } catch (err) {
             console.error('Failed to check Zoho integration:', err);
             setIsZohoIntegrated(false);
@@ -33,12 +41,13 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
 
     useEffect(() => {
         checkStatus();
-    }, [user?.id]);
+    }, [user?.id, searchParams.get('zoho')]);
 
     const handleConnectZoho = () => {
         setIsConnecting(true);
-        // Redirect to Zoho OAuth flow
-        window.location.href = `/api/auth/zoho/connect?userId=${user.id}`;
+        // Redirect to Zoho OAuth flow with current path as returnTo
+        const currentPath = window.location.pathname;
+        window.location.href = `/api/auth/zoho/connect?userId=${user.id}&returnTo=${encodeURIComponent(currentPath)}`;
     };
 
     if (isLoading) {

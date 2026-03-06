@@ -54,7 +54,7 @@ import ContractDashboard from '../../contracts/ContractDashboard';
 import DocumentHub from '../../documents/DocumentHub';
 // Accounting Components - Lazy loaded to prevent module resolution issues
 const AccountingDashboard = React.lazy(() => import('../accounting/AccountingDashboard'));
-const GmailTab = React.lazy(() => import('../GmailTab'));
+const MailTab = React.lazy(() => import('../MailTab'));
 const CustomVideoRoom = React.lazy(() => import('../video/CustomVideoRoom'));
 
 import Sidebar from '@/components/dashboard/Sidebar';
@@ -330,10 +330,11 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     </React.Suspense>
                 );
 
+            case '/dashboard/mail':
             case '/dashboard/gmail':
                 return (
-                    <React.Suspense fallback={<div>Loading Gmail...</div>}>
-                        <GmailTab user={user} />
+                    <React.Suspense fallback={<TableSkeleton rows={4} columns={1} />}>
+                        <MailTab user={user} />
                     </React.Suspense>
                 );
 
@@ -371,7 +372,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/sales-agent': return 'Sales Agent';
             case '/dashboard/leads': return 'Leads & Pipelines';
             case '/dashboard/accounting': return 'Accounting Dashboard';
-            case '/dashboard/gmail': return 'Gmail Integration';
+            case '/dashboard/mail':
+            case '/dashboard/gmail': return 'Mail Command Center';
             default: return 'AlphaClone';
         }
     };
@@ -541,6 +543,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
                 {/* Dynamic Content Area */}
                 <div className={`flex-1 ${[
+                    '/dashboard/mail',
                     '/dashboard/gmail',
                     '/dashboard/business/projects',
                     '/dashboard/tasks',
