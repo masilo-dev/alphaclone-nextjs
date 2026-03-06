@@ -60,7 +60,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         { id: 'nav-projects', title: 'Project Management', description: 'Active & pending projects', icon: Briefcase, category: 'Navigate', action: () => router.push('/dashboard?tab=projects') },
         { id: 'nav-crm', title: 'CRM & Pipeline', description: 'Manage leads & clients', icon: Users, category: 'Navigate', action: () => router.push('/dashboard?tab=crm') },
         { id: 'nav-messages', title: 'Messenger', description: 'Internal communication', icon: MessageSquare, category: 'Navigate', action: () => router.push('/dashboard?tab=messages') },
-        { id: 'nav-gmail', title: 'Gmail Inbox', description: 'Connect & management', icon: Mail, category: 'Navigate', action: () => router.push('/dashboard?tab=gmail') },
+        { id: 'nav-mail', title: 'Mail Inbox', description: 'Connect & management', icon: Mail, category: 'Navigate', action: () => router.push('/dashboard?tab=mail') },
         { id: 'nav-calendar', title: 'Schedule & Booking', description: 'Manage your time', icon: Calendar, category: 'Navigate', action: () => router.push('/dashboard?tab=calendar') },
 
         // --- FINANCE ---

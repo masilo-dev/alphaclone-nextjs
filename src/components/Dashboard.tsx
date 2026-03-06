@@ -85,7 +85,7 @@ const DealsTab = React.lazy(() => import('./dashboard/DealsTab'));
 const QuotesTab = React.lazy(() => import('./dashboard/QuotesTab'));
 const SalesForecastTab = React.lazy(() => import('./dashboard/SalesForecastTab'));
 const UserLocationTable = React.lazy(() => import('./dashboard/admin/UserLocationTable'));
-const GmailTab = React.lazy(() => import('./dashboard/GmailTab'));
+const MailTab = React.lazy(() => import('./dashboard/MailTab'));
 
 const CustomVideoRoom = React.lazy(() => import('./dashboard/video/CustomVideoRoom'));
 
@@ -1001,10 +1001,11 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         );
 
-      case '/dashboard/gmail':
+      case '/dashboard/mail':
+      case '/dashboard/gmail': // Keep for backward compatibility/redirect
         return (
           <React.Suspense fallback={<TabSkeleton rows={4} showStats={false} />}>
-            <GmailTab user={user} />
+            <MailTab user={user} />
           </React.Suspense>
         );
 

@@ -36,7 +36,7 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
   { label: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
   { label: 'Meetings', href: '/dashboard/conference', icon: Video },
   { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
-  { label: 'Mail', href: '/dashboard/gmail', icon: Mail },
+  { label: 'Mail', href: '/dashboard/mail', icon: Mail },
   { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
   { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
   { label: 'Creative Intel Lab', href: '/dashboard/ai-studio', icon: Palette, comingSoon: true },
@@ -56,7 +56,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'Calendar', href: '/dashboard/calendar' },
       { label: 'Meetings', href: '/dashboard/meetings' },
-      { label: 'Mail', href: '/dashboard/gmail' },
+      { label: 'Mail', href: '/dashboard/mail' },
       { label: 'Messages', href: '/dashboard/messages' },
     ]
   },
@@ -96,7 +96,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Contacts', href: '/dashboard/crm', icon: Users },
 
   // 3. Communication & Scheduling
-  { label: 'Mail', href: '/dashboard/gmail', icon: Mail },
+  { label: 'Mail', href: '/dashboard/mail', icon: Mail },
   { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
   { label: 'Booking', href: '/dashboard/business/booking', icon: Clock },
   { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
