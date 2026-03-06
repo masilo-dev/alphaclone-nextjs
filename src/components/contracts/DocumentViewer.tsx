@@ -73,24 +73,27 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         const loadPdf = async () => {
             setIsLoading(true);
             try {
-                // @ts-ignore
-                const pdfjs = await import('pdfjs-dist');
-                if (typeof window !== 'undefined' && !pdfjs.GlobalWorkerOptions.workerSrc) {
-                    const WORKER_URL = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-                    pdfjs.GlobalWorkerOptions.workerSrc = WORKER_URL;
+                // @ts-ignore - Dynamic import of PDF.js
+                const pdfjsLib = await import('pdfjs-dist/build/pdf.mjs');
+
+                // Ensure worker is only initialized once
+                if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
+                    const version = pdfjsLib.version || '5.4.624';
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.mjs`;
                 }
-                const loadingTask = pdfjs.getDocument(url);
+
+                const loadingTask = pdfjsLib.getDocument(url);
                 const pdfDoc = await loadingTask.promise;
                 setPdf(pdfDoc);
                 setNumPages(pdfDoc.numPages);
             } catch (error) {
-                console.error('PDF Load Error:', error);
-                toast.error('Failed to render PDF background');
+                console.error('PDF Library Load Error:', error);
+                toast.error('Failed to initialize document viewer');
             } finally {
                 setIsLoading(false);
             }
         };
-        loadPdf();
+        if (url) loadPdf();
     }, [url]);
 
     const handlePageClick = (e: React.MouseEvent, pageNumber: number) => {

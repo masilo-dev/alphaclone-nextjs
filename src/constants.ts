@@ -31,36 +31,24 @@ export const LOGO_URL = "/logo.png";
 
 // --- CLIENT NAVIGATION ---
 export const CLIENT_NAV_ITEMS: NavItem[] = [
-  { label: 'Business Home', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Mission Control', href: '/dashboard/projects', icon: Briefcase },
-  { label: 'Operations Calendar', href: '/dashboard/calendar', icon: Calendar },
-  { label: 'High-Definition Ops', href: '/dashboard/conference', icon: Video },
-  { label: 'Communication Hub', href: '/dashboard/messages', icon: MessageSquare },
-  { label: 'Email Sync', href: '/dashboard/gmail', icon: Mail },
-  { label: 'Revenue & Payments', href: '/dashboard/finance', icon: DollarSign },
-  { label: 'Agreement Lifecycle', href: '/dashboard/contracts', icon: FileText },
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Projects', href: '/dashboard/projects', icon: Briefcase },
+  { label: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
+  { label: 'Meetings', href: '/dashboard/conference', icon: Video },
+  { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
+  { label: 'Mail', href: '/dashboard/gmail', icon: Mail },
+  { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
+  { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
   { label: 'Creative Intel Lab', href: '/dashboard/ai-studio', icon: Palette, comingSoon: true },
-  { label: 'Operational Request', href: '/dashboard/submit', icon: FileText },
-  { label: 'System Settings', href: '/dashboard/settings', icon: Settings },
+  { label: 'Documents', href: '/dashboard/submit', icon: FileText },
+  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
 // --- ADMIN NAVIGATION ---
 export const ADMIN_NAV_ITEMS: NavItem[] = [
-  { label: 'Platform Command', href: '/dashboard/admin/tenants', icon: Users },
-
-  { label: 'Command Center', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Live Operations', href: '/dashboard/analytics', icon: Activity },
-  {
-    label: 'Unified Intelligence',
-    href: '#',
-    icon: Users,
-    subItems: [
-      { label: 'Intelligence CRM', href: '/dashboard/clients' },
-      { label: 'Autonomous Growth', href: '/dashboard/sales-agent' },
-      { label: 'Mission Control', href: '/dashboard/projects' },
-      { label: 'Onboarding Pipelines', href: '/dashboard/onboarding' },
-    ]
-  },
+  { label: 'Tenants', href: '/dashboard/admin/tenants', icon: Users },
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Live Stats', href: '/dashboard/analytics', icon: Activity },
   {
     label: 'Communication',
     href: '#',
@@ -68,8 +56,8 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'Calendar', href: '/dashboard/calendar' },
       { label: 'Meetings', href: '/dashboard/meetings' },
-      { label: 'Email', href: '/dashboard/gmail' },
-      { label: 'Inbox', href: '/dashboard/messages' },
+      { label: 'Mail', href: '/dashboard/gmail' },
+      { label: 'Messages', href: '/dashboard/messages' },
     ]
   },
   {
@@ -77,9 +65,9 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     href: '#',
     icon: Layers,
     subItems: [
-      { label: 'SEO Engine', href: '/dashboard/articles' },
-      { label: 'Resource Allocation', href: '/dashboard/allocation' },
-      { label: 'System Improvements', href: '/dashboard/admin/improvements' },
+      { label: 'SEO', href: '/dashboard/articles' },
+      { label: 'Allocation', href: '/dashboard/allocation' },
+      { label: 'Improvements', href: '/dashboard/admin/improvements' },
     ]
   },
   {
@@ -88,46 +76,46 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     icon: TrendingUp,
     subItems: [
       { label: 'Tasks', href: '/dashboard/tasks' },
-      { label: 'Deals Pipeline', href: '/dashboard/deals' },
-      { label: 'Sales Forecast', href: '/dashboard/forecast' },
+      { label: 'Deals', href: '/dashboard/deals' },
+      { label: 'Forecast', href: '/dashboard/forecast' },
     ]
   },
   { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
-  { label: 'Financials', href: '/dashboard/finance', icon: DollarSign },
-  { label: 'Security (SIEM)', href: '/dashboard/security', icon: ShieldCheck },
+  { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
+  { label: 'Security', href: '/dashboard/security', icon: ShieldCheck },
 ];
 
-// --- TENANT ADMIN NAVIGATION (Business Dashboard) ---
+// --- TENANT_ADMIN NAVIGATION (Business Dashboard) ---
 export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   // 1. Overview
-  { label: 'Business Command', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
 
   // 2. Acquisition & Sales Pipeline
-  { label: 'Autonomous Growth', href: '/dashboard/sales-agent', icon: Zap },
-  { label: 'Growth Pipeline', href: '/dashboard/leads', icon: TrendingUp },
-  { label: 'Unified Client Intel', href: '/dashboard/crm', icon: Users },
+  { label: 'AI Growth', href: '/dashboard/sales-agent', icon: Zap },
+  { label: 'Leads', href: '/dashboard/leads', icon: TrendingUp },
+  { label: 'Contacts', href: '/dashboard/crm', icon: Users },
 
   // 3. Communication & Scheduling
-  { label: 'Email Sync', href: '/dashboard/gmail', icon: Mail },
-  { label: 'Ops Calendar', href: '/dashboard/business/calendar', icon: Calendar },
-  { label: 'Auto-Booking', href: '/dashboard/business/booking', icon: Clock },
-  { label: 'Huddle / Meetings', href: '/dashboard/business/meetings', icon: Video },
+  { label: 'Mail', href: '/dashboard/gmail', icon: Mail },
+  { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
+  { label: 'Booking', href: '/dashboard/business/booking', icon: Clock },
+  { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
 
   // 4. Closing & Agreements
-  { label: 'Revenue Quotes', href: '/dashboard/business/quotes', icon: FileText },
-  { label: 'Agreement Lifecycle', href: '/dashboard/business/contracts', icon: FileText },
+  { label: 'Quotes', href: '/dashboard/business/quotes', icon: FileText },
+  { label: 'Contracts', href: '/dashboard/business/contracts', icon: FileText },
 
   // 5. Execution & Fulfillment 
-  { label: 'Mission Control', href: '/dashboard/business/projects', icon: Briefcase },
-  { label: 'Task Execution', href: '/dashboard/tasks', icon: CheckSquare },
+  { label: 'Projects', href: '/dashboard/business/projects', icon: Briefcase },
+  { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
 
   // 6. Finances & Records
-  { label: 'Revenue Center', href: '/dashboard/business/billing', icon: DollarSign },
-  { label: 'Profit & Loss Intel', href: '/dashboard/accounting', icon: BarChart3 },
-  { label: 'Unified Doc Hub', href: '/dashboard/business/documents', icon: FolderOpen },
+  { label: 'Invoices', href: '/dashboard/business/billing', icon: DollarSign },
+  { label: 'Finance', href: '/dashboard/accounting', icon: BarChart3 },
+  { label: 'Documents', href: '/dashboard/business/documents', icon: FolderOpen },
 
   // 7. Administration
-  { label: 'System Settings', href: '/dashboard/business/settings', icon: Settings },
+  { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },
 ];
 
 

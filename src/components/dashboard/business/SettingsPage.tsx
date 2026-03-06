@@ -539,6 +539,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             <p className="text-slate-400 mb-6">Connect your professional email accounts for unified inbox management.</p>
                         </div>
 
+                        <GmailIntegration user={user} />
+
                         <ZohoIntegration />
 
                         {/* AI Autonomous Response Card */}
