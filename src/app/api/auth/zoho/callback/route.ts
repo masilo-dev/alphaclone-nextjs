@@ -94,6 +94,16 @@ export async function GET(req: NextRequest) {
         const email = primaryAccount.emailAddress;
 
         // 4. Save to integrations table
+        // First get existing integration to preserve refresh_token if new one is not provided
+        const { data: existingIntegration } = await supabaseAdmin
+            .from('integrations')
+            .select('config')
+            .eq('user_id', userId)
+            .eq('type', 'zoho')
+            .maybeSingle();
+
+        const finalRefreshToken = refresh_token || (existingIntegration?.config?.refreshToken);
+
         const { error: integrationError } = await supabaseAdmin
             .from('integrations')
             .upsert({
@@ -104,7 +114,7 @@ export async function GET(req: NextRequest) {
                 config: {
                     accountId,
                     accessToken: access_token,
-                    refreshToken: refresh_token,
+                    refreshToken: finalRefreshToken,
                     expiryDate: expiresAt,
                     email,
                     accountsServer,

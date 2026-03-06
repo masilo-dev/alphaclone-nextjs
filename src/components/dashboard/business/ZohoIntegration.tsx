@@ -94,55 +94,57 @@ const ZohoIntegration: React.FC = () => {
     }
 
     return (
-        <div className="p-5 bg-slate-800/50 rounded-2xl border border-slate-700">
-            <div className="flex items-start justify-between gap-4">
+        <div className={`p-6 rounded-2xl border ${config ? 'bg-teal-500/5 border-teal-500/20' : 'bg-slate-900/50 border-slate-800'} relative overflow-hidden`}>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-[#f5d400]/10 flex items-center justify-center shrink-0">
-                        <Mail className="w-6 h-6 text-[#f5d400]" />
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${config ? 'bg-[#f5d400]/10 text-[#f5d400]' : 'bg-slate-800 text-slate-500'}`}>
+                        <Mail className="w-6 h-6" />
                     </div>
                     <div>
-                        <h4 className="text-lg font-bold text-white mb-1">Zoho Mail Integration</h4>
-                        <p className="text-sm text-slate-400 leading-relaxed mb-4">
-                            Connect your professional Zoho Mail account to enable AI autonomous responses and bulk email campaigns.
+                        <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-bold text-white">
+                                Zoho Mail
+                            </h4>
+                            {config ? (
+                                <CheckCircle2 className="w-4 h-4 text-teal-400" />
+                            ) : (
+                                <AlertCircle className="w-4 h-4 text-slate-500" />
+                            )}
+                        </div>
+                        <p className="text-sm text-slate-400 max-w-md mb-2">
+                            {config
+                                ? "Your Zoho Mail account is connected. You can now manage your business emails and communications directly from the dashboard."
+                                : "Link your professional Zoho Mail account to read, send, and manage business emails directly within the AlphaClone Business OS."
+                            }
                         </p>
-
-                        {config ? (
-                            <div className="flex flex-col gap-2">
-                                <div className="flex items-center gap-2 text-teal-400 bg-teal-500/10 w-fit px-3 py-1.5 rounded-lg border border-teal-500/20 text-sm">
-                                    <CheckCircle2 className="w-4 h-4" />
-                                    <span>Connected: {typeof config.email === 'object' ? JSON.stringify(config.email) : String(config.email)}</span>
-                                </div>
-                                <p className="text-xs text-slate-500">
-                                    Your professional inbox is now being managed by AlphaClone AI.
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-2 text-amber-500 bg-amber-500/10 w-fit px-3 py-1.5 rounded-lg border border-amber-500/20 text-sm">
-                                <AlertCircle className="w-4 h-4" />
-                                <span>Not Connected</span>
+                        {config && (
+                            <div className="flex items-center gap-2 text-teal-400 bg-teal-500/10 w-fit px-3 py-1.5 rounded-lg border border-teal-500/20 text-xs">
+                                <span>Connected: {typeof config.email === 'object' ? JSON.stringify(config.email) : String(config.email)}</span>
                             </div>
                         )}
                     </div>
                 </div>
 
-                {config ? (
-                    <button
-                        onClick={handleDisconnect}
-                        className="p-2 hover:bg-red-500/10 text-slate-400 hover:text-red-500 rounded-lg transition-all"
-                        title="Disconnect"
-                    >
-                        <XCircle className="w-5 h-5" />
-                    </button>
-                ) : (
-                    <button
-                        onClick={handleConnect}
-                        disabled={connecting}
-                        className="px-5 py-2.5 bg-[#f5d400] hover:bg-[#e6c700] text-slate-900 rounded-xl font-bold transition-all shadow-lg shadow-[#f5d400]/10 flex items-center gap-2"
-                    >
-                        {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                        Connect Zoho
-                    </button>
-                )}
+                <div className="flex flex-wrap gap-3">
+                    {config ? (
+                        <button
+                            onClick={handleDisconnect}
+                            className="flex items-center gap-2 px-6 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-black text-sm uppercase tracking-widest rounded-xl border border-red-500/20 transition-all"
+                        >
+                            <XCircle className="w-4 h-4" />
+                            Disconnect
+                        </button>
+                    ) : (
+                        <button
+                            onClick={handleConnect}
+                            disabled={connecting}
+                            className="flex items-center gap-2 px-6 py-2.5 bg-[#f5d400] hover:bg-[#e6c700] text-slate-900 font-black text-sm uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-[#f5d400]/20 disabled:opacity-50"
+                        >
+                            {connecting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                            {connecting ? 'CONNECTING...' : 'CONNECT ZOHO'}
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );

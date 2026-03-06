@@ -55,7 +55,10 @@ export const zohoServerService = {
             });
 
             const data = await response.json();
-            if (data.error) throw new Error(data.error);
+            if (data.error) {
+                console.error('[Zoho Refresh Error]', JSON.stringify(data));
+                throw new Error(data.error);
+            }
 
             const expiresAt = new Date(Date.now() + (data.expires_in || 3600) * 1000).toISOString();
 
