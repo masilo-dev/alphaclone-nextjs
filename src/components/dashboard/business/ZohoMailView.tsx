@@ -17,7 +17,8 @@ import {
     AlertCircle,
     ExternalLink,
     Plus,
-    Sparkles
+    Sparkles,
+    Wand2
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { Button, Badge } from '../../ui/UIComponents';
@@ -57,7 +58,9 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
     const [sending, setSending] = useState(false);
     const [accountEmail, setAccountEmail] = useState('');
     const [isOutreachOpen, setIsOutreachOpen] = useState(false);
-    const [isComposeOpen, setIsComposeOpen] = useState(false); // For future single compose
+    const [isComposeOpen, setIsComposeOpen] = useState(false);
+    const [aiReplyGenerating, setAiReplyGenerating] = useState(false);
+    const [aiReplyDrafting, setAiReplyDrafting] = useState(false);
 
     const fetchEmails = async (folder: string = activeFolder) => {
         setLoading(true);
@@ -161,10 +164,40 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
 
             toast.success('Reply sent via Zoho Mail');
             setReplyBody('');
+            setAiReplyDrafting(false);
         } catch (err: any) {
             toast.error(err.message || 'Failed to send');
         } finally {
             setSending(false);
+        }
+    };
+
+    const handleAiReplyGenerate = async () => {
+        if (!selected) return;
+        setAiReplyGenerating(true);
+        try {
+            const res = await fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt: `Reply to this email from "${selected.fromAddress}" with subject "${selected.subject}".
+                    Email Content: "${selected.content || selected.summary}"
+                    
+                    Instructions for the reply: "Draft a professional and helpful response that addresses the points in the user's email."
+                    Return only the reply text, no subject or JSON.`,
+                    systemPrompt: "You are an expert customer relations assistant. You write concise, empathetic, and professional email replies."
+                })
+            });
+
+            if (!res.ok) throw new Error('AI failed to generate reply');
+            const data = await res.json();
+            setReplyBody(data.text);
+            toast.success('AI Draft ready');
+            setAiReplyDrafting(true);
+        } catch (err) {
+            toast.error('AI Reply assistance failed');
+        } finally {
+            setAiReplyGenerating(false);
         }
     };
 
@@ -329,11 +362,25 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
                         {/* Reply box */}
                         <div className="p-6 pt-0">
                             <div className="bg-slate-950 border border-slate-800 rounded-2xl p-2 focus-within:border-[#f5d400]/40 transition-all shadow-xl">
+                                <div className="flex items-center justify-between px-3 py-2 border-b border-slate-900 mb-1">
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Fast Reply</span>
+                                    </div>
+                                    <button
+                                        onClick={handleAiReplyGenerate}
+                                        disabled={aiReplyGenerating}
+                                        className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 uppercase tracking-widest flex items-center gap-1.5 px-2 py-1 rounded-lg bg-indigo-500/5 hover:bg-indigo-500/10 transition-all disabled:opacity-50"
+                                    >
+                                        {aiReplyGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
+                                        {aiReplyGenerating ? 'AI Thinking...' : 'AI HelpMe Reply'}
+                                    </button>
+                                </div>
                                 <textarea
                                     value={replyBody}
                                     onChange={e => setReplyBody(e.target.value)}
                                     placeholder="Type your reply..."
-                                    className="w-full bg-transparent border-none focus:ring-0 text-white text-sm min-h-[90px] p-3 resize-none"
+                                    className="w-full bg-transparent border-none focus:ring-0 text-white text-sm min-h-[90px] p-2 resize-none"
                                 />
                                 <div className="flex items-center justify-end p-2 border-t border-slate-900 mt-2">
                                     <button

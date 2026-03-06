@@ -82,6 +82,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   },
   { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
   { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
+  { label: 'Global Settings', href: '/dashboard/admin/settings', icon: Settings },
   { label: 'Security', href: '/dashboard/security', icon: ShieldCheck },
 ];
 

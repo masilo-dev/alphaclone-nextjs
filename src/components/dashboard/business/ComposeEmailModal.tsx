@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, Send, Loader2 } from 'lucide-react';
+import { X, Send, Loader2, Sparkles, Wand2 } from 'lucide-react';
 import { Button } from '../../ui/UIComponents';
 import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
@@ -18,6 +18,49 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({ isOpen, onClose, 
     const [subject, setSubject] = useState('');
     const [body, setBody] = useState('');
     const [sending, setSending] = useState(false);
+    const [aiPrompt, setAiPrompt] = useState('');
+    const [generating, setGenerating] = useState(false);
+
+    const handleAIGenerate = async () => {
+        if (!aiPrompt.trim()) {
+            toast.error('Please describe what you want the AI to write');
+            return;
+        }
+
+        setGenerating(true);
+        try {
+            const res = await fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt: `Write an email based on these instructions: "${aiPrompt}". 
+                    Return your response as a JSON object with 'subject' and 'body' fields. 
+                    Be professional and concise. Don't add any other text outside the JSON.`,
+                    systemPrompt: "You are an expert business email assistant. You respond only with valid JSON focusing on high-conversion outreach."
+                })
+            });
+
+            if (!res.ok) throw new Error('AI generation failed');
+            const data = await res.json();
+
+            try {
+                // The AI might return the JSON wrapped in markdown or just plain
+                const cleanedText = data.text.replace(/```json|```/g, '').trim();
+                const parsed = JSON.parse(cleanedText);
+                setSubject(parsed.subject || '');
+                setBody(parsed.body || '');
+                toast.success('Draft generated!');
+            } catch (parseError) {
+                // Fallback if not JSON
+                setBody(data.text);
+                toast.success('Draft ready (body only)');
+            }
+        } catch (err) {
+            toast.error('Failed to generate draft');
+        } finally {
+            setGenerating(false);
+        }
+    };
 
     const handleSend = async () => {
         if (!to || !subject || !body) {
@@ -87,7 +130,34 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({ isOpen, onClose, 
                     </button>
                 </div>
 
-                <div className="p-6 space-y-4">
+                <div className="p-6 space-y-5">
+                    {/* AI ASSIST SECTION */}
+                    <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-2xl p-4 mb-2">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Sparkles className="w-4 h-4 text-indigo-400" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">AI Drafting Assistant</span>
+                        </div>
+                        <div className="flex gap-2">
+                            <input
+                                value={aiPrompt}
+                                onChange={e => setAiPrompt(e.target.value)}
+                                placeholder="Example: Write a follow up email about the partnership proposal..."
+                                className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:border-indigo-500/50 outline-none"
+                                onKeyDown={e => e.key === 'Enter' && handleAIGenerate()}
+                            />
+                            <Button
+                                onClick={handleAIGenerate}
+                                disabled={generating || !aiPrompt.trim()}
+                                className="bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold px-4 rounded-xl shrink-0"
+                            >
+                                {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3 mr-2" />}
+                                {generating ? 'GEN...' : 'DRAFT'}
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div className="w-full h-[1px] bg-slate-900" />
+
                     <div>
                         <label className="text-[10px] text-slate-500 uppercase font-black tracking-widest block mb-2 px-1">Recipient</label>
                         <input
