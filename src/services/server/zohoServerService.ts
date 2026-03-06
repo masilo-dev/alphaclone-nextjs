@@ -63,7 +63,18 @@ export const zohoServerService = {
                 .eq('id', integrationId)
                 .single();
 
-            const accountsServer = currentIntegration?.config?.accountsServer || 'https://accounts.zoho.com';
+            let accountsServer = currentIntegration?.config?.accountsServer;
+            const mailApiHost = currentIntegration?.config?.mailApiHost || 'mail.zoho.com';
+
+            // If accountsServer is missing, derive it from mailApiHost (e.g. mail.zoho.eu -> accounts.zoho.eu)
+            if (!accountsServer) {
+                if (mailApiHost.includes('.eu')) accountsServer = 'https://accounts.zoho.eu';
+                else if (mailApiHost.includes('.in')) accountsServer = 'https://accounts.zoho.in';
+                else if (mailApiHost.includes('.com.au')) accountsServer = 'https://accounts.zoho.com.au';
+                else if (mailApiHost.includes('.jp')) accountsServer = 'https://accounts.zoho.jp';
+                else if (mailApiHost.includes('.ca')) accountsServer = 'https://accounts.zoho.ca';
+                else accountsServer = 'https://accounts.zoho.com';
+            }
 
             const response = await fetch(`${accountsServer}/oauth/v2/token`, {
                 method: 'POST',
