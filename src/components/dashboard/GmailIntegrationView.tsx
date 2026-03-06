@@ -90,7 +90,7 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
     };
 
     return (
-        <div className="flex h-[calc(100vh-280px)] bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+        <div className="flex h-[calc(100vh-120px)] min-h-[600px] w-full bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
             {/* Folder Sidebar */}
             <div className="w-16 sm:w-20 md:w-24 border-r border-slate-800 flex flex-col items-center py-6 gap-6 bg-slate-950/50">
                 {LABELS.map(({ id, Icon, label }) => (

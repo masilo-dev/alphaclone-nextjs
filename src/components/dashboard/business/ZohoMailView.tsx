@@ -163,7 +163,7 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
     };
 
     return (
-        <div className="flex h-[calc(100vh-280px)] bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+        <div className="flex h-[calc(100vh-120px)] min-h-[600px] w-full bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
             {/* Icon sidebar */}
             <div className="w-16 sm:w-20 border-r border-slate-800 flex flex-col items-center py-6 gap-5 bg-slate-950/50">
                 {FOLDERS.map(({ id, icon: Icon, label }) => (

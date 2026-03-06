@@ -31,8 +31,26 @@ export async function GET(req: NextRequest) {
             });
         }
 
-        // Otherwise list messages
-        const endpoint = `messages/view?folderId=${folderId}`;
+        // If we have a string like 'inbox', 'sent', etc, we need to map it to the actual Zoho folder ID
+        let actualFolderId = folderId;
+        if (['inbox', 'sent', 'starred', 'trash'].includes(folderId.toLowerCase())) {
+            // Fetch folders from Zoho
+            const foldersData = await zohoServerService.proxyRequest(userId, 'folders');
+            const folders = foldersData.data || [];
+
+            // Map our UI names to typical Zoho folder names
+            const nameToMatch = folderId.toLowerCase() === 'inbox' ? 'Inbox'
+                : folderId.toLowerCase() === 'sent' ? 'Sent'
+                    : folderId.toLowerCase() === 'trash' ? 'Trash'
+                        : 'Inbox'; // Default to inbox for starred or unknown for now (Zoho handles starred via flags, not folders typically, but we'll fallback)
+
+            const targetFolder = folders.find((f: any) => f.folderName?.toLowerCase() === nameToMatch.toLowerCase());
+            if (targetFolder && targetFolder.folderId) {
+                actualFolderId = targetFolder.folderId;
+            }
+        }
+
+        const endpoint = `messages/view?folderId=${actualFolderId}`;
         const data = await zohoServerService.proxyRequest(userId, endpoint);
 
         // Map Zoho response to internal ZohoMessage format
