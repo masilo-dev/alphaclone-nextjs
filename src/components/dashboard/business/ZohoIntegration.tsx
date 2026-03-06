@@ -110,7 +110,7 @@ const ZohoIntegration: React.FC = () => {
                             <div className="flex flex-col gap-2">
                                 <div className="flex items-center gap-2 text-teal-400 bg-teal-500/10 w-fit px-3 py-1.5 rounded-lg border border-teal-500/20 text-sm">
                                     <CheckCircle2 className="w-4 h-4" />
-                                    <span>Connected: {config.email}</span>
+                                    <span>Connected: {typeof config.email === 'object' ? JSON.stringify(config.email) : String(config.email)}</span>
                                 </div>
                                 <p className="text-xs text-slate-500">
                                     Your professional inbox is now being managed by AlphaClone AI.
