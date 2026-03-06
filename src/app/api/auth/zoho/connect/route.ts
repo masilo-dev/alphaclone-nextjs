@@ -47,8 +47,12 @@ export async function GET(req: NextRequest) {
 
         // Zoho Mail scopes
         const scopes = [
-            'ZohoMail.messages.ALL',
-            'ZohoMail.accounts.READ'
+            'ZohoMail.messages.READ',
+            'ZohoMail.messages.CREATE',
+            'ZohoMail.messages.UPDATE',
+            'ZohoMail.messages.DELETE',
+            'ZohoMail.accounts.READ',
+            'ZohoMail.folders.READ'
         ].join(',');
 
         const authUrl = `https://${accountsDomain}/oauth/v2/auth?` +
