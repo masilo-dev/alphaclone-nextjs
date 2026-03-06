@@ -12,6 +12,7 @@ const ZohoIntegration: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [connecting, setConnecting] = useState(false);
     const [config, setConfig] = useState<ZohoConfig | null>(null);
+    const [region, setRegion] = useState('eu'); // Defaulting to EU for AlphaClone
 
     useEffect(() => {
         loadZohoConfig();
@@ -52,7 +53,7 @@ const ZohoIntegration: React.FC = () => {
             if (!user) throw new Error('Not authenticated');
 
             // Redirect to our backend connect route
-            window.location.href = `/api/auth/zoho/connect?userId=${user.id}`;
+            window.location.href = `/api/auth/zoho/connect?userId=${user.id}&region=${region}`;
         } catch (error: any) {
             toast.error(error.message || 'Failed to initiate Zoho connection');
             setConnecting(false);
@@ -135,14 +136,28 @@ const ZohoIntegration: React.FC = () => {
                             Disconnect
                         </button>
                     ) : (
-                        <button
-                            onClick={handleConnect}
-                            disabled={connecting}
-                            className="flex items-center gap-2 px-6 py-2.5 bg-[#f5d400] hover:bg-[#e6c700] text-slate-900 font-black text-sm uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-[#f5d400]/20 disabled:opacity-50"
-                        >
-                            {connecting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-                            {connecting ? 'CONNECTING...' : 'CONNECT ZOHO'}
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <select
+                                value={region}
+                                onChange={(e) => setRegion(e.target.value)}
+                                className="bg-slate-950 border border-slate-800 text-slate-300 text-sm rounded-xl px-4 py-2.5 outline-none focus:border-[#f5d400]/50 transition-colors"
+                            >
+                                <option value="com">US (.com)</option>
+                                <option value="eu">EU (.eu)</option>
+                                <option value="in">India (.in)</option>
+                                <option value="com.au">Australia (.com.au)</option>
+                                <option value="jp">Japan (.jp)</option>
+                                <option value="ca">Canada (.ca)</option>
+                            </select>
+                            <button
+                                onClick={handleConnect}
+                                disabled={connecting}
+                                className="flex items-center gap-2 px-6 py-2.5 bg-[#f5d400] hover:bg-[#e6c700] text-slate-900 font-black text-sm uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-[#f5d400]/20 disabled:opacity-50"
+                            >
+                                {connecting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                                {connecting ? 'CONNECTING...' : 'CONNECT ZOHO'}
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>

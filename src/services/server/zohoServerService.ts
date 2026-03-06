@@ -163,12 +163,11 @@ export const zohoServerService = {
             const errorText = await response.text();
             console.error(`[Zoho Proxy Debug] Request to ${url} failed with status ${response.status}:`, errorText);
 
-            let description = 'Zoho API request failed';
+            let description = `Zoho API Error ${response.status}: ${errorText.substring(0, 150)}`;
             try {
                 const errorJson = JSON.parse(errorText);
-                description = errorJson.status?.description || errorJson.error || description;
+                description = errorJson.status?.description || errorJson.error_message || errorJson.error || description;
             } catch (e) {
-                // If parsing fails, just use the fallback description
             }
             throw new Error(description);
         }
