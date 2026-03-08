@@ -12,6 +12,27 @@ export interface Notification {
 }
 
 export const notificationService = {
+    async sendNotification(params: {
+        userId: string;
+        type: 'message' | 'project' | 'payment' | 'system' | 'alert';
+        title: string;
+        message?: string;
+        link?: string;
+    }) {
+        const { error } = await supabase
+            .from('notifications')
+            .insert({
+                user_id: params.userId,
+                type: params.type,
+                title: params.title,
+                message: params.message,
+                link: params.link,
+                read: false
+            });
+
+        return { success: !error, error: error?.message };
+    },
+
     async getNotifications(userId: string) {
         const { data, error } = await supabase
             .from('notifications')

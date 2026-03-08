@@ -1,4 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import {
+    Building,
+    Palette,
+    Bell,
+    Shield,
+    Upload,
+    Loader2,
+    Calendar,
+    CreditCard,
+    CheckCircle2,
+    AlertCircle,
+    Mail,
+    X,
+    DollarSign,
+    FileText,
+    CheckCircle,
+    Edit3,
+    Save,
+    Download,
+    PenLine,
+    Copy,
+    Briefcase,
+    Plus,
+    Trash2,
+    Settings,
+    List,
+    Sparkles
+} from 'lucide-react';
+import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '../../../services/universalServiceCatalog';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -6,22 +35,6 @@ import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 import CalendlySettings from './CalendlySettings';
 import ZohoIntegration from './ZohoIntegration';
-import {
-    Building,
-    Palette,
-    Bell,
-    Shield,
-    Save,
-    Upload,
-    Loader2,
-    Calendar,
-    Trash2,
-    X,
-    CreditCard,
-    CheckCircle2,
-    AlertCircle,
-    Mail
-} from 'lucide-react';
 import { fileUploadService } from '../../../services/fileUploadService';
 import GmailIntegration from './GmailIntegration';
 import MFAEnrollment from './MFAEnrollment';
@@ -34,7 +47,7 @@ interface SettingsPageProps {
 
 const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const { currentTenant } = useTenant();
-    const [activeTab, setActiveTab] = useState('business');
+    const [activeTab, setActiveTab] = useState<'business' | 'notifications' | 'security' | 'booking' | 'integrations' | 'billing'>('business');
     const [settings, setSettings] = useState({
         businessName: '',
         logoUrl: '',
@@ -46,7 +59,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         currency: 'USD',
         invoicePrefix: 'INV',
         bankDetails: '',
-        mobilePaymentDetails: ''
+        mobilePaymentDetails: '',
+        serviceSectors: [] as string[],
+        myServices: {} as Record<string, Partial<ServiceItem> & { isCustom?: boolean }>,
+        rawSettings: {} as any // To preserve other settings in the jsonb column
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -155,8 +171,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         const error = searchParams.get('error');
         const tab = searchParams.get('tab');
 
-        if (tab) {
-            setActiveTab(tab);
+        if (tab && ['notifications', 'security', 'business', 'booking', 'integrations', 'billing'].includes(tab)) {
+            setActiveTab(tab as any);
         }
 
         if (error === 'calendly_not_configured') {
@@ -210,7 +226,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                     currency: data.currency || 'USD',
                     invoicePrefix: data.invoice_prefix || 'INV',
                     bankDetails: data.bank_details || '',
-                    mobilePaymentDetails: data.mobile_payment_details || ''
+                    mobilePaymentDetails: data.mobile_payment_details || '',
+                    serviceSectors: data.settings?.service_sectors || [],
+                    myServices: data.settings?.my_services || {},
+                    rawSettings: data.settings || {}
                 });
             }
         } catch (error) {
@@ -240,6 +259,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                     invoice_prefix: settings.invoicePrefix,
                     bank_details: settings.bankDetails,
                     mobile_payment_details: settings.mobilePaymentDetails,
+                    settings: {
+                        ...settings.rawSettings,
+                        service_sectors: settings.serviceSectors,
+                        my_services: settings.myServices
+                    },
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'tenant_id' });
 
@@ -283,7 +307,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         { id: 'booking', label: 'Booking & Calendly', icon: Calendar },
         { id: 'integrations', label: 'Email & Integrations', icon: Mail },
         { id: 'billing', label: 'Billing & Plans', icon: CreditCard }
-    ];
+    ] as const;
 
     const handleDeleteAccount = async () => {
         setIsDeleting(true);
@@ -334,82 +358,329 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
             {/* Content */}
             <div className="flex-1 bg-slate-900/50 border border-slate-700 rounded-2xl p-4 md:p-6 overflow-y-auto">
                 {activeTab === 'business' && (
-                    <div className="space-y-6">
-                        <div>
-                            <h3 className="text-xl font-bold mb-4">Business Profile</h3>
-                            <p className="text-slate-400 mb-6">Manage your business information</p>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Business Name</label>
-                                <input
-                                    type="text"
-                                    value={settings.businessName}
-                                    onChange={(e) => setSettings({ ...settings, businessName: e.target.value })}
-                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                                />
-                            </div>
+                    <>
+                        <div className="space-y-6">
 
                             <div>
-                                <label className="block text-sm font-medium mb-2">Email</label>
-                                <input
-                                    type="email"
-                                    value={settings.email}
-                                    onChange={(e) => setSettings({ ...settings, email: e.target.value })}
-                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                                />
+                                <h3 className="text-xl font-bold mb-4">Business Profile</h3>
+                                <p className="text-slate-400 mb-6">Manage your business information</p>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Phone</label>
-                                <input
-                                    type="tel"
-                                    value={settings.phone}
-                                    onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
-                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                                />
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Business Name</label>
+                                    <input
+                                        type="text"
+                                        value={settings.businessName}
+                                        onChange={(e) => setSettings({ ...settings, businessName: e.target.value })}
+                                        className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Email</label>
+                                    <input
+                                        type="email"
+                                        value={settings.email}
+                                        onChange={(e) => setSettings({ ...settings, email: e.target.value })}
+                                        className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Phone</label>
+                                    <input
+                                        type="tel"
+                                        value={settings.phone}
+                                        onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                                        className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Address</label>
+                                    <textarea
+                                        value={settings.address}
+                                        onChange={(e) => setSettings({ ...settings, address: e.target.value })}
+                                        rows={3}
+                                        className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                                    />
+                                </div>
+
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Address</label>
-                                <textarea
-                                    value={settings.address}
-                                    onChange={(e) => setSettings({ ...settings, address: e.target.value })}
-                                    rows={3}
-                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                                />
-                            </div>
+                            {/* Service Sectors Section */}
+                            <div className="pt-6 border-t border-slate-700">
+                                <h4 className="text-md font-bold mb-4 text-teal-400 flex items-center gap-2">
+                                    <Briefcase className="w-5 h-5" />
+                                    Industry & Expertise
+                                </h4>
+                                <p className="text-sm text-slate-400 mb-4">
+                                    Select the industries and service sectors you operate in. This will customize your contract templates and invoice options.
+                                </p>
 
-                            <div className="pt-4 border-t border-slate-700">
-                                <h4 className="text-md font-bold mb-4 text-teal-400">Payment Instructions (Manual)</h4>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Bank Details</label>
-                                        <textarea
-                                            value={settings.bankDetails}
-                                            onChange={(e) => setSettings({ ...settings, bankDetails: e.target.value })}
-                                            rows={3}
-                                            placeholder="Bank Name, Account Number, Swift, etc."
-                                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                                        />
-                                        <p className="text-xs text-slate-500 mt-1">These will be shown on invoices if 'Bank Transfer' is selected.</p>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Mobile Payment / Other</label>
-                                        <input
-                                            type="text"
-                                            value={settings.mobilePaymentDetails}
-                                            onChange={(e) => setSettings({ ...settings, mobilePaymentDetails: e.target.value })}
-                                            placeholder="e.g. Mobile number, PayPal email"
-                                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                                        />
-                                    </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    {UNIVERSAL_SERVICE_CATALOG.map(category => (
+                                        <label
+                                            key={category.name}
+                                            className={`flex items-start gap-3 p-4 rounded-xl border transition-all cursor-pointer ${settings.serviceSectors.includes(category.name)
+                                                ? 'bg-teal-500/10 border-teal-500/50 text-white'
+                                                : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600'
+                                                }`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                className="mt-1 accent-teal-500"
+                                                checked={settings.serviceSectors.includes(category.name)}
+                                                onChange={(e) => {
+                                                    const newSectors = e.target.checked
+                                                        ? [...settings.serviceSectors, category.name]
+                                                        : settings.serviceSectors.filter(s => s !== category.name);
+                                                    setSettings({ ...settings, serviceSectors: newSectors });
+                                                }}
+                                            />
+                                            <div>
+                                                <span className="font-bold text-sm block">{category.name}</span>
+                                                <span className="text-xs opacity-60">
+                                                    {category.services.length} services included
+                                                </span>
+                                            </div>
+                                        </label>
+                                    ))}
                                 </div>
                             </div>
+
                         </div>
-                    </div>
+
+                        {/* My Services & Pricing Section */}
+                        <div className="pt-8 border-t border-slate-700">
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h4 className="text-md font-bold text-teal-400 flex items-center gap-2">
+                                        <DollarSign className="w-5 h-5" />
+                                        My Services & Pricing
+                                    </h4>
+                                    <p className="text-sm text-slate-400 mt-1">
+                                        Set your rates and add custom services you offer.
+                                    </p>
+                                </div>
+                                <Button
+                                    size="sm"
+                                    className="bg-teal-600 hover:bg-teal-500"
+                                    onClick={() => {
+                                        const customId = `custom_${Date.now()}`;
+                                        setSettings({
+                                            ...settings,
+                                            myServices: {
+                                                ...settings.myServices,
+                                                [customId]: {
+                                                    id: customId,
+                                                    name: 'New Custom Service',
+                                                    defaultPrice: 0,
+                                                    unit: 'hour',
+                                                    description: '',
+                                                    stages: ['Consultation', 'Execution', 'Delivery'],
+                                                    isCustom: true
+                                                }
+                                            }
+                                        });
+                                    }}
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Add Custom Service
+                                </Button>
+                            </div>
+
+                            <div className="space-y-4">
+                                {/* Services from Selected Sectors */}
+                                {UNIVERSAL_SERVICE_CATALOG
+                                    .filter(cat => settings.serviceSectors.includes(cat.name))
+                                    .map(category => (
+                                        <div key={category.name} className="space-y-3">
+                                            <h5 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                                <List className="w-3 h-3" />
+                                                {category.name}
+                                            </h5>
+                                            <div className="grid grid-cols-1 gap-3">
+                                                {category.services.map(service => {
+                                                    const myService = settings.myServices[service.id] || {};
+                                                    const price = myService.defaultPrice !== undefined ? myService.defaultPrice : service.defaultPrice;
+                                                    const unit = myService.unit || service.unit;
+
+                                                    return (
+                                                        <div key={service.id} className="bg-slate-900 shadow-sm border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                                            <div className="flex-1">
+                                                                <span className="font-bold text-white block">{service.name}</span>
+                                                                <span className="text-xs text-slate-400 block mt-1">{service.description}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                                                                <div className="relative">
+                                                                    <DollarSign className="w-3 h-3 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                                                                    <input
+                                                                        type="number"
+                                                                        className="w-24 pl-7 pr-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-teal-500"
+                                                                        value={price}
+                                                                        onChange={(e) => {
+                                                                            setSettings({
+                                                                                ...settings,
+                                                                                myServices: {
+                                                                                    ...settings.myServices,
+                                                                                    [service.id]: {
+                                                                                        ...myService,
+                                                                                        defaultPrice: parseFloat(e.target.value) || 0
+                                                                                    }
+                                                                                }
+                                                                            });
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                                <select
+                                                                    className="w-24 px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-teal-500"
+                                                                    value={unit}
+                                                                    onChange={(e) => {
+                                                                        setSettings({
+                                                                            ...settings,
+                                                                            myServices: {
+                                                                                ...settings.myServices,
+                                                                                [service.id]: {
+                                                                                    ...myService,
+                                                                                    unit: e.target.value as any
+                                                                                }
+                                                                            }
+                                                                        });
+                                                                    }}
+                                                                >
+                                                                    <option value="hour">per hour</option>
+                                                                    <option value="project">per project</option>
+                                                                    <option value="month">per month</option>
+                                                                    <option value="day">per day</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                {/* Custom Services */}
+                                {Object.values(settings.myServices).some(s => s.isCustom) && (
+                                    <div className="space-y-3 mt-6">
+                                        <h5 className="text-xs font-black text-amber-500 uppercase tracking-widest flex items-center gap-2">
+                                            <Sparkles className="w-3 h-3" />
+                                            Custom Added Services
+                                        </h5>
+                                        <div className="grid grid-cols-1 gap-3">
+                                            {Object.values(settings.myServices)
+                                                .filter(s => s.isCustom)
+                                                .map(service => (
+                                                    <div key={service.id} className="bg-slate-900 border border-amber-500/20 rounded-xl p-4 space-y-4">
+                                                        <div className="flex items-center justify-between gap-4">
+                                                            <input
+                                                                type="text"
+                                                                className="flex-1 bg-transparent border-b border-transparent hover:border-slate-700 focus:border-teal-500 focus:outline-none font-bold text-white py-1"
+                                                                value={service.name}
+                                                                onChange={(e) => {
+                                                                    setSettings({
+                                                                        ...settings,
+                                                                        myServices: {
+                                                                            ...settings.myServices,
+                                                                            [service.id!]: {
+                                                                                ...service,
+                                                                                name: e.target.value
+                                                                            }
+                                                                        }
+                                                                    });
+                                                                }}
+                                                            />
+                                                            <button
+                                                                className="text-slate-500 hover:text-red-400"
+                                                                onClick={() => {
+                                                                    const { [service.id!]: _, ...rest } = settings.myServices;
+                                                                    setSettings({ ...settings, myServices: rest });
+                                                                }}
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                                            <div>
+                                                                <label className="text-[10px] uppercase font-black text-slate-500 tracking-wider block mb-1">Pricing</label>
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="relative flex-1">
+                                                                        <DollarSign className="w-3 h-3 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                                                                        <input
+                                                                            type="number"
+                                                                            className="w-full pl-7 pr-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-teal-500 text-white"
+                                                                            value={service.defaultPrice}
+                                                                            onChange={(e) => {
+                                                                                setSettings({
+                                                                                    ...settings,
+                                                                                    myServices: {
+                                                                                        ...settings.myServices,
+                                                                                        [service.id!]: {
+                                                                                            ...service,
+                                                                                            defaultPrice: parseFloat(e.target.value) || 0
+                                                                                        }
+                                                                                    }
+                                                                                });
+                                                                            }}
+                                                                        />
+                                                                    </div>
+                                                                    <select
+                                                                        className="w-32 px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-teal-500 text-white"
+                                                                        value={service.unit}
+                                                                        onChange={(e) => {
+                                                                            setSettings({
+                                                                                ...settings,
+                                                                                myServices: {
+                                                                                    ...settings.myServices,
+                                                                                    [service.id!]: {
+                                                                                        ...service,
+                                                                                        unit: e.target.value as any
+                                                                                    }
+                                                                                }
+                                                                            });
+                                                                        }}
+                                                                    >
+                                                                        <option value="hour">per hour</option>
+                                                                        <option value="project">per project</option>
+                                                                        <option value="month">per month</option>
+                                                                        <option value="day">per day</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[10px] uppercase font-black text-slate-500 tracking-wider block mb-1">Description</label>
+                                                                <input
+                                                                    type="text"
+                                                                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-teal-500 text-slate-300"
+                                                                    placeholder="Short summary of service..."
+                                                                    value={service.description}
+                                                                    onChange={(e) => {
+                                                                        setSettings({
+                                                                            ...settings,
+                                                                            myServices: {
+                                                                                ...settings.myServices,
+                                                                                [service.id!]: {
+                                                                                    ...service,
+                                                                                    description: e.target.value
+                                                                                }
+                                                                            }
+                                                                        });
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            }
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </>
                 )}
 
 

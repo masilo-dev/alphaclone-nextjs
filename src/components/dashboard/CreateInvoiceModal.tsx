@@ -1,10 +1,13 @@
 import React, { useState, useRef } from 'react';
-import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download, PenLine, Copy } from 'lucide-react';
+import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download, PenLine, Copy, List, Plus } from 'lucide-react';
 import { Button, Input } from '../ui/UIComponents';
 import { paymentService } from '../../services/paymentService';
 import { Project } from '../../types';
 import toast from 'react-hot-toast';
 import { useTenant } from '../../contexts/TenantContext';
+import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '../../services/universalServiceCatalog';
+import { ChevronDown, Sparkles } from 'lucide-react';
+
 
 interface LineItem {
     description: string;
@@ -40,6 +43,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [signatureData, setSignatureData] = useState<string | null>(null);
     const [signatureType, setSignatureType] = useState<'draw' | 'type'>('draw');
     const [typedSignature, setTypedSignature] = useState('');
+    const [userSectors, setUserSectors] = useState<string[]>([]);
+    const [myServices, setMyServices] = useState<Record<string, any>>({});
+    const [showServiceDropdown, setShowServiceDropdown] = useState<{ index: number; open: boolean }>({ index: -1, open: false });
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const isDrawing = useRef(false);
 
@@ -76,6 +82,16 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     // Pre-fill editable fields
                     setBankDetails(defaults.bank);
                     setMobileDetails(defaults.mobile);
+
+                    // Fetch service sectors and custom services from JSONB
+                    if (settingsRes.data.settings) {
+                        if (settingsRes.data.settings.service_sectors) {
+                            setUserSectors(settingsRes.data.settings.service_sectors);
+                        }
+                        if (settingsRes.data.settings.my_services) {
+                            setMyServices(settingsRes.data.settings.my_services);
+                        }
+                    }
                 }
 
                 if (clientsRes.clients) {
@@ -410,66 +426,182 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                         <DollarSign className="w-5 h-5 text-green-400" />
                                         Line Items
                                     </div>
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="text-[10px] uppercase"
-                                        onClick={() => setLineItems([...lineItems, { description: '', quantity: 1, rate: 0 }])}
-                                    >
-                                        + Add Item
-                                    </Button>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="text-[10px] uppercase border-teal-500/30 text-teal-400 hover:bg-teal-500/10"
+                                            onClick={() => {
+                                                const newItems = [...lineItems, { description: '', quantity: 1, rate: 0 }];
+                                                setLineItems(newItems);
+                                            }}
+                                        >
+                                            + Add Custom
+                                        </Button>
+                                    </div>
                                 </h3>
 
-                                <div className="space-y-3">
+                                {/* Select from "My Services" Dropdown */}
+                                {Object.keys(myServices).length > 0 && (
+                                    <div className="mb-4 p-4 bg-teal-500/5 border border-teal-500/20 rounded-xl">
+                                        <label className="block text-[10px] font-bold text-teal-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                            <List className="w-3 h-3" />
+                                            Quick Add from My Services
+                                        </label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {Object.entries(myServices).map(([id, service]: [string, any]) => (
+                                                <button
+                                                    key={id}
+                                                    onClick={() => {
+                                                        // Replace the first empty item or add a new one
+                                                        const emptyIdx = lineItems.findIndex(item => !item.description);
+                                                        if (emptyIdx !== -1) {
+                                                            const newItems = [...lineItems];
+                                                            newItems[emptyIdx] = {
+                                                                description: service.name,
+                                                                quantity: 1,
+                                                                rate: service.defaultPrice || 0
+                                                            };
+                                                            setLineItems(newItems);
+                                                        } else {
+                                                            setLineItems([...lineItems, {
+                                                                description: service.name,
+                                                                quantity: 1,
+                                                                rate: service.defaultPrice || 0
+                                                            }]);
+                                                        }
+                                                        toast.success(`Added ${service.name}`);
+                                                    }}
+                                                    className="px-3 py-1.5 bg-slate-950 border border-slate-700 hover:border-teal-400 hover:bg-teal-400/10 rounded-lg text-xs text-slate-300 transition-all flex items-center gap-2"
+                                                >
+                                                    <Plus className="w-3 h-3 text-teal-400" />
+                                                    {service.name} (${service.defaultPrice})
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="space-y-4">
                                     {lineItems.map((item, index) => (
-                                        <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-slate-900/50 p-3 rounded-lg border border-slate-800">
-                                            <div className="md:col-span-6">
-                                                <Input
-                                                    label={index === 0 ? "Description *" : ""}
-                                                    value={item.description}
-                                                    onChange={(e) => {
-                                                        const newItems = [...lineItems];
-                                                        newItems[index].description = e.target.value;
-                                                        setLineItems(newItems);
-                                                    }}
-                                                    placeholder="e.g. Graphic Design"
-                                                />
-                                            </div>
-                                            <div className="md:col-span-2">
-                                                <Input
-                                                    label={index === 0 ? "Qty *" : ""}
-                                                    type="number"
-                                                    value={item.quantity.toString()}
-                                                    onChange={(e) => {
-                                                        const newItems = [...lineItems];
-                                                        newItems[index].quantity = parseInt(e.target.value) || 0;
-                                                        setLineItems(newItems);
-                                                    }}
-                                                    min="1"
-                                                />
-                                            </div>
-                                            <div className="md:col-span-3">
-                                                <Input
-                                                    label={index === 0 ? "Rate *" : ""}
-                                                    type="number"
-                                                    value={item.rate.toString()}
-                                                    onChange={(e) => {
-                                                        const newItems = [...lineItems];
-                                                        newItems[index].rate = parseFloat(e.target.value) || 0;
-                                                        setLineItems(newItems);
-                                                    }}
-                                                    placeholder="0.00"
-                                                />
-                                            </div>
-                                            <div className="md:col-span-1 pb-2 flex justify-end">
-                                                {lineItems.length > 1 && (
+                                        <div key={index} className="relative bg-slate-900/50 p-4 rounded-xl border border-slate-800 hover:border-slate-700 transition-all">
+                                            {/* Service Quick Select for empty items */}
+                                            {item.description === '' && (
+                                                <div className="mb-4">
+                                                    <label className="block text-[10px] font-bold text-teal-500 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                                        <Sparkles className="w-3 h-3" />
+                                                        Quick Select Service
+                                                    </label>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {UNIVERSAL_SERVICE_CATALOG
+                                                            .filter(cat => userSectors.length === 0 || userSectors.includes(cat.name))
+                                                            .flatMap(cat => cat.services)
+                                                            .slice(0, 8) // Show top candidates or first few
+                                                            .map(service => (
+                                                                <button
+                                                                    key={service.id}
+                                                                    onClick={() => {
+                                                                        const newItems = [...lineItems];
+                                                                        newItems[index] = {
+                                                                            description: service.name,
+                                                                            quantity: 1,
+                                                                            rate: service.defaultPrice
+                                                                        };
+                                                                        setLineItems(newItems);
+                                                                    }}
+                                                                    className="px-3 py-1.5 bg-slate-950 border border-slate-700 hover:border-teal-500/50 hover:bg-teal-500/5 rounded-lg text-xs text-slate-300 transition-all"
+                                                                >
+                                                                    {service.name}
+                                                                </button>
+                                                            ))}
+
+                                                        <select
+                                                            className="px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                                                            onChange={(e) => {
+                                                                if (!e.target.value) return;
+                                                                const service = UNIVERSAL_SERVICE_CATALOG
+                                                                    .flatMap(cat => cat.services)
+                                                                    .find(s => s.id === e.target.value);
+                                                                if (service) {
+                                                                    const newItems = [...lineItems];
+                                                                    newItems[index] = {
+                                                                        description: service.name,
+                                                                        quantity: 1,
+                                                                        rate: service.defaultPrice
+                                                                    };
+                                                                    setLineItems(newItems);
+                                                                }
+                                                            }}
+                                                            value=""
+                                                        >
+                                                            <option value="">More services...</option>
+                                                            {UNIVERSAL_SERVICE_CATALOG
+                                                                .filter(cat => userSectors.length === 0 || userSectors.includes(cat.name))
+                                                                .map(cat => (
+                                                                    <optgroup key={cat.name} label={cat.name}>
+                                                                        {cat.services.map(s => (
+                                                                            <option key={s.id} value={s.id}>{s.name} (${s.defaultPrice})</option>
+                                                                        ))}
+                                                                    </optgroup>
+                                                                ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                                                <div className="md:col-span-6">
+                                                    <Input
+                                                        label={index === 0 ? "Description *" : ""}
+                                                        value={item.description}
+                                                        onChange={(e) => {
+                                                            const newItems = [...lineItems];
+                                                            newItems[index].description = e.target.value;
+                                                            setLineItems(newItems);
+                                                        }}
+                                                        placeholder="e.g. Logo Design"
+                                                    />
+                                                </div>
+                                                <div className="md:col-span-2">
+                                                    <Input
+                                                        label={index === 0 ? "Qty *" : ""}
+                                                        type="number"
+                                                        value={item.quantity.toString()}
+                                                        onChange={(e) => {
+                                                            const newItems = [...lineItems];
+                                                            newItems[index].quantity = parseInt(e.target.value) || 0;
+                                                            setLineItems(newItems);
+                                                        }}
+                                                        min="1"
+                                                    />
+                                                </div>
+                                                <div className="md:col-span-3">
+                                                    <Input
+                                                        label={index === 0 ? "Rate ($) *" : ""}
+                                                        type="number"
+                                                        value={item.rate.toString()}
+                                                        onChange={(e) => {
+                                                            const newItems = [...lineItems];
+                                                            newItems[index].rate = parseFloat(e.target.value) || 0;
+                                                            setLineItems(newItems);
+                                                        }}
+                                                        placeholder="0.00"
+                                                    />
+                                                </div>
+                                                <div className="md:col-span-1 pb-2 flex justify-end">
                                                     <button
-                                                        onClick={() => setLineItems(lineItems.filter((_, i) => i !== index))}
-                                                        className="text-red-400 hover:text-red-300 transition-colors p-2"
+                                                        onClick={() => {
+                                                            if (lineItems.length > 1) {
+                                                                setLineItems(lineItems.filter((_, i) => i !== index));
+                                                            } else {
+                                                                setLineItems([{ description: '', quantity: 1, rate: 0 }]);
+                                                            }
+                                                        }}
+                                                        className="text-slate-500 hover:text-red-400 transition-colors p-2"
                                                     >
                                                         <X className="w-4 h-4" />
                                                     </button>
-                                                )}
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
@@ -873,8 +1005,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 

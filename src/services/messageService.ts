@@ -259,8 +259,13 @@ export const messageService = {
         }
 
         // Create unique channel per user for better isolation
+        // Sanitize IDs to ensure valid channel name (alphanumeric, underscores, hyphens)
+        const safeUserId = userId.replace(/[^a-zA-Z0-9-_]/g, '_');
+        const safeTenantId = tenantId.replace(/[^a-zA-Z0-9-_]/g, '_');
+        const channelName = `messages_${safeUserId}_${safeTenantId}`;
+
         const channel = supabase
-            .channel(`messages:${userId}:${tenantId}`)
+            .channel(channelName)
             .on(
                 'postgres_changes' as any,
                 {

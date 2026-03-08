@@ -210,7 +210,8 @@ export const leadService = {
                 outreach_status: l.outreachStatus || 'pending',
                 is_verified: l.isVerified || false,
                 trust_score: l.trustScore || 0,
-                verification_notes: l.verificationNotes,
+                latitude: l.lat,
+                longitude: l.lng,
                 sdr_insight: l.sdrInsight
             }));
 

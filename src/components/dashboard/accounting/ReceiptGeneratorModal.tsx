@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react';
 import { Button } from '../../ui/UIComponents';
-import { X, Download, Eye, FileText, Printer, Share2 } from 'lucide-react';
+import { X, Download, Eye, FileText, Printer, Share2, Search, List, Plus, Sparkles } from 'lucide-react';
 import { useTenant } from '../../../contexts/TenantContext';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { googleDriveService } from '../../../services/googleDriveService';
 import { supabase } from '../../../lib/supabase';
+import { businessClientService, BusinessClient } from '../../../services/businessClientService';
 import toast from 'react-hot-toast';
 
 interface ReceiptItem {
@@ -38,6 +39,52 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
 
     const [isPreviewMode, setIsPreviewMode] = useState(false);
     const [isSavingToDrive, setIsSavingToDrive] = useState(false);
+    const [clients, setClients] = useState<BusinessClient[]>([]);
+    const [myServices, setMyServices] = useState<Record<string, any>>({});
+    const [showContactDropdown, setShowContactDropdown] = useState(false);
+    const [contactSearch, setContactSearch] = useState('');
+    const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowContactDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    React.useEffect(() => {
+        const fetchDropdownData = async () => {
+            const tenantId = currentTenant?.id;
+            if (!tenantId || !isOpen) return;
+
+            try {
+                const [clientsRes, settingsRes] = await Promise.all([
+                    businessClientService.getClients(tenantId),
+                    supabase
+                        .from('business_settings')
+                        .select('settings')
+                        .eq('tenant_id', tenantId)
+                        .maybeSingle()
+                ]);
+
+                if (clientsRes.clients) {
+                    setClients(clientsRes.clients);
+                }
+
+                if (settingsRes.data?.settings?.my_services) {
+                    setMyServices(settingsRes.data.settings.my_services);
+                }
+            } catch (err) {
+                console.error('Error fetching dropdown data:', err);
+            }
+        };
+
+        fetchDropdownData();
+    }, [currentTenant?.id, isOpen]);
 
     if (!isOpen) return null;
 
@@ -353,13 +400,48 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-sm font-medium text-slate-400 mb-2">Client Name <span className="text-rose-400">*</span></label>
-                                <input
-                                    type="text"
-                                    value={receiptData.clientName}
-                                    onChange={(e) => setReceiptData({ ...receiptData, clientName: e.target.value })}
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 transition-colors"
-                                    placeholder="Jane Doe or Acme Corp"
-                                />
+                                <div className="relative" ref={dropdownRef}>
+                                    <input
+                                        type="text"
+                                        value={receiptData.clientName}
+                                        onChange={(e) => {
+                                            setReceiptData({ ...receiptData, clientName: e.target.value });
+                                            setContactSearch(e.target.value);
+                                            setShowContactDropdown(true);
+                                        }}
+                                        onFocus={() => setShowContactDropdown(true)}
+                                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 transition-colors"
+                                        placeholder="Jane Doe or Acme Corp"
+                                    />
+                                    {showContactDropdown && (clients.length > 0) && (
+                                        <div className="absolute z-10 w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg shadow-xl max-h-60 overflow-y-auto custom-scrollbar">
+                                            {clients
+                                                .filter(c => c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
+                                                    (c.email && c.email.toLowerCase().includes(contactSearch.toLowerCase())))
+                                                .map(client => (
+                                                    <div
+                                                        key={client.id}
+                                                        onClick={() => {
+                                                            setReceiptData({
+                                                                ...receiptData,
+                                                                clientName: client.name,
+                                                                clientEmail: client.email || ''
+                                                            });
+                                                            setShowContactDropdown(false);
+                                                        }}
+                                                        className="px-4 py-2 hover:bg-slate-800 cursor-pointer border-b border-slate-800 last:border-0"
+                                                    >
+                                                        <div className="text-sm font-medium text-white">{client.name}</div>
+                                                        {client.email && <div className="text-xs text-slate-500">{client.email}</div>}
+                                                    </div>
+                                                ))}
+                                            {clients.filter(c => c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
+                                                (c.email && c.email.toLowerCase().includes(contactSearch.toLowerCase()))).length === 0 && (
+                                                    <div className="px-4 py-3 text-sm text-slate-500 italic">No contacts found</div>
+                                                )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-400 mb-2">Client Email</label>
@@ -417,6 +499,45 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                                 + Add Item
                             </button>
                         </div>
+
+                        {/* Quick Add Services */}
+                        {Object.keys(myServices).length > 0 && (
+                            <div className="mb-6 p-4 bg-teal-500/5 border border-teal-500/10 rounded-xl">
+                                <label className="block text-[10px] font-bold text-teal-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                    <Sparkles className="w-3 h-3" />
+                                    Quick Add from My Services
+                                </label>
+                                <div className="flex flex-wrap gap-2">
+                                    {Object.entries(myServices).map(([id, service]: [string, any]) => (
+                                        <button
+                                            key={id}
+                                            onClick={() => {
+                                                const emptyIdx = receiptData.items.findIndex(item => !item.description);
+                                                if (emptyIdx !== -1) {
+                                                    handleItemChange(emptyIdx, 'description', service.name);
+                                                    handleItemChange(emptyIdx, 'price', service.defaultPrice || 0);
+                                                } else {
+                                                    setReceiptData(prev => ({
+                                                        ...prev,
+                                                        items: [...prev.items, {
+                                                            description: service.name,
+                                                            quantity: 1,
+                                                            price: service.defaultPrice || 0
+                                                        }]
+                                                    }));
+                                                }
+                                                toast.success(`Added ${service.name}`);
+                                            }}
+                                            className="px-3 py-1.5 bg-slate-900 border border-slate-700 hover:border-teal-500 hover:bg-teal-500/10 rounded-lg text-xs text-slate-300 transition-all flex items-center gap-2 group"
+                                        >
+                                            <Plus className="w-3 h-3 text-teal-500 group-hover:scale-110 transition-transform" />
+                                            {service.name}
+                                            <span className="text-slate-500 ml-1 font-mono">${service.defaultPrice}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         <div className="space-y-4">
                             {receiptData.items.map((item, index) => (

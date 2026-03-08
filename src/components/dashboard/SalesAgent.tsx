@@ -325,8 +325,17 @@ const SalesAgent: React.FC = () => {
 
                         if (tenantId) {
                             for (const lead of leadsToProcess) {
-                                const result = await processLeadHelper(lead, user.id, tenantId);
-                                if (result.success) processed++;
+                                try {
+                                    const result = await processLeadHelper(lead, user.id, tenantId);
+                                    if (result.success) {
+                                        processed++;
+                                    } else {
+                                        console.error(`Conversion failed for ${lead.businessName}:`, result.error);
+                                        toast.error(`CRM sync failed for ${lead.businessName}. The lead was saved but conversion aborted.`, { duration: 3000 });
+                                    }
+                                } catch (innerErr) {
+                                    console.error(`Unexpected conversion error for ${lead.businessName}:`, innerErr);
+                                }
                             }
                         }
                     }

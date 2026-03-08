@@ -74,12 +74,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             setIsLoading(true);
             try {
                 // @ts-ignore - Dynamic import of PDF.js
-                const pdfjsLib = await import('pdfjs-dist/build/pdf.mjs');
+                // Using the standard build instead of legacy for v5+ ESM support
+                const pdfjsModule = await import('pdfjs-dist/build/pdf.min.mjs');
+                const pdfjsLib = pdfjsModule.default || pdfjsModule;
 
-                // Ensure worker is only initialized once
                 if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
                     const version = pdfjsLib.version || '5.4.624';
-                    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.mjs`;
+                    // Use a more reliable worker source URL structure for v5.x
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.mjs`;
                 }
 
                 const loadingTask = pdfjsLib.getDocument(url);
@@ -302,12 +304,14 @@ const PDFPage = React.forwardRef<HTMLDivElement, PDFPageProps>(({
     const [renderPending, setRenderPending] = useState(false);
 
     useEffect(() => {
+        let renderTask: any = null;
+
         const renderPage = async () => {
             if (!canvasRef.current) return;
             setRenderPending(true);
             try {
                 const page = await pdf.getPage(pageNumber);
-                const viewport = page.getViewport({ scale });
+                const viewport = page.getViewport({ scale: scale * (window.devicePixelRatio || 1) });
                 const canvas = canvasRef.current;
                 const context = canvas.getContext('2d');
 
@@ -315,6 +319,8 @@ const PDFPage = React.forwardRef<HTMLDivElement, PDFPageProps>(({
 
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
+                canvas.style.width = `${viewport.width / (window.devicePixelRatio || 1)}px`;
+                canvas.style.height = `${viewport.height / (window.devicePixelRatio || 1)}px`;
 
                 // Clear previous content
                 context.clearRect(0, 0, canvas.width, canvas.height);
@@ -324,19 +330,29 @@ const PDFPage = React.forwardRef<HTMLDivElement, PDFPageProps>(({
                 const renderContext = {
                     canvasContext: context,
                     viewport: viewport,
-                    canvas: canvas!
+                    canvas: canvas
                 };
 
-                const renderTask = page.render(renderContext);
+                renderTask = page.render(renderContext);
                 await renderTask.promise;
-            } catch (error) {
-                console.error('Page Render Error:', error);
+            } catch (error: any) {
+                if (error.name === 'RenderingCancelledException') {
+                    console.log('Rendering cancelled');
+                } else {
+                    console.error('Page Render Error:', error);
+                }
             } finally {
                 setRenderPending(false);
             }
         };
 
         renderPage();
+
+        return () => {
+            if (renderTask) {
+                renderTask.cancel();
+            }
+        };
     }, [pdf, pageNumber, scale]);
 
     return (

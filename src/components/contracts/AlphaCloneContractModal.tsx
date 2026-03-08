@@ -16,6 +16,9 @@ import ContractDraftingVisual from './ContractDraftingVisual';
 import { useTenant } from '../../contexts/TenantContext';
 import { useBackgroundTasks } from '../../contexts/BackgroundTaskContext';
 import { PLAN_PRICING } from '../../services/tenancy/types';
+import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '../../services/universalServiceCatalog';
+import { Sparkles } from 'lucide-react';
+
 
 interface Props {
     isOpen: boolean;
@@ -52,6 +55,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
     const [isSavingToDrive, setIsSavingToDrive] = useState(false);
     const [clients, setClients] = useState<BusinessClient[]>([]);
     const [selectedClientId, setSelectedClientId] = useState<string>(project?.ownerId || '');
+    const [userSectors, setUserSectors] = useState<string[]>([]);
     const { startTask } = useBackgroundTasks();
 
     // Contract variables with defaults
@@ -87,6 +91,18 @@ const AlphaCloneContractModal: React.FC<Props> = ({
             businessClientService.getClients(currentTenant.id).then(({ clients }) => {
                 setClients(clients || []);
             });
+
+            // Fetch service sectors
+            supabase.from('business_settings')
+                .select('settings')
+                .eq('tenant_id', currentTenant.id)
+                .single()
+                .then((res: any) => {
+                    const data = res.data;
+                    if (data?.settings?.service_sectors) {
+                        setUserSectors(data.settings.service_sectors);
+                    }
+                });
         }
     }, [currentTenant?.id]);
 

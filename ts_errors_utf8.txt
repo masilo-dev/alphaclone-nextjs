@@ -1,0 +1,5 @@
+﻿src/components/contracts/AlphaCloneContractModal.tsx(100,26): error TS7031: Binding element 'data' implicitly has an 'any' type.
+src/components/dashboard/business/SettingsPage.tsx(175,26): error TS2345: Argument of type 'string' is not assignable to parameter of type 'SetStateAction<"notifications" | "security" | "business" | "booking" | "integrations" | "billing">'.
+src/components/dashboard/business/SettingsPage.tsx(345,57): error TS2345: Argument of type 'string' is not assignable to parameter of type 'SetStateAction<"notifications" | "security" | "business" | "booking" | "integrations" | "billing">'.
+src/components/dashboard/CreateInvoiceModal.tsx(448,46): error TS2304: Cannot find name 'List'.
+src/components/dashboard/CreateInvoiceModal.tsx(477,54): error TS2304: Cannot find name 'Plus'.

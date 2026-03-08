@@ -222,15 +222,23 @@ export const journalEntryService = {
 
             if (numberError) throw numberError;
 
-            // Find current period
-            const { data: period } = await supabase
+            // Find current period and check if it's open
+            const { data: period, error: periodError } = await supabase
                 .from('accounting_periods')
-                .select('id')
+                .select('id, status')
                 .eq('tenant_id', tenantId)
                 .lte('start_date', input.entryDate)
                 .gte('end_date', input.entryDate)
-                .eq('status', 'open')
                 .single();
+
+            if (periodError && periodError.code !== 'PGRST116') throw periodError;
+
+            if (period && period.status !== 'open') {
+                return {
+                    entry: null,
+                    error: `Cannot create entry in a ${period.status} period.`,
+                };
+            }
 
             // Create entry header
             const { data: entryData, error: entryError } = await supabase
@@ -330,6 +338,18 @@ export const journalEntryService = {
         try {
             const { data: userData } = await supabase.auth.getUser();
 
+            // Check period status
+            const { data: entry } = await supabase
+                .from('journal_entries')
+                .select('period_id, status, accounting_periods(status)')
+                .eq('id', entryId)
+                .single();
+
+            const periodStatus = (entry as any)?.accounting_periods?.status;
+            if (periodStatus && periodStatus !== 'open') {
+                return { success: false, error: `Cannot post entry to a ${periodStatus} period.` };
+            }
+
             const { data, error } = await supabase.rpc('post_journal_entry', {
                 p_entry_id: entryId,
                 p_posted_by: userData.user?.id,
@@ -352,6 +372,18 @@ export const journalEntryService = {
     async voidEntry(entryId: string, reason: string): Promise<{ reversingEntryId: string | null; error: string | null }> {
         try {
             const { data: userData } = await supabase.auth.getUser();
+
+            // Check period status - Only allowed if NOT locked
+            const { data: entry } = await supabase
+                .from('journal_entries')
+                .select('period_id, status, accounting_periods(status)')
+                .eq('id', entryId)
+                .single();
+
+            const periodStatus = (entry as any)?.accounting_periods?.status;
+            if (periodStatus === 'locked') {
+                return { reversingEntryId: null, error: 'Cannot void entries in a locked period.' };
+            }
 
             const { data, error } = await supabase.rpc('void_journal_entry', {
                 p_entry_id: entryId,
@@ -376,16 +408,21 @@ export const journalEntryService = {
         try {
             const tenantId = this.getTenantId();
 
-            // Check status
+            // Check status and period
             const { data: entry } = await supabase
                 .from('journal_entries')
-                .select('status')
+                .select('status, accounting_periods(status)')
                 .eq('id', entryId)
                 .eq('tenant_id', tenantId)
                 .single();
 
             if (entry?.status !== 'draft') {
                 return { error: 'Only draft entries can be deleted. Use void for posted entries.' };
+            }
+
+            const periodStatus = (entry as any)?.accounting_periods?.status;
+            if (periodStatus && periodStatus !== 'open') {
+                return { error: `Cannot delete entry in a ${periodStatus} period.` };
             }
 
             // Delete lines first (cascade will handle this, but explicit is clearer)

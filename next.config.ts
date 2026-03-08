@@ -41,7 +41,7 @@ const nextConfig: NextConfig = {
   async headers() {
     const cspHeader = `
       default-src 'self';
-      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://va.vercel-scripts.com;
+      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://va.vercel-scripts.com https://*.daily.co https://*.sentry.io;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       img-src 'self' blob: data: https://*.supabase.co https://api.dicebear.com https://*.stripe.com https://img.logo.dev;
       font-src 'self' data: https://fonts.gstatic.com;
@@ -49,8 +49,8 @@ const nextConfig: NextConfig = {
       base-uri 'self';
       form-action 'self';
       frame-ancestors 'none';
-      frame-src 'self' https://*.stripe.com https://js.stripe.com;
-      connect-src 'self' https://*.supabase.co wss://*.supabase.co *.upstash.io *.stripe.com https://api.dicebear.com;
+      frame-src 'self' https://*.stripe.com https://js.stripe.com https://*.daily.co;
+      connect-src 'self' https://*.supabase.co wss://*.supabase.co *.upstash.io *.stripe.com https://api.dicebear.com https://*.daily.co wss://*.daily.co https://*.sentry.io;
       worker-src 'self' blob: https://unpkg.com https://cdnjs.cloudflare.com;
       upgrade-insecure-requests;
     `.replace(/\s{2,}/g, ' ').trim();
