@@ -2,24 +2,82 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, Send, Loader2, Sparkles, Wand2 } from 'lucide-react';
+import { X, Send, Loader2, Sparkles, Wand2, User, Search, Check } from 'lucide-react';
 import { Button } from '../../ui/UIComponents';
 import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
+import { businessClientService } from '../../../services/businessClientService';
+import { useTenant } from '../../../contexts/TenantContext';
 
 interface ComposeEmailModalProps {
     isOpen: boolean;
     onClose: () => void;
     userId: string;
+    initialTo?: string;
+    initialSubject?: string;
+    initialBody?: string;
 }
 
-const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({ isOpen, onClose, userId }) => {
-    const [to, setTo] = useState('');
-    const [subject, setSubject] = useState('');
-    const [body, setBody] = useState('');
+const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
+    isOpen,
+    onClose,
+    userId,
+    initialTo = '',
+    initialSubject = '',
+    initialBody = ''
+}) => {
+    const { currentTenant } = useTenant();
+    const [to, setTo] = useState(initialTo);
+    const [subject, setSubject] = useState(initialSubject);
+    const [body, setBody] = useState(initialBody);
     const [sending, setSending] = useState(false);
     const [aiPrompt, setAiPrompt] = useState('');
     const [generating, setGenerating] = useState(false);
+    const [selectedTone, setSelectedTone] = useState('professional');
+    const [clients, setClients] = useState<any[]>([]);
+    const [showContactDropdown, setShowContactDropdown] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        if (isOpen) {
+            setTo(initialTo);
+            setSubject(initialSubject);
+            setBody(initialBody);
+            setSearchQuery('');
+            setAiPrompt('');
+        }
+    }, [isOpen, initialTo, initialSubject, initialBody]);
+
+    React.useEffect(() => {
+        if (isOpen && currentTenant?.id) {
+            businessClientService.getClients(currentTenant.id).then(({ clients }) => {
+                setClients(clients || []);
+            });
+        }
+    }, [isOpen, currentTenant?.id]);
+
+    React.useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowContactDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const filteredClients = clients.filter(c =>
+        c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const TONES = [
+        { id: 'professional', label: 'Professional' },
+        { id: 'friendly', label: 'Friendly' },
+        { id: 'direct', label: 'Direct' },
+        { id: 'creative', label: 'Creative' },
+    ];
 
     const handleAIGenerate = async () => {
         if (!aiPrompt.trim()) {
@@ -33,8 +91,10 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({ isOpen, onClose, 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    prompt: `Write an email based on these instructions: "${aiPrompt}". 
+                    prompt: `Write a ${selectedTone} email based on these instructions: "${aiPrompt}". 
+                    Recipient context: ${to ? `Writing to ${to}` : 'General business contact'}.
                     Return your response as a JSON object with 'subject' and 'body' fields. 
+                    Style: ${selectedTone}.
                     Be professional and concise. Don't add any other text outside the JSON.`,
                     systemPrompt: "You are an expert business email assistant. You respond only with valid JSON focusing on high-conversion outreach."
                 })
@@ -137,11 +197,25 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({ isOpen, onClose, 
                             <Sparkles className="w-4 h-4 text-indigo-400" />
                             <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">AI Drafting Assistant</span>
                         </div>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                            {TONES.map(tone => (
+                                <button
+                                    key={tone.id}
+                                    onClick={() => setSelectedTone(tone.id)}
+                                    className={`px-3 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all border ${selectedTone === tone.id
+                                            ? 'bg-indigo-500 text-white border-indigo-400'
+                                            : 'bg-slate-900 text-slate-500 border-slate-800 hover:border-slate-700'
+                                        }`}
+                                >
+                                    {tone.label}
+                                </button>
+                            ))}
+                        </div>
                         <div className="flex gap-2">
                             <input
                                 value={aiPrompt}
                                 onChange={e => setAiPrompt(e.target.value)}
-                                placeholder="Example: Write a follow up email about the partnership proposal..."
+                                placeholder="Describe your email (e.g., 'Follow up on the project proposal')"
                                 className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:border-indigo-500/50 outline-none"
                                 onKeyDown={e => e.key === 'Enter' && handleAIGenerate()}
                             />
@@ -158,15 +232,55 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({ isOpen, onClose, 
 
                     <div className="w-full h-[1px] bg-slate-900" />
 
-                    <div>
+                    <div className="relative" ref={dropdownRef}>
                         <label className="text-[10px] text-slate-500 uppercase font-black tracking-widest block mb-2 px-1">Recipient</label>
-                        <input
-                            type="email"
-                            value={to}
-                            onChange={e => setTo(e.target.value)}
-                            placeholder="email@example.com"
-                            className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-[#f5d400]/40 outline-none transition-all"
-                        />
+                        <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                            <input
+                                type="text"
+                                value={to}
+                                onChange={e => {
+                                    setTo(e.target.value);
+                                    setSearchQuery(e.target.value);
+                                    setShowContactDropdown(true);
+                                }}
+                                onFocus={() => setShowContactDropdown(true)}
+                                placeholder="Search contacts or enter email..."
+                                className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-10 py-3 text-sm text-white focus:border-[#f5d400]/40 outline-none transition-all"
+                            />
+                        </div>
+
+                        {showContactDropdown && (searchQuery.length > 0 || filteredClients.length > 0) && (
+                            <div className="absolute left-0 right-0 top-full mt-2 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl z-[120] max-h-60 overflow-y-auto overflow-x-hidden p-2">
+                                {filteredClients.length > 0 ? (
+                                    filteredClients.map(client => (
+                                        <button
+                                            key={client.id}
+                                            onClick={() => {
+                                                setTo(client.email);
+                                                setShowContactDropdown(false);
+                                            }}
+                                            className="w-full text-left p-3 rounded-xl hover:bg-slate-800 transition-colors group flex items-center justify-between"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center border border-teal-500/20">
+                                                    <User className="w-4 h-4 text-teal-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-white group-hover:text-teal-400 transition-colors">{client.name}</p>
+                                                    <p className="text-[10px] text-slate-500">{client.email}</p>
+                                                </div>
+                                            </div>
+                                            {to === client.email && <Check className="w-3.5 h-3.5 text-teal-400" />}
+                                        </button>
+                                    ))
+                                ) : (
+                                    <div className="p-4 text-center text-slate-500 text-xs">
+                                        No contacts found matching "{searchQuery}"
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     <div>
@@ -201,8 +315,8 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({ isOpen, onClose, 
                         Send Email
                     </Button>
                 </div>
-            </motion.div>
-        </div>
+            </motion.div >
+        </div >
     );
 };
 

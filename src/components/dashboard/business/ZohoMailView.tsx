@@ -61,6 +61,7 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
     const [isComposeOpen, setIsComposeOpen] = useState(false);
     const [aiReplyGenerating, setAiReplyGenerating] = useState(false);
     const [aiReplyDrafting, setAiReplyDrafting] = useState(false);
+    const [composeDefaults, setComposeDefaults] = useState({ to: '', subject: '', body: '' });
 
     const fetchEmails = async (folder: string = activeFolder) => {
         setLoading(true);
@@ -320,6 +321,21 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
                                 </div>
                             </div>
                             <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => {
+                                        setComposeDefaults({
+                                            to: selected.fromAddress,
+                                            subject: `Re: ${selected.subject}`,
+                                            body: `\n\n--- Original Message ---\nFrom: ${selected.fromAddress}\nSubject: ${selected.subject}\n\n${(selected.content || selected.summary || '').replace(/<[^>]*>/g, '')}`
+                                        });
+                                        setIsComposeOpen(true);
+                                    }}
+                                    title="Open in AI Composer"
+                                    className="p-2 text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest bg-indigo-500/5 rounded-lg px-2"
+                                >
+                                    <Sparkles className="w-3.5 h-3.5" />
+                                    AI Compose
+                                </button>
                                 <button className="p-2 text-slate-400 hover:text-white transition-colors"><Archive className="w-4 h-4" /></button>
                                 <button className="p-2 text-slate-400 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>
                                 <button className="p-2 text-slate-400 hover:text-white transition-colors"><MoreVertical className="w-4 h-4" /></button>
@@ -421,8 +437,14 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
             />
             <ComposeEmailModal
                 isOpen={isComposeOpen}
-                onClose={() => setIsComposeOpen(false)}
+                onClose={() => {
+                    setIsComposeOpen(false);
+                    setComposeDefaults({ to: '', subject: '', body: '' });
+                }}
                 userId={userId}
+                initialTo={composeDefaults.to}
+                initialSubject={composeDefaults.subject}
+                initialBody={composeDefaults.body}
             />
         </div>
     );
