@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button, Badge } from '../ui/UIComponents';
-import { CreditCard, CheckCircle, Download, TrendingUp, TrendingDown, DollarSign, FileDown, Zap, Star, Rocket, Check, ShieldCheck } from 'lucide-react';
+import { CreditCard, CheckCircle, Download, TrendingUp, TrendingDown, DollarSign, FileDown, Zap, Star, Rocket, Check, ShieldCheck, ExternalLink } from 'lucide-react';
 import { User, Invoice } from '../../types';
 import { paymentService } from '../../services/paymentService';
 import { useTenant } from '@/contexts/TenantContext';
@@ -639,6 +639,14 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                             </Badge>
                                         </td>
                                         <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => window.open(`/invoice/${inv.id}`, '_blank')}
+                                                title="View Web Receipt"
+                                            >
+                                                <ExternalLink className="w-4 h-4" />
+                                            </Button>
                                             <Button
                                                 size="sm"
                                                 variant="outline"

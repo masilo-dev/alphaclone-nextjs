@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '../ui/UIComponents';
-import { Video, Copy, Check, ExternalLink, Loader, AlertTriangle, RefreshCw, Zap } from 'lucide-react';
+import { Video, Copy, ExternalLink, RefreshCw, AlertTriangle, Check, Zap, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { User } from '../../types';
 import { dailyService } from '../../services/dailyService';
@@ -63,7 +64,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
             if (!permanentCall) {
                 const { call, error } = await dailyService.createVideoCall({
                     hostId: user.id || 'system',
-                    title: `${currentTenant.name}'s Permanent Meeting Room`,
+                    title: `${currentTenant.name} 's Permanent Meeting Room`,
                     isPublic: true,
                     maxParticipants: 10,
                     screenShareEnabled: true,
@@ -75,17 +76,38 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                     throw new Error(error || 'Failed to create room');
                 }
 
-                // Mark it as permanent
-                const { error: updateError } = await supabase
+                // Generate a random 6-digit PIN
+                const meetingPin = Math.floor(100000 + Math.random() * 900000).toString();
+
+                // Mark it as permanent and store the PIN in metadata
+                const { error: updateError, data: updatedCall } = await supabase
                     .from('video_calls')
-                    .update({ is_permanent: true })
-                    .eq('id', call.id);
+                    .update({
+                        is_permanent: true,
+                        metadata: { meeting_pin: meetingPin }
+                    })
+                    .eq('id', call.id)
+                    .select()
+                    .single();
 
                 if (updateError) {
-                    console.error('Failed to mark room as permanent:', updateError);
+                    console.error('Failed to mark room as permanent/set PIN:', updateError);
+                } else {
+                    permanentCall = updatedCall;
                 }
+            } else if (!permanentCall.metadata?.meeting_pin) {
+                // Retroactively add a PIN if one doesn't exist for an older layout
+                const meetingPin = Math.floor(100000 + Math.random() * 900000).toString();
+                const { data: updatedCall } = await supabase
+                    .from('video_calls')
+                    .update({
+                        metadata: { ...permanentCall.metadata, meeting_pin: meetingPin }
+                    })
+                    .eq('id', permanentCall.id)
+                    .select()
+                    .single();
 
-                permanentCall = call;
+                if (updatedCall) permanentCall = updatedCall;
             }
 
             // Always use the branded link for the shareable link to ensure consistency
@@ -95,8 +117,9 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                 id: permanentCall.id,
                 name: permanentCall.daily_room_name || `room-${permanentCall.id}`,
                 url: permanentCall.daily_room_url || '',
-                shareLink: shareLink
-            });
+                shareLink: shareLink,
+                pin: permanentCall.metadata?.meeting_pin // Attach pin to room state
+            } as any); // Cast as any to add pin temporarily if not strictly typed
             setStatus('ready');
 
         } catch (err: any) {
@@ -115,6 +138,16 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
             toast.error('Failed to copy link');
+        }
+    };
+
+    const handleCopyPin = async () => {
+        if (!room || !(room as any).pin) return;
+        try {
+            await navigator.clipboard.writeText((room as any).pin);
+            toast.success('Meeting Code copied!');
+        } catch (err) {
+            toast.error('Failed to copy code');
         }
     };
 
@@ -215,35 +248,62 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                 </div>
 
                 {/* Meeting Link Display */}
-                <div className="bg-gray-900/50 border-2 border-teal-500/50 rounded-lg p-4 mb-4 backdrop-blur-sm">
-                    <div className="flex items-center gap-2 mb-2">
-                        <ExternalLink className="w-4 h-4 text-teal-400" />
-                        <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">
-                            Shareable Link
-                        </span>
+                <div className="bg-gray-900/50 border-2 border-teal-500/50 rounded-lg p-4 mb-4 backdrop-blur-sm space-y-4">
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <ExternalLink className="w-4 h-4 text-teal-400" />
+                            <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">
+                                Shareable Link
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-3 flex-wrap">
+                            <p className="flex-1 text-teal-400 font-mono text-sm break-all select-all bg-black/30 p-2 rounded min-w-0">
+                                {room.shareLink}
+                            </p>
+                            <Button
+                                onClick={handleCopyLink}
+                                className={`shrink-0 transition-all ${copied ? 'bg-green-600' : 'bg-teal-600 hover:bg-teal-500'}`}
+                                size="sm"
+                            >
+                                {copied ? (
+                                    <>
+                                        <Check className="w-4 h-4 mr-1" />
+                                        Copied
+                                    </>
+                                ) : (
+                                    <>
+                                        <Copy className="w-4 h-4 mr-1" />
+                                        Copy
+                                    </>
+                                )}
+                            </Button>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-3 flex-wrap">
-                        <p className="flex-1 text-teal-400 font-mono text-sm break-all select-all bg-black/30 p-2 rounded min-w-0">
-                            {room.shareLink}
-                        </p>
-                        <Button
-                            onClick={handleCopyLink}
-                            className={`shrink-0 transition-all ${copied ? 'bg-green-600' : 'bg-teal-600 hover:bg-teal-500'}`}
-                            size="sm"
-                        >
-                            {copied ? (
-                                <>
-                                    <Check className="w-4 h-4 mr-1" />
-                                    Copied
-                                </>
-                            ) : (
-                                <>
+
+                    {/* Meeting PIN Display */}
+                    {(room as any).pin && (
+                        <div className="pt-3 border-t border-slate-700/50">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Lock className="w-4 h-4 text-amber-400" />
+                                <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">
+                                    Meeting Code (Required for Clients)
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-3 flex-wrap">
+                                <p className="flex-1 text-amber-400 font-mono text-xl tracking-[0.2em] font-bold bg-black/30 p-2 rounded min-w-0 text-center">
+                                    {String((room as any).pin).match(/.{1,3}/g)?.join(' ')}
+                                </p>
+                                <Button
+                                    onClick={handleCopyPin}
+                                    className="shrink-0 transition-all bg-amber-600 hover:bg-amber-500 text-white"
+                                    size="sm"
+                                >
                                     <Copy className="w-4 h-4 mr-1" />
-                                    Copy
-                                </>
-                            )}
-                        </Button>
-                    </div>
+                                    Copy Code
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Action Buttons */}

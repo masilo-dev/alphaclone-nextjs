@@ -17,6 +17,13 @@ export default function MeetPage() {
     const [loading, setLoading] = useState(true);
     const [callId, setCallId] = useState<string | null>(null);
 
+    const [inputPin, setInputPin] = useState('');
+    const [expectedPin, setExpectedPin] = useState<string | null>(null);
+    const [isPinValidated, setIsPinValidated] = useState(false);
+    const [guestName, setGuestName] = useState('');
+    const [guestEmail, setGuestEmail] = useState('');
+    const [pinError, setPinError] = useState('');
+
     // This ID is the database UUID or the business slug
     const meetingIdOrSlug = params.id as string;
 
@@ -26,11 +33,11 @@ export default function MeetPage() {
     // Memoize the guest user object to ensure it's pure and doesn't change on every render
     const guestUser = React.useMemo(() => ({
         id: guestId,
-        name: 'Guest',
-        email: '',
+        name: guestName || 'Guest',
+        email: guestEmail,
         role: 'client' as const,
         avatar: ''
-    }), [guestId]);
+    }), [guestId, guestName, guestEmail]);
 
     useEffect(() => {
         // Wait for auth to initialize (even if user is null, we need to know that for sure)
@@ -65,7 +72,7 @@ export default function MeetPage() {
                     // Look up the permanent room for this tenant
                     const { data: permanentRooms, error: roomError } = await supabase
                         .from('video_calls')
-                        .select('id')
+                        .select('id, metadata')
                         .eq('tenant_id', tenant.id)
                         .eq('is_permanent', true)
                         .eq('status', 'active');
@@ -78,6 +85,19 @@ export default function MeetPage() {
 
                     // Use the first active permanent room found
                     targetMeetingId = permanentRooms[0].id;
+                    if (permanentRooms[0].metadata?.meeting_pin) {
+                        setExpectedPin(permanentRooms[0].metadata.meeting_pin);
+                    }
+                } else {
+                    const { data: room, error: singleRoomError } = await supabase
+                        .from('video_calls')
+                        .select('metadata')
+                        .eq('id', targetMeetingId)
+                        .single();
+
+                    if (room?.metadata && room.metadata.meeting_pin) {
+                        setExpectedPin(room.metadata.meeting_pin);
+                    }
                 }
 
                 // 1. Fetch meeting details from OUR database
@@ -106,6 +126,11 @@ export default function MeetPage() {
                     return;
                 }
 
+                // If the user logging in is the host/tenant owner, skip the PIN check
+                if (user && call.host_id === user.id) {
+                    setIsPinValidated(true);
+                }
+
                 // 4. Token & URL Generation
                 // Ideally, we generate a token for the user to join securely.
                 // For now, we will use the roomUrl.
@@ -129,6 +154,23 @@ export default function MeetPage() {
 
         connectToMeeting();
     }, [meetingIdOrSlug, authLoading, user, router]);
+
+    const handlePinSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setPinError('');
+
+        if (!guestName.trim()) {
+            setPinError('Please enter your name.');
+            return;
+        }
+
+        if (expectedPin && inputPin !== expectedPin) {
+            setPinError('Incorrect meeting code. Please try again.');
+            return;
+        }
+
+        setIsPinValidated(true);
+    };
 
     if (loading || authLoading) {
         return (
@@ -166,6 +208,74 @@ export default function MeetPage() {
                         Return to Homepage
                     </button>
                 </div>
+            </div>
+        );
+    }
+
+    // Require PIN validation if expectedPin exists and hasn't been validated yet
+    if (expectedPin && !isPinValidated) {
+        return (
+            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white p-4">
+                <form onSubmit={handlePinSubmit} className="bg-slate-900 border border-slate-800 p-8 rounded-2xl w-full max-w-md shadow-2xl">
+                    <div className="text-center mb-6">
+                        <div className="w-16 h-16 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-teal-500/20">
+                            <ShieldCheck className="w-8 h-8 text-teal-500" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-white mb-2">Join Secure Meeting</h2>
+                        <p className="text-slate-400 text-sm">Please enter the meeting code provided by the host.</p>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Your Name</label>
+                            <input
+                                type="text"
+                                value={guestName}
+                                onChange={(e) => setGuestName(e.target.value)}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                placeholder="Enter your full name"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Email (Optional)</label>
+                            <input
+                                type="email"
+                                value={guestEmail}
+                                onChange={(e) => setGuestEmail(e.target.value)}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                placeholder="Enter your email"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Meeting Code</label>
+                            <input
+                                type="text"
+                                value={inputPin}
+                                onChange={(e) => setInputPin(e.target.value)}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white font-mono text-center tracking-widest text-lg focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                placeholder="------"
+                                maxLength={6}
+                                required
+                            />
+                        </div>
+
+                        {pinError && (
+                            <div className="p-3 rounded bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                                {pinError}
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            className="w-full mt-6 py-3 px-6 bg-teal-600 hover:bg-teal-500 text-white rounded-xl transition-all font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+                        >
+                            Join Meeting
+                        </button>
+                    </div>
+                </form>
             </div>
         );
     }

@@ -296,80 +296,84 @@ const ClientCard = ({ client, onEdit, onDelete, onCall }: { client: BusinessClie
     };
 
     return (
-        <div className="bg-slate-900/50 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 transition-all group relative shadow-sm">
-            {/* Call Button (Mobile/Direct Action) */}
-            <button
-                onClick={() => onCall(client)}
-                className="absolute top-4 right-12 p-2.5 hover:bg-teal-500/10 rounded-full transition-colors group/call active:scale-95"
-                title="Video Call"
-            >
-                <Phone className="w-5 h-5 text-slate-400 group-hover/call:text-teal-400" />
-            </button>
-
-            {/* Proposal Button */}
-            <button
-                onClick={(e) => {
-                    e.stopPropagation(); // Avoid triggering card click if any
-                    // Navigate to Projects with pre-fill
-                    window.location.href = `/dashboard/business/projects?create=true&clientId=${client.id}`;
-                }}
-                className="absolute top-4 right-24 text-xs bg-slate-800 border border-slate-700 text-slate-300 px-3 py-1.5 rounded-lg hover:border-teal-500 hover:text-teal-400 transition-colors"
-            >
-                Create Proposal
-            </button>
-
-            <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold">
+        <div className="bg-slate-900/50 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 transition-all group relative shadow-sm flex flex-col h-full">
+            <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3 flex-1 min-w-0 mr-2">
+                    <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold">
                         {client.name.charAt(0)}
                     </div>
-                    <div>
-                        <h3 className="font-semibold">{client.name}</h3>
-                        {client.industry && <p className="text-xs text-slate-400">{client.industry}</p>}
+                    <div className="min-w-0">
+                        <h3 className="font-semibold truncate" title={client.name}>{client.name}</h3>
+                        {client.industry && <p className="text-xs text-slate-400 truncate">{client.industry}</p>}
                     </div>
                 </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+
+                <div className="flex items-center gap-2 shrink-0">
                     <button
-                        onClick={() => onEdit(client)}
-                        className="p-1 hover:bg-teal-500/10 rounded transition-all"
-                        title="Edit Client"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            window.location.href = `/dashboard/business/projects?create=true&clientId=${client.id}`;
+                        }}
+                        className="text-xs bg-slate-800 border border-slate-700 text-slate-300 px-2 py-1.5 rounded-lg hover:border-teal-500 hover:text-teal-400 transition-colors hidden sm:block"
                     >
-                        <Edit className="w-4 h-4 text-teal-400" />
+                        Proposal
                     </button>
                     <button
-                        onClick={() => onDelete(client.id)}
-                        className="p-1 hover:bg-red-500/10 rounded transition-all"
-                        title="Delete Client"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onCall(client);
+                        }}
+                        className="p-1.5 bg-slate-800 border border-slate-700 hover:bg-teal-500/10 hover:border-teal-500/50 rounded-lg transition-colors group/call active:scale-95"
+                        title="Video Call"
                     >
-                        <Trash2 className="w-4 h-4 text-red-400" />
+                        <Phone className="w-4 h-4 text-slate-400 group-hover/call:text-teal-400" />
                     </button>
                 </div>
             </div>
 
-            <div className="space-y-2 mb-3">
+            <div className="space-y-2 mb-4 flex-1">
                 {client.email && (
                     <div className="flex items-center gap-2 text-sm text-slate-400">
-                        <Mail className="w-4 h-4" />
-                        <span className="truncate">{client.email}</span>
+                        <Mail className="w-4 h-4 shrink-0" />
+                        <span className="truncate" title={client.email}>{client.email}</span>
                     </div>
                 )}
                 {client.phone && (
                     <div className="flex items-center gap-2 text-sm text-slate-400">
-                        <Phone className="w-4 h-4" />
-                        <span>{client.phone}</span>
+                        <Phone className="w-4 h-4 shrink-0" />
+                        <span className="truncate">{client.phone}</span>
                     </div>
                 )}
             </div>
 
-            <div className="flex items-center justify-between">
-                <span className={`text-xs px-2 py-1 rounded-full border ${stageColors[client.salesStage]}`}>
-                    {client.salesStage.charAt(0).toUpperCase() + client.salesStage.slice(1)}
-                </span>
-                {client.value > 0 && (
-                    <span className="text-sm font-semibold text-teal-400">
-                        ${client.value.toLocaleString()}
+            <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-800/50">
+                <div className="flex items-center gap-2">
+                    <span className={`text-xs px-2 py-1 rounded-full border ${stageColors[client.salesStage]}`}>
+                        {client.salesStage.charAt(0).toUpperCase() + client.salesStage.slice(1)}
                     </span>
-                )}
+                    {client.value > 0 && (
+                        <span className="text-sm font-semibold text-teal-400">
+                            ${client.value.toLocaleString()}
+                        </span>
+                    )}
+                </div>
+
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onEdit(client); }}
+                        className="p-1.5 hover:bg-teal-500/10 text-slate-400 hover:text-teal-400 rounded transition-all"
+                        title="Edit Client"
+                    >
+                        <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDelete(client.id); }}
+                        className="p-1.5 hover:bg-red-500/10 text-slate-400 hover:text-red-400 rounded transition-all"
+                        title="Delete Client"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                </div>
             </div>
         </div>
     );

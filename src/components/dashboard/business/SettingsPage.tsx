@@ -216,12 +216,12 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 
             if (!error && data) {
                 setSettings({
-                    businessName: data.business_name || '',
+                    businessName: data.business_name || user?.name || '',
                     logoUrl: data.logo_url || '',
                     brandColor: data.brand_color || '#2dd4bf',
                     address: data.address || '',
                     phone: data.phone || '',
-                    email: data.email || '',
+                    email: data.email || user?.email || '',
                     taxRate: data.tax_rate || 0,
                     currency: data.currency || 'USD',
                     invoicePrefix: data.invoice_prefix || 'INV',
@@ -231,6 +231,13 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                     myServices: data.settings?.my_services || {},
                     rawSettings: data.settings || {}
                 });
+            } else {
+                // If no profile exists yet, prefill from user object
+                setSettings(prev => ({
+                    ...prev,
+                    businessName: user?.name || '',
+                    email: user?.email || '',
+                }));
             }
         } catch (error) {
             console.error('Error loading settings:', error);
@@ -405,6 +412,41 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                         rows={3}
                                         className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
                                     />
+                                </div>
+
+                                {/* Custom Payment Details */}
+                                <div className="pt-4 border-t border-slate-700/50">
+                                    <h4 className="text-md font-semibold text-slate-300 mb-4 flex items-center gap-2">
+                                        <CreditCard className="w-4 h-4 text-teal-400" /> Payment & Invoicing Details
+                                    </h4>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1 text-slate-400">
+                                                Bank Details (for Invoices)
+                                            </label>
+                                            <textarea
+                                                value={settings.bankDetails}
+                                                onChange={(e) => setSettings({ ...settings, bankDetails: e.target.value })}
+                                                rows={3}
+                                                placeholder="Account Name: John Doe\nAccount Number: 12345678\nRouting/Sort Code: 123-456"
+                                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500 font-mono text-sm"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1 text-slate-400">
+                                                Mobile or Other Payment Details
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={settings.mobilePaymentDetails}
+                                                onChange={(e) => setSettings({ ...settings, mobilePaymentDetails: e.target.value })}
+                                                placeholder="CashApp: $johndoe | M-Pesa: +1234567890"
+                                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
 
                             </div>
