@@ -235,8 +235,8 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
                             : 'text-slate-500 hover:text-white hover:bg-slate-900'
                             }`}
                     >
-                        <Icon className="w-5 h-5" />
-                        <span className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none whitespace-nowrap font-bold uppercase tracking-widest">
+                        <Icon className="w-5 h-5 group-active:scale-90 transition-transform" />
+                        <span className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none whitespace-nowrap font-bold uppercase tracking-widest shadow-xl border border-slate-700">
                             {label}
                         </span>
                     </button>
@@ -272,163 +272,182 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
                             <p className="text-sm">No emails in {activeFolder}</p>
                         </div>
                     ) : (
-                        emails.map(email => (
-                            <button
-                                key={email.messageId}
-                                onClick={() => handleSelectEmail(email)}
-                                className={`w-full text-left p-4 rounded-xl transition-all border ${selected?.messageId === email.messageId
-                                    ? 'bg-[#f5d400]/10 border-[#f5d400]/40'
-                                    : 'border-transparent hover:bg-slate-900 hover:border-slate-800'
-                                    }`}
-                            >
-                                <div className="flex justify-between items-start mb-1">
-                                    <span className="text-xs font-bold text-[#f5d400] truncate max-w-[140px] uppercase tracking-wider">
-                                        {email.fromAddress?.split('<')[0].trim() || 'Unknown'}
-                                    </span>
-                                    <span className="text-[10px] text-slate-500 whitespace-nowrap">
-                                        {email.receivedTime ? new Date(Number(email.receivedTime)).toLocaleDateString() : ''}
-                                    </span>
-                                </div>
-                                <h4 className="text-sm font-bold text-white truncate mb-1">
-                                    {email.subject || '(No Subject)'}
-                                </h4>
-                                <p className="text-xs text-slate-400 line-clamp-2 opacity-70">
-                                    {email.summary}
-                                </p>
-                            </button>
-                        ))
+                        <AnimatePresence mode="popLayout">
+                            {emails.map((email, idx) => (
+                                <motion.button
+                                    key={email.messageId}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: idx * 0.03 }}
+                                    onClick={() => handleSelectEmail(email)}
+                                    className={`w-full text-left p-4 rounded-xl transition-all border group relative ${selected?.messageId === email.messageId
+                                        ? 'bg-[#f5d400]/10 border-[#f5d400]/40'
+                                        : 'border-transparent hover:bg-slate-900 hover:border-slate-800'
+                                        }`}
+                                >
+                                    {selected?.messageId === email.messageId && (
+                                        <motion.div
+                                            layoutId="active-indicator"
+                                            className="absolute left-0 top-4 bottom-4 w-1 bg-[#f5d400] rounded-r-full"
+                                        />
+                                    )}
+                                    <div className="flex justify-between items-start mb-1">
+                                        <span className="text-xs font-bold text-[#f5d400] truncate max-w-[140px] uppercase tracking-wider group-hover:text-white transition-colors">
+                                            {email.fromAddress?.split('<')[0].trim() || 'Unknown'}
+                                        </span>
+                                        <span className="text-[10px] text-slate-500 whitespace-nowrap">
+                                            {email.receivedTime ? new Date(Number(email.receivedTime)).toLocaleDateString() : ''}
+                                        </span>
+                                    </div>
+                                    <h4 className="text-sm font-bold text-white truncate mb-1">
+                                        {email.subject || '(No Subject)'}
+                                    </h4>
+                                    <p className="text-xs text-slate-400 line-clamp-2 opacity-70 group-hover:opacity-100 transition-opacity">
+                                        {email.summary}
+                                    </p>
+                                </motion.button>
+                            ))}
+                        </AnimatePresence>
                     )}
                 </div>
             </div>
 
-            {/* Email content */}
+            {/* Email content area */}
             <div className={`flex-1 flex flex-col bg-slate-950 ${!selected ? 'hidden md:flex' : 'flex'}`}>
-                {selected ? (
-                    <>
-                        {/* Header */}
-                        <div className="p-4 border-b border-slate-800 flex items-center gap-3 bg-slate-950/50">
-                            <button
-                                onClick={() => setSelected(null)}
-                                className="md:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all"
-                            >
-                                <ArrowLeft className="w-4 h-4" />
-                            </button>
-                            <div className="flex-1 min-w-0">
-                                <h3 className="text-white font-bold truncate">{selected.subject || '(No Subject)'}</h3>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <Badge variant="neutral" className="text-[10px] px-1.5 py-0 bg-[#f5d400]/10 text-[#f5d400] border-[#f5d400]/20">ZOHO</Badge>
-                                    <span className="text-[10px] text-slate-500">{selected.fromAddress}</span>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <button
-                                    onClick={() => {
-                                        setComposeDefaults({
-                                            to: selected.fromAddress,
-                                            subject: `Re: ${selected.subject}`,
-                                            body: `\n\n--- Original Message ---\nFrom: ${selected.fromAddress}\nSubject: ${selected.subject}\n\n${(selected.content || selected.summary || '').replace(/<[^>]*>/g, '')}`
-                                        });
-                                        setIsComposeOpen(true);
-                                    }}
-                                    title="Open in AI Composer"
-                                    className="p-2 text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest bg-indigo-500/5 rounded-lg px-2"
-                                >
-                                    <Sparkles className="w-3.5 h-3.5" />
-                                    AI Compose
-                                </button>
-                                <button className="p-2 text-slate-400 hover:text-white transition-colors"><Archive className="w-4 h-4" /></button>
-                                <button className="p-2 text-slate-400 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>
-                                <button className="p-2 text-slate-400 hover:text-white transition-colors"><MoreVertical className="w-4 h-4" /></button>
-                            </div>
-                        </div>
-
-                        {/* Body */}
-                        <div className="flex-1 overflow-y-auto p-6 sm:p-8">
-                            {loadingEmail ? (
-                                <div className="flex flex-col items-center justify-center h-full gap-3">
-                                    <Loader2 className="w-8 h-8 animate-spin text-[#f5d400]" />
-                                    <p className="text-xs text-slate-400 animate-pulse">Loading email...</p>
-                                </div>
-                            ) : (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="space-y-6"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-2xl bg-[#f5d400]/10 flex items-center justify-center border border-[#f5d400]/20">
-                                            <UserIcon className="w-6 h-6 text-[#f5d400]" />
-                                        </div>
-                                        <div>
-                                            <p className="text-white font-bold">{selected.fromAddress}</p>
-                                            <p className="text-xs text-slate-500">
-                                                to {selected.toAddress} · {selected.receivedTime ? new Date(Number(selected.receivedTime)).toLocaleString() : ''}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        className="prose prose-invert max-w-none text-slate-200 text-sm leading-relaxed"
-                                        dangerouslySetInnerHTML={{ __html: selected.content || selected.summary || '' }}
-                                    />
-                                </motion.div>
-                            )}
-                        </div>
-
-                        {/* Reply box */}
-                        <div className="p-6 pt-0">
-                            <div className="bg-slate-950 border border-slate-800 rounded-2xl p-2 focus-within:border-[#f5d400]/40 transition-all shadow-xl">
-                                <div className="flex items-center justify-between px-3 py-2 border-b border-slate-900 mb-1">
-                                    <div className="flex items-center gap-2">
-                                        <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Fast Reply</span>
-                                    </div>
-                                    <button
-                                        onClick={handleAiReplyGenerate}
-                                        disabled={aiReplyGenerating}
-                                        className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 uppercase tracking-widest flex items-center gap-1.5 px-2 py-1 rounded-lg bg-indigo-500/5 hover:bg-indigo-500/10 transition-all disabled:opacity-50"
-                                    >
-                                        {aiReplyGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
-                                        {aiReplyGenerating ? 'AI Thinking...' : 'AI HelpMe Reply'}
-                                    </button>
-                                </div>
-                                <textarea
-                                    value={replyBody}
-                                    onChange={e => setReplyBody(e.target.value)}
-                                    placeholder="Type your reply..."
-                                    className="w-full bg-transparent border-none focus:ring-0 text-white text-sm min-h-[90px] p-2 resize-none"
-                                />
-                                <div className="flex items-center justify-end p-2 border-t border-slate-900 mt-2">
-                                    <button
-                                        onClick={handleSendReply}
-                                        disabled={sending || !replyBody.trim()}
-                                        className="flex items-center gap-2 px-5 py-2 bg-[#f5d400] hover:bg-[#e6c700] disabled:opacity-40 disabled:cursor-not-allowed text-slate-900 rounded-xl font-bold text-sm transition-all"
-                                    >
-                                        {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                                        Send Reply
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </>
-                ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-slate-500 p-8 text-center">
+                <AnimatePresence mode="wait">
+                    {selected ? (
                         <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="bg-slate-900/50 p-12 rounded-[3rem] border border-slate-800/50"
+                            key={selected.messageId}
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            transition={{ duration: 0.2 }}
+                            className="flex-1 flex flex-col h-full overflow-hidden"
                         >
-                            <div className="w-20 h-20 bg-[#f5d400]/10 rounded-3xl flex items-center justify-center border border-[#f5d400]/20 mb-6 mx-auto">
-                                <Mail className="w-10 h-10 text-[#f5d400]" />
+                            {/* Header */}
+                            <div className="p-4 border-b border-slate-800 flex items-center gap-3 bg-slate-950/50">
+                                <button
+                                    onClick={() => setSelected(null)}
+                                    className="md:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all"
+                                >
+                                    <ArrowLeft className="w-4 h-4" />
+                                </button>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="text-white font-bold truncate">{selected.subject || '(No Subject)'}</h3>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <Badge variant="neutral" className="text-[10px] px-1.5 py-0 bg-[#f5d400]/10 text-[#f5d400] border-[#f5d400]/20">ZOHO</Badge>
+                                        <span className="text-[10px] text-slate-500">{selected.fromAddress}</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={() => {
+                                            setComposeDefaults({
+                                                to: selected.fromAddress,
+                                                subject: `Re: ${selected.subject}`,
+                                                body: `\n\n--- Original Message ---\nFrom: ${selected.fromAddress}\nSubject: ${selected.subject}\n\n${(selected.content || selected.summary || '').replace(/<[^>]*>/g, '')}`
+                                            });
+                                            setIsComposeOpen(true);
+                                        }}
+                                        title="Open in AI Composer"
+                                        className="p-2 text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest bg-indigo-500/5 rounded-lg px-2"
+                                    >
+                                        <Sparkles className="w-3.5 h-3.5" />
+                                        AI Compose
+                                    </button>
+                                    <button className="p-2 text-slate-400 hover:text-white transition-colors"><Archive className="w-4 h-4" /></button>
+                                    <button className="p-2 text-slate-400 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                    <button className="p-2 text-slate-400 hover:text-white transition-colors"><MoreVertical className="w-4 h-4" /></button>
+                                </div>
                             </div>
-                            <h3 className="text-xl font-bold text-white mb-2">Select an email</h3>
-                            <p className="max-w-xs text-sm text-slate-500 leading-relaxed">
-                                Manage your Zoho Mail conversations directly from AlphaClone.
-                            </p>
+
+                            {/* Body */}
+                            <div className="flex-1 overflow-y-auto p-6 sm:p-8 custom-scrollbar">
+                                {loadingEmail ? (
+                                    <div className="flex flex-col items-center justify-center h-full gap-3">
+                                        <Loader2 className="w-8 h-8 animate-spin text-[#f5d400]" />
+                                        <p className="text-xs text-slate-400 animate-pulse">Loading email...</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-2xl bg-[#f5d400]/10 flex items-center justify-center border border-[#f5d400]/20">
+                                                <UserIcon className="w-6 h-6 text-[#f5d400]" />
+                                            </div>
+                                            <div>
+                                                <p className="text-white font-bold">{selected.fromAddress}</p>
+                                                <p className="text-xs text-slate-500">
+                                                    to {selected.toAddress} · {selected.receivedTime ? new Date(Number(selected.receivedTime)).toLocaleString() : ''}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            className="prose prose-invert max-w-none text-slate-200 text-sm leading-relaxed"
+                                            dangerouslySetInnerHTML={{ __html: selected.content || selected.summary || '' }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Reply box */}
+                            <div className="p-6 pt-0">
+                                <div className="bg-slate-950 border border-slate-800 rounded-2xl p-2 focus-within:border-[#f5d400]/40 transition-all shadow-xl">
+                                    <div className="flex items-center justify-between px-3 py-2 border-b border-slate-900 mb-1">
+                                        <div className="flex items-center gap-2">
+                                            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Fast Reply</span>
+                                        </div>
+                                        <button
+                                            onClick={handleAiReplyGenerate}
+                                            disabled={aiReplyGenerating}
+                                            className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 uppercase tracking-widest flex items-center gap-1.5 px-2 py-1 rounded-lg bg-indigo-500/5 hover:bg-indigo-500/10 transition-all disabled:opacity-50"
+                                        >
+                                            {aiReplyGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
+                                            {aiReplyGenerating ? 'AI Thinking...' : 'AI HelpMe Reply'}
+                                        </button>
+                                    </div>
+                                    <textarea
+                                        value={replyBody}
+                                        onChange={e => setReplyBody(e.target.value)}
+                                        placeholder="Type your reply..."
+                                        className="w-full bg-transparent border-none focus:ring-0 text-white text-sm min-h-[90px] p-2 resize-none"
+                                    />
+                                    <div className="flex items-center justify-end p-2 border-t border-slate-900 mt-2">
+                                        <button
+                                            onClick={handleSendReply}
+                                            disabled={sending || !replyBody.trim()}
+                                            className="flex items-center gap-2 px-5 py-2 bg-[#f5d400] hover:bg-[#e6c700] disabled:opacity-40 disabled:cursor-not-allowed text-slate-900 rounded-xl font-bold text-sm transition-all"
+                                        >
+                                            {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                                            Send Reply
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </motion.div>
-                    </div>
-                )}
+                    ) : (
+                        <motion.div
+                            key="empty"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex-1 flex flex-col items-center justify-center text-slate-500 p-8 text-center"
+                        >
+                            <div className="bg-slate-900/50 p-12 rounded-[3rem] border border-slate-800/50">
+                                <div className="w-20 h-20 bg-[#f5d400]/10 rounded-3xl flex items-center justify-center border border-[#f5d400]/20 mb-6 mx-auto">
+                                    <Mail className="w-10 h-10 text-[#f5d400]" />
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-2">Select an email</h3>
+                                <p className="max-w-xs text-sm text-slate-500 leading-relaxed">
+                                    Manage your Zoho Mail conversations directly from AlphaClone.
+                                </p>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
+
             {/* Modals */}
             <AIOutreachModal
                 isOpen={isOutreachOpen}

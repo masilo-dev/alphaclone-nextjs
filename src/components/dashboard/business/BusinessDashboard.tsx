@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -551,7 +552,18 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     '/dashboard/crm'
                 ].includes(activeTab) ? 'overflow-hidden p-0' : 'overflow-y-auto p-4 md:p-8 dashboard-content-padding'}`}>
                     <WidgetErrorBoundary title="Business Dashboard Error">
-                        {renderBusinessContent()}
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={activeTab}
+                                initial={{ opacity: 0, scale: 0.99, y: 5 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.99, y: -5 }}
+                                transition={{ duration: 0.2, ease: "easeOut" }}
+                                className="h-full w-full"
+                            >
+                                {renderBusinessContent()}
+                            </motion.div>
+                        </AnimatePresence>
                     </WidgetErrorBoundary>
                 </div>
             </main>
