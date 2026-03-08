@@ -1367,9 +1367,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="bg-slate-900/40 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden shadow-2xl"
+                  className="bg-transparent md:bg-slate-900/40 md:backdrop-blur-xl rounded-2xl md:border md:border-white/5 overflow-hidden md:shadow-2xl"
                 >
-                  <table className="w-full text-left border-collapse">
+                  {/* Desktop Table View */}
+                  <table className="hidden md:table w-full text-left border-collapse">
                     <thead>
                       <tr className="border-b border-white/5 bg-slate-900/60 font-mono">
                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Directive Code</th>
@@ -1444,6 +1445,37 @@ const Dashboard: React.FC<DashboardProps> = ({
                       ))}
                     </tbody>
                   </table>
+
+                  {/* Mobile Card-List View */}
+                  <div className="md:hidden space-y-4">
+                    {filteredProjects.map((p, idx) => (
+                      <motion.div
+                        key={p.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.02 }}
+                        onClick={() => openArchitectTool(p)}
+                        className="bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-white/5 p-4 flex items-center gap-4 active:scale-[0.98] transition-all"
+                      >
+                        <div className="w-14 h-14 rounded-xl overflow-hidden border border-white/10 shrink-0">
+                          <img src={p.image} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-white text-sm truncate uppercase tracking-tight">{p.name}</h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${p.status === 'Active' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-slate-800/50 text-slate-400 border-white/5'}`}>
+                              {p.status}
+                            </span>
+                            <span className="text-[8px] font-mono text-slate-500 uppercase tracking-widest">{p.category}</span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[10px] font-black text-teal-400 font-mono">{p.progress}%</span>
+                          <ChevronRight className="w-4 h-4 text-slate-600 block ml-auto mt-1" />
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>

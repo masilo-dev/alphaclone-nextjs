@@ -393,7 +393,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                             <CheckSquare className="w-8 h-8 text-slate-900" />
                         </div>
                         <div>
-                            <h1 className="text-4xl font-black text-white tracking-tighter uppercase leading-none">
+                            <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tighter uppercase leading-none">
                                 {filter === 'completed' ? 'Archive' : 'Operations'}
                             </h1>
                             <div className="flex items-center gap-2 mt-1">

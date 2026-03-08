@@ -1,7 +1,7 @@
 'use client';
 // @ts-nocheck
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import {
@@ -81,7 +81,15 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
     const [showProjectModal, setShowProjectModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+    const dossierRef = useRef<HTMLDivElement>(null);
     const queryClient = useQueryClient();
+
+    // Scroll to top when client is selected
+    useEffect(() => {
+        if (selectedClient && dossierRef.current) {
+            dossierRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }, [selectedClient?.id]);
 
     // React Query Hook
     const {
@@ -194,7 +202,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
 
     return (
         <>
-            <div className="h-full flex flex-col p-8 overflow-y-auto custom-scrollbar space-y-8 bg-[radial-gradient(circle_at_top_right,rgba(20,184,166,0.05),transparent_40%)]">
+            <div className="h-full flex flex-col p-4 lg:p-8 overflow-hidden custom-scrollbar space-y-4 lg:space-y-8 bg-[radial-gradient(circle_at_top_right,rgba(20,184,166,0.05),transparent_40%)]">
                 {/* Elite Client Relations Header */}
                 <div className={`flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-8 border-b border-white/5 relative ${selectedClient ? 'hidden lg:flex' : 'flex'}`}>
                     <div className="flex-1 relative z-10">
@@ -207,7 +215,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                                 <Briefcase className="w-8 h-8 text-slate-900" />
                             </div>
                             <div>
-                                <h1 className="text-4xl font-black text-white tracking-tighter uppercase leading-none">
+                                <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tighter uppercase leading-none">
                                     Client Relations
                                 </h1>
                                 <div className="flex items-center gap-2 mt-1">
@@ -273,7 +281,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                     </div>
                 </div>
 
-                <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
                     {/* Client Intelligence Directory */}
                     <div className={`lg:col-span-1 glass-panel rounded-[2rem] border border-white/5 overflow-hidden flex flex-col bg-slate-900/20 backdrop-blur-2xl shadow-2xl ${selectedClient ? 'hidden lg:flex' : 'flex'}`} style={{ minHeight: '500px' }}>
                         <div className="p-6 border-b border-white/5 bg-slate-950/20 flex justify-between items-center">
@@ -372,7 +380,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                                     animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
                                     exit={{ opacity: 0, scale: 0.98, filter: 'blur(20px)' }}
                                     transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-                                    className="h-full flex flex-col overflow-y-auto custom-scrollbar"
+                                    ref={dossierRef}
+                                    className="h-full flex flex-col overflow-y-auto custom-scrollbar scroll-smooth"
                                 >
                                     {/* Command Banner */}
                                     <div className="h-44 md:h-64 bg-[url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center relative">
@@ -386,7 +395,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                                             <X className="w-5 h-5" />
                                         </button>
 
-                                        <div className="absolute -bottom-14 left-10 md:left-14 flex items-end gap-10">
+                                        <div className="absolute -bottom-14 left-6 md:left-14 flex items-end gap-6 md:gap-10">
                                             <motion.div
                                                 layoutId={`avatar-${selectedClient.id}`}
                                                 className="w-28 h-28 md:w-36 md:h-36 rounded-[2.5rem] bg-slate-900 border-4 border-slate-950 flex items-center justify-center text-5xl md:text-6xl font-black text-white shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden group"
@@ -448,7 +457,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                                         </div>
                                     </div>
 
-                                    <div className="mt-24 px-12 md:px-16 pb-16 space-y-16">
+                                    <div className="mt-20 md:mt-24 px-6 md:px-16 pb-16 space-y-8 md:space-y-16">
                                         {/* Strategic Intelligence Grid */}
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                                             {[
@@ -461,7 +470,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                                                     initial={{ opacity: 0, y: 30 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     transition={{ delay: 0.3 + (i * 0.1) }}
-                                                    className="p-8 rounded-[2.5rem] bg-slate-950/40 border border-white/5 hover:border-teal-500/20 transition-all group/node relative overflow-hidden shadow-2xl"
+                                                    className="p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] bg-slate-950/40 border border-white/5 hover:border-teal-500/20 transition-all group/node relative overflow-hidden shadow-2xl"
                                                 >
                                                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(20,184,166,0.05),transparent_50%)]" />
                                                     <div className="text-[10px] text-slate-600 uppercase font-black tracking-[0.25em] mb-4 flex items-center gap-3 relative z-10">
@@ -491,7 +500,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                                             initial={{ opacity: 0, y: 30 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: 0.6 }}
-                                            className="p-10 rounded-[3.5rem] bg-slate-950/30 border border-white/5 relative overflow-hidden shadow-inner group/log"
+                                            className="p-6 md:p-10 rounded-[2rem] md:rounded-[3.5rem] bg-slate-950/30 border border-white/5 relative overflow-hidden shadow-inner group/log"
                                         >
                                             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-teal-500/20 to-transparent" />
                                             <div className="text-[12px] text-slate-500 uppercase font-black tracking-[0.4em] mb-8 flex items-center gap-4">
