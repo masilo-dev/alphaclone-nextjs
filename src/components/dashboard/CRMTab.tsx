@@ -499,25 +499,27 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                                                     initial={{ opacity: 0, y: 30 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     transition={{ delay: 0.3 + (i * 0.1) }}
-                                                    className="p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] bg-slate-950/40 border border-white/5 hover:border-teal-500/20 transition-all group/node relative overflow-hidden shadow-2xl"
+                                                    className="p-5 md:p-6 lg:p-5 xl:p-8 rounded-2xl md:rounded-[2.5rem] bg-slate-950/40 border border-white/5 hover:border-teal-500/20 transition-all group/node relative overflow-hidden shadow-2xl flex flex-col justify-between"
                                                 >
                                                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(20,184,166,0.05),transparent_50%)]" />
                                                     <div className="text-[9px] md:text-[10px] text-slate-600 uppercase font-black tracking-[0.25em] mb-2 md:mb-4 flex items-center gap-2 md:gap-3 relative z-10">
-                                                        <div className="p-1.5 md:p-2 bg-slate-900 rounded-lg md:rounded-xl text-teal-500 border border-white/5 shadow-inner">
+                                                        <div className="p-1.5 md:p-2 bg-slate-900 rounded-lg md:rounded-xl text-teal-500 border border-white/5 shadow-inner shrink-0">
                                                             {node.icon}
                                                         </div>
-                                                        {node.label}
+                                                        <span className="truncate">{node.label}</span>
                                                     </div>
-                                                    {node.isLink && node.value !== 'N/A' ? (
-                                                        <a href={node.href} className={`text-sm font-black ${node.color} hover:underline truncate block relative z-10 tracking-tight transition-all`}>
-                                                            {node.value}
-                                                        </a>
-                                                    ) : (
-                                                        <div className={`text-2xl font-mono ${node.color} relative z-10 tracking-tighter font-black`}>
-                                                            {node.value}
-                                                        </div>
-                                                    )}
-                                                    <div className="mt-2 text-[9px] font-mono text-slate-700 uppercase tracking-widest relative z-10">
+                                                    <div className="flex-1 flex flex-col justify-center my-1 xl:my-2">
+                                                        {node.isLink && node.value !== 'N/A' ? (
+                                                            <a href={node.href} title={node.value} className={`text-sm md:text-base lg:text-[13px] xl:text-base font-black ${node.color} hover:underline break-words block relative z-10 tracking-tight transition-all`}>
+                                                                {node.value}
+                                                            </a>
+                                                        ) : (
+                                                            <div className={`text-xl md:text-2xl lg:text-xl xl:text-2xl font-mono ${node.color} relative z-10 tracking-tighter font-black break-words`}>
+                                                                {node.value}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="mt-1 xl:mt-2 text-[9px] font-mono text-slate-700 uppercase tracking-widest relative z-10 shrink-0">
                                                         {node.desc}
                                                     </div>
                                                 </motion.div>
