@@ -24,10 +24,10 @@ const ProjectSubmitTab: React.FC<ProjectSubmitTabProps> = ({
 }) => {
     return (
         <div className="max-w-2xl mx-auto animate-fade-in">
-            <Card className="bg-slate-900 border-slate-800 shadow-2xl p-6">
-                <h2 className="text-2xl font-bold text-white mb-2">Initialize New Project</h2>
-                <p className="text-slate-400 mb-8">Submit a request for a new module, feature, or entire platform. Our team will review instantly.</p>
-                <div className="space-y-6">
+            <Card className="bg-slate-900 border-slate-800 shadow-2xl p-4 sm:p-6">
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-2">Initialize New Project</h2>
+                <p className="text-sm md:text-base text-slate-400 mb-6 md:mb-8">Submit a request for a new module, feature, or entire platform. Our team will review instantly.</p>
+                <div className="space-y-4 md:space-y-6">
                     <Input
                         label="Project Name"
                         value={newProject.name}

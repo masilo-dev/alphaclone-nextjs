@@ -1169,20 +1169,20 @@ const Dashboard: React.FC<DashboardProps> = ({
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
+            className="space-y-4 md:space-y-6"
             data-tour={user.role === 'admin' ? 'projects' : 'my-projects'}
           >
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <h2 className="text-2xl font-black text-white tracking-tight">
+                <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">
                   {user.role === 'admin' ? 'PROJECT MANAGER' : 'MY ACTIVE PROJECTS'}
                 </h2>
                 <div className="text-[10px] text-slate-500 font-mono mt-1 uppercase tracking-widest">
                   {filteredProjects.length} Directives Synchronized
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                {user.role === 'client' && <Button onClick={() => router.push('/dashboard/submit')} variant="secondary" className="h-10 px-4 text-xs font-black uppercase tracking-widest">Add New Item</Button>}
+              <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-2 sm:gap-4 mt-2 sm:mt-0">
+                {user.role === 'client' && <Button onClick={() => router.push('/dashboard/submit')} variant="secondary" className="h-8 md:h-10 px-3 md:px-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Add New Item</Button>}
                 <div className="flex items-center gap-1 bg-slate-900/50 p-1 rounded-xl border border-white/5 shadow-inner">
                   <button
                     onClick={() => setProjectViewMode('list')}
@@ -1216,7 +1216,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4"
                 >
                   {filteredProjects.map((p, idx) => (
                     <motion.div
@@ -1244,7 +1244,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                               {p.status}
                             </div>
                           </div>
-                          <div className="p-4 flex-1 flex flex-col">
+                          <div className="p-3 md:p-4 flex-1 flex flex-col">
                             <div className="flex justify-between items-start mb-1">
                               <h4 className="font-bold text-white text-base leading-tight group-hover:text-teal-400 transition-colors uppercase tracking-tight">{p.name}</h4>
                               {user.role === 'admin' && (
@@ -1275,7 +1275,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                               </div>
                             </div>
 
-                            <div className="mt-4 pt-4 border-t border-white/5 flex flex-col gap-3">
+                            <div className="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-white/5 flex flex-col gap-2 md:gap-3">
                               {/* Quick Communication Actions */}
                               <div className="grid grid-cols-2 gap-2">
                                 {user.role === 'admin' ? (
