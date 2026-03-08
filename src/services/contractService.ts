@@ -119,42 +119,22 @@ export const contractService = {
      * Clean markdown formatting from AI-generated text
      * Removes **, ~~, ####, -, *, and other markdown symbols
      */
+    /**
+     * Clean Markdown for Professional Display (Simplified, keeps markers for PDF engine)
+     */
     cleanMarkdown(text: string): string {
         if (!text) return '';
 
         return text
-            // Remove markdown headers (####, ###, ##, #)
-            .replace(/^#{1,6}\s+/gm, '')
-            // Remove bold (**text** or __text__)
-            .replace(/\*\*(.*?)\*\*/g, '$1')
-            .replace(/__(.*?)__/g, '$1')
-            // Remove italic (*text* or _text_)
-            .replace(/\*(.*?)\*/g, '$1')
-            .replace(/_(.*?)_/g, '$1')
-            // Remove strikethrough (~~text~~)
-            .replace(/~~(.*?)~~/g, '$1')
-            // Remove code blocks (```text```)
+            // Normalize line endings
+            .replace(/\r\n/g, '\n')
+            // Remove code blocks
             .replace(/```[\s\S]*?```/g, '')
-            .replace(/`(.+?)`/g, '$1')
-            // Remove markdown links [text](url)
+            // Keep # headers and ** bold, but clean others
+            .replace(/~~(.*?)~~/g, '$1')
+            .replace(/__(.*?)__/g, '$1')
             .replace(/\[(.*?)\]\(.*?\)/g, '$1')
-            // Remove markdown images ![alt](url)
-            .replace(/!\[.*?\]\(.*?\)/g, '')
-            // Remove horizontal rules (---, ***, ___)
-            .replace(/^[-*_]{3,}$/gm, '')
-            // Remove bullet points and list markers (-, *, +) at start of lines
-            .replace(/^[\s]*[-*+]\s+/gm, '• ')
-            // Remove numbered lists (1., 2., etc.) but keep the number
-            .replace(/^[\s]*(\d+)\.\s+/gm, '$1. ')
-            // Remove blockquotes (>)
-            .replace(/^>\s+/gm, '')
-            // Remove remaining leading/trailing hashes, asterisks or tildes that might be stuck
-            .replace(/^[#*~_\s]+|[#*~_\s]+$/gm, '')
-            // Final pass: remove any stray double asterisks or triple asterisks
-            .replace(/\*{2,}/g, '')
-            // Clean up multiple spaces
             .replace(/[ \t]{2,}/g, ' ')
-            // Clean up multiple newlines (keep max 2)
             .replace(/\n{3,}/g, '\n\n')
             .trim();
     },
@@ -347,10 +327,10 @@ export const contractService = {
 
         const rawContent = typeof contract.content === 'string' ? contract.content : 'No content provided';
         const content = this.cleanMarkdown(rawContent);
-        const splitText = doc.splitTextToSize(content, 170);
+        const lines = content.split('\n');
 
-        splitText.forEach((line: string) => {
-            if (y > 270) {
+        lines.forEach((line) => {
+            if (y > pageHeight - 30) {
                 doc.addPage();
                 y = 20;
 
@@ -361,8 +341,35 @@ export const contractService = {
                 doc.setTextColor(15, 23, 42);
                 doc.setFontSize(11);
             }
-            doc.text(line, 20, y);
-            y += 6;
+
+            if (line.trim().startsWith('#')) {
+                const headerLevel = Math.min(line.match(/^#+/)?.[0].length || 1, 3);
+                const headerText = line.replace(/^#+\s*/, '');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(16 - headerLevel);
+                doc.setTextColor(20, 184, 166); // Teal-500
+                const split = doc.splitTextToSize(headerText, 170);
+                doc.text(split, 20, y);
+                y += (split.length * 7) + 2;
+                // Reset
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(11);
+                doc.setTextColor(15, 23, 42);
+            } else if (line.trim().startsWith('**') && line.trim().endsWith('**')) {
+                const boldText = line.trim().replace(/\*\*/g, '');
+                doc.setFont('helvetica', 'bold');
+                const split = doc.splitTextToSize(boldText, 170);
+                doc.text(split, 20, y);
+                y += (split.length * 6) + 1;
+                doc.setFont('helvetica', 'normal');
+            } else if (line.trim() === '') {
+                y += 5;
+            } else {
+                const cleanLine = line.replace(/\*\*/g, '');
+                const split = doc.splitTextToSize(cleanLine, 170);
+                doc.text(split, 20, y);
+                y += (split.length * 6) + 1;
+            }
         });
 
         // Signatures Section

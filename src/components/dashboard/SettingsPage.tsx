@@ -46,7 +46,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const validSections = ['profile', 'notifications', 'security', 'appearance', 'billing', 'booking'];
     const defaultSection = validSections.includes(initialSection) ? initialSection : 'profile';
 
-    const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'security' | 'appearance' | 'billing' | 'booking' | 'branding'>(defaultSection);
+    const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'security' | 'appearance' | 'billing' | 'booking' | 'branding' | null>(window.innerWidth < 1024 ? null : defaultSection);
     const [isSaving, setIsSaving] = useState(false);
     const { currentTenant } = useTenant();
 
@@ -288,29 +288,67 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                 <p className="text-slate-400 mt-1">Manage your account preferences and settings</p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                {/* Sidebar */}
-                <div className="lg:col-span-1">
-                    <div className="flex lg:flex-col overflow-x-auto lg:overflow-x-visible gap-2 pb-4 lg:pb-0 scrollbar-hide">
+            <div className={`grid grid-cols-1 lg:grid-cols-4 gap-6 ${!activeSection ? 'block' : 'hidden lg:grid'}`}>
+                {/* Sidebar / Navigation Menu */}
+                <div className="lg:col-span-1 space-y-4">
+                    <div className="flex flex-col gap-2">
                         {sections.map((section) => (
                             <button
                                 key={section.id}
                                 onClick={() => setActiveSection(section.id)}
-                                className={`flex shrink-0 lg:w-full items-center justify-center lg:justify-start gap-3 px-4 py-3 rounded-2xl text-[10px] lg:text-xs font-black uppercase tracking-widest transition-all duration-300 border ${activeSection === section.id
+                                className={`flex items-center justify-between w-full gap-3 px-5 py-4 rounded-2xl text-[10px] lg:text-xs font-black uppercase tracking-widest transition-all duration-300 border group ${activeSection === section.id
                                     ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-600/20'
-                                    : 'bg-white/5 border-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                                    : 'bg-slate-900/40 border-white/5 text-slate-400 hover:text-white hover:bg-slate-800/60'
                                     }`}
                             >
-                                <section.icon className="w-4 h-4" />
-                                <span className="whitespace-nowrap">{section.label}</span>
+                                <div className="flex items-center gap-4">
+                                    <div className={`p-2 rounded-xl transition-colors ${activeSection === section.id ? 'bg-white/20' : 'bg-white/5 group-hover:bg-teal-500/20'}`}>
+                                        <section.icon className={`w-4 h-4 ${activeSection === section.id ? 'text-white' : 'text-slate-500 group-hover:text-teal-400'}`} />
+                                    </div>
+                                    <span className="whitespace-nowrap">{section.label}</span>
+                                </div>
+                                <div className={`text-lg transition-transform ${activeSection === section.id ? 'translate-x-1' : 'opacity-0 group-hover:opacity-100'}`}>→</div>
                             </button>
                         ))}
                     </div>
+
+                    {/* Platform Information */}
+                    <div className="mt-8 pt-8 border-t border-white/5 space-y-4 px-2">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
+                                <Sparkles className="w-4 h-4 text-teal-400" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black text-white uppercase tracking-widest">Alphaclone OS</p>
+                                <p className="text-[8px] font-mono text-slate-500 uppercase tracking-tighter">Enterprise Intelligence v2.4.0</p>
+                            </div>
+                        </div>
+                        <div className="bg-slate-950/40 rounded-xl p-3 border border-white/5">
+                            <div className="flex justify-between items-center mb-1">
+                                <span className="text-[8px] font-mono text-slate-600 uppercase">System Status</span>
+                                <span className="text-[8px] font-black text-green-400 uppercase tracking-widest">Operational</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-[8px] font-mono text-slate-600 uppercase">Core Latency</span>
+                                <span className="text-[8px] font-mono text-slate-400 tracking-tighter">14ms</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Content */}
-                <div className="lg:col-span-3">
-                    <Card>
+                <div className={`lg:col-span-3 ${activeSection ? 'block' : 'hidden lg:block'}`}>
+                    {activeSection && (
+                        <div className="lg:hidden mb-4">
+                            <button
+                                onClick={() => setActiveSection(null as any)}
+                                className="flex items-center gap-2 text-teal-400 font-black text-[10px] uppercase tracking-widest bg-white/5 px-4 py-2 rounded-xl border border-white/5"
+                            >
+                                <span className="text-lg">←</span> Back to Settings
+                            </button>
+                        </div>
+                    )}
+
+                    <Card className="relative overflow-hidden">
                         {activeSection === 'profile' && (
                             <div className="space-y-6">
                                 <div>

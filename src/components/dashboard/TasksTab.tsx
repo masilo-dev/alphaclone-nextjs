@@ -295,108 +295,81 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                         'bg-teal-500/30 group-hover:bg-teal-500 group-hover:shadow-[2px_0_15px_rgba(20,184,166,0.5)]'
                                     }`} />
 
-                                {/* Objective Detail */}
-                                <div className="col-span-1 lg:col-span-5 flex items-center gap-6">
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-inner group-hover:scale-110 ${task.status === 'completed' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-teal-500/10 text-teal-400 border border-teal-500/20'
-                                        }`}>
-                                        {task.status === 'completed' ? <CheckCircle2 className="w-6 h-6" /> : <Target className="w-6 h-6" />}
+                                {/* Objective Detail - Desktop & Mobile Header */}
+                                <div className="col-span-1 lg:col-span-5 flex items-center gap-4 sm:gap-6">
+                                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-inner group-hover:scale-110 shrink-0 ${task.status === 'completed' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-teal-500/10 text-teal-400 border border-teal-500/20'}`}>
+                                        {task.status === 'completed' ? <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" /> : <Target className="w-5 h-5 sm:w-6 sm:h-6" />}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h4 className="text-base font-black text-slate-200 group-hover:text-white transition-colors truncate tracking-tight">
+                                        <h4 className="text-sm sm:text-base font-black text-slate-200 group-hover:text-white transition-colors truncate tracking-tight">
                                             {task.title}
                                         </h4>
-                                        <div className="flex items-center gap-3 mt-1.5">
+                                        <div className="flex items-center gap-3 mt-1 sm:mt-1.5">
                                             {task.description && (
-                                                <p className="text-xs text-slate-500 truncate max-w-[200px] font-medium italic">
+                                                <p className="text-[10px] sm:text-xs text-slate-500 truncate max-w-[150px] sm:max-w-[200px] font-medium italic">
                                                     {task.description}
                                                 </p>
-                                            )}
-                                            {task.estimatedHours && (
-                                                <span className="flex items-center gap-1.5 text-[10px] text-slate-400 bg-white/5 px-2 py-0.5 rounded-lg border border-white/5 font-mono">
-                                                    <Clock className="w-3 h-3 text-teal-500/60" />
-                                                    {task.estimatedHours}H
-                                                </span>
                                             )}
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Status Intelligence */}
-                                <div className="col-span-1 lg:col-span-2 flex justify-center">
-                                    <div className="relative w-full lg:w-36 group/status">
+                                {/* Status Intelligence (Hidden on extreme mobile, shown as pill in next row) */}
+                                <div className="hidden lg:block col-span-2">
+                                    <div className="relative w-full group/status">
                                         <select
                                             value={task.status}
                                             onChange={(e) => handleStatusChange(task.id, e.target.value as any)}
-                                            className={`w-full text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl bg-slate-950/60 border border-white/10 outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer text-center appearance-none hover:bg-slate-900 transition-all shadow-inner ${task.status === 'completed' ? 'text-green-400 border-green-500/30' :
-                                                task.status === 'in_progress' ? 'text-teal-400 border-teal-500/30' : 'text-slate-400'
-                                                }`}
+                                            className={`w-full text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl bg-slate-950/60 border border-white/10 outline-none cursor-pointer text-center appearance-none ${task.status === 'completed' ? 'text-green-400 border-green-500/30' : 'text-teal-400 border-teal-500/30'}`}
                                         >
-                                            {[
-                                                { value: 'ideas', label: 'Standby' },
-                                                { value: 'todo', label: 'Planning' },
-                                                { value: 'in_progress', label: 'Active' },
-                                                { value: 'review', label: 'Review' },
-                                                { value: 'completed', label: 'Success' },
-                                            ].map((stage, idx, arr) => {
-                                                const currentIdx = arr.findIndex(s => s.value === task.status);
-                                                return (
-                                                    <option key={stage.value} value={stage.value} disabled={idx < currentIdx} className="bg-slate-900 text-white">
-                                                        {stage.label}
-                                                    </option>
-                                                );
-                                            })}
+                                            <option value="ideas">Standby</option>
+                                            <option value="todo">Planning</option>
+                                            <option value="in_progress">Active</option>
+                                            <option value="review">Review</option>
+                                            <option value="completed">Success</option>
                                         </select>
-                                        <ChevronDown className="w-3 h-3 absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none transition-transform group-hover/status:translate-y-[-40%]" />
                                     </div>
                                 </div>
 
                                 {/* Priority Node */}
-                                <div className="col-span-1 lg:col-span-2 flex justify-center">
-                                    <span className={`flex items-center gap-2 px-4 py-2 text-[10px] rounded-xl font-black uppercase tracking-[0.1em] border transition-all duration-500 ${task.priority === 'high' ? 'bg-red-500/10 border-red-500/20 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.1)]' :
-                                        task.priority === 'medium' ? 'bg-orange-500/10 border-orange-500/20 text-orange-500' :
-                                            'bg-slate-800/40 border-white/5 text-slate-500'
-                                        }`}>
-                                        <div className={`w-1.5 h-1.5 rounded-full ${task.priority === 'high' ? 'bg-red-500 animate-ping' :
-                                            task.priority === 'medium' ? 'bg-orange-500 animate-pulse' : 'bg-slate-600'
-                                            }`} />
+                                <div className="hidden lg:flex col-span-2 justify-center">
+                                    <span className={`px-4 py-2 text-[10px] rounded-xl font-black uppercase tracking-[0.1em] border ${task.priority === 'high' ? 'bg-red-500/10 border-red-500/20 text-red-500' : 'bg-slate-800/40 border-white/5 text-slate-500'}`}>
                                         {task.priority}
                                     </span>
                                 </div>
 
                                 {/* Timeline Control */}
-                                <div className="col-span-1 lg:col-span-2 flex justify-center">
+                                <div className="hidden lg:flex col-span-2 justify-center">
                                     {task.dueDate ? (
-                                        <div className="bg-slate-950/40 px-4 py-2 rounded-xl border border-white/5 w-full lg:w-auto text-center shadow-inner group-hover:border-teal-500/20 transition-all">
-                                            <TaskCountdown
-                                                dueDate={task.dueDate}
-                                                onOverdue={() => handleStatusChange(task.id, 'review')}
-                                            />
+                                        <div className="bg-slate-950/40 px-4 py-2 rounded-xl border border-white/5">
+                                            <TaskCountdown dueDate={task.dueDate} onOverdue={() => handleStatusChange(task.id, 'review')} />
                                         </div>
                                     ) : (
                                         <span className="text-[10px] text-slate-700 font-black uppercase tracking-widest italic opacity-40">No Deadline</span>
                                     )}
                                 </div>
 
+                                {/* Mobile Metadata Row */}
+                                <div className="lg:hidden flex flex-wrap gap-3 mt-2 pt-2 border-t border-white/5 w-full">
+                                    <div className="flex items-center gap-2 text-[10px] font-mono text-slate-400 uppercase">
+                                        <div className={`w-1.5 h-1.5 rounded-full ${task.status === 'completed' ? 'bg-green-500' : 'bg-teal-500'}`} />
+                                        {task.status}
+                                    </div>
+                                    <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${task.priority === 'high' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-teal-500/10 text-teal-400 border-teal-500/20'}`}>
+                                        {task.priority}
+                                    </span>
+                                    {task.dueDate && (
+                                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-mono ml-auto">
+                                            <Calendar className="w-3 h-3 text-teal-500/60" />
+                                            {new Date(task.dueDate).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                        </div>
+                                    )}
+                                </div>
+
                                 {/* Tactical Operations */}
-                                <div className="col-span-1 lg:col-span-1 flex justify-end gap-2">
-                                    <motion.button
-                                        whileHover={{ scale: 1.1, backgroundColor: 'rgba(20, 184, 166, 0.15)' }}
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={() => openEditModal(task)}
-                                        className="p-3 text-slate-500 hover:text-white rounded-2xl transition-all border border-transparent hover:border-teal-500/20 bg-white/2"
-                                        title="Recalibrate Directive"
-                                    >
-                                        <Edit2 className="w-4 h-4" />
-                                    </motion.button>
-                                    <motion.button
-                                        whileHover={{ scale: 1.1, backgroundColor: 'rgba(20, 184, 166, 0.15)' }}
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={() => setNotesTaskId(task.id)}
-                                        className="p-3 text-slate-500 hover:text-white rounded-2xl transition-all border border-transparent hover:border-teal-500/20 bg-white/2"
-                                        title="Intelligence Log"
-                                    >
-                                        <FileText className="w-4 h-4" />
-                                    </motion.button>
+                                <div className="col-span-1 lg:col-span-1 flex justify-end gap-2 lg:opacity-0 group-hover:opacity-100 transition-all duration-500">
+                                    <button onClick={() => openEditModal(task)} className="p-2.5 sm:p-3 text-slate-500 hover:text-white rounded-2xl border border-white/5 bg-white/2"><Edit2 className="w-4 h-4" /></button>
+                                    <button onClick={() => setNotesTaskId(task.id)} className="p-2.5 sm:p-3 text-slate-500 hover:text-white rounded-2xl border border-white/5 bg-white/2"><FileText className="w-4 h-4" /></button>
                                 </div>
                             </motion.div>
                         ))}

@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Bot, Search, Play, Pause, Settings, RefreshCw, Plus, Filter, Database, MessageSquare, ArrowRight, CheckCircle2, AlertCircle, UserPlus, Phone, Send, Trash2, Upload, FileSpreadsheet, X, Mail, ExternalLink, FileText, Zap, Layout, CheckSquare, Clock, ShieldCheck } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { generateLeads, chatWithGrowthAgent, isAnyAIConfigured } from '../../services/unifiedAIService';
 import { leadService, Lead } from '../../services/leadService';
 import { fileImportService } from '../../services/fileImportService';
@@ -1237,7 +1239,8 @@ const SalesAgent: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Integrated Aerial Lead Navigator (Shows only when searching) */}
+                    {/* Integrated Aerial Lead Navigator - Removed as per user request to eliminate map visuals */}
+                    {/* 
                     {isVisualSearchActive && (
                         <div className="absolute inset-x-0 bottom-0 top-[200px] z-50">
                             <div className="relative w-full h-full rounded-b-xl overflow-hidden border-t border-slate-800">
@@ -1250,6 +1253,7 @@ const SalesAgent: React.FC = () => {
                             </div>
                         </div>
                     )}
+                    */}
                 </div>
             ) : (
                 <div className="flex-1 bg-transparent flex flex-col">
@@ -1258,7 +1262,18 @@ const SalesAgent: React.FC = () => {
                         {messages.map((msg) => (
                             <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[85%] sm:max-w-[80%] p-3 sm:p-4 rounded-xl text-sm sm:text-base ${msg.sender === 'user' ? 'bg-teal-600 text-white rounded-tr-none' : 'bg-slate-800 text-slate-200 rounded-tl-none'}`}>
-                                    {msg.text}
+                                    <ReactMarkdown
+                                        remarkPlugins={[remarkGfm]}
+                                        components={{
+                                            p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                                            ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-2" {...props} />,
+                                            ol: ({ node, ...props }) => <ol className="list-decimal pl-4 mb-2" {...props} />,
+                                            li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+                                            strong: ({ node, ...props }) => <strong className="font-bold text-teal-400" {...props} />,
+                                        }}
+                                    >
+                                        {msg.text}
+                                    </ReactMarkdown>
                                 </div>
                             </div>
                         ))}
