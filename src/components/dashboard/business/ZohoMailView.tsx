@@ -203,109 +203,130 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
     };
 
     return (
-        <div className="flex h-[calc(100vh-120px)] min-h-[600px] w-full bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex h-[calc(100vh-120px)] min-h-[600px] w-full bg-slate-950 border border-white/5 rounded-3xl overflow-hidden shadow-2xl relative"
+        >
+            {/* Glossy Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-teal-500/2 to-indigo-500/2 pointer-events-none" />
+
             {/* Icon sidebar */}
-            <div className="w-16 sm:w-20 border-r border-slate-800 flex flex-col items-center py-6 gap-5 bg-slate-950/50">
+            <div className="w-16 sm:w-20 border-r border-white/5 flex flex-col items-center py-8 gap-6 bg-slate-900/40 backdrop-blur-xl relative z-10">
                 {/* Primary Actions */}
-                <button
+                <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => setIsOutreachOpen(true)}
                     title="AI Bulk Outreach"
-                    className="p-3 rounded-2xl bg-[#f5d400] text-slate-900 shadow-lg shadow-yellow-500/20 hover:scale-110 active:scale-95 transition-all mb-2"
+                    className="p-3.5 rounded-2xl bg-[#f5d400] text-slate-950 shadow-lg shadow-yellow-500/20 transition-all mb-1"
                 >
                     <Sparkles className="w-5 h-5 fill-current" />
-                </button>
+                </motion.button>
 
-                <button
+                <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => setIsComposeOpen(true)}
                     title="Compose New Email"
-                    className="p-3 rounded-2xl bg-slate-900 border border-slate-800 text-white hover:border-[#f5d400]/40 transition-all mb-4"
+                    className="p-3.5 rounded-2xl bg-slate-800/50 border border-white/10 text-white hover:border-[#f5d400]/40 transition-all mb-4"
                 >
                     <Plus className="w-5 h-5" />
-                </button>
+                </motion.button>
 
-                <div className="w-8 h-[1px] bg-slate-800 mb-2" />
+                <div className="w-10 h-[1px] bg-white/5 mb-2" />
 
-                {FOLDERS.map(({ id, icon: Icon, label }) => (
-                    <button
-                        key={id}
-                        onClick={() => { setActiveFolder(id); setSelected(null); }}
-                        title={label}
-                        className={`group relative p-3 rounded-2xl transition-all ${activeFolder === id
-                            ? 'bg-[#f5d400] text-slate-900 shadow-lg shadow-yellow-500/20'
-                            : 'text-slate-500 hover:text-white hover:bg-slate-900'
-                            }`}
-                    >
-                        <Icon className="w-5 h-5 group-active:scale-90 transition-transform" />
-                        <span className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none whitespace-nowrap font-bold uppercase tracking-widest shadow-xl border border-slate-700">
-                            {label}
-                        </span>
-                    </button>
-                ))}
+                <div className="flex flex-col gap-4">
+                    {FOLDERS.map(({ id, icon: Icon, label }) => (
+                        <motion.button
+                            key={id}
+                            whileHover={{ x: 2 }}
+                            onClick={() => { setActiveFolder(id); setSelected(null); }}
+                            title={label}
+                            className={`group relative p-3 rounded-2xl transition-all ${activeFolder === id
+                                ? 'bg-white/10 text-[#f5d400] shadow-inner'
+                                : 'text-slate-500 hover:text-slate-300'
+                                }`}
+                        >
+                            <Icon className={`w-5 h-5 group-active:scale-90 transition-transform ${activeFolder === id ? 'stroke-[2.5px]' : ''}`} />
+                            {activeFolder === id && (
+                                <motion.div
+                                    layoutId="activeFolderDot"
+                                    className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-4 bg-[#f5d400] rounded-full shadow-[0_0_8px_#f5d400]"
+                                />
+                            )}
+                            <span className="absolute left-full ml-4 px-2.5 py-1.5 bg-slate-900 text-white text-[10px] rounded-xl opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0 z-50 pointer-events-none whitespace-nowrap font-black uppercase tracking-widest shadow-2xl border border-white/10 backdrop-blur-xl">
+                                {label}
+                            </span>
+                        </motion.button>
+                    ))}
+                </div>
             </div>
 
             {/* Thread list */}
-            <div className={`w-full md:w-80 lg:w-96 border-r border-slate-800 flex flex-col ${selected ? 'hidden md:flex' : 'flex'}`}>
-                <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+            <div className={`w-full md:w-80 lg:w-96 border-r border-white/5 flex flex-col bg-slate-900/20 backdrop-blur-sm z-10 ${selected ? 'hidden md:flex' : 'flex'}`}>
+                <div className="p-6 border-b border-white/5 flex items-center justify-between">
                     <div>
-                        <h3 className="text-white font-bold text-sm capitalize">{activeFolder}</h3>
+                        <h3 className="text-white font-black text-xs uppercase tracking-widest">{activeFolder}</h3>
                         {accountEmail && (
-                            <p className="text-[10px] text-[#f5d400] mt-0.5 truncate">{accountEmail}</p>
+                            <p className="text-[10px] text-[#f5d400]/80 mt-1 truncate font-mono">{accountEmail}</p>
                         )}
                     </div>
-                    <button
+                    <motion.button
+                        whileHover={{ rotate: 180 }}
+                        transition={{ duration: 0.5, ease: "anticipate" }}
                         onClick={() => fetchEmails(activeFolder)}
                         disabled={loading}
-                        className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all"
+                        className="p-2.5 text-slate-500 hover:text-teal-400 bg-white/5 hover:bg-teal-500/10 rounded-xl transition-all border border-transparent hover:border-teal-500/20"
                     >
                         <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                    </button>
+                    </motion.button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
                     {loading ? (
-                        Array.from({ length: 5 }).map((_, i) => (
-                            <div key={i} className="p-4 rounded-xl bg-slate-900/40 animate-pulse h-20 mb-2" />
+                        Array.from({ length: 6 }).map((_, i) => (
+                            <div key={i} className="p-4 rounded-2xl bg-white/2 border border-white/5 animate-pulse h-24" />
                         ))
                     ) : emails.length === 0 ? (
-                        <div className="text-center py-12 text-slate-500">
-                            <Mail className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                            <p className="text-sm">No emails in {activeFolder}</p>
+                        <div className="flex flex-col items-center justify-center py-20 text-slate-600 px-6">
+                            <div className="w-16 h-16 bg-white/2 rounded-full flex items-center justify-center mb-4 border border-white/5">
+                                <Mail className="w-8 h-8 opacity-20" />
+                            </div>
+                            <p className="text-[10px] font-black uppercase tracking-widest">No signals in channel</p>
                         </div>
                     ) : (
                         <AnimatePresence mode="popLayout">
                             {emails.map((email, idx) => (
-                                <motion.button
+                                <motion.div
                                     key={email.messageId}
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: idx * 0.03 }}
-                                    onClick={() => handleSelectEmail(email)}
-                                    className={`w-full text-left p-4 rounded-xl transition-all border group relative ${selected?.messageId === email.messageId
-                                        ? 'bg-[#f5d400]/10 border-[#f5d400]/40'
-                                        : 'border-transparent hover:bg-slate-900 hover:border-slate-800'
-                                        }`}
                                 >
-                                    {selected?.messageId === email.messageId && (
-                                        <motion.div
-                                            layoutId="active-indicator"
-                                            className="absolute left-0 top-4 bottom-4 w-1 bg-[#f5d400] rounded-r-full"
-                                        />
-                                    )}
-                                    <div className="flex justify-between items-start mb-1">
-                                        <span className="text-xs font-bold text-[#f5d400] truncate max-w-[140px] uppercase tracking-wider group-hover:text-white transition-colors">
-                                            {email.fromAddress?.split('<')[0].trim() || 'Unknown'}
-                                        </span>
-                                        <span className="text-[10px] text-slate-500 whitespace-nowrap">
-                                            {email.receivedTime ? new Date(Number(email.receivedTime)).toLocaleDateString() : ''}
-                                        </span>
-                                    </div>
-                                    <h4 className="text-sm font-bold text-white truncate mb-1">
-                                        {email.subject || '(No Subject)'}
-                                    </h4>
-                                    <p className="text-xs text-slate-400 line-clamp-2 opacity-70 group-hover:opacity-100 transition-opacity">
-                                        {email.summary}
-                                    </p>
-                                </motion.button>
+                                    <button
+                                        onClick={() => handleSelectEmail(email)}
+                                        className={`w-full text-left p-4 rounded-2xl transition-all border group relative ${selected?.messageId === email.messageId
+                                            ? 'bg-teal-500/10 border-teal-500/30 shadow-lg shadow-teal-500/5'
+                                            : 'border-transparent hover:bg-white/5 hover:border-white/10'
+                                            }`}
+                                    >
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className="text-[10px] font-black text-[#f5d400] truncate max-w-[150px] uppercase tracking-widest">
+                                                {email.fromAddress?.split('<')[0].trim() || 'Unidentified'}
+                                            </span>
+                                            <span className="text-[9px] text-slate-500 font-mono">
+                                                {email.receivedTime ? new Date(Number(email.receivedTime)).toLocaleDateString() : ''}
+                                            </span>
+                                        </div>
+                                        <h4 className="text-sm font-bold text-slate-100 truncate group-hover:text-white transition-colors mb-1.5 leading-tight">
+                                            {email.subject || '(NO SUBJECT)'}
+                                        </h4>
+                                        <p className="text-[11px] text-slate-500 line-clamp-2 opacity-80 group-hover:opacity-100 transition-opacity leading-relaxed font-medium">
+                                            {email.summary}
+                                        </p>
+                                    </button>
+                                </motion.div>
                             ))}
                         </AnimatePresence>
                     )}
@@ -313,7 +334,7 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
             </div>
 
             {/* Email content area */}
-            <div className={`flex-1 flex flex-col bg-slate-950 ${!selected ? 'hidden md:flex' : 'flex'}`}>
+            <div className={`flex-1 flex flex-col bg-slate-950/80 backdrop-blur-md relative z-10 ${!selected ? 'hidden md:flex' : 'flex'}`}>
                 <AnimatePresence mode="wait">
                     {selected ? (
                         <motion.div
@@ -321,69 +342,79 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.2 }}
+                            transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
                             className="flex-1 flex flex-col h-full overflow-hidden"
                         >
                             {/* Header */}
-                            <div className="p-4 border-b border-slate-800 flex items-center gap-3 bg-slate-950/50">
+                            <div className="p-6 border-b border-white/5 flex items-center gap-4 bg-white/2">
                                 <button
                                     onClick={() => setSelected(null)}
-                                    className="md:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all"
+                                    className="md:hidden p-2 text-slate-400 hover:text-white bg-white/5 rounded-xl transition-all"
                                 >
-                                    <ArrowLeft className="w-4 h-4" />
+                                    <ArrowLeft className="w-5 h-5" />
                                 </button>
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="text-white font-bold truncate">{selected.subject || '(No Subject)'}</h3>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <Badge variant="neutral" className="text-[10px] px-1.5 py-0 bg-[#f5d400]/10 text-[#f5d400] border-[#f5d400]/20">ZOHO</Badge>
-                                        <span className="text-[10px] text-slate-500">{selected.fromAddress}</span>
+                                    <h3 className="text-lg font-black text-white truncate tracking-tight uppercase leading-tight">{selected.subject || '(NO SUBJECT)'}</h3>
+                                    <div className="flex items-center gap-3 mt-2">
+                                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#f5d400]/10 border border-[#f5d400]/20">
+                                            <div className="w-1 h-1 rounded-full bg-[#f5d400] animate-pulse" />
+                                            <span className="text-[9px] font-black uppercase tracking-widest text-[#f5d400]">Quantum Link</span>
+                                        </div>
+                                        <span className="text-[10px] text-slate-500 font-mono truncate">{selected.fromAddress}</span>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    <button
+                                <div className="flex items-center gap-2">
+                                    <motion.button
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
                                         onClick={() => {
                                             setComposeDefaults({
                                                 to: selected.fromAddress,
                                                 subject: `Re: ${selected.subject}`,
-                                                body: `\n\n--- Original Message ---\nFrom: ${selected.fromAddress}\nSubject: ${selected.subject}\n\n${(selected.content || selected.summary || '').replace(/<[^>]*>/g, '')}`
+                                                body: `\n\n--- Original Signal ---\nFrom: ${selected.fromAddress}\nSubject: ${selected.subject}\n\n${(selected.content || selected.summary || '').replace(/<[^>]*>/g, '')}`
                                             });
                                             setIsComposeOpen(true);
                                         }}
-                                        title="Open in AI Composer"
-                                        className="p-2 text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest bg-indigo-500/5 rounded-lg px-2"
+                                        className="hidden sm:flex items-center gap-2 h-10 px-4 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-indigo-600/10"
                                     >
                                         <Sparkles className="w-3.5 h-3.5" />
-                                        AI Compose
-                                    </button>
-                                    <button className="p-2 text-slate-400 hover:text-white transition-colors"><Archive className="w-4 h-4" /></button>
-                                    <button className="p-2 text-slate-400 hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>
-                                    <button className="p-2 text-slate-400 hover:text-white transition-colors"><MoreVertical className="w-4 h-4" /></button>
+                                        Advanced Draft
+                                    </motion.button>
+                                    <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
+                                        <button className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all" title="Archive"><Archive className="w-4 h-4" /></button>
+                                        <button className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                                        <button className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"><MoreVertical className="w-4 h-4" /></button>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Body */}
-                            <div className="flex-1 overflow-y-auto p-6 sm:p-8 custom-scrollbar">
+                            <div className="flex-1 overflow-y-auto p-8 sm:p-12 custom-scrollbar selection:bg-[#f5d400]/30">
                                 {loadingEmail ? (
-                                    <div className="flex flex-col items-center justify-center h-full gap-3">
-                                        <Loader2 className="w-8 h-8 animate-spin text-[#f5d400]" />
-                                        <p className="text-xs text-slate-400 animate-pulse">Loading email...</p>
+                                    <div className="flex flex-col items-center justify-center h-full gap-4">
+                                        <div className="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-400 rounded-full animate-spin" />
+                                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest animate-pulse">Decrypting transmission...</p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-6">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-2xl bg-[#f5d400]/10 flex items-center justify-center border border-[#f5d400]/20">
-                                                <UserIcon className="w-6 h-6 text-[#f5d400]" />
+                                    <div className="max-w-4xl mx-auto space-y-10">
+                                        <div className="flex items-center gap-5 p-4 bg-white/2 rounded-2xl border border-white/5">
+                                            <div className="w-14 h-14 rounded-2xl bg-[#f5d400]/10 flex items-center justify-center border border-[#f5d400]/20 shadow-inner">
+                                                <UserIcon className="w-7 h-7 text-[#f5d400]" />
                                             </div>
                                             <div>
-                                                <p className="text-white font-bold">{selected.fromAddress}</p>
-                                                <p className="text-xs text-slate-500">
-                                                    to {selected.toAddress} · {selected.receivedTime ? new Date(Number(selected.receivedTime)).toLocaleString() : ''}
-                                                </p>
+                                                <p className="text-white font-black text-sm uppercase tracking-tight">{selected.fromAddress?.split('<')[0].trim() || 'Undefined Sender'}</p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <p className="text-[10px] text-slate-500 font-mono">{selected.fromAddress}</p>
+                                                    <div className="w-1 h-1 rounded-full bg-slate-700" />
+                                                    <p className="text-[10px] text-slate-500 font-mono">
+                                                        {selected.receivedTime ? new Date(Number(selected.receivedTime)).toLocaleString() : ''}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
 
                                         <div
-                                            className="prose prose-invert max-w-none text-slate-200 text-sm leading-relaxed"
+                                            className="prose prose-invert prose-slate max-w-none text-slate-300 text-[15px] leading-relaxed font-medium transition-all"
                                             dangerouslySetInnerHTML={{ __html: selected.content || selected.summary || '' }}
                                         />
                                     </div>
@@ -391,39 +422,47 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
                             </div>
 
                             {/* Reply box */}
-                            <div className="p-6 pt-0">
-                                <div className="bg-slate-950 border border-slate-800 rounded-2xl p-2 focus-within:border-[#f5d400]/40 transition-all shadow-xl">
-                                    <div className="flex items-center justify-between px-3 py-2 border-b border-slate-900 mb-1">
-                                        <div className="flex items-center gap-2">
-                                            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Fast Reply</span>
+                            <div className="p-8 pt-0">
+                                <motion.div
+                                    initial={{ y: 20, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-[2rem] p-4 focus-within:border-teal-500/50 transition-all shadow-2xl relative"
+                                >
+                                    <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 mb-2">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-2 h-2 rounded-full bg-teal-500 shadow-[0_0_8px_#14b8a6]" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Response Terminal</span>
                                         </div>
-                                        <button
+                                        <motion.button
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
                                             onClick={handleAiReplyGenerate}
                                             disabled={aiReplyGenerating}
-                                            className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 uppercase tracking-widest flex items-center gap-1.5 px-2 py-1 rounded-lg bg-indigo-500/5 hover:bg-indigo-500/10 transition-all disabled:opacity-50"
+                                            className="h-9 px-4 text-[10px] font-black text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 uppercase tracking-widest flex items-center gap-2 rounded-xl transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50"
                                         >
-                                            {aiReplyGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
-                                            {aiReplyGenerating ? 'AI Thinking...' : 'AI HelpMe Reply'}
-                                        </button>
+                                            {aiReplyGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+                                            {aiReplyGenerating ? 'AI PROCESSING...' : 'AI ASSIST REPLI'}
+                                        </motion.button>
                                     </div>
                                     <textarea
                                         value={replyBody}
                                         onChange={e => setReplyBody(e.target.value)}
-                                        placeholder="Type your reply..."
-                                        className="w-full bg-transparent border-none focus:ring-0 text-white text-sm min-h-[90px] p-2 resize-none"
+                                        placeholder="Initiate communication..."
+                                        className="w-full bg-transparent border-none focus:ring-0 text-slate-200 text-sm min-h-[120px] p-4 resize-none placeholder:text-slate-600 font-medium"
                                     />
-                                    <div className="flex items-center justify-end p-2 border-t border-slate-900 mt-2">
-                                        <button
+                                    <div className="flex items-center justify-end p-2 mt-2">
+                                        <motion.button
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
                                             onClick={handleSendReply}
                                             disabled={sending || !replyBody.trim()}
-                                            className="flex items-center gap-2 px-5 py-2 bg-[#f5d400] hover:bg-[#e6c700] disabled:opacity-40 disabled:cursor-not-allowed text-slate-900 rounded-xl font-bold text-sm transition-all"
+                                            className="flex items-center gap-2.5 px-8 py-3 bg-[#f5d400] hover:bg-[#ffe100] disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed text-slate-950 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-yellow-500/10"
                                         >
-                                            {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                                            Send Reply
-                                        </button>
+                                            {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 stroke-[2.5px]" />}
+                                            Transmit Message
+                                        </motion.button>
                                     </div>
-                                </div>
+                                </motion.div>
                             </div>
                         </motion.div>
                     ) : (
@@ -434,13 +473,14 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
                             exit={{ opacity: 0 }}
                             className="flex-1 flex flex-col items-center justify-center text-slate-500 p-8 text-center"
                         >
-                            <div className="bg-slate-900/50 p-12 rounded-[3rem] border border-slate-800/50">
-                                <div className="w-20 h-20 bg-[#f5d400]/10 rounded-3xl flex items-center justify-center border border-[#f5d400]/20 mb-6 mx-auto">
-                                    <Mail className="w-10 h-10 text-[#f5d400]" />
+                            <div className="bg-slate-900/30 backdrop-blur-xl p-16 rounded-[4rem] border border-white/5 relative group">
+                                <div className="absolute inset-0 bg-teal-500/5 rounded-[4rem] blur-3xl group-hover:bg-teal-500/10 transition-colors" />
+                                <div className="relative z-10 w-24 h-24 bg-white/5 rounded-[2rem] flex items-center justify-center border border-white/10 mb-8 mx-auto shadow-2xl">
+                                    <Mail className="w-10 h-10 text-[#f5d400] opacity-40 group-hover:opacity-100 transition-opacity" />
                                 </div>
-                                <h3 className="text-xl font-bold text-white mb-2">Select an email</h3>
-                                <p className="max-w-xs text-sm text-slate-500 leading-relaxed">
-                                    Manage your Zoho Mail conversations directly from AlphaClone.
+                                <h3 className="relative z-10 text-2xl font-black text-white mb-3 tracking-tight uppercase">Channel Standby</h3>
+                                <p className="relative z-10 max-w-sm text-xs text-slate-500 leading-relaxed font-mono uppercase tracking-widest opacity-60">
+                                    Select a cryptographic signal from the terminal to begin synchronization.
                                 </p>
                             </div>
                         </motion.div>
@@ -465,7 +505,7 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
                 initialSubject={composeDefaults.subject}
                 initialBody={composeDefaults.body}
             />
-        </div>
+        </motion.div>
     );
 };
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     CheckSquare,
     Plus,
@@ -16,7 +17,10 @@ import {
     CheckCircle2,
     Clock,
     Target,
-    History
+    History,
+    ChevronDown,
+    Edit2,
+    Search
 } from 'lucide-react';
 import { taskService, Task } from '../../services/taskService';
 import { taskRecurrenceService, RecurrenceFrequency } from '../../services/taskRecurrenceService';
@@ -242,193 +246,268 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
     };
 
     const renderDirectiveList = () => (
-        <div className="w-full space-y-4">
-            {/* Table Header - Simplified for Modern Look */}
-            <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-3 bg-slate-900/40 border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 font-mono">
-                <div className="col-span-12 lg:col-span-5">Objective Detail</div>
+        <div className="w-full space-y-6">
+            {/* Table Header - Elite Protocol Styling */}
+            <div className="hidden lg:grid grid-cols-12 gap-6 px-8 py-4 bg-slate-900/40 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 font-mono backdrop-blur-md shadow-inner">
+                <div className="col-span-12 lg:col-span-5 flex items-center gap-3">
+                    <Target className="w-3 h-3 text-teal-400" />
+                    Objective Detail
+                </div>
                 <div className="lg:col-span-2 text-center">Status</div>
                 <div className="lg:col-span-2 text-center">Priority</div>
-                <div className="lg:col-span-2 text-center">Deadline</div>
+                <div className="lg:col-span-2 text-center">Timeline</div>
                 <div className="lg:col-span-1 text-right">Ops</div>
             </div>
 
             {/* List Rows */}
-            <div className="space-y-3">
+            <div className="space-y-4">
                 {filteredAndSearchedTasks.length === 0 && !loading ? (
-                    <div className="py-12 flex flex-col items-center justify-center text-slate-500 bg-slate-900/20 rounded-2xl border border-dashed border-white/5">
-                        <Target className="w-12 h-12 mb-4 opacity-20" />
-                        <p className="font-mono text-sm uppercase tracking-widest">No Active Directives</p>
-                    </div>
-                ) : (
-                    filteredAndSearchedTasks.map((task) => (
-                        <div
-                            key={task.id}
-                            className="group grid grid-cols-1 lg:grid-cols-12 gap-4 items-center px-6 py-4 bg-slate-900/40 hover:bg-slate-800/40 border border-white/5 hover:border-teal-500/30 rounded-2xl transition-all duration-300 relative overflow-hidden"
-                        >
-                            {/* Priority Indicator Line */}
-                            <div className={`absolute left-0 top-0 bottom-0 w-1 ${task.priority === 'high' ? 'bg-red-500' :
-                                task.priority === 'medium' ? 'bg-orange-500' : 'bg-teal-500/30'
-                                }`} />
-
-                            {/* Objective Detail */}
-                            <div className="col-span-1 lg:col-span-5 flex items-center gap-4">
-                                <div className={`p-2 rounded-lg ${task.status === 'completed' ? 'bg-green-500/10 text-green-400' : 'bg-teal-500/10 text-teal-400'}`}>
-                                    {task.status === 'completed' ? <CheckCircle2 className="w-5 h-5" /> : <Target className="w-5 h-5" />}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <h4 className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors truncate">
-                                        {task.title}
-                                    </h4>
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                        {task.description && (
-                                            <p className="text-xs text-slate-500 truncate max-w-[200px]">
-                                                {task.description}
-                                            </p>
-                                        )}
-                                        {task.estimatedHours && (
-                                            <span className="flex items-center gap-1 text-[10px] text-slate-600 bg-white/5 px-1.5 py-0.5 rounded">
-                                                <Clock className="w-3 h-3" />
-                                                {task.estimatedHours}h
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Status Select */}
-                            <div className="col-span-1 lg:col-span-2 flex justify-center">
-                                <select
-                                    value={task.status}
-                                    onChange={(e) => handleStatusChange(task.id, e.target.value as any)}
-                                    className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg bg-slate-950/50 border border-white/5 outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer w-full lg:w-32 text-center appearance-none hover:bg-slate-900 transition-colors ${task.status === 'completed' ? 'text-green-400 border-green-500/20' :
-                                        task.status === 'in_progress' ? 'text-teal-400 border-teal-500/20' : 'text-slate-400'
-                                        }`}
-                                >
-                                    {[
-                                        { value: 'ideas', label: 'Standby' },
-                                        { value: 'todo', label: 'Planning' },
-                                        { value: 'in_progress', label: 'Active' },
-                                        { value: 'review', label: 'Review' },
-                                        { value: 'completed', label: 'Success' },
-                                    ].map((stage, idx, arr) => {
-                                        const currentIdx = arr.findIndex(s => s.value === task.status);
-                                        return (
-                                            <option key={stage.value} value={stage.value} disabled={idx < currentIdx}>
-                                                {stage.label}
-                                            </option>
-                                        );
-                                    })}
-                                </select>
-                            </div>
-
-                            {/* Priority Tag */}
-                            <div className="col-span-1 lg:col-span-2 flex justify-center">
-                                <span className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] rounded-lg font-black uppercase tracking-widest border ${task.priority === 'high' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
-                                    task.priority === 'medium' ? 'bg-orange-500/10 border-orange-500/20 text-orange-500' :
-                                        'bg-slate-800/50 border-white/5 text-slate-500'
-                                    }`}>
-                                    <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${task.priority === 'high' ? 'bg-red-500' :
-                                        task.priority === 'medium' ? 'bg-orange-500' : 'bg-slate-500'
-                                        }`} />
-                                    {task.priority}
-                                </span>
-                            </div>
-
-                            {/* Deadline / Countdown */}
-                            <div className="col-span-1 lg:col-span-2 flex justify-center">
-                                {task.dueDate ? (
-                                    <div className="bg-slate-950/30 px-3 py-1.5 rounded-lg border border-white/5 w-full lg:w-auto text-center">
-                                        <TaskCountdown
-                                            dueDate={task.dueDate}
-                                            onOverdue={() => handleStatusChange(task.id, 'review')}
-                                        />
-                                    </div>
-                                ) : (
-                                    <span className="text-[10px] text-slate-600 font-mono italic">No Deadline</span>
-                                )}
-                            </div>
-
-                            {/* Row Actions */}
-                            <div className="col-span-1 lg:col-span-1 flex justify-end gap-1">
-                                <button
-                                    onClick={() => openEditModal(task)}
-                                    className="p-2 hover:bg-teal-500/10 text-slate-400 hover:text-teal-400 rounded-lg transition-all"
-                                    title="Edit Directive"
-                                >
-                                    <Plus className="w-4 h-4 rotate-45" />
-                                </button>
-                                <button
-                                    onClick={() => setNotesTaskId(task.id)}
-                                    className="p-2 hover:bg-teal-500/10 text-slate-400 hover:text-teal-400 rounded-lg transition-all"
-                                    title="Intelligence Notes"
-                                >
-                                    <FileText className="w-4 h-4" />
-                                </button>
-                            </div>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="py-24 flex flex-col items-center justify-center text-slate-500 bg-slate-900/20 rounded-[2.5rem] border border-dashed border-white/5 backdrop-blur-sm"
+                    >
+                        <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mb-6 shadow-inner">
+                            <Target className="w-10 h-10 opacity-20" />
                         </div>
-                    ))
+                        <p className="font-black text-sm uppercase tracking-[0.3em] text-slate-600">No Active Directives</p>
+                        <p className="text-[10px] font-mono text-slate-700 mt-2 uppercase">System Idle // Awaiting Input</p>
+                    </motion.div>
+                ) : (
+                    <AnimatePresence mode="popLayout">
+                        {filteredAndSearchedTasks.map((task, idx) => (
+                            <motion.div
+                                key={task.id}
+                                layout
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+                                transition={{
+                                    delay: idx * 0.05,
+                                    duration: 0.4,
+                                    ease: [0.23, 1, 0.32, 1]
+                                }}
+                                className="group grid grid-cols-1 lg:grid-cols-12 gap-6 items-center px-8 py-6 bg-slate-900/40 hover:bg-slate-800/60 border border-white/5 hover:border-teal-500/30 rounded-[2rem] transition-all duration-500 relative overflow-hidden backdrop-blur-xl shadow-2xl hover:shadow-teal-500/5"
+                            >
+                                {/* Priority Glow Indicator */}
+                                <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-500 group-hover:w-2 ${task.priority === 'high' ? 'bg-red-500 shadow-[2px_0_15px_rgba(239,68,68,0.5)]' :
+                                    task.priority === 'medium' ? 'bg-orange-500 shadow-[2px_0_15px_rgba(249,115,22,0.5)]' :
+                                        'bg-teal-500/30 group-hover:bg-teal-500 group-hover:shadow-[2px_0_15px_rgba(20,184,166,0.5)]'
+                                    }`} />
+
+                                {/* Objective Detail */}
+                                <div className="col-span-1 lg:col-span-5 flex items-center gap-6">
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-inner group-hover:scale-110 ${task.status === 'completed' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-teal-500/10 text-teal-400 border border-teal-500/20'
+                                        }`}>
+                                        {task.status === 'completed' ? <CheckCircle2 className="w-6 h-6" /> : <Target className="w-6 h-6" />}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="text-base font-black text-slate-200 group-hover:text-white transition-colors truncate tracking-tight">
+                                            {task.title}
+                                        </h4>
+                                        <div className="flex items-center gap-3 mt-1.5">
+                                            {task.description && (
+                                                <p className="text-xs text-slate-500 truncate max-w-[200px] font-medium italic">
+                                                    {task.description}
+                                                </p>
+                                            )}
+                                            {task.estimatedHours && (
+                                                <span className="flex items-center gap-1.5 text-[10px] text-slate-400 bg-white/5 px-2 py-0.5 rounded-lg border border-white/5 font-mono">
+                                                    <Clock className="w-3 h-3 text-teal-500/60" />
+                                                    {task.estimatedHours}H
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Status Intelligence */}
+                                <div className="col-span-1 lg:col-span-2 flex justify-center">
+                                    <div className="relative w-full lg:w-36 group/status">
+                                        <select
+                                            value={task.status}
+                                            onChange={(e) => handleStatusChange(task.id, e.target.value as any)}
+                                            className={`w-full text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl bg-slate-950/60 border border-white/10 outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer text-center appearance-none hover:bg-slate-900 transition-all shadow-inner ${task.status === 'completed' ? 'text-green-400 border-green-500/30' :
+                                                task.status === 'in_progress' ? 'text-teal-400 border-teal-500/30' : 'text-slate-400'
+                                                }`}
+                                        >
+                                            {[
+                                                { value: 'ideas', label: 'Standby' },
+                                                { value: 'todo', label: 'Planning' },
+                                                { value: 'in_progress', label: 'Active' },
+                                                { value: 'review', label: 'Review' },
+                                                { value: 'completed', label: 'Success' },
+                                            ].map((stage, idx, arr) => {
+                                                const currentIdx = arr.findIndex(s => s.value === task.status);
+                                                return (
+                                                    <option key={stage.value} value={stage.value} disabled={idx < currentIdx} className="bg-slate-900 text-white">
+                                                        {stage.label}
+                                                    </option>
+                                                );
+                                            })}
+                                        </select>
+                                        <ChevronDown className="w-3 h-3 absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none transition-transform group-hover/status:translate-y-[-40%]" />
+                                    </div>
+                                </div>
+
+                                {/* Priority Node */}
+                                <div className="col-span-1 lg:col-span-2 flex justify-center">
+                                    <span className={`flex items-center gap-2 px-4 py-2 text-[10px] rounded-xl font-black uppercase tracking-[0.1em] border transition-all duration-500 ${task.priority === 'high' ? 'bg-red-500/10 border-red-500/20 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.1)]' :
+                                        task.priority === 'medium' ? 'bg-orange-500/10 border-orange-500/20 text-orange-500' :
+                                            'bg-slate-800/40 border-white/5 text-slate-500'
+                                        }`}>
+                                        <div className={`w-1.5 h-1.5 rounded-full ${task.priority === 'high' ? 'bg-red-500 animate-ping' :
+                                            task.priority === 'medium' ? 'bg-orange-500 animate-pulse' : 'bg-slate-600'
+                                            }`} />
+                                        {task.priority}
+                                    </span>
+                                </div>
+
+                                {/* Timeline Control */}
+                                <div className="col-span-1 lg:col-span-2 flex justify-center">
+                                    {task.dueDate ? (
+                                        <div className="bg-slate-950/40 px-4 py-2 rounded-xl border border-white/5 w-full lg:w-auto text-center shadow-inner group-hover:border-teal-500/20 transition-all">
+                                            <TaskCountdown
+                                                dueDate={task.dueDate}
+                                                onOverdue={() => handleStatusChange(task.id, 'review')}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <span className="text-[10px] text-slate-700 font-black uppercase tracking-widest italic opacity-40">No Deadline</span>
+                                    )}
+                                </div>
+
+                                {/* Tactical Operations */}
+                                <div className="col-span-1 lg:col-span-1 flex justify-end gap-2">
+                                    <motion.button
+                                        whileHover={{ scale: 1.1, backgroundColor: 'rgba(20, 184, 166, 0.15)' }}
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={() => openEditModal(task)}
+                                        className="p-3 text-slate-500 hover:text-white rounded-2xl transition-all border border-transparent hover:border-teal-500/20 bg-white/2"
+                                        title="Recalibrate Directive"
+                                    >
+                                        <Edit2 className="w-4 h-4" />
+                                    </motion.button>
+                                    <motion.button
+                                        whileHover={{ scale: 1.1, backgroundColor: 'rgba(20, 184, 166, 0.15)' }}
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={() => setNotesTaskId(task.id)}
+                                        className="p-3 text-slate-500 hover:text-white rounded-2xl transition-all border border-transparent hover:border-teal-500/20 bg-white/2"
+                                        title="Intelligence Log"
+                                    >
+                                        <FileText className="w-4 h-4" />
+                                    </motion.button>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
                 )}
             </div>
         </div>
     );
 
     return (
-        <div className="h-full flex flex-col space-y-6 p-8 overflow-y-auto custom-scrollbar">
-            {/* Mission Interface Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/5">
-                <div>
-                    <h1 className="text-3xl font-black text-white tracking-tighter flex items-center gap-3">
-                        <div className="p-2 bg-teal-500 rounded-lg shadow-lg shadow-teal-500/20">
-                            <CheckSquare className="w-6 h-6 text-slate-900" />
+        <div className="h-full flex flex-col space-y-8 p-8 overflow-y-auto custom-scrollbar bg-[radial-gradient(circle_at_top_right,rgba(20,184,166,0.05),transparent_40%)]">
+            {/* Elite Mission Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b border-white/5 relative">
+                <div className="relative z-10">
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex items-center gap-4 mb-3"
+                    >
+                        <div className="p-3 bg-teal-500 rounded-2xl shadow-2xl shadow-teal-500/40 rotate-3">
+                            <CheckSquare className="w-8 h-8 text-slate-900" />
                         </div>
-                        {filter === 'completed' ? 'MISSION HISTORY' : 'MISSION CONTROL'}
-                        <span className="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-teal-400 text-xs font-mono font-bold animate-pulse">
-                            {loading ? 'SYNCING...' : `${filteredAndSearchedTasks.length} ${filter === 'completed' ? 'COMPLETED' : 'ACTIVE'} DIRECTIVES`}
-                        </span>
-                    </h1>
-                    <p className="text-slate-400 text-xs font-mono uppercase tracking-[0.2em] mt-2 opacity-60">System Operational // Objective Tracking Interface</p>
+                        <div>
+                            <h1 className="text-4xl font-black text-white tracking-tighter uppercase leading-none">
+                                {filter === 'completed' ? 'Archive' : 'Operations'}
+                            </h1>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+                                <p className="text-[10px] font-mono text-teal-500/60 uppercase tracking-[0.3em]">System Live // Objective Tracking</p>
+                            </div>
+                        </div>
+                    </motion.div>
                 </div>
-                <div className="flex items-center gap-4">
-                    <div className="relative group">
-                        <Input
-                            placeholder="SEARCH DIRECTIVES..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="bg-slate-900/60 border-white/10 w-64 h-11 text-xs font-mono tracking-widest focus:border-teal-500 focus:bg-slate-900 transition-all pl-10"
-                        />
-                        <Target className="w-4 h-4 text-slate-600 absolute left-3 top-1/2 -translate-y-1/2 group-focus-within:text-teal-500 transition-colors" />
+
+                <div className="flex flex-wrap items-center gap-4 relative z-10">
+                    <div className="px-4 py-2 rounded-2xl bg-slate-900/50 border border-white/5 backdrop-blur-md">
+                        <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mr-3">Status:</span>
+                        <span className="text-xs font-black text-teal-400 font-mono">
+                            {loading ? 'SYNCING...' : `${filteredAndSearchedTasks.length} DIRECTIVES`}
+                        </span>
                     </div>
-                    <Button
-                        onClick={() => setFilter(filter === 'completed' ? 'all' : 'completed')}
-                        icon={filter === 'completed' ? <Target className="w-4 h-4" /> : <History className="w-4 h-4" />}
-                        variant="secondary"
-                        className="h-11 px-6 font-black uppercase tracking-widest text-xs bg-slate-900 border-white/10 text-slate-300 hover:text-white"
-                    >
-                        {filter === 'completed' ? 'Active' : 'History'}
-                    </Button>
-                    <Button
-                        onClick={() => { setEditingTask(null); resetTaskForm(); setShowCreateModal(true); }}
-                        icon={<Plus className="w-4 h-4" />}
-                        variant="primary"
-                        className="h-11 px-6 font-black uppercase tracking-widest text-xs shadow-xl shadow-teal-500/10"
-                    >
-                        New Directive
-                    </Button>
                 </div>
             </div>
 
-            {/* Main Operational Window */}
+            {/* Tactical Control Bar */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-3 bg-slate-900/40 border border-white/5 rounded-[2.5rem] backdrop-blur-2xl shadow-2xl">
+                <div className="flex p-1.5 bg-black/40 rounded-[1.8rem] border border-white/5">
+                    {[
+                        { id: 'all', label: 'All', icon: <List className="w-3.5 h-3.5" /> },
+                        { id: 'my_tasks', label: 'My Ops', icon: <User className="w-3.5 h-3.5" /> },
+                        { id: 'overdue', label: 'Critical', icon: <AlertCircle className="w-3.5 h-3.5" /> },
+                        { id: 'completed', label: 'History', icon: <History className="w-3.5 h-3.5" /> }
+                    ].map((btn) => (
+                        <button
+                            key={btn.id}
+                            onClick={() => setFilter(btn.id as any)}
+                            className={`relative px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all flex items-center gap-2.5 group ${filter === btn.id ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+                                }`}
+                        >
+                            {filter === btn.id && (
+                                <motion.div
+                                    layoutId="active-nav-bg"
+                                    className="absolute inset-0 bg-teal-500/10 border border-teal-500/20 rounded-2xl shadow-[0_0_25px_rgba(20,184,166,0.15)]"
+                                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                />
+                            )}
+                            <span className={`${filter === btn.id ? 'text-teal-400 scale-110' : 'text-slate-600 group-hover:text-slate-400'} transition-all duration-300`}>
+                                {btn.icon}
+                            </span>
+                            <span className="relative z-10">{btn.label}</span>
+                        </button>
+                    ))}
+                </div>
+
+                <div className="flex items-center gap-4 px-2">
+                    <div className="relative group">
+                        <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-teal-400 transition-colors" />
+                        <input
+                            type="text"
+                            placeholder="ENCRYPTED SEARCH..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full lg:w-72 bg-black/40 border border-white/5 rounded-2xl pl-12 pr-6 py-3 text-[10px] font-mono tracking-widest text-white focus:border-teal-500/40 outline-none transition-all placeholder:text-slate-700 shadow-inner"
+                        />
+                    </div>
+                    <motion.button
+                        whileHover={{ scale: 1.02, translateY: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => { setEditingTask(null); resetTaskForm(); setShowCreateModal(true); }}
+                        className="bg-teal-500 hover:bg-teal-400 text-slate-950 rounded-2xl h-12 px-8 shadow-[0_10px_30px_rgba(20,184,166,0.3)] transition-all flex items-center gap-3 group"
+                    >
+                        <Plus className="w-4 h-4 font-bold group-hover:rotate-90 transition-transform duration-500" />
+                        <span className="font-black text-[10px] uppercase tracking-[0.2em]">Deploy Directive</span>
+                    </motion.button>
+                </div>
+            </div>
+
+            {/* Main Deployment Field */}
             <div className="flex-1 min-h-0 relative">
                 {loading && tasks.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                    <div className="flex flex-col items-center justify-center h-96 space-y-6">
                         <div className="relative">
-                            <Loader2 className="w-12 h-12 text-teal-500 animate-spin" />
-                            <div className="absolute inset-0 bg-teal-500/20 blur-xl rounded-full" />
+                            <div className="w-16 h-16 border-4 border-teal-500/10 border-t-teal-500 rounded-full animate-spin" />
+                            <div className="absolute inset-0 bg-teal-500/20 blur-2xl rounded-full animate-pulse" />
                         </div>
-                        <p className="font-mono text-[10px] text-slate-500 uppercase tracking-widest animate-pulse">Synchronizing Mission Data...</p>
+                        <p className="font-mono text-[10px] text-slate-500 uppercase tracking-[0.4em] animate-pulse">Synchronizing Tactical Data...</p>
                     </div>
                 ) : (
-                    renderDirectiveList()
+                    <div className="h-full overflow-y-auto pr-2 custom-scrollbar pb-12">
+                        {renderDirectiveList()}
+                    </div>
                 )}
             </div>
 

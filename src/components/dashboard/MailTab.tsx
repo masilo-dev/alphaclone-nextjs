@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, CheckCircle2, ShieldCheck, Zap, Globe, Link2, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
 import { zohoService } from '../../services/zohoService';
@@ -50,73 +50,112 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
         window.location.href = `/api/auth/zoho/connect?userId=${user.id}&returnTo=${encodeURIComponent(currentPath)}`;
     };
 
-    if (isLoading) {
-        return (
-            <div className="flex flex-col items-center justify-center p-12 gap-4">
-                <div className="w-12 h-12 border-4 border-[#f5d400]/20 border-t-[#f5d400] rounded-full animate-spin"></div>
-                <p className="text-slate-400 font-medium animate-pulse uppercase tracking-[0.2em] text-xs font-mono">Synchronizing Quantum Channels...</p>
-            </div>
-        );
-    }
-
-    if (isZohoIntegrated) {
-        return <ZohoMailView userId={user.id} />;
-    }
-
     return (
-        <div className="max-w-4xl mx-auto py-8">
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-12 text-center relative overflow-hidden shadow-2xl"
-            >
-                {/* Visual Background Elements */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#f5d400]/50 to-transparent" />
-                <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#f5d400]/5 rounded-full blur-3xl" />
-                <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl" />
+        <div className="max-w-6xl mx-auto py-12 px-6">
+            <AnimatePresence mode="wait">
+                {isLoading ? (
+                    <motion.div
+                        key="loading"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="flex flex-col items-center justify-center p-20 gap-6 bg-slate-900/40 backdrop-blur-3xl rounded-[3rem] border border-white/5 shadow-2xl"
+                    >
+                        <div className="relative">
+                            <div className="w-20 h-20 border-4 border-teal-500/20 border-t-[#f5d400] rounded-full animate-spin" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <Zap className="w-8 h-8 text-[#f5d400] animate-pulse" />
+                            </div>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-white font-black uppercase tracking-[0.3em] text-xs mb-2">Synchronizing Quantum Channels</p>
+                            <p className="text-slate-500 text-[10px] uppercase font-mono tracking-widest animate-pulse">Establishing secure link to Zoho-Node-Alpha...</p>
+                        </div>
+                    </motion.div>
+                ) : isZohoIntegrated ? (
+                    <motion.div
+                        key="integrated"
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                    >
+                        <ZohoMailView userId={user.id} />
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        key="connect"
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-slate-900 border border-white/10 rounded-[4rem] p-12 sm:p-20 text-center relative overflow-hidden shadow-[0_64px_128px_-32px_rgba(0,0,0,0.8)]"
+                    >
+                        {/* Visual Background Elements */}
+                        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-[#f5d400]/40 to-transparent" />
+                        <div className="absolute -top-32 -right-32 w-96 h-96 bg-[#f5d400]/10 rounded-full blur-[100px]" />
+                        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-teal-500/10 rounded-full blur-[100px]" />
 
-                <div className="w-24 h-24 bg-gradient-to-br from-[#f5d400] to-[#e6c700] rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-[#f5d400]/20 rotate-3 transition-transform hover:rotate-0 duration-500">
-                    <Mail className="w-12 h-12 text-slate-950 -rotate-3" />
-                </div>
+                        <motion.div
+                            whileHover={{ rotate: 12, scale: 1.05 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                            className="w-32 h-32 bg-gradient-to-br from-[#f5d400] to-[#e6c700] rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-2xl shadow-yellow-500/20 cursor-pointer"
+                        >
+                            <Mail className="w-16 h-16 text-slate-950" />
+                        </motion.div>
 
-                <h2 className="text-4xl font-black text-white mb-4 tracking-tight uppercase">Zoho Mail Command</h2>
-                <p className="text-slate-400 max-w-xl mx-auto mb-8 leading-relaxed">
-                    Unleash high-frequency AI email automation via Zoho. Quantum-safe thread synchronization and context-aware neural drafting for the ultra-productive enterprise.
-                </p>
+                        <h2 className="text-5xl sm:text-7xl font-black text-white mb-6 tracking-tight uppercase leading-none">
+                            Zoho Mail <br />
+                            <span className="text-[#f5d400] text-3xl sm:text-5xl">Neural Hub</span>
+                        </h2>
+                        <p className="text-slate-400 max-w-2xl mx-auto mb-12 text-lg leading-relaxed font-medium">
+                            Unleash high-frequency AI email automation. Quantum-safe thread synchronization and context-aware neural drafting for the ultra-productive enterprise.
+                        </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                    <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-6 text-left hover:border-[#f5d400]/30 transition-colors group">
-                        <Zap className="w-6 h-6 text-[#f5d400] mb-3 group-hover:scale-110 transition-transform" />
-                        <h4 className="text-white font-bold text-sm mb-1 uppercase tracking-wider">Instant Sync</h4>
-                        <p className="text-slate-500 text-xs">Real-time thread retrieval and multi-device coordination.</p>
-                    </div>
-                    <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-6 text-left hover:border-[#f5d400]/30 transition-colors group">
-                        <ShieldCheck className="w-6 h-6 text-[#f5d400] mb-3 group-hover:scale-110 transition-transform" />
-                        <h4 className="text-white font-bold text-sm mb-1 uppercase tracking-wider">Enterprise-Grade</h4>
-                        <p className="text-slate-500 text-xs">OAuth2 authentication with dedicated token isolation.</p>
-                    </div>
-                    <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-6 text-left hover:border-[#f5d400]/30 transition-colors group">
-                        <Globe className="w-6 h-6 text-[#f5d400] mb-3 group-hover:scale-110 transition-transform" />
-                        <h4 className="text-white font-bold text-sm mb-1 uppercase tracking-wider">Unified Context</h4>
-                        <p className="text-slate-500 text-xs">AI understands complex business relationships across Zoho threads.</p>
-                    </div>
-                </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                            {[
+                                { icon: Zap, title: "Instant Sync", desc: "Real-time thread retrieval and multi-device coordination." },
+                                { icon: ShieldCheck, title: "Quantum Secure", desc: "OAuth2 authentication with dedicated token isolation." },
+                                { icon: Globe, title: "Unified Context", desc: "AI understands complex business relationships across Zoho threads." }
+                            ].map((feature, i) => (
+                                <motion.div
+                                    key={i}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.2 + (i * 0.1) }}
+                                    className="bg-white/2 backdrop-blur-xl border border-white/5 rounded-3xl p-8 text-left hover:border-[#f5d400]/30 transition-all group"
+                                >
+                                    <feature.icon className="w-8 h-8 text-[#f5d400] mb-4 group-hover:scale-110 transition-transform" />
+                                    <h4 className="text-white font-black text-sm mb-2 uppercase tracking-widest">{feature.title}</h4>
+                                    <p className="text-slate-500 text-xs leading-relaxed">{feature.desc}</p>
+                                </motion.div>
+                            ))}
+                        </div>
 
-                <Button
-                    onClick={handleConnectZoho}
-                    disabled={isConnecting}
-                    className="h-16 px-10 rounded-2xl bg-[#f5d400] hover:bg-[#e6c700] text-slate-950 font-black text-lg transition-all hover:scale-105 active:scale-95 shadow-xl shadow-yellow-500/10 flex items-center justify-center gap-3 mx-auto"
-                >
-                    {isConnecting ? <Loader2 className="w-6 h-6 animate-spin" /> : <Link2 className="w-6 h-6" />}
-                    CONNECT ZOHO NOW
-                </Button>
+                        <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                        >
+                            <Button
+                                onClick={handleConnectZoho}
+                                disabled={isConnecting}
+                                className="h-20 px-16 rounded-[2rem] bg-[#f5d400] hover:bg-[#ffe100] text-slate-950 font-black text-xl transition-all shadow-2xl shadow-yellow-500/20 flex items-center justify-center gap-4 mx-auto uppercase tracking-tighter"
+                            >
+                                {isConnecting ? <Loader2 className="w-8 h-8 animate-spin" /> : <Link2 className="w-8 h-8 stroke-[3px]" />}
+                                Establish Link Now
+                            </Button>
+                        </motion.div>
 
-                <div className="mt-8 flex items-center justify-center gap-4 text-slate-500 text-[10px] uppercase font-mono tracking-widest opacity-60">
-                    <span>Active Integration: Zoho Mail</span>
-                    <div className="w-1 h-1 bg-slate-700 rounded-full" />
-                    <span>AI Engine: Enabled</span>
-                </div>
-            </motion.div>
+                        <div className="mt-12 flex items-center justify-center gap-6 text-slate-500 text-[10px] uppercase font-black tracking-[0.3em] opacity-40">
+                            <span className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 bg-teal-500 rounded-full animate-pulse" />
+                                Zoho Protocol v2.4
+                            </span>
+                            <div className="w-1 h-1 bg-slate-800 rounded-full" />
+                            <span className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 bg-[#f5d400] rounded-full animate-pulse" />
+                                AI Engine Active
+                            </span>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

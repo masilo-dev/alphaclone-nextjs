@@ -2,6 +2,8 @@
 // @ts-nocheck
 
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
 import {
     Briefcase,
     Search,
@@ -191,275 +193,382 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
 
 
     return (
-        <div className="h-full flex flex-col p-8 overflow-y-auto custom-scrollbar space-y-4 md:space-y-6">
-            {/* Header */}
-            <div className={`flex flex-col lg:flex-row lg:items-center justify-between gap-4 ${selectedClient ? 'hidden lg:flex' : 'flex'}`}>
-                <div className="flex-1">
-                    <h1 className="text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-3">
-                        <Briefcase className="w-6 h-6 md:w-8 md:h-8 text-teal-400" />
-                        Client Relations
-                        <span className="px-2 md:px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-400 text-[10px] md:text-xs font-mono">
-                            {loading ? '...' : clients.length} Records
-                        </span>
-                    </h1>
-                    <p className="text-slate-400 text-xs md:text-sm mt-1">Manage leads, prospects, and customer relationships</p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-                    <div className="relative flex-1 lg:flex-none">
-                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                        <input
-                            type="text"
-                            placeholder="Search clients..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-9 pr-4 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm text-slate-300 focus:outline-none focus:border-teal-500 transition-colors w-full lg:w-64"
-                        />
+        <>
+            <div className="h-full flex flex-col p-8 overflow-y-auto custom-scrollbar space-y-8 bg-[radial-gradient(circle_at_top_right,rgba(20,184,166,0.05),transparent_40%)]">
+                {/* Elite Client Relations Header */}
+                <div className={`flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-8 border-b border-white/5 relative ${selectedClient ? 'hidden lg:flex' : 'flex'}`}>
+                    <div className="flex-1 relative z-10">
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="flex items-center gap-4 mb-3"
+                        >
+                            <div className="p-3 bg-teal-500 rounded-2xl shadow-2xl shadow-teal-500/40 rotate-3">
+                                <Briefcase className="w-8 h-8 text-slate-900" />
+                            </div>
+                            <div>
+                                <h1 className="text-4xl font-black text-white tracking-tighter uppercase leading-none">
+                                    Client Relations
+                                </h1>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+                                    <p className="text-[10px] font-mono text-teal-500/60 uppercase tracking-[0.3em]">
+                                        {loading ? 'SYNCING DATABASE...' : `${clients.length} Active Records`}
+                                    </p>
+                                </div>
+                            </div>
+                        </motion.div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                        <Button
-                            onClick={() => setShowLeadImportModal(true)}
-                            variant="secondary"
-                            icon={<Users className="w-4 h-4" />}
-                            className="flex-1 sm:flex-none text-xs sm:text-sm h-10 px-3"
-                        >
-                            Import Leads
-                        </Button>
-                        <Button
-                            onClick={() => setShowImportModal(true)}
-                            variant="secondary"
-                            icon={<Upload className="w-4 h-4" />}
-                            className="flex-1 sm:flex-none text-xs sm:text-sm h-10 px-3"
-                        >
-                            Import CSV
-                        </Button>
-                        <Button
-                            onClick={() => exportToCSV(clients, 'CRM_Clients')}
-                            variant="secondary"
-                            icon={<Download className="w-4 h-4" />}
-                            className="flex-1 sm:flex-none text-xs sm:text-sm h-10 px-3"
-                        >
-                            Export CSV
-                        </Button>
-                        <Button
-                            onClick={() => setShowAddModal(true)}
-                            icon={<Plus className="w-4 h-4" />}
-                            variant="primary"
-                            className="flex-1 sm:flex-none text-xs sm:text-sm h-10 px-3"
-                        >
-                            Add Client
-                        </Button>
-                    </div>
-                </div>
-            </div>
 
-            <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Client List */}
-                <div className={`lg:col-span-1 glass-panel rounded-2xl border border-white/5 overflow-hidden flex flex-col ${selectedClient ? 'hidden lg:flex' : 'flex'}`} style={{ minHeight: '400px' }}>
-                    <div className="p-4 border-b border-white/5 bg-slate-900/50 flex justify-between items-center">
-                        <h2 className="font-bold text-slate-200">Directory</h2>
-                        <div className="flex gap-1">
-                            <button className="p-1.5 hover:bg-white/5 rounded text-slate-400"><Filter className="w-3 h-3" /></button>
+                    <div className="flex flex-wrap items-center gap-4 relative z-10">
+                        <div className="relative group">
+                            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-teal-400 transition-colors" />
+                            <input
+                                type="text"
+                                placeholder="SEARCH INTELLIGENCE..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full lg:w-72 bg-black/40 border border-white/5 rounded-2xl pl-12 pr-6 py-3 text-[10px] font-mono tracking-widest text-white focus:border-teal-500/40 outline-none transition-all placeholder:text-slate-700 shadow-inner"
+                            />
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setShowLeadImportModal(true)}
+                                className="p-3 bg-slate-900/50 border border-white/5 rounded-2xl text-slate-400 hover:text-teal-400 transition-all hover:bg-teal-500/5"
+                                title="Import Leads"
+                            >
+                                <Users className="w-5 h-5" />
+                            </motion.button>
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setShowImportModal(true)}
+                                className="p-3 bg-slate-900/50 border border-white/5 rounded-2xl text-slate-400 hover:text-teal-400 transition-all hover:bg-teal-500/5"
+                                title="Import CSV"
+                            >
+                                <Upload className="w-5 h-5" />
+                            </motion.button>
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => exportToCSV(clients, 'CRM_Clients')}
+                                className="p-3 bg-slate-900/50 border border-white/5 rounded-2xl text-slate-400 hover:text-teal-400 transition-all hover:bg-teal-500/5"
+                                title="Export Data"
+                            >
+                                <Download className="w-5 h-5" />
+                            </motion.button>
+                            <motion.button
+                                whileHover={{ scale: 1.02, translateY: -2 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => setShowAddModal(true)}
+                                className="bg-teal-500 hover:bg-teal-400 text-slate-950 rounded-2xl h-12 px-8 shadow-[0_10px_30px_rgba(20,184,166,0.3)] transition-all flex items-center gap-3 group ml-2"
+                            >
+                                <Plus className="w-4 h-4 font-bold group-hover:rotate-90 transition-transform duration-500" />
+                                <span className="font-black text-[10px] uppercase tracking-[0.2em]">New Relation</span>
+                            </motion.button>
                         </div>
                     </div>
-
-                    <div className="flex-1 relative min-h-0 overflow-y-auto custom-scrollbar">
-                        {loading && clients.length === 0 ? (
-                            <div className="flex items-center justify-center p-12">
-                                <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
-                            </div>
-                        ) : clients.length === 0 ? (
-                            <div className="p-12 text-center text-slate-500">
-                                <Users className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-                                <p>No clients found</p>
-                            </div>
-                        ) : (
-                            <div className="p-2 space-y-2">
-                                {clients.map((client) => (
-                                    <div key={client.id} className="px-1">
-                                        <div
-                                            onClick={() => typeof setSelectedClient === 'function' && setSelectedClient(client)}
-                                            className={`p-3 md:p-4 rounded-xl border transition-all cursor-pointer group flex items-center justify-between ${selectedClient?.id === client.id
-                                                ? 'bg-teal-500/10 border-teal-500/50 shadow-lg shadow-teal-500/10'
-                                                : 'bg-slate-900/40 border-white/5 hover:border-white/10 hover:bg-slate-800/60'
-                                                }`}
-                                        >
-                                            <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
-                                                <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center text-lg font-bold flex-shrink-0 ${selectedClient?.id === client.id ? 'bg-teal-500 text-white' : 'bg-slate-800 text-slate-300'}`}>
-                                                    {client.name.charAt(0)}
-                                                </div>
-                                                <div className="overflow-hidden">
-                                                    <div className="font-semibold text-white group-hover:text-teal-400 transition-colors truncate">{client.name}</div>
-                                                    <div className="text-xs text-slate-500 truncate">{client.industry || 'No Industry'}</div>
-                                                </div>
-                                            </div>
-                                            <div className="flex-shrink-0 ml-2">
-                                                <div className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${client.salesStage === 'customer' ? 'bg-green-500/20 text-green-400' :
-                                                    client.salesStage === 'prospect' ? 'bg-blue-500/20 text-blue-400' :
-                                                        'bg-slate-700 text-slate-400'
-                                                    }`}>
-                                                    {client.salesStage}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
                 </div>
 
-                {/* Client Details */}
-                <div className={`lg:col-span-2 glass-panel rounded-2xl border border-white/5 overflow-hidden flex flex-col relative ${!selectedClient ? 'hidden lg:flex' : 'flex focus-in'}`}>
-                    {selectedClient ? (
-                        <div className="h-full flex flex-col overflow-y-auto custom-scrollbar">
-                            {/* Header Banner */}
-                            <div className="h-24 md:h-32 bg-gradient-to-r from-teal-500/20 to-emerald-500/20 relative">
-                                {/* Mobile Back Button */}
-                                <button
-                                    onClick={() => typeof setSelectedClient === 'function' && setSelectedClient(null)}
-                                    className="lg:hidden absolute top-4 left-4 p-2 bg-slate-950/50 rounded-lg text-white hover:bg-slate-950 transition-colors z-10"
-                                >
-                                    <X className="w-5 h-5" />
+                <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Client Intelligence Directory */}
+                    <div className={`lg:col-span-1 glass-panel rounded-[2rem] border border-white/5 overflow-hidden flex flex-col bg-slate-900/20 backdrop-blur-2xl shadow-2xl ${selectedClient ? 'hidden lg:flex' : 'flex'}`} style={{ minHeight: '500px' }}>
+                        <div className="p-6 border-b border-white/5 bg-slate-950/20 flex justify-between items-center">
+                            <h2 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+                                <Users className="w-3 h-3 text-teal-500" />
+                                Intelligence Directory
+                            </h2>
+                            <div className="flex gap-2">
+                                <button className="p-2 hover:bg-white/5 rounded-xl text-slate-500 transition-colors">
+                                    <Filter className="w-3.5 h-3.5" />
                                 </button>
-
-                                <div className="absolute -bottom-10 left-6 md:left-8 flex items-end">
-                                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-slate-900 border-4 border-slate-950 flex items-center justify-center text-2xl md:text-3xl font-bold text-white shadow-xl">
-                                        {selectedClient.name.charAt(0)}
-                                    </div>
-                                </div>
-                                <div className="absolute top-4 right-4 flex gap-2">
-                                    <Button size="sm" variant="danger" onClick={() => handleDeleteClient(selectedClient.id)} icon={<Trash2 className="w-3 h-3" />}>Delete</Button>
-                                    <Button size="sm" variant="secondary" onClick={() => handleEditClient(selectedClient)} icon={<Edit2 className="w-3 h-3" />}>Edit</Button>
-                                    <Button
-                                        size="sm"
-                                        variant="primary"
-                                        onClick={() => setShowProjectModal(true)}
-                                        icon={<Plus className="w-3 h-3" />}
-                                        className="bg-teal-600 hover:bg-teal-500"
-                                    >
-                                        Launch Project
-                                    </Button>
-                                </div>
                             </div>
+                        </div>
 
-                            <div className="mt-12 px-6 md:px-8 pb-8 space-y-8">
-                                <div>
-                                    <h1 className="text-xl md:text-2xl font-black text-white">{selectedClient.name}</h1>
-                                    <div className="flex flex-wrap items-center gap-2 mt-1 text-xs md:text-sm text-slate-400">
-                                        <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" /> {selectedClient.industry || 'Unknown Industry'}</span>
-                                        <span className="w-1 h-1 rounded-full bg-slate-600 hidden sm:block"></span>
-                                        <div className={`px-2 py-0.5 rounded-full font-bold uppercase text-[10px] tracking-widest ${selectedClient.salesStage === 'customer' ? 'bg-green-500/20 text-green-400' : 'bg-teal-500/20 text-teal-400'}`}>
-                                            {selectedClient.salesStage}
-                                        </div>
-                                    </div>
+                        <div className="flex-1 relative min-h-0 overflow-y-auto custom-scrollbar p-3 space-y-3">
+                            {loading && clients.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center p-20 gap-4">
+                                    <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
+                                    <p className="text-[10px] font-mono text-slate-600 uppercase tracking-widest animate-pulse">Scanning Records...</p>
                                 </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                                    <div className="p-4 rounded-xl bg-slate-950/40 border border-white/5 hover:border-teal-500/20 transition-colors">
-                                        <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1 flex items-center gap-2">
-                                            <DollarSign className="w-3 h-3 text-teal-400" />
-                                            Lifetime Value
-                                        </div>
-                                        <div className="text-lg md:text-xl font-mono text-emerald-400">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(selectedClient.value || 0)}</div>
+                            ) : clients.length === 0 ? (
+                                <div className="p-20 text-center">
+                                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                                        <Users className="w-8 h-8 text-slate-800" />
                                     </div>
-                                    <div className="p-4 rounded-xl bg-slate-950/40 border border-white/5 hover:border-teal-500/20 transition-colors overflow-hidden">
-                                        <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1 flex items-center gap-2">
-                                            <Mail className="w-3 h-3 text-teal-400" />
-                                            Email Address
-                                        </div>
-                                        {selectedClient.email ? (
-                                            <a
-                                                href={`mailto:${selectedClient.email}`}
-                                                className="text-sm text-teal-400 hover:text-teal-300 truncate block transition-colors"
+                                    <p className="text-sm font-black text-slate-600 uppercase tracking-widest">No Intelligence Found</p>
+                                    <p className="text-[10px] font-mono text-slate-700 mt-2 uppercase">Database Query Returned Null</p>
+                                </div>
+                            ) : (
+                                <AnimatePresence mode="popLayout">
+                                    {clients.map((client, idx) => (
+                                        <motion.div
+                                            key={client.id}
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: idx * 0.03, ease: [0.23, 1, 0.32, 1] }}
+                                            className="px-1"
+                                        >
+                                            <motion.div
+                                                whileHover={{ scale: 1.02, x: 4 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                onClick={() => typeof setSelectedClient === 'function' && setSelectedClient(client)}
+                                                className={`p-4 rounded-2xl border transition-all cursor-pointer group flex items-center justify-between relative overflow-hidden ${selectedClient?.id === client.id
+                                                    ? 'bg-teal-500/10 border-teal-500/30 shadow-[0_0_30px_rgba(20,184,166,0.1)]'
+                                                    : 'bg-slate-900/40 border-white/5 hover:border-white/10 hover:bg-slate-800/40 shadow-lg'
+                                                    }`}
                                             >
-                                                {selectedClient.email}
-                                            </a>
-                                        ) : (
-                                            <div className="text-sm text-slate-500 italic">No email provided</div>
-                                        )}
-                                    </div>
-                                    <div className="p-4 rounded-xl bg-slate-950/40 border border-white/5 hover:border-teal-500/20 transition-colors">
-                                        <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1 flex items-center gap-2">
-                                            <Phone className="w-3 h-3 text-teal-400" />
-                                            Phone Number
-                                        </div>
-                                        {selectedClient.phone ? (
-                                            <div className="flex items-center gap-3">
-                                                <a
-                                                    href={`tel:${selectedClient.phone}`}
-                                                    className="text-sm text-slate-300 hover:text-teal-400 transition-colors flex items-center gap-2"
-                                                >
-                                                    {selectedClient.phone}
-                                                </a>
-                                                <a
-                                                    href={`https://wa.me/${selectedClient.phone.replace(/\D/g, '')}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="p-1.5 bg-green-500/10 hover:bg-green-500/20 rounded-lg transition-colors border border-green-500/20 group/wa"
-                                                    title="Open in WhatsApp"
-                                                >
-                                                    <MessageCircle className="w-3.5 h-3.5 text-green-400 group-hover/wa:scale-110 transition-transform" />
-                                                </a>
-                                            </div>
-                                        ) : (
-                                            <div className="text-sm text-slate-500 italic">No phone provided</div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
+                                                {selectedClient?.id === client.id && (
+                                                    <motion.div
+                                                        layoutId="active-client-glow"
+                                                        className="absolute inset-0 bg-gradient-to-r from-teal-500/5 to-transparent pointer-events-none"
+                                                    />
+                                                )}
 
-                            {/* Activity Timeline */}
-                            <div className="pt-6 border-t border-white/5">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
-                                        <TrendingUp className="w-4 h-4 text-teal-400" />
-                                        Activity History
-                                    </h3>
-                                    <Button size="sm" variant="ghost" className="text-[10px] h-7 px-2">View Full History</Button>
-                                </div>
-                                <div className="space-y-6 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-px before:bg-slate-800">
-                                    <div className="flex gap-6 relative">
-                                        <div className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/20 flex items-center justify-center flex-shrink-0 z-10 bg-slate-950">
-                                            <CheckCircle2 className="w-4 h-4 text-teal-400" />
-                                        </div>
-                                        <div className="pt-1">
-                                            <div className="text-sm font-bold text-white">Client profile established</div>
-                                            <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
-                                                <Calendar className="w-3 h-3" />
-                                                {new Date(selectedClient.createdAt).toLocaleString()}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                                                <div className="flex items-center gap-4 overflow-hidden relative z-10">
+                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-black flex-shrink-0 transition-all duration-500 ${selectedClient?.id === client.id ? 'bg-teal-500 text-slate-950 scale-110 rotate-3' : 'bg-slate-800 text-slate-400 group-hover:bg-slate-700'
+                                                        }`}>
+                                                        {client.name.charAt(0)}
+                                                    </div>
+                                                    <div className="overflow-hidden">
+                                                        <div className="font-black text-sm text-slate-200 group-hover:text-white transition-colors truncate tracking-tight uppercase">
+                                                            {client.name}
+                                                        </div>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <div className="w-1 h-1 rounded-full bg-teal-500/40" />
+                                                            <div className="text-[10px] font-mono text-slate-600 uppercase tracking-widest truncate">
+                                                                {client.industry || 'Classified'}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-                            {selectedClient.description && (
-                                <div className="pt-6 border-t border-white/5">
-                                    <h3 className="text-sm font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2">
-                                        <FileText className="w-4 h-4 text-teal-400" />
-                                        Account Notes
-                                    </h3>
-                                    <div className="p-4 rounded-xl bg-slate-950/40 border border-white/5 text-sm text-slate-400 leading-relaxed italic">
-                                        "{selectedClient.description}"
-                                    </div>
-                                </div>
+                                                <div className="flex-shrink-0 ml-4 relative z-10">
+                                                    <div className={`text-[9px] px-2.5 py-1 rounded-lg font-black uppercase tracking-[0.1em] border ${client.salesStage === 'customer' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                                        client.salesStage === 'prospect' ? 'bg-teal-500/10 text-teal-400 border-teal-500/20' :
+                                                            'bg-slate-800/50 text-slate-500 border-white/5'
+                                                        }`}>
+                                                        {client.salesStage}
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        </motion.div>
+                                    ))}
+                                </AnimatePresence>
                             )}
                         </div>
-                    ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-slate-500 p-12 text-center">
-                            <div className="w-20 h-20 rounded-3xl bg-slate-900/50 flex items-center justify-center mb-6 border border-white/10 shadow-2xl relative">
-                                <Users className="w-10 h-10 text-slate-700" />
-                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-teal-500 rounded-full animate-pulse border-4 border-slate-950"></div>
-                            </div>
-                            <h3 className="text-white font-bold mb-2">Customer Intelligence</h3>
-                            <p className="max-w-xs text-sm">Select a client from the directory to analyze their history, value, and contact information.</p>
-                        </div>
-                    )}
+                    </div>
+
+                    {/* Client Intelligence Dossier */}
+                    <div className={`lg:col-span-2 glass-panel rounded-[2rem] border border-white/5 overflow-hidden flex flex-col relative bg-slate-900/40 backdrop-blur-2xl shadow-2xl ${!selectedClient ? 'hidden lg:flex' : 'flex focus-in'}`}>
+                        <AnimatePresence mode="wait">
+                            {selectedClient ? (
+                                <motion.div
+                                    key={selectedClient.id}
+                                    initial={{ opacity: 0, scale: 0.98, filter: 'blur(20px)' }}
+                                    animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                                    exit={{ opacity: 0, scale: 0.98, filter: 'blur(20px)' }}
+                                    transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+                                    className="h-full flex flex-col overflow-y-auto custom-scrollbar"
+                                >
+                                    {/* Command Banner */}
+                                    <div className="h-44 md:h-64 bg-[url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center relative">
+                                        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-slate-950/40 to-slate-950" />
+
+                                        {/* Mobile Escape */}
+                                        <button
+                                            onClick={() => typeof setSelectedClient === 'function' && setSelectedClient(null)}
+                                            className="lg:hidden absolute top-6 left-6 p-3 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl text-white hover:bg-white/10 transition-all z-10"
+                                        >
+                                            <X className="w-5 h-5" />
+                                        </button>
+
+                                        <div className="absolute -bottom-14 left-10 md:left-14 flex items-end gap-10">
+                                            <motion.div
+                                                layoutId={`avatar-${selectedClient.id}`}
+                                                className="w-28 h-28 md:w-36 md:h-36 rounded-[2.5rem] bg-slate-900 border-4 border-slate-950 flex items-center justify-center text-5xl md:text-6xl font-black text-white shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden group"
+                                            >
+                                                <div className="absolute inset-0 bg-gradient-to-br from-teal-500/20 to-transparent group-hover:opacity-100 transition-opacity" />
+                                                <span className="relative z-10 drop-shadow-2xl">{selectedClient.name.charAt(0)}</span>
+                                            </motion.div>
+
+                                            <div className="mb-6 pb-2">
+                                                <motion.h1
+                                                    initial={{ opacity: 0, y: 15 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: 0.2 }}
+                                                    className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase leading-[0.8]"
+                                                >
+                                                    {selectedClient.name}
+                                                </motion.h1>
+                                                <div className="flex items-center gap-4 mt-4">
+                                                    <span className={`px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.25em] border ${selectedClient.salesStage === 'customer' ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-teal-500/10 text-teal-400 border-teal-500/30'
+                                                        }`}>
+                                                        {selectedClient.salesStage} Protocol
+                                                    </span>
+                                                    <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500 uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-xl border border-white/5">
+                                                        <Briefcase className="w-3.5 h-3.5 text-teal-500" />
+                                                        {selectedClient.industry || 'Classified Information'}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="absolute top-8 right-8 flex gap-3">
+                                            <motion.button
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                onClick={() => handleEditClient(selectedClient)}
+                                                className="p-3.5 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[1.25rem] text-slate-400 hover:text-white transition-all shadow-2xl"
+                                                title="Modify Record"
+                                            >
+                                                <Edit2 className="w-6 h-6" />
+                                            </motion.button>
+                                            <motion.button
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                onClick={() => handleDeleteClient(selectedClient.id)}
+                                                className="p-3.5 bg-red-500/5 backdrop-blur-2xl border border-red-500/20 rounded-[1.25rem] text-red-500 hover:text-red-400 transition-all shadow-2xl"
+                                                title="Purge Record"
+                                            >
+                                                <Trash2 className="w-6 h-6" />
+                                            </motion.button>
+                                            <motion.button
+                                                whileHover={{ scale: 1.02, translateY: -2 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                onClick={() => setShowProjectModal(true)}
+                                                className="bg-teal-500 hover:bg-teal-400 text-slate-950 rounded-[1.5rem] h-14 px-10 shadow-[0_20px_40px_rgba(20,184,166,0.25)] transition-all flex items-center gap-4 font-black text-[11px] uppercase tracking-[0.25em] ml-3"
+                                            >
+                                                <Plus className="w-5 h-5 font-bold" />
+                                                Launch Project
+                                            </motion.button>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-24 px-12 md:px-16 pb-16 space-y-16">
+                                        {/* Strategic Intelligence Grid */}
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                            {[
+                                                { label: 'Intelligence Value', value: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(selectedClient.value || 0), icon: <DollarSign className="w-5 h-5" />, color: 'text-emerald-400', desc: 'Accumulated Revenue' },
+                                                { label: 'Comm Channel', value: selectedClient.email || 'N/A', icon: <Mail className="w-5 h-5" />, color: 'text-teal-400', isLink: true, href: `mailto:${selectedClient.email}`, desc: 'Primary Signal' },
+                                                { label: 'Signal Range', value: selectedClient.phone || 'N/A', icon: <Phone className="w-5 h-5" />, color: 'text-blue-400', isLink: true, href: `tel:${selectedClient.phone}`, desc: 'Tactical Voice' }
+                                            ].map((node, i) => (
+                                                <motion.div
+                                                    key={i}
+                                                    initial={{ opacity: 0, y: 30 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: 0.3 + (i * 0.1) }}
+                                                    className="p-8 rounded-[2.5rem] bg-slate-950/40 border border-white/5 hover:border-teal-500/20 transition-all group/node relative overflow-hidden shadow-2xl"
+                                                >
+                                                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(20,184,166,0.05),transparent_50%)]" />
+                                                    <div className="text-[10px] text-slate-600 uppercase font-black tracking-[0.25em] mb-4 flex items-center gap-3 relative z-10">
+                                                        <div className="p-2 bg-slate-900 rounded-xl text-teal-500 border border-white/5 shadow-inner">
+                                                            {node.icon}
+                                                        </div>
+                                                        {node.label}
+                                                    </div>
+                                                    {node.isLink && node.value !== 'N/A' ? (
+                                                        <a href={node.href} className={`text-sm font-black ${node.color} hover:underline truncate block relative z-10 tracking-tight transition-all`}>
+                                                            {node.value}
+                                                        </a>
+                                                    ) : (
+                                                        <div className={`text-2xl font-mono ${node.color} relative z-10 tracking-tighter font-black`}>
+                                                            {node.value}
+                                                        </div>
+                                                    )}
+                                                    <div className="mt-2 text-[9px] font-mono text-slate-700 uppercase tracking-widest relative z-10">
+                                                        {node.desc}
+                                                    </div>
+                                                </motion.div>
+                                            ))}
+                                        </div>
+
+                                        {/* Narrative Log */}
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 30 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.6 }}
+                                            className="p-10 rounded-[3.5rem] bg-slate-950/30 border border-white/5 relative overflow-hidden shadow-inner group/log"
+                                        >
+                                            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-teal-500/20 to-transparent" />
+                                            <div className="text-[12px] text-slate-500 uppercase font-black tracking-[0.4em] mb-8 flex items-center gap-4">
+                                                <FileText className="w-5 h-5 text-teal-500/50 group-hover/log:scale-110 transition-transform" />
+                                                Strategic Intelligence Narrative
+                                            </div>
+                                            <p className="text-slate-400 text-lg leading-[1.8] font-medium italic indent-8">
+                                                {selectedClient.description || 'No detailed intelligence logs recorded for this entity. All operations conducted under standard protocol. Subject monitoring remains active for potential tactical updates.'}
+                                            </p>
+                                            {/* Deployment Zones / Activity */}
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 30 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: 0.7 }}
+                                                className="space-y-8"
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <h3 className="text-[12px] text-slate-500 uppercase font-black tracking-[0.4em] flex items-center gap-4">
+                                                        <TrendingUp className="w-5 h-5 text-teal-500/50" />
+                                                        Tactical Event Log
+                                                    </h3>
+                                                    <div className="h-px flex-1 bg-gradient-to-r from-teal-500/20 to-transparent ml-6" />
+                                                </div>
+
+                                                <div className="space-y-4">
+                                                    {[
+                                                        { title: 'Intelligence Node Established', date: selectedClient.createdAt, icon: <CheckCircle2 className="w-4 h-4" />, status: 'Completed' },
+                                                        { title: 'Last Communication Signal', date: new Date().toISOString(), icon: <MessageCircle className="w-4 h-4" />, status: 'Transmitted' }
+                                                    ].map((event, i) => (
+                                                        <div key={i} className="flex gap-6 group/event">
+                                                            <div className="flex flex-col items-center">
+                                                                <div className="w-10 h-10 rounded-2xl bg-slate-900 border border-white/5 flex items-center justify-center text-teal-500 shadow-xl group-hover/event:border-teal-500/30 transition-colors">
+                                                                    {event.icon}
+                                                                </div>
+                                                                {i === 0 && <div className="w-px h-full bg-slate-800 my-2" />}
+                                                            </div>
+                                                            <div className="pt-1 pb-4">
+                                                                <div className="text-sm font-black text-white uppercase tracking-wider">{event.title}</div>
+                                                                <div className="flex items-center gap-3 mt-2">
+                                                                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">{new Date(event.date).toLocaleString()}</span>
+                                                                    <span className="w-1 h-1 rounded-full bg-slate-700" />
+                                                                    <span className="text-[9px] font-black text-teal-500/70 uppercase tracking-widest">{event.status}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </motion.div>
+                                        </motion.div>
+                                    </div>
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="empty"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="flex-1 flex flex-col items-center justify-center text-slate-500 p-8 text-center"
+                                >
+                                    <div className="bg-slate-900/50 p-12 rounded-[3rem] border border-white/5">
+                                        <div className="w-20 h-20 bg-teal-500/10 rounded-3xl flex items-center justify-center border border-teal-500/20 mb-6 mx-auto">
+                                            <Users className="w-10 h-10 text-teal-400" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-white mb-2">Select a Client</h3>
+                                        <p className="max-w-xs text-sm text-slate-500 leading-relaxed">
+                                            View complete relationship history, linked projects, and intelligence notes.
+                                        </p>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
             </div>
 
             {/* Add Client Modal */}
-            <Modal
+            < Modal
                 isOpen={showAddModal}
                 onClose={() => setShowAddModal(false)}
                 title="Add New Client"
@@ -527,10 +636,10 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                         </Button>
                     </div>
                 </div>
-            </Modal>
+            </Modal >
 
             {/* Edit Client Modal */}
-            <Modal
+            < Modal
                 isOpen={showEditModal}
                 onClose={() => setShowEditModal(false)}
                 title="Edit Client"
@@ -598,10 +707,10 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                         </Button>
                     </div>
                 </div>
-            </Modal>
+            </Modal >
 
             {/* Import Modal */}
-            <ClientImportModal
+            < ClientImportModal
                 isOpen={showImportModal}
                 onClose={() => setShowImportModal(false)}
                 onImportComplete={() => {
@@ -630,7 +739,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ userId, userRole }) => {
                     // We could redirect to projects tab here or just close
                 }}
             />
-        </div>
+        </>
     );
 };
 

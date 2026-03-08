@@ -336,17 +336,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               AS
                            </span>
                         </div>
-                        <span className="text-xl font-bold tracking-tight font-marketing-heading text-white translate-y-[1px]">
+                        <span className="text-xl font-bold tracking-tight font-marketing-heading text-white">
                            AlphaClone
                         </span>
                      </div>
 
                      {/* Desktop Nav */}
                      <div className="hidden lg:flex items-center gap-8">
-                        <Link href="/" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Home</Link>
-                        <Link href="/ecosystem" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Platform</Link>
-                        <Link href="/pricing" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Pricing</Link>
-                        <Link href="/docs" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Docs</Link>
+                        <Link href="/" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase flex items-center">Home</Link>
+                        <Link href="/ecosystem" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase flex items-center">Platform</Link>
+                        <Link href="/pricing" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase flex items-center">Pricing</Link>
+                        <Link href="/docs" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase flex items-center">Docs</Link>
 
                         {/* Services Dropdown */}
                         <div className="relative" onMouseEnter={() => setServicesDropdownOpen(true)} onMouseLeave={() => setServicesDropdownOpen(false)}>
@@ -381,13 +381,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            </AnimatePresence>
                         </div>
 
-                        <Link href="https://alphaclone.tech/about" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">About</Link>
-                        <Link href="https://alphaclone.tech/contact" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Contact</Link>
+                        <Link href="https://alphaclone.tech/about" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase flex items-center">About</Link>
+                        <Link href="https://alphaclone.tech/contact" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase flex items-center">Contact</Link>
 
                         <div className="flex items-center gap-4 ml-6 pl-6 border-l border-white/10">
                            <button
                               onClick={() => setIsLoginOpen(true)}
-                              className="text-sm font-semibold text-slate-400 hover:text-white transition-colors"
+                              className="text-sm font-semibold text-slate-400 hover:text-white transition-colors flex items-center"
                            >
                               Login
                            </button>

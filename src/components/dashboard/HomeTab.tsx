@@ -26,7 +26,7 @@ const getGreeting = (): { text: string; Icon: any } => {
 };
 
 const TodayAgendaCard: React.FC<{ projects: Project[]; user: User }> = ({ projects, user }) => {
-    const { text: greeting, Icon: GreetIcon } = useMemo(getGreeting, []);
+    const { text: greeting, Icon: GreetIcon } = useMemo(() => getGreeting(), []);
 
     const overdue = useMemo(() =>
         projects.filter(p => {

@@ -11,6 +11,10 @@ import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { presenceService, PresenceStatus } from '../../services/presenceService';
 import OnlineStatusBadge from './OnlineStatusBadge';
 import CampaignBuilder from '../dashboard/business/CampaignBuilder';
+import { useClients } from '../../hooks/useClients';
+import { useTenant } from '../../contexts/TenantContext';
+import { Users, UserPlus, Wand2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 interface MessagesTabProps {
     user: User;
@@ -32,6 +36,10 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
     const [adminUser, setAdminUser] = useState<User | null>(null); // For client view - store admin
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [sidebarTab, setSidebarTab] = useState<'chats' | 'contacts'>('chats');
+    const [isAIGenerating, setIsAIGenerating] = useState(false);
+    const { currentTenant } = useTenant();
+    const { clients: crmClients, isLoading: isLoadingCRM } = useClients(currentTenant?.id, { limit: 100 });
 
 
     // Mobile Detection
@@ -413,6 +421,40 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
         }
     };
 
+    // AI Assist logic
+    const handleAiAssist = async () => {
+        if (!selectedClient) return;
+
+        setIsAIGenerating(true);
+        try {
+            // Get last message context
+            const lastClientMessage = [...visibleMessages]
+                .reverse()
+                .find(m => m.senderId === selectedClient.id);
+
+            if (!lastClientMessage) {
+                toast.error("No recent message to reply to.");
+                return;
+            }
+
+            const { reply, error } = await messageService.draftAutoReply(
+                lastClientMessage.id,
+                lastClientMessage.text,
+                selectedClient.name
+            );
+
+            if (error) throw new Error(error);
+            if (reply) {
+                setNewMessage(reply);
+            }
+        } catch (err: any) {
+            console.error("AI Assist failed:", err);
+            toast.error("Failed to generate AI assist reply.");
+        } finally {
+            setIsAIGenerating(false);
+        }
+    };
+
     const filteredClients = clients.filter(c =>
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.email.toLowerCase().includes(searchQuery.toLowerCase())
@@ -490,45 +532,98 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                         <X className="w-5 h-5" />
                                     </button>
                                 </div>
-                                <div className="relative">
+                                <div className="mt-4 flex bg-slate-800/50 p-1 rounded-xl border border-white/5">
+                                    <button
+                                        onClick={() => setSidebarTab('chats')}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-all ${sidebarTab === 'chats' ? 'bg-teal-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                                    >
+                                        <MessageSquare className="w-3.5 h-3.5" /> Recent
+                                    </button>
+                                    <button
+                                        onClick={() => setSidebarTab('contacts')}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-all ${sidebarTab === 'contacts' ? 'bg-teal-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                                    >
+                                        <Users className="w-3.5 h-3.5" /> Contacts
+                                    </button>
+                                </div>
+                                <div className="relative mt-4">
                                     <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                                     <input
                                         className="w-full bg-slate-800 border border-slate-600 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-teal-500"
-                                        placeholder="Search clients..."
+                                        placeholder={sidebarTab === 'chats' ? "Search chats..." : "Search CRM contacts..."}
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
                                 </div>
                             </div>
                             <div className="flex-1 overflow-y-auto custom-scrollbar">
-                                {filteredClients.map(client => (
-                                    <div
-                                        key={client.id}
-                                        onClick={() => setSelectedClient(client)}
-                                        className={`p-3 md:p-4 flex items-center gap-3 cursor-pointer transition-all border-b border-slate-700 hover:bg-slate-800/50 ${selectedClient?.id === client.id ? 'bg-teal-500/10 border-l-2 border-l-teal-500' : 'border-l-2 border-l-transparent'}`}
-                                    >
-                                        <div className="relative">
-                                            <img src={client.avatar} alt={client.name} className="w-10 h-10 rounded-full" />
-                                            {typingUsers.has(client.id) ? (
-                                                <div className="absolute -bottom-1 -right-1 bg-slate-900 rounded-full p-[2px]">
-                                                    <div className="flex gap-[2px] px-1">
-                                                        <span className="w-1 h-1 bg-teal-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                                                        <span className="w-1 h-1 bg-teal-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                                                        <span className="w-1 h-1 bg-teal-400 rounded-full animate-bounce"></span>
+                                {sidebarTab === 'chats' ? (
+                                    filteredClients.map(client => (
+                                        <div
+                                            key={client.id}
+                                            onClick={() => setSelectedClient(client)}
+                                            className={`p-3 md:p-4 flex items-center gap-3 cursor-pointer transition-all border-b border-slate-700 hover:bg-slate-800/50 ${selectedClient?.id === client.id ? 'bg-teal-500/10 border-l-2 border-l-teal-500' : 'border-l-2 border-l-transparent'}`}
+                                        >
+                                            <div className="relative">
+                                                <img src={client.avatar} alt={client.name} className="w-10 h-10 rounded-full" />
+                                                {typingUsers.has(client.id) ? (
+                                                    <div className="absolute -bottom-1 -right-1 bg-slate-900 rounded-full p-[2px]">
+                                                        <div className="flex gap-[2px] px-1">
+                                                            <span className="w-1 h-1 bg-teal-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                                            <span className="w-1 h-1 bg-teal-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                                            <span className="w-1 h-1 bg-teal-400 rounded-full animate-bounce"></span>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ) : (
-                                                <div className="absolute -bottom-1 -right-1">
-                                                    <OnlineStatusBadge status={onlineUsers.has(client.id) ? 'online' : 'offline'} size="sm" />
-                                                </div>
-                                            )}
+                                                ) : (
+                                                    <div className="absolute -bottom-1 -right-1">
+                                                        <OnlineStatusBadge status={onlineUsers.has(client.id) ? 'online' : 'offline'} size="sm" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className={`text-sm font-medium truncate ${selectedClient?.id === client.id ? 'text-white' : 'text-slate-300'}`}>{client.name}</h4>
+                                                <p className="text-xs text-slate-400 truncate">{client.email}</p>
+                                            </div>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className={`text-sm font-medium truncate ${selectedClient?.id === client.id ? 'text-white' : 'text-slate-300'}`}>{client.name}</h4>
-                                            <p className="text-xs text-slate-400 truncate">{client.email}</p>
-                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="flex flex-col">
+                                        {isLoadingCRM ? (
+                                            <div className="flex flex-col items-center justify-center p-8 text-slate-400 gap-3">
+                                                <Loader2 className="w-6 h-6 animate-spin text-teal-500" />
+                                                <p className="text-sm">Loading contacts...</p>
+                                            </div>
+                                        ) : crmClients.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.email?.toLowerCase().includes(searchQuery.toLowerCase())).map(contact => (
+                                            <div
+                                                key={contact.id}
+                                                onClick={() => {
+                                                    // Map CRM contact to a User object for the chat
+                                                    // This assumes current messaging system requires a user record
+                                                    // but we'll adapt it or show an invite option
+                                                    const mappedUser: User = {
+                                                        id: contact.id, // Using CRM ID as temporarily fallback
+                                                        name: contact.name,
+                                                        email: contact.email || '',
+                                                        role: 'client',
+                                                        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(contact.name)}&background=0D9488&color=fff`
+                                                    };
+                                                    setSelectedClient(mappedUser);
+                                                    setSidebarTab('chats'); // Switch back to see the chat
+                                                }}
+                                                className="p-3 md:p-4 flex items-center gap-3 cursor-pointer transition-all border-b border-slate-700 hover:bg-slate-800/50"
+                                            >
+                                                <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-teal-400 font-bold">
+                                                    {contact.name.charAt(0)}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="text-sm font-medium text-slate-300 truncate">{contact.name}</h4>
+                                                    <p className="text-xs text-slate-400 truncate">{contact.email || 'No email'}</p>
+                                                </div>
+                                                <UserPlus className="w-4 h-4 text-slate-500 hover:text-teal-400" />
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </div>
                     )}
@@ -727,6 +822,18 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                             >
                                                 <Paperclip className="w-4 h-4 md:w-5 md:h-5" />
                                             </button>
+
+                                            {isAdmin && (
+                                                <button
+                                                    onClick={handleAiAssist}
+                                                    disabled={isAIGenerating || !selectedClient}
+                                                    className={`p-2 md:p-3 rounded-xl transition-all border flex items-center justify-center flex-shrink-0 ${isAIGenerating ? 'bg-teal-500/20 text-teal-400 border-teal-500/50' : 'bg-slate-800 text-slate-400 hover:text-teal-400 hover:bg-slate-700 border-slate-600'}`}
+                                                    title="AI Draft Assistant"
+                                                    aria-label="Generate AI draft"
+                                                >
+                                                    <Wand2 className={`w-4 h-4 sm:w-5 sm:h-5 ${isAIGenerating ? 'animate-pulse' : ''}`} />
+                                                </button>
+                                            )}
 
                                             {showEmojiPicker && (
                                                 <div className="absolute bottom-16 left-0 z-50 animate-fade-in shadow-2xl">

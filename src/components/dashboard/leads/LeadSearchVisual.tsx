@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { MapPin, Search, Activity, Target, Zap, Building2, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -10,6 +10,18 @@ interface LeadSearchVisualProps {
 const LeadSearchVisual: React.FC<LeadSearchVisualProps> = ({ industry, location }) => {
     const [progress, setProgress] = useState(0);
     const [statusText, setStatusText] = useState("Deploying AI Sales Agents...");
+
+    // Memoize grid and targets to avoid purity errors during render
+    const gridItems = useMemo(() => Array.from({ length: 36 }).map(() => ({
+        hasBuilding: Math.random() > 0.6,
+        buildingHeight: Math.random() * 60 + 20,
+        delay: Math.random() * 2
+    })), []);
+
+    const targetPositions = useMemo(() => Array.from({ length: 5 }).map(() => ({
+        left: Math.random() * 80 + 10,
+        top: Math.random() * 80 + 10
+    })), []);
 
     // Simulate progress and phase changes
     useEffect(() => {
@@ -60,14 +72,14 @@ const LeadSearchVisual: React.FC<LeadSearchVisualProps> = ({ industry, location 
                 >
                     {/* The Grid / City Base */}
                     <div className="absolute inset-0 grid grid-cols-6 grid-rows-6 gap-2 opacity-30 shadow-[0_0_50px_rgba(20,184,166,0.3)]">
-                        {Array.from({ length: 36 }).map((_, i) => (
+                        {gridItems.map((item, i) => (
                             <div key={i} className="bg-teal-500/20 border border-teal-500/40 rounded-sm relative">
                                 {/* Random 3D Buildings floating up */}
-                                {Math.random() > 0.6 && (
+                                {item.hasBuilding && (
                                     <motion.div
                                         initial={{ height: 0 }}
-                                        animate={{ height: Math.random() * 60 + 20 }}
-                                        transition={{ duration: 2, delay: Math.random() * 2 }}
+                                        animate={{ height: item.buildingHeight }}
+                                        transition={{ duration: 2, delay: item.delay }}
                                         className="absolute bottom-0 left-0 w-full bg-slate-800/80 border border-teal-500/50 transform-style-3d translate-z-[1px]"
                                         style={{ transformOrigin: 'bottom' }}
                                     >
@@ -130,7 +142,7 @@ const LeadSearchVisual: React.FC<LeadSearchVisualProps> = ({ industry, location 
                     </motion.div>
 
                     {/* Target markers that pop up randomly */}
-                    {Array.from({ length: 5 }).map((_, i) => (
+                    {targetPositions.map((pos, i) => (
                         <motion.div
                             key={`target-${i}`}
                             initial={{ scale: 0, opacity: 0 }}
@@ -146,8 +158,8 @@ const LeadSearchVisual: React.FC<LeadSearchVisualProps> = ({ industry, location 
                             }}
                             className="absolute w-12 h-12 -ml-6 -mt-6 rounded-full border border-blue-500/50 flex items-center justify-center"
                             style={{
-                                left: `${Math.random() * 80 + 10}%`,
-                                top: `${Math.random() * 80 + 10}%`,
+                                left: `${pos.left}%`,
+                                top: `${pos.top}%`,
                                 translateZ: '5px'
                             }}
                         >

@@ -80,16 +80,11 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const endpoint = 'messages';
-        const body = {
+        // Use the dedicated sendMessage method which handles mailFormat: 'html' and proper endpoint structure
+        const data = await zohoServerService.sendMessage(userId, {
             toAddress: to,
             subject: subject,
             content: content
-        };
-
-        const data = await zohoServerService.proxyRequest(userId, endpoint, {
-            method: 'POST',
-            body: JSON.stringify(body)
         });
 
         return NextResponse.json({ success: true, data });

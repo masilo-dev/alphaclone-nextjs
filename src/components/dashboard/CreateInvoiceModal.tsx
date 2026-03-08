@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download, PenLine, Copy, List, Plus } from 'lucide-react';
+import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download, PenLine, Copy, List, Plus, Users, Search, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from '../ui/UIComponents';
 import { paymentService } from '../../services/paymentService';
 import { Project } from '../../types';
@@ -46,6 +47,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [userSectors, setUserSectors] = useState<string[]>([]);
     const [myServices, setMyServices] = useState<Record<string, any>>({});
     const [showServiceDropdown, setShowServiceDropdown] = useState<{ index: number; open: boolean }>({ index: -1, open: false });
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showContactDropdown, setShowContactDropdown] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const isDrawing = useRef(false);
 
@@ -105,6 +109,16 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             setStep('edit');
         }
     }, [isOpen]);
+
+    React.useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowContactDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const handleMethodChange = (method: 'stripe' | 'bank' | 'mobile_money') => {
         setPaymentMethod(method);
@@ -401,21 +415,77 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                         </select>
                                     </div>
 
-                                    {!selectedProjectId && (
-                                        <div className="animate-fade-in-down">
-                                            <label className="block text-sm font-medium text-slate-300 mb-1">Select Client</label>
-                                            <select
-                                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
-                                                value={selectedClientId}
-                                                onChange={(e) => setSelectedClientId(e.target.value)}
-                                            >
-                                                <option value="">Select a client...</option>
-                                                {clients.map(c => (
-                                                    <option key={c.id} value={c.id}>{c.name} ({c.email})</option>
-                                                ))}
-                                            </select>
+                                    <div className="relative" ref={dropdownRef}>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Select Client</label>
+                                        <div className="relative group">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 p-1 bg-white/5 rounded-lg group-focus-within:bg-teal-500/10 transition-colors">
+                                                <Users className="w-3 h-3 text-slate-500 group-focus-within:text-teal-400" />
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={selectedClientId ? clients.find(c => c.id === selectedClientId)?.name || '' : searchQuery}
+                                                onChange={(e) => {
+                                                    setSearchQuery(e.target.value);
+                                                    setShowContactDropdown(true);
+                                                    if (selectedClientId) setSelectedClientId('');
+                                                }}
+                                                onFocus={() => setShowContactDropdown(true)}
+                                                placeholder="Search client database..."
+                                                className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-10 py-2.5 text-sm text-white focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700"
+                                            />
                                         </div>
-                                    )}
+
+                                        <AnimatePresence>
+                                            {showContactDropdown && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                    exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                                                    className="absolute left-0 right-0 top-full mt-2 bg-slate-900 border border-white/10 rounded-2xl shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8)] z-[60] max-h-60 overflow-y-auto p-1.5 backdrop-blur-2xl"
+                                                >
+                                                    {clients.filter(c =>
+                                                        c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                                        c.email?.toLowerCase().includes(searchQuery.toLowerCase())
+                                                    ).length > 0 ? (
+                                                        clients
+                                                            .filter(c =>
+                                                                c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                                                c.email?.toLowerCase().includes(searchQuery.toLowerCase())
+                                                            )
+                                                            .map(client => (
+                                                                <button
+                                                                    key={client.id}
+                                                                    onClick={() => {
+                                                                        setSelectedClientId(client.id);
+                                                                        setShowContactDropdown(false);
+                                                                        setSearchQuery('');
+                                                                    }}
+                                                                    className="w-full text-left p-2.5 rounded-xl hover:bg-white/5 transition-all group flex items-center justify-between border border-transparent hover:border-white/5 mb-0.5"
+                                                                >
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center border border-teal-500/20">
+                                                                            <span className="text-[10px] font-black text-teal-400">{client.name?.charAt(0)}</span>
+                                                                        </div>
+                                                                        <div>
+                                                                            <p className="text-xs font-bold text-slate-200 group-hover:text-white transition-colors">{client.name}</p>
+                                                                            <p className="text-[9px] text-slate-500 font-mono">{client.email}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                    {selectedClientId === client.id && (
+                                                                        <CheckCircle className="w-3.5 h-3.5 text-teal-400" />
+                                                                    )}
+                                                                </button>
+                                                            ))
+                                                    ) : (
+                                                        <div className="p-6 text-center">
+                                                            <Search className="w-6 h-6 mx-auto mb-2 text-slate-700 opacity-20" />
+                                                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">No matches found</p>
+                                                        </div>
+                                                    )}
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
                                 </div>
                             </div>
 

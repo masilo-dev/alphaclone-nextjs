@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, Mail, Clock, ArrowLeft, Shield } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -22,6 +22,15 @@ const ComingSoon: React.FC<ComingSoonProps> = ({ title, subtitle, videoUrl }) =>
         return () => clearInterval(interval);
     }, []);
 
+    // Memoize particles to avoid purity errors during render
+    const particles = useMemo(() => [...Array(20)].map(() => ({
+        width: Math.random() * 4 + 2,
+        height: Math.random() * 4 + 2,
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        duration: Math.random() * 5 + 5
+    })), []);
+
     return (
         <div className="relative w-full h-[calc(100vh-100px)] overflow-hidden rounded-[2.5rem] bg-slate-950 border border-white/5 flex items-center justify-center">
             {/* Immersive Neural Background */}
@@ -30,22 +39,22 @@ const ComingSoon: React.FC<ComingSoonProps> = ({ title, subtitle, videoUrl }) =>
 
                 {/* Simulated Neural Network Animation */}
                 <div className="absolute inset-0 opacity-20">
-                    {[...Array(20)].map((_, i) => (
+                    {particles.map((p, i) => (
                         <motion.div
                             key={i}
                             className="absolute bg-teal-500/40 rounded-full blur-sm"
                             style={{
-                                width: Math.random() * 4 + 2 + 'px',
-                                height: Math.random() * 4 + 2 + 'px',
-                                left: Math.random() * 100 + '%',
-                                top: Math.random() * 100 + '%',
+                                width: p.width + 'px',
+                                height: p.height + 'px',
+                                left: p.left + '%',
+                                top: p.top + '%',
                             }}
                             animate={{
                                 y: [0, -100, 0],
                                 opacity: [0.1, 0.5, 0.1],
                             }}
                             transition={{
-                                duration: Math.random() * 5 + 5,
+                                duration: p.duration,
                                 repeat: Infinity,
                                 ease: "linear"
                             }}

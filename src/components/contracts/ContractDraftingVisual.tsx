@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Scale, FileText, CheckCircle2, ShieldCheck, PenTool, Database, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -58,6 +58,14 @@ const ContractDraftingVisual: React.FC<ContractDraftingVisualProps> = ({
 
     const CurrentIcon = phases[phase].icon;
 
+    // Memoize random positions to avoid purity errors during render
+    const docPositions = useMemo(() => Array.from({ length: 8 }).map(() => ({
+        x: Math.random() * 300 + 50,
+        y: Math.random() * 300 + 50,
+        rotateZ: Math.random() * 90 - 45,
+        duration: Math.random() * 2 + 2
+    })), []);
+
     return (
         <div className="absolute inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-indigo-500/30">
             {/* Subtle law/indigo background glow */}
@@ -88,22 +96,22 @@ const ContractDraftingVisual: React.FC<ContractDraftingVisualProps> = ({
                     </div>
 
                     {/* Flying Documents */}
-                    {Array.from({ length: 8 }).map((_, i) => (
+                    {docPositions.map((pos: { x: number; y: number; rotateZ: number; duration: number }, i: number) => (
                         <motion.div
                             key={`doc-${i}`}
                             initial={{
                                 z: 0,
                                 opacity: 0,
-                                x: Math.random() * 300 + 50,
-                                y: Math.random() * 300 + 50
+                                x: pos.x,
+                                y: pos.y
                             }}
                             animate={{
                                 z: [0, 150, 300],
                                 opacity: [0, 1, 0],
-                                rotateZ: Math.random() * 90 - 45
+                                rotateZ: pos.rotateZ
                             }}
                             transition={{
-                                duration: Math.random() * 2 + 2,
+                                duration: pos.duration,
                                 repeat: Infinity,
                                 delay: i * 0.4,
                                 ease: "easeInOut"

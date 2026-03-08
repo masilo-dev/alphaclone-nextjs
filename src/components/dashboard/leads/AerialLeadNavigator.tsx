@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Plane, Camera, Compass, Play, Pause, ExternalLink } from 'lucide-react';
@@ -33,6 +33,13 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
     const [mapType, setMapType] = useState<string>('satellite');
     const [showScanner, setShowScanner] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
+
+    // Memoize drone paths to avoid purity errors during render
+    const dronePositions = useMemo(() => Array.from({ length: 3 }).map((_, i) => ({
+        x: [Math.random() * 500, Math.random() * 800],
+        y: [Math.random() * 500, Math.random() * 800],
+        duration: 5 + i
+    })), []);
 
     const apiKey = ENV.GOOGLE_API_KEY || '';
 
@@ -225,8 +232,8 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
                                         key={type}
                                         onClick={() => setMapType(type)}
                                         className={`px-2 py-1 rounded-lg text-[8px] sm:text-[10px] font-mono uppercase transition-all ${mapType === type
-                                                ? 'bg-teal-500 text-black font-bold shadow-[0_0_10px_rgba(20,184,166,0.5)]'
-                                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                            ? 'bg-teal-500 text-black font-bold shadow-[0_0_10px_rgba(20,184,166,0.5)]'
+                                            : 'text-slate-400 hover:text-white hover:bg-white/5'
                                             }`}
                                     >
                                         {type}
@@ -323,16 +330,16 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
 
             {/* worker drone icons moving (decorative) */}
             <AnimatePresence>
-                {isNavigating && Array.from({ length: 3 }).map((_, i) => (
+                {isNavigating && dronePositions.map((pos, i) => (
                     <motion.div
                         key={`drone-${i}`}
                         initial={{ x: -100, y: -100, opacity: 0 }}
                         animate={{
-                            x: [Math.random() * 500, Math.random() * 800],
-                            y: [Math.random() * 500, Math.random() * 800],
+                            x: pos.x,
+                            y: pos.y,
                             opacity: [0, 1, 0]
                         }}
-                        transition={{ duration: 5 + i, repeat: Infinity, ease: "linear" }}
+                        transition={{ duration: pos.duration, repeat: Infinity, ease: "linear" }}
                         className="absolute z-30 pointer-events-none"
                     >
                         <Plane className="text-teal-400 w-4 h-4 rotate-45" />
