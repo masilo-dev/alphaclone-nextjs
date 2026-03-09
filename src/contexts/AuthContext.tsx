@@ -347,8 +347,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (!u && !latestUserRef.current) {
                     if (isAuthCallback) {
                         console.log('[AuthContext] INITIAL_SESSION: No user yet but auth callback in progress, holding loading state...');
-                        // Don't call initSession immediately, let the async flow or subsequent events handle it
-                        // This prevents AppShell from seeing loading=false and redirecting out prematurely
+                        // PERSISTENCE FIX: If we are in a callback, we MUST keep loading=true 
+                        // until either u becomes non-null or initSession/backupInit concludes.
+                        // Setting loading=false here is what causes the 'double-login' redirect.
+                        setLoading(true);
                     } else {
                         console.log('[AuthContext] INITIAL_SESSION returned no user, performing manual validation...');
                         initSession();
