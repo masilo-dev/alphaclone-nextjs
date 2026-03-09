@@ -108,6 +108,7 @@ export const cacheService = {
      * Delete multiple keys by pattern
      */
     async delPattern(pattern: string): Promise<void> {
+        if (!redisEnabled || !redis) return;
         try {
             const keys = await redis.keys(pattern);
             if (keys.length > 0) {

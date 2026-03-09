@@ -146,7 +146,7 @@ export async function rateLimit(
     limit: number;
 }> {
     // 1. Determine identifier (IP address or provided custom identifier)
-    const id = identifier || request.ip || request.headers.get('x-forwarded-for') || '127.0.0.1';
+    const id = identifier || (request as any).ip || request.headers.get('x-forwarded-for') || '127.0.0.1';
 
     // 2. Try Redis rate limiter if configured
     if (redis) {
@@ -161,7 +161,7 @@ export async function rateLimit(
             const result = await ratelimit.limit(id);
 
             if (!result.success) {
-                await logRateLimitViolation(id, request.ip || '0.0.0.0', request.nextUrl.pathname);
+                await logRateLimitViolation(id, (request as any).ip || '0.0.0.0', request.nextUrl.pathname);
             }
 
             return {
@@ -182,7 +182,7 @@ export async function rateLimit(
 
     if (!result.success) {
         // Log violation for in-memory as well (non-blocking)
-        logRateLimitViolation(id, request.ip || '0.0.0.0', request.nextUrl.pathname).catch(console.error);
+        logRateLimitViolation(id, (request as any).ip || '0.0.0.0', request.nextUrl.pathname).catch(console.error);
     }
 
     return {

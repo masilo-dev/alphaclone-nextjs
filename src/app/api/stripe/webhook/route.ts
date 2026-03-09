@@ -6,12 +6,12 @@ import { emailProviderService } from '@/services/EmailProviderService';
 import { invoiceServerService } from '@/services/server/invoiceServerService';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+const supabaseAdmin = createSupabaseAdminClient();
 
 /**
  * Check if webhook event was already processed (idempotency)
  */
 async function isEventProcessed(eventId: string): Promise<boolean> {
-    const supabaseAdmin = createSupabaseAdminClient();
     const { data } = await supabaseAdmin
         .from('stripe_webhook_events')
         .select('id')
@@ -33,7 +33,6 @@ async function recordWebhookEvent(
 ): Promise<void> {
     const session = event.data.object as any;
 
-    const supabaseAdmin = createSupabaseAdminClient();
     await supabaseAdmin.from('stripe_webhook_events').insert({
         stripe_event_id: event.id,
         event_type: event.type,
@@ -48,7 +47,7 @@ async function recordWebhookEvent(
         last_error: error || null,
     });
 
-    const supabaseAdmin = createSupabaseAdminClient();
+    // Also log to audit_logs for tracking
     // Also log to audit_logs for tracking
     await supabaseAdmin.from('audit_logs').insert({
         action: `stripe_webhook_${event.type}`,
@@ -76,7 +75,6 @@ async function recordPayment(
     status: string = 'succeeded',
     description?: string
 ): Promise<void> {
-    const supabaseAdmin = createSupabaseAdminClient();
     await supabaseAdmin.from('stripe_payments').insert({
         stripe_payment_intent_id: paymentIntentId,
         tenant_id: tenantId,
@@ -144,7 +142,7 @@ export async function POST(req: Request) {
                     const subscription = await stripe.subscriptions.retrieve(session.subscription);
 
                     // Update tenant subscription
-                    const supabaseAdmin = createSupabaseAdminClient();
+                    // Update tenant subscription
                     await supabaseAdmin
                         .from('tenants')
                         .update({
@@ -170,14 +168,14 @@ export async function POST(req: Request) {
                     }
 
                     // Send Card Verified Email
-                    const { data: tenant } = await supabase
+                    const { data: tenant } = await supabaseAdmin
                         .from('tenants')
                         .select('admin_user_id, name')
                         .eq('id', tenantId)
                         .single();
 
                     if (tenant?.admin_user_id) {
-                        const { data: user } = await supabase
+                        const { data: user } = await supabaseAdmin
                             .from('profiles')
                             .select('email, name')
                             .eq('id', tenant.admin_user_id)
@@ -214,7 +212,6 @@ export async function POST(req: Request) {
 
                     if (tenantId) {
                         // Update tenant subscription
-                        const supabaseAdmin = createSupabaseAdminClient();
                         await supabaseAdmin
                             .from('tenants')
                             .update({
@@ -252,7 +249,7 @@ export async function POST(req: Request) {
 
                     if (tenantId) {
                         // Mark subscription as past_due
-                        const supabaseAdmin = createSupabaseAdminClient();
+                        // Mark subscription as past_due
                         await supabaseAdmin
                             .from('tenants')
                             .update({
@@ -274,14 +271,15 @@ export async function POST(req: Request) {
                         }
 
                         // Send payment failed notification email
-                        const { data: tenantData } = await supabase
+                        // Send payment failed notification email
+                        const { data: tenantData } = await supabaseAdmin
                             .from('tenants')
                             .select('admin_user_id, name')
                             .eq('id', tenantId)
                             .single();
 
                         if (tenantData?.admin_user_id) {
-                            const { data: user } = await supabase
+                            const { data: user } = await supabaseAdmin
                                 .from('profiles')
                                 .select('email, name')
                                 .eq('id', tenantData.admin_user_id)
@@ -313,7 +311,6 @@ export async function POST(req: Request) {
             case 'customer.subscription.deleted': {
                 tenantId = session.metadata?.tenantId;
                 if (tenantId) {
-                    const supabaseAdmin = createSupabaseAdminClient();
                     await supabaseAdmin
                         .from('tenants')
                         .update({
@@ -337,8 +334,6 @@ export async function POST(req: Request) {
                         'unpaid': 'suspended',
                         'trialing': 'trial',
                     };
-
-                    const supabaseAdmin = createSupabaseAdminClient();
                     await supabaseAdmin
                         .from('tenants')
                         .update({
@@ -359,7 +354,6 @@ export async function POST(req: Request) {
                 const tenantId = account.metadata?.tenantId;
 
                 if (tenantId && account.details_submitted) {
-                    const supabaseAdmin = createSupabaseAdminClient();
                     await supabaseAdmin
                         .from('tenants')
                         .update({
@@ -382,7 +376,6 @@ export async function POST(req: Request) {
                 // Handle refunds
                 const charge = session;
                 if (charge.payment_intent) {
-                    const supabaseAdmin = createSupabaseAdminClient();
                     await supabaseAdmin
                         .from('stripe_payments')
                         .update({
