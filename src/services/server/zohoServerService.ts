@@ -183,9 +183,23 @@ export const zohoServerService = {
         subject: string;
         content: string;
     }) {
+        const supabaseAdmin = createSupabaseAdminClient();
+        const { data: integration, error } = await supabaseAdmin
+            .from('integrations')
+            .select('config')
+            .eq('user_id', userId)
+            .eq('type', 'zoho')
+            .single();
+
+        if (error || !integration?.config?.email) {
+            console.error('[Zoho Send Debug] Failed to fetch sender email from config:', error || 'Missing email');
+            throw new Error('Zoho integration is missing email address configuration');
+        }
+
         return this.proxyRequest(userId, 'messages', {
             method: 'POST',
             body: JSON.stringify({
+                fromAddress: integration.config.email,
                 toAddress: data.toAddress,
                 subject: data.subject,
                 content: data.content,
