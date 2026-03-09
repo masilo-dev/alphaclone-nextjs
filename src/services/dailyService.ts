@@ -49,6 +49,7 @@ export interface VideoCall {
     cancellation_reason?: string;
     description?: string;
     is_public: boolean;
+    is_permanent?: boolean;
     scheduled_at: Date;
     created_at: Date;
     updated_at: Date;

@@ -145,6 +145,12 @@ export default function MeetPage() {
                 setRoomUrl(call.daily_room_url);
                 setLoading(false);
 
+                // For permanent public rooms with no PIN, we can potentially auto-join if name is already known
+                // or just ensure the UI is extremely minimal.
+                if (call.is_permanent && call.is_public && !expectedPin && guestName) {
+                    setIsPinValidated(true);
+                }
+
             } catch (err) {
                 console.error('Error connecting to meeting:', err);
                 setError('Failed to connect to the secure meeting channel.');
@@ -221,8 +227,12 @@ export default function MeetPage() {
                         <div className="w-16 h-16 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-teal-500/20">
                             <ShieldCheck className="w-8 h-8 text-teal-500" />
                         </div>
-                        <h2 className="text-2xl font-bold text-white mb-2">Join Secure Meeting</h2>
-                        <p className="text-slate-400 text-sm">Please enter the meeting code provided by the host.</p>
+                        <h2 className="text-2xl font-bold text-white mb-2">
+                            {meetingIdOrSlug.length < 20 ? `${meetingIdOrSlug}'s Office` : 'Join Secure Meeting'}
+                        </h2>
+                        <p className="text-slate-400 text-sm">
+                            {expectedPin ? 'Please enter the meeting code provided by the host.' : 'Welcome! Please enter your name to join the meeting.'}
+                        </p>
                     </div>
 
                     <div className="space-y-4">
@@ -233,34 +243,25 @@ export default function MeetPage() {
                                 value={guestName}
                                 onChange={(e) => setGuestName(e.target.value)}
                                 className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
-                                placeholder="Enter your full name"
+                                placeholder="What should we call you?"
                                 required
                             />
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">Email (Optional)</label>
-                            <input
-                                type="email"
-                                value={guestEmail}
-                                onChange={(e) => setGuestEmail(e.target.value)}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
-                                placeholder="Enter your email"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">Meeting Code</label>
-                            <input
-                                type="text"
-                                value={inputPin}
-                                onChange={(e) => setInputPin(e.target.value)}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white font-mono text-center tracking-widest text-lg focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
-                                placeholder="------"
-                                maxLength={6}
-                                required
-                            />
-                        </div>
+                        {expectedPin && (
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">Meeting Code</label>
+                                <input
+                                    type="text"
+                                    value={inputPin}
+                                    onChange={(e) => setInputPin(e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white font-mono text-center tracking-widest text-lg focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                    placeholder="------"
+                                    maxLength={6}
+                                    required
+                                />
+                            </div>
+                        )}
 
                         {pinError && (
                             <div className="p-3 rounded bg-red-500/10 border border-red-500/20 text-red-400 text-sm">

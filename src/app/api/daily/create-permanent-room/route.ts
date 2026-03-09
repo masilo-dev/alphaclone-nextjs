@@ -24,8 +24,9 @@ export async function POST(req: Request) {
         const { data: existingRoom } = await supabase
             .from('video_calls')
             .select('*')
-            .eq('tenant_id', tenantId || userId) // Fallback to userId if tenantId not provided
+            .eq('host_id', userId) // Unique per user
             .eq('is_permanent', true)
+            .eq('status', 'active')
             .single();
 
         // 1.5 Fetch user's tenant to check for a slug
@@ -49,8 +50,8 @@ export async function POST(req: Request) {
         }
 
         // 2. Create new Daily room
-        // Use a deterministic name based on tenant/user to avoid duplicates and allow recovery
-        const cleanId = (tenantId || userId).replace(/[^a-zA-Z0-9]/g, '').substring(0, 16);
+        // Use a deterministic name based on user identity to ensure individual uniqueness
+        const cleanId = userId.replace(/[^a-zA-Z0-9]/g, '').substring(0, 16);
         const roomName = `perm-${cleanId}`;
 
         const response = await fetch(`${DAILY_API_URL}/rooms`, {
@@ -65,8 +66,9 @@ export async function POST(req: Request) {
                     enable_chat: true,
                     enable_screenshare: true,
                     max_participants: 10,
-                    // Permanent rooms shouldn't expire soon
-                    exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60) // 1 year expiry
+                    privacy: 'public',
+                    // Permanent rooms shouldn't expire soon - 10 years
+                    exp: Math.floor(Date.now() / 1000) + (10 * 365 * 24 * 60 * 60)
                 }
             })
         });
