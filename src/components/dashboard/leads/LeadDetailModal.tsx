@@ -467,6 +467,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
             onClose={onClose}
             title=""
             maxWidth="max-w-4xl"
+            containerClassName="lg:pl-64"
         >
             <div className="flex flex-col h-[80vh] -m-6">
                 {/* Header */}

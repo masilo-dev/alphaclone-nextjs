@@ -70,32 +70,48 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
     // Load PDF
     useEffect(() => {
+        let isMounted = true;
+
         const loadPdf = async () => {
+            if (!url) return;
             setIsLoading(true);
             try {
                 // @ts-ignore - Dynamic import of PDF.js
-                // Using the standard build instead of legacy for v5+ ESM support
                 const pdfjsModule = await import('pdfjs-dist/build/pdf.min.mjs');
                 const pdfjsLib = pdfjsModule.default || pdfjsModule;
 
                 if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
-                    const version = '3.11.174'; // Fixed version to match fileImportService
-                    // Use a more reliable worker source URL structure
+                    const version = '3.11.174';
                     pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.mjs`;
                 }
 
-                const loadingTask = pdfjsLib.getDocument(url);
+                if (!isMounted) return;
+
+                const loadingTask = pdfjsLib.getDocument({
+                    url,
+                    cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+                    cMapPacked: true,
+                });
+
                 const pdfDoc = await loadingTask.promise;
+
+                if (!isMounted) return;
+
                 setPdf(pdfDoc);
                 setNumPages(pdfDoc.numPages);
             } catch (error) {
                 console.error('PDF Library Load Error:', error);
-                toast.error('Failed to initialize document viewer');
+                if (isMounted) toast.error('Failed to initialize document viewer');
             } finally {
-                setIsLoading(false);
+                if (isMounted) setIsLoading(false);
             }
         };
-        if (url) loadPdf();
+
+        loadPdf();
+
+        return () => {
+            isMounted = false;
+        };
     }, [url]);
 
     const handlePageClick = (e: React.MouseEvent, pageNumber: number) => {
