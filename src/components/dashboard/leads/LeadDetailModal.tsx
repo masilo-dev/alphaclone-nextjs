@@ -349,28 +349,48 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
         setIsLoading(true);
 
         try {
-            // Re-use logic from SalesAgent or implement here. 
-            // For simplicity and to avoid circular deps if SalesAgent is a large component, 
-            // we'll implement the direct service calls.
+            // 1. Validate Address (if not already done)
+            if (!lead.isAddressValid && lead.location) {
+                toast.loading('Validating address...', { id: toastId });
+                const apiKey = ENV.GOOGLE_API_KEY || '';
+                const { valid, formattedAddress } = await googleMapsService.validateAddress(lead.location, apiKey);
+                if (valid && formattedAddress) {
+                    await leadService.updateLead(lead.id, { location: formattedAddress });
+                    lead.location = formattedAddress; // Local update for subsequent steps
+                }
+            }
 
-            // 1. Convert Lead to Client/Contact
-            const { contactId, error: conversionError } = await contactService.convertLeadToContact(lead.id, { createCompany: true });
+            // 2. AI Research / Enrichment (if notes are empty)
+            if (!lead.notes || lead.notes.length < 10) {
+                toast.loading('Gathering AI Market Intelligence...', { id: toastId });
+                const { notes } = await leadService.enrichLead(lead.id, authUser.id);
+                if (notes) lead.notes = notes;
+            }
+
+            // 3. Convert Lead to Client/Contact
+            toast.loading('Converting to contact...', { id: toastId });
+            const { contactId, error: conversionError } = await contactService.convertLeadToContact(lead.id, {
+                createCompany: true,
+                companyName: lead.businessName
+            });
             if (conversionError) throw new Error(conversionError);
             if (!contactId) throw new Error("Conversion failed to return a contact ID");
 
-            // 2. Create Deal
+            // 4. Create Deal
+            toast.loading('Initializing deal...', { id: toastId });
             const { deal, error: dealError } = await dealService.createDeal(authUser.id, {
                 name: `${lead.businessName} Deal`,
                 value: lead.value || 0,
-                stage: 'lead',
+                stage: 'qualified',
                 contactId: contactId
             });
             if (dealError) throw new Error(dealError);
             if (!deal) throw new Error("Deal creation failed");
 
-            // 3. Create Quote
+            // 5. Create Quote
+            toast.loading('Generating initial quote...', { id: toastId });
             const { quote, error: quoteError } = await quoteService.createQuote(authUser.id, {
-                name: `${lead.businessName} Quote`,
+                name: `${lead.businessName} Initial Quote`,
                 contactId: contactId,
                 dealId: deal.id,
                 currency: 'USD',
@@ -379,31 +399,33 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
             if (quoteError) throw new Error(quoteError);
             if (!quote) throw new Error("Quote creation failed");
 
-            // 4. Add initial quote item
+            // 6. Add initial quote item
             await quoteService.addQuoteItem(quote.id, {
-                productName: 'Consultation Services',
-                description: 'Initial consultation and requirements gathering',
+                productName: 'Professional Services',
+                description: 'Solutions implementation and strategy',
                 quantity: 1,
-                unitPrice: 0
+                unitPrice: lead.value || 0
             });
 
-            // 5. Create Project
+            // 7. Create Project
+            toast.loading('Launching project board...', { id: toastId });
             await projectService.createProject({
                 ownerId: authUser.id,
                 ownerName: authUser.user_metadata?.name || authUser.email || 'System',
                 name: `${lead.businessName} Implementation`,
-                description: `Project for ${lead.businessName} initiated from lead execution flow.`,
+                description: `Project for ${lead.businessName} initiated from lead execution flow. \n\nIndustry: ${lead.industry}\nResearch: ${lead.notes || 'Gathered during flow'}`,
                 status: 'Active',
                 category: lead.industry || 'General',
                 currentStage: 'Planning',
                 progress: 0,
-                team: [],
-                clientId: contactId
+                team: [authUser.id],
+                clientId: contactId,
+                startDate: new Date().toISOString().split('T')[0]
             });
 
-            toast.success(`Successfully converted ${lead.businessName}!`, { id: toastId });
-            if (onLeadUpdate) onLeadUpdate({ ...lead, stage: 'converted' });
-            onClose();
+            toast.success(`Successfully executed full flow for ${lead.businessName}!`, { id: toastId });
+            if (onLeadUpdate) onLeadUpdate({ ...lead, status: 'converted', stage: 'converted' });
+            setTimeout(() => onClose(), 2000); // Give user a moment to see success
         } catch (err: any) {
             console.error("Execution error", err);
             toast.error(`Execution failed: ${err.message}`, { id: toastId });
@@ -419,29 +441,38 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
         }
 
         setIsValidatingAddress(true);
+        const toastId = toast.loading("Validating address with Google API...");
+
         try {
             const apiKey = ENV.GOOGLE_API_KEY || '';
-            const { valid, formattedAddress, error } = await googleMapsService.validateAddress(lead.location, apiKey);
+            const { valid, formattedAddress, location, error } = await googleMapsService.validateAddress(lead.location, apiKey);
 
             if (error) throw new Error(error);
 
-            if (valid) {
-                toast.success('Address is valid and deliverable!');
-                // Update lead location with formatted address if it's better
-                if (formattedAddress && formattedAddress !== lead.location) {
-                    await leadService.updateLead(lead.id, { location: formattedAddress });
-                    if (onLeadUpdate) onLeadUpdate({ ...lead, location: formattedAddress });
-                }
+            if (valid && formattedAddress) {
+                const updates: Partial<Lead> = {
+                    location: formattedAddress,
+                    isAddressValid: true,
+                    lat: location?.lat,
+                    lng: location?.lng
+                };
+
+                const { error: updateError } = await leadService.updateLead(lead.id, updates);
+                if (updateError) throw new Error(updateError);
+
+                toast.success('Address is valid and deliverable!', { id: toastId });
+                if (onLeadUpdate) onLeadUpdate({ ...lead, ...updates });
 
                 // Log activity
                 if (user) {
                     await leadService.addLeadActivity(lead.id, user.id, 'verification', 'Address validated via Google Maps');
                 }
             } else {
-                toast.error('Address could not be fully validated. Please check the details.');
+                toast.error('Address could not be fully validated. Please check the details.', { id: toastId });
             }
         } catch (error: any) {
-            toast.error('Validation failed: ' + error.message);
+            console.error("Validation error", error);
+            toast.error('Validation failed: ' + error.message, { id: toastId });
         } finally {
             setIsValidatingAddress(false);
         }
@@ -484,8 +515,18 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                             )}
                         </div>
                         <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-slate-400">
-                            {lead.industry && <span className="flex items-center gap-1"><User className="w-3 h-3" /> {lead.industry}</span>}
-                            {lead.location && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {lead.location}</span>}
+                            {lead.industry && (
+                                <span className="flex items-center gap-1 bg-slate-800/50 px-2 py-1 rounded-md border border-white/5">
+                                    <Bot className="w-3 h-3 text-teal-400" />
+                                    {lead.industry}
+                                </span>
+                            )}
+                            {lead.location && (
+                                <span className="flex items-center gap-1 max-w-[300px] truncate" title={lead.location}>
+                                    <MapPin className="w-3 h-3 text-amber-500" />
+                                    {lead.location}
+                                </span>
+                            )}
                             {lead.website && (
                                 <a href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-teal-400 transition-colors">
                                     <Globe className="w-3 h-3" /> Website
@@ -659,11 +700,19 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                         </div>
                                     </div>
                                     {lead.location && (
-                                        <div className="flex items-center gap-3 text-slate-300">
-                                            <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center">
-                                                <MapPin className="w-4 h-4 text-slate-400" />
+                                        <div className="flex items-start gap-3 text-slate-300 group">
+                                            <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">
+                                                <MapPin className="w-4 h-4 text-amber-500" />
                                             </div>
-                                            <span>{lead.location}</span>
+                                            <div className="flex flex-col">
+                                                <span className="text-xs text-slate-500 uppercase font-bold tracking-tighter mb-0.5">Address</span>
+                                                <span className="text-sm leading-relaxed whitespace-pre-wrap">{lead.location}</span>
+                                                {lead.isAddressValid && (
+                                                    <span className="text-[10px] text-emerald-400 flex items-center gap-1 mt-1 font-mono uppercase font-bold">
+                                                        <CheckSquare className="w-2.5 h-2.5" /> Google Verified
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>

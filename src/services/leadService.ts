@@ -274,6 +274,9 @@ export const leadService = {
         if (updates.isVerified !== undefined) dbPayload.is_verified = updates.isVerified;
         if (updates.trustScore !== undefined) dbPayload.trust_score = updates.trustScore;
         if (updates.verificationNotes !== undefined) dbPayload.verification_notes = updates.verificationNotes;
+        if (updates.isAddressValid !== undefined) dbPayload.is_address_valid = updates.isAddressValid;
+        if (updates.lat !== undefined) dbPayload.latitude = updates.lat;
+        if (updates.lng !== undefined) dbPayload.longitude = updates.lng;
         if (updates.sdrInsight !== undefined) dbPayload.sdr_insight = updates.sdrInsight;
 
         const { error } = await supabase
