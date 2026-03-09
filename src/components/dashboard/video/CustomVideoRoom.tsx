@@ -99,13 +99,6 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         }
     });
 
-    // START CAMERA IMMEDIATELY (Instant Self-View)
-    useEffect(() => {
-        if (!isJoined && !isJoining && !localParticipant?.video?.track) {
-            startCamera().catch(err => console.error('Failed to start camera:', err));
-        }
-    }, []);
-
     // Handle leaving the meeting
     const handleLeave = useCallback(async () => {
         try {
@@ -113,7 +106,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 ? Math.floor((new Date().getTime() - callStartTime.getTime()) / 1000)
                 : undefined;
 
-            if (callId && duration) {
+            if (callId && duration && isUserAdmin(user)) {
                 await dailyService.endVideoCall(callId, duration).catch(err => {
                     console.error('Failed to end call in database:', err);
                 });
@@ -125,7 +118,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
             console.error('Error leaving meeting:', err);
             onLeave();
         }
-    }, [callStartTime, callId, leave, onLeave]);
+    }, [callStartTime, callId, leave, onLeave, user]);
 
     // Resolve Room URL if not provided
     useEffect(() => {
@@ -162,7 +155,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
 
                 setCallStartTime(new Date());
 
-                if (callId) {
+                if (callId && isUserAdmin(user)) {
                     await dailyService.startVideoCall(callId).catch(err => {
                         console.error('Failed to mark call as active:', err);
                     });
@@ -178,13 +171,22 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         };
 
         setTimeout(joinMeeting, 100);
+    }, [resolvedRoomUrl, user.name, callId, onLeave, join, isJoining, isJoined, user]);
 
+    // Keep a fresh reference to handleLeave to avoid stale closures in the unmount listener
+    const handleLeaveRef = useRef(handleLeave);
+    useEffect(() => {
+        handleLeaveRef.current = handleLeave;
+    }, [handleLeave]);
+
+    // Handle component unmount cleanup separately to avoid volatile dependency loops
+    useEffect(() => {
         return () => {
             if (isJoinedRef.current) {
-                handleLeave();
+                handleLeaveRef.current();
             }
         };
-    }, [resolvedRoomUrl, user.name, callId, onLeave, join, isJoining, isJoined, handleLeave]);
+    }, []);
 
     useEffect(() => {
         isJoinedRef.current = isJoined;

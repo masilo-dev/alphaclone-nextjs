@@ -158,11 +158,6 @@ export class VideoEngine {
 
             await this.callObject.join(joinConfig);
 
-            // Enable camera and microphone by default after joining
-            // This ensures user can see/hear themselves immediately
-            await this.callObject.setLocalAudio(true);
-            await this.callObject.setLocalVideo(true);
-
             this.state = 'joined';
         } catch (error) {
             this.state = 'error';
