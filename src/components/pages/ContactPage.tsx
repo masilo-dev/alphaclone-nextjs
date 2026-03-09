@@ -68,7 +68,7 @@ const ContactPage: React.FC = () => {
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
                             <Button
-                                onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
+                                onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
                                 className="bg-teal-600 hover:bg-teal-500 text-white font-bold h-12 px-8 font-marketing-heading uppercase tracking-tight"
                             >
                                 Book a Consultation

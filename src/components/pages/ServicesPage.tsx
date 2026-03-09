@@ -342,7 +342,7 @@ const ServicesPage: React.FC = () => {
                                                 <Button
                                                     variant="outline"
                                                     className="w-full border-slate-700 hover:bg-slate-800"
-                                                    onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
+                                                    onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
                                                 >
                                                     Book a Demo Call
                                                 </Button>
@@ -447,7 +447,7 @@ const ServicesPage: React.FC = () => {
                                 <Button
                                     variant="outline"
                                     className="text-lg px-10 py-4 h-auto border-slate-700 hover:bg-slate-800"
-                                    onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
+                                    onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
                                 >
                                     <Phone className="w-5 h-5 mr-2" />
                                     Book a Live Demo

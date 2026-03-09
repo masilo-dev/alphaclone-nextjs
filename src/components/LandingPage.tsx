@@ -511,7 +511,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      <Button
                         size="lg"
                         variant="outline"
-                        onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
+                        onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
                         className="border-slate-700 bg-slate-900/80 md:bg-slate-900/50 md:backdrop-blur hover:bg-slate-800 text-white px-10 h-14 w-full sm:w-auto text-lg hover:border-slate-500 tracking-tight"
                      >
                         Book a Demo
@@ -827,7 +827,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                   <div className="mt-16 text-center">
                      <p className="text-slate-400 mb-6">Don't see yourself here? We work with all types of businesses.</p>
                      <Button
-                        onClick={() => window.open('https://calendly.com/bonniiehendrix/30min', '_blank')}
+                        onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
                         className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-8"
                      >
                         Book a Free Consultation
