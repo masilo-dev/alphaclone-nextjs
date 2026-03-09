@@ -19,6 +19,7 @@ interface MeetingRoom {
     name: string;
     url: string;
     shareLink: string;
+    pin?: string;
 }
 
 /**
@@ -33,6 +34,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
     const [status, setStatus] = useState<'idle' | 'initializing' | 'ready' | 'error'>('initializing');
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
+    const [isRegenerating, setIsRegenerating] = useState(false);
 
     const initRef = useRef(false);
 
@@ -132,9 +134,10 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
     const handleCopyLink = async () => {
         if (!room) return;
         try {
-            await navigator.clipboard.writeText(room.shareLink);
+            const formattedInvite = `--- Secure Video Meeting Invite ---\n\nJoin Link: ${room.shareLink}\nMeeting Code: ${room.pin || 'None'}\n\nPlease click the link and enter the Meeting Code when prompted.`;
+            await navigator.clipboard.writeText(formattedInvite);
             setCopied(true);
-            toast.success('Link copied!');
+            toast.success('Invitation copied!');
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
             toast.error('Failed to copy link');
@@ -142,12 +145,51 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
     };
 
     const handleCopyPin = async () => {
-        if (!room || !(room as any).pin) return;
+        if (!room || !room.pin) return;
         try {
-            await navigator.clipboard.writeText((room as any).pin);
+            await navigator.clipboard.writeText(room.pin);
             toast.success('Meeting Code copied!');
         } catch (err) {
             toast.error('Failed to copy code');
+        }
+    };
+
+    const handleRegeneratePin = async () => {
+        if (!room || !currentTenant) return;
+
+        setIsRegenerating(true);
+        try {
+            const newPin = Math.floor(100000 + Math.random() * 900000).toString();
+
+            // For regenerating, we just want to update the PIN
+            // We do NOT want to change the pin_generated_at timestamp, as that is only for 
+            // when the meeting starts to track the 35 min expiration limit
+
+            // First get current metadata
+            const { data: currentRoom } = await supabase
+                .from('video_calls')
+                .select('metadata')
+                .eq('id', room.id)
+                .single();
+
+            const currentMetadata = currentRoom?.metadata || {};
+
+            const { error: updateError } = await supabase
+                .from('video_calls')
+                .update({
+                    metadata: { ...currentMetadata, meeting_pin: newPin }
+                })
+                .eq('id', room.id);
+
+            if (updateError) throw updateError;
+
+            setRoom({ ...room, pin: newPin });
+            toast.success('New meeting code generated!');
+        } catch (err) {
+            console.error('Failed to regenerate pin:', err);
+            toast.error('Failed to generate new code');
+        } finally {
+            setIsRegenerating(false);
         }
     };
 
@@ -268,12 +310,12 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                                 {copied ? (
                                     <>
                                         <Check className="w-4 h-4 mr-1" />
-                                        Copied
+                                        Invitation Copied
                                     </>
                                 ) : (
                                     <>
                                         <Copy className="w-4 h-4 mr-1" />
-                                        Copy
+                                        Copy Invite
                                     </>
                                 )}
                             </Button>
@@ -281,7 +323,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                     </div>
 
                     {/* Meeting PIN Display */}
-                    {(room as any).pin && (
+                    {room.pin && (
                         <div className="pt-3 border-t border-slate-700/50">
                             <div className="flex items-center gap-2 mb-2">
                                 <Lock className="w-4 h-4 text-amber-400" />
@@ -291,16 +333,27 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                             </div>
                             <div className="flex items-center gap-3 flex-wrap">
                                 <p className="flex-1 text-amber-400 font-mono text-xl tracking-[0.2em] font-bold bg-black/30 p-2 rounded min-w-0 text-center">
-                                    {String((room as any).pin).match(/.{1,3}/g)?.join(' ')}
+                                    {String(room.pin).match(/.{1,3}/g)?.join(' ')}
                                 </p>
-                                <Button
-                                    onClick={handleCopyPin}
-                                    className="shrink-0 transition-all bg-amber-600 hover:bg-amber-500 text-white"
-                                    size="sm"
-                                >
-                                    <Copy className="w-4 h-4 mr-1" />
-                                    Copy Code
-                                </Button>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <Button
+                                        onClick={handleCopyPin}
+                                        className="transition-all bg-amber-600 hover:bg-amber-500 text-white"
+                                        size="sm"
+                                    >
+                                        <Copy className="w-4 h-4 mr-1" />
+                                        Copy Code
+                                    </Button>
+                                    <Button
+                                        onClick={handleRegeneratePin}
+                                        className="transition-all bg-slate-700 hover:bg-slate-600 text-white"
+                                        size="sm"
+                                        disabled={isRegenerating}
+                                    >
+                                        <RefreshCw className={`w-4 h-4 mr-1 ${isRegenerating ? 'animate-spin' : ''}`} />
+                                        Regenerate
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     )}

@@ -9,6 +9,7 @@ import { User } from '../../../types';
 import { dailyService } from '../../../services/dailyService';
 import toast from 'react-hot-toast';
 import { ChevronRight, ChevronLeft, Minimize2, Maximize2, X, Mic, MicOff, Video, VideoOff, Users } from 'lucide-react';
+import { supabase } from '../../../lib/supabase';
 
 interface CustomVideoRoomProps {
     user: User;
@@ -64,6 +65,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
 
     const [callStartTime, setCallStartTime] = useState<Date | null>(null);
     const [secondsElapsed, setSecondsElapsed] = useState(0);
+    const [hasMeetingStarted, setHasMeetingStarted] = useState(false);
     const isRestricted = !isUserAdmin(user);
     const [showParticipants, setShowParticipants] = useState(false);
     const [showChat, setShowChat] = useState(false);
@@ -173,6 +175,89 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         setTimeout(joinMeeting, 100);
     }, [resolvedRoomUrl, user.name, callId, onLeave, join, isJoining, isJoined, user]);
 
+    // Meeting Start Logic (2 people trigger)
+    useEffect(() => {
+        if (!isJoined || !callId || hasMeetingStarted || !isUserAdmin(user)) return;
+
+        // Check if there are at least 2 participants (host + 1 client, or 2 clients if host is there)
+        // Note: The host's presence is verified by isUserAdmin
+        if (participants.length >= 2) {
+            const startActiveMeeting = async () => {
+                setHasMeetingStarted(true);
+                try {
+                    await supabase
+                        .from('video_calls')
+                        .update({
+                            status: 'active', // Ensure it's active
+                            metadata: {
+                                // Keep existing metadata, just add the tracking field
+                                // We'll need to fetch existing metadata to just append the started_at, but we can do it via RPC or we can just fetch first
+                            }
+                        })
+                        .eq('id', callId);
+
+                    // Actually, a safer way to append cleanly in Supabase is fetching current metadata first
+                    const { data: callData } = await supabase
+                        .from('video_calls')
+                        .select('metadata')
+                        .eq('id', callId)
+                        .single();
+
+                    const currentMetadata = callData?.metadata || {};
+                    const meetingStartedAt = Date.now();
+
+                    await supabase
+                        .from('video_calls')
+                        .update({
+                            metadata: { ...currentMetadata, meeting_started_at: meetingStartedAt }
+                        })
+                        .eq('id', callId);
+
+                } catch (err) {
+                    console.error('Failed to set meeting_started_at:', err);
+                }
+            };
+
+            startActiveMeeting();
+        }
+    }, [isJoined, callId, participants, hasMeetingStarted, user]);
+
+    // PIN Recycling Logic (35 Minutes after Start)
+    useEffect(() => {
+        if (!isJoined || !callId || !hasMeetingStarted || !isUserAdmin(user)) return;
+
+        // Create a 35 minute timer (35 * 60 * 1000 = 2100000ms)
+        const expirationTime = 35 * 60 * 1000;
+
+        const recyclePinTimer = setTimeout(async () => {
+            try {
+                const newPin = Math.floor(100000 + Math.random() * 900000).toString();
+
+                const { data: currentRoom } = await supabase
+                    .from('video_calls')
+                    .select('metadata')
+                    .eq('id', callId)
+                    .single();
+
+                const currentMetadata = currentRoom?.metadata || {};
+
+                await supabase
+                    .from('video_calls')
+                    .update({
+                        metadata: { ...currentMetadata, meeting_pin: newPin }
+                    })
+                    .eq('id', callId);
+
+                console.log('PIN Automatically recycled after 35 minutes of meeting start time');
+            } catch (err) {
+                console.error('Failed to recycle PIN:', err);
+            }
+        }, expirationTime);
+
+        return () => clearTimeout(recyclePinTimer);
+    }, [isJoined, callId, hasMeetingStarted, user]);
+
+
     // Keep a fresh reference to handleLeave to avoid stale closures in the unmount listener
     const handleLeaveRef = useRef(handleLeave);
     useEffect(() => {
@@ -268,10 +353,33 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         if (!isUserAdmin(user)) return;
         if (!confirm('End meeting for all?')) return;
         try {
-            if (callId) await dailyService.endVideoCall(callId, 0);
+            if (callId) {
+                await dailyService.endVideoCall(callId, 0);
+
+                // Recycle the PIN upon explicitly ending the meeting
+                const newPin = Math.floor(100000 + Math.random() * 900000).toString();
+                const { data: currentRoom } = await supabase
+                    .from('video_calls')
+                    .select('metadata')
+                    .eq('id', callId)
+                    .single();
+
+                const currentMetadata = currentRoom?.metadata || {};
+
+                await supabase
+                    .from('video_calls')
+                    .update({
+                        metadata: {
+                            ...currentMetadata,
+                            meeting_pin: newPin,
+                            meeting_started_at: null // Reset the start timer
+                        }
+                    })
+                    .eq('id', callId);
+            }
             await leave();
             onLeave();
-        } catch (err) { toast.error('Error'); }
+        } catch (err) { toast.error('Error ending meeting'); }
     }, [user, callId, leave, onLeave]);
 
     const handleSendChatMessage = useCallback(async (message: string) => {

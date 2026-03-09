@@ -83,20 +83,41 @@ export default function MeetPage() {
                         return;
                     }
 
-                    // Use the first active permanent room found
                     targetMeetingId = permanentRooms[0].id;
-                    if (permanentRooms[0].metadata?.meeting_pin) {
-                        setExpectedPin(permanentRooms[0].metadata.meeting_pin);
+                    const metadata = permanentRooms[0].metadata;
+                    if (metadata?.meeting_pin) {
+                        setExpectedPin(metadata.meeting_pin);
+
+                        // Check if PIN has expired (35 minutes after meeting start)
+                        if (metadata.meeting_started_at) {
+                            const timeSinceStart = Date.now() - metadata.meeting_started_at;
+                            if (timeSinceStart > 35 * 60 * 1000) {
+                                setError('The meeting code has expired. Please contact the host for a new link/code.');
+                                setLoading(false);
+                                return;
+                            }
+                        }
                     }
                 } else {
-                    const { data: room, error: singleRoomError } = await supabase
+                    const { data: room } = await supabase
                         .from('video_calls')
                         .select('metadata')
                         .eq('id', targetMeetingId)
                         .single();
 
-                    if (room?.metadata && room.metadata.meeting_pin) {
-                        setExpectedPin(room.metadata.meeting_pin);
+                    const metadata = room?.metadata;
+                    if (metadata && metadata.meeting_pin) {
+                        setExpectedPin(metadata.meeting_pin);
+
+                        // Check if PIN has expired (35 minutes after meeting start)
+                        if (metadata.meeting_started_at) {
+                            const timeSinceStart = Date.now() - metadata.meeting_started_at;
+                            if (timeSinceStart > 35 * 60 * 1000) {
+                                setError('The meeting code has expired. Please contact the host for a new link/code.');
+                                setLoading(false);
+                                return;
+                            }
+                        }
                     }
                 }
 
