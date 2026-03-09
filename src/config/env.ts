@@ -34,9 +34,12 @@ const envSchema = z.object({
     DAILY_API_KEY: z.string().optional(),
 
     // Stripe (optional - for payments)
-    VITE_STRIPE_PUBLIC_KEY: z.string()
-        .optional()
-        .or(z.literal('')), // Allow empty string but it won't be used by the service
+    VITE_STRIPE_PUBLIC_KEY: z.string().optional().or(z.literal('')),
+    STRIPE_SECRET_KEY: z.string().optional(),
+    STRIPE_WEBHOOK_SECRET: z.string().optional(),
+
+    // Resend (required for emails)
+    RESEND_API_KEY: z.string().optional(),
 
     // Optional
     VITE_SENTRY_DSN: z.string().url().optional(),
@@ -96,6 +99,13 @@ function validateEnv() {
         // Zoho OAuth
         ZOHO_CLIENT_ID: process.env.ZOHO_CLIENT_ID || process.env.NEXT_PUBLIC_ZOHO_CLIENT_ID || process.env.VITE_ZOHO_CLIENT_ID,
         ZOHO_CLIENT_SECRET: process.env.ZOHO_CLIENT_SECRET || process.env.NEXT_PUBLIC_ZOHO_CLIENT_SECRET || process.env.VITE_ZOHO_CLIENT_SECRET,
+
+        // Stripe
+        STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+        STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+
+        // Resend
+        RESEND_API_KEY: process.env.RESEND_API_KEY || process.env.NEXT_PUBLIC_RESEND_API_KEY,
 
         // Supabase Admin
         SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,

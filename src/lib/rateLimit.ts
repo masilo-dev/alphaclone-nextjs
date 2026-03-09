@@ -145,11 +145,48 @@ export async function rateLimit(
     reset: number;
     limit: number;
 }> {
-    // RATE LIMITING DISABLED
+    // 1. Determine identifier (IP address or provided custom identifier)
+    const id = identifier || request.ip || request.headers.get('x-forwarded-for') || '127.0.0.1';
+
+    // 2. Try Redis rate limiter if configured
+    if (redis) {
+        try {
+            const ratelimit = new Ratelimit({
+                redis,
+                limiter: Ratelimit.slidingWindow(config.limit, config.window),
+                analytics: true,
+                prefix: 'alphaclone',
+            });
+
+            const result = await ratelimit.limit(id);
+
+            if (!result.success) {
+                await logRateLimitViolation(id, request.ip || '0.0.0.0', request.nextUrl.pathname);
+            }
+
+            return {
+                success: result.success,
+                remaining: result.remaining,
+                reset: result.reset,
+                limit: config.limit,
+            };
+        } catch (error) {
+            console.error('Redis Rate Limit Error, falling back to in-memory:', error);
+        }
+    }
+
+    // 3. Fallback to In-Memory rate limiting
+    // Note: window is a string (e.g. '15m'), we need to parse it to ms
+    const windowMs = parseWindow(config.window);
+    const result = checkInMemoryRateLimit(id, config.limit, windowMs);
+
+    if (!result.success) {
+        // Log violation for in-memory as well (non-blocking)
+        logRateLimitViolation(id, request.ip || '0.0.0.0', request.nextUrl.pathname).catch(console.error);
+    }
+
     return {
-        success: true,
-        remaining: config.limit,
-        reset: Date.now() + 60000,
+        ...result,
         limit: config.limit,
     };
 }

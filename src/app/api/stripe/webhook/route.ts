@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { supabase } from '@/lib/supabase';
+import { createSupabaseAdminClient } from '@/lib/supabase-server';
 import { headers } from 'next/headers';
 import { emailProviderService } from '@/services/EmailProviderService';
 import { invoiceServerService } from '@/services/server/invoiceServerService';
@@ -11,7 +11,8 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
  * Check if webhook event was already processed (idempotency)
  */
 async function isEventProcessed(eventId: string): Promise<boolean> {
-    const { data } = await supabase
+    const supabaseAdmin = createSupabaseAdminClient();
+    const { data } = await supabaseAdmin
         .from('stripe_webhook_events')
         .select('id')
         .eq('stripe_event_id', eventId)
@@ -32,7 +33,8 @@ async function recordWebhookEvent(
 ): Promise<void> {
     const session = event.data.object as any;
 
-    await supabase.from('stripe_webhook_events').insert({
+    const supabaseAdmin = createSupabaseAdminClient();
+    await supabaseAdmin.from('stripe_webhook_events').insert({
         stripe_event_id: event.id,
         event_type: event.type,
         api_version: event.api_version,
@@ -46,8 +48,9 @@ async function recordWebhookEvent(
         last_error: error || null,
     });
 
+    const supabaseAdmin = createSupabaseAdminClient();
     // Also log to audit_logs for tracking
-    await supabase.from('audit_logs').insert({
+    await supabaseAdmin.from('audit_logs').insert({
         action: `stripe_webhook_${event.type}`,
         resource_type: 'payment',
         resource_id: event.id,
@@ -73,7 +76,8 @@ async function recordPayment(
     status: string = 'succeeded',
     description?: string
 ): Promise<void> {
-    await supabase.from('stripe_payments').insert({
+    const supabaseAdmin = createSupabaseAdminClient();
+    await supabaseAdmin.from('stripe_payments').insert({
         stripe_payment_intent_id: paymentIntentId,
         tenant_id: tenantId,
         customer_id: customerId,
@@ -140,12 +144,15 @@ export async function POST(req: Request) {
                     const subscription = await stripe.subscriptions.retrieve(session.subscription);
 
                     // Update tenant subscription
-                    await supabase
+                    const supabaseAdmin = createSupabaseAdminClient();
+                    await supabaseAdmin
                         .from('tenants')
                         .update({
                             subscription_status: 'active',
+                            subscription_plan: session.metadata?.plan || 'starter', // Default to starter if metadata missing
                             stripe_customer_id: session.customer,
                             current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
+                            trial_ends_at: null, // Clear trial once paid
                         })
                         .eq('id', tenantId);
 
@@ -207,11 +214,14 @@ export async function POST(req: Request) {
 
                     if (tenantId) {
                         // Update tenant subscription
-                        await supabase
+                        const supabaseAdmin = createSupabaseAdminClient();
+                        await supabaseAdmin
                             .from('tenants')
                             .update({
                                 subscription_status: 'active',
+                                subscription_plan: subscription.metadata?.plan || 'starter',
                                 current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
+                                trial_ends_at: null,
                             })
                             .eq('id', tenantId);
 
@@ -242,7 +252,8 @@ export async function POST(req: Request) {
 
                     if (tenantId) {
                         // Mark subscription as past_due
-                        await supabase
+                        const supabaseAdmin = createSupabaseAdminClient();
+                        await supabaseAdmin
                             .from('tenants')
                             .update({
                                 subscription_status: 'past_due',
@@ -302,7 +313,8 @@ export async function POST(req: Request) {
             case 'customer.subscription.deleted': {
                 tenantId = session.metadata?.tenantId;
                 if (tenantId) {
-                    await supabase
+                    const supabaseAdmin = createSupabaseAdminClient();
+                    await supabaseAdmin
                         .from('tenants')
                         .update({
                             subscription_status: 'cancelled',
@@ -326,11 +338,14 @@ export async function POST(req: Request) {
                         'trialing': 'trial',
                     };
 
-                    await supabase
+                    const supabaseAdmin = createSupabaseAdminClient();
+                    await supabaseAdmin
                         .from('tenants')
                         .update({
                             subscription_status: statusMap[session.status] || 'suspended',
+                            subscription_plan: session.metadata?.plan || 'starter',
                             current_period_end: new Date(session.current_period_end * 1000).toISOString(),
+                            trial_ends_at: session.status === 'trialing' ? new Date(session.trial_end * 1000).toISOString() : null,
                         })
                         .eq('id', tenantId);
 
@@ -344,7 +359,8 @@ export async function POST(req: Request) {
                 const tenantId = account.metadata?.tenantId;
 
                 if (tenantId && account.details_submitted) {
-                    await supabase
+                    const supabaseAdmin = createSupabaseAdminClient();
+                    await supabaseAdmin
                         .from('tenants')
                         .update({
                             stripe_connect_onboarded: true,
@@ -366,7 +382,8 @@ export async function POST(req: Request) {
                 // Handle refunds
                 const charge = session;
                 if (charge.payment_intent) {
-                    await supabase
+                    const supabaseAdmin = createSupabaseAdminClient();
+                    await supabaseAdmin
                         .from('stripe_payments')
                         .update({
                             status: 'refunded',

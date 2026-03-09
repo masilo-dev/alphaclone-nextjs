@@ -2,6 +2,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { addMinutes } from 'date-fns';
+import { PLAN_PRICING } from '@/services/tenancy/types';
 
 
 // Helper to get Supabase Admin Client
@@ -63,18 +64,34 @@ export async function POST(req: NextRequest) {
 
         const hostId = host.user_id;
 
-        // 3. Check Limits (if Trial)
-        // Simplified limit check for now
-        if (tenant.subscription_status === 'trial') {
+        // 3. Check Limits & Status
+        const status = tenant.subscription_status;
+        const trialEndsAt = tenant.trial_ends_at ? new Date(tenant.trial_ends_at) : null;
+        const isTrialExpired = status === 'trial' && trialEndsAt && trialEndsAt < new Date();
+
+        if (status === 'suspended' || status === 'cancelled' || isTrialExpired) {
+            return NextResponse.json({
+                error: 'Subscription Required',
+                message: isTrialExpired ? 'Your trial has expired.' : 'Your subscription is inactive. Please update your billing details.'
+            }, { status: 403 });
+        }
+
+        if (status === 'trial') {
             const { count } = await supabaseAdmin
                 .from('video_calls')
                 .select('*', { count: 'exact', head: true })
                 .eq('host_id', hostId);
 
-            // Hardcoded limit from types.ts
-            const MAX_MEETINGS = 2;
-            if (count && count >= MAX_MEETINGS) {
-                return NextResponse.json({ error: 'Trial limit reached' }, { status: 403 });
+            // Get limits from PLAN_PRICING
+            const plan = tenant.subscription_plan || 'free';
+            const planLimits = PLAN_PRICING[plan as keyof typeof PLAN_PRICING]?.features;
+            const MAX_MEETINGS = planLimits?.maxVideoMeetingsPerMonth || 2;
+
+            if (MAX_MEETINGS !== -1 && count && count >= MAX_MEETINGS) {
+                return NextResponse.json({
+                    error: 'Trial limit reached',
+                    message: `You've reached the limit of ${MAX_MEETINGS} meetings for your trial on the ${plan} plan.`
+                }, { status: 403 });
             }
         }
 

@@ -10,7 +10,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardShellSkeleton } from '@/components/ui/TabSkeleton';
 import { SessionTimeoutWarning, useSessionTimeoutWarning } from '@/components/SessionTimeoutWarning';
-import { useTenant } from '@/contexts/TenantContext'; // Assuming this import is needed for useTenant
+import { useTenant } from '@/contexts/TenantContext';
+import { SubscriptionGuard } from '@/components/SubscriptionGuard';
 
 export default function DashboardPage() {
     const [projects, setProjects] = useState<Project[]>([]);
@@ -46,7 +47,7 @@ export default function DashboardPage() {
     if (!user || needsMfa) return <DashboardShellSkeleton />;
 
     return (
-        <>
+        <SubscriptionGuard>
             <Dashboard
                 user={user}
                 onLogout={handleLogout}
@@ -63,6 +64,6 @@ export default function DashboardPage() {
                 onExtendSession={extendSession}
                 onLogout={handleLogout}
             />
-        </>
+        </SubscriptionGuard>
     );
 }
