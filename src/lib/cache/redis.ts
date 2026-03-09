@@ -6,10 +6,17 @@ import { Redis } from '@upstash/redis';
  */
 
 // Initialize Upstash Redis client
-export const redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL || '',
-    token: process.env.UPSTASH_REDIS_REST_TOKEN || '',
-});
+const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+export const redisEnabled = !!(redisUrl && redisToken);
+
+export const redis = redisEnabled
+    ? new Redis({
+        url: redisUrl!,
+        token: redisToken!,
+    })
+    : null;
 
 /**
  * Cache TTL presets (in seconds)
@@ -63,6 +70,7 @@ export const cacheService = {
      * Get cached value
      */
     async get<T>(key: string): Promise<T | null> {
+        if (!redisEnabled || !redis) return null;
         try {
             const value = await redis.get(key);
             return value as T | null;
@@ -76,6 +84,7 @@ export const cacheService = {
      * Set cached value with TTL
      */
     async set(key: string, value: any, ttlSeconds: number = CacheTTL.MEDIUM): Promise<void> {
+        if (!redisEnabled || !redis) return;
         try {
             await redis.setex(key, ttlSeconds, JSON.stringify(value));
         } catch (error) {
@@ -87,6 +96,7 @@ export const cacheService = {
      * Delete cached value
      */
     async del(key: string): Promise<void> {
+        if (!redisEnabled || !redis) return;
         try {
             await redis.del(key);
         } catch (error) {
@@ -117,6 +127,7 @@ export const cacheService = {
         fetchFn: () => Promise<T>,
         ttl: number = CacheTTL.MEDIUM
     ): Promise<T> {
+        if (!redisEnabled || !redis) return fetchFn();
         // Try to get from cache
         const cached = await this.get<T>(key);
         if (cached !== null) {
@@ -136,6 +147,7 @@ export const cacheService = {
      * Increment a counter
      */
     async incr(key: string): Promise<number> {
+        if (!redisEnabled || !redis) return 0;
         try {
             return await redis.incr(key);
         } catch (error) {
@@ -148,6 +160,7 @@ export const cacheService = {
      * Decrement a counter
      */
     async decr(key: string): Promise<number> {
+        if (!redisEnabled || !redis) return 0;
         try {
             return await redis.decr(key);
         } catch (error) {
@@ -160,6 +173,7 @@ export const cacheService = {
      * Check if key exists
      */
     async exists(key: string): Promise<boolean> {
+        if (!redisEnabled || !redis) return false;
         try {
             const result = await redis.exists(key);
             return result === 1;
@@ -173,6 +187,7 @@ export const cacheService = {
      * Set key expiration
      */
     async expire(key: string, seconds: number): Promise<void> {
+        if (!redisEnabled || !redis) return;
         try {
             await redis.expire(key, seconds);
         } catch (error) {
@@ -184,6 +199,7 @@ export const cacheService = {
      * Get remaining TTL
      */
     async ttl(key: string): Promise<number> {
+        if (!redisEnabled || !redis) return -1;
         try {
             return await redis.ttl(key);
         } catch (error) {

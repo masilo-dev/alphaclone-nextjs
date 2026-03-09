@@ -31,17 +31,25 @@ export async function GET() {
     }
 
     // 2. Check Redis connection
-    try {
-        const redisStart = Date.now();
-        await redis.ping();
+    const { redisEnabled } = await import('@/lib/cache/redis');
+    if (redisEnabled && redis) {
+        try {
+            const redisStart = Date.now();
+            await redis.ping();
+            checks.redis = {
+                status: 'healthy',
+                responseTime: Date.now() - redisStart,
+            };
+        } catch (error) {
+            checks.redis = {
+                status: 'unhealthy',
+                error: error instanceof Error ? error.message : 'Unknown error',
+            };
+        }
+    } else {
         checks.redis = {
-            status: 'healthy',
-            responseTime: Date.now() - redisStart,
-        };
-    } catch (error) {
-        checks.redis = {
-            status: 'unhealthy',
-            error: error instanceof Error ? error.message : 'Unknown error',
+            status: 'skipped',
+            message: 'Redis not configured',
         };
     }
 
