@@ -26,6 +26,7 @@ import BusinessDashboard from './dashboard/business/BusinessDashboard';
 import { useTenant } from '../contexts/TenantContext';
 
 import AIStudio from './dashboard/AIStudio';
+import AIStudioTab from './dashboard/AIStudioTab';
 import NotificationCenter from './dashboard/NotificationCenter';
 import ThemeToggle from './ThemeToggle';
 import EnhancedGlobalSearch from './dashboard/EnhancedGlobalSearch';
@@ -1012,7 +1013,11 @@ const Dashboard: React.FC<DashboardProps> = ({
         );
 
       case '/dashboard/ai-studio':
-        return <AIStudio />;
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <AIStudioTab user={user} />
+          </React.Suspense>
+        );
 
       // New Enterprise Views
       case '/dashboard/admin/tenants':

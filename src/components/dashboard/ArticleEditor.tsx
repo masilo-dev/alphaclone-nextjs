@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit, Trash2, Eye, EyeOff, Save, X, Loader2 } from 'lucide-react';
+import { TabSkeleton } from '../ui/TabSkeleton';
 import { articleService, Article } from '../../services/articleService';
 import toast from 'react-hot-toast';
 
@@ -81,7 +82,7 @@ const ArticleEditor: React.FC = () => {
     }, [loadArticles]);
 
     if (loading) {
-        return <div className="text-white">Loading...</div>;
+        return <TabSkeleton rows={4} showStats={false} />;
     }
 
     if (editing) {

@@ -1211,7 +1211,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                               <p className="text-slate-400">We'll be in touch with you shortly to discuss your project.</p>
                            </div>
                         ) : (
-                           <form onSubmit={handleContactSubmit} className="space-y-6">
+                           <form onSubmit={(e) => {
+                              e.preventDefault();
+                              if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactForm.email)) {
+                                 import('react-hot-toast').then(({ toast }) => toast.error('Please enter a valid email address'));
+                                 return;
+                              }
+                              handleContactSubmit(e);
+                           }} className="space-y-6">
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                  <Input
                                     label="Name"

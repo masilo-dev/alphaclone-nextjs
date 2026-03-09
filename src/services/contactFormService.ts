@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
+import { emailProviderService } from './EmailProviderService';
+
 
 export interface ContactSubmission {
     id: string;
@@ -48,7 +50,28 @@ export const contactService = {
                 return { success: false, error: dbError.message };
             }
 
-            // Email notification and admin notification are handled by database triggers
+            // Email notification to admin (Direct delivery via server API)
+            try {
+                await emailProviderService.sendEmail({
+                    to: 'info@alphaclone.tech',
+                    subject: `New Lead: ${name} via Contact Form`,
+                    html: `
+                        <div style="font-family: sans-serif; color: #333;">
+                            <h2>New Website Submission</h2>
+                            <p><strong>Name:</strong> ${name}</p>
+                            <p><strong>Email:</strong> ${email}</p>
+                            <hr />
+                            <p><strong>Message:</strong></p>
+                            <p style="white-space: pre-wrap;">${message}</p>
+                        </div>
+                    `,
+                    replyTo: email
+                });
+            } catch (emailErr) {
+                console.error('Failed to send admin notification email:', emailErr);
+                // We don't return error here because DB save was successful
+            }
+
 
             return { success: true, error: null };
         } catch (err) {

@@ -39,7 +39,7 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
   { label: 'Mail', href: '/dashboard/mail', icon: Mail },
   { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
   { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
-  { label: 'Creative Intel Lab', href: '/dashboard/ai-studio', icon: Palette, comingSoon: true },
+  { label: 'Creative Intel Lab', href: '/dashboard/ai-studio', icon: Palette },
   { label: 'Documents', href: '/dashboard/submit', icon: FileText },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
