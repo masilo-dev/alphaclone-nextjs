@@ -135,8 +135,17 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     };
 
     const getSubtotal = () => Math.round(lineItems.reduce((sum, item) => sum + (item.quantity * item.rate), 0) * 100) / 100;
-    const getTaxAmount = () => Math.round((getSubtotal() * (taxRate / 100)) * 100) / 100;
-    const getTotal = () => Math.max(0, Math.round((getSubtotal() + getTaxAmount() - discountAmount) * 100) / 100);
+    const getTaxAmount = () => {
+        const subtotal = getSubtotal();
+        const taxableAmount = Math.max(0, subtotal - discountAmount);
+        return Math.round((taxableAmount * (taxRate / 100)) * 100) / 100;
+    };
+    const getTotal = () => {
+        const subtotal = getSubtotal();
+        const taxableAmount = Math.max(0, subtotal - discountAmount);
+        const tax = getTaxAmount();
+        return Math.round((taxableAmount + tax) * 100) / 100;
+    };
 
     const handleSaveInvoice = async () => {
         if (!currentTenant?.id) {

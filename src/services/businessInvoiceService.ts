@@ -657,6 +657,13 @@ export const businessInvoiceService = {
             doc.text(`$${tax.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, pageWidth - margin, currentY, { align: 'right' });
         }
 
+        const discount = invoice.discountAmount || invoice.discount_amount || 0;
+        if (discount > 0) {
+            currentY += 6;
+            doc.text('Discount:', totalsX, currentY);
+            doc.text(`-$${discount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, pageWidth - margin, currentY, { align: 'right' });
+        }
+
         currentY += 10;
         doc.setFillColor(colors.primary);
         doc.roundedRect(totalsX - 5, currentY - 7, 70, 12, 1, 1, 'F');

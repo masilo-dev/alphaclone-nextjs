@@ -34,6 +34,8 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
         receivedBy: '',
         template: 'professional' as 'professional' | 'modern',
         items: [{ description: '', quantity: 1, price: 0 }] as ReceiptItem[],
+        discountAmount: 0,
+        taxRate: 0,
         notes: 'Thank you for your business.'
     }));
 
@@ -112,8 +114,15 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
         return Math.round(receiptData.items.reduce((sum, item) => sum + (item.quantity * item.price), 0) * 100) / 100;
     };
 
+    const calculateTax = (subtotal: number) => {
+        const taxableAmount = Math.max(0, subtotal - receiptData.discountAmount);
+        return Math.round((taxableAmount * (receiptData.taxRate / 100)) * 100) / 100;
+    };
+
     const calculateTotal = () => {
-        return calculateSubtotal(); // Add tax logic here if needed
+        const subtotal = calculateSubtotal();
+        const tax = calculateTax(subtotal);
+        return Math.round((subtotal - receiptData.discountAmount + tax) * 100) / 100;
     };
 
     const handleSaveToDrive = async () => {
@@ -228,19 +237,33 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                 // Totals
                 const finalY = (doc as any).lastAutoTable.finalY || 100;
                 doc.setFontSize(10);
+                doc.setTextColor(30, 41, 59); // Slate 800
                 doc.text('Subtotal:', 140, finalY + 10);
-                doc.text(`$${subtotal.toFixed(2)}`, 170, finalY + 10);
+                doc.text(`$${subtotal.toFixed(2)}`, 170, finalY + 10, { align: 'right' });
 
+                if (receiptData.discountAmount > 0) {
+                    doc.text('Discount:', 140, finalY + 16);
+                    doc.text(`-$${receiptData.discountAmount.toFixed(2)}`, 170, finalY + 16, { align: 'right' });
+                }
+
+                if (receiptData.taxRate > 0) {
+                    const taxLineY = receiptData.discountAmount > 0 ? 22 : 16;
+                    doc.text(`Tax (${receiptData.taxRate}%):`, 140, finalY + taxLineY);
+                    doc.text(`$${calculateTax(subtotal).toFixed(2)}`, 170, finalY + taxLineY, { align: 'right' });
+                }
+
+                const totalLineY = (receiptData.discountAmount > 0 ? 6 : 0) + (receiptData.taxRate > 0 ? 6 : 0) + 20;
                 doc.setFontSize(12);
                 doc.setFont('helvetica', 'bold');
-                doc.text('Total Paid:', 140, finalY + 18);
-                doc.text(`$${total.toFixed(2)}`, 170, finalY + 18);
+                doc.setTextColor(30, 41, 59);
+                doc.text('Total Paid:', 140, finalY + totalLineY);
+                doc.text(`$${total.toFixed(2)}`, 170, finalY + totalLineY, { align: 'right' });
 
                 // Notes
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(10);
                 doc.setTextColor(100, 116, 139);
-                doc.text(receiptData.notes, 14, finalY + 40);
+                doc.text(receiptData.notes, 14, finalY + totalLineY + 15);
 
             } else {
                 // Template 2: Modern / Minimalist
@@ -308,24 +331,44 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
 
                 const finalY = (doc as any).lastAutoTable.finalY || 100;
 
+                // Totals
+                const totalsY = finalY + 10;
+                doc.setFontSize(10);
+                doc.setTextColor(100, 116, 139);
+                doc.text('Subtotal:', 140, totalsY);
+                doc.text(`$${subtotal.toFixed(2)}`, 196, totalsY, { align: 'right' });
+
+                let currentTotalY = totalsY + 6;
+                if (receiptData.discountAmount > 0) {
+                    doc.text('Discount:', 140, currentTotalY);
+                    doc.text(`-$${receiptData.discountAmount.toFixed(2)}`, 196, currentTotalY, { align: 'right' });
+                    currentTotalY += 6;
+                }
+
+                if (receiptData.taxRate > 0) {
+                    doc.text(`Tax (${receiptData.taxRate}%):`, 140, currentTotalY);
+                    doc.text(`$${calculateTax(subtotal).toFixed(2)}`, 196, currentTotalY, { align: 'right' });
+                    currentTotalY += 6;
+                }
+
                 // Big Total Area
                 doc.setFillColor(241, 245, 249); // slate 100
-                doc.rect(130, finalY + 10, 66, 25, 'F');
+                doc.rect(130, currentTotalY + 4, 66, 25, 'F');
 
                 doc.setFontSize(11);
                 doc.setTextColor(100, 116, 139);
-                doc.text('Total Paid', 135, finalY + 18);
+                doc.text('Total Paid', 135, currentTotalY + 12);
 
                 doc.setFontSize(16);
                 doc.setTextColor(15, 23, 42);
                 doc.setFont('helvetica', 'bold');
-                doc.text(`$${total.toFixed(2)}`, 135, finalY + 28);
+                doc.text(`$${total.toFixed(2)}`, 135, currentTotalY + 22);
 
                 // Notes
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(10);
                 doc.setTextColor(100, 116, 139);
-                doc.text(receiptData.notes, 14, finalY + 50);
+                doc.text(receiptData.notes, 14, currentTotalY + 40);
             }
 
             if (mode === 'download') {
@@ -585,10 +628,54 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                             ))}
                         </div>
 
-                        <div className="mt-4 flex justify-end">
-                            <div className="text-right">
-                                <p className="text-slate-400 text-sm">Total Amount Received</p>
-                                <p className="text-2xl font-bold text-white">${calculateTotal().toFixed(2)}</p>
+                        <div className="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 bg-slate-800/30 p-4 rounded-xl border border-slate-700/50">
+                            <div className="flex flex-wrap gap-4 w-full sm:w-auto">
+                                <div>
+                                    <label className="block text-xs text-slate-500 mb-1">Discount ($)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={receiptData.discountAmount}
+                                        onChange={(e) => setReceiptData({ ...receiptData, discountAmount: parseFloat(e.target.value) || 0 })}
+                                        className="w-24 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs text-slate-500 mb-1">Tax (%)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.1"
+                                        value={receiptData.taxRate}
+                                        onChange={(e) => setReceiptData({ ...receiptData, taxRate: parseFloat(e.target.value) || 0 })}
+                                        className="w-24 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors"
+                                    />
+                                </div>
+                            </div>
+                            <div className="text-right w-full sm:w-auto">
+                                <div className="space-y-1">
+                                    <div className="flex justify-end gap-10 text-slate-400 text-sm">
+                                        <span>Subtotal</span>
+                                        <span>${calculateSubtotal().toFixed(2)}</span>
+                                    </div>
+                                    {receiptData.discountAmount > 0 && (
+                                        <div className="flex justify-end gap-10 text-rose-400 text-sm">
+                                            <span>Discount</span>
+                                            <span>-${receiptData.discountAmount.toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    {receiptData.taxRate > 0 && (
+                                        <div className="flex justify-end gap-10 text-slate-400 text-sm">
+                                            <span>Tax ({receiptData.taxRate}%)</span>
+                                            <span>${calculateTax(calculateSubtotal()).toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    <div className="pt-2 border-t border-slate-700">
+                                        <p className="text-slate-400 text-xs uppercase tracking-widest font-bold">Total Amount Received</p>
+                                        <p className="text-3xl font-black text-white italic tracking-tight">${calculateTotal().toFixed(2)}</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
