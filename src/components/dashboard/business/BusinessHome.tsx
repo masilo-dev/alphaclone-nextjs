@@ -5,6 +5,7 @@ import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { businessClientService } from '../../../services/businessClientService';
 import { dailyService } from '../../../services/dailyService';
+import { supabase } from '../../../lib/supabase';
 import {
     DollarSign,
     Users,
@@ -21,9 +22,32 @@ import {
     CheckSquare,
     FileText,
     UserPlus,
-    Zap
+    Zap,
+    Sun,
+    Sunset,
+    Moon,
+    Star,
+    XCircle,
+    Loader2
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+
+// ─── Greeting Helpers ────────────────────────────────────────────────
+function getGreeting(): { text: string; Icon: React.FC<any> } {
+    const h = new Date().getHours();
+    if (h >= 5 && h < 12) return { text: 'Good morning', Icon: Sun };
+    if (h >= 12 && h < 17) return { text: 'Good afternoon', Icon: Sun };
+    if (h >= 17 && h < 21) return { text: 'Good evening', Icon: Sunset };
+    return { text: 'Good night', Icon: Moon };
+}
+
+interface InvoiceStats {
+    overdue: number;
+    dueSoon: number;
+    inProgress: number;
+    totalActive: number;
+    loadingInvoices: boolean;
+}
 
 interface BusinessHomeProps {
     user: User;
@@ -42,6 +66,11 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
     const [pipelineData, setPipelineData] = useState<any[]>([]);
     const [recentActivity, setRecentActivity] = useState<any[]>(stats?.recentActivity || []);
     const [loading, setLoading] = useState(!stats);
+    const [invoiceStats, setInvoiceStats] = useState<InvoiceStats>({
+        overdue: 0, dueSoon: 0, inProgress: 0, totalActive: 0, loadingInvoices: true
+    });
+    const greeting = getGreeting();
+    const firstName = (user.name || user.email || 'there').split(' ')[0];
 
     const mapPipelineData = (pipeline: Record<string, number>) => {
         const stageLabels: Record<string, string> = {
@@ -82,6 +111,40 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
         }
     }, [stats]);
 
+    // Fetch live invoice stats
+    useEffect(() => {
+        const fetchInvoiceStats = async () => {
+            if (!currentTenant?.id) return;
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const sevenDaysLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+                const { data: invoices, error } = await supabase
+                    .from('business_invoices')
+                    .select('status, due_date')
+                    .eq('tenant_id', currentTenant.id);
+
+                if (error || !invoices) throw error;
+
+                let overdue = 0, dueSoon = 0, inProgress = 0, totalActive = 0;
+                for (const inv of invoices) {
+                    const st = (inv.status || '').toLowerCase();
+                    if (st === 'paid' || st === 'cancelled') continue;
+                    totalActive++;
+                    if (st === 'sent' || st === 'pending') {
+                        if (inv.due_date && inv.due_date < today) overdue++;
+                        else if (inv.due_date && inv.due_date <= sevenDaysLater) dueSoon++;
+                    }
+                    if (st === 'draft' || st === 'in_progress' || st === 'sent') inProgress++;
+                }
+                setInvoiceStats({ overdue, dueSoon, inProgress, totalActive, loadingInvoices: false });
+            } catch {
+                setInvoiceStats(prev => ({ ...prev, loadingInvoices: false }));
+            }
+        };
+        fetchInvoiceStats();
+    }, [currentTenant?.id]);
+
     // Always render — stats default to 0 and update when the async fetch resolves.
     // Removing the loading guard so the dashboard is never stuck on "Loading dashboard..."
 
@@ -90,6 +153,90 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
 
     return (
         <div className="space-y-6">
+
+            {/* ─── Personalized Greeting Banner ─── */}
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800/80 via-slate-900/60 to-teal-900/20 border border-slate-700/50 p-6 md:p-8">
+                {/* Background glow */}
+                <div className="absolute inset-0 bg-gradient-to-r from-teal-500/5 via-transparent to-violet-500/5 pointer-events-none" />
+                <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <greeting.Icon className="w-5 h-5 text-amber-400" />
+                            <span className="text-slate-400 text-sm font-medium">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+                        </div>
+                        <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+                            {greeting.text}, <span className="text-teal-400">{firstName}</span>! 👋
+                        </h2>
+                        <p className="text-slate-400 text-sm mt-1">
+                            {invoiceStats.overdue > 0
+                                ? `You have ${invoiceStats.overdue} overdue invoice${invoiceStats.overdue !== 1 ? 's' : ''} that need your attention.`
+                                : `Everything looks great — no overdue invoices today.`}
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500/30 ring-2 ring-teal-500/10">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src={user.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.email || user.name}`}
+                                alt={firstName}
+                                className="w-full h-full object-cover"
+                                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><rect width='48' height='48' fill='%230f766e'/><text x='50%' y='50%' font-size='20' fill='white' text-anchor='middle' dominant-baseline='central' font-family='sans-serif'>${firstName.charAt(0).toUpperCase()}</text></svg>`)}`; }}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Invoice Stats Row */}
+                <div className="relative mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                        {
+                            label: 'Overdue',
+                            value: invoiceStats.overdue,
+                            icon: XCircle,
+                            color: invoiceStats.overdue > 0 ? 'text-red-400' : 'text-slate-500',
+                            bg: invoiceStats.overdue > 0 ? 'bg-red-500/10 border-red-500/20' : 'bg-slate-800/40 border-slate-700/30',
+                            pulse: invoiceStats.overdue > 0,
+                        },
+                        {
+                            label: 'Due Soon',
+                            value: invoiceStats.dueSoon,
+                            icon: Clock,
+                            color: invoiceStats.dueSoon > 0 ? 'text-amber-400' : 'text-slate-500',
+                            bg: invoiceStats.dueSoon > 0 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-800/40 border-slate-700/30',
+                            pulse: false,
+                        },
+                        {
+                            label: 'In Progress',
+                            value: invoiceStats.inProgress,
+                            icon: TrendingUp,
+                            color: 'text-blue-400',
+                            bg: 'bg-blue-500/10 border-blue-500/20',
+                            pulse: false,
+                        },
+                        {
+                            label: 'Total Active',
+                            value: invoiceStats.totalActive,
+                            icon: FileText,
+                            color: 'text-teal-400',
+                            bg: 'bg-teal-500/10 border-teal-500/20',
+                            pulse: false,
+                        },
+                    ].map(({ label, value, icon: Icon, color, bg, pulse }) => (
+                        <div key={label} className={`flex items-center gap-3 rounded-xl border p-3 transition-all ${bg}`}>
+                            <div className={`shrink-0 ${pulse ? 'animate-pulse' : ''}`}>
+                                <Icon className={`w-5 h-5 ${color}`} />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-slate-400 text-xs font-medium truncate">{label}</p>
+                                {invoiceStats.loadingInvoices
+                                    ? <Loader2 className="w-4 h-4 text-slate-600 animate-spin mt-0.5" />
+                                    : <p className={`text-xl font-bold ${color} leading-none mt-0.5`}>{value}</p>
+                                }
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
 
             {/* Metrics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
