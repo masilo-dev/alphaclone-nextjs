@@ -136,9 +136,9 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
         : invoices.filter(inv => inv.status === filter);
 
     const stats = {
-        total: invoices.reduce((sum, inv) => sum + inv.total, 0),
-        paid: invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + inv.total, 0),
-        pending: invoices.filter(inv => inv.status !== 'paid').reduce((sum, inv) => sum + inv.total, 0)
+        total: Math.round(invoices.reduce((sum, inv) => sum + (inv.total || 0), 0) * 100) / 100,
+        paid: Math.round(invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + (inv.total || 0), 0) * 100) / 100,
+        pending: Math.round(invoices.filter(inv => inv.status !== 'paid').reduce((sum, inv) => sum + (inv.total || 0), 0) * 100) / 100
     };
 
     if (loading) {
@@ -460,7 +460,7 @@ const CreateInvoiceModal = ({ clients, projects, contracts, isOpen, onClose, onI
         newItems[index] = { ...newItems[index], [field]: value };
 
         if (field === 'quantity' || field === 'rate') {
-            newItems[index].amount = newItems[index].quantity * newItems[index].rate;
+            newItems[index].amount = Math.round(newItems[index].quantity * newItems[index].rate * 100) / 100;
         }
 
         setFormData({ ...formData, lineItems: newItems });

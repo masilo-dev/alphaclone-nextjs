@@ -370,14 +370,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 initSession();
             }
         }, 2000);
-        // Safety net: force stop loading after 30s — only stops the spinner, does NOT clear the user.
-        // Increased to 30s to cover slow auth initializations and tenant creations on Vercel cold starts.
+        // Safety net: force stop loading after 10s — only stops the spinner, does NOT clear the user.
+        // Reduced to 10s due to optimized getSession timeouts.
         const safetyTimeout = setTimeout(() => {
             if (isMounted) {
-                console.warn('[AuthContext] Safety timeout reached (30s). Forcing loading to false. If user state exists it is preserved.');
+                console.warn('[AuthContext] Safety timeout reached (10s). Forcing loading to false. If user state exists it is preserved.');
                 setLoading(false);
             }
-        }, 30000);
+        }, 10000);
 
         return () => {
             isMounted = false;

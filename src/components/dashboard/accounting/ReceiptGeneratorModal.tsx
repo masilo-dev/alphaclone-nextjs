@@ -109,7 +109,7 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
     };
 
     const calculateSubtotal = () => {
-        return receiptData.items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+        return Math.round(receiptData.items.reduce((sum, item) => sum + (item.quantity * item.price), 0) * 100) / 100;
     };
 
     const calculateTotal = () => {

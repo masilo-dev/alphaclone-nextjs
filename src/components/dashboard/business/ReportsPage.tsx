@@ -83,9 +83,9 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
             const { invoices } = await businessInvoiceService.getInvoices(currentTenant.id);
 
             // Calculate stats
-            const totalRevenue = invoices
+            const totalRevenue = Math.round(invoices
                 .filter(inv => inv.status === 'paid')
-                .reduce((sum, inv) => sum + inv.total, 0);
+                .reduce((sum, inv) => sum + (inv.total || 0), 0) * 100) / 100;
 
             const activeProjects = projects.filter(p => p.status === 'Active' || p.status === 'Pending').length;
             const completedProjects = projects.filter(p => p.status === 'Completed').length;
@@ -114,7 +114,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 const invDate = new Date(inv.issueDate);
                 const monthEntry = last6Months.find(m => m.monthIndex === invDate.getMonth() && m.year === invDate.getFullYear());
                 if (monthEntry) {
-                    monthEntry.revenue += inv.total;
+                    monthEntry.revenue = Math.round((monthEntry.revenue + inv.total) * 100) / 100;
                 }
             });
 

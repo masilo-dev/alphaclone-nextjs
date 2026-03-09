@@ -382,7 +382,7 @@ export const authService = {
             const maxAttempts = isAuthCallback ? 3 : 1;
 
             for (let i = 0; i < maxAttempts; i++) {
-                const { data: { session: s }, error } = await withAuthTimeout(supabase.auth.getSession());
+                const { data: { session: s }, error } = await withAuthTimeout(supabase.auth.getSession(), 5000);
                 if (s?.user) {
                     session = s;
                     if (isAuthCallback) sessionStorage.removeItem('auth_callback_in_progress');

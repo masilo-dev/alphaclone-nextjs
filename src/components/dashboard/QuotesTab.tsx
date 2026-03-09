@@ -250,7 +250,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
     };
 
     const calculateSubtotal = () => {
-        return lineItems.reduce((sum: number, item: Partial<QuoteItem>) => sum + ((item.quantity || 0) * (item.unitPrice || 0)), 0);
+        return Math.round(lineItems.reduce((sum: number, item: Partial<QuoteItem>) => sum + ((item.quantity || 0) * (item.unitPrice || 0)), 0) * 100) / 100;
     };
 
     const handleViewQuote = async (quoteId: string) => {

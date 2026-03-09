@@ -34,6 +34,12 @@ export async function POST(req: NextRequest) {
         const base64Data = Buffer.from(buffer).toString('base64');
         const mimeType = file.type;
 
+        // Ensure we only process supported image formats
+        const supportedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (!supportedTypes.includes(mimeType)) {
+            return NextResponse.json({ error: `Unsupported file type: ${mimeType}. Please upload a clear image (JPEG, PNG, WEBP).` }, { status: 400 });
+        }
+
         // 2. Determine which AI provider to use
         // Prioritize OpenAI for Vision (GPT-4o), fallback to Claude
         let extractedData = null;

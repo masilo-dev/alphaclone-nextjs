@@ -79,8 +79,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                 const pdfjsLib = pdfjsModule.default || pdfjsModule;
 
                 if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
-                    const version = pdfjsLib.version || '5.4.624';
-                    // Use a more reliable worker source URL structure for v5.x
+                    const version = '3.11.174'; // Fixed version to match fileImportService
+                    // Use a more reliable worker source URL structure
                     pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.mjs`;
                 }
 

@@ -269,9 +269,9 @@ export const businessClientService = {
             ]);
 
             const invoices = invoiceData || [];
-            const totalRevenue = invoices
+            const totalRevenue = Math.round(invoices
                 .filter((i: any) => i.status === 'paid')
-                .reduce((sum: number, i: any) => sum + (i.amount || 0), 0);
+                .reduce((sum: number, i: any) => sum + (i.amount || 0), 0) * 100) / 100;
             const pendingInvoices = invoices.filter((i: any) => i.status === 'pending').length;
 
             const stats: DashboardStats = {

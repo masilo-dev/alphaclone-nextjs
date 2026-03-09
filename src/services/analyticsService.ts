@@ -82,14 +82,14 @@ export const analyticsService = {
 
         if (error) throw error;
 
-        const totalRevenue = (invoices || []).reduce((sum: number, inv: { amount: number | null }) => sum + (inv.amount || 0), 0);
+        const totalRevenue = Math.round((invoices || []).reduce((sum: number, inv: { amount: number | null }) => sum + (inv.amount || 0), 0) * 100) / 100;
 
         // This month
         const thisMonthStart = startOfDay(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
         const thisMonthInvoices = (invoices || []).filter(
             (inv: { created_at: string | number | Date }) => new Date(inv.created_at) >= thisMonthStart
         );
-        const thisMonth = thisMonthInvoices.reduce((sum: number, inv: { amount: number | null }) => sum + (inv.amount || 0), 0);
+        const thisMonth = Math.round(thisMonthInvoices.reduce((sum: number, inv: { amount: number | null }) => sum + (inv.amount || 0), 0) * 100) / 100;
 
         // Last month
         const lastMonthStart = startOfDay(new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1));
@@ -101,7 +101,7 @@ export const analyticsService = {
             .eq('tenant_id', tenantService.getCurrentTenantId())
             .gte('created_at', lastMonthStart.toISOString())
             .lte('created_at', lastMonthEnd.toISOString());
-        const lastMonth = (lastMonthInvoices || []).reduce((sum: number, inv: { amount: number | null }) => sum + (inv.amount || 0), 0);
+        const lastMonth = Math.round((lastMonthInvoices || []).reduce((sum: number, inv: { amount: number | null }) => sum + (inv.amount || 0), 0) * 100) / 100;
 
         const trend = lastMonth > 0 ? ((thisMonth - lastMonth) / lastMonth) * 100 : 0;
 
@@ -112,7 +112,7 @@ export const analyticsService = {
             if (!byPeriod[date]) {
                 byPeriod[date] = { revenue: 0, projects: 0 };
             }
-            byPeriod[date].revenue += inv.amount || 0;
+            byPeriod[date].revenue = Math.round((byPeriod[date].revenue + (inv.amount || 0)) * 100) / 100;
         });
 
         // Get projects for same period

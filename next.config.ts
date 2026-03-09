@@ -43,7 +43,8 @@ const nextConfig: NextConfig = {
       default-src 'self';
       script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://va.vercel-scripts.com https://*.daily.co https://*.sentry.io;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-      img-src 'self' blob: data: https://*.supabase.co https://api.dicebear.com https://*.stripe.com https://img.logo.dev;
+      img-src 'self' blob: data: https://*.supabase.co https://api.dicebear.com https://*.stripe.com https://img.logo.dev https://images.unsplash.com;
+      media-src 'self' https://assets.mixkit.co;
       font-src 'self' data: https://fonts.gstatic.com;
       object-src 'none';
       base-uri 'self';

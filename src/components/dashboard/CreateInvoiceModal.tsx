@@ -134,9 +134,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         toast.success('Invoice preview generated');
     };
 
-    const getSubtotal = () => lineItems.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
-    const getTaxAmount = () => getSubtotal() * (taxRate / 100);
-    const getTotal = () => Math.max(0, getSubtotal() + getTaxAmount() - discountAmount);
+    const getSubtotal = () => Math.round(lineItems.reduce((sum, item) => sum + (item.quantity * item.rate), 0) * 100) / 100;
+    const getTaxAmount = () => Math.round((getSubtotal() * (taxRate / 100)) * 100) / 100;
+    const getTotal = () => Math.max(0, Math.round((getSubtotal() + getTaxAmount() - discountAmount) * 100) / 100);
 
     const handleSaveInvoice = async () => {
         if (!currentTenant?.id) {
@@ -161,7 +161,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 description: item.description,
                 quantity: item.quantity,
                 rate: item.rate,
-                amount: item.quantity * item.rate
+                amount: Math.round(item.quantity * item.rate * 100) / 100
             }));
 
             // Map to BusinessInvoice schema
@@ -248,7 +248,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 description: item.description,
                 quantity: item.quantity,
                 rate: item.rate,
-                amount: item.quantity * item.rate
+                amount: Math.round(item.quantity * item.rate * 100) / 100
             }));
 
             const amountNum = getSubtotal();

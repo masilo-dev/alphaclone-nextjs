@@ -266,7 +266,7 @@ const AnalyticsTab: React.FC = () => {
                         <Activity className="w-5 h-5 text-violet-500" /> Project Status Distribution
                     </h3>
                     <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height={300} minWidth={0}>
+                        <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={250}>
                             <PieChart>
                                 <Pie
                                     data={projectStatusData}

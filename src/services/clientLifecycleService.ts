@@ -54,7 +54,7 @@ class ClientLifecycleService {
                 activeDeals: 0, // Would link to deals table if needed
                 totalInvoices: invoices.length,
                 paidInvoices: invoices.filter((inv: any) => inv.status === 'paid').length,
-                totalRevenue: invoices.filter((inv: any) => inv.status === 'paid').reduce((sum: number, inv: any) => sum + (inv.total || 0), 0),
+                totalRevenue: Math.round(invoices.filter((inv: any) => inv.status === 'paid').reduce((sum: number, inv: any) => sum + (inv.total || 0), 0) * 100) / 100,
                 hasSignedContract: (contractsRes.data || []).length > 0,
                 lastActivity: activityRes.data?.[0]?.created_at || null
             };
@@ -102,7 +102,7 @@ class ClientLifecycleService {
                 activeDeals: 0,
                 totalInvoices: clientInvoices.length,
                 paidInvoices: clientInvoices.filter((inv: any) => inv.status === 'paid').length,
-                totalRevenue: clientInvoices.filter((inv: any) => inv.status === 'paid').reduce((sum: number, inv: any) => sum + (inv.total || 0), 0),
+                totalRevenue: Math.round(clientInvoices.filter((inv: any) => inv.status === 'paid').reduce((sum: number, inv: any) => sum + (inv.total || 0), 0) * 100) / 100,
                 hasSignedContract: false, // Contract check is better handled individually or via a joined query
                 lastActivity: null
             };

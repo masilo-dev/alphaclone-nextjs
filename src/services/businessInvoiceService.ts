@@ -731,12 +731,24 @@ export const businessInvoiceService = {
     async postInvoiceToGL(invoiceId: string, invoiceData: any): Promise<{ error: string | null }> {
         try {
             // Get account IDs for AR and Revenue
-            const { account: arAccount } = await chartOfAccountsService.getAccountByCode('1100');
-            const { account: revenueAccount } = await chartOfAccountsService.getAccountByCode('4100');
+            let { account: arAccount } = await chartOfAccountsService.getAccountByCode('1100');
+            let { account: revenueAccount } = await chartOfAccountsService.getAccountByCode('4100');
 
             if (!arAccount || !revenueAccount) {
-                console.warn('Accounts Receivable (1100) or Service Revenue (4100) not found. Skipping GL post.');
-                return { error: 'Required accounts not found in Chart of Accounts' };
+                console.warn('Accounts Receivable (1100) or Service Revenue (4100) not found. Attempting to initialize default accounts...');
+                await chartOfAccountsService.initializeDefaultAccounts();
+
+                // Retry fetching accounts
+                const arRetry = await chartOfAccountsService.getAccountByCode('1100');
+                const revRetry = await chartOfAccountsService.getAccountByCode('4100');
+
+                arAccount = arRetry.account;
+                revenueAccount = revRetry.account;
+
+                if (!arAccount || !revenueAccount) {
+                    console.error('Failed to initialize or retrieve required accounts (1100, 4100). Skipping GL post.');
+                    return { error: 'Required accounts not found and could not be initialized in Chart of Accounts' };
+                }
             }
 
             const total = parseFloat(invoiceData.total || '0');
@@ -795,12 +807,24 @@ export const businessInvoiceService = {
     async postPaymentToGL(invoiceId: string, invoiceData: any): Promise<{ error: string | null }> {
         try {
             // Get account IDs for Cash and AR
-            const { account: cashAccount } = await chartOfAccountsService.getAccountByCode('1000');
-            const { account: arAccount } = await chartOfAccountsService.getAccountByCode('1100');
+            let { account: cashAccount } = await chartOfAccountsService.getAccountByCode('1000');
+            let { account: arAccount } = await chartOfAccountsService.getAccountByCode('1100');
 
             if (!cashAccount || !arAccount) {
-                console.warn('Cash (1000) or Accounts Receivable (1100) not found. Skipping GL post.');
-                return { error: 'Required accounts not found in Chart of Accounts' };
+                console.warn('Cash (1000) or Accounts Receivable (1100) not found. Attempting to initialize default accounts...');
+                await chartOfAccountsService.initializeDefaultAccounts();
+
+                // Retry fetching accounts
+                const cashRetry = await chartOfAccountsService.getAccountByCode('1000');
+                const arRetry = await chartOfAccountsService.getAccountByCode('1100');
+
+                cashAccount = cashRetry.account;
+                arAccount = arRetry.account;
+
+                if (!cashAccount || !arAccount) {
+                    console.error('Failed to initialize or retrieve required accounts (1000, 1100). Skipping GL post.');
+                    return { error: 'Required accounts not found and could not be initialized in Chart of Accounts' };
+                }
             }
 
             const total = parseFloat(invoiceData.total || '0');

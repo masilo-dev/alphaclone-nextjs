@@ -720,9 +720,9 @@ export const dealService: DealService = {
 
             if (error) throw error;
 
-            const weightedValue = (data || []).reduce((sum: number, deal: any) => {
+            const weightedValue = Math.round((data || []).reduce((sum: number, deal: any) => {
                 return sum + ((deal.value || 0) * (deal.probability || 0)) / 100;
-            }, 0);
+            }, 0) * 100) / 100;
 
             return { value: weightedValue, error: null };
         } catch (err) {
@@ -795,9 +795,9 @@ export const dealService: DealService = {
             (data || []).forEach((deal: any) => {
                 const closeDate = new Date(deal.expected_close_date);
                 const month = closeDate.toLocaleString('default', { month: 'short', year: 'numeric' });
-                const weightedValue = ((deal.value || 0) * (deal.probability || 0)) / 100;
+                const weightedValue = Math.round((((deal.value || 0) * (deal.probability || 0)) / 100) * 100) / 100;
 
-                forecastMap.set(month, (forecastMap.get(month) || 0) + weightedValue);
+                forecastMap.set(month, Math.round(((forecastMap.get(month) || 0) + weightedValue) * 100) / 100);
             });
 
             const forecast = Array.from(forecastMap.entries()).map(([month, value]) => ({
