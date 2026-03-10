@@ -138,7 +138,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Sync sidebar on mount to avoid hydration mismatch
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setSidebarOpen(window.innerWidth >= 1024);
+      setSidebarOpen(window.innerWidth >= 768);
     }
   }, []);
   const [activeTab, setActiveTab] = useState(location || '/dashboard');
