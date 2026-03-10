@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     CreditCard,
     Shield,
@@ -46,9 +46,17 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const validSections = ['profile', 'notifications', 'security', 'appearance', 'billing', 'booking'];
     const defaultSection = validSections.includes(initialSection) ? initialSection : 'profile';
 
-    const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'security' | 'appearance' | 'billing' | 'booking' | 'branding' | null>(window.innerWidth < 1024 ? null : defaultSection);
+    const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'security' | 'appearance' | 'billing' | 'booking' | 'branding' | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const { currentTenant } = useTenant();
+
+    // Fix hydration issue - set initial section after mount
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const isMobile = window.innerWidth < 1024;
+            setActiveSection(isMobile ? null : defaultSection);
+        }
+    }, [defaultSection]);
 
     const [profileData, setProfileData] = useState({
         name: user.name,

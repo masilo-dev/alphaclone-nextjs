@@ -77,7 +77,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     window.location.reload();
   }, [userTenants]);
 
-  const loadUserTenants = useCallback(async (timeoutId?: NodeJS.Timeout) => {
+  const loadUserTenants = useCallback(async function loadUserTenantsImpl(timeoutId?: NodeJS.Timeout) {
     if (!user?.id) return;
 
     try {
@@ -96,7 +96,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         // This handles replication lag or transient database issues during rapid redirects
         console.log('[TenantContext] No tenants found on first attempt, retrying in 1s...');
         await new Promise(r => setTimeout(r, 1000));
-        return await loadUserTenants(undefined); // undefined to mark it as the retry
+        return await loadUserTenantsImpl(undefined); // undefined to mark it as the retry
       }
 
       if (tenants.length > 0) {

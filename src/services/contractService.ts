@@ -56,7 +56,9 @@ export const contractService = {
                 project_id: contract.project_id,
                 client_id: contract.client_id, // Link to Client profile
                 owner_id: userData.user?.id,   // Link to Admin user
-                status: 'draft',
+                status: contract.status || 'draft',
+                admin_signature: contract.admin_signature,
+                admin_signed_at: contract.admin_signed_at,
                 payment_due_date: contract.payment_due_date,
                 payment_amount: contract.payment_amount,
                 payment_status: contract.payment_status || 'pending'

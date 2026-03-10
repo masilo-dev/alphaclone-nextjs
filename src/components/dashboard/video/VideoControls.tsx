@@ -34,6 +34,62 @@ interface VideoControlsProps {
     unreadMessageCount?: number;
 }
 
+interface ControlButtonProps {
+    onClick: () => void;
+    active?: boolean;
+    icon: React.ElementType;
+    activeIcon?: React.ElementType;
+    label: string;
+    danger?: boolean;
+    highlight?: boolean;
+    badgeCount?: number;
+}
+
+const ControlButton: React.FC<ControlButtonProps> = ({
+    onClick,
+    active,
+    icon: Icon,
+    activeIcon: ActiveIcon,
+    label,
+    danger,
+    highlight,
+    badgeCount
+}) => (
+    <div className="flex flex-col items-center gap-1 group">
+        <button
+            onClick={onClick}
+            className={`
+                relative flex items-center justify-center
+                w-12 h-12 sm:w-14 sm:h-14 rounded-full
+                transition-all duration-300 transform active:scale-90
+                ${danger
+                    ? 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/40'
+                    : highlight
+                        ? 'bg-teal-600 hover:bg-teal-500 text-white shadow-lg shadow-teal-900/40'
+                        : active
+                            ? 'bg-red-500/20 border-2 border-red-500/50 text-red-500 hover:bg-red-500/30'
+                            : 'bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-white/10'
+                }
+            `}
+            title={label}
+        >
+            {(active && ActiveIcon) ? <ActiveIcon className="w-5 h-5 sm:w-6 sm:h-6" /> : <Icon className="w-5 h-5 sm:w-6 sm:h-6" />}
+
+            {badgeCount && badgeCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-5 w-5 bg-red-500 border-2 border-slate-900 text-[10px] font-bold text-white items-center justify-center">
+                        {badgeCount && badgeCount > 9 ? '9+' : badgeCount}
+                    </span>
+                </span>
+            )}
+        </button>
+        <span className="text-[10px] sm:text-xs font-medium text-slate-400 group-hover:text-white transition-colors">
+            {label}
+        </span>
+    </div>
+);
+
 /**
  * Custom Video Controls Bar - Zoom/Teams Style
  * Optimized for both Desktop and Mobile
@@ -92,50 +148,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({
         }
     };
 
-    const ControlButton = ({
-        onClick,
-        active,
-        icon: Icon,
-        activeIcon: ActiveIcon,
-        label,
-        danger,
-        highlight,
-        badgeCount
-    }: any) => (
-        <div className="flex flex-col items-center gap-1 group">
-            <button
-                onClick={onClick}
-                className={`
-                    relative flex items-center justify-center
-                    w-12 h-12 sm:w-14 sm:h-14 rounded-full
-                    transition-all duration-300 transform active:scale-90
-                    ${danger
-                        ? 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/40'
-                        : highlight
-                            ? 'bg-teal-600 hover:bg-teal-500 text-white shadow-lg shadow-teal-900/40'
-                            : active
-                                ? 'bg-red-500/20 border-2 border-red-500/50 text-red-500 hover:bg-red-500/30'
-                                : 'bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-white/10'
-                    }
-                `}
-                title={label}
-            >
-                {(active && ActiveIcon) ? <ActiveIcon className="w-5 h-5 sm:w-6 sm:h-6" /> : <Icon className="w-5 h-5 sm:w-6 sm:h-6" />}
 
-                {badgeCount > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-5 w-5 bg-red-500 border-2 border-slate-900 text-[10px] font-bold text-white items-center justify-center">
-                            {badgeCount > 9 ? '9+' : badgeCount}
-                        </span>
-                    </span>
-                )}
-            </button>
-            <span className="text-[10px] sm:text-xs font-medium text-slate-400 group-hover:text-white transition-colors">
-                {label}
-            </span>
-        </div>
-    );
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 sm:pb-8 pointer-events-none">
