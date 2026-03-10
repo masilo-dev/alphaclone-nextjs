@@ -1,4 +1,5 @@
 'use client';
+// Deployment trigger: 2026-03-10 - Authentication fixes deployed
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
