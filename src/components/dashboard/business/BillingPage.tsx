@@ -96,8 +96,9 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
 
         try {
             const doc = businessInvoiceService.generatePDF(invoice, tenant, client);
-            const blob = doc.output('blob');
-            const url = URL.createObjectURL(blob);
+            // Use output('blob') directly for rendering in the viewer
+            const pdfBlob = doc.output('blob');
+            const url = URL.createObjectURL(pdfBlob);
             setViewerUrl(url);
             setSelectedInvoice(invoice);
         } catch (e) {
