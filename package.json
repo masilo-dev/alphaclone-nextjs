@@ -73,7 +73,7 @@
     "react-quill-new": "^3.7.0",
     "react-virtualized-auto-sizer": "^2.0.2",
     "react-window": "^2.2.6",
-    "recharts": "^3.6.0",
+    "recharts": "^3.8.0",
     "remark-gfm": "^4.0.1",
     "resend": "^6.7.0",
     "serwist": "^9.5.6",
