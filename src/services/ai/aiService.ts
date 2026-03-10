@@ -22,7 +22,7 @@ export interface AIRequest {
 
 export interface AIResponse {
     content: string;
-    provider: 'openai' | 'anthropic' | 'gemini';
+    provider: 'openai' | 'anthropic' | 'gemini' | 'openrouter';
     model: string;
     tokens: {
         prompt: number;

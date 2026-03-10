@@ -387,6 +387,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         <div className="flex items-center gap-4 ml-6 pl-6 border-l border-white/10">
                            <button
                               onClick={() => setIsLoginOpen(true)}
+                              data-login-trigger="true"
                               className="text-sm font-semibold text-slate-400 hover:text-white transition-colors flex items-center"
                            >
                               Login

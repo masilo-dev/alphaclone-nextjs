@@ -37,18 +37,37 @@ export async function GET(request: Request) {
                     },
                 }
             )
-            const { error } = await supabase.auth.exchangeCodeForSession(code)
-            if (!error) {
+            const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code)
+            if (!error && session) {
                 const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
                 const isLocalEnv = process.env.NODE_ENV === 'development'
+                let redirectUrl = ''
+
                 if (isLocalEnv) {
-                    // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
-                    return NextResponse.redirect(`${origin}${next}`)
+                    redirectUrl = `${origin}${next}`
                 } else if (forwardedHost) {
-                    return NextResponse.redirect(`https://${forwardedHost}${next}`)
+                    redirectUrl = `https://${forwardedHost}${next}`
                 } else {
-                    return NextResponse.redirect(`${origin}${next}`)
+                    redirectUrl = `${origin}${next}`
                 }
+
+                // Check if this is a new user (first-time sign-in)
+                // We check the 'created_at' and 'last_sign_in_at' timestamps. 
+                // If they are very close (e.g. within a few seconds), it's likely a new user.
+                const user = session.user
+                const createdAt = new Date(user.created_at).getTime()
+                const lastSignIn = new Date(user.last_sign_in_at || user.created_at).getTime()
+                const isNewUser = Math.abs(lastSignIn - createdAt) < 5000 // 5 seconds tolerance
+
+                if (isNewUser) {
+                    // Redirect to landing page with a special flag for new users
+                    const landingUrl = new URL(origin)
+                    landingUrl.searchParams.set('auth_status', 'new_account')
+                    landingUrl.searchParams.set('message', 'Please sign in again to confirm your account.')
+                    return NextResponse.redirect(landingUrl.toString())
+                }
+
+                return NextResponse.redirect(redirectUrl)
             } else {
                 console.error('Auth Callback Exchange Error:', error)
             }

@@ -22,6 +22,8 @@ const envSchema = z.object({
     ANTHROPIC_API_KEY: z.string().optional(),
     // OpenAI GPT (recommended secondary)
     OPENAI_API_KEY: z.string().optional(),
+    // OpenRouter (optional)
+    OPENROUTER_API_KEY: z.string().optional(),
     // Google Gemini (fallback)
     VITE_GEMINI_API_KEY: z.string().optional(),
     // Google General Services (Places, Maps, etc.)
@@ -79,6 +81,7 @@ function validateEnv() {
         // AI Service API Keys (priority order)
         ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY || process.env.VITE_ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY,
         OPENAI_API_KEY: process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+        OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || process.env.NEXT_PUBLIC_OPENROUTER_API_KEY,
         VITE_GEMINI_API_KEY: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_KEY || process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_API_KEY,
         GOOGLE_API_KEY: process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || process.env.VITE_GOOGLE_API_KEY || process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_AI_KEY,
         MANUS_API_KEY: process.env.MANUS_API_KEY || process.env.NEXT_PUBLIC_MANUS_API_KEY || process.env.VITE_MANUS_API_KEY,

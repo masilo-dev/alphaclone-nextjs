@@ -48,7 +48,7 @@ export interface AIRequestOptions {
 
 export interface AIResponse {
   content: string;
-  provider: 'anthropic' | 'openai' | 'gemini';
+  provider: 'anthropic' | 'openai' | 'gemini' | 'openrouter';
   model: string;
   success: boolean;
   error?: string;
@@ -73,6 +73,9 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
     }
     if (requestedModel.startsWith('gemini') && ENV.VITE_GEMINI_API_KEY) {
       return await completeWithGemini(options);
+    }
+    if (requestedModel.startsWith('openrouter/') && openrouter) {
+      return await completeWithOpenRouter(options);
     }
   }
 
@@ -104,7 +107,7 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
     }
   }
 
-  // Priority 3: Try Gemini (fallback)
+  // Priority 4: Try Gemini (fallback)
   if (ENV.VITE_GEMINI_API_KEY) {
     try {
       console.log('[AI Router] Attempting Gemini (fallback)...');
@@ -233,6 +236,9 @@ export async function routeAIChat(
       // Gemini chat is fallback-only in this simplified router, but we can call it directly
       // Note: chatWithGemini handles its own model logic usually, but we should pass it if possible
     }
+    if (requestedModel.startsWith('openrouter/') && openrouter) {
+      return await chatWithOpenRouter(history, message, systemPrompt, model);
+    }
   }
 
   // Priority 1: Try Anthropic
@@ -263,7 +269,7 @@ export async function routeAIChat(
     }
   }
 
-  // Priority 3: Try Gemini (supports vision)
+  // Priority 4: Try Gemini (supports vision)
   if (ENV.VITE_GEMINI_API_KEY) {
     try {
       console.log('[AI Router] Attempting Gemini chat...');
@@ -429,6 +435,94 @@ async function chatWithOpenAI(
 }
 
 /**
+ * Complete with OpenRouter
+ */
+async function completeWithOpenRouter(options: AIRequestOptions): Promise<AIResponse> {
+  if (!openrouter) {
+    throw new Error('OpenRouter API key not configured');
+  }
+
+  let model = options.model || 'anthropic/claude-3.5-sonnet';
+  if (model.startsWith('openrouter/')) {
+    model = model.replace('openrouter/', '');
+  }
+
+  const messages: any[] = [];
+  if (options.systemPrompt) {
+    messages.push({ role: 'system', content: options.systemPrompt });
+  }
+  messages.push({ role: 'user', content: options.prompt });
+
+  const completion = await openrouter.chat.completions.create({
+    model: model,
+    messages,
+    max_tokens: options.maxTokens || 4096,
+    temperature: options.temperature || 0.7,
+  });
+
+  return {
+    content: completion.choices[0]?.message?.content || '',
+    provider: 'openrouter',
+    model: model,
+    success: true,
+  };
+}
+
+/**
+ * Chat with OpenRouter
+ */
+async function chatWithOpenRouter(
+  history: Array<{ role: string; content: string }>,
+  message: string,
+  systemPrompt?: string,
+  model?: string
+): Promise<AIResponse> {
+  if (!openrouter) {
+    throw new Error('OpenRouter API key not configured');
+  }
+
+  let selectedModel = model || 'anthropic/claude-3.5-sonnet';
+  if (selectedModel.startsWith('openrouter/')) {
+    selectedModel = selectedModel.replace('openrouter/', '');
+  }
+
+  // Ensure history alternates and starts with 'user'
+  const validHistory = history.filter((msg, idx) => {
+    if (idx === 0 && msg.role !== 'user') return false;
+    return true;
+  });
+
+  const chatMessages: any[] = [];
+  for (const msg of validHistory) {
+    const role = msg.role === 'user' ? 'user' : 'assistant';
+    if (chatMessages.length > 0 && chatMessages[chatMessages.length - 1].role === role) {
+      continue;
+    }
+    chatMessages.push({
+      role,
+      content: msg.content || (msg as any).text || '',
+    });
+  }
+
+  const completion = await openrouter.chat.completions.create({
+    model: selectedModel,
+    messages: [
+      ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+      ...chatMessages,
+      { role: 'user', content: message }
+    ],
+    max_tokens: 4096,
+  });
+
+  return {
+    content: completion.choices[0]?.message?.content || '',
+    provider: 'openrouter',
+    model: selectedModel,
+    success: true,
+  };
+}
+
+/**
  * Check which AI providers are available
  */
 export function getAvailableProviders() {
@@ -436,6 +530,7 @@ export function getAvailableProviders() {
     anthropic: !!anthropic,
     openai: !!openai,
     gemini: !!ENV.VITE_GEMINI_API_KEY,
+    openrouter: !!openrouter,
   };
 }
 
@@ -444,6 +539,7 @@ export function getAvailableProviders() {
  */
 export function getPrimaryProvider(): string {
   if (anthropic) return 'Claude (Anthropic)';
+  if (openrouter) return 'OpenRouter';
   if (openai) return 'GPT-4 (OpenAI)';
   if (ENV.VITE_GEMINI_API_KEY) {
     return 'Gemini (Google)';
@@ -454,8 +550,8 @@ export function getPrimaryProvider(): string {
 /**
  * Get model recommendations based on task
  */
-export function getRecommendedModel(taskType: string): { provider: 'anthropic' | 'openai' | 'gemini'; model: string } {
-  const recommendations: Record<string, { provider: 'anthropic' | 'openai' | 'gemini'; model: string }> = {
+export function getRecommendedModel(taskType: string): { provider: 'anthropic' | 'openai' | 'gemini' | 'openrouter'; model: string } {
+  const recommendations: Record<string, { provider: 'anthropic' | 'openai' | 'gemini' | 'openrouter'; model: string }> = {
     'contract_generation': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
     'document_analysis': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
     'code_generation': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
