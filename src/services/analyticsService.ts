@@ -108,12 +108,12 @@ export const analyticsService = {
 
         // Aggregate Revenue
         const paidRevenue = invoices
-            .filter(inv => inv.status === 'Paid')
-            .reduce((sum, inv) => sum + (inv.amount || 0), 0);
+            .filter((inv: any) => inv.status === 'Paid')
+            .reduce((sum: number, inv: any) => sum + (inv.amount || 0), 0);
         
         const sentRevenue = invoices
-            .filter(inv => inv.status === 'Sent')
-            .reduce((sum, inv) => sum + (inv.amount || 0), 0);
+            .filter((inv: any) => inv.status === 'Sent')
+            .reduce((sum: number, inv: any) => sum + (inv.amount || 0), 0);
         
         const directRevenue = otherRevenue
             .reduce((sum: number, rec: any) => sum + (rec.amount || 0), 0);
