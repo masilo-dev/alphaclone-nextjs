@@ -22,6 +22,17 @@ const openai = ENV.OPENAI_API_KEY
   ? new OpenAI({ apiKey: ENV.OPENAI_API_KEY })
   : null;
 
+const openRouterClient = ENV.OPENROUTER_API_KEY
+  ? new OpenAI({
+      apiKey: ENV.OPENROUTER_API_KEY,
+      baseURL: 'https://openrouter.ai/api/v1',
+      defaultHeaders: {
+        'HTTP-Referer': 'https://alphaclone.tech',
+        'X-Title': 'AlphaClone Systems',
+      },
+    })
+  : null;
+
 // Model pricing (per 1M tokens)
 export const MODEL_PRICING = {
   // OpenAI (per 1M tokens)
@@ -74,7 +85,7 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
     if (requestedModel.startsWith('gemini') && ENV.VITE_GEMINI_API_KEY) {
       return await completeWithGemini(options);
     }
-    if (requestedModel.startsWith('openrouter/') && openrouter) {
+    if (requestedModel.startsWith('openrouter/') && openRouterClient) {
       return await completeWithOpenRouter(options);
     }
   }
@@ -236,7 +247,7 @@ export async function routeAIChat(
       // Gemini chat is fallback-only in this simplified router, but we can call it directly
       // Note: chatWithGemini handles its own model logic usually, but we should pass it if possible
     }
-    if (requestedModel.startsWith('openrouter/') && openrouter) {
+    if (requestedModel.startsWith('openrouter/') && openRouterClient) {
       return await chatWithOpenRouter(history, message, systemPrompt, model);
     }
   }
@@ -438,7 +449,7 @@ async function chatWithOpenAI(
  * Complete with OpenRouter
  */
 async function completeWithOpenRouter(options: AIRequestOptions): Promise<AIResponse> {
-  if (!openrouter) {
+  if (!openRouterClient) {
     throw new Error('OpenRouter API key not configured');
   }
 
@@ -453,7 +464,7 @@ async function completeWithOpenRouter(options: AIRequestOptions): Promise<AIResp
   }
   messages.push({ role: 'user', content: options.prompt });
 
-  const completion = await openrouter.chat.completions.create({
+  const completion = await openRouterClient.chat.completions.create({
     model: model,
     messages,
     max_tokens: options.maxTokens || 4096,
@@ -477,7 +488,7 @@ async function chatWithOpenRouter(
   systemPrompt?: string,
   model?: string
 ): Promise<AIResponse> {
-  if (!openrouter) {
+  if (!openRouterClient) {
     throw new Error('OpenRouter API key not configured');
   }
 
@@ -504,7 +515,7 @@ async function chatWithOpenRouter(
     });
   }
 
-  const completion = await openrouter.chat.completions.create({
+  const completion = await openRouterClient.chat.completions.create({
     model: selectedModel,
     messages: [
       ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
@@ -530,7 +541,7 @@ export function getAvailableProviders() {
     anthropic: !!anthropic,
     openai: !!openai,
     gemini: !!ENV.VITE_GEMINI_API_KEY,
-    openrouter: !!openrouter,
+    openrouter: !!openRouterClient,
   };
 }
 
@@ -539,7 +550,7 @@ export function getAvailableProviders() {
  */
 export function getPrimaryProvider(): string {
   if (anthropic) return 'Claude (Anthropic)';
-  if (openrouter) return 'OpenRouter';
+  if (openRouterClient) return 'OpenRouter';
   if (openai) return 'GPT-4 (OpenAI)';
   if (ENV.VITE_GEMINI_API_KEY) {
     return 'Gemini (Google)';
