@@ -1,0 +1,153 @@
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import { useAuth } from '../contexts/AuthContext';
+import DashboardCard from '../components/DashboardCard';
+import StatCard from '../components/StatCard';
+import { Ionicons } from '@expo/vector-icons';
+
+export default function DashboardScreen() {
+  const { user } = useAuth();
+
+  const stats = [
+    { title: 'Active Projects', value: '12', icon: 'folder', color: '#00D2A0' },
+    { title: 'Total Leads', value: '48', icon: 'people', color: '#0077FF' },
+    { title: 'Revenue', value: '$24.5K', icon: 'cash', color: '#FFA500' },
+    { title: 'Tasks', value: '23', icon: 'checkmark-circle', color: '#FF6B6B' },
+  ];
+
+  const recentActivities = [
+    { id: 1, title: 'New lead from website', time: '2 hours ago', type: 'lead' },
+    { id: 2, title: 'Project AlphaClone completed', time: '4 hours ago', type: 'project' },
+    { id: 3, title: 'Invoice #1234 paid', time: '6 hours ago', type: 'finance' },
+    { id: 4, title: 'Meeting with client scheduled', time: '1 day ago', type: 'calendar' },
+  ];
+
+  return (
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#020D1A', '#0A1A2F']}
+        style={styles.gradient}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.userInfo}>
+              <Text style={styles.greeting}>Welcome back,</Text>
+              <Text style={styles.userName}>{user?.name || user?.email || 'User'}</Text>
+            </View>
+            <TouchableOpacity style={styles.notificationButton}>
+              <Ionicons name="notifications" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Stats Grid */}
+          <View style={styles.statsGrid}>
+            {stats.map((stat, index) => (
+              <StatCard key={index} {...stat} />
+            ))}
+          </View>
+
+          {/* Quick Actions */}
+          <BlurView intensity={80} style={styles.quickActions}>
+            <Text style={styles.sectionTitle}>Quick Actions</Text>
+            <View style={styles.actionsRow}>
+              <TouchableOpacity style={styles.actionButton}>
+                <Ionicons name="add-circle" size={32} color="#00D2A0" />
+                <Text style={styles.actionText}>New Project</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton}>
+                <Ionicons name="person-add" size={32} color="#0077FF" />
+                <Text style={styles.actionText}>Add Lead</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton}>
+                <Ionicons name="calendar" size={32} color="#FFA500" />
+                <Text style={styles.actionText}>Schedule</Text>
+              </TouchableOpacity>
+            </View>
+          </BlurView>
+
+          {/* Recent Activity */}
+          <View style={styles.recentActivity}>
+            <Text style={styles.sectionTitle}>Recent Activity</Text>
+            {recentActivities.map((activity) => (
+              <DashboardCard key={activity.id} activity={activity} />
+            ))}
+          </View>
+        </ScrollView>
+      </LinearGradient>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  gradient: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+  },
+  userInfo: {
+    flex: 1,
+  },
+  greeting: {
+    fontSize: 16,
+    color: '#94A3B8',
+    marginBottom: 4,
+  },
+  userName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  notificationButton: {
+    padding: 10,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 10,
+    marginBottom: 20,
+  },
+  quickActions: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 16,
+    padding: 20,
+    backgroundColor: 'rgba(30, 41, 59, 0.5)',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 15,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  actionButton: {
+    alignItems: 'center',
+    padding: 10,
+  },
+  actionText: {
+    fontSize: 12,
+    color: '#CBD5E1',
+    marginTop: 5,
+  },
+  recentActivity: {
+    marginHorizontal: 20,
+  },
+});
