@@ -9,19 +9,27 @@ import {
     Shield,
     Trash2,
     X,
-    UserPlus
+    UserPlus,
+    Layout,
+    MessageSquare,
+    BarChart3,
+    Network
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ResourceAllocationView from '../ResourceAllocationView';
+import { TeamChat } from './TeamChat';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface TeamPageProps {
     user: User;
 }
 
 const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
-    const { currentTenant, userTenants } = useTenant();
+    const { currentTenant } = useTenant();
     const [teamMembers, setTeamMembers] = useState<any[]>([]);
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<'directory' | 'org' | 'resources' | 'chat'>('directory');
 
     useEffect(() => {
         if (currentTenant) {
@@ -101,32 +109,128 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
     }
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
+        <div className="space-y-6 h-full flex flex-col">
+            {/* Header & Tabs */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold">Team Management</h2>
-                    <p className="text-slate-400 mt-1">{teamMembers.length} team members</p>
+                    <h2 className="text-2xl font-bold flex items-center gap-2">
+                        <UsersIcon className="w-6 h-6 text-teal-400" />
+                        Human Resources & Team
+                    </h2>
+                    <p className="text-slate-400 mt-1">Manage your organization, talent, and culture</p>
                 </div>
-                <button
-                    onClick={() => setShowInviteModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors"
-                >
-                    <UserPlus className="w-4 h-4" />
-                    Invite Member
-                </button>
+                
+                <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800">
+                    {[
+                        { id: 'directory', label: 'Directory', icon: UsersIcon },
+                        { id: 'org', label: 'Org Chart', icon: Network },
+                        { id: 'resources', label: 'Allocation', icon: BarChart3 },
+                        { id: 'chat', label: 'Team Chat', icon: MessageSquare },
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id as any)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                activeTab === tab.id
+                                    ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20'
+                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                            }`}
+                        >
+                            <tab.icon className="w-4 h-4" />
+                            <span className="hidden sm:inline">{tab.label}</span>
+                        </button>
+                    ))}
+                </div>
             </div>
 
-            {/* Team Members Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {teamMembers.map(member => (
-                    <TeamMemberCard
-                        key={member.user_id}
-                        member={member}
-                        onRemove={handleRemoveMember}
-                        isCurrentUser={member.user_id === user.id}
-                    />
-                ))}
+            {/* Content Area */}
+            <div className="flex-1 min-h-0 overflow-y-auto">
+                <AnimatePresence mode="wait">
+                    {activeTab === 'directory' && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="space-y-6"
+                        >
+                            <div className="flex justify-end">
+                                <button
+                                    onClick={() => setShowInviteModal(true)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors text-white font-bold shadow-lg shadow-teal-500/20"
+                                >
+                                    <UserPlus className="w-4 h-4" />
+                                    Invite Member
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {teamMembers.map(member => (
+                                    <TeamMemberCard
+                                        key={member.user_id}
+                                        member={member}
+                                        onRemove={handleRemoveMember}
+                                        isCurrentUser={member.user_id === user.id}
+                                    />
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {activeTab === 'org' && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="h-full bg-slate-900/50 border border-slate-800 rounded-2xl p-8 flex items-center justify-center"
+                        >
+                            <div className="text-center max-w-lg">
+                                <Network className="w-16 h-16 text-slate-700 mx-auto mb-6" />
+                                <h3 className="text-xl font-bold text-white mb-2">Organization Structure</h3>
+                                <p className="text-slate-400 mb-8">
+                                    Visualize your team's hierarchy and reporting lines.
+                                    (Currently showing flat structure)
+                                </p>
+                                <div className="flex flex-col items-center gap-4 relative">
+                                    {/* Simple Tree Visualization */}
+                                    <div className="p-4 bg-teal-500/20 border border-teal-500/50 rounded-xl min-w-[200px]">
+                                        <div className="font-bold text-teal-400">Admin / Owner</div>
+                                    </div>
+                                    <div className="h-8 w-px bg-slate-700"></div>
+                                    <div className="flex gap-4 overflow-x-auto p-4 w-full justify-center">
+                                        {teamMembers.filter(m => m.role !== 'admin').map(member => (
+                                            <div key={member.user_id} className="flex flex-col items-center relative group">
+                                                <div className="absolute -top-4 left-1/2 w-px h-4 bg-slate-700"></div>
+                                                <div className="p-3 bg-slate-800 border border-slate-700 rounded-xl min-w-[140px] text-center hover:border-teal-500/50 transition-all">
+                                                    <div className="font-bold text-white text-sm">{member.user.name}</div>
+                                                    <div className="text-xs text-slate-500 uppercase">{member.role}</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {activeTab === 'resources' && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                        >
+                            <ResourceAllocationView user={user} />
+                        </motion.div>
+                    )}
+
+                    {activeTab === 'chat' && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                        >
+                            <TeamChat user={user} teamMembers={teamMembers} />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
 
             {/* Invite Modal */}
@@ -148,33 +252,36 @@ const TeamMemberCard = ({ member, onRemove, isCurrentUser }: any) => {
     };
 
     return (
-        <div className="bg-slate-900/50 border border-slate-800 hover:border-slate-700 rounded-2xl p-6 transition-all group">
+        <div className="bg-slate-900/50 border border-slate-800 hover:border-teal-500/30 rounded-2xl p-6 transition-all group">
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-lg">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-lg text-white shadow-lg">
                         {member.user?.name?.charAt(0) || 'U'}
                     </div>
                     <div>
-                        <h3 className="font-semibold">{member.user?.name || 'Unknown'}</h3>
-                        <p className="text-sm text-slate-400">{member.user?.email}</p>
+                        <h3 className="font-bold text-white">{member.user?.name || 'Unknown'}</h3>
+                        <p className="text-xs text-slate-400 font-mono">{member.user?.email}</p>
                     </div>
                 </div>
                 {!isCurrentUser && (
                     <button
                         onClick={() => onRemove(member.user_id)}
-                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/10 rounded transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-500/10 rounded-lg transition-all"
+                        title="Remove Member"
                     >
                         <Trash2 className="w-4 h-4 text-red-400" />
                     </button>
                 )}
             </div>
 
-            <div className="flex items-center justify-between">
-                <span className={`text-xs px-2 py-1 rounded-full border ${roleColors[member.role as keyof typeof roleColors] || roleColors.member}`}>
+            <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-800/50">
+                <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg border ${roleColors[member.role as keyof typeof roleColors] || roleColors.member}`}>
                     {member.role?.charAt(0).toUpperCase() + member.role?.slice(1) || 'Member'}
                 </span>
                 {isCurrentUser && (
-                    <span className="text-xs text-teal-400">You</span>
+                    <span className="text-xs font-bold text-teal-400 flex items-center gap-1">
+                        <Shield className="w-3 h-3" /> You
+                    </span>
                 )}
             </div>
         </div>
@@ -191,41 +298,50 @@ const InviteMemberModal = ({ onClose, onInvite }: any) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold">Invite Team Member</h3>
-                    <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded">
+                    <h3 className="text-xl font-bold text-white">Invite Team Member</h3>
+                    <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium mb-2">Email Address *</label>
+                        <label className="block text-sm font-bold text-slate-300 mb-2">Email Address *</label>
                         <input
                             type="email"
                             required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="colleague@example.com"
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 text-white placeholder-slate-600 transition-colors"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-2">Role</label>
-                        <select
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        >
-                            <option value="member">Member</option>
-                            <option value="manager">Manager</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                        <p className="text-xs text-slate-500 mt-2">
-                            Members can view and edit. Managers can manage projects. Admins have full access.
+                        <label className="block text-sm font-bold text-slate-300 mb-2">Role</label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {['member', 'manager', 'admin'].map((r) => (
+                                <button
+                                    key={r}
+                                    type="button"
+                                    onClick={() => setRole(r)}
+                                    className={`px-2 py-2 rounded-xl text-xs font-bold uppercase tracking-wide border transition-all ${
+                                        role === r 
+                                            ? 'bg-teal-500 text-white border-teal-500' 
+                                            : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-600'
+                                    }`}
+                                >
+                                    {r}
+                                </button>
+                            ))}
+                        </div>
+                        <p className="text-xs text-slate-500 mt-3 bg-slate-800/50 p-3 rounded-lg border border-slate-800">
+                            {role === 'member' && "Can view projects and tasks assigned to them."}
+                            {role === 'manager' && "Can create projects, manage tasks, and view reports."}
+                            {role === 'admin' && "Full access to all settings, billing, and team management."}
                         </p>
                     </div>
 
@@ -233,13 +349,13 @@ const InviteMemberModal = ({ onClose, onInvite }: any) => {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+                            className="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors text-slate-300 font-bold"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors"
+                            className="flex-1 px-4 py-3 bg-teal-600 hover:bg-teal-500 rounded-xl transition-colors text-white font-bold shadow-lg shadow-teal-500/20"
                         >
                             Send Invitation
                         </button>

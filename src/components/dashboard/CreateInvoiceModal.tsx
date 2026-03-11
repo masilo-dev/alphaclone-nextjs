@@ -26,6 +26,7 @@ interface CreateInvoiceModalProps {
 const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose, onInvoiceCreated, projects }) => {
     const { currentTenant } = useTenant();
     const [step, setStep] = useState<'edit' | 'preview' | 'success'>('edit');
+    const [selectedTemplate, setSelectedTemplate] = useState<1 | 2 | 3 | 4 | 5>(1);
 
     // Form state
     const [lineItems, setLineItems] = useState<LineItem[]>([{ description: '', quantity: 1, rate: 0 }]);
@@ -371,6 +372,42 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     <p className="text-slate-400 text-xs mt-1">
                                         Fill in the invoice information. You'll see a preview before saving.
                                     </p>
+                                </div>
+                            </div>
+
+                            {/* Template Selector */}
+                            <div className="border-b border-slate-800 pb-6">
+                                <h3 className="text-white font-bold mb-3 flex items-center gap-2">
+                                    <Sparkles className="w-5 h-5 text-teal-400" />
+                                    Choose Style
+                                </h3>
+                                <div className="grid grid-cols-5 gap-2">
+                                    {[
+                                        { id: 1, name: 'Classic', color: 'bg-white' },
+                                        { id: 2, name: 'Modern', color: 'bg-teal-50' },
+                                        { id: 3, name: 'Dark', color: 'bg-slate-900 border border-white/20' },
+                                        { id: 4, name: 'Minimal', color: 'bg-gray-50' },
+                                        { id: 5, name: 'Bold', color: 'bg-slate-200' }
+                                    ].map((t) => (
+                                        <button
+                                            key={t.id}
+                                            onClick={() => setSelectedTemplate(t.id as any)}
+                                            className={`relative aspect-[3/4] rounded-lg border-2 transition-all overflow-hidden group ${selectedTemplate === t.id ? 'border-teal-500 ring-2 ring-teal-500/20' : 'border-slate-700 hover:border-slate-500'}`}
+                                        >
+                                            <div className={`absolute inset-0 ${t.color} opacity-50`} />
+                                            <div className="absolute inset-x-2 top-2 h-2 bg-current opacity-20 rounded-sm" />
+                                            <div className="absolute inset-x-2 top-5 bottom-2 bg-current opacity-10 rounded-sm" />
+                                            
+                                            {selectedTemplate === t.id && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
+                                                    <CheckCircle2 className="w-6 h-6 text-teal-400 drop-shadow-lg" />
+                                                </div>
+                                            )}
+                                            <span className="absolute bottom-1 left-0 right-0 text-[9px] text-center font-bold uppercase tracking-wider text-white bg-black/50 py-0.5">
+                                                {t.name}
+                                            </span>
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
 
@@ -781,47 +818,85 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     {step === 'preview' && (
                         <div className="space-y-6">
                             {/* Invoice Preview Container block */}
-                            <div className="bg-white text-black p-4 sm:p-6 md:p-8 rounded-lg border-4 border-slate-700">
+                            <div className={`p-4 sm:p-6 md:p-8 rounded-lg border-4 transition-all duration-300 ${
+                                selectedTemplate === 1 ? 'bg-white text-black border-slate-700' :
+                                selectedTemplate === 2 ? 'bg-slate-50 text-slate-800 border-teal-500' :
+                                selectedTemplate === 3 ? 'bg-slate-950 text-white border-slate-800' :
+                                selectedTemplate === 4 ? 'bg-white text-slate-900 border-transparent shadow-xl' :
+                                'bg-white text-black border-black' // Bold
+                            }`}>
+                                {/* Template-specific Header Background */}
+                                {selectedTemplate === 2 && (
+                                    <div className="absolute top-0 left-0 right-0 h-32 bg-teal-600/10 -z-10 rounded-t-lg" />
+                                )}
+                                {selectedTemplate === 5 && (
+                                    <div className="absolute top-0 left-0 right-0 h-4 bg-black" />
+                                )}
+
                                 {/* Header */}
-                                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-8">
-                                    {currentTenant?.logo_url && (
+                                <div className={`flex flex-col sm:flex-row justify-between items-start gap-4 mb-8 ${selectedTemplate === 5 ? 'border-b-4 border-black pb-6' : ''}`}>
+                                    {currentTenant?.logo_url ? (
                                         <img src={currentTenant.logo_url} alt="Logo" className="h-12 sm:h-16 object-contain" />
+                                    ) : (
+                                        <div className={`h-12 w-12 rounded-lg flex items-center justify-center font-bold text-xl ${
+                                            selectedTemplate === 2 ? 'bg-teal-600 text-white' :
+                                            selectedTemplate === 3 ? 'bg-white/10 text-white' :
+                                            'bg-black text-white'
+                                        }`}>
+                                            {(currentTenant?.name || 'A').charAt(0)}
+                                        </div>
                                     )}
                                     <div className="text-left sm:text-right">
-                                        <h1 className="text-2xl sm:text-3xl font-bold">INVOICE</h1>
-                                        <p className="text-gray-600 text-sm">#{createdInvoiceId || 'DRAFT'}</p>
+                                        <h1 className={`text-2xl sm:text-3xl font-bold ${
+                                            selectedTemplate === 2 ? 'text-teal-700' :
+                                            selectedTemplate === 3 ? 'text-teal-400' :
+                                            selectedTemplate === 5 ? 'text-4xl uppercase tracking-tighter' :
+                                            ''
+                                        }`}>INVOICE</h1>
+                                        <p className={`text-sm ${selectedTemplate === 3 ? 'text-slate-400' : 'text-gray-600'}`}>
+                                            #{createdInvoiceId || 'DRAFT'}
+                                        </p>
                                     </div>
                                 </div>
 
                                 {/* Business Info */}
                                 <div className="mb-8">
-                                    <h2 className="font-bold text-base sm:text-lg">
+                                    <h2 className={`font-bold text-base sm:text-lg ${selectedTemplate === 2 ? 'text-teal-800' : ''}`}>
                                         {currentTenant?.name || tenantDefaults?.organizationName || 'Organization Name Missing'}
                                     </h2>
                                     {(!currentTenant?.name && !tenantDefaults?.organizationName) && (
                                         <p className="text-red-500 text-xs mt-1">⚠️ Please set your organization name in Settings</p>
                                     )}
-                                    <p className="text-gray-600 text-sm">Professional Services</p>
+                                    <p className={`text-sm ${selectedTemplate === 3 ? 'text-slate-400' : 'text-gray-600'}`}>Professional Services</p>
                                 </div>
 
                                 {/* Client Info */}
                                 {(selectedProject || selectedClient) && (
-                                    <div className="mb-8">
-                                        <h3 className="font-bold text-sm mb-2">Bill To:</h3>
-                                        <p className="text-gray-800">{selectedProject?.ownerName || selectedClient?.name || 'Client'}</p>
-                                        {selectedProject && <p className="text-gray-600 text-sm">Project: {selectedProject.name}</p>}
-                                        {selectedClient && <p className="text-gray-600 text-sm">{selectedClient.email}</p>}
+                                    <div className={`mb-8 p-4 rounded-lg ${
+                                        selectedTemplate === 2 ? 'bg-teal-500/5 border border-teal-500/20' :
+                                        selectedTemplate === 3 ? 'bg-white/5 border border-white/10' :
+                                        selectedTemplate === 5 ? 'border-l-4 border-black bg-gray-50' :
+                                        ''
+                                    }`}>
+                                        <h3 className={`font-bold text-sm mb-2 ${selectedTemplate === 2 ? 'text-teal-700' : 'uppercase tracking-wider opacity-70'}`}>Bill To:</h3>
+                                        <p className={`font-bold text-lg ${selectedTemplate === 3 ? 'text-white' : 'text-gray-900'}`}>
+                                            {selectedProject?.ownerName || selectedClient?.name || 'Client'}
+                                        </p>
+                                        {selectedProject && <p className={`text-sm ${selectedTemplate === 3 ? 'text-slate-400' : 'text-gray-600'}`}>Project: {selectedProject.name}</p>}
+                                        {selectedClient && <p className={`text-sm ${selectedTemplate === 3 ? 'text-slate-400' : 'text-gray-600'}`}>{selectedClient.email}</p>}
                                     </div>
                                 )}
 
-                                {/* Invoice Details */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 text-sm">
+                                {/* Invoice Details Grid */}
+                                <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 text-sm p-4 rounded-lg ${
+                                    selectedTemplate === 3 ? 'bg-white/5' : 'bg-gray-50'
+                                }`}>
                                     <div>
-                                        <p className="text-gray-600">Issue Date:</p>
+                                        <p className={`${selectedTemplate === 3 ? 'text-slate-400' : 'text-gray-600'}`}>Issue Date:</p>
                                         <p className="font-semibold">{new Date().toLocaleDateString()}</p>
                                     </div>
                                     <div>
-                                        <p className="text-gray-600">Due Date:</p>
+                                        <p className={`${selectedTemplate === 3 ? 'text-slate-400' : 'text-gray-600'}`}>Due Date:</p>
                                         <p className="font-semibold">{new Date(dueDate).toLocaleDateString()}</p>
                                     </div>
                                 </div>
@@ -829,21 +904,26 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 {/* Line Items */}
                                 <div className="overflow-x-auto mb-8">
                                     <table className="w-full text-sm">
-                                        <thead className="border-b-2 border-gray-300">
+                                        <thead className={`border-b-2 ${
+                                            selectedTemplate === 2 ? 'border-teal-500 text-teal-700' :
+                                            selectedTemplate === 3 ? 'border-slate-700 text-slate-400' :
+                                            selectedTemplate === 5 ? 'border-black text-black uppercase' :
+                                            'border-gray-300'
+                                        }`}>
                                             <tr>
-                                                <th className="text-left py-2">Item Description</th>
+                                                <th className="text-left py-2 pl-2">Item Description</th>
                                                 <th className="text-right py-2">Qty</th>
                                                 <th className="text-right py-2">Rate</th>
-                                                <th className="text-right py-2">Amount</th>
+                                                <th className="text-right py-2 pr-2">Amount</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
+                                        <tbody className={`${selectedTemplate === 3 ? 'text-slate-300' : ''}`}>
                                             {lineItems.map((item, idx) => (
-                                                <tr key={idx} className="border-b border-gray-100">
-                                                    <td className="py-3 font-medium text-gray-800">{item.description}</td>
+                                                <tr key={idx} className={`border-b ${selectedTemplate === 3 ? 'border-slate-800' : 'border-gray-100'}`}>
+                                                    <td className={`py-3 pl-2 font-medium ${selectedTemplate === 3 ? 'text-white' : 'text-gray-800'}`}>{item.description}</td>
                                                     <td className="text-right py-3">{item.quantity}</td>
                                                     <td className="text-right py-3">${item.rate.toFixed(2)}</td>
-                                                    <td className="text-right py-3 font-semibold">${(item.quantity * item.rate).toFixed(2)}</td>
+                                                    <td className="text-right py-3 pr-2 font-semibold">${(item.quantity * item.rate).toFixed(2)}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -852,24 +932,34 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
                                 {/* Total */}
                                 <div className="flex justify-end mb-8">
-                                    <div className="w-full sm:w-64">
+                                    <div className={`w-full sm:w-64 p-4 rounded-lg ${
+                                        selectedTemplate === 2 ? 'bg-teal-500/10' :
+                                        selectedTemplate === 3 ? 'bg-teal-500/10 border border-teal-500/20' :
+                                        selectedTemplate === 5 ? 'bg-black text-white' :
+                                        ''
+                                    }`}>
                                         <div className="flex justify-between py-2 text-sm">
-                                            <span className="text-gray-600">Subtotal:</span>
+                                            <span className={`${selectedTemplate === 3 ? 'text-slate-400' : selectedTemplate === 5 ? 'text-gray-400' : 'text-gray-600'}`}>Subtotal:</span>
                                             <span>${getSubtotal().toFixed(2)}</span>
                                         </div>
                                         {taxRate > 0 && (
-                                            <div className="flex justify-between py-2 text-sm text-gray-600">
+                                            <div className={`flex justify-between py-2 text-sm ${selectedTemplate === 3 ? 'text-slate-400' : selectedTemplate === 5 ? 'text-gray-400' : 'text-gray-600'}`}>
                                                 <span>Tax ({taxRate}%):</span>
                                                 <span>+${getTaxAmount().toFixed(2)}</span>
                                             </div>
                                         )}
                                         {discountAmount > 0 && (
-                                            <div className="flex justify-between py-2 text-sm text-green-600">
+                                            <div className="flex justify-between py-2 text-sm text-green-500">
                                                 <span>Discount:</span>
                                                 <span>-${discountAmount.toFixed(2)}</span>
                                             </div>
                                         )}
-                                        <div className="flex justify-between py-2 border-t-2 border-gray-800 font-bold text-base sm:text-lg">
+                                        <div className={`flex justify-between py-2 border-t-2 font-bold text-base sm:text-lg mt-2 ${
+                                            selectedTemplate === 2 ? 'border-teal-500 text-teal-800' :
+                                            selectedTemplate === 3 ? 'border-teal-500/50 text-teal-400' :
+                                            selectedTemplate === 5 ? 'border-white text-white' :
+                                            'border-gray-800'
+                                        }`}>
                                             <span>Total:</span>
                                             <span>${getTotal().toFixed(2)} USD</span>
                                         </div>
@@ -878,43 +968,45 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
                                 {/* Payment Instructions */}
                                 {(paymentMethod !== 'stripe' || bankDetails || mobileDetails) && (
-                                    <div className="bg-gray-100 p-4 rounded-lg">
+                                    <div className={`p-4 rounded-lg ${
+                                        selectedTemplate === 3 ? 'bg-white/5 border border-white/10' : 'bg-gray-100'
+                                    }`}>
                                         <h3 className="font-bold text-sm mb-2">Payment Instructions:</h3>
 
                                         {bankDetails && (
                                             <div className="mb-3">
-                                                <p className="text-xs font-bold text-gray-500 uppercase">Bank Transfer</p>
-                                                <p className="text-gray-700 text-sm whitespace-pre-wrap font-mono">{bankDetails}</p>
+                                                <p className={`text-xs font-bold uppercase ${selectedTemplate === 3 ? 'text-slate-500' : 'text-gray-500'}`}>Bank Transfer</p>
+                                                <p className={`text-sm whitespace-pre-wrap font-mono ${selectedTemplate === 3 ? 'text-slate-300' : 'text-gray-700'}`}>{bankDetails}</p>
                                             </div>
                                         )}
 
                                         {mobileDetails && (
                                             <div className="mb-3">
-                                                <p className="text-xs font-bold text-gray-500 uppercase">Mobile Money</p>
-                                                <p className="text-gray-700 text-sm whitespace-pre-wrap font-mono">{mobileDetails}</p>
+                                                <p className={`text-xs font-bold uppercase ${selectedTemplate === 3 ? 'text-slate-500' : 'text-gray-500'}`}>Mobile Money</p>
+                                                <p className={`text-sm whitespace-pre-wrap font-mono ${selectedTemplate === 3 ? 'text-slate-300' : 'text-gray-700'}`}>{mobileDetails}</p>
                                             </div>
                                         )}
                                     </div>
                                 )}
 
                                 {/* Signature Section */}
-                                <div className="mt-6 border-t-2 border-gray-200 pt-6">
+                                <div className={`mt-6 border-t-2 pt-6 ${selectedTemplate === 3 ? 'border-slate-800' : 'border-gray-200'}`}>
                                     <div className="flex flex-col sm:flex-row items-center justify-between mb-3 gap-3">
-                                        <h3 className="font-bold text-sm flex items-center gap-2">
-                                            <PenLine className="w-4 h-4 text-gray-600" />
+                                        <h3 className={`font-bold text-sm flex items-center gap-2 ${selectedTemplate === 3 ? 'text-slate-300' : ''}`}>
+                                            <PenLine className={`w-4 h-4 ${selectedTemplate === 3 ? 'text-slate-400' : 'text-gray-600'}`} />
                                             Authorized Signature
                                         </h3>
                                         <div className="flex items-center gap-4">
-                                            <div className="flex bg-gray-100 rounded-lg p-1">
+                                            <div className={`flex rounded-lg p-1 ${selectedTemplate === 3 ? 'bg-white/10' : 'bg-gray-100'}`}>
                                                 <button
                                                     onClick={() => setSignatureType('draw')}
-                                                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${signatureType === 'draw' ? 'bg-white shadow-sm text-teal-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${signatureType === 'draw' ? (selectedTemplate === 3 ? 'bg-teal-600 text-white' : 'bg-white shadow-sm text-teal-600') : (selectedTemplate === 3 ? 'text-slate-400 hover:text-white' : 'text-gray-500 hover:text-gray-700')}`}
                                                 >
                                                     DRAW
                                                 </button>
                                                 <button
                                                     onClick={() => setSignatureType('type')}
-                                                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${signatureType === 'type' ? 'bg-white shadow-sm text-teal-600' : 'text-gray-500 hover:text-gray-700'}`}
+                                                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${signatureType === 'type' ? (selectedTemplate === 3 ? 'bg-teal-600 text-white' : 'bg-white shadow-sm text-teal-600') : (selectedTemplate === 3 ? 'text-slate-400 hover:text-white' : 'text-gray-500 hover:text-gray-700')}`}
                                                 >
                                                     TYPE
                                                 </button>
@@ -939,8 +1031,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
                                     {signatureType === 'draw' ? (
                                         signatureData ? (
-                                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-2 bg-gray-50">
-                                                <img src={signatureData} alt="Signature" className="max-h-20 mx-auto" />
+                                            <div className={`border-2 border-dashed rounded-lg p-2 ${selectedTemplate === 3 ? 'border-slate-700 bg-white/5' : 'border-gray-300 bg-gray-50'}`}>
+                                                <img src={signatureData} alt="Signature" className={`max-h-20 mx-auto ${selectedTemplate === 3 ? 'invert' : ''}`} />
                                             </div>
                                         ) : (
                                             <div>
@@ -948,7 +1040,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                     ref={canvasRef}
                                                     width={500}
                                                     height={100}
-                                                    className="w-full border-2 border-dashed border-gray-300 rounded-lg cursor-crosshair bg-gray-50"
+                                                    className={`w-full border-2 border-dashed rounded-lg cursor-crosshair ${selectedTemplate === 3 ? 'border-slate-700 bg-white/5' : 'border-gray-300 bg-gray-50'}`}
                                                     style={{ touchAction: 'none' }}
                                                     onMouseDown={(e) => {
                                                         isDrawing.current = true;
@@ -965,7 +1057,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                         const rect = canvas.getBoundingClientRect();
                                                         ctx.lineWidth = 2;
                                                         ctx.lineCap = 'round';
-                                                        ctx.strokeStyle = '#1e293b';
+                                                        ctx.strokeStyle = selectedTemplate === 3 ? '#ffffff' : '#1e293b';
                                                         ctx.lineTo((e.clientX - rect.left) * (canvas.width / rect.width), (e.clientY - rect.top) * (canvas.height / rect.height));
                                                         ctx.stroke();
                                                     }}
@@ -987,30 +1079,30 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                         const ctx = canvas.getContext('2d')!;
                                                         const rect = canvas.getBoundingClientRect();
                                                         const t = e.touches[0];
-                                                        ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#1e293b';
+                                                        ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = selectedTemplate === 3 ? '#ffffff' : '#1e293b';
                                                         ctx.lineTo((t.clientX - rect.left) * (canvas.width / rect.width), (t.clientY - rect.top) * (canvas.height / rect.height));
                                                         ctx.stroke();
                                                     }}
                                                     onTouchEnd={() => { isDrawing.current = false; setSignatureData(canvasRef.current!.toDataURL()); }}
                                                 />
-                                                <p className="text-xs text-gray-400 text-center mt-1 uppercase tracking-tighter font-bold">Draw your signature above</p>
+                                                <p className={`text-xs text-center mt-1 uppercase tracking-tighter font-bold ${selectedTemplate === 3 ? 'text-slate-500' : 'text-gray-400'}`}>Draw your signature above</p>
                                             </div>
                                         )
                                     ) : (
                                         <div className="space-y-3">
                                             <input
                                                 type="text"
-                                                className="w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:border-teal-500 transition-colors"
+                                                className={`w-full border-2 border-dashed rounded-lg px-4 py-3 focus:outline-none focus:border-teal-500 transition-colors ${selectedTemplate === 3 ? 'bg-white/5 border-slate-700 text-white placeholder-slate-500' : 'bg-gray-50 border-gray-300 text-gray-800'}`}
                                                 placeholder="Type your full legal name..."
                                                 value={typedSignature}
                                                 onChange={(e) => setTypedSignature(e.target.value)}
                                             />
                                             {typedSignature && (
-                                                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
-                                                    <span className="text-3xl font-cursive text-gray-800 block" style={{ fontFamily: "'Dancing Script', 'Sacramento', cursive" }}>
+                                                <div className={`p-4 border rounded-lg text-center ${selectedTemplate === 3 ? 'bg-white/5 border-slate-700' : 'bg-gray-50 border-gray-200'}`}>
+                                                    <span className={`text-3xl font-cursive block ${selectedTemplate === 3 ? 'text-white' : 'text-gray-800'}`} style={{ fontFamily: "'Dancing Script', 'Sacramento', cursive" }}>
                                                         {typedSignature}
                                                     </span>
-                                                    <p className="text-[10px] text-gray-400 mt-2 uppercase tracking-widest font-bold">Digital Signature Preview</p>
+                                                    <p className={`text-[10px] mt-2 uppercase tracking-widest font-bold ${selectedTemplate === 3 ? 'text-slate-500' : 'text-gray-400'}`}>Digital Signature Preview</p>
                                                 </div>
                                             )}
                                         </div>
@@ -1018,8 +1110,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 </div>
 
                                 {paymentMethod === 'stripe' && (
-                                    <div className="bg-blue-50 p-4 rounded-lg mt-6">
-                                        <p className="text-blue-800 text-sm">
+                                    <div className={`p-4 rounded-lg mt-6 ${selectedTemplate === 3 ? 'bg-blue-500/20' : 'bg-blue-50'}`}>
+                                        <p className={`text-sm ${selectedTemplate === 3 ? 'text-blue-300' : 'text-blue-800'}`}>
                                             <strong>Payment Method:</strong> Online payment via Stripe (Card/Online)
                                         </p>
                                     </div>

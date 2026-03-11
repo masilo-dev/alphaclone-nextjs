@@ -120,11 +120,28 @@ export async function POST(req: NextRequest) {
                 extractedData = JSON.parse(cleanJson);
             }
         } else {
-            return NextResponse.json({ error: 'No Vision-capable AI provider configured. Please add OpenAI or Anthropic API Keys.' }, { status: 500 });
+            // No AI provider configured - return basic file info for manual entry
+            console.warn('No Vision-capable AI provider configured. Returning basic file info.');
+            extractedData = {
+                date: new Date().toISOString().split('T')[0],
+                description: '',
+                amount: 0,
+                currency: 'USD',
+                category: 'Uncategorized',
+                confidence: 0
+            };
         }
 
-        if (!extractedData || typeof extractedData.amount !== 'number' || !extractedData.description) {
-            return NextResponse.json({ error: 'Failed to extract valid data from the receipt.', rawData: extractedData }, { status: 400 });
+        if (!extractedData) {
+             // Fallback for extraction failure
+             extractedData = {
+                date: new Date().toISOString().split('T')[0],
+                description: '',
+                amount: 0,
+                currency: 'USD',
+                category: 'Uncategorized',
+                confidence: 0
+            };
         }
 
         // 3. Upload File to Storage for records (optional but good practice)

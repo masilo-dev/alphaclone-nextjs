@@ -5,7 +5,11 @@ import {
     ChevronLeft, AlertTriangle, FileCheck, AlertCircle, CheckCircle2,
     Filter,
     Printer,
-    Share2
+    Share2,
+    Presentation,
+    ScanLine,
+    Image as ImageIcon,
+    Type
 } from 'lucide-react';
 import { googleDriveService } from '../../services/googleDriveService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -39,7 +43,14 @@ interface DocumentHubProps {
     user: User;
 }
 
-type ViewMode = 'list' | 'viewer' | 'editor' | 'image';
+type ViewMode = 'list' | 'viewer' | 'editor' | 'image' | 'presentation';
+
+interface Slide {
+    id: string;
+    title: string;
+    content: string;
+    image?: string;
+}
 
 interface HubFile {
     id: string;
@@ -92,7 +103,10 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     const [storageUsed, setStorageUsed] = useState(0);
     const { user: authUser } = useAuth();
     const [isSavingToDrive, setIsSavingToDrive] = useState<string | null>(null);
+    const [slides, setSlides] = useState<Slide[]>([{ id: '1', title: 'New Presentation', content: 'Subtitle or description' }]);
+    const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const scanInputRef = useRef<HTMLInputElement>(null);
 
     const loadFiles = useCallback(async () => {
         if (!currentTenant?.id) {
@@ -121,6 +135,85 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         loadFiles();
         loadStorageUsage();
     }, [loadFiles, loadStorageUsage]);
+
+    const handleScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsLoading(true);
+        const toastId = toast.loading('Scanning document with AI Vision...');
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', 'document_scan'); // Tell API to just extract text
+
+            const response = await fetch('/api/ai/vision', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) throw new Error('Scan failed');
+
+            const data = await response.json();
+            
+            // Create a new document with the scanned text
+            const scannedContent = `
+                <h1>Scanned Document</h1>
+                <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+                <hr/>
+                <p>${data.description || data.text || 'No text extracted'}</p>
+                ${data.amount ? `<p><strong>Detected Amount:</strong> ${data.amount}</p>` : ''}
+            `;
+            
+            setEditorContent(scannedContent);
+            setSelectedFile({
+                id: 'new-scan',
+                original_filename: `Scan-${format(new Date(), 'yyyy-MM-dd-HHmm')}.docx`,
+                file_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                file_size: 0,
+                storage_path: '',
+                created_at: new Date().toISOString(),
+                deleted_at: null
+            });
+            setViewMode('editor');
+            toast.success('Document scanned successfully', { id: toastId });
+        } catch (error) {
+            console.error('Scan error:', error);
+            toast.error('Failed to scan document', { id: toastId });
+        } finally {
+            setIsLoading(false);
+            if (scanInputRef.current) scanInputRef.current.value = '';
+        }
+    };
+
+    const handleCreateDocument = () => {
+        setEditorContent('<h1>New Document</h1><p>Start typing...</p>');
+        setSelectedFile({
+            id: 'new-doc',
+            original_filename: `Document-${format(new Date(), 'yyyy-MM-dd-HHmm')}.docx`,
+            file_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            file_size: 0,
+            storage_path: '',
+            created_at: new Date().toISOString(),
+            deleted_at: null
+        });
+        setViewMode('editor');
+    };
+
+    const handleCreatePresentation = () => {
+        setSlides([{ id: '1', title: 'Presentation Title', content: 'Subtitle or description' }]);
+        setCurrentSlideIndex(0);
+        setSelectedFile({
+            id: 'new-ppt',
+            original_filename: `Presentation-${format(new Date(), 'yyyy-MM-dd-HHmm')}.pdf`,
+            file_type: 'application/pdf', // We export as PDF
+            file_size: 0,
+            storage_path: '',
+            created_at: new Date().toISOString(),
+            deleted_at: null
+        });
+        setViewMode('presentation');
+    };
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -527,6 +620,79 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                 </div>
                             </div>
                         </div>
+                    ) : viewMode === 'presentation' ? (
+                        <div className="h-full flex overflow-hidden bg-slate-900">
+                            {/* Slides Sidebar */}
+                            <div className="w-48 bg-slate-950 border-r border-white/10 flex flex-col">
+                                <div className="p-4 overflow-y-auto flex-1 space-y-3">
+                                    {slides.map((slide, idx) => (
+                                        <button
+                                            key={slide.id}
+                                            onClick={() => setCurrentSlideIndex(idx)}
+                                            className={`w-full aspect-video rounded border-2 transition-all p-2 text-[8px] overflow-hidden text-left relative group ${currentSlideIndex === idx ? 'border-orange-500 bg-orange-500/10' : 'border-slate-800 hover:border-slate-600'}`}
+                                        >
+                                            <div className="font-bold text-white truncate">{slide.title || 'Untitled'}</div>
+                                            <div className="text-slate-500 truncate">{slide.content}</div>
+                                            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <span className="bg-slate-900 text-slate-400 text-[8px] px-1 rounded">{idx + 1}</span>
+                                            </div>
+                                        </button>
+                                    ))}
+                                    <button
+                                        onClick={() => {
+                                            const newSlide = { id: Date.now().toString(), title: 'New Slide', content: 'Click to edit' };
+                                            setSlides([...slides, newSlide]);
+                                            setCurrentSlideIndex(slides.length);
+                                        }}
+                                        className="w-full py-3 border-2 border-dashed border-slate-800 rounded hover:border-slate-600 hover:bg-slate-900 transition-all text-slate-500 hover:text-white text-xs font-bold flex items-center justify-center gap-1"
+                                    >
+                                        <Plus className="w-3 h-3" /> Add Slide
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Main Slide Editor */}
+                            <div className="flex-1 flex flex-col h-full overflow-hidden relative bg-slate-900">
+                                <div className="flex-1 p-8 sm:p-12 flex items-center justify-center overflow-auto">
+                                    <div
+                                        id="presentation-content"
+                                        className="aspect-video w-full max-w-4xl bg-white shadow-2xl rounded-sm p-12 flex flex-col relative"
+                                    >
+                                        <input
+                                            value={slides[currentSlideIndex]?.title || ''}
+                                            onChange={(e) => {
+                                                const newSlides = [...slides];
+                                                newSlides[currentSlideIndex].title = e.target.value;
+                                                setSlides(newSlides);
+                                            }}
+                                            placeholder="Click to add title"
+                                            className="text-4xl sm:text-5xl font-bold text-slate-900 border-none focus:ring-0 placeholder:text-slate-300 bg-transparent mb-6"
+                                        />
+                                        <textarea
+                                            value={slides[currentSlideIndex]?.content || ''}
+                                            onChange={(e) => {
+                                                const newSlides = [...slides];
+                                                newSlides[currentSlideIndex].content = e.target.value;
+                                                setSlides(newSlides);
+                                            }}
+                                            placeholder="Click to add text"
+                                            className="flex-1 text-xl sm:text-2xl text-slate-600 border-none focus:ring-0 placeholder:text-slate-200 bg-transparent resize-none leading-relaxed"
+                                        />
+                                        
+                                        {/* Logo / Branding Placeholder */}
+                                        <div className="absolute bottom-8 right-8 opacity-50">
+                                            {currentTenant?.logo_url ? (
+                                                <img src={currentTenant.logo_url} className="h-8 object-contain" alt="Logo" />
+                                            ) : (
+                                                <span className="text-slate-300 font-bold uppercase tracking-widest text-sm">
+                                                    {currentTenant?.name || 'COMPANY'}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     ) : fileUrl ? (
                         <div className="flex items-center justify-center h-full">
                             <div className="bg-slate-900 border border-white/5 p-12 rounded-3xl text-center max-w-sm">
@@ -591,20 +757,54 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                             <Trash2 className="w-3.5 h-3.5" /> Empty Trash
                         </button>
                     ) : (
-                        <label className="cursor-pointer flex-1 sm:flex-none">
-                            <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-colors shadow-lg shadow-teal-500/20">
-                                {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                                Upload Document
-                            </div>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                className="hidden"
-                                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                                onChange={handleUpload}
-                                disabled={isUploading}
-                            />
-                        </label>
+                        <div className="flex gap-2">
+                            <label className="cursor-pointer">
+                                <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-colors border border-white/5">
+                                    {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                                    <span className="hidden sm:inline">Upload</span>
+                                </div>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    className="hidden"
+                                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                    onChange={handleUpload}
+                                    disabled={isUploading}
+                                />
+                            </label>
+
+                            <button
+                                onClick={handleCreateDocument}
+                                className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 text-xs font-bold transition-colors border border-blue-500/30"
+                            >
+                                <Type className="w-3.5 h-3.5" />
+                                <span className="hidden sm:inline">Write Doc</span>
+                            </button>
+
+                            <button
+                                onClick={handleCreatePresentation}
+                                className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-orange-600/20 hover:bg-orange-600/30 text-orange-400 text-xs font-bold transition-colors border border-orange-500/30"
+                            >
+                                <Presentation className="w-3.5 h-3.5" />
+                                <span className="hidden sm:inline">Slides</span>
+                            </button>
+
+                            <label className="cursor-pointer">
+                                <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-colors shadow-lg shadow-teal-500/20">
+                                    <ScanLine className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">Scan</span>
+                                </div>
+                                <input
+                                    ref={scanInputRef}
+                                    type="file"
+                                    className="hidden"
+                                    accept="image/*"
+                                    capture="environment"
+                                    onChange={handleScan}
+                                    disabled={isLoading}
+                                />
+                            </label>
+                        </div>
                     )}
                 </div>
             </div>

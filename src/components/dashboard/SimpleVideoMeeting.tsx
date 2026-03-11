@@ -274,105 +274,96 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
     // READY STATE
     if (room) {
         return (
-            <div className="bg-gradient-to-br from-teal-900/30 to-blue-900/30 rounded-xl p-6 border-2 border-teal-500/30">
-                <div className="flex items-start gap-4 mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-blue-500 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-teal-900/20">
-                        <Video className="w-6 h-6 text-white" />
+            <div className="bg-gradient-to-br from-teal-900/30 to-blue-900/30 rounded-xl p-4 border border-teal-500/30">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-blue-500 rounded-lg flex items-center justify-center shrink-0 shadow-lg shadow-teal-900/20">
+                        <Video className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1">
-                        <h3 className="text-xl font-bold text-white mb-1">
-                            Ready to Meet
+                        <h3 className="text-base font-bold text-white leading-tight">
+                            Instant Meeting
                         </h3>
-                        <p className="text-sm text-gray-300">
+                        <p className="text-xs text-gray-400">
                             Your secure room is ready.
                         </p>
                     </div>
                 </div>
 
-                {/* Meeting Link Display */}
-                <div className="bg-gray-900/50 border-2 border-teal-500/50 rounded-lg p-4 mb-4 backdrop-blur-sm space-y-4">
+                {/* Meeting Details Card */}
+                <div className="bg-gray-900/50 border border-teal-500/20 rounded-lg p-3 mb-4 backdrop-blur-sm space-y-3">
+                    {/* Link Section */}
                     <div>
-                        <div className="flex items-center gap-2 mb-2">
-                            <ExternalLink className="w-4 h-4 text-teal-400" />
-                            <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">
-                                Shareable Link
+                        <div className="flex items-center justify-between mb-1">
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                                Invite Link
                             </span>
+                            {copied && (
+                                <span className="text-[10px] text-teal-400 flex items-center animate-fade-in">
+                                    <Check className="w-3 h-3 mr-1" /> Copied
+                                </span>
+                            )}
                         </div>
-                        <div className="flex items-center gap-3 flex-wrap">
-                            <p className="flex-1 text-teal-400 font-mono text-sm break-all select-all bg-black/30 p-2 rounded min-w-0">
-                                {room.shareLink}
-                            </p>
+                        <div className="flex gap-2">
+                            <div className="flex-1 bg-black/30 rounded px-3 py-2 border border-white/5 min-w-0">
+                                <p className="text-teal-400 font-mono text-xs truncate">
+                                    {room.shareLink}
+                                </p>
+                            </div>
                             <Button
                                 onClick={handleCopyLink}
-                                className={`shrink-0 transition-all ${copied ? 'bg-green-600' : 'bg-teal-600 hover:bg-teal-500'}`}
-                                size="sm"
+                                className="shrink-0 h-[34px] w-[34px] p-0 bg-teal-600/20 hover:bg-teal-600/40 text-teal-400 border border-teal-500/30"
+                                title="Copy Link"
                             >
-                                {copied ? (
-                                    <>
-                                        <Check className="w-4 h-4 mr-1" />
-                                        Invitation Copied
-                                    </>
-                                ) : (
-                                    <>
-                                        <Copy className="w-4 h-4 mr-1" />
-                                        Copy Invite
-                                    </>
-                                )}
+                                <Copy className="w-4 h-4" />
                             </Button>
                         </div>
                     </div>
 
-                    {/* Meeting PIN Display */}
+                    {/* PIN Section */}
                     {room.pin && (
-                        <div className="pt-3 border-t border-slate-700/50">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Lock className="w-4 h-4 text-amber-400" />
-                                <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">
-                                    Meeting Code (Required for Clients)
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-3 flex-wrap">
-                                <p className="flex-1 text-amber-400 font-mono text-xl tracking-[0.2em] font-bold bg-black/30 p-2 rounded min-w-0 text-center">
-                                    {String(room.pin).match(/.{1,3}/g)?.join(' ')}
-                                </p>
-                                <div className="flex items-center gap-2 shrink-0">
-                                    <Button
-                                        onClick={handleCopyPin}
-                                        className="transition-all bg-amber-600 hover:bg-amber-500 text-white"
-                                        size="sm"
-                                    >
-                                        <Copy className="w-4 h-4 mr-1" />
-                                        Copy Code
-                                    </Button>
-                                    <Button
-                                        onClick={handleRegeneratePin}
-                                        className="transition-all bg-slate-700 hover:bg-slate-600 text-white"
-                                        size="sm"
-                                        disabled={isRegenerating}
-                                    >
-                                        <RefreshCw className={`w-4 h-4 mr-1 ${isRegenerating ? 'animate-spin' : ''}`} />
-                                        Regenerate
-                                    </Button>
+                        <div className="pt-2 border-t border-white/5">
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">
+                                Access Code
+                            </span>
+                            <div className="flex gap-2 items-center">
+                                <div className="flex-1 bg-black/30 rounded px-3 py-2 border border-white/5">
+                                    <p className="text-amber-400 font-mono text-sm font-bold tracking-widest truncate">
+                                        {String(room.pin).match(/.{1,3}/g)?.join(' ')}
+                                    </p>
                                 </div>
+                                <Button
+                                    onClick={handleCopyPin}
+                                    className="shrink-0 h-[34px] w-[34px] p-0 bg-amber-600/20 hover:bg-amber-600/40 text-amber-400 border border-amber-500/30"
+                                    title="Copy Code"
+                                >
+                                    <Copy className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                    onClick={handleRegeneratePin}
+                                    className="shrink-0 h-[34px] w-[34px] p-0 bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 border border-white/10"
+                                    title="Regenerate Code"
+                                    disabled={isRegenerating}
+                                >
+                                    <RefreshCw className={`w-4 h-4 ${isRegenerating ? 'animate-spin' : ''}`} />
+                                </Button>
                             </div>
                         </div>
                     )}
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-3 flex-wrap">
+                <div className="grid grid-cols-2 gap-3">
                     <Button
                         onClick={handleJoin}
-                        className="flex-1 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-500 hover:to-blue-500 min-w-[150px] shadow-lg shadow-teal-900/20"
+                        className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-500 hover:to-blue-500 text-white shadow-lg shadow-teal-900/20 text-xs font-bold"
                     >
-                        <Video className="w-4 h-4 mr-2" />
-                        Start Meeting Now
+                        Start Meeting
                     </Button>
 
                     <Button
                         onClick={handleCreateNew}
                         variant="outline"
-                        className="border-gray-500/50 hover:bg-gray-500/10 text-slate-300"
+                        className="border-white/10 hover:bg-white/5 text-slate-300 text-xs"
                     >
                         New Room
                     </Button>

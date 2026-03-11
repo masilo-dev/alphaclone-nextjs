@@ -71,48 +71,117 @@ export const analyticsService = {
      * Get revenue analytics
      */
     async getRevenueData(startDate: Date, endDate: Date) {
-        // Get all paid invoices
-        const { data: invoices, error } = await supabase
-            .from('invoices')
-            .select('amount, created_at, status')
-            .eq('status', 'Paid')
-            .eq('tenant_id', tenantService.getCurrentTenantId())
-            .gte('created_at', startDate.toISOString())
-            .lte('created_at', endDate.toISOString());
+        const tenantId = tenantService.getCurrentTenantId();
+        
+        // Fetch all financial activities for aggregation
+        const [invoicesRes, expensesRes, payoutsRes] = await Promise.all([
+            // 1. Paid Invoices (Revenue)
+            supabase
+                .from('invoices')
+                .select('amount, created_at, status')
+                .eq('tenant_id', tenantId)
+                .in('status', ['Paid', 'Sent']) // Include Sent as potential revenue if needed
+                .gte('created_at', startDate.toISOString())
+                .lte('created_at', endDate.toISOString()),
+            
+            // 2. Expenses (Costs)
+            supabase
+                .from('expenses')
+                .select('amount, created_at, category')
+                .eq('tenant_id', tenantId)
+                .gte('created_at', startDate.toISOString())
+                .lte('created_at', endDate.toISOString()),
 
-        if (error) throw error;
+            // 3. Other Revenue (Direct payments/payouts)
+            supabase
+                .from('revenue_records')
+                .select('amount, created_at')
+                .eq('tenant_id', tenantId)
+                .gte('created_at', startDate.toISOString())
+                .lte('created_at', endDate.toISOString())
+                .catch(() => ({ data: [], error: null })) // Graceful fallback if table doesn't exist yet
+        ]);
 
-        const totalRevenue = Math.round((invoices || []).reduce((sum: number, inv: { amount: number | null }) => sum + (inv.amount || 0), 0) * 100) / 100;
+        const invoices = invoicesRes.data || [];
+        const expenses = expensesRes.data || [];
+        const otherRevenue = (payoutsRes as any)?.data || [];
+
+        // Aggregate Revenue
+        const paidRevenue = invoices
+            .filter(inv => inv.status === 'Paid')
+            .reduce((sum, inv) => sum + (inv.amount || 0), 0);
+        
+        const sentRevenue = invoices
+            .filter(inv => inv.status === 'Sent')
+            .reduce((sum, inv) => sum + (inv.amount || 0), 0);
+        
+        const directRevenue = otherRevenue
+            .reduce((sum: number, rec: any) => sum + (rec.amount || 0), 0);
+
+        const totalRevenue = Math.round((paidRevenue + directRevenue) * 100) / 100;
+        const totalPotentialRevenue = Math.round((totalRevenue + sentRevenue) * 100) / 100;
 
         // This month
         const thisMonthStart = startOfDay(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-        const thisMonthInvoices = (invoices || []).filter(
-            (inv: { created_at: string | number | Date }) => new Date(inv.created_at) >= thisMonthStart
+        const thisMonthInvoices = invoices.filter(
+            (inv: { created_at: string | number | Date }) => new Date(inv.created_at) >= thisMonthStart && inv.status === 'Paid'
         );
-        const thisMonth = Math.round(thisMonthInvoices.reduce((sum: number, inv: { amount: number | null }) => sum + (inv.amount || 0), 0) * 100) / 100;
+        const thisMonthDirect = otherRevenue.filter(
+            (rec: { created_at: string | number | Date }) => new Date(rec.created_at) >= thisMonthStart
+        );
+        const thisMonth = Math.round(
+            (thisMonthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) +
+             thisMonthDirect.reduce((sum: number, rec: any) => sum + (rec.amount || 0), 0)) * 100
+        ) / 100;
 
         // Last month
         const lastMonthStart = startOfDay(new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1));
         const lastMonthEnd = endOfDay(new Date(new Date().getFullYear(), new Date().getMonth(), 0));
-        const { data: lastMonthInvoices } = await supabase
-            .from('invoices')
-            .select('amount')
-            .eq('status', 'Paid')
-            .eq('tenant_id', tenantService.getCurrentTenantId())
-            .gte('created_at', lastMonthStart.toISOString())
-            .lte('created_at', lastMonthEnd.toISOString());
-        const lastMonth = Math.round((lastMonthInvoices || []).reduce((sum: number, inv: { amount: number | null }) => sum + (inv.amount || 0), 0) * 100) / 100;
+        
+        // We need to fetch last month data specifically if it's not covered by the current range
+        // But for simplicity and performance, let's try to filter from existing data first
+        // If the date range is '7d', existing data won't have last month.
+        // So we should fetch last month data separately to be safe.
+        
+        const [lastMonthInvoicesRes, lastMonthRevenueRes] = await Promise.all([
+            supabase
+                .from('invoices')
+                .select('amount')
+                .eq('status', 'Paid')
+                .eq('tenant_id', tenantId)
+                .gte('created_at', lastMonthStart.toISOString())
+                .lte('created_at', lastMonthEnd.toISOString()),
+            supabase
+                .from('revenue_records')
+                .select('amount')
+                .eq('tenant_id', tenantId)
+                .gte('created_at', lastMonthStart.toISOString())
+                .lte('created_at', lastMonthEnd.toISOString())
+                .catch(() => ({ data: [], error: null }))
+        ]);
+
+        const lastMonthRevenue = (lastMonthInvoicesRes.data || []).reduce((sum, inv) => sum + (inv.amount || 0), 0) +
+                                 ((lastMonthRevenueRes as any)?.data || []).reduce((sum: number, rec: any) => sum + (rec.amount || 0), 0);
+        
+        const lastMonth = Math.round(lastMonthRevenue * 100) / 100;
 
         const trend = lastMonth > 0 ? ((thisMonth - lastMonth) / lastMonth) * 100 : 0;
 
         // Group by period for chart
-        const byPeriod: Record<string, { revenue: number; projects: number }> = {};
-        (invoices || []).forEach((inv: { created_at: string; amount: number | null }) => {
+        const byPeriod: Record<string, { revenue: number; expenses: number; projects: number }> = {};
+        
+        invoices.forEach(inv => {
             const date = format(parseISO(inv.created_at), 'yyyy-MM-dd');
-            if (!byPeriod[date]) {
-                byPeriod[date] = { revenue: 0, projects: 0 };
+            if (!byPeriod[date]) byPeriod[date] = { revenue: 0, expenses: 0, projects: 0 };
+            if (inv.status === 'Paid') {
+                byPeriod[date].revenue = Math.round((byPeriod[date].revenue + (inv.amount || 0)) * 100) / 100;
             }
-            byPeriod[date].revenue = Math.round((byPeriod[date].revenue + (inv.amount || 0)) * 100) / 100;
+        });
+
+        expenses.forEach(exp => {
+            const date = format(parseISO(exp.created_at), 'yyyy-MM-dd');
+            if (!byPeriod[date]) byPeriod[date] = { revenue: 0, expenses: 0, projects: 0 };
+            byPeriod[date].expenses = Math.round((byPeriod[date].expenses + (exp.amount || 0)) * 100) / 100;
         });
 
         // Get projects for same period
