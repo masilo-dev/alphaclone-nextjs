@@ -109,11 +109,16 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   // 5. Execution & Fulfillment 
   { label: 'Projects', href: '/dashboard/business/projects', icon: Briefcase },
   { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
+  { label: 'Task Scheduler', href: '/dashboard/business/tasks', icon: Clock },
+  { label: 'Resource Allocation', href: '/dashboard/business/resources', icon: TrendingUp },
 
   // 6. Finances & Records
   { label: 'Invoices', href: '/dashboard/business/billing', icon: DollarSign },
   { label: 'Finance', href: '/dashboard/accounting', icon: BarChart3 },
   { label: 'Documents', href: '/dashboard/business/documents', icon: FolderOpen },
+
+  // 7. Integrations
+  { label: 'Zoho CRM', href: '/dashboard/business/zoho', icon: Zap },
 
   // 7. Administration
   { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },

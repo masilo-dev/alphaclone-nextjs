@@ -57,6 +57,10 @@ import DocumentHub from '../../documents/DocumentHub';
 const AccountingDashboard = React.lazy(() => import('../accounting/AccountingDashboard'));
 const MailTab = React.lazy(() => import('../MailTab'));
 const CustomVideoRoom = React.lazy(() => import('../video/CustomVideoRoom'));
+// New Components
+const TaskScheduler = React.lazy(() => import('./TaskScheduler'));
+const ZohoIntegration = React.lazy(() => import('./ZohoIntegration'));
+const ResourceAllocation = React.lazy(() => import('./ResourceAllocation'));
 
 import Sidebar from '@/components/dashboard/Sidebar';
 import { TableSkeleton } from '@/components/ui/Skeleton';
@@ -328,6 +332,24 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
                         <QuotesTab userId={user.id} userRole={user.role} />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/tasks':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <TaskScheduler />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/zoho':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <ZohoIntegration />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/resources':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
+                        <ResourceAllocation />
                     </React.Suspense>
                 );
 

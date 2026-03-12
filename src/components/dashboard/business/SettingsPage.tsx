@@ -40,6 +40,8 @@ import GmailIntegration from './GmailIntegration';
 import MFAEnrollment from './MFAEnrollment';
 import { authService } from '../../../services/authService';
 import { Button, Modal, Input } from '../../ui/UIComponents';
+import { BackgroundColorPicker } from '../settings/BackgroundColorPicker';
+import { useTheme } from '../../../contexts/ThemeContext';
 
 interface SettingsPageProps {
     user: User;
@@ -47,7 +49,8 @@ interface SettingsPageProps {
 
 const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const { currentTenant } = useTenant();
-    const [activeTab, setActiveTab] = useState<'business' | 'notifications' | 'security' | 'booking' | 'integrations' | 'billing'>('business');
+    const { backgroundColor, setBackgroundColor } = useTheme();
+    const [activeTab, setActiveTab] = useState<'business' | 'notifications' | 'security' | 'booking' | 'integrations' | 'billing' | 'appearance'>('business');
     const [settings, setSettings] = useState({
         businessName: '',
         logoUrl: '',
@@ -74,6 +77,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
     const [upgradeLoading, setUpgradeLoading] = useState<string | null>(null);
     const [connectLoading, setConnectLoading] = useState(false);
+    const [showColorPicker, setShowColorPicker] = useState(false);
 
     const handleStripeConnect = async () => {
         if (!currentTenant) return;
@@ -309,6 +313,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 
     const tabs = [
         { id: 'business', label: 'Business Profile', icon: Building },
+        { id: 'appearance', label: 'Appearance', icon: Palette },
         { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'security', label: 'Security', icon: Shield },
         { id: 'booking', label: 'Booking & Calendly', icon: Calendar },
@@ -725,6 +730,58 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                     </>
                 )}
 
+                {/* Appearance Tab */}
+                {activeTab === 'appearance' && (
+                    <div className="space-y-6">
+                        <div>
+                            <h3 className="text-xl font-bold mb-4">Dashboard Appearance</h3>
+                            <p className="text-slate-400 mb-6">Customize the look and feel of your workspace</p>
+                        </div>
+
+                        <div className="space-y-6">
+                            {/* Background Color Section */}
+                            <div className="p-6 bg-slate-800 rounded-xl border border-slate-700">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h4 className="text-lg font-semibold text-white mb-2">Dashboard Background</h4>
+                                        <p className="text-sm text-slate-400">Choose a color that matches your brand or preference</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowColorPicker(true)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors"
+                                    >
+                                        <Palette className="w-4 h-4" />
+                                        Change Color
+                                    </button>
+                                </div>
+                                
+                                <div className="flex items-center gap-4">
+                                    <div 
+                                        className="w-12 h-12 rounded-lg border-2 border-slate-600"
+                                        style={{ backgroundColor: backgroundColor }}
+                                    />
+                                    <div>
+                                        <p className="text-sm font-medium text-white">Current Background</p>
+                                        <p className="text-xs text-slate-400">{backgroundColor}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Preview Section */}
+                            <div className="p-6 bg-slate-800 rounded-xl border border-slate-700">
+                                <h4 className="text-lg font-semibold text-white mb-4">Preview</h4>
+                                <div 
+                                    className="p-8 rounded-xl border-2 border-dashed border-slate-600 text-center"
+                                    style={{ backgroundColor: backgroundColor }}
+                                >
+                                    <p className="text-slate-300 mb-2">Your dashboard will look like this</p>
+                                    <p className="text-xs text-slate-500">This is how your workspace background will appear</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
 
 
                 {activeTab === 'notifications' && (
@@ -1066,8 +1123,14 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             </div>
                         </div>
                     </div>
-                </Modal>
+                </div>
             </div>
+
+            {/* Background Color Picker Modal */}
+            <BackgroundColorPicker 
+                isOpen={showColorPicker}
+                onClose={() => setShowColorPicker(false)}
+            />
         </div>
     );
 };

@@ -1,168 +1,354 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, CheckCircle2, XCircle, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
-import { supabase } from '../../../lib/supabase';
-import toast from 'react-hot-toast';
+import { Mail, Plus, Settings, RefreshCw, Target, Send, BarChart3 } from 'lucide-react';
+import { Button } from '../../ui/UIComponents';
 
-interface ZohoConfig {
-    email: string;
-    accountId: string;
+interface ZohoIntegrationProps {
+  onLeadsGenerated?: (leads: any[]) => void;
+  onEmailsSent?: (count: number) => void;
 }
 
-const ZohoIntegration: React.FC = () => {
-    const [loading, setLoading] = useState(true);
-    const [connecting, setConnecting] = useState(false);
-    const [config, setConfig] = useState<ZohoConfig | null>(null);
-    const [region, setRegion] = useState('eu'); // Defaulting to EU for AlphaClone
+const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ 
+  onLeadsGenerated, 
+  onEmailsSent 
+}) => {
+  const [isConnected, setIsConnected] = useState(false);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [leads, setLeads] = useState<any[]>([]);
+  const [emailStats, setEmailStats] = useState({ sent: 0, failed: 0, pending: 0 });
+  const [showSettings, setShowSettings] = useState(false);
 
-    useEffect(() => {
-        loadZohoConfig();
-    }, []);
-
-    const loadZohoConfig = async () => {
-        setLoading(true);
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            const { data, error } = await supabase
-                .from('integrations')
-                .select('config, enabled')
-                .eq('user_id', user.id)
-                .eq('type', 'zoho')
-                .maybeSingle();
-
-            if (data && data.enabled && data.config) {
-                setConfig({
-                    email: data.config.email,
-                    accountId: data.config.accountId
-                });
-            } else {
-                setConfig(null);
-            }
-        } catch (error) {
-            console.error('Error loading Zoho config:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleConnect = async () => {
-        setConnecting(true);
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error('Not authenticated');
-
-            // Redirect to our backend connect route
-            window.location.href = `/api/auth/zoho/connect?userId=${user.id}&region=${region}`;
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to initiate Zoho connection');
-            setConnecting(false);
-        }
-    };
-
-    const handleDisconnect = async () => {
-        if (!confirm('Are you sure you want to disconnect Zoho Mail?')) return;
-
-        setLoading(true);
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            const { error } = await supabase
-                .from('integrations')
-                .delete()
-                .eq('user_id', user.id)
-                .eq('type', 'zoho');
-
-            if (error) throw error;
-
-            setConfig(null);
-            toast.success('Zoho Mail disconnected');
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to disconnect Zoho');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (loading) {
-        return (
-            <div className="flex items-center gap-2 text-slate-400 p-4">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Checking Zoho status...</span>
-            </div>
-        );
+  // Check if already connected on component mount
+  useEffect(() => {
+    const savedToken = localStorage.getItem('zoho_access_token');
+    if (savedToken) {
+      setAccessToken(savedToken);
+      setIsConnected(true);
+      loadLeads(savedToken);
     }
+  }, []);
 
-    return (
-        <div className={`p-6 rounded-2xl border ${config ? 'bg-teal-500/5 border-teal-500/20' : 'bg-slate-900/50 border-slate-800'} relative overflow-hidden`}>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="flex items-start gap-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${config ? 'bg-[#f5d400]/10 text-[#f5d400]' : 'bg-slate-800 text-slate-500'}`}>
-                        <Mail className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-bold text-white">
-                                Zoho Mail
-                            </h4>
-                            {config ? (
-                                <CheckCircle2 className="w-4 h-4 text-teal-400" />
-                            ) : (
-                                <AlertCircle className="w-4 h-4 text-slate-500" />
-                            )}
-                        </div>
-                        <p className="text-sm text-slate-400 max-w-md mb-2">
-                            {config
-                                ? "Your Zoho Mail account is connected. You can now manage your business emails and communications directly from the dashboard."
-                                : "Link your professional Zoho Mail account to read, send, and manage business emails directly within the AlphaClone Business OS."
-                            }
-                        </p>
-                        {config && (
-                            <div className="flex items-center gap-2 text-teal-400 bg-teal-500/10 w-fit px-3 py-1.5 rounded-lg border border-teal-500/20 text-xs">
-                                <span>Connected: {typeof config.email === 'object' ? JSON.stringify(config.email) : String(config.email)}</span>
-                            </div>
-                        )}
-                    </div>
-                </div>
+  const connectToZoho = () => {
+    // Redirect to Zoho OAuth
+    const clientId = '1000.EHLUECNTL7GYIS34VV79J1KDPBCFWK';
+    const redirectUri = `${window.location.origin}/api/zoho/callback`;
+    const scope = 'ZohoCRM.modules.leads.READ,ZohoCRM.modules.contacts.READ,ZohoCRM.modules.emails.CREATE';
+    
+    const authUrl = `https://accounts.zoho.com/oauth/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&access_type=offline`;
+    
+    window.location.href = authUrl;
+  };
 
-                <div className="flex flex-wrap gap-3">
-                    {config ? (
-                        <button
-                            onClick={handleDisconnect}
-                            className="flex items-center gap-2 px-6 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-black text-sm uppercase tracking-widest rounded-xl border border-red-500/20 transition-all"
-                        >
-                            <XCircle className="w-4 h-4" />
-                            Disconnect
-                        </button>
-                    ) : (
-                        <div className="flex items-center gap-3">
-                            <select
-                                value={region}
-                                onChange={(e) => setRegion(e.target.value)}
-                                className="bg-slate-950 border border-slate-800 text-slate-300 text-sm rounded-xl px-4 py-2.5 outline-none focus:border-[#f5d400]/50 transition-colors"
-                            >
-                                <option value="com">US (.com)</option>
-                                <option value="eu">EU (.eu)</option>
-                                <option value="in">India (.in)</option>
-                                <option value="com.au">Australia (.com.au)</option>
-                                <option value="jp">Japan (.jp)</option>
-                                <option value="ca">Canada (.ca)</option>
-                            </select>
-                            <button
-                                onClick={handleConnect}
-                                disabled={connecting}
-                                className="flex items-center gap-2 px-6 py-2.5 bg-[#f5d400] hover:bg-[#e6c700] text-slate-900 font-black text-sm uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-[#f5d400]/20 disabled:opacity-50"
-                            >
-                                {connecting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-                                {connecting ? 'CONNECTING...' : 'CONNECT ZOHO'}
-                            </button>
-                        </div>
-                    )}
-                </div>
-            </div>
+  const loadLeads = async (token: string) => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/zoho', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'get_leads',
+          access_token: token
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        setLeads(data.data || []);
+        if (onLeadsGenerated) {
+          onLeadsGenerated(data.data || []);
+        }
+      } else {
+        console.error('Failed to load leads:', data);
+      }
+    } catch (error) {
+      console.error('Error loading leads:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateLeads = async (criteria: string) => {
+    if (!isConnected || !accessToken) return;
+
+    try {
+      setLoading(true);
+      
+      // This would typically call your backend to generate leads based on criteria
+      const response = await fetch('/api/zoho', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'create_lead',
+          access_token: accessToken,
+          lead: {
+            First_Name: 'Auto',
+            Last_Name: 'Generated',
+            Company: 'Prospect Company',
+            Email: 'prospect@example.com',
+            Phone: '+1234567890',
+            Description: `Generated based on criteria: ${criteria}`,
+            Lead_Source: 'AlphaClone Automation'
+          }
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        // Reload leads after creation
+        await loadLeads(accessToken);
+        
+        // Update stats
+        setEmailStats(prev => ({
+          ...prev,
+          sent: prev.sent + 1
+        }));
+      } else {
+        console.error('Failed to create lead:', data);
+      }
+    } catch (error) {
+      console.error('Error creating lead:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendBulkEmails = async (recipients: string[], subject: string, body: string) => {
+    if (!isConnected || !accessToken) return;
+
+    try {
+      setLoading(true);
+      let sent = 0;
+      let failed = 0;
+
+      for (const recipient of recipients) {
+        try {
+          const response = await fetch('/api/zoho', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              action: 'send_email',
+              access_token: accessToken,
+              email: {
+                to: [{ email: recipient }],
+                subject: subject,
+                content: body,
+                from: 'noreply@alphaclone.com'
+              }
+            }),
+          });
+
+          if (response.ok) {
+            sent++;
+          } else {
+            failed++;
+          }
+        } catch (error) {
+          failed++;
+          console.error(`Failed to send email to ${recipient}:`, error);
+        }
+      }
+
+      setEmailStats(prev => ({
+        sent: prev.sent + sent,
+        failed: prev.failed + failed,
+        pending: prev.pending
+      }));
+
+      if (onEmailsSent) {
+        onEmailsSent(sent);
+      }
+
+    } catch (error) {
+      console.error('Error sending bulk emails:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const disconnect = () => {
+    localStorage.removeItem('zoho_access_token');
+    setAccessToken(null);
+    setIsConnected(false);
+    setLeads([]);
+  };
+
+  const QuickActions = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+        <div className="flex items-center gap-3 mb-3">
+          <Target className="w-5 h-5 text-teal-400" />
+          <h4 className="font-semibold text-white">Generate Leads</h4>
         </div>
+        <p className="text-slate-400 text-sm mb-3">Find potential customers based on your criteria</p>
+        <div className="space-y-2">
+          <Button
+            size="sm"
+            onClick={() => generateLeads('tech startups')}
+            disabled={!isConnected || loading}
+            className="w-full bg-teal-600 hover:bg-teal-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Generate Tech Leads
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => generateLeads('small business')}
+            disabled={!isConnected || loading}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Generate SMB Leads
+          </Button>
+        </div>
+      </div>
+
+      <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+        <div className="flex items-center gap-3 mb-3">
+          <Send className="w-5 h-5 text-green-400" />
+          <h4 className="font-semibold text-white">Send Emails</h4>
+        </div>
+        <p className="text-slate-400 text-sm mb-3">Automated email campaigns to your leads</p>
+        <Button
+          size="sm"
+          onClick={() => {
+            const recipients = leads.map(lead => lead.Email).filter(Boolean);
+            if (recipients.length > 0) {
+              sendBulkEmails(
+                recipients.slice(0, 10), // Limit to 10 for demo
+                'Introduction from AlphaClone',
+                'Hello! I noticed your company and wanted to reach out about how AlphaClone can help streamline your business operations...'
+              );
+            }
+          }}
+          disabled={!isConnected || loading || leads.length === 0}
+          className="w-full bg-green-600 hover:bg-green-700"
+        >
+          <Send className="w-4 h-4 mr-2" />
+          Send to {leads.length} Leads
+        </Button>
+      </div>
+    </div>
+  );
+
+  const StatsDashboard = () => (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+        <div className="flex items-center gap-3 mb-2">
+          <Target className="w-5 h-5 text-teal-400" />
+          <h4 className="font-semibold text-white">Total Leads</h4>
+        </div>
+        <div className="text-2xl font-bold text-teal-400">{leads.length}</div>
+        <div className="text-sm text-slate-400">in your CRM</div>
+      </div>
+
+      <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+        <div className="flex items-center gap-3 mb-2">
+          <Send className="w-5 h-5 text-green-400" />
+          <h4 className="font-semibold text-white">Emails Sent</h4>
+        </div>
+        <div className="text-2xl font-bold text-green-400">{emailStats.sent}</div>
+        <div className="text-sm text-slate-400">successful sends</div>
+      </div>
+
+      <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+        <div className="flex items-center gap-3 mb-2">
+          <BarChart3 className="w-5 h-5 text-blue-400" />
+          <h4 className="font-semibold text-white">Success Rate</h4>
+        </div>
+        <div className="text-2xl font-bold text-blue-400">
+          {emailStats.sent + emailStats.failed > 0 
+            ? Math.round((emailStats.sent / (emailStats.sent + emailStats.failed)) * 100)
+            : 0}%
+        </div>
+        <div className="text-sm text-slate-400">email success rate</div>
+      </div>
+    </div>
+  );
+
+  if (!isConnected) {
+    return (
+      <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
+        <div className="text-center">
+          <Mail className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-white mb-2">Zoho Integration</h3>
+          <p className="text-slate-400 mb-4">
+            Connect your Zoho CRM to automate lead generation and email campaigns
+          </p>
+          <Button
+            onClick={connectToZoho}
+            className="bg-teal-600 hover:bg-teal-700"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Connect to Zoho
+          </Button>
+        </div>
+      </div>
     );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-white">Zoho CRM Integration</h3>
+          <p className="text-slate-400">Automated lead generation and email campaigns</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+            <span className="text-sm text-slate-400">Connected</span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={disconnect}
+            className="border-red-500 text-red-400 hover:bg-red-500/10"
+          >
+            Disconnect
+          </Button>
+        </div>
+      </div>
+
+      <StatsDashboard />
+      <QuickActions />
+
+      {leads.length > 0 && (
+        <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+          <h4 className="font-semibold text-white mb-3">Recent Leads</h4>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {leads.slice(0, 5).map((lead, index) => (
+              <div key={index} className="flex items-center justify-between p-2 bg-slate-700 rounded">
+                <div>
+                  <div className="font-medium text-white">
+                    {lead.First_Name} {lead.Last_Name}
+                  </div>
+                  <div className="text-sm text-slate-400">{lead.Company}</div>
+                </div>
+                <div className="text-sm text-slate-400">
+                  {lead.Email}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {loading && (
+        <div className="text-center py-4">
+          <RefreshCw className="w-6 h-6 animate-spin text-teal-400 mx-auto" />
+          <p className="text-slate-400 mt-2">Processing...</p>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default ZohoIntegration;
