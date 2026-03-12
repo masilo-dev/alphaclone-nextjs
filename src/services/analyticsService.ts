@@ -124,10 +124,10 @@ export const analyticsService = {
         // This month
         const thisMonthStart = startOfDay(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
         const thisMonthInvoices = invoices.filter(
-            (inv: { created_at: string | number | Date }) => new Date(inv.created_at) >= thisMonthStart && inv.status === 'Paid'
+            (inv: any) => new Date(inv.created_at) >= thisMonthStart && inv.status === 'Paid'
         );
         const thisMonthDirect = otherRevenue.filter(
-            (rec: { created_at: string | number | Date }) => new Date(rec.created_at) >= thisMonthStart
+            (rec: any) => new Date(rec.created_at) >= thisMonthStart
         );
         const thisMonth = Math.round(
             (thisMonthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) +
