@@ -53,17 +53,22 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [clientEmail, setClientEmail] = useState('');
 
     // Set default bank and mobile money details from tenant
+    const tenantSettings = currentTenant?.settings as {
+        paymentMethods?: { bank?: string; mobile?: string };
+        payment_methods?: { bank?: string; mobile?: string };
+    } | undefined;
+    const tenantPaymentMethods = tenantSettings?.paymentMethods || tenantSettings?.payment_methods;
     const tenantDefaults = {
-        bank: currentTenant?.paymentMethods?.bank || 'Bank: ABSA\nAccount: 123456789\nBranch: Sandton',
-        mobile: currentTenant?.paymentMethods?.mobile || 'Mobile Money: +27 123 456 7890',
+        bank: tenantPaymentMethods?.bank || 'Bank: ABSA\nAccount: 123456789\nBranch: Sandton',
+        mobile: tenantPaymentMethods?.mobile || 'Mobile Money: +27 123 456 7890',
     };
 
     React.useEffect(() => {
-        if (currentTenant?.paymentMethods) {
-            setBankDetails(currentTenant.paymentMethods.bank || tenantDefaults.bank);
-            setMobileDetails(currentTenant.paymentMethods.mobile || tenantDefaults.mobile);
+        if (tenantPaymentMethods) {
+            setBankDetails(tenantPaymentMethods.bank || tenantDefaults.bank);
+            setMobileDetails(tenantPaymentMethods.mobile || tenantDefaults.mobile);
         }
-    }, [currentTenant]);
+    }, [tenantPaymentMethods, tenantDefaults.bank, tenantDefaults.mobile]);
 
     // Load clients when component mounts or project changes
     React.useEffect(() => {
