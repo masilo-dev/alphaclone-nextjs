@@ -170,7 +170,7 @@ export const analyticsService = {
         // Group by period for chart
         const byPeriod: Record<string, { revenue: number; expenses: number; projects: number }> = {};
         
-        invoices.forEach(inv => {
+        invoices.forEach((inv: any) => {
             const date = format(parseISO(inv.created_at), 'yyyy-MM-dd');
             if (!byPeriod[date]) byPeriod[date] = { revenue: 0, expenses: 0, projects: 0 };
             if (inv.status === 'Paid') {
@@ -178,7 +178,7 @@ export const analyticsService = {
             }
         });
 
-        expenses.forEach(exp => {
+        expenses.forEach((exp: any) => {
             const date = format(parseISO(exp.created_at), 'yyyy-MM-dd');
             if (!byPeriod[date]) byPeriod[date] = { revenue: 0, expenses: 0, projects: 0 };
             byPeriod[date].expenses = Math.round((byPeriod[date].expenses + (exp.amount || 0)) * 100) / 100;
