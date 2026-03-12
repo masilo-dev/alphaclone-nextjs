@@ -21,7 +21,8 @@ import {
   Zap,
   BarChart3,
   MapPin,
-  FolderOpen
+  FolderOpen,
+  Presentation
 } from 'lucide-react';
 import { NavItem, DashboardStat } from './types';
 
@@ -98,6 +99,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
 
   // 3. Communication & Scheduling
   { label: 'Mail', href: '/dashboard/mail', icon: Mail },
+  { label: 'Team Chat', href: '/dashboard/business/team-chat', icon: MessageSquare },
   { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
   { label: 'Booking', href: '/dashboard/business/booking', icon: Clock },
   { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
@@ -120,7 +122,15 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   // 7. Integrations
   { label: 'Zoho CRM', href: '/dashboard/business/zoho', icon: Zap },
 
-  // 7. Administration
+  // 8. Usage & Limits
+  { label: 'Quota Manager', href: '/dashboard/business/quotas', icon: BarChart3 },
+  { label: 'Presentations', href: '/dashboard/business/presentations', icon: Presentation },
+  { label: 'Documents', href: '/dashboard/business/documents', icon: FileText },
+
+  // 9. Daily Summary
+  { label: 'Daily Summary', href: '/dashboard/business/daily-summary', icon: BarChart3 },
+
+  // 10. Administration
   { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },
 ];
 

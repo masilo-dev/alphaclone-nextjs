@@ -3,6 +3,7 @@ import { jsPDF } from 'jspdf';
 import { journalEntryService } from './accounting/journalEntryService';
 import { chartOfAccountsService } from './accounting/chartOfAccountsService';
 import { activityService } from './activityService';
+import { quotaService } from './quotaService';
 
 export interface BusinessInvoice {
     id: string;
@@ -87,6 +88,14 @@ export const businessInvoiceService = {
      */
     async createInvoice(tenantId: string, invoice: Partial<BusinessInvoice>): Promise<{ invoice: BusinessInvoice | null; error: string | null }> {
         try {
+            // Check quota limits
+            if (invoice.status !== 'draft') {
+                const quotaCheck = await quotaService.checkQuota('invoices', tenantId);
+                if (!quotaCheck.allowed) {
+                    return { invoice: null, error: quotaCheck.message };
+                }
+            }
+
             // Generate invoice number if not provided
             const invoiceNumber = invoice.invoiceNumber || await this.generateInvoiceNumber(tenantId);
 
@@ -190,6 +199,14 @@ export const businessInvoiceService = {
                         invoiceNumber: newInvoice.invoiceNumber,
                         amount: newInvoice.total
                     }, newInvoice.tenantId);
+                }
+
+                // Increment quota usage if invoice is not draft
+                if (newInvoice.status !== 'draft') {
+                    const { success: quotaSuccess, error: quotaError } = await quotaService.incrementQuota('invoices', tenantId);
+                    if (!quotaSuccess) {
+                        console.warn('Failed to increment invoice quota:', quotaError);
+                    }
                 }
             }
 

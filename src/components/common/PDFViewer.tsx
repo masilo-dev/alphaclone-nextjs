@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FileText, Download, ZoomIn, ZoomOut, RotateCw, X, Eye, RefreshCw } from 'lucide-react';
+import { Button } from '../ui/UIComponents';
 
 interface PDFViewerProps {
   fileUrl: string;
@@ -296,7 +297,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         
         <div className="flex items-center gap-2">
           <Button
-            size="xs"
+            size="sm"
             onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
             disabled={currentPage <= 1}
             className="bg-slate-600 hover:bg-slate-500"
@@ -304,7 +305,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
             Previous
           </Button>
           <Button
-            size="xs"
+            size="sm"
             onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
             disabled={currentPage >= totalPages}
             className="bg-slate-600 hover:bg-slate-500"

@@ -40,6 +40,7 @@ import TeamPage from './TeamPage';
 const MessagesPage = React.lazy(() => import('./MessagesPage'));
 const CalendarPage = React.lazy(() => import('./CalendarPage'));
 const BillingPage = React.lazy(() => import('./BillingPage'));
+const EnhancedBillingPage = React.lazy(() => import('./EnhancedBillingPage'));
 const ReportsPage = React.lazy(() => import('./ReportsPage'));
 const SettingsPage = React.lazy(() => import('./SettingsPage'));
 const MeetingsPage = React.lazy(() => import('./MeetingsPage'));
@@ -60,7 +61,13 @@ const CustomVideoRoom = React.lazy(() => import('../video/CustomVideoRoom'));
 // New Components
 const TaskScheduler = React.lazy(() => import('./TaskScheduler'));
 const ZohoIntegration = React.lazy(() => import('./ZohoIntegration'));
+const EnhancedZohoIntegration = React.lazy(() => import('./EnhancedZohoIntegration'));
 const ResourceAllocation = React.lazy(() => import('./ResourceAllocation'));
+const EnhancedTeamChat = React.lazy(() => import('./EnhancedTeamChat'));
+const QuotaManager = React.lazy(() => import('./QuotaManager'));
+const PresentationTemplates = React.lazy(() => import('./PresentationTemplates'));
+const EnhancedDocumentSystem = React.lazy(() => import('./EnhancedDocumentSystem'));
+const DailySummarySystem = React.lazy(() => import('./DailySummarySystem'));
 
 import Sidebar from '@/components/dashboard/Sidebar';
 import { TableSkeleton } from '@/components/ui/Skeleton';
@@ -280,7 +287,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/billing':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
-                        <BillingPage user={user} />
+                        <EnhancedBillingPage user={user} />
                     </React.Suspense>
                 );
             case '/dashboard/business/reports':
@@ -343,13 +350,43 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/zoho':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
-                        <ZohoIntegration />
+                        <EnhancedZohoIntegration />
                     </React.Suspense>
                 );
             case '/dashboard/business/resources':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
                         <ResourceAllocation />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/team-chat':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <EnhancedTeamChat />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/quotas':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <QuotaManager />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/presentations':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <PresentationTemplates />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/documents':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <EnhancedDocumentSystem />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/daily-summary':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <DailySummarySystem />
                     </React.Suspense>
                 );
 

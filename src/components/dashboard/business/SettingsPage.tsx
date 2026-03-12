@@ -1123,7 +1123,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             </div>
                         </div>
                     </div>
-                </div>
+                </Modal>
             </div>
 
             {/* Background Color Picker Modal */}

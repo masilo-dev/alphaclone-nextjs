@@ -17,6 +17,7 @@ export const messageService = {
         }
         return tenantId;
     },
+
     /**
      * Get messages for a conversation between current user and another (or all if admin view)
      * Now with DATABASE-LEVEL filtering for performance (50x faster!)
@@ -62,7 +63,11 @@ export const messageService = {
                 attachments: m.attachments || [],
                 readAt: m.read_at ? new Date(m.read_at) : null,
                 deliveredAt: m.delivered_at ? new Date(m.delivered_at) : null,
-                priority: m.priority as any
+                priority: m.priority as any,
+                reactions: m.reactions || {},
+                reply_to: m.reply_to,
+                edited_at: m.edited_at,
+                group_id: m.group_id
             })).reverse(); // Reverse to show oldest first in chat
 
             return { messages, error: null };
@@ -109,7 +114,59 @@ export const messageService = {
                 attachments: m.attachments || [],
                 readAt: m.read_at ? new Date(m.read_at) : null,
                 deliveredAt: m.delivered_at ? new Date(m.delivered_at) : null,
-                priority: m.priority as any
+                priority: m.priority as any,
+                reactions: m.reactions || {},
+                reply_to: m.reply_to,
+                edited_at: m.edited_at,
+                group_id: m.group_id
+            })).reverse();
+
+            return { messages, error: null };
+        } catch (err) {
+            return { messages: [], error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * Get group messages
+     */
+    async getGroupMessages(
+        groupId: string,
+        limit: number = 100
+    ): Promise<{ messages: ChatMessage[]; error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            if (!tenantId) return { messages: [], error: null };
+
+            const { data, error } = await supabase
+                .from('messages')
+                .select('*')
+                .eq('tenant_id', tenantId)
+                .eq('group_id', groupId)
+                .order('created_at', { ascending: false })
+                .limit(limit);
+
+            if (error) {
+                return { messages: [], error: error.message };
+            }
+
+            const messages: ChatMessage[] = (data || []).map((m: any) => ({
+                id: m.id,
+                role: m.sender_role as 'user' | 'model' | 'system',
+                senderName: m.sender_name,
+                senderId: m.sender_id,
+                recipientId: m.recipient_id,
+                text: m.text,
+                timestamp: new Date(m.created_at),
+                isThinking: m.is_thinking,
+                attachments: m.attachments || [],
+                readAt: m.read_at ? new Date(m.read_at) : null,
+                deliveredAt: m.delivered_at ? new Date(m.delivered_at) : null,
+                priority: m.priority as any,
+                reactions: m.reactions || {},
+                reply_to: m.reply_to,
+                edited_at: m.edited_at,
+                group_id: m.group_id
             })).reverse();
 
             return { messages, error: null };
@@ -162,7 +219,11 @@ export const messageService = {
                 attachments: m.attachments || [],
                 readAt: m.read_at ? new Date(m.read_at) : null,
                 deliveredAt: m.delivered_at ? new Date(m.delivered_at) : null,
-                priority: m.priority as any
+                priority: m.priority as any,
+                reactions: m.reactions || {},
+                reply_to: m.reply_to,
+                edited_at: m.edited_at,
+                group_id: m.group_id
             })).reverse();
 
             // Check if there are more messages beyond this page
@@ -184,7 +245,9 @@ export const messageService = {
         text: string,
         recipientId?: string, // Optional: if null, might be treated as broadcast/system
         attachments: { id: string; url: string; type: 'image' | 'file'; name: string }[] = [],
-        priority: 'normal' | 'high' | 'urgent' = 'normal'
+        priority: 'normal' | 'high' | 'urgent' = 'normal',
+        replyTo?: string,
+        groupId?: string
     ): Promise<{ message: ChatMessage | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
@@ -210,10 +273,12 @@ export const messageService = {
                     sender_name: senderName,
                     sender_role: senderRole,
                     recipient_id: validated.recipientId,
+                    group_id: groupId,
                     text: validated.text,
                     is_thinking: false,
                     attachments: attachments,
-                    priority: priority
+                    priority: priority,
+                    reply_to: replyTo
                 })
                 .select()
                 .single();
@@ -234,7 +299,11 @@ export const messageService = {
                 attachments: data.attachments || [],
                 readAt: data.read_at ? new Date(data.read_at) : null,
                 deliveredAt: data.delivered_at ? new Date(data.delivered_at) : null,
-                priority: data.priority as any
+                priority: data.priority as any,
+                reactions: data.reactions || {},
+                reply_to: data.reply_to,
+                edited_at: data.edited_at,
+                group_id: data.group_id
             };
 
             return { message, error: null };
@@ -296,7 +365,11 @@ export const messageService = {
                         attachments: m.attachments || [],
                         readAt: m.read_at ? new Date(m.read_at) : null,
                         deliveredAt: m.delivered_at ? new Date(m.delivered_at) : null,
-                        priority: m.priority as any
+                        priority: m.priority as any,
+                        reactions: m.reactions || {},
+                        reply_to: m.reply_to,
+                        edited_at: m.edited_at,
+                        group_id: m.group_id
                     };
                     callback(message, 'INSERT');
                 }
@@ -330,7 +403,11 @@ export const messageService = {
                         attachments: m.attachments || [],
                         readAt: m.read_at ? new Date(m.read_at) : null,
                         deliveredAt: m.delivered_at ? new Date(m.delivered_at) : null,
-                        priority: m.priority as any
+                        priority: m.priority as any,
+                        reactions: m.reactions || {},
+                        reply_to: m.reply_to,
+                        edited_at: m.edited_at,
+                        group_id: m.group_id
                     };
                     callback(message, 'UPDATE');
                 }
@@ -356,23 +433,63 @@ export const messageService = {
         };
     },
 
-    async markAsRead(messageId: string): Promise<{ error: string | null }> {
+    /**
+     * Add reaction to message
+     */
+    async addReaction(messageId: string, emoji: string, userId: string): Promise<{ error: string | null }> {
         try {
-            const { error, data } = await supabase
+            // Get current reactions
+            const { data: currentData, error: fetchError } = await supabase
                 .from('messages')
-                .update({ read_at: new Date().toISOString() })
+                .select('reactions')
                 .eq('id', messageId)
-                .select('recipient_id, sender_id')
                 .single();
 
-            // Log activity - recipient read the message
-            if (!error && data?.recipient_id) {
-                const tenantId = this.getTenantId();
-                activityService.logActivity(data.recipient_id, 'Message Read', {
-                    messageId: messageId,
-                    senderId: data.sender_id
-                }, tenantId || undefined).catch(err => console.error('Failed to log activity:', err));
+            if (fetchError) {
+                return { error: fetchError.message };
             }
+
+            const reactions = currentData?.reactions || {};
+            
+            // Add or remove reaction
+            if (!reactions[emoji]) {
+                reactions[emoji] = [];
+            }
+            
+            if (reactions[emoji].includes(userId)) {
+                // Remove reaction
+                reactions[emoji] = reactions[emoji].filter(id => id !== userId);
+                if (reactions[emoji].length === 0) {
+                    delete reactions[emoji];
+                }
+            } else {
+                // Add reaction
+                reactions[emoji].push(userId);
+            }
+
+            const { error } = await supabase
+                .from('messages')
+                .update({ reactions })
+                .eq('id', messageId);
+
+            return { error: error ? error.message : null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * Edit message
+     */
+    async editMessage(messageId: string, newText: string): Promise<{ error: string | null }> {
+        try {
+            const { error } = await supabase
+                .from('messages')
+                .update({ 
+                    text: newText,
+                    edited_at: new Date().toISOString()
+                })
+                .eq('id', messageId);
 
             return { error: error ? error.message : null };
         } catch (err) {
@@ -393,6 +510,71 @@ export const messageService = {
             return { error: error ? error.message : null };
         } catch (err) {
             return { error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * Get group chats
+     */
+    async getGroupChats(): Promise<any[]> {
+        try {
+            const tenantId = this.getTenantId();
+            if (!tenantId) return [];
+
+            const { data, error } = await supabase
+                .from('group_chats')
+                .select('*')
+                .eq('tenant_id', tenantId)
+                .order('last_message_at', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching group chats:', error);
+                return [];
+            }
+
+            return data || [];
+        } catch (err) {
+            console.error('Error fetching group chats:', err);
+            return [];
+        }
+    },
+
+    /**
+     * Create group chat
+     */
+    async createGroupChat(groupData: {
+        name: string;
+        description?: string;
+        members: string[];
+        type: 'public' | 'private';
+        avatar_url?: string;
+    }): Promise<{ group: any | null; error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            if (!tenantId) return { group: null, error: 'No active tenant' };
+
+            const { data, error } = await supabase
+                .from('group_chats')
+                .insert({
+                    tenant_id: tenantId,
+                    name: groupData.name,
+                    description: groupData.description,
+                    members: groupData.members,
+                    type: groupData.type,
+                    avatar_url: groupData.avatar_url,
+                    created_at: new Date().toISOString(),
+                    last_message_at: new Date().toISOString()
+                })
+                .select()
+                .single();
+
+            if (error) {
+                return { group: null, error: error.message };
+            }
+
+            return { group: data, error: null };
+        } catch (err) {
+            return { group: null, error: err instanceof Error ? err.message : 'Unknown error' };
         }
     },
 
@@ -507,11 +689,47 @@ export const messageService = {
     },
 
     /**
+     * Mark message as read
+     */
+    async markAsRead(messageId: string): Promise<{ error: string | null }> {
+        try {
+            const { error, data } = await supabase
+                .from('messages')
+                .update({ read_at: new Date().toISOString() })
+                .eq('id', messageId)
+                .select('recipient_id, sender_id')
+                .single();
+
+            // Log activity - recipient read the message
+            if (!error && data?.recipient_id) {
+                const tenantId = this.getTenantId();
+                activityService.logActivity(data.recipient_id, 'Message Read', {
+                    messageId: messageId,
+                    senderId: data.sender_id
+                }, tenantId || undefined).catch(err => console.error('Failed to log activity:', err));
+            }
+
+            return { error: error ? error.message : null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
      * Send 'typing' event via Realtime Presence
      */
     sendTypingEvent(channel: any, userId: string, isTyping: boolean) {
         if (!channel) return;
         channel.track({ user_id: userId, is_typing: isTyping });
+    },
+
+    /**
+     * Unsubscribe from messages
+     */
+    unsubscribeFromMessages(channel: any) {
+        if (channel) {
+            supabase.removeChannel(channel);
+        }
     },
 
     /**

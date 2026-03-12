@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { quotaService } from './quotaService';
 
 export interface BusinessClient {
     id: string;
@@ -116,6 +117,14 @@ export const businessClientService = {
      */
     async createClient(tenantId: string, client: Partial<BusinessClient>): Promise<{ client: BusinessClient | null; error: string | null }> {
         try {
+            // Check quota for leads (new clients are considered leads)
+            if (client.salesStage === 'lead') {
+                const quotaCheck = await quotaService.checkQuota('leads', tenantId);
+                if (!quotaCheck.allowed) {
+                    return { client: null, error: quotaCheck.message };
+                }
+            }
+
             const { data, error } = await supabase
                 .from('business_clients')
                 .insert({
@@ -154,6 +163,14 @@ export const businessClientService = {
                 industry: data.industry,
                 website: data.website
             };
+
+            // Increment quota usage for leads
+            if (newClient.salesStage === 'lead') {
+                const { success: quotaSuccess, error: quotaError } = await quotaService.incrementQuota('leads', tenantId);
+                if (!quotaSuccess) {
+                    console.warn('Failed to increment lead quota:', quotaError);
+                }
+            }
 
             return { client: newClient, error: null };
         } catch (err: any) {
