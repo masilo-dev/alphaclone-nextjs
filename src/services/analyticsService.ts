@@ -130,7 +130,7 @@ export const analyticsService = {
             (rec: any) => new Date(rec.created_at) >= thisMonthStart
         );
         const thisMonth = Math.round(
-            (thisMonthInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0) +
+            (thisMonthInvoices.reduce((sum: number, inv: any) => sum + (inv.amount || 0), 0) +
              thisMonthDirect.reduce((sum: number, rec: any) => sum + (rec.amount || 0), 0)) * 100
         ) / 100;
 
@@ -160,7 +160,7 @@ export const analyticsService = {
                 .catch(() => ({ data: [], error: null }))
         ]);
 
-        const lastMonthRevenue = (lastMonthInvoicesRes.data || []).reduce((sum, inv) => sum + (inv.amount || 0), 0) +
+        const lastMonthRevenue = (lastMonthInvoicesRes.data || []).reduce((sum: number, inv: any) => sum + (inv.amount || 0), 0) +
                                  ((lastMonthRevenueRes as any)?.data || []).reduce((sum: number, rec: any) => sum + (rec.amount || 0), 0);
         
         const lastMonth = Math.round(lastMonthRevenue * 100) / 100;
