@@ -32,20 +32,25 @@ const LocalizationWrapper: React.FC<LocalizationWrapperProps> = ({ children }) =
     };
   }, []);
 
-  // Prevent hydration mismatch by not rendering on server
-  if (!isClient) {
-    return null;
-  }
+  // Hydration safety: we still keep isClient for browser-only logic, 
+  // but we NO LONGER return null to prevent blank screen on first paint.
+  useEffect(() => {
+    setIsClient(true);
+    // ... rest of effect
+  }, []);
 
-  // Wrap content with translation protection
   return (
     <div 
-      className="localization-wrapper"
+      className={`localization-wrapper ${!isClient ? 'is-hydrating' : ''}`}
       style={{ 
         contain: 'layout style paint',
         overflowWrap: 'break-word',
         wordBreak: 'break-word'
       }}
+      // These attributes help prevent Google Translate and other auto-translators
+      // from breaking React hydration without needing a null return.
+      translate="no"
+      lang="en"
       suppressHydrationWarning
     >
       {children}

@@ -8,8 +8,6 @@ import { BackgroundTaskProvider } from '@/contexts/BackgroundTaskContext';
 import { ToastProvider } from '@/components/Toast';
 import { GlobalErrorBoundary } from '@/components/GlobalErrorBoundary';
 import { ThemeProvider } from '@/contexts/ThemeContext';
-import LanguageDetector from '@/components/common/LanguageDetector';
-import LocalizationWrapper from '@/components/common/LocalizationWrapper';
 
 
 
@@ -31,16 +29,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <QueryClientProvider client={queryClient}>
                 <ToastProvider>
                     <ThemeProvider>
-                        <LocalizationWrapper>
-                            <LanguageDetector onLanguageChange={(lang) => console.log('Language detected:', lang)} />
-                            <AuthProvider>
-                                <TenantProvider>
-                                    <BackgroundTaskProvider>
-                                        {children}
-                                    </BackgroundTaskProvider>
-                                </TenantProvider>
-                            </AuthProvider>
-                        </LocalizationWrapper>
+                        <AuthProvider>
+                            <TenantProvider>
+                                <BackgroundTaskProvider>
+                                    {children}
+                                </BackgroundTaskProvider>
+                            </TenantProvider>
+                        </AuthProvider>
                     </ThemeProvider>
                 </ToastProvider>
             </QueryClientProvider>
