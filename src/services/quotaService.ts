@@ -49,7 +49,21 @@ export const quotaService = {
      */
     async checkQuota(resourceType: 'leads' | 'contracts' | 'invoices' | 'receipts', userId: string): Promise<QuotaCheckResult> {
         try {
+            // Validate UUID
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (!uuidRegex.test(userId)) {
+                console.error('Invalid userId provided to checkQuota:', userId);
+                return {
+                    allowed: false,
+                    currentUsage: 0,
+                    limit: 0,
+                    remaining: 0,
+                    message: 'Authentication internal error'
+                };
+            }
+
             const tenantId = this.getTenantId();
+            console.log(`Checking quota for ${resourceType}. Tenant: ${tenantId}, User: ${userId}`);
             if (!tenantId) {
                 return {
                     allowed: true,
@@ -110,7 +124,7 @@ export const quotaService = {
                 currentUsage,
                 limit,
                 remaining,
-                message: allowed 
+                message: allowed
                     ? `You have ${remaining} ${resourceType} remaining today`
                     : `Daily limit reached. You can create ${limit} ${resourceType} per day.`
             };
@@ -138,13 +152,14 @@ export const quotaService = {
             }
 
             const today = new Date().toISOString().split('T')[0];
-            
+            console.log(`Incrementing quota for ${resourceType}. Tenant: ${this.getTenantId()}, User: ${userId}`);
+
             // Check quota first
             const quotaCheck = await this.checkQuota(resourceType, userId);
             if (!quotaCheck.allowed) {
-                return { 
-                    success: false, 
-                    error: quotaCheck.message 
+                return {
+                    success: false,
+                    error: quotaCheck.message
                 };
             }
 

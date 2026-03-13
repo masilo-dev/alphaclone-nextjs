@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { jsPDF } from 'jspdf';
+import jsPDF from 'jspdf';
 import { journalEntryService } from './accounting/journalEntryService';
 import { chartOfAccountsService } from './accounting/chartOfAccountsService';
 import { activityService } from './activityService';
@@ -90,7 +90,10 @@ export const businessInvoiceService = {
         try {
             // Check quota limits
             if (invoice.status !== 'draft') {
-                const quotaCheck = await quotaService.checkQuota('invoices', tenantId);
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) throw new Error('Authentication required');
+
+                const quotaCheck = await quotaService.checkQuota('invoices', user.id);
                 if (!quotaCheck.allowed) {
                     return { invoice: null, error: quotaCheck.message };
                 }
@@ -203,9 +206,12 @@ export const businessInvoiceService = {
 
                 // Increment quota usage if invoice is not draft
                 if (newInvoice.status !== 'draft') {
-                    const { success: quotaSuccess, error: quotaError } = await quotaService.incrementQuota('invoices', tenantId);
-                    if (!quotaSuccess) {
-                        console.warn('Failed to increment invoice quota:', quotaError);
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user) {
+                        const { success: quotaSuccess, error: quotaError } = await quotaService.incrementQuota('invoices', user.id);
+                        if (!quotaSuccess) {
+                            console.warn('Failed to increment invoice quota:', quotaError);
+                        }
                     }
                 }
             }

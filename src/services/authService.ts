@@ -382,7 +382,7 @@ export const authService = {
             const maxAttempts = isAuthCallback ? 3 : 1;
 
             for (let i = 0; i < maxAttempts; i++) {
-                const { data: { session: s }, error } = await withAuthTimeout(supabase.auth.getSession(), 5000);
+                const { data: { session: s }, error } = await withAuthTimeout(supabase.auth.getSession(), 3000); // Reduced from 5s to 3s
                 if (s?.user) {
                     session = s;
                     if (isAuthCallback) sessionStorage.removeItem('auth_callback_in_progress');
@@ -448,7 +448,7 @@ export const authService = {
 
             let profile = null;
             lastError = null;
-            const maxRetries = 3;
+            const maxRetries = 2; // Reduced from 3
             const retryDelay = 500;
 
             for (let i = 0; i < maxRetries; i++) {
@@ -459,7 +459,7 @@ export const authService = {
                             .select('*, account_status, scheduled_deletion_at')
                             .eq('id', session.user.id)
                             .maybeSingle(),
-                        5000 // 5s timeout for profile fetch
+                        3000 // Reduced from 5s to 3s
                     );
 
                     if (!profileError && p) {

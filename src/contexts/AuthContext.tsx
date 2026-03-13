@@ -66,9 +66,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const latestUserRef = useRef<User | null>(null);
 
     // Fetch and set MFA level
+    // Fetch and set MFA level - wrapped in timeout to prevent blocking init
     const refreshMfaLevel = async () => {
         try {
-            const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+            // Add a 3s timeout to the MFA check
+            const mfaPromise = supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('MFA check timeout')), 3000));
+
+            const { data, error } = await Promise.race([mfaPromise, timeoutPromise]) as any;
+
             if (error) {
                 console.error('[AuthContext] Error getting MFA level:', error);
                 return;
@@ -77,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setMfaLevel(data.currentLevel as 'aal1' | 'aal2');
             setNeedsMfa(data.nextLevel === 'aal2' && data.currentLevel !== 'aal2');
         } catch (err) {
-            console.error('[AuthContext] Unexpected error fetching MFA level:', err);
+            console.error('[AuthContext] MFA level fetch suppressed or timed out:', err);
         }
     };
 
@@ -208,12 +214,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Safety net: force stop loading after 8s (reduced from 10s for better DX).
         // Only stops the spinner, does NOT clear the user state.
+        // Safety net: force stop loading after 4s (reduced from 8s).
+        // Only stops the spinner, does NOT clear the user state.
         const safetyTimeout = setTimeout(() => {
             if (isMounted && loading) {
-                console.warn('[AuthContext] Safety timeout reached (8s). Forcing loading to false.');
+                console.warn('[AuthContext] Safety timeout reached (4s). Forcing loading to false.');
                 setLoading(false);
             }
-        }, 8000);
+        }, 4000);
 
         return () => {
             isMounted = false;

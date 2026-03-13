@@ -25,6 +25,7 @@ import { businessInvoiceService } from '@/services/businessInvoiceService';
 import { emailCampaignService } from '@/services/emailCampaignService';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
+import { generateInvoicePDF } from '@/utils/pdfGenerator';
 
 interface EnhancedInvoiceModalProps {
   isOpen: boolean;
@@ -276,6 +277,34 @@ export default function EnhancedInvoiceModal({
     } catch (error) {
       console.error('Failed to copy link:', error);
       toast.error("Failed to copy payment link");
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    try {
+      const { businessInvoiceService } = await import('@/services/businessInvoiceService');
+      const doc = businessInvoiceService.generatePDF(
+        {
+          ...formData,
+          invoice_number: invoice?.invoice_number || invoice?.invoiceNumber || 'INV-TEMP',
+          issue_date: invoice?.issue_date || invoice?.issueDate || new Date().toISOString(),
+          due_date: formData.dueDate || invoice?.due_date || invoice?.dueDate,
+          currency: 'USD',
+          line_items: formData.items.map(item => ({
+            description: item.description,
+            quantity: item.quantity,
+            rate: item.rate,
+            amount: item.amount
+          }))
+        },
+        currentTenant,
+        currentTenant // Fallback as client info might be limited in modal state
+      );
+      doc.save(`Invoice_${invoice?.invoice_number || invoice?.invoiceNumber || 'temp'}.pdf`);
+      toast.success("PDF downloaded successfully");
+    } catch (error) {
+      console.error('Failed to download PDF:', error);
+      toast.error("Failed to generate PDF");
     }
   };
 
@@ -567,6 +596,13 @@ export default function EnhancedInvoiceModal({
             >
               {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               <span>{copiedLink ? 'Copied!' : 'Copy Link'}</span>
+            </button>
+            <button
+              onClick={handleDownloadPDF}
+              className="flex items-center space-x-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download PDF</span>
             </button>
           </div>
         </div>

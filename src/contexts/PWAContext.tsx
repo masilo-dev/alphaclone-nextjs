@@ -11,7 +11,7 @@ interface PWAContextType {
 const PWAContext = createContext<PWAContextType>({ isPWA: false, isLoading: true });
 
 export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
-    const [isPwaMode, setIsPwaMode] = useState(false);
+    const [isPwaMode, setIsPwaMode] = useState(typeof window !== 'undefined' ? isPWA() : false);
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {

@@ -47,7 +47,7 @@ const InteractiveMap = React.lazy(() => import('./dashboard/InteractiveMap'));
 const VideoExplainer = React.lazy(() => import('./dashboard/VideoExplainer'));
 const HeroBackground = React.lazy(() => import('./landing/HeroBackground'));
 import { MovingBorderButton } from './landing/MovingBorderButton';
-import PrismBackground from './common/PrismBackground';
+// PrismBackground import removed - now handled by MarketingShell
 
 interface LandingPageProps {
    onLogin: (user: User) => void;
@@ -138,7 +138,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
 
    return (
       <div className="min-h-screen text-slate-200 selection:bg-teal-500/30 relative">
-         <PrismBackground />
+
 
          <LoginModal
             isOpen={isLoginOpen}
