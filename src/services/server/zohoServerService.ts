@@ -116,7 +116,7 @@ export const zohoServerService = {
     /**
      * Proxy request to Zoho Mail API
      */
-    async proxyRequest(userId: string, endpoint: string, options: RequestInit = {}) {
+    async proxyRequest(userId: string, endpoint: string, options: RequestInit = {}): Promise<any> {
         const token = await this.getValidToken(userId);
         if (!token) throw new Error('Zoho not connected: Valid token could not be retrieved');
 
@@ -134,9 +134,20 @@ export const zohoServerService = {
             throw new Error('Database error fetching Zoho integration info');
         }
 
-        const accountId = integration?.config?.accountId;
+        const accountId = integration?.config?.accountId || integration?.config?.zoid;
         if (!accountId && !endpoint.includes('accounts')) {
             console.error('[Zoho Proxy Debug] Account ID is missing in integration config:', integration.config);
+            // Try to auto-resolve accountId if it's missing but we have a token
+            try {
+                const accountsData = await this.proxyRequest(userId, 'accounts');
+                if (accountsData.data && accountsData.data.length > 0) {
+                    const resolvedId = accountsData.data[0].accountId;
+                    console.log('[Zoho Proxy Debug] Auto-resolved accountId:', resolvedId);
+                    return this.proxyRequest(userId, endpoint, options);
+                }
+            } catch (e) {
+                console.error('[Zoho Proxy Debug] Auto-resolve failed:', e);
+            }
             throw new Error('Zoho account ID not found in database settings');
         }
 

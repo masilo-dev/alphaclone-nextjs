@@ -236,12 +236,20 @@ async function updateIntegrationConfig(userId: string, config: any) {
             ...config
         };
 
+        console.log('[Zoho Debug] Updating config for user:', userId, 'with keys:', Object.keys(config));
+
         // Update the integration
-        await supabaseAdmin
+        const { error: updateError } = await supabaseAdmin
             .from('integrations')
-            .update({ config: updatedConfig })
+            .update({ 
+                config: updatedConfig,
+                enabled: true,
+                updated_at: new Date().toISOString()
+            })
             .eq('user_id', userId)
             .eq('type', 'zoho');
+
+        if (updateError) throw updateError;
 
         console.log('Successfully updated Zoho integration config for user:', userId);
     } catch (error) {

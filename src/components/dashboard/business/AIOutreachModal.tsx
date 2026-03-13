@@ -134,20 +134,20 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                 className="absolute inset-0 bg-black/80 backdrop-blur-md"
             />
 
-            <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                className="relative w-full max-w-5xl h-[85vh] bg-slate-950 border border-slate-800 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col"
-            >
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    className="relative w-full max-w-4xl h-[80vh] bg-slate-950 border border-slate-800 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col"
+                >
                 {/* Header */}
-                <div className="p-8 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+                <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
                     <div className="flex items-center gap-4">
                         <div className="w-14 h-14 bg-[#f5d400]/10 rounded-2xl flex items-center justify-center border border-[#f5d400]/20">
                             <Sparkles className="w-7 h-7 text-[#f5d400]" />
                         </div>
                         <div>
-                            <h2 className="text-2xl font-black text-white uppercase tracking-tighter">AI Bulk Outreach</h2>
-                            <p className="text-sm text-slate-500 font-medium">Smart personalization for your top leads</p>
+                            <h2 className="text-xl font-black text-white uppercase tracking-tighter">AI Bulk Outreach</h2>
+                            <p className="text-[9px] text-slate-500 font-medium tracking-wide">SMART PERSONALIZATION FOR YOUR LEADS</p>
                         </div>
                     </div>
                     <button
@@ -160,10 +160,10 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
 
                 <div className="flex-1 flex overflow-hidden">
                     {/* Left Side: Lead Selection */}
-                    <div className="w-1/2 border-r border-slate-800 flex flex-col p-8 bg-slate-950/30">
+                    <div className="w-1/2 border-r border-slate-800 flex flex-col p-6 bg-slate-950/30">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-white font-bold flex items-center gap-2">
-                                <Users className="w-4 h-4 text-[#f5d400]" />
+                            <h3 className="text-white text-[10px] font-bold flex items-center gap-2 uppercase tracking-widest opacity-70">
+                                <Users className="w-3.5 h-3.5 text-[#f5d400]" />
                                 Select Leads ({selectedLeads.length}/20)
                             </h3>
                             <button
@@ -226,7 +226,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                     </div>
 
                     {/* Right Side: Configuration & AI */}
-                    <div className="w-1/2 flex flex-col p-8 overflow-y-auto bg-slate-950">
+                    <div className="w-1/2 flex flex-col p-6 overflow-y-auto bg-slate-950">
                         {results ? (
                             <div className="space-y-6">
                                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
@@ -261,9 +261,9 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                         ) : (
                             <div className="space-y-8">
                                 <div>
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-xs opacity-70">
-                                        <MessageSquare className="w-4 h-4" />
-                                        Step 1: AI Persona & Tone
+                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-[9px] opacity-70">
+                                        <MessageSquare className="w-3.5 h-3.5" />
+                                        Step 1: Tone of Voice
                                     </h3>
                                     <div className="grid grid-cols-2 gap-3">
                                         {TONES.map(tone => (
@@ -285,9 +285,9 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                 </div>
 
                                 <div>
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-xs opacity-70">
-                                        <Zap className="w-4 h-4" />
-                                        Step 2: Custom Directive
+                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-[9px] opacity-70">
+                                        <Zap className="w-3.5 h-3.5" />
+                                        Step 2: Custom Instructions
                                     </h3>
                                     <div className="bg-slate-900/50 border border-slate-800 rounded-[2rem] p-4 focus-within:border-[#f5d400]/40 transition-all">
                                         <textarea
@@ -310,13 +310,13 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                     >
                                         {sending ? (
                                             <div className="flex items-center gap-3">
-                                                <Loader2 className="w-6 h-6 animate-spin" />
-                                                <span>Transmitting...</span>
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                                <span className="text-base">Sending...</span>
                                             </div>
                                         ) : (
                                             <div className="flex items-center justify-center gap-3">
-                                                <Send className="w-6 h-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                                                <span>Deploy AI Outreach ({selectedLeads.length})</span>
+                                                <Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                                <span className="text-base uppercase tracking-wider">Send AI Emails ({selectedLeads.length})</span>
                                             </div>
                                         )}
                                     </Button>

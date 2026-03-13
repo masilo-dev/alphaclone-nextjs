@@ -6,6 +6,7 @@ import {
   CheckCircle, AlertCircle, Loader2, Trash2, Star, Reply, Forward,
   PenSquare, X, User, Clock, Search, Zap
 } from 'lucide-react';
+import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 
 interface ZohoIntegrationProps {
@@ -54,33 +55,54 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
   const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
-    const savedUserId = localStorage.getItem('user_id') || 'default_user';
-    setUserId(savedUserId);
-    const savedToken = localStorage.getItem('zoho_access_token');
-    if (savedToken) {
-      setIsConnected(true);
-      loadAccountInfo(savedUserId);
-      loadInbox(savedUserId);
-    }
+    const fetchSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        setUserId(session.user.id);
+        checkConnection(session.user.id);
+      }
+    };
+    fetchSession();
   }, []);
 
-  const connectToZoho = () => {
-    const clientId = '1000.EHLUECNTL7GYIS34VV79J1KDPBCFWK';
-    const redirectUri = `${window.location.origin}/api/zoho/callback`;
-    // Email-only scopes — no CRM scopes
-    const scope = 'ZohoMail.accounts.READ,ZohoMail.messages.READ,ZohoMail.messages.CREATE';
-    const authUrl = `https://accounts.zoho.com/oauth/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&access_type=offline`;
-    window.location.href = authUrl;
+  const checkConnection = async (uid: string) => {
+    try {
+      const response = await fetch(`/api/zoho/enhanced?userId=${uid}&action=get_account_info`);
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setIsConnected(true);
+        setAccountInfo(data.data);
+        loadInbox(uid);
+      }
+    } catch (err) {
+      console.error('Connection check failed:', err);
+    }
   };
 
-  const disconnect = () => {
-    localStorage.removeItem('zoho_access_token');
-    localStorage.removeItem('zoho_account_info');
-    setIsConnected(false);
-    setAccountInfo(null);
-    setMessages([]);
-    setSelectedMessage(null);
-    toast.success('Disconnected from Zoho Mail');
+  const connectToZoho = () => {
+    // Redirect to the backend-managed OAuth flow
+    const appUrl = window.location.origin;
+    window.location.href = `/api/auth/zoho/connect?userId=${userId}`;
+  };
+
+  const disconnect = async () => {
+    try {
+        const { error } = await supabase
+            .from('integrations')
+            .delete()
+            .eq('user_id', userId)
+            .eq('type', 'zoho');
+        
+        if (error) throw error;
+        
+        setIsConnected(false);
+        setAccountInfo(null);
+        setMessages([]);
+        setSelectedMessage(null);
+        toast.success('Disconnected from Zoho Mail');
+    } catch (err: any) {
+        toast.error('Failed to disconnect: ' + err.message);
+    }
   };
 
   const loadAccountInfo = async (uid: string) => {
@@ -208,9 +230,9 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
           <div className="w-20 h-20 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl">
             <Mail className="w-10 h-10 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-3">Zoho Mail</h2>
-          <p className="text-slate-400 mb-8 leading-relaxed">
-            Connect your Zoho Mail account to send and receive emails directly from your dashboard.
+          <h2 className="text-xl font-bold text-white mb-2">Zoho Mail</h2>
+          <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+            Connect your Zoho Mail account to manage your emails directly from your dashboard.
           </p>
           <button
             onClick={connectToZoho}
@@ -226,7 +248,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
 
   // ─── Connected ────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden" style={{ minHeight: '70vh' }}>
+    <div className="flex flex-col h-full bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden" style={{ minHeight: '600px', maxHeight: '800px' }}>
 
       {/* ── Top Bar ── */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm shrink-0">
@@ -329,11 +351,11 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
 
         {/* Compose Panel */}
         {activeTab === 'compose' && (
-          <div className="flex-1 p-6 overflow-y-auto">
+          <div className="flex-1 p-5 overflow-y-auto">
             <div className="max-w-2xl mx-auto">
               <h3 className="text-white font-semibold mb-5 flex items-center gap-2">
-                <PenSquare className="w-4 h-4 text-sky-400" />
-                New Message
+                <PenSquare className="w-3.5 h-3.5 text-sky-400" />
+                New Email
               </h3>
               <div className="space-y-3">
                 {([
@@ -470,7 +492,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
                     </div>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto p-6">
+                  <div className="flex-1 overflow-y-auto p-5">
                     <h2 className="text-white text-lg font-semibold mb-4">{selectedMessage.subject}</h2>
                     <div className="flex items-center gap-3 mb-6">
                       <div className="w-9 h-9 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
