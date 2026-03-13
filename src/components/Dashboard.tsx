@@ -67,7 +67,6 @@ import WelcomeModal from './dashboard/WelcomeModal';
 import OnboardingFlow from './onboarding/OnboardingFlow';
 import CreateInvoiceModal from './dashboard/CreateInvoiceModal';
 import { WidgetErrorBoundary } from './dashboard/WidgetErrorBoundary';
-import ResourceAllocationView from '@/components/dashboard/ResourceAllocationView';
 import { useOverdueTaskNotifier } from '../hooks/useOverdueTaskNotifier';
 import { DeletionOverlay } from './dashboard/DeletionOverlay';
 import PullToRefresh from './common/PullToRefresh';
@@ -1150,13 +1149,6 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       case '/dashboard/settings':
         return <SettingsPage user={user} />;
-
-      case '/dashboard/allocation':
-        return (
-          <WidgetErrorBoundary title="Resource Allocation">
-            <ResourceAllocationView user={user} initialProjects={projects} />
-          </WidgetErrorBoundary>
-        );
 
       case '/dashboard/submit':
         return (

@@ -18,6 +18,17 @@
 
 ---
 
+### 1b. **Zoho Mail Integration** ✅
+**Files:**
+- `src/app/api/zoho/messages/route.ts` - Message endpoints
+- `src/services/server/zohoServerService.ts` - API logic
+
+**Fixed Issues:**
+- ✅ **URL 404 (URL_RULE_NOT_CONFIGURED)**: Fixed incorrect API endpoint construction in proxyRequest.
+- ✅ **Email TypeError**: Fixed `extractEmail` to robustly handle non-string inputs.
+- ✅ **Input Sanitization**: Ensured consistent string types for email addresses.
+- ✅ **Account Auto-resolution**: Optimized fetching and caching of primary account info.
+
 ### 2. **Portfolio Editor FIXED** ✅
 **File:** `components/dashboard/PortfolioShowcase.tsx`
 

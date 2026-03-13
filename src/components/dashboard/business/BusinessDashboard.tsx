@@ -62,8 +62,6 @@ const CustomVideoRoom = React.lazy(() => import('../video/CustomVideoRoom'));
 const TaskScheduler = React.lazy(() => import('./TaskScheduler'));
 const ZohoIntegration = React.lazy(() => import('./ZohoIntegration'));
 
-const ResourceAllocation = React.lazy(() => import('./ResourceAllocation'));
-const EnhancedTeamChat = React.lazy(() => import('./EnhancedTeamChat'));
 const QuotaManager = React.lazy(() => import('./QuotaManager'));
 const PresentationTemplates = React.lazy(() => import('./PresentationTemplates'));
 const EnhancedDocumentSystem = React.lazy(() => import('./EnhancedDocumentSystem'));
@@ -354,18 +352,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     </React.Suspense>
                 );
 
-            case '/dashboard/business/resources':
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
-                        <ResourceAllocation />
-                    </React.Suspense>
-                );
-            case '/dashboard/business/team-chat':
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
-                        <EnhancedTeamChat />
-                    </React.Suspense>
-                );
             case '/dashboard/business/quotas':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>

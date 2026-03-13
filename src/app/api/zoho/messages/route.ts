@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
 
         // Use the dedicated sendMessage method which handles mailFormat: 'html' and proper endpoint structure
         const data = await zohoServerService.sendMessage(userId, {
-            toAddress: to,
+            toAddress: String(to || ''),
             subject: subject,
             content: content,
             fromAddress: fromAddress
@@ -130,6 +130,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, data });
     } catch (err: any) {
         console.error('Zoho Send Error:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        // Provide more detailed error info in the response for debugging
+        return NextResponse.json({ 
+            error: err.message,
+            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+        }, { status: 500 });
     }
 }

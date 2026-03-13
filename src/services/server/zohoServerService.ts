@@ -152,12 +152,17 @@ export const zohoServerService = {
         }
 
         const mailApiHost = integration?.config?.mailApiHost || 'mail.zoho.com';
-        const baseUrl = `https://${mailApiHost}/api/accounts`;
+        const baseUrl = `https://${mailApiHost}/api`; // Base URL should be /api, account ID comes after /accounts
+        
+        // Correctly construct the URL:
+        // 1. If absolute URL, use it
+        // 2. If 'accounts', it's always https://{host}/api/accounts
+        // 3. Otherwise, it's https://{host}/api/accounts/{accountId}/{endpoint}
         const url = endpoint.startsWith('http')
             ? endpoint
-            : accountId
-                ? `${baseUrl}/${accountId}/${endpoint}`
-                : `${baseUrl}/${endpoint}`;
+            : endpoint === 'accounts'
+                ? `${baseUrl}/accounts`
+                : `${baseUrl}/accounts/${accountId}/${endpoint}`;
 
         console.log(`[Zoho Proxy Debug] Sending request to URL: ${url}`);
 
@@ -189,8 +194,8 @@ export const zohoServerService = {
     /**
      * Extract clean email address from "Name <email@domain.com>" format
      */
-    extractEmail(address: string): string {
-        if (!address) return '';
+    extractEmail(address: any): string {
+        if (!address || typeof address !== 'string') return '';
         const match = address.match(/<([^>]+)>/);
         if (match) return match[1].trim();
         return address.trim();
