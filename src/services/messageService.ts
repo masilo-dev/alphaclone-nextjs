@@ -450,15 +450,15 @@ export const messageService = {
             }
 
             const reactions = currentData?.reactions || {};
-            
+
             // Add or remove reaction
             if (!reactions[emoji]) {
                 reactions[emoji] = [];
             }
-            
+
             if (reactions[emoji].includes(userId)) {
                 // Remove reaction
-                reactions[emoji] = reactions[emoji].filter(id => id !== userId);
+                reactions[emoji] = reactions[emoji].filter((id: string) => id !== userId);
                 if (reactions[emoji].length === 0) {
                     delete reactions[emoji];
                 }
@@ -485,7 +485,7 @@ export const messageService = {
         try {
             const { error } = await supabase
                 .from('messages')
-                .update({ 
+                .update({
                     text: newText,
                     edited_at: new Date().toISOString()
                 })

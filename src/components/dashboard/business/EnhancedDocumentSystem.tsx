@@ -1,26 +1,26 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-    FileText, 
-    Edit3, 
-    Download, 
-    Upload, 
-    Save, 
-    Bold, 
-    Italic, 
-    Underline, 
-    AlignLeft, 
-    AlignCenter, 
-    AlignRight, 
-    List, 
-    ListOrdered, 
-    Heading, 
-    Type, 
-    Palette, 
-    Plus, 
-    Trash2, 
-    Eye, 
+import {
+    FileText,
+    Edit3,
+    Download,
+    Upload,
+    Save,
+    Bold,
+    Italic,
+    Underline,
+    AlignLeft,
+    AlignCenter,
+    AlignRight,
+    List,
+    ListOrdered,
+    Heading,
+    Type,
+    Palette,
+    Plus,
+    Trash2,
+    Eye,
     Share2,
     Copy,
     RefreshCw,
@@ -32,7 +32,7 @@ import {
     File,
     Image,
     Link,
-    Table
+    X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../../ui/UIComponents';
@@ -226,7 +226,7 @@ export default function EnhancedDocumentSystem() {
     const [showPreview, setShowPreview] = useState(false);
     const [wordCount, setWordCount] = useState(0);
     const [readingTime, setReadingTime] = useState(0);
-    
+
     const editorRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -318,10 +318,10 @@ export default function EnhancedDocumentSystem() {
 
             // Update in local state (in real app, this would be an API call)
             setSelectedDocument(updatedDoc);
-            setDocuments(prev => prev.map(doc => 
+            setDocuments(prev => prev.map(doc =>
                 doc.id === updatedDoc.id ? updatedDoc : doc
             ));
-            
+
             toast.success('Document saved successfully');
         } catch (error) {
             console.error('Error saving document:', error);
@@ -365,7 +365,7 @@ export default function EnhancedDocumentSystem() {
                 a.click();
                 URL.revokeObjectURL(url);
             }
-            
+
             toast.success(`Document exported as ${format.toUpperCase()}`);
         } catch (error) {
             console.error('Error exporting document:', error);
@@ -381,24 +381,24 @@ export default function EnhancedDocumentSystem() {
     };
 
     const filteredDocuments = documents.filter(doc => {
-        const matchesSearch = searchTerm === '' || 
+        const matchesSearch = searchTerm === '' ||
             doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             doc.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
             doc.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-        
+
         const matchesCategory = filterCategory === 'all' || doc.category === filterCategory;
-        
+
         return matchesSearch && matchesCategory;
     });
 
     const filteredTemplates = DOCUMENT_TEMPLATES.filter(template => {
-        const matchesSearch = searchTerm === '' || 
+        const matchesSearch = searchTerm === '' ||
             template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             template.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
             template.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-        
+
         const matchesCategory = filterCategory === 'all' || template.category === filterCategory;
-        
+
         return matchesSearch && matchesCategory;
     });
 
@@ -592,7 +592,7 @@ export default function EnhancedDocumentSystem() {
                     {/* Editor Content */}
                     <div className="border border-slate-700 rounded-lg overflow-hidden">
                         {showPreview ? (
-                            <div 
+                            <div
                                 className="p-6 bg-white text-black min-h-96 prose max-w-none"
                                 dangerouslySetInnerHTML={{ __html: editorContent }}
                             />
@@ -670,7 +670,7 @@ export default function EnhancedDocumentSystem() {
                         <h3 className="text-lg font-bold text-white">Your Documents</h3>
                         <p className="text-slate-400 text-sm mt-1">{filteredDocuments.length} documents found</p>
                     </div>
-                    
+
                     <div className="divide-y divide-slate-800">
                         {filteredDocuments.map((document) => (
                             <div
@@ -732,7 +732,7 @@ export default function EnhancedDocumentSystem() {
                             </div>
                         ))}
                     </div>
-                    
+
                     {filteredDocuments.length === 0 && (
                         <div className="text-center py-12">
                             <FileText className="w-12 h-12 text-slate-400 mx-auto mb-4" />

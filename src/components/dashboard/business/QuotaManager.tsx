@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, TrendingUp, FileText, Users, DollarSign, RefreshCw, Settings, BarChart3 } from 'lucide-react';
+import { AlertTriangle, TrendingUp, FileText, Users, DollarSign, RefreshCw, Settings, BarChart3, X } from 'lucide-react';
 import { quotaService, QuotaUsage, QuotaLimits } from '../../../services/quotaService';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -40,7 +40,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
                 // Load tenant limits if available
                 currentTenant?.quota_limits ? Promise.resolve(currentTenant.quota_limits) : Promise.resolve(quotaLimits)
             ]);
-            
+
             setQuotaUsage(usage);
             setQuotaLimits(limits);
             setEditingLimits(limits);
@@ -163,7 +163,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
                         </span>
                     </div>
                     <div className="w-full bg-slate-700 rounded-full h-2">
-                        <div 
+                        <div
                             className={`h-2 rounded-full transition-all ${getProgressColor(quotaUsage?.leads || 0, quotaLimits.leadsPerDay)}`}
                             style={{ width: `${getProgressPercentage(quotaUsage?.leads || 0, quotaLimits.leadsPerDay)}%` }}
                         ></div>
@@ -185,7 +185,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
                         </span>
                     </div>
                     <div className="w-full bg-slate-700 rounded-full h-2">
-                        <div 
+                        <div
                             className={`h-2 rounded-full transition-all ${getProgressColor(quotaUsage?.contracts || 0, quotaLimits.contractsPerDay)}`}
                             style={{ width: `${getProgressPercentage(quotaUsage?.contracts || 0, quotaLimits.contractsPerDay)}%` }}
                         ></div>
@@ -207,7 +207,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
                         </span>
                     </div>
                     <div className="w-full bg-slate-700 rounded-full h-2">
-                        <div 
+                        <div
                             className={`h-2 rounded-full transition-all ${getProgressColor(quotaUsage?.invoices || 0, quotaLimits.invoicesPerDay)}`}
                             style={{ width: `${getProgressPercentage(quotaUsage?.invoices || 0, quotaLimits.invoicesPerDay)}%` }}
                         ></div>
@@ -229,7 +229,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
                         </span>
                     </div>
                     <div className="w-full bg-slate-700 rounded-full h-2">
-                        <div 
+                        <div
                             className={`h-2 rounded-full transition-all ${getProgressColor(quotaUsage?.receipts || 0, quotaLimits.receiptsPerDay)}`}
                             style={{ width: `${getProgressPercentage(quotaUsage?.receipts || 0, quotaLimits.receiptsPerDay)}%` }}
                         ></div>
@@ -275,7 +275,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
                     <RefreshCw className="w-4 h-4" />
                     Reset Today's Usage
                 </button>
-                
+
                 <div className="text-slate-400 text-sm flex items-center">
                     Limits reset daily at midnight UTC
                 </div>
@@ -294,7 +294,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
-                        
+
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">
@@ -308,7 +308,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
                                     min="1"
                                 />
                             </div>
-                            
+
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">
                                     Daily Contracts Limit
@@ -321,7 +321,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
                                     min="1"
                                 />
                             </div>
-                            
+
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">
                                     Daily Invoices Limit
@@ -334,7 +334,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
                                     min="1"
                                 />
                             </div>
-                            
+
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">
                                     Daily Receipts Limit
@@ -348,7 +348,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
                                 />
                             </div>
                         </div>
-                        
+
                         <div className="flex gap-3 mt-6">
                             <button
                                 onClick={() => setShowSettings(false)}

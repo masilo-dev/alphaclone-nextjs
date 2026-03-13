@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Calendar, DollarSign, TrendingUp, Plus, Edit3, Trash2, Clock, CheckCircle } from 'lucide-react';
+import { Users, Calendar, DollarSign, TrendingUp, Plus, Edit3, Trash2, Clock, CheckCircle, FileText } from 'lucide-react';
 import { Button } from '../../ui/UIComponents';
 
 interface TeamMember {
@@ -45,9 +45,9 @@ interface ResourceAllocationProps {
   onTeamUpdate?: (team: TeamMember[]) => void;
 }
 
-const ResourceAllocation: React.FC<ResourceAllocationProps> = ({ 
-  onResourceUpdate, 
-  onTeamUpdate 
+const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
+  onResourceUpdate,
+  onTeamUpdate
 }) => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
@@ -240,7 +240,7 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    
+
     if (diffHours < 1) return 'Just now';
     if (diffHours < 24) return `${diffHours}h ago`;
     return `${Math.floor(diffHours / 24)}d ago`;
@@ -248,7 +248,7 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
 
   const TeamMemberCard: React.FC<{ member: TeamMember }> = ({ member }) => {
     const utilization = calculateUtilization(member.currentProjects.length, member.maxProjects);
-    
+
     return (
       <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 hover:border-slate-600 transition-colors">
         <div className="flex items-start justify-between mb-3">
@@ -291,7 +291,7 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
             <span className="text-white">{member.availability}%</span>
           </div>
           <div className="w-full bg-slate-700 rounded-full h-2">
-            <div 
+            <div
               className="bg-teal-500 h-2 rounded-full transition-all"
               style={{ width: `${member.availability}%` }}
             />
@@ -304,11 +304,10 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
             <span className="text-white">{member.currentProjects.length}/{member.maxProjects}</span>
           </div>
           <div className="w-full bg-slate-700 rounded-full h-2">
-            <div 
-              className={`h-2 rounded-full transition-all ${
-                utilization > 80 ? 'bg-red-500' : 
-                utilization > 60 ? 'bg-yellow-500' : 'bg-green-500'
-              }`}
+            <div
+              className={`h-2 rounded-full transition-all ${utilization > 80 ? 'bg-red-500' :
+                  utilization > 60 ? 'bg-yellow-500' : 'bg-green-500'
+                }`}
               style={{ width: `${utilization}%` }}
             />
           </div>
@@ -340,7 +339,7 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
 
   const ResourceCard: React.FC<{ resource: Resource }> = ({ resource }) => {
     const utilization = calculateUtilization(resource.used, resource.capacity);
-    
+
     return (
       <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 hover:border-slate-600 transition-colors">
         <div className="flex items-start justify-between mb-3">
@@ -383,11 +382,10 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
             <span className="text-white">{utilization}%</span>
           </div>
           <div className="w-full bg-slate-700 rounded-full h-2">
-            <div 
-              className={`h-2 rounded-full transition-all ${
-                utilization > 90 ? 'bg-red-500' : 
-                utilization > 75 ? 'bg-yellow-500' : 'bg-green-500'
-              }`}
+            <div
+              className={`h-2 rounded-full transition-all ${utilization > 90 ? 'bg-red-500' :
+                  utilization > 75 ? 'bg-yellow-500' : 'bg-green-500'
+                }`}
               style={{ width: `${utilization}%` }}
             />
           </div>
@@ -421,7 +419,7 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
   };
 
   const ProjectCard: React.FC<{ project: Project }> = ({ project }) => {
-    const assignedTeam = teamMembers.filter(member => 
+    const assignedTeam = teamMembers.filter(member =>
       project.assignedResources.includes(member.id)
     );
 
@@ -436,12 +434,11 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
             <span className={`px-2 py-1 text-xs rounded-full ${getPriorityColor(project.priority)}`}>
               {project.priority}
             </span>
-            <span className={`px-2 py-1 text-xs rounded-full ${
-              project.status === 'active' ? 'text-green-400 bg-green-500/20' :
-              project.status === 'completed' ? 'text-blue-400 bg-blue-500/20' :
-              project.status === 'on_hold' ? 'text-yellow-400 bg-yellow-500/20' :
-              'text-slate-400 bg-slate-500/20'
-            }`}>
+            <span className={`px-2 py-1 text-xs rounded-full ${project.status === 'active' ? 'text-green-400 bg-green-500/20' :
+                project.status === 'completed' ? 'text-blue-400 bg-blue-500/20' :
+                  project.status === 'on_hold' ? 'text-yellow-400 bg-yellow-500/20' :
+                    'text-slate-400 bg-slate-500/20'
+              }`}>
               {project.status}
             </span>
           </div>
@@ -452,7 +449,7 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
             <span className="text-slate-400">Budget</span>
             <span className="text-white">{formatCurrency(project.budget)}</span>
           </div>
-          
+
           <div className="flex items-center justify-between text-sm">
             <span className="text-slate-400">Deadline</span>
             <span className="text-white">{formatDate(project.deadline)}</span>
@@ -464,7 +461,7 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
               <span className="text-white">{project.progress}%</span>
             </div>
             <div className="w-full bg-slate-700 rounded-full h-2">
-              <div 
+              <div
                 className="bg-teal-500 h-2 rounded-full transition-all"
                 style={{ width: `${project.progress}%` }}
               />

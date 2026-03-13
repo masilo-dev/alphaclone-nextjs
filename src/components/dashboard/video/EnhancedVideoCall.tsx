@@ -1,17 +1,17 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { 
-  Video, 
-  Mic, 
-  MicOff, 
-  VideoOff, 
-  Monitor, 
-  Phone, 
-  MessageSquare, 
-  Users, 
-  Settings, 
-  Maximize2, 
+import {
+  Video,
+  Mic,
+  MicOff,
+  VideoOff,
+  Monitor,
+  Phone,
+  MessageSquare,
+  Users,
+  Settings,
+  Maximize2,
   Minimize2,
   X,
   AlertCircle,
@@ -39,12 +39,12 @@ interface Participant {
   local: boolean;
 }
 
-export default function EnhancedVideoCall({ 
-  roomUrl, 
-  userName, 
-  userId, 
-  onLeave, 
-  isAdmin = false 
+export default function EnhancedVideoCall({
+  roomUrl,
+  userName,
+  userId,
+  onLeave,
+  isAdmin = false
 }: EnhancedVideoCallProps) {
   const daily = useDaily();
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -61,7 +61,7 @@ export default function EnhancedVideoCall({
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [screenShareVisible, setScreenShareVisible] = useState(false);
   const [dominantSpeaker, setDominantSpeaker] = useState<string | null>(null);
-  
+
   const videoGridRef = useRef<HTMLDivElement>(null);
   const screenShareRef = useRef<HTMLDivElement>(null);
   const localVideoRef = useRef<HTMLDivElement>(null);
@@ -114,11 +114,10 @@ export default function EnhancedVideoCall({
     const initCall = async () => {
       try {
         setConnectionState('connecting');
-        
+
         await daily.join({
           url: roomUrl,
-          userName: userName,
-          userId: userId,
+          userName: userName
         });
 
         setConnectionState('connected');
@@ -165,7 +164,7 @@ export default function EnhancedVideoCall({
 
       setParticipants(participantList);
       setLocalParticipant(local);
-      
+
       // Enhanced screen share detection
       const hasScreenShare = detectScreenShare();
       setScreenShareVisible(hasScreenShare);
@@ -206,12 +205,12 @@ export default function EnhancedVideoCall({
       setScreenShareVisible(false);
     };
 
-    daily.on('screen-share-started', handleScreenShareStarted);
-    daily.on('screen-share-stopped', handleScreenShareStopped);
+    daily.on('screen-share-started' as any, handleScreenShareStarted);
+    daily.on('screen-share-stopped' as any, handleScreenShareStopped);
 
     return () => {
-      daily.off('screen-share-started', handleScreenShareStarted);
-      daily.off('screen-share-stopped', handleScreenShareStopped);
+      daily.off('screen-share-started' as any, handleScreenShareStarted);
+      daily.off('screen-share-stopped' as any, handleScreenShareStopped);
     };
   }, [daily]);
 
@@ -271,7 +270,7 @@ export default function EnhancedVideoCall({
 
   const sendMessage = async () => {
     if (!daily || !newMessage.trim()) return;
-    
+
     try {
       await daily.sendAppMessage({
         type: 'chat',
@@ -279,14 +278,14 @@ export default function EnhancedVideoCall({
         sender: userName,
         timestamp: new Date().toISOString()
       });
-      
+
       setMessages(prev => [...prev, {
         text: newMessage.trim(),
         sender: userName,
         timestamp: new Date().toISOString(),
         isOwn: true
       }]);
-      
+
       setNewMessage('');
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -296,7 +295,7 @@ export default function EnhancedVideoCall({
   // Render video tiles with enhanced visibility
   const renderVideoTiles = () => {
     const allParticipants = localParticipant ? [localParticipant, ...participants] : participants;
-    
+
     return allParticipants.map((participant) => (
       <div
         key={participant.id}
@@ -314,7 +313,15 @@ export default function EnhancedVideoCall({
               try {
                 const participantObj = daily.participants()[participant.id];
                 if (participantObj?.videoTrack) {
-                  el.appendChild(participantObj.videoTrack.attach());
+                  // Standard way to attach track in Daily
+                  const videoEl = document.createElement('video');
+                  videoEl.autoplay = true;
+                  videoEl.playsInline = true;
+                  videoEl.muted = participant.local;
+                  videoEl.className = 'w-full h-full object-cover';
+                  videoEl.srcObject = new MediaStream([participantObj.videoTrack]);
+                  el.innerHTML = '';
+                  el.appendChild(videoEl);
                 }
               } catch (error) {
                 console.error('Error attaching video track:', error);
@@ -333,7 +340,7 @@ export default function EnhancedVideoCall({
             </div>
           )}
         </div>
-        
+
         {/* Participant info overlay */}
         <div className="absolute bottom-2 left-2 flex items-center space-x-2 bg-black bg-opacity-50 px-2 py-1 rounded">
           <span className="text-white text-xs">{participant.name}</span>
@@ -353,23 +360,28 @@ export default function EnhancedVideoCall({
     if (!screenShareVisible || !daily) return null;
 
     const screenShareParticipant = Object.values(daily.participants()).find((p: any) => {
-      return p.tracks?.screenVideo?.state === 'playable' || 
-             p.tracks?.screenVideo?.persistentTrack ||
-             p.tracks?.screenVideo?.track;
+      return p.tracks?.screenVideo?.state === 'playable' ||
+        p.tracks?.screenVideo?.persistentTrack ||
+        p.tracks?.screenVideo?.track;
     });
 
     if (!screenShareParticipant) return null;
 
     return (
-      <div 
+      <div
         className="relative w-full h-full bg-gray-900 rounded-lg overflow-hidden border-2 border-green-500"
         ref={(el) => {
           if (el && daily) {
             try {
               const screenTrack = screenShareParticipant.tracks?.screenVideo?.track;
               if (screenTrack) {
+                const videoEl = document.createElement('video');
+                videoEl.autoplay = true;
+                videoEl.playsInline = true;
+                videoEl.className = 'w-full h-full object-contain';
+                videoEl.srcObject = new MediaStream([screenTrack]);
                 el.innerHTML = ''; // Clear previous content
-                el.appendChild(screenTrack.attach());
+                el.appendChild(videoEl);
               }
             } catch (error) {
               console.error('Error attaching screen share track:', error);
@@ -432,7 +444,7 @@ export default function EnhancedVideoCall({
             </span>
           )}
         </div>
-        
+
         <div className="flex items-center space-x-2">
           {!isMinimized && (
             <>
@@ -450,14 +462,14 @@ export default function EnhancedVideoCall({
               </button>
             </>
           )}
-          
+
           <button
             onClick={() => setIsMinimized(!isMinimized)}
             className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg"
           >
             {isMinimized ? <Maximize2 className="w-5 h-5" /> : <Minimize2 className="w-5 h-5" />}
           </button>
-          
+
           <button
             onClick={onLeave}
             className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg"
@@ -473,9 +485,9 @@ export default function EnhancedVideoCall({
           <div className="flex-1 relative">
             {/* Screen Share Area */}
             {screenShareVisible && renderScreenShare()}
-            
+
             {/* Video Grid */}
-            <div 
+            <div
               ref={videoGridRef}
               className={cn(
                 "grid gap-2 p-4 h-full",
@@ -497,7 +509,7 @@ export default function EnhancedVideoCall({
                 >
                   {isAudioEnabled ? <Mic className="w-5 h-5 text-white" /> : <MicOff className="w-5 h-5 text-white" />}
                 </button>
-                
+
                 <button
                   onClick={toggleVideo}
                   className={cn(
@@ -507,7 +519,7 @@ export default function EnhancedVideoCall({
                 >
                   {isVideoEnabled ? <Video className="w-5 h-5 text-white" /> : <VideoOff className="w-5 h-5 text-white" />}
                 </button>
-                
+
                 <button
                   onClick={toggleScreenShare}
                   className={cn(
@@ -517,7 +529,7 @@ export default function EnhancedVideoCall({
                 >
                   {isScreenSharing ? <StopCircle className="w-5 h-5 text-white" /> : <Monitor className="w-5 h-5 text-white" />}
                 </button>
-                
+
                 <button
                   onClick={onLeave}
                   className="p-3 bg-red-600 hover:bg-red-700 rounded-full transition-colors"

@@ -13,6 +13,9 @@ export interface User {
   company?: string;
   account_status?: 'active' | 'pending_deletion';
   scheduled_deletion_at?: string;
+  sectors?: string[];
+  services?: string[];
+  status?: string;
 }
 
 export interface NavItem {
@@ -49,6 +52,10 @@ export interface ChatMessage {
   readAt?: Date | null;
   deliveredAt?: Date | null; // Timestamp when message was delivered
   priority?: 'normal' | 'high' | 'urgent';
+  reactions?: Record<string, string[]>;
+  reply_to?: string;
+  edited_at?: string;
+  group_id?: string;
 }
 
 export type ProjectStage = 'Initiation' | 'Planning' | 'Execution' | 'Review' | 'Closure';

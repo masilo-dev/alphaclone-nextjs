@@ -29,6 +29,7 @@ export interface Tenant {
     business_address?: string;
     brand_color_primary?: string;
     brand_color_secondary?: string;
+    quota_limits?: any;
 }
 
 // Tenant Settings

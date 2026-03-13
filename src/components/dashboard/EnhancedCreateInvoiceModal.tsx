@@ -75,7 +75,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         const loadClients = async () => {
             try {
                 const { businessClientService } = await import('../../services/businessClientService');
-                const { clients } = await businessClientService.getClients();
+                const { clients } = await businessClientService.getClients(currentTenant?.id || '');
                 setClients(clients || []);
             } catch (error) {
                 console.error('Failed to load clients:', error);
@@ -137,7 +137,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         setIsSubmitting(true);
         try {
             const { businessInvoiceService } = await import('../../services/businessInvoiceService');
-            
+
             const invoiceData = {
                 clientId: selectedClientId,
                 projectId: selectedProjectId,
@@ -157,10 +157,10 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 enablePaymentLinks: enablePaymentLinks // Explicitly set payment links status
             };
 
-            const { invoice, error } = await businessInvoiceService.createInvoice(invoiceData);
+            const { invoice, error } = await businessInvoiceService.createInvoice(currentTenant?.id || '', invoiceData as any);
 
-            if (error) {
-                toast.error(error);
+            if (error || !invoice) {
+                toast.error(error || 'Failed to create invoice');
                 return;
             }
 
@@ -186,7 +186,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         try {
             const { emailCampaignService } = await import('../../services/emailCampaignService');
             const invoiceUrl = `${window.location.origin}/invoice/${invoice.id}`;
-            
+
             await emailCampaignService.sendTransactionalEmail(
                 clientEmail,
                 `New Invoice from ${currentTenant?.name || 'Your Business'}`,
@@ -200,7 +200,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     paymentInstructions: getPaymentInstructions()
                 }
             );
-            
+
             toast.success('Invoice sent to client via email');
         } catch (error) {
             console.error('Failed to send invoice email:', error);
@@ -238,6 +238,24 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         setSendAsDraft(false);
         setClientEmail('');
         setStep('edit');
+    };
+
+    const handleDownloadPDF = async () => {
+        if (!createdInvoice) return;
+        try {
+            const { businessInvoiceService } = await import('../../services/businessInvoiceService');
+            const doc = businessInvoiceService.generatePDF(
+                createdInvoice,
+                currentTenant,
+                selectedClient,
+                signatureData ? { type: signatureType, data: signatureData } : undefined
+            );
+            doc.save(`Invoice-${createdInvoice.invoiceNumber}.pdf`);
+            toast.success('Invoice PDF downloaded');
+        } catch (error) {
+            console.error('Failed to generate PDF:', error);
+            toast.error('Failed to generate PDF');
+        }
     };
 
     const handleCopyPaymentLink = async () => {
@@ -339,7 +357,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                 />
                                                 <span className="text-sm text-white">Save as draft (don't send to client)</span>
                                             </label>
-                                            
+
                                             {!sendAsDraft && (
                                                 <div className="ml-6">
                                                     <Input
@@ -445,11 +463,10 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                         <button
                                             key={method.value}
                                             onClick={() => setPaymentMethod(method.value as any)}
-                                            className={`p-3 rounded-lg border-2 transition-all ${
-                                                paymentMethod === method.value
-                                                    ? 'border-teal-500 bg-teal-500/10'
-                                                    : 'border-slate-700 bg-slate-800 hover:border-slate-600'
-                                            }`}
+                                            className={`p-3 rounded-lg border-2 transition-all ${paymentMethod === method.value
+                                                ? 'border-teal-500 bg-teal-500/10'
+                                                : 'border-slate-700 bg-slate-800 hover:border-slate-600'
+                                                }`}
                                         >
                                             <div className="text-2xl mb-1">{method.icon}</div>
                                             <div className="text-white text-sm font-medium">{method.label}</div>
@@ -684,21 +701,19 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     <div className="flex gap-3">
                                         <button
                                             onClick={() => setSignatureType('draw')}
-                                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                                signatureType === 'draw'
-                                                    ? 'bg-teal-600 text-white'
-                                                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                                            }`}
+                                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${signatureType === 'draw'
+                                                ? 'bg-teal-600 text-white'
+                                                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                                                }`}
                                         >
                                             Draw Signature
                                         </button>
                                         <button
                                             onClick={() => setSignatureType('type')}
-                                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                                signatureType === 'type'
-                                                    ? 'bg-teal-600 text-white'
-                                                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                                            }`}
+                                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${signatureType === 'type'
+                                                ? 'bg-teal-600 text-white'
+                                                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                                                }`}
                                         >
                                             Type Signature
                                         </button>
@@ -714,7 +729,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                             // Set canvas size
                                                             canvas.width = canvas.offsetWidth;
                                                             canvas.height = 150;
-                                                            
+
                                                             // Set drawing style
                                                             ctx.strokeStyle = '#000000';
                                                             ctx.lineWidth = 2;
@@ -930,7 +945,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
                             <h3 className="text-2xl font-bold text-white mb-2">Invoice Created Successfully!</h3>
                             <p className="text-slate-400 max-w-md mx-auto mb-8">
-                                {sendAsDraft 
+                                {sendAsDraft
                                     ? "Your invoice has been saved as a draft. You can send it to the client later."
                                     : "Your invoice has been created and sent to the client."
                                 }

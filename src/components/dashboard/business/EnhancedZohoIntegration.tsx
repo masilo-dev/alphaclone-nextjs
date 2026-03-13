@@ -26,9 +26,9 @@ interface LeadData {
   Lead_Source: string;
 }
 
-const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ 
-  onLeadsGenerated, 
-  onEmailsSent 
+const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({
+  onLeadsGenerated,
+  onEmailsSent
 }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -59,9 +59,9 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({
     const clientId = '1000.EHLUECNTL7GYIS34VV79J1KDPBCFWK';
     const redirectUri = `${window.location.origin}/api/zoho/callback`;
     const scope = 'ZohoCRM.modules.leads.READ,ZohoCRM.modules.contacts.READ,ZohoCRM.modules.emails.CREATE,ZohoMail.accounts.READ,ZohoMail.messages.CREATE';
-    
+
     const authUrl = `https://accounts.zoho.com/oauth/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&access_type=offline`;
-    
+
     window.location.href = authUrl;
   };
 
@@ -69,7 +69,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({
     try {
       const response = await fetch(`/api/zoho/enhanced?userId=${userId}&action=get_account_info`);
       const data = await response.json();
-      
+
       if (response.ok && data.success) {
         setAccountInfo(data.data);
         // Store account info in localStorage for future use
@@ -89,7 +89,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({
       setLoading(true);
       const response = await fetch(`/api/zoho/enhanced?userId=${userId}&action=get_leads`);
       const data = await response.json();
-      
+
       if (response.ok && data.success) {
         setLeads(data.data || []);
         if (onLeadsGenerated) {
@@ -115,7 +115,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({
 
     try {
       setLoading(true);
-      
+
       // Generate sample leads based on criteria
       const sampleLeads: LeadData[] = [
         {
@@ -163,7 +163,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({
           });
 
           const result = await response.json();
-          
+
           if (!response.ok || !result.success) {
             console.error('Failed to create lead:', result.error);
           }
@@ -174,9 +174,9 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({
 
       // Reload leads after creation
       await loadLeads(accessToken, userId);
-      
+
       toast.success(`Generated ${sampleLeads.length} leads successfully`);
-      
+
       // Update stats
       setEmailStats(prev => ({
         ...prev,
@@ -227,7 +227,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({
           });
 
           const result = await response.json();
-          
+
           if (response.ok && result.success) {
             sent++;
           } else {
@@ -253,7 +253,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({
       if (sent > 0) {
         toast.success(`Successfully sent ${sent} emails`);
       }
-      
+
       if (failed > 0) {
         toast.error(`Failed to send ${failed} emails`);
       }
@@ -323,7 +323,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({
                 'Hello! I noticed your interest in our services. Let me introduce you to AlphaClone...'
               );
             } else {
-              toast.info('No leads with email addresses found');
+              toast('No leads with email addresses found');
             }
           }}
           disabled={!isConnected || loading || leads.length === 0}
@@ -423,7 +423,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({
             <h3 className="font-semibold text-white">Success Rate</h3>
           </div>
           <p className="text-2xl font-bold text-white">
-            {emailStats.sent + emailStats.failed > 0 
+            {emailStats.sent + emailStats.failed > 0
               ? Math.round((emailStats.sent / (emailStats.sent + emailStats.failed)) * 100)
               : 0}%
           </p>
@@ -485,7 +485,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({
                 ×
               </button>
             </div>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
@@ -510,7 +510,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({
                   </div>
                 )}
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
                   Integration Status
@@ -533,7 +533,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({
                 </div>
               </div>
             </div>
-            
+
             <div className="flex gap-2 mt-6">
               <Button
                 variant="outline"

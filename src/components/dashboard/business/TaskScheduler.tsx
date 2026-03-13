@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Plus, Trash2, Play, Pause, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, Plus, Trash2, Play, Pause, CheckCircle, X } from 'lucide-react';
 import { Button } from '../../ui/UIComponents';
+
+interface TaskResults {
+  total: number;
+  successful: number;
+  failed: number;
+}
 
 interface Task {
   id: string;
@@ -20,11 +26,7 @@ interface Task {
   status: 'active' | 'paused' | 'completed';
   lastRun?: string;
   nextRun?: string;
-  results?: {
-    total: number;
-    successful: number;
-    failed: number;
-  };
+  results?: TaskResults;
 }
 
 interface TaskSchedulerProps {
@@ -93,10 +95,10 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
   const checkAndRunTasks = async () => {
     const now = new Date();
     const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
-    
+
     tasks.forEach(async (task) => {
       if (task.status !== 'active') return;
-      
+
       const shouldRun = checkIfShouldRun(task, now, currentTime);
       if (shouldRun) {
         await runTask(task);
@@ -106,26 +108,26 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
 
   const checkIfShouldRun = (task: Task, now: Date, currentTime: string): boolean => {
     if (task.schedule.time !== currentTime) return false;
-    
+
     const lastRun = task.lastRun ? new Date(task.lastRun) : null;
-    
+
     switch (task.schedule.type) {
       case 'daily':
         return !lastRun || lastRun.toDateString() !== now.toDateString();
-      
+
       case 'weekly':
         const targetDay = task.schedule.day || 0;
-        return now.getDay() === targetDay && 
-               (!lastRun || lastRun.toDateString() !== now.toDateString());
-      
+        return now.getDay() === targetDay &&
+          (!lastRun || lastRun.toDateString() !== now.toDateString());
+
       case 'monthly':
         const targetDate = task.schedule.day || 1;
-        return now.getDate() === targetDate && 
-               (!lastRun || lastRun.toDateString() !== now.toDateString());
-      
+        return now.getDate() === targetDate &&
+          (!lastRun || lastRun.toDateString() !== now.toDateString());
+
       case 'once':
-        return !task.lastRun && task.nextRun && new Date(task.nextRun) <= now;
-      
+        return !task.lastRun && !!task.nextRun && new Date(task.nextRun) <= now;
+
       default:
         return false;
     }
@@ -141,7 +143,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
       };
 
       // Execute task based on type
-      let results = { total: 0, successful: 0, failed: 0 };
+      let results: TaskResults = { total: 0, successful: 0, failed: 0 };
 
       switch (task.type) {
         case 'email':
@@ -165,14 +167,14 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
       }
 
       updatedTask.results = results;
-      
+
       if (task.schedule.type === 'once') {
         updatedTask.status = 'completed';
       }
 
       // Update task in state
       setTasks(prev => prev.map(t => t.id === task.id ? updatedTask : t));
-      
+
       // Notify completion
       if (onTaskComplete) {
         onTaskComplete(updatedTask);
@@ -180,17 +182,17 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
 
       // Show success notification
       console.log(`Task "${task.title}" completed successfully`, results);
-      
+
     } catch (error) {
       console.error(`Task "${task.title}" failed:`, error);
-      
+
       // Update task with failed status
       const updatedTask = {
         ...task,
         lastRun: new Date().toISOString(),
         results: { total: 0, successful: 0, failed: 1 }
       };
-      
+
       setTasks(prev => prev.map(t => t.id === task.id ? updatedTask : t));
     }
   };
@@ -198,7 +200,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
   const calculateNextRun = (schedule: Task['schedule']): string => {
     const now = new Date();
     const next = new Date();
-    
+
     switch (schedule.type) {
       case 'daily':
         next.setDate(next.getDate() + 1);
@@ -212,42 +214,42 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
       case 'once':
         return '';
     }
-    
+
     return next.toISOString();
   };
 
   // Task execution functions
-  const runEmailTask = async (task: Task): Promise<Task['results']> => {
+  const runEmailTask = async (task: Task): Promise<TaskResults> => {
     // Implement email sending logic
     console.log('Running email task:', task);
     return { total: 50, successful: 45, failed: 5 };
   };
 
-  const runLeadGenerationTask = async (task: Task): Promise<Task['results']> => {
+  const runLeadGenerationTask = async (task: Task): Promise<TaskResults> => {
     // Implement lead generation logic
     console.log('Running lead generation task:', task);
     return { total: 25, successful: 20, failed: 5 };
   };
 
-  const runContractCreationTask = async (task: Task): Promise<Task['results']> => {
+  const runContractCreationTask = async (task: Task): Promise<TaskResults> => {
     // Implement contract creation logic
     console.log('Running contract creation task:', task);
     return { total: 5, successful: 5, failed: 0 };
   };
 
-  const runInvoiceTask = async (task: Task): Promise<Task['results']> => {
+  const runInvoiceTask = async (task: Task): Promise<TaskResults> => {
     // Implement invoice generation logic
     console.log('Running invoice task:', task);
     return { total: 10, successful: 10, failed: 0 };
   };
 
-  const runFollowUpTask = async (task: Task): Promise<Task['results']> => {
+  const runFollowUpTask = async (task: Task): Promise<TaskResults> => {
     // Implement follow up logic
     console.log('Running follow up task:', task);
     return { total: 15, successful: 12, failed: 3 };
   };
 
-  const runCustomTask = async (task: Task): Promise<Task['results']> => {
+  const runCustomTask = async (task: Task): Promise<TaskResults> => {
     // Implement custom task logic
     console.log('Running custom task:', task);
     return { total: 1, successful: 1, failed: 0 };
@@ -283,8 +285,8 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
   };
 
   const toggleTaskStatus = (taskId: string) => {
-    setTasks(prev => prev.map(task => 
-      task.id === taskId 
+    setTasks(prev => prev.map(task =>
+      task.id === taskId
         ? { ...task, status: task.status === 'active' ? 'paused' : 'active' }
         : task
     ));
@@ -362,16 +364,15 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                       {taskTypes.find(t => t.value === task.type)?.icon}
                     </span>
                     <h4 className="font-semibold text-white">{task.title}</h4>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      task.status === 'active' ? 'bg-green-500/20 text-green-400' :
+                    <span className={`px-2 py-1 text-xs rounded-full ${task.status === 'active' ? 'bg-green-500/20 text-green-400' :
                       task.status === 'paused' ? 'bg-yellow-500/20 text-yellow-400' :
-                      'bg-blue-500/20 text-blue-400'
-                    }`}>
+                        'bg-blue-500/20 text-blue-400'
+                      }`}>
                       {task.status}
                     </span>
                   </div>
                   <p className="text-slate-400 text-sm mb-3">{task.description}</p>
-                  
+
                   <div className="flex flex-wrap gap-4 text-sm">
                     <div className="flex items-center gap-1">
                       <Clock className="w-4 h-4 text-slate-500" />
@@ -397,15 +398,14 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => toggleTaskStatus(task.id)}
-                    className={`p-2 rounded-lg transition-colors ${
-                      task.status === 'active' 
-                        ? 'bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30' 
-                        : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
-                    }`}
+                    className={`p-2 rounded-lg transition-colors ${task.status === 'active'
+                      ? 'bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30'
+                      : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                      }`}
                     title={task.status === 'active' ? 'Pause task' : 'Resume task'}
                   >
                     {task.status === 'active' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
@@ -483,7 +483,12 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                     value={newTask.schedule?.type || 'daily'}
                     onChange={(e) => setNewTask(prev => ({
                       ...prev,
-                      schedule: { ...prev.schedule, type: e.target.value as Task['schedule']['type'] }
+                      schedule: {
+                        time: prev.schedule?.time || '09:00',
+                        day: prev.schedule?.day,
+                        ...prev.schedule,
+                        type: e.target.value as Task['schedule']['type']
+                      } as Task['schedule']
                     }))}
                     className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
                   >
@@ -499,7 +504,12 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                     value={newTask.schedule?.time || '09:00'}
                     onChange={(e) => setNewTask(prev => ({
                       ...prev,
-                      schedule: { ...prev.schedule, time: e.target.value }
+                      schedule: {
+                        type: prev.schedule?.type || 'daily',
+                        day: prev.schedule?.day,
+                        ...prev.schedule,
+                        time: e.target.value
+                      } as Task['schedule']
                     }))}
                     className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
                   />
@@ -509,7 +519,12 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                       value={newTask.schedule.day || 0}
                       onChange={(e) => setNewTask(prev => ({
                         ...prev,
-                        schedule: { ...prev.schedule, day: parseInt(e.target.value) }
+                        schedule: {
+                          type: 'daily',
+                          time: '09:00',
+                          ...prev.schedule,
+                          day: parseInt(e.target.value)
+                        }
                       }))}
                       className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
                     >
@@ -529,7 +544,12 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                       value={newTask.schedule.day || 1}
                       onChange={(e) => setNewTask(prev => ({
                         ...prev,
-                        schedule: { ...prev.schedule, day: parseInt(e.target.value) }
+                        schedule: {
+                          type: 'daily',
+                          time: '09:00',
+                          ...prev.schedule,
+                          day: parseInt(e.target.value)
+                        }
                       }))}
                       className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
                       placeholder="Day of month (1-31)"
@@ -545,7 +565,10 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                   value={newTask.target?.count || ''}
                   onChange={(e) => setNewTask(prev => ({
                     ...prev,
-                    target: { ...prev.target, count: e.target.value ? parseInt(e.target.value) : undefined }
+                    target: {
+                      ...prev.target,
+                      count: e.target.value ? parseInt(e.target.value) : undefined
+                    }
                   }))}
                   className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
                   placeholder="Number of items to process"

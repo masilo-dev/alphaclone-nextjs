@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Download, Eye, Palette, Layout, Type, Image, Sliders, Copy, Share2, FileText, Presentation, Zap, Sparkles } from 'lucide-react';
+import { Download, Eye, Palette, Layout, Type, Image, Sliders, Copy, Share2, FileText, Presentation, Zap, Sparkles, Plus, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '../ui/UIComponents';
+import { Button } from '../../ui/UIComponents';
 import { cn } from '@/lib/utils';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -155,7 +156,7 @@ export default function PresentationTemplates() {
     const [currentSlide, setCurrentSlide] = useState(0);
     const [isExporting, setIsExporting] = useState(false);
     const [exportFormat, setExportFormat] = useState<'pdf' | 'pptx'>('pdf');
-    
+
     const slideRef = useRef<HTMLDivElement>(null);
 
     const handleTemplateSelect = (template: PresentationTemplate) => {
@@ -200,17 +201,17 @@ export default function PresentationTemplates() {
             for (let i = 0; i < slides.length; i++) {
                 if (i > 0) pdf.addPage();
                 setCurrentSlide(i);
-                
+
                 // Wait for React to render
                 await new Promise(resolve => setTimeout(resolve, 100));
-                
+
                 if (slideRef.current) {
                     const canvas = await html2canvas(slideRef.current, {
                         scale: 2,
                         useCORS: true,
                         backgroundColor: null
                     });
-                    
+
                     const imgData = canvas.toDataURL('image/png');
                     pdf.addImage(imgData, 'PNG', 0, 0, 1920, 1080);
                 }
@@ -253,14 +254,14 @@ export default function PresentationTemplates() {
                     </body>
                 </html>
             `;
-            
+
             const printWindow = window.open('', '_blank');
             if (printWindow) {
                 printWindow.document.write(htmlContent);
                 printWindow.document.close();
                 printWindow.print();
             }
-            
+
             toast.success('Presentation exported successfully!');
         } catch (error) {
             console.error('Error exporting to PowerPoint:', error);
@@ -275,12 +276,12 @@ export default function PresentationTemplates() {
         const fontFamily = selectedTemplate?.fonts[selectedFont] || 'Inter';
 
         return (
-            <div 
+            <div
                 key={index}
                 className="w-full h-full bg-gradient-to-br from-white to-gray-50 rounded-lg shadow-2xl p-12 flex flex-col justify-center"
-                style={{ 
+                style={{
                     background: `linear-gradient(135deg, ${primaryColor} 0%, ${selectedTemplate?.colors[selectedColor + 1] || primaryColor} 100%)`,
-                    fontFamily 
+                    fontFamily
                 }}
             >
                 {slide.layout === 'title' && (
@@ -294,7 +295,7 @@ export default function PresentationTemplates() {
                         </div>
                     </div>
                 )}
-                
+
                 {slide.layout === 'content' && (
                     <div className="text-white">
                         <h1 className="text-5xl font-bold mb-8">{slide.title}</h1>
@@ -308,7 +309,7 @@ export default function PresentationTemplates() {
                         </div>
                     </div>
                 )}
-                
+
                 {slide.layout === 'two-column' && (
                     <div className="grid grid-cols-2 gap-12 text-white h-full">
                         <div className="flex flex-col justify-center">
@@ -378,7 +379,7 @@ export default function PresentationTemplates() {
                         AlphaClone Presentation Templates
                     </h1>
                     <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-                        Create stunning presentations with our professionally designed templates. 
+                        Create stunning presentations with our professionally designed templates.
                         Perfect for pitches, reports, and business presentations.
                     </p>
                 </div>
@@ -397,7 +398,7 @@ export default function PresentationTemplates() {
                                 </button>
                             </div>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {PRESENTATION_TEMPLATES.map((template) => (
                                 <motion.div
@@ -411,7 +412,7 @@ export default function PresentationTemplates() {
                                         <div className="text-6xl mb-4">{template.thumbnail}</div>
                                         <h3 className="text-xl font-bold text-white mb-2">{template.name}</h3>
                                         <p className="text-gray-400 text-sm mb-4">{template.description}</p>
-                                        
+
                                         <div className="flex justify-center gap-1 mb-4">
                                             {template.colors.map((color, index) => (
                                                 <div
@@ -421,12 +422,12 @@ export default function PresentationTemplates() {
                                                 />
                                             ))}
                                         </div>
-                                        
+
                                         <div className="flex items-center justify-between text-sm text-gray-400">
                                             <span>{template.slideCount} slides</span>
                                             <span className="capitalize">{template.category}</span>
                                         </div>
-                                        
+
                                         {template.premium && (
                                             <div className="mt-3 inline-flex items-center gap-1 px-2 py-1 bg-yellow-500/10 text-yellow-400 rounded-lg text-xs">
                                                 <Sparkles className="w-3 h-3" />
@@ -451,7 +452,7 @@ export default function PresentationTemplates() {
                                     <div className="text-4xl mb-2">{selectedTemplate.thumbnail}</div>
                                     <h3 className="text-lg font-bold text-white">{selectedTemplate.name}</h3>
                                 </div>
-                                
+
                                 <div className="space-y-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-300 mb-2">Color Scheme</label>
@@ -460,15 +461,14 @@ export default function PresentationTemplates() {
                                                 <button
                                                     key={index}
                                                     onClick={() => setSelectedColor(index)}
-                                                    className={`w-12 h-12 rounded-lg border-2 transition-all ${
-                                                        selectedColor === index ? 'border-white scale-110' : 'border-gray-600'
-                                                    }`}
+                                                    className={`w-12 h-12 rounded-lg border-2 transition-all ${selectedColor === index ? 'border-white scale-110' : 'border-gray-600'
+                                                        }`}
                                                     style={{ backgroundColor: color }}
                                                 />
                                             ))}
                                         </div>
                                     </div>
-                                    
+
                                     <div>
                                         <label className="block text-sm font-medium text-gray-300 mb-2">Font Family</label>
                                         <select
@@ -495,17 +495,16 @@ export default function PresentationTemplates() {
                                         <Plus className="w-4 h-4" />
                                     </button>
                                 </div>
-                                
+
                                 <div className="space-y-2 max-h-96 overflow-y-auto">
                                     {slides.map((slide, index) => (
                                         <div
                                             key={index}
                                             onClick={() => setCurrentSlide(index)}
-                                            className={`p-3 rounded-lg cursor-pointer transition-all ${
-                                                currentSlide === index
-                                                    ? 'bg-teal-600/20 border border-teal-500'
-                                                    : 'bg-gray-700 hover:bg-gray-600 border border-gray-600'
-                                            }`}
+                                            className={`p-3 rounded-lg cursor-pointer transition-all ${currentSlide === index
+                                                ? 'bg-teal-600/20 border border-teal-500'
+                                                : 'bg-gray-700 hover:bg-gray-600 border border-gray-600'
+                                                }`}
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex-1 min-w-0">
@@ -556,7 +555,7 @@ export default function PresentationTemplates() {
                                         </button>
                                     </div>
                                 </div>
-                                
+
                                 <div className="aspect-video bg-gray-900 rounded-lg overflow-hidden" ref={slideRef}>
                                     {renderSlideContent(slides[currentSlide], currentSlide)}
                                 </div>
@@ -565,7 +564,7 @@ export default function PresentationTemplates() {
                             {/* Slide Editor */}
                             <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
                                 <h4 className="text-white font-semibold mb-4">Edit Slide</h4>
-                                
+
                                 <div className="space-y-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-300 mb-2">Title</label>
@@ -576,7 +575,7 @@ export default function PresentationTemplates() {
                                             className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2"
                                         />
                                     </div>
-                                    
+
                                     <div>
                                         <label className="block text-sm font-medium text-gray-300 mb-2">Subtitle (Optional)</label>
                                         <input
@@ -586,7 +585,7 @@ export default function PresentationTemplates() {
                                             className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2"
                                         />
                                     </div>
-                                    
+
                                     <div>
                                         <label className="block text-sm font-medium text-gray-300 mb-2">Layout</label>
                                         <select
@@ -602,7 +601,7 @@ export default function PresentationTemplates() {
                                             <option value="three-column">Three Column</option>
                                         </select>
                                     </div>
-                                    
+
                                     <div>
                                         <label className="block text-sm font-medium text-gray-300 mb-2">Content (One per line)</label>
                                         <textarea

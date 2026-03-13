@@ -1,15 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  X, 
-  Send, 
-  Copy, 
-  Check, 
-  AlertCircle, 
-  Download, 
-  Eye, 
-  Edit3, 
+import {
+  X,
+  Send,
+  Copy,
+  Check,
+  AlertCircle,
+  Download,
+  Eye,
+  Edit3,
   Trash2,
   Mail,
   Clock,
@@ -20,6 +20,7 @@ import {
   Upload
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTenant } from '@/contexts/TenantContext';
 import { businessInvoiceService } from '@/services/businessInvoiceService';
 import { emailCampaignService } from '@/services/emailCampaignService';
 import toast from 'react-hot-toast';
@@ -70,22 +71,22 @@ const PAYMENT_METHODS = [
   { id: 'mobile_money', name: 'Mobile Money', icon: '📱' }
 ];
 
-export default function EnhancedInvoiceModal({ 
-  isOpen, 
-  onClose, 
-  invoice, 
-  mode, 
-  onSuccess 
+export default function EnhancedInvoiceModal({
+  isOpen,
+  onClose,
+  invoice,
+  mode,
+  onSuccess
 }: EnhancedInvoiceModalProps) {
   const { user } = useAuth();
-  const { toast } = useToast();
-  
+  const { currentTenant } = useTenant();
+
   const [activeTab, setActiveTab] = useState<'details' | 'items' | 'payment' | 'preview'>('details');
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
-  
+
   const [formData, setFormData] = useState<InvoiceFormData>({
     clientId: '',
     clientName: '',
@@ -130,7 +131,7 @@ export default function EnhancedInvoiceModal({
     const subtotal = formData.items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
     const tax = subtotal * 0.15; // 15% tax
     const total = subtotal + tax;
-    
+
     setFormData(prev => ({
       ...prev,
       subtotal,
@@ -156,7 +157,7 @@ export default function EnhancedInvoiceModal({
   const handleItemChange = (index: number, field: string, value: any) => {
     setFormData(prev => ({
       ...prev,
-      items: prev.items.map((item, i) => 
+      items: prev.items.map((item, i) =>
         i === index ? { ...item, [field]: value, amount: item.quantity * item.rate } : item
       )
     }));
@@ -172,36 +173,31 @@ export default function EnhancedInvoiceModal({
     try {
       const invoiceData = {
         ...formData,
-        status: 'draft',
+        lineItems: formData.items,
+        status: 'draft' as const,
         isPublic: false,
+        tenantId: currentTenant?.id,
         createdBy: user?.id
       };
 
-      let result;
+      let finalInvoice;
       if (mode === 'edit' && invoice) {
-        result = await businessInvoiceService.updateInvoice(invoice.id, invoiceData);
+        const result = await businessInvoiceService.updateInvoice(invoice.id, invoiceData as any);
+        if (result.error) throw new Error(result.error);
+        finalInvoice = { ...invoice, ...invoiceData, id: invoice.id };
       } else {
-        result = await businessInvoiceService.createInvoice(invoiceData);
+        const result = await businessInvoiceService.createInvoice(currentTenant?.id || '', invoiceData as any);
+        if (result.error) throw new Error(result.error);
+        finalInvoice = result.invoice;
       }
 
-      if (result.error) {
-        throw new Error(result.error);
-      }
+      toast.success("Invoice saved as draft");
 
-      toast({
-        title: "Success",
-        description: "Invoice saved as draft"
-      });
-
-      onSuccess?.(result.invoice);
+      onSuccess?.(finalInvoice);
       onClose();
     } catch (error) {
       console.error('Error saving draft:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save invoice draft",
-        variant: "destructive"
-      });
+      toast.error("Failed to save invoice draft");
     } finally {
       setIsLoading(false);
     }
@@ -209,11 +205,7 @@ export default function EnhancedInvoiceModal({
 
   const handleSendInvoice = async () => {
     if (!formData.clientEmail) {
-      toast({
-        title: "Error",
-        description: "Client email is required to send invoice",
-        variant: "destructive"
-      });
+      toast.error("Client email is required to send invoice");
       return;
     }
 
@@ -222,24 +214,28 @@ export default function EnhancedInvoiceModal({
       // Create or update invoice with sent status
       const invoiceData = {
         ...formData,
-        status: 'sent',
+        lineItems: formData.items,
+        status: 'sent' as const,
         isPublic: true,
+        tenantId: currentTenant?.id,
         createdBy: user?.id
       };
 
-      let result;
+      let finalInvoice;
       if (mode === 'edit' && invoice) {
-        result = await businessInvoiceService.updateInvoice(invoice.id, invoiceData);
+        const result = await businessInvoiceService.updateInvoice(invoice.id, invoiceData as any);
+        if (result.error) throw new Error(result.error);
+        finalInvoice = { ...invoice, ...invoiceData, id: invoice.id };
       } else {
-        result = await businessInvoiceService.createInvoice(invoiceData);
+        const result = await businessInvoiceService.createInvoice(currentTenant?.id || '', invoiceData as any);
+        if (result.error) throw new Error(result.error);
+        finalInvoice = result.invoice;
       }
 
-      if (result.error) {
-        throw new Error(result.error);
-      }
+      if (!finalInvoice) throw new Error("Failed to retrieve invoice information");
 
       // Generate payment link
-      const paymentUrl = `${window.location.origin}/invoice/${result.invoice.id}`;
+      const paymentUrl = `${window.location.origin}/invoice/${finalInvoice.id}`;
 
       // Send email if enabled
       if (formData.sendEmail) {
@@ -248,30 +244,23 @@ export default function EnhancedInvoiceModal({
           formData.emailSubject,
           {
             invoiceUrl: paymentUrl,
-            invoiceNumber: result.invoice.invoiceNumber,
+            invoiceNumber: finalInvoice.invoiceNumber || `INV-${finalInvoice.id.slice(0, 8)}`,
             amount: formData.total,
             dueDate: formData.dueDate,
             clientName: formData.clientName,
             message: formData.emailMessage,
-            paymentMethods: formData.paymentMethods
+            paymentMethods: formData.paymentMethods.join(', ')
           }
         );
       }
 
-      toast({
-        title: "Success",
-        description: "Invoice sent successfully"
-      });
+      toast.success("Invoice sent successfully");
 
-      onSuccess?.(result.invoice);
+      onSuccess?.(finalInvoice);
       onClose();
     } catch (error) {
       console.error('Error sending invoice:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send invoice",
-        variant: "destructive"
-      });
+      toast.error("Failed to send invoice");
     } finally {
       setIsSending(false);
     }
@@ -282,18 +271,11 @@ export default function EnhancedInvoiceModal({
       const paymentUrl = `${window.location.origin}/invoice/${invoice?.id}`;
       await navigator.clipboard.writeText(paymentUrl);
       setCopiedLink(true);
-      toast({
-        title: "Copied",
-        description: "Payment link copied to clipboard"
-      });
+      toast.success("Payment link copied to clipboard");
       setTimeout(() => setCopiedLink(false), 2000);
     } catch (error) {
       console.error('Failed to copy link:', error);
-      toast({
-        title: "Error",
-        description: "Failed to copy payment link",
-        variant: "destructive"
-      });
+      toast.error("Failed to copy payment link");
     }
   };
 
@@ -416,7 +398,7 @@ export default function EnhancedInvoiceModal({
           </button>
         </div>
       ))}
-      
+
       <button
         onClick={handleAddItem}
         className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-700"
@@ -517,7 +499,7 @@ export default function EnhancedInvoiceModal({
       <div className="bg-gray-50 p-4 rounded-lg">
         <h3 className="font-semibold mb-2">Invoice Preview</h3>
         <p className="text-sm text-gray-600 mb-4">This is how your invoice will appear to the client</p>
-        
+
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <div className="flex justify-between items-start mb-6">
             <div>
@@ -578,8 +560,8 @@ export default function EnhancedInvoiceModal({
               onClick={handleCopyPaymentLink}
               className={cn(
                 "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors",
-                copiedLink 
-                  ? "bg-green-600 text-white" 
+                copiedLink
+                  ? "bg-green-600 text-white"
                   : "bg-blue-600 text-white hover:bg-blue-700"
               )}
             >
@@ -665,7 +647,7 @@ export default function EnhancedInvoiceModal({
                 <span>Save Draft</span>
               </button>
             )}
-            
+
             {invoice && (
               <button
                 onClick={handleCopyPaymentLink}
@@ -684,7 +666,7 @@ export default function EnhancedInvoiceModal({
             >
               Cancel
             </button>
-            
+
             <button
               onClick={handleSendInvoice}
               disabled={isSending || !formData.clientName || !formData.clientEmail}
