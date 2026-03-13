@@ -14,10 +14,17 @@ interface ZohoIntegrationProps {
   onEmailsSent?: (count: number) => void;
 }
 
+interface ZohoFromAddress {
+  address: string;
+  isDefault: boolean;
+  displayName: string;
+}
+
 interface ZohoAccount {
   accountId: string;
   email: string;
   displayName: string;
+  fromAddresses?: ZohoFromAddress[];
 }
 
 interface EmailMessage {
@@ -46,6 +53,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
   const [searchQuery, setSearchQuery] = useState('');
   const [isComposing, setIsComposing] = useState(false);
   const [composeData, setComposeData] = useState({
+    from: '',
     to: '',
     cc: '',
     subject: '',
@@ -111,6 +119,13 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
       const data = await response.json();
       if (response.ok && data.success) {
         setAccountInfo(data.data);
+        // Set default from address if composing
+        if (data.data.fromAddresses?.length > 0) {
+          const defaultAddr = data.data.fromAddresses.find((a: any) => a.isDefault)?.address || data.data.fromAddresses[0].address;
+          setComposeData(prev => ({ ...prev, from: defaultAddr }));
+        } else {
+          setComposeData(prev => ({ ...prev, from: data.data.email }));
+        }
         localStorage.setItem('zoho_account_info', JSON.stringify(data.data));
       }
     } catch (err) {
@@ -166,8 +181,8 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
       toast.error('Please fill in To, Subject, and Body');
       return;
     }
-    if (!accountInfo?.email) {
-      toast.error('No sender email available. Please reconnect to Zoho.');
+    if (!composeData.from) {
+      toast.error('No sender email selected');
       return;
     }
     setSendingEmail(true);
@@ -183,14 +198,15 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
             cc: composeData.cc || undefined,
             subject: composeData.subject,
             content: composeData.body,
-            fromAddress: accountInfo.email,
+            fromAddress: composeData.from,
           },
         }),
       });
       const result = await resp.json();
       if (resp.ok && result.success) {
         toast.success('Email sent successfully!');
-        setComposeData({ to: '', cc: '', subject: '', body: '' });
+        const defaultFrom = accountInfo?.fromAddresses?.find(a => a.isDefault)?.address || accountInfo?.email || '';
+        setComposeData({ from: defaultFrom, to: '', cc: '', subject: '', body: '' });
         setIsComposing(false);
         if (onEmailsSent) onEmailsSent(1);
       } else {
@@ -358,22 +374,41 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
                 New Email
               </h3>
               <div className="space-y-3">
-                {([
-                  { field: 'to', label: 'To', placeholder: 'recipient@example.com', required: true },
-                  { field: 'cc', label: 'CC', placeholder: 'cc@example.com (optional)', required: false },
-                  { field: 'subject', label: 'Subject', placeholder: 'Email subject', required: true },
-                ] as any[]).map(({ field, label, placeholder }) => (
-                  <div key={field} className="flex items-center gap-3 border-b border-slate-700 pb-3">
-                    <span className="text-slate-400 text-sm w-14 text-right">{label}</span>
-                    <input
-                      type="text"
-                      value={(composeData as any)[field]}
-                      onChange={(e) => setComposeData({ ...composeData, [field]: e.target.value })}
-                      placeholder={placeholder}
-                      className="flex-1 bg-transparent text-white text-sm placeholder:text-slate-600 outline-none"
-                    />
+                  <div className="flex items-center gap-3 border-b border-slate-700 pb-3">
+                    <span className="text-slate-400 text-sm w-14 text-right">From</span>
+                    {accountInfo?.fromAddresses && accountInfo.fromAddresses.length > 1 ? (
+                      <select
+                        value={composeData.from}
+                        onChange={(e) => setComposeData({ ...composeData, from: e.target.value })}
+                        className="flex-1 bg-transparent text-white text-sm outline-none cursor-pointer appearance-none"
+                      >
+                        {accountInfo.fromAddresses.map((addr) => (
+                          <option key={addr.address} value={addr.address} className="bg-slate-800 text-white">
+                            {addr.displayName} &lt;{addr.address}&gt;
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="flex-1 text-slate-300 text-sm px-1">{composeData.from || accountInfo?.email}</span>
+                    )}
                   </div>
-                ))}
+
+                  {([
+                    { field: 'to', label: 'To', placeholder: 'recipient@example.com', required: true },
+                    { field: 'cc', label: 'CC', placeholder: 'cc@example.com (optional)', required: false },
+                    { field: 'subject', label: 'Subject', placeholder: 'Email subject', required: true },
+                  ] as any[]).map(({ field, label, placeholder }) => (
+                    <div key={field} className="flex items-center gap-3 border-b border-slate-700 pb-3">
+                      <span className="text-slate-400 text-sm w-14 text-right">{label}</span>
+                      <input
+                        type="text"
+                        value={(composeData as any)[field]}
+                        onChange={(e) => setComposeData({ ...composeData, [field]: e.target.value })}
+                        placeholder={placeholder}
+                        className="flex-1 bg-transparent text-white text-sm placeholder:text-slate-600 outline-none"
+                      />
+                    </div>
+                  ))}
 
                 <textarea
                   value={composeData.body}

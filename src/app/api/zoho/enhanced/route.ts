@@ -100,13 +100,31 @@ async function getAccountInfo(userId: string) {
             zoid: accountId // Also store as zoid for compatibility
         });
 
+        // Fetch verified from-addresses for this account
+        let fromAddresses = [];
+        try {
+            const fromAddressesData = await zohoServerService.proxyRequest(userId, 'fromaddresses');
+            if (fromAddressesData?.data) {
+                fromAddresses = fromAddressesData.data.map((addr: any) => ({
+                    address: addr.fromAddress,
+                    isDefault: addr.isDefault,
+                    displayName: addr.displayName
+                }));
+            }
+        } catch (e) {
+            console.warn('[Zoho Debug] Could not fetch from-addresses:', e);
+            // Fallback to the primary email if from-addresses call fails
+            fromAddresses = [{ address: accountEmail, isDefault: true, displayName: accountsData.data[0].displayName }];
+        }
+
         return NextResponse.json({
             success: true,
             data: {
                 accountId,
                 email: accountEmail,
                 displayName: accountsData.data[0].displayName,
-                accounts: accountsData.data
+                accounts: accountsData.data,
+                fromAddresses: fromAddresses
             }
         });
     } catch (error: any) {
