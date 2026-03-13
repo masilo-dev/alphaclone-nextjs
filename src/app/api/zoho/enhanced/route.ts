@@ -22,9 +22,7 @@ export async function GET(req: NextRequest) {
         switch (action) {
             case 'get_account_info':
                 return await getAccountInfo(userId);
-            case 'get_leads':
-                return await getLeads(userId);
-            case 'get_emails':
+            case 'get_messages':
                 return await getEmails(userId, searchParams);
             default:
                 return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
@@ -62,12 +60,8 @@ export async function POST(req: NextRequest) {
         }
 
         switch (action) {
-            case 'create_lead':
-                return await createLead(userId, data);
             case 'send_email':
                 return await sendEmail(userId, data);
-            case 'get_leads':
-                return await getLeads(userId);
             default:
                 return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
         }
@@ -119,50 +113,6 @@ async function getAccountInfo(userId: string) {
         console.error('Error fetching Zoho account info:', error);
         return NextResponse.json({ 
             error: `Failed to fetch Zoho account information: ${error.message}` 
-        }, { status: 500 });
-    }
-}
-
-/**
- * Get leads from Zoho CRM
- */
-async function getLeads(userId: string) {
-    try {
-        // Use the CRM API endpoint instead of mail API
-        const leadsData = await zohoServerService.proxyRequest(userId, 'crm/Leads');
-        
-        return NextResponse.json({
-            success: true,
-            data: leadsData.data || []
-        });
-    } catch (error: any) {
-        console.error('Error fetching Zoho leads:', error);
-        return NextResponse.json({ 
-            error: `Failed to fetch leads: ${error.message}` 
-        }, { status: 500 });
-    }
-}
-
-/**
- * Create a new lead in Zoho CRM
- */
-async function createLead(userId: string, leadData: any) {
-    try {
-        const response = await zohoServerService.proxyRequest(userId, 'crm/Leads', {
-            method: 'POST',
-            body: JSON.stringify({
-                data: [leadData]
-            })
-        });
-
-        return NextResponse.json({
-            success: true,
-            data: response.data
-        });
-    } catch (error: any) {
-        console.error('Error creating Zoho lead:', error);
-        return NextResponse.json({ 
-            error: `Failed to create lead: ${error.message}` 
         }, { status: 500 });
     }
 }

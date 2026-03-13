@@ -226,8 +226,19 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
+                            className="h-full flex flex-col"
                         >
-                            <TeamChat user={user} teamMembers={teamMembers} />
+                            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-900/50 border border-slate-800 rounded-2xl min-h-[400px]">
+                                <MessageSquare className="w-16 h-16 text-slate-700 mb-6" />
+                                <h3 className="text-2xl font-bold text-white mb-2">Internal Team Chat</h3>
+                                <p className="text-slate-400 max-w-md mx-auto mb-8">
+                                    A dedicated space for your team to collaborate, share files, and stay aligned. 
+                                    This feature is currently being optimized for your workflow.
+                                </p>
+                                <div className="px-6 py-3 bg-teal-500/10 border border-teal-500/50 rounded-xl text-teal-400 font-bold uppercase tracking-widest text-xs">
+                                    Coming Soon
+                                </div>
+                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>

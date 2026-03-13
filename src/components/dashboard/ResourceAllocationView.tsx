@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, Button, Modal, Input } from '../ui/UIComponents';
 import { teamService } from '../../services/teamService';
 import { projectService } from '../../services/projectService';
+import { useTenant } from '../../contexts/TenantContext';
 import { TableSkeleton } from '../ui/Skeleton';
 import { User, Project } from '../../types';
 import { Plus, Edit, Briefcase, Users, CheckCircle, XCircle, Loader2 } from 'lucide-react';
@@ -30,6 +31,7 @@ interface ResourceAllocationViewProps {
  * - Auto-calculated capacity based on workload
  */
 const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, initialProjects }) => {
+    const { currentTenant } = useTenant();
     const [members, setMembers] = useState<TeamMember[]>([]);
     const [projects, setProjects] = useState<Project[]>(initialProjects || []);
     const [isLoading, setIsLoading] = useState(true);
@@ -46,8 +48,8 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            // Always fetch team members
-            const teamResult = await teamService.getTeamMembers();
+            // Always fetch team members for current tenant
+            const teamResult = await teamService.getTeamMembers(currentTenant?.id);
 
             let activeProjects = initialProjects || [];
 

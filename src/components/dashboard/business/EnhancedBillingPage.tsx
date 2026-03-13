@@ -56,14 +56,17 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     });
 
     useEffect(() => {
-        loadInvoices();
-        loadRevenueData();
-    }, [user.id, dateRange]);
+        if (currentTenant?.id) {
+            loadInvoices();
+            loadRevenueData();
+        }
+    }, [currentTenant?.id, dateRange]);
 
     const loadInvoices = async () => {
+        if (!currentTenant?.id) return;
         try {
             setLoading(true);
-            const { invoices: data, error } = await businessInvoiceService.getInvoices(user.id);
+            const { invoices: data, error } = await businessInvoiceService.getInvoices(currentTenant.id);
             if (error) {
                 toast.error('Failed to load invoices');
                 return;
@@ -153,22 +156,36 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         }
     };
 
-    const handleViewPDF = async (invoiceId: string) => {
+    const handleViewPDF = async (invoice: BusinessInvoice) => {
         try {
-            // For now, show a placeholder since we don't have the getInvoicePDF method
-            toast.success('PDF viewer functionality will be available soon');
-            // You could implement a simple PDF viewer or redirect to a preview page
+            if (!currentTenant) {
+                toast.error('Organization details missing');
+                return;
+            }
+
+            // We need the client object if possible
+            const client = invoice.clientId ? { name: invoice.clientId, email: '' } : undefined;
+            
+            const doc = businessInvoiceService.generatePDF(invoice, currentTenant, client);
+            const pdfDataUri = doc.output('datauristring');
+            setShowPDFPreview(pdfDataUri);
         } catch (error) {
-            console.error('Error loading PDF:', error);
-            toast.error('Failed to load PDF');
+            console.error('Error generating PDF preview:', error);
+            toast.error('Failed to generate PDF preview');
         }
     };
 
-    const handleDownloadPDF = async (invoiceId: string) => {
+    const handleDownloadPDF = async (invoice: BusinessInvoice) => {
         try {
-            // For now, show a message since we don't have the getInvoicePDF method
-            toast.success('PDF download functionality will be available soon');
-            // You could implement PDF generation using the generatePDF method with proper tenant/client data
+            if (!currentTenant) {
+                toast.error('Organization details missing');
+                return;
+            }
+
+            const client = invoice.clientId ? { name: invoice.clientId, email: '' } : undefined;
+            const doc = businessInvoiceService.generatePDF(invoice, currentTenant, client);
+            doc.save(`Invoice-${invoice.invoiceNumber || invoice.id}.pdf`);
+            toast.success('PDF downloaded successfully');
         } catch (error) {
             console.error('Error downloading PDF:', error);
             toast.error('Failed to download PDF');
@@ -295,10 +312,46 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     </h1>
                     <p className="text-slate-400 mt-1">Manage your invoices and track payments</p>
                 </div>
-                <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2">
-                    <Plus className="w-4 h-4" />
-                    Create Invoice
-                </Button>
+                <div className="flex items-center gap-2">
+                    <div className="relative group/dropdown">
+                        <Button variant="outline" className="flex items-center gap-2">
+                            Quick Actions
+                            <Plus className="w-4 h-4" />
+                        </Button>
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl opacity-0 invisible group-hover/dropdown:opacity-100 group-hover/dropdown:visible transition-all z-20 overflow-hidden">
+                            <button 
+                                onClick={() => setShowCreateModal(true)}
+                                className="w-full px-4 py-3 text-left text-sm text-slate-300 hover:bg-teal-500 hover:text-white transition-colors flex items-center gap-2 border-b border-slate-800"
+                            >
+                                <Plus className="w-4 h-4" />
+                                New Empty Invoice
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    // Could preset some values in modal or use a different modal
+                                    setShowCreateModal(true);
+                                }}
+                                className="w-full px-4 py-3 text-left text-sm text-slate-300 hover:bg-teal-500 hover:text-white transition-colors flex items-center gap-2 border-b border-slate-800"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Standard Service
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    setShowCreateModal(true);
+                                }}
+                                className="w-full px-4 py-3 text-left text-sm text-slate-300 hover:bg-teal-500 hover:text-white transition-colors flex items-center gap-2"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Custom Project
+                            </button>
+                        </div>
+                    </div>
+                    <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2">
+                        <Plus className="w-4 h-4" />
+                        Create Invoice
+                    </Button>
+                </div>
             </div>
 
             {/* Stats Cards */}
@@ -471,7 +524,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
                                             <button
-                                                onClick={() => handleViewPDF(invoice.id)}
+                                                onClick={() => handleViewPDF(invoice)}
                                                 className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
                                                 title="View PDF"
                                             >
@@ -479,7 +532,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             </button>
                                             
                                             <button
-                                                onClick={() => handleDownloadPDF(invoice.id)}
+                                                onClick={() => handleDownloadPDF(invoice)}
                                                 className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
                                                 title="Download PDF"
                                             >
