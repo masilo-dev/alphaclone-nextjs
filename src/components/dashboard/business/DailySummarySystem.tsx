@@ -96,7 +96,7 @@ const DailySummarySystem: React.FC = () => {
     ];
 
     return {
-      id: `${now.getTime()}-${period}`,
+      id: `${now.getTime()}-${period}-${Math.random().toString(36).substr(2, 9)}`,
       date: now.toISOString().split('T')[0],
       period,
       timestamp: now.toISOString(),

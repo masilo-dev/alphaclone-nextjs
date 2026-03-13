@@ -61,7 +61,7 @@ const CustomVideoRoom = React.lazy(() => import('../video/CustomVideoRoom'));
 // New Components
 const TaskScheduler = React.lazy(() => import('./TaskScheduler'));
 const ZohoIntegration = React.lazy(() => import('./ZohoIntegration'));
-const EnhancedZohoIntegration = React.lazy(() => import('./EnhancedZohoIntegration'));
+
 const ResourceAllocation = React.lazy(() => import('./ResourceAllocation'));
 const EnhancedTeamChat = React.lazy(() => import('./EnhancedTeamChat'));
 const QuotaManager = React.lazy(() => import('./QuotaManager'));
@@ -350,9 +350,10 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/zoho':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
-                        <EnhancedZohoIntegration />
+                        <ZohoIntegration />
                     </React.Suspense>
                 );
+
             case '/dashboard/business/resources':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>

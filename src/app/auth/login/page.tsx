@@ -3,7 +3,7 @@
 // Force Next.js to not statically cache this page in production
 export const dynamic = 'force-dynamic';
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Input, Button } from '@/components/ui/UIComponents';
 import { LOGO_URL } from '@/constants';
@@ -15,6 +15,14 @@ import { SubscriptionPlan } from '@/services/tenancy/types';
 import TurnstileVerification from '@/components/ui/TurnstileVerification';
 
 export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-[100dvh] bg-slate-950 flex items-center justify-center"><div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" /></div>}>
+            <LoginContent />
+        </Suspense>
+    );
+}
+
+function LoginContent() {
     const { isPWA } = usePWA();
     const router = useRouter();
     const searchParams = useSearchParams();

@@ -449,6 +449,15 @@ export const businessInvoiceService = {
      */
     async markAsPaid(invoiceId: string): Promise<{ error: string | null }> {
         try {
+            // Get invoice data first for GL posting
+            const { data: invoice, error: fetchError } = await supabase
+                .from('business_invoices')
+                .select('*')
+                .eq('id', invoiceId)
+                .single();
+
+            if (fetchError) throw fetchError;
+
             const { error } = await supabase
                 .from('business_invoices')
                 .update({ status: 'paid', updated_at: new Date().toISOString() })
@@ -456,14 +465,17 @@ export const businessInvoiceService = {
 
             if (error) throw error;
 
+            // GL INTEGRATION: Post payment to accounting
+            await this.postPaymentToGL(invoiceId, invoice);
+
             // Log activity
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                // Get tenantId for the invoice
-                const { data: invoice } = await supabase.from('business_invoices').select('tenant_id').eq('id', invoiceId).single();
                 await activityService.logActivity(user.id, 'Invoice Paid', {
-                    invoiceId: invoiceId
-                }, invoice?.tenant_id);
+                    invoiceId: invoiceId,
+                    invoiceNumber: invoice.invoice_number,
+                    amount: invoice.total
+                }, invoice.tenant_id);
             }
 
             return { error: null };

@@ -25,7 +25,8 @@ import { businessInvoiceService } from '@/services/businessInvoiceService';
 import { emailCampaignService } from '@/services/emailCampaignService';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
-import { generateInvoicePDF } from '@/utils/pdfGenerator';
+// Removed unused import causing build failure
+
 
 interface EnhancedInvoiceModalProps {
   isOpen: boolean;

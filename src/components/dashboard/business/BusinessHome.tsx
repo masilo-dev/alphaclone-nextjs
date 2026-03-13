@@ -60,7 +60,10 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
         totalRevenue: stats?.totalRevenue || 0,
         totalClients: stats?.clientCount || 0,
         activeProjects: stats?.activeProjects || 0,
-        pendingInvoices: stats?.pendingInvoices || 0
+        pendingInvoices: stats?.pendingInvoices || 0,
+        overdueInvoices: stats?.overdueInvoices || 0,
+        weightedPipeline: stats?.weightedPipeline || 0,
+        salesForecast: stats?.salesForecast || 0
     });
     const [revenueData, setRevenueData] = useState<any[]>(stats?.monthlyRevenue || []);
     const [pipelineData, setPipelineData] = useState<any[]>([]);
@@ -100,7 +103,10 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
                 totalRevenue: stats.totalRevenue || 0,
                 totalClients: stats.clientCount || 0,
                 activeProjects: stats.activeProjects || 0,
-                pendingInvoices: stats.pendingInvoices || 0
+                pendingInvoices: stats.pendingInvoices || 0,
+                overdueInvoices: stats.overdueInvoices || 0,
+                weightedPipeline: stats.weightedPipeline || 0,
+                salesForecast: stats.salesForecast || 0
             });
             setRevenueData(stats.monthlyRevenue || []);
             setRecentActivity(stats.recentActivity || []);
@@ -137,7 +143,13 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
                     }
                     if (st === 'draft' || st === 'in_progress' || st === 'sent') inProgress++;
                 }
-                setInvoiceStats({ overdue, dueSoon, inProgress, totalActive, loadingInvoices: false });
+                setInvoiceStats({ 
+                    overdue: stats?.overdueInvoices || overdue, 
+                    dueSoon, 
+                    inProgress, 
+                    totalActive, 
+                    loadingInvoices: false 
+                });
             } catch {
                 setInvoiceStats(prev => ({ ...prev, loadingInvoices: false }));
             }
@@ -253,16 +265,15 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
                     color="text-violet-400"
                 />
                 <MetricCard
-                    label="Active Projects"
-                    value={metrics.activeProjects.toString()}
-                    trend={`${metrics.activeProjects} ongoing`}
-                    icon={Briefcase}
+                    label="Weighted Pipeline"
+                    value={`$${metrics.weightedPipeline.toLocaleString()}`}
+                    icon={BarChart2}
                     color="text-blue-400"
                 />
                 <MetricCard
-                    label="Pending Invoices"
-                    value={metrics.pendingInvoices.toString()}
-                    icon={AlertCircle}
+                    label="Sales Forecast"
+                    value={`$${metrics.salesForecast.toLocaleString()}`}
+                    icon={Target}
                     color="text-orange-400"
                 />
             </div>

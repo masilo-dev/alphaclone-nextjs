@@ -2,6 +2,8 @@ import { supabase } from '../lib/supabase';
 import { activityService } from './activityService';
 import { tenantService } from './tenancy/TenantService';
 import { fileUploadService } from './fileUploadService';
+import { journalEntryService } from './accounting/journalEntryService';
+import { chartOfAccountsService } from './accounting/chartOfAccountsService';
 
 export type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
 export type DealSource = 'referral' | 'website' | 'cold_outreach' | 'social_media' | 'event' | 'partner' | 'organic' | 'other';
@@ -397,6 +399,56 @@ export const dealService: DealService = {
                 .single();
 
             if (error) throw error;
+
+            // GL INTEGRATION: When deal moves to closed_won, post revenue entry
+            if (updates.stage === 'closed_won' && data.value && data.value > 0) {
+                try {
+                    let { account: arAccount } = await chartOfAccountsService.getAccountByCode('1100');
+                    let { account: revenueAccount } = await chartOfAccountsService.getAccountByCode('4100');
+
+                    if (!arAccount || !revenueAccount) {
+                        await chartOfAccountsService.initializeDefaultAccounts();
+                        const arRetry = await chartOfAccountsService.getAccountByCode('1100');
+                        const revRetry = await chartOfAccountsService.getAccountByCode('4100');
+                        arAccount = arRetry.account;
+                        revenueAccount = revRetry.account;
+                    }
+
+                    if (arAccount && revenueAccount) {
+                        const closeDate = updateData.actual_close_date || new Date().toISOString().split('T')[0];
+                        const { entry } = await journalEntryService.createEntry({
+                            entryDate: closeDate,
+                            description: `Closed-won deal: ${data.name}`,
+                            reference: `DEAL-${dealId.slice(0, 8).toUpperCase()}`,
+                            sourceType: 'deal',
+                            sourceId: dealId,
+                            lines: [
+                                {
+                                    accountId: arAccount.id,
+                                    debitAmount: data.value,
+                                    creditAmount: 0,
+                                    description: `AR - Deal: ${data.name}`,
+                                    entityType: 'deal',
+                                    entityId: dealId,
+                                },
+                                {
+                                    accountId: revenueAccount.id,
+                                    debitAmount: 0,
+                                    creditAmount: data.value,
+                                    description: `Revenue - Deal: ${data.name}`,
+                                    entityType: 'deal',
+                                    entityId: dealId,
+                                },
+                            ],
+                        });
+                        if (entry) {
+                            await journalEntryService.postEntry(entry.id);
+                        }
+                    }
+                } catch (glErr) {
+                    console.error('Non-critical: Failed to post closed-won deal to GL:', glErr);
+                }
+            }
 
             const deal: Deal = {
                 id: data.id,
