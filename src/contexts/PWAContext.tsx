@@ -12,7 +12,7 @@ const PWAContext = createContext<PWAContextType>({ isPWA: false, isLoading: true
 
 export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
     const [isPwaMode, setIsPwaMode] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         // Check immediately on mount

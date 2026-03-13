@@ -8,19 +8,43 @@ import PublicNavigation from '../PublicNavigation';
 import { contactService } from '../../services/contactFormService';
 import { contactSchema } from '../../schemas/validation';
 import AnimateIn from '../common/AnimateIn';
+import TurnstileVerification from '../ui/TurnstileVerification';
 
 const ContactPage: React.FC = () => {
     const [, setIsLoginOpen] = React.useState(false);
     const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
     const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
     const [validationError, setValidationError] = useState<string>('');
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!turnstileToken) {
+            setValidationError('Please complete the security check.');
+            setStatus('error');
+            setTimeout(() => { setStatus('idle'); setValidationError(''); }, 5000);
+            return;
+        }
+
         setStatus('sending');
         setValidationError('');
 
         try {
+            // Verify Turnstile token on server
+            const verifyRes = await fetch('/api/auth/verify-turnstile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: turnstileToken }),
+            });
+
+            const verifyData = await verifyRes.json();
+            if (!verifyData.success) {
+                setValidationError('Security verification failed. Please try again.');
+                setStatus('error');
+                setTimeout(() => { setStatus('idle'); setValidationError(''); }, 5000);
+                return;
+            }
             contactSchema.parse({
                 name: formData.name,
                 email: formData.email,
@@ -178,6 +202,16 @@ const ContactPage: React.FC = () => {
                                         placeholder="Tell us about your project..."
                                     />
                                 </div>
+
+                                <TurnstileVerification
+                                    onVerify={(token) => {
+                                        setTurnstileToken(token);
+                                        setValidationError('');
+                                    }}
+                                    onExpire={() => setTurnstileToken(null)}
+                                    onError={() => setValidationError('Verification error. Please refresh.')}
+                                />
+
                                 {status === 'success' && (
                                     <div className="flex items-center gap-2 text-green-400 bg-green-400/10 p-4 rounded-lg">
                                         <CheckCircle2 className="w-5 h-5" />
@@ -192,7 +226,7 @@ const ContactPage: React.FC = () => {
                                 )}
                                 <Button
                                     type="submit"
-                                    disabled={status === 'sending'}
+                                    disabled={status === 'sending' || !turnstileToken}
                                     isLoading={status === 'sending'}
                                     size="lg"
                                     className="w-full font-marketing-heading uppercase tracking-tight"

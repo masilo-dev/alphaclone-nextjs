@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { usePWA } from '@/contexts/PWAContext';
 import { SubscriptionPlan } from '@/services/tenancy/types';
-import HumanVerification from '@/components/ui/HumanVerification';
+import TurnstileVerification from '@/components/ui/TurnstileVerification';
 
 export default function LoginPage() {
     const { isPWA } = usePWA();
@@ -40,6 +40,7 @@ export default function LoginPage() {
     const [showMfaChallenge, setShowMfaChallenge] = useState(false);
     const [mfaCode, setMfaCode] = useState('');
     const [humanVerified, setHumanVerified] = useState(false);
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
     const plans: { id: SubscriptionPlan, name: string, price: string, features: string[] }[] = [
         {
@@ -68,8 +69,22 @@ export default function LoginPage() {
         setIsLoading(true);
 
         try {
-            if (!humanVerified) {
+            if (!turnstileToken) {
                 setError('Please complete the security check to continue.');
+                setIsLoading(false);
+                return;
+            }
+
+            // Verify Turnstile token on server
+            const verifyRes = await fetch('/api/auth/verify-turnstile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: turnstileToken }),
+            });
+
+            const verifyData = await verifyRes.json();
+            if (!verifyData.success) {
+                setError('Security verification failed. Please try again.');
                 setIsLoading(false);
                 return;
             }
@@ -614,18 +629,20 @@ export default function LoginPage() {
                             </div>
                         )}
 
-                        <HumanVerification
-                            verified={humanVerified}
-                            onVerify={() => {
-                                setHumanVerified(true);
+                        <TurnstileVerification
+                            onVerify={(token) => {
+                                setTurnstileToken(token);
                                 setError('');
-                            }} />
+                            }}
+                            onExpire={() => setTurnstileToken(null)}
+                            onError={() => setError('Verification error. Please refresh.')}
+                        />
 
                         <Button
                             type="submit"
                             className="w-full h-12 text-base font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 shadow-lg shadow-teal-500/20"
                             isLoading={isLoading}
-                            disabled={!humanVerified}
+                            disabled={!turnstileToken}
                         >
                             {isRegistering ? 'Create Account' : 'Sign In'}
                         </Button>
