@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Calendar, DollarSign, TrendingUp, Plus, Edit3, Trash2, Clock, CheckCircle, FileText } from 'lucide-react';
 import { Button } from '../../ui/UIComponents';
+import ComingSoonOverlay from '../ComingSoonOverlay';
 
 interface TeamMember {
   id: string;
@@ -494,118 +495,123 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <ComingSoonOverlay
+      title="Strategic Asset Management"
+      description="AlphaClone's enterprise resource and equipment allocation suite is entering final deployment. The visual structure below demonstrates the core allocation algorithms and data visualization."
+    >
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-bold text-white">Resource Allocation</h3>
+            <p className="text-slate-400">Manage your team and resources efficiently</p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowAddMember(true)}
+              className="bg-teal-600 hover:bg-teal-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Team Member
+            </Button>
+            <Button
+              onClick={() => setShowAddResource(true)}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Resource
+            </Button>
+          </div>
+        </div>
+
+        {/* Overview Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+            <div className="flex items-center gap-3 mb-2">
+              <Users className="w-5 h-5 text-teal-400" />
+              <h4 className="font-semibold text-white">Team Size</h4>
+            </div>
+            <div className="text-2xl font-bold text-teal-400">{teamMembers.length}</div>
+            <div className="text-sm text-slate-400">active members</div>
+          </div>
+
+          <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+            <div className="flex items-center gap-3 mb-2">
+              <CheckCircle className="w-5 h-5 text-green-400" />
+              <h4 className="font-semibold text-white">Available</h4>
+            </div>
+            <div className="text-2xl font-bold text-green-400">
+              {teamMembers.filter(m => m.status === 'available').length}
+            </div>
+            <div className="text-sm text-slate-400">team members</div>
+          </div>
+
+          <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+            <div className="flex items-center gap-3 mb-2">
+              <Calendar className="w-5 h-5 text-blue-400" />
+              <h4 className="font-semibold text-white">Active Projects</h4>
+            </div>
+            <div className="text-2xl font-bold text-blue-400">
+              {projects.filter(p => p.status === 'active').length}
+            </div>
+            <div className="text-sm text-slate-400">in progress</div>
+          </div>
+
+          <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+            <div className="flex items-center gap-3 mb-2">
+              <DollarSign className="w-5 h-5 text-yellow-400" />
+              <h4 className="font-semibold text-white">Budget Used</h4>
+            </div>
+            <div className="text-2xl font-bold text-yellow-400">
+              {formatCurrency(resources.reduce((sum, r) => sum + r.used * r.costPerUnit, 0))}
+            </div>
+            <div className="text-sm text-slate-400">total spent</div>
+          </div>
+        </div>
+
+        {/* Team Members Section */}
         <div>
-          <h3 className="text-xl font-bold text-white">Resource Allocation</h3>
-          <p className="text-slate-400">Manage your team and resources efficiently</p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => setShowAddMember(true)}
-            className="bg-teal-600 hover:bg-teal-700"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Team Member
-          </Button>
-          <Button
-            onClick={() => setShowAddResource(true)}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Resource
-          </Button>
-        </div>
-      </div>
-
-      {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-          <div className="flex items-center gap-3 mb-2">
+          <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <Users className="w-5 h-5 text-teal-400" />
-            <h4 className="font-semibold text-white">Team Size</h4>
+            Team Members
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {teamMembers.map(member => (
+              <TeamMemberCard key={member.id} member={member} />
+            ))}
           </div>
-          <div className="text-2xl font-bold text-teal-400">{teamMembers.length}</div>
-          <div className="text-sm text-slate-400">active members</div>
         </div>
 
-        <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-          <div className="flex items-center gap-3 mb-2">
-            <CheckCircle className="w-5 h-5 text-green-400" />
-            <h4 className="font-semibold text-white">Available</h4>
+        {/* Resources Section */}
+        <div>
+          <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-blue-400" />
+            Resources
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {resources.map(resource => (
+              <ResourceCard key={resource.id} resource={resource} />
+            ))}
           </div>
-          <div className="text-2xl font-bold text-green-400">
-            {teamMembers.filter(m => m.status === 'available').length}
-          </div>
-          <div className="text-sm text-slate-400">team members</div>
         </div>
 
-        <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-          <div className="flex items-center gap-3 mb-2">
-            <Calendar className="w-5 h-5 text-blue-400" />
-            <h4 className="font-semibold text-white">Active Projects</h4>
+        {/* Projects Section */}
+        <div>
+          <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-green-400" />
+            Active Projects
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {projects.map(project => (
+              <ProjectCard key={project.id} project={project} />
+            ))}
           </div>
-          <div className="text-2xl font-bold text-blue-400">
-            {projects.filter(p => p.status === 'active').length}
-          </div>
-          <div className="text-sm text-slate-400">in progress</div>
         </div>
 
-        <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-          <div className="flex items-center gap-3 mb-2">
-            <DollarSign className="w-5 h-5 text-yellow-400" />
-            <h4 className="font-semibold text-white">Budget Used</h4>
-          </div>
-          <div className="text-2xl font-bold text-yellow-400">
-            {formatCurrency(resources.reduce((sum, r) => sum + r.used * r.costPerUnit, 0))}
-          </div>
-          <div className="text-sm text-slate-400">total spent</div>
-        </div>
+        {/* Add/Edit Modals would go here */}
+        {/* Implementation of modals for adding/editing team members and resources */}
       </div>
-
-      {/* Team Members Section */}
-      <div>
-        <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Users className="w-5 h-5 text-teal-400" />
-          Team Members
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {teamMembers.map(member => (
-            <TeamMemberCard key={member.id} member={member} />
-          ))}
-        </div>
-      </div>
-
-      {/* Resources Section */}
-      <div>
-        <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-blue-400" />
-          Resources
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {resources.map(resource => (
-            <ResourceCard key={resource.id} resource={resource} />
-          ))}
-        </div>
-      </div>
-
-      {/* Projects Section */}
-      <div>
-        <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-green-400" />
-          Active Projects
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {projects.map(project => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
-        </div>
-      </div>
-
-      {/* Add/Edit Modals would go here */}
-      {/* Implementation of modals for adding/editing team members and resources */}
-    </div>
+    </ComingSoonOverlay>
   );
 };
 

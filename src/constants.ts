@@ -67,7 +67,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     icon: Layers,
     subItems: [
       { label: 'SEO', href: '/dashboard/articles' },
-      { label: 'Allocation', href: '/dashboard/allocation' },
+      { label: 'Allocation (Coming Soon)', href: '/dashboard/allocation' },
       { label: 'Improvements', href: '/dashboard/admin/improvements' },
     ]
   },
@@ -99,7 +99,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
 
   // 3. Communication & Scheduling
   { label: 'Mail', href: '/dashboard/mail', icon: Mail },
-  { label: 'Team Chat', href: '/dashboard/business/team-chat', icon: MessageSquare },
+  { label: 'Team Chat (Coming Soon)', href: '/dashboard/business/team-chat', icon: MessageSquare },
   { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
   { label: 'Booking', href: '/dashboard/business/booking', icon: Clock },
   { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
@@ -112,7 +112,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Projects', href: '/dashboard/business/projects', icon: Briefcase },
   { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
   { label: 'Task Scheduler', href: '/dashboard/business/tasks', icon: Clock },
-  { label: 'Resource Allocation', href: '/dashboard/business/resources', icon: TrendingUp },
+  { label: 'Resource Allocation (Coming Soon)', href: '/dashboard/business/resources', icon: TrendingUp },
 
   // 6. Finances & Records
   { label: 'Invoices', href: '/dashboard/business/billing', icon: DollarSign },

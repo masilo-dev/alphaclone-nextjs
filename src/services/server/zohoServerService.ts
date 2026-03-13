@@ -187,31 +187,54 @@ export const zohoServerService = {
     },
 
     /**
+     * Extract clean email address from "Name <email@domain.com>" format
+     */
+    extractEmail(address: string): string {
+        if (!address) return '';
+        const match = address.match(/<([^>]+)>/);
+        if (match) return match[1].trim();
+        return address.trim();
+    },
+
+    /**
      * Send email via Zoho Mail API
      */
     async sendMessage(userId: string, data: {
         toAddress: string;
         subject: string;
         content: string;
+        fromAddress?: string;
     }) {
         const supabaseAdmin = createSupabaseAdminClient();
-        const { data: integration, error } = await supabaseAdmin
-            .from('integrations')
-            .select('config')
-            .eq('user_id', userId)
-            .eq('type', 'zoho')
-            .single();
+        
+        let fromAddress = data.fromAddress;
 
-        if (error || !integration?.config?.email) {
-            console.error('[Zoho Send Debug] Failed to fetch sender email from config:', error || 'Missing email');
-            throw new Error('Zoho integration is missing email address configuration');
+        if (!fromAddress) {
+            const { data: integration, error } = await supabaseAdmin
+                .from('integrations')
+                .select('config')
+                .eq('user_id', userId)
+                .eq('type', 'zoho')
+                .single();
+
+            if (error || !integration?.config?.email) {
+                console.error('[Zoho Send Debug] Failed to fetch sender email from config:', error || 'Missing email');
+                throw new Error('Zoho integration is missing email address configuration');
+            }
+            fromAddress = integration.config.email;
         }
+
+        // Sanitize addresses to ensure they match Zoho's expected patterns
+        const cleanTo = this.extractEmail(data.toAddress);
+        const cleanFrom = this.extractEmail(fromAddress!);
+
+        console.log(`[Zoho Send Debug] Sending email: From ${cleanFrom} To ${cleanTo}`);
 
         return this.proxyRequest(userId, 'messages', {
             method: 'POST',
             body: JSON.stringify({
-                fromAddress: integration.config.email,
-                toAddress: data.toAddress,
+                fromAddress: cleanFrom,
+                toAddress: cleanTo,
                 subject: data.subject,
                 content: data.content,
                 mailFormat: 'html'

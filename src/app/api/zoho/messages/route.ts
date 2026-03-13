@@ -80,11 +80,51 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
+        // Robustly fetch/verify account info (to fix "Invalid Input" issues related to mismatched fromAddress)
+        let fromAddress: string | undefined;
+        try {
+            const accountsData = await zohoServerService.proxyRequest(userId, 'accounts');
+            if (accountsData.data && accountsData.data.length > 0) {
+                const primaryAccount = accountsData.data[0];
+                fromAddress = primaryAccount.emailAddress || primaryAccount.primaryEmail;
+                
+                // Proactively update the integration config if we have new info
+                if (fromAddress || primaryAccount.accountId) {
+                    const { createSupabaseAdminClient } = await import('@/lib/supabase-server');
+                    const supabaseAdmin = createSupabaseAdminClient();
+                    
+                    const { data: integration } = await supabaseAdmin
+                        .from('integrations')
+                        .select('config')
+                        .eq('user_id', userId)
+                        .eq('type', 'zoho')
+                        .single();
+
+                    const updatedConfig = {
+                        ...(integration?.config || {}),
+                        email: fromAddress || integration?.config?.email,
+                        accountId: primaryAccount.accountId || integration?.config?.accountId,
+                        zoid: primaryAccount.accountId || integration?.config?.zoid
+                    };
+
+                    await supabaseAdmin
+                        .from('integrations')
+                        .update({ config: updatedConfig })
+                        .eq('user_id', userId)
+                        .eq('type', 'zoho');
+                }
+            }
+        } catch (accErr) {
+            console.error('[Zoho Send Debug] Failed to auto-resolve account info:', accErr);
+            // Continue with fallback in sendMessage if this fails
+        }
+
         // Use the dedicated sendMessage method which handles mailFormat: 'html' and proper endpoint structure
         const data = await zohoServerService.sendMessage(userId, {
             toAddress: to,
             subject: subject,
-            content: content
+            content: content,
+            fromAddress: fromAddress
         });
 
         return NextResponse.json({ success: true, data });
