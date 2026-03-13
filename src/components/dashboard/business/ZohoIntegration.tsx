@@ -427,7 +427,12 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
                 </div>
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => { setIsComposing(false); setActiveTab('inbox'); setComposeData({ to: '', cc: '', subject: '', body: '' }); }}
+                    onClick={() => { 
+                      setIsComposing(false); 
+                      setActiveTab('inbox'); 
+                      const defaultFrom = accountInfo?.fromAddresses?.find(a => a.isDefault)?.address || accountInfo?.email || '';
+                      setComposeData({ from: defaultFrom, to: '', cc: '', subject: '', body: '' }); 
+                    }}
                     className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
                   >
                     Discard
@@ -514,7 +519,13 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
                     <div className="flex items-center gap-2 ml-auto">
                       <button
                         onClick={() => {
-                          setComposeData({ to: selectedMessage.fromAddress, cc: '', subject: `Re: ${selectedMessage.subject}`, body: '' });
+                          setComposeData({ 
+                            from: accountInfo?.fromAddresses?.find(a => a.isDefault)?.address || accountInfo?.email || '',
+                            to: selectedMessage.fromAddress, 
+                            cc: '', 
+                            subject: `Re: ${selectedMessage.subject}`, 
+                            body: '' 
+                          });
                           setActiveTab('compose');
                         }}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
