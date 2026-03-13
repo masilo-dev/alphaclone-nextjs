@@ -146,7 +146,7 @@ export const authService = {
             // Check for MFA requirement
             let needsMfa = false;
             try {
-                const { data: mfaData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+                const { data: mfaData } = await withAuthTimeout(supabase.auth.mfa.getAuthenticatorAssuranceLevel(), 5000);
                 if (mfaData?.nextLevel === 'aal2' && mfaData?.currentLevel === 'aal1') {
                     needsMfa = true;
                 }
@@ -544,8 +544,8 @@ export const authService = {
         try {
             // Update both database and auth metadata in parallel for consistency
             const [dbResult, authResult] = await Promise.allSettled([
-                supabase.from('profiles').update(updates).eq('id', userId),
-                supabase.auth.updateUser({ data: updates })
+                withAuthTimeout(supabase.from('profiles').update(updates).eq('id', userId), 8000),
+                withAuthTimeout(supabase.auth.updateUser({ data: updates }), 8000)
             ]);
 
             // Check database result

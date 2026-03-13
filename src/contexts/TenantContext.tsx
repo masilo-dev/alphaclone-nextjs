@@ -241,7 +241,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         }
         setError('Loading timeout - please check your connection and refresh');
         setIsLoading(false);
-      }, 15000);
+      }, 10000);
 
       loadUserTenants(timeoutId);
 
