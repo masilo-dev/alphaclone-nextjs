@@ -61,6 +61,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
   });
   const [sendingEmail, setSendingEmail] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -176,6 +177,41 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
     if (tab === 'sent') loadSentMessages();
   };
 
+  const generateAiReply = async () => {
+    if (!selectedMessage) return;
+    setAiGenerating(true);
+    try {
+      const res = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: `Reply to this email from "${selectedMessage.fromAddress}" with subject "${selectedMessage.subject}".
+          Email Content: "${selectedMessage.content || selectedMessage.summary}"
+          Instructions: Draft a professional and helpful response.`,
+          systemPrompt: "You are an expert customer relations assistant."
+        })
+      });
+
+      if (!res.ok) throw new Error('AI failed');
+      const data = await res.json();
+      
+      setComposeData({
+        from: accountInfo?.fromAddresses?.find(a => a.isDefault)?.address || accountInfo?.email || '',
+        to: selectedMessage.fromAddress,
+        cc: '',
+        subject: `Re: ${selectedMessage.subject}`,
+        body: data.text
+      });
+      setActiveTab('compose');
+      setIsComposing(true);
+      toast.success('AI Draft ready');
+    } catch (err) {
+      toast.error('AI Assistant failed');
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   const sendEmail = async () => {
     if (!composeData.to || !composeData.subject || !composeData.body) {
       toast.error('Please fill in To, Subject, and Body');
@@ -264,26 +300,36 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
 
   // ─── Connected ────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden" style={{ minHeight: '600px', maxHeight: '800px' }}>
+    <div className="flex flex-col h-full bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden" 
+         style={{ minHeight: '500px', height: '100%', maxHeight: 'calc(100vh - 120px)' }}>
 
       {/* ── Top Bar ── */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-lg flex items-center justify-center shadow">
+      <div className="flex flex-wrap items-center justify-between px-3 sm:px-5 py-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm shrink-0 gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="w-8 h-8 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-lg flex items-center justify-center shadow shrink-0">
             <Mail className="w-4 h-4 text-white" />
           </div>
-          <div>
-            <h2 className="text-sm font-semibold text-white">Zoho Mail</h2>
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-white truncate">Zoho Mail</h2>
             {accountInfo && (
-              <p className="text-xs text-slate-400 flex items-center gap-1">
-                <CheckCircle className="w-3 h-3 text-emerald-400" />
-                {accountInfo.email}
+              <p className="text-[10px] text-slate-400 flex items-center gap-1 truncate">
+                <CheckCircle className="w-3 h-3 text-emerald-400 shrink-0" />
+                <span className="truncate">{accountInfo.email}</span>
               </p>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
+          {selectedMessage && (
+            <button
+              onClick={() => setSelectedMessage(null)}
+              className="lg:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+              title="Back to List"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
           <button
             onClick={() => handleTabChange(activeTab)}
             disabled={loading}
@@ -293,18 +339,11 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
           <button
-            onClick={() => setShowSettings(!showSettings)}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
-            title="Settings"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
-          <button
             onClick={() => { setIsComposing(true); setActiveTab('compose'); }}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow"
+            className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-xs font-semibold rounded-xl transition-all duration-200 shadow"
           >
-            <PenSquare className="w-4 h-4" />
-            Compose
+            <PenSquare className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Compose</span>
           </button>
         </div>
       </div>
@@ -342,24 +381,25 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
 
       {/* ── Tab Navigation ── */}
       <div className="flex items-center gap-1 px-5 pt-3 pb-0 shrink-0">
-        {([
-          { key: 'inbox', label: 'Inbox', icon: Inbox },
-          { key: 'compose', label: 'Compose', icon: PenSquare },
-          { key: 'sent', label: 'Sent', icon: Send },
-        ] as { key: TabType; label: string; icon: any }[]).map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => key === 'compose' ? (setIsComposing(true), setActiveTab('compose')) : handleTabChange(key)}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors border-b-2 ${
-              activeTab === key
-                ? 'text-sky-400 border-sky-500 bg-slate-800/50'
-                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/30'
-            }`}
-          >
-            <Icon className="w-3.5 h-3.5" />
-            {label}
-          </button>
-        ))}
+        {(['inbox', 'compose', 'sent'] as TabType[]).map((key) => {
+          const labels: Record<TabType, string> = { inbox: 'Inbox', compose: 'Compose', sent: 'Sent' };
+          const icons: Record<TabType, any> = { inbox: Inbox, compose: PenSquare, sent: Send };
+          const Icon = icons[key];
+          return (
+            <button
+              key={key}
+              onClick={() => key === 'compose' ? (setIsComposing(true), setActiveTab('compose')) : handleTabChange(key)}
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors border-b-2 ${
+                activeTab === key
+                  ? 'text-sky-400 border-sky-500 bg-slate-800/50'
+                  : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/30'
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              {labels[key]}
+            </button>
+          );
+        })}
       </div>
 
       {/* ── Main Content ── */}
@@ -367,56 +407,72 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
 
         {/* Compose Panel */}
         {activeTab === 'compose' && (
-          <div className="flex-1 p-5 overflow-y-auto">
+          <div className="flex-1 p-4 sm:p-5 overflow-y-auto custom-scrollbar">
             <div className="max-w-2xl mx-auto">
-              <h3 className="text-white font-semibold mb-5 flex items-center gap-2">
-                <PenSquare className="w-3.5 h-3.5 text-sky-400" />
-                New Email
+              <h3 className="text-white font-semibold mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <PenSquare className="w-3.5 h-3.5 text-sky-400" />
+                  New Email
+                </div>
               </h3>
               <div className="space-y-3">
-                  <div className="flex items-center gap-3 border-b border-slate-700/50 pb-4 mb-4">
-                    <div className="w-10 h-10 bg-sky-500/10 rounded-xl flex items-center justify-center border border-sky-500/20 shrink-0">
-                      <User className="w-5 h-5 text-sky-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-0.5">Sender (From)</p>
-                      {accountInfo?.fromAddresses && accountInfo.fromAddresses.length > 1 ? (
-                        <div className="relative group">
-                          <select
-                            value={composeData.from}
-                            onChange={(e) => setComposeData({ ...composeData, from: e.target.value })}
-                            className="w-full bg-transparent text-white text-sm font-bold outline-none cursor-pointer appearance-none pr-8 py-0.5"
-                          >
-                            {accountInfo.fromAddresses.map((addr) => (
-                              <option key={addr.address} value={addr.address} className="bg-slate-900 text-white">
-                                {addr.address} {addr.displayName ? `(${addr.displayName})` : ''}
-                              </option>
-                            ))}
-                          </select>
-                          <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none group-hover:text-sky-400 transition-colors" />
-                        </div>
-                      ) : (
-                        <p className="text-white text-sm font-bold truncate">{composeData.from || accountInfo?.email || 'Loading sender...'}</p>
-                      )}
-                    </div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 border-b border-slate-700/50 pb-4 mb-4">
+                  <div className="w-8 h-8 bg-sky-500/10 rounded-lg flex items-center justify-center border border-sky-500/20 shrink-0">
+                    <User className="w-4 h-4 text-sky-400" />
                   </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-0.5">Sender</p>
+                    {accountInfo?.fromAddresses && accountInfo.fromAddresses.length > 1 ? (
+                      <div className="relative group">
+                        <select
+                          value={composeData.from}
+                          onChange={(e) => setComposeData({ ...composeData, from: e.target.value })}
+                          className="w-full bg-transparent text-white text-sm font-bold outline-none cursor-pointer appearance-none pr-8 py-0.5"
+                        >
+                          {accountInfo.fromAddresses.map((addr) => (
+                            <option key={addr.address} value={addr.address} className="bg-slate-900 text-white">
+                              {addr.address} {addr.displayName ? `(${addr.displayName})` : ''}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none group-hover:text-sky-400 transition-colors" />
+                      </div>
+                    ) : (
+                      <p className="text-white text-sm font-bold truncate">{composeData.from || accountInfo?.email || 'Loading sender...'}</p>
+                    )}
+                  </div>
+                </div>
 
-                  {([
-                    { field: 'to', label: 'To', placeholder: 'recipient@example.com', required: true },
-                    { field: 'cc', label: 'CC', placeholder: 'cc@example.com (optional)', required: false },
-                    { field: 'subject', label: 'Subject', placeholder: 'Email subject', required: true },
-                  ] as any[]).map(({ field, label, placeholder }) => (
-                    <div key={field} className="flex items-center gap-3 border-b border-slate-700 pb-3">
-                      <span className="text-slate-400 text-sm w-14 text-right">{label}</span>
-                      <input
-                        type="text"
-                        value={(composeData as any)[field]}
-                        onChange={(e) => setComposeData({ ...composeData, [field]: e.target.value })}
-                        placeholder={placeholder}
-                        className="flex-1 bg-transparent text-white text-sm placeholder:text-slate-600 outline-none"
-                      />
-                    </div>
-                  ))}
+                <div className="flex items-center gap-3 border-b border-slate-700 pb-3">
+                  <span className="text-slate-400 text-sm w-14 text-right">To</span>
+                  <input
+                    type="text"
+                    value={composeData.to}
+                    onChange={(e) => setComposeData({ ...composeData, to: e.target.value })}
+                    placeholder="recipient@example.com"
+                    className="flex-1 bg-transparent text-white text-sm placeholder:text-slate-600 outline-none"
+                  />
+                </div>
+                <div className="flex items-center gap-3 border-b border-slate-700 pb-3">
+                  <span className="text-slate-400 text-sm w-14 text-right">CC</span>
+                  <input
+                    type="text"
+                    value={composeData.cc}
+                    onChange={(e) => setComposeData({ ...composeData, cc: e.target.value })}
+                    placeholder="cc@example.com (optional)"
+                    className="flex-1 bg-transparent text-white text-sm placeholder:text-slate-600 outline-none"
+                  />
+                </div>
+                <div className="flex items-center gap-3 border-b border-slate-700 pb-3">
+                  <span className="text-slate-400 text-sm w-14 text-right">Subject</span>
+                  <input
+                    type="text"
+                    value={composeData.subject}
+                    onChange={(e) => setComposeData({ ...composeData, subject: e.target.value })}
+                    placeholder="Email subject"
+                    className="flex-1 bg-transparent text-white text-sm placeholder:text-slate-600 outline-none"
+                  />
+                </div>
 
                 <textarea
                   value={composeData.body}
@@ -433,7 +489,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
                     <Paperclip className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-end gap-2 sm:gap-3">
                   <button
                     onClick={() => { 
                       setIsComposing(false); 
@@ -441,17 +497,17 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
                       const defaultFrom = accountInfo?.fromAddresses?.find(a => a.isDefault)?.address || accountInfo?.email || '';
                       setComposeData({ from: defaultFrom, to: '', cc: '', subject: '', body: '' }); 
                     }}
-                    className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+                    className="px-3 py-2 text-xs text-slate-400 hover:text-white transition-colors"
                   >
                     Discard
                   </button>
                   <button
                     onClick={sendEmail}
                     disabled={sendingEmail}
-                    className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-sm font-semibold rounded-xl transition-all disabled:opacity-50 shadow"
+                    className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-sm font-bold rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-sky-500/20"
                   >
                     {sendingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    {sendingEmail ? 'Sending...' : 'Send'}
+                    {sendingEmail ? 'Sending...' : 'Send Now'}
                   </button>
                 </div>
               </div>
@@ -461,9 +517,9 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
 
         {/* Inbox / Sent List + Detail */}
         {(activeTab === 'inbox' || activeTab === 'sent') && (
-          <>
+          <div className="flex flex-1 overflow-hidden">
             {/* Message List */}
-            <div className={`${selectedMessage ? 'hidden md:flex' : 'flex'} flex-col border-r border-slate-800 overflow-y-auto`} style={{ width: '340px', minWidth: '260px' }}>
+            <div className={`${selectedMessage ? 'hidden lg:flex' : 'flex'} flex-col border-r border-slate-800 overflow-y-auto bg-slate-900/30`} style={{ width: '100%', maxWidth: selectedMessage ? '300px' : 'none', minWidth: '240px' }}>
               {/* Search */}
               <div className="p-3 border-b border-slate-800 shrink-0">
                 <div className="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-2">
@@ -514,9 +570,9 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
             </div>
 
             {/* Message Detail */}
-            <div className={`${selectedMessage ? 'flex' : 'hidden md:flex'} flex-1 flex-col overflow-hidden`}>
+            <div className={`${selectedMessage ? 'flex' : 'hidden lg:flex'} flex-1 flex-col overflow-hidden bg-slate-900/40`}>
               {selectedMessage ? (
-                <>
+                <div className="flex flex-col h-full overflow-hidden">
                   <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 shrink-0">
                     <button
                       onClick={() => setSelectedMessage(null)}
@@ -526,7 +582,16 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
                     </button>
                     <div className="flex items-center gap-2 ml-auto">
                       <button
+                        onClick={generateAiReply}
+                        disabled={aiGenerating}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 rounded-lg transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50"
+                      >
+                        {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
+                        {aiGenerating ? 'AI Generating...' : 'AI Assist'}
+                      </button>
+                      <button
                         onClick={() => {
+                          if (!selectedMessage) return;
                           setComposeData({ 
                             from: accountInfo?.fromAddresses?.find(a => a.isDefault)?.address || accountInfo?.email || '',
                             to: selectedMessage.fromAddress, 
@@ -535,6 +600,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
                             body: '' 
                           });
                           setActiveTab('compose');
+                          setIsComposing(true);
                         }}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
                       >
@@ -564,7 +630,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
                       {selectedMessage.content || selectedMessage.summary || 'No message content available.'}
                     </div>
                   </div>
-                </>
+                </div>
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
                   <Mail className="w-12 h-12 text-slate-700 mb-4" />
@@ -572,7 +638,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
                 </div>
               )}
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

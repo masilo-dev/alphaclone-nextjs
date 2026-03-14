@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 const GmailIntegrationView = React.lazy(() =>
     import('../GmailIntegrationView').then(m => ({ default: m.GmailIntegrationView }))
 );
-const ZohoMailView = React.lazy(() => import('./ZohoMailView'));
+const ZohoEmailIntegration = React.lazy(() => import('./ZohoIntegration'));
 
 interface MessagesPageProps {
     user: User;
@@ -198,7 +198,7 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
                                     <p className="text-xs text-slate-500">Loading Zoho...</p>
                                 </div>
                             }>
-                                <ZohoMailView userId={user.id} />
+                                <ZohoEmailIntegration />
                             </Suspense>
                         </motion.div>
                     )}
