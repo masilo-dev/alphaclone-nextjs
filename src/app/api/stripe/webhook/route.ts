@@ -6,12 +6,11 @@ import { emailProviderService } from '@/services/EmailProviderService';
 import { invoiceServerService } from '@/services/server/invoiceServerService';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-const supabaseAdmin = createSupabaseAdminClient();
 
 /**
  * Check if webhook event was already processed (idempotency)
  */
-async function isEventProcessed(eventId: string): Promise<boolean> {
+async function isEventProcessed(supabaseAdmin: any, eventId: string): Promise<boolean> {
     const { data } = await supabaseAdmin
         .from('stripe_webhook_events')
         .select('id')
@@ -26,6 +25,7 @@ async function isEventProcessed(eventId: string): Promise<boolean> {
  * Record webhook event for idempotency and auditing
  */
 async function recordWebhookEvent(
+    supabaseAdmin: any,
     event: any,
     tenantId?: string,
     status: 'processed' | 'failed' = 'processed',
@@ -48,7 +48,6 @@ async function recordWebhookEvent(
     });
 
     // Also log to audit_logs for tracking
-    // Also log to audit_logs for tracking
     await supabaseAdmin.from('audit_logs').insert({
         action: `stripe_webhook_${event.type}`,
         resource_type: 'payment',
@@ -67,6 +66,7 @@ async function recordWebhookEvent(
  * Record payment for reconciliation
  */
 async function recordPayment(
+    supabaseAdmin: any,
     paymentIntentId: string,
     tenantId: string,
     customerId: string,
@@ -91,8 +91,12 @@ export async function POST(req: Request) {
     const body = await req.text();
     const headerList = await headers();
     const signature = headerList.get('stripe-signature') as string;
+    
+    // Initialize Supabase Admin Lazily inside the handler
+    const supabaseAdmin = createSupabaseAdminClient();
 
     let event;
+
 
     // Step 1: Verify webhook signature
     try {
@@ -107,7 +111,7 @@ export async function POST(req: Request) {
 
     // Step 2: Check idempotency - has this event been processed before?
     try {
-        const alreadyProcessed = await isEventProcessed(event.id);
+        const alreadyProcessed = await isEventProcessed(supabaseAdmin, event.id);
         if (alreadyProcessed) {
             console.log(`Event ${event.id} already processed, skipping (idempotent)`);
             return NextResponse.json({ received: true, status: 'already_processed' });
@@ -157,6 +161,7 @@ export async function POST(req: Request) {
                     // Record payment
                     if (session.amount_total) {
                         await recordPayment(
+                            supabaseAdmin,
                             session.payment_intent || session.id,
                             tenantId,
                             session.customer,
@@ -225,6 +230,7 @@ export async function POST(req: Request) {
                         // Record payment for reconciliation
                         if (session.amount_paid) {
                             await recordPayment(
+                                supabaseAdmin,
                                 session.payment_intent || session.id,
                                 tenantId,
                                 session.customer,
@@ -260,6 +266,7 @@ export async function POST(req: Request) {
                         // Record failed payment
                         if (session.amount_due) {
                             await recordPayment(
+                                supabaseAdmin,
                                 session.payment_intent || session.id,
                                 tenantId,
                                 session.customer,
@@ -395,7 +402,7 @@ export async function POST(req: Request) {
         }
 
         // Step 4: Record successful webhook processing
-        await recordWebhookEvent(event, tenantId, 'processed');
+        await recordWebhookEvent(supabaseAdmin, event, tenantId, 'processed');
 
         return NextResponse.json({ received: true, status: 'processed' });
     } catch (err: any) {
@@ -403,7 +410,7 @@ export async function POST(req: Request) {
 
         // Record failed webhook processing
         try {
-            await recordWebhookEvent(event, tenantId, 'failed', err.message);
+            await recordWebhookEvent(supabaseAdmin, event, tenantId, 'failed', err.message);
         } catch (recordErr) {
             console.error('Failed to record webhook error:', recordErr);
         }

@@ -7,11 +7,19 @@ import { ENV } from '@/config/env'
  * This should be used in Server Components, API routes, and Server Actions.
  */
 export async function createSupabaseServerClient() {
+    // Safety check for missing environment variables during build time
+    if (!ENV.VITE_SUPABASE_URL || !ENV.VITE_SUPABASE_ANON_KEY) {
+        console.warn('[SupabaseServer] Missing credentials, returning mock client for build time');
+        return new Proxy({} as any, {
+            get: () => () => ({ data: null, error: { message: 'Supabase credentials missing' } })
+        });
+    }
+
     const cookieStore = await cookies()
 
     return createServerClient(
-        ENV.VITE_SUPABASE_URL!,
-        ENV.VITE_SUPABASE_ANON_KEY!,
+        ENV.VITE_SUPABASE_URL,
+        ENV.VITE_SUPABASE_ANON_KEY,
         {
             cookies: {
                 getAll() {
@@ -38,9 +46,17 @@ export async function createSupabaseServerClient() {
  * This bypasses RLS and should ONLY be used in server-side code (API routes, Server Actions).
  */
 export function createSupabaseAdminClient() {
+    // Safety check for missing environment variables during build time
+    if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
+        console.warn('[SupabaseAdmin] Missing credentials, returning mock client for build time');
+        return new Proxy({} as any, {
+            get: () => () => ({ data: null, error: { message: 'Supabase admin credentials missing' } })
+        });
+    }
+
     return createServerClient(
-        ENV.VITE_SUPABASE_URL!,
-        ENV.SUPABASE_SERVICE_ROLE_KEY!,
+        ENV.VITE_SUPABASE_URL,
+        ENV.SUPABASE_SERVICE_ROLE_KEY,
         {
             cookies: {
                 getAll() { return [] },
