@@ -15,7 +15,7 @@
 
 /* Marketing Theme Definitions */
 .marketing-theme {
-  --background: #020617;
+  --background: #020D1A;
   --foreground: #f8fafc;
   color: var(--foreground);
 }
@@ -41,7 +41,7 @@
 
 /* Marketing Grid and Glows */
 .marketing-bg-grid {
-  background-color: #020617;
+  background-color: #020D1A;
   background-image:
     url('/grid-pattern.svg'),
     radial-gradient(circle at center, rgba(2, 6, 23, 1) 0%, rgba(0, 0, 0, 1) 100%);
@@ -64,12 +64,12 @@
 }
 
 :root {
-  --background: #020617;
+  --background: #020D1A;
   --foreground: #f8fafc;
 }
 
 body {
-  background-color: #020617;
+  background-color: #020D1A;
   color: var(--foreground);
   scroll-behavior: smooth;
   @apply text-sm antialiased;
@@ -377,7 +377,7 @@ a {
 html,
 body {
   overscroll-behavior-y: none;
-  background-color: #020617;
+  background-color: #020D1A;
   min-height: 100%;
   width: 100%;
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { usePathname } from 'next/navigation';
 
 /**
  * PrismBackground
@@ -9,6 +10,7 @@ import React from 'react';
  * with a subtle grid overlay — matching the LandingPage hero aesthetic.
  */
 const PrismBackground = React.memo(() => {
+    const pathname = usePathname();
     const [mounted, setMounted] = React.useState(false);
 
     React.useEffect(() => {
@@ -16,6 +18,11 @@ const PrismBackground = React.memo(() => {
         const timer = setTimeout(() => setMounted(true), 100);
         return () => clearTimeout(timer);
     }, []);
+
+    // Exclude background from dashboard routes as requested by user
+    if (pathname?.startsWith('/dashboard')) {
+        return null;
+    }
 
     return (
         <div

@@ -85,6 +85,7 @@ export const viewport: Viewport = {
 };
 
 import { WebVitals } from "@/components/common/WebVitals";
+import PrismBackground from "@/components/common/PrismBackground";
 
 const organizationSchema = {
   '@context': 'https://schema.org',
@@ -137,6 +138,7 @@ export default function RootLayout({
         />
         <WebVitals />
         <Providers>
+          <PrismBackground />
           <PWAProvider>
             <NativeInteractions />
             <ShellSwitcher>
