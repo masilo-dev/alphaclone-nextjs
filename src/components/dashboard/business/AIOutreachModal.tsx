@@ -12,7 +12,9 @@ import {
     AlertCircle,
     Loader2,
     MessageSquare,
-    Zap
+    Zap,
+    Mail,
+    ChevronDown
 } from 'lucide-react';
 import { Button, Badge } from '../../ui/UIComponents';
 import { leadService, Lead } from '../../../services/leadService';
@@ -41,12 +43,33 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
     const [customPrompt, setCustomPrompt] = useState('');
     const [selectedTone, setSelectedTone] = useState('professional');
     const [results, setResults] = useState<any[] | null>(null);
+    const [fromAddresses, setFromAddresses] = useState<any[]>([]);
+    const [selectedFromAddress, setSelectedFromAddress] = useState('');
+    const [fetchingAccount, setFetchingAccount] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
             fetchLeads();
+            fetchAccountInfo();
         }
-    }, [isOpen]);
+    }, [isOpen, userId]);
+
+    const fetchAccountInfo = async () => {
+        setFetchingAccount(true);
+        try {
+            const response = await fetch(`/api/zoho/enhanced?userId=${userId}&action=get_account_info`);
+            const data = await response.json();
+            if (response.ok && data.success && data.data.fromAddresses) {
+                setFromAddresses(data.data.fromAddresses);
+                const defaultAddr = data.data.fromAddresses.find((a: any) => a.isDefault)?.address || data.data.fromAddresses[0]?.address || data.data.email;
+                setSelectedFromAddress(defaultAddr);
+            }
+        } catch (err) {
+            console.error('Failed to fetch Zoho account info:', err);
+        } finally {
+            setFetchingAccount(false);
+        }
+    };
 
     const fetchLeads = async () => {
         setLoading(true);
@@ -93,7 +116,8 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                     userId,
                     leadIds: selectedLeads,
                     customPrompt,
-                    tone: selectedTone
+                    tone: selectedTone,
+                    fromAddress: selectedFromAddress
                 })
             });
 
@@ -262,8 +286,45 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                             <div className="space-y-8">
                                 <div>
                                     <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-[9px] opacity-70">
+                                        <Mail className="w-3.5 h-3.5" />
+                                        Step 1: Outgoing Email (From)
+                                    </h3>
+                                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-4 flex items-center justify-between group hover:border-[#f5d400]/20 transition-all">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-[#f5d400]/10 rounded-xl flex items-center justify-center border border-[#f5d400]/20">
+                                                <Mail className="w-5 h-5 text-[#f5d400]" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Sender Address</p>
+                                                {fetchingAccount ? (
+                                                    <div className="h-4 w-32 bg-slate-800 animate-pulse rounded mt-1" />
+                                                ) : fromAddresses.length > 1 ? (
+                                                    <select
+                                                        value={selectedFromAddress}
+                                                        onChange={(e) => setSelectedFromAddress(e.target.value)}
+                                                        className="bg-transparent text-white text-sm font-bold outline-none cursor-pointer appearance-none pr-6"
+                                                    >
+                                                        {fromAddresses.map((addr) => (
+                                                            <option key={addr.address} value={addr.address} className="bg-slate-900">
+                                                                {addr.address}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <p className="text-white text-sm font-bold">{selectedFromAddress || 'Connecting to Zoho...'}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {fromAddresses.length > 1 && (
+                                            <ChevronDown className="w-4 h-4 text-slate-500 group-hover:text-[#f5d400] transition-colors" />
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-[9px] opacity-70">
                                         <MessageSquare className="w-3.5 h-3.5" />
-                                        Step 1: Tone of Voice
+                                        Step 2: Tone of Voice
                                     </h3>
                                     <div className="grid grid-cols-2 gap-3">
                                         {TONES.map(tone => (
@@ -287,7 +348,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                 <div>
                                     <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-[9px] opacity-70">
                                         <Zap className="w-3.5 h-3.5" />
-                                        Step 2: Custom Instructions
+                                        Step 3: Custom Instructions
                                     </h3>
                                     <div className="bg-slate-900/50 border border-slate-800 rounded-[2rem] p-4 focus-within:border-[#f5d400]/40 transition-all">
                                         <textarea

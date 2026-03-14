@@ -374,23 +374,31 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
                 New Email
               </h3>
               <div className="space-y-3">
-                  <div className="flex items-center gap-3 border-b border-slate-700 pb-3">
-                    <span className="text-slate-400 text-sm w-14 text-right">From</span>
-                    {accountInfo?.fromAddresses && accountInfo.fromAddresses.length > 1 ? (
-                      <select
-                        value={composeData.from}
-                        onChange={(e) => setComposeData({ ...composeData, from: e.target.value })}
-                        className="flex-1 bg-transparent text-white text-sm outline-none cursor-pointer appearance-none"
-                      >
-                        {accountInfo.fromAddresses.map((addr) => (
-                          <option key={addr.address} value={addr.address} className="bg-slate-800 text-white">
-                            {addr.displayName} &lt;{addr.address}&gt;
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <span className="flex-1 text-slate-300 text-sm px-1">{composeData.from || accountInfo?.email}</span>
-                    )}
+                  <div className="flex items-center gap-3 border-b border-slate-700/50 pb-4 mb-4">
+                    <div className="w-10 h-10 bg-sky-500/10 rounded-xl flex items-center justify-center border border-sky-500/20 shrink-0">
+                      <User className="w-5 h-5 text-sky-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-0.5">Sender (From)</p>
+                      {accountInfo?.fromAddresses && accountInfo.fromAddresses.length > 1 ? (
+                        <div className="relative group">
+                          <select
+                            value={composeData.from}
+                            onChange={(e) => setComposeData({ ...composeData, from: e.target.value })}
+                            className="w-full bg-transparent text-white text-sm font-bold outline-none cursor-pointer appearance-none pr-8 py-0.5"
+                          >
+                            {accountInfo.fromAddresses.map((addr) => (
+                              <option key={addr.address} value={addr.address} className="bg-slate-900 text-white">
+                                {addr.address} {addr.displayName ? `(${addr.displayName})` : ''}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none group-hover:text-sky-400 transition-colors" />
+                        </div>
+                      ) : (
+                        <p className="text-white text-sm font-bold truncate">{composeData.from || accountInfo?.email || 'Loading sender...'}</p>
+                      )}
+                    </div>
                   </div>
 
                   {([

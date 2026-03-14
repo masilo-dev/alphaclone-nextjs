@@ -28,6 +28,7 @@
 - ✅ **Email TypeError**: Fixed `extractEmail` to robustly handle non-string inputs.
 - ✅ **Input Sanitization**: Ensured consistent string types for email addresses.
 - ✅ **Diagnostic Logging**: Enhanced `proxyRequest` to log status text and response body on error.
+- ✅ **Dynamic "From" Selection**: Added a visible and selectable "From" section to AI Outreach, Compose, and Reply views, supporting multiple Zoho aliases.
 ### 1c. **Security & Performance** ✅
 **Files:**
 - `next.config.ts` - CSP Headers

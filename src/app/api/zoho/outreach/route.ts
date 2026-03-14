@@ -8,7 +8,7 @@ export const maxDuration = 300; // Increased timeout for bulk AI generation
 
 export async function POST(req: Request) {
     try {
-        const { userId, leadIds, customPrompt, tone } = await req.json();
+        const { userId, leadIds, customPrompt, tone, fromAddress } = await req.json();
 
         if (!userId || !leadIds || !Array.isArray(leadIds)) {
             return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
@@ -102,7 +102,8 @@ Subject: [Subject Line]
                 await zohoServerService.sendMessage(userId, {
                     toAddress: recipientEmail,
                     subject: subject,
-                    content: htmlBody
+                    content: htmlBody,
+                    fromAddress: fromAddress
                 });
 
                 // 4. Update lead status in DB
