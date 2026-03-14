@@ -366,7 +366,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                 <div className="pt-4 mt-auto">
                                     <Button
                                         onClick={handleSend}
-                                        disabled={sending || selectedLeads.length === 0}
+                                        disabled={true}
                                         className="w-full h-16 rounded-[2rem] bg-[#f5d400] hover:bg-[#ffe100] text-slate-950 font-black text-lg shadow-xl shadow-yellow-500/10 disabled:opacity-50 transition-all relative overflow-hidden group"
                                     >
                                         {sending ? (
@@ -377,7 +377,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                         ) : (
                                             <div className="flex items-center justify-center gap-3">
                                                 <Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                                                <span className="text-base uppercase tracking-wider">Send AI Emails ({selectedLeads.length})</span>
+                                                <span className="text-base uppercase tracking-wider">Sending Coming Soon</span>
                                             </div>
                                         )}
                                     </Button>

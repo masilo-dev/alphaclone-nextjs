@@ -455,11 +455,11 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
                                             whileHover={{ scale: 1.05 }}
                                             whileTap={{ scale: 0.95 }}
                                             onClick={handleSendReply}
-                                            disabled={sending || !replyBody.trim()}
+                                            disabled={true}
                                             className="flex items-center gap-2.5 px-8 py-3 bg-[#f5d400] hover:bg-[#ffe100] disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed text-slate-950 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-yellow-500/10"
                                         >
                                             {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 stroke-[2.5px]" />}
-                                            Transmit Message
+                                            Sending Coming Soon
                                         </motion.button>
                                     </div>
                                 </motion.div>
