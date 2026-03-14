@@ -83,11 +83,8 @@ export default function DemoPage() {
                             <div className="aspect-video w-full">
                                 <iframe 
                                     src="https://www.loom.com/embed/3a7000c925c145b7882089688b0ceb5d?hide_owner=true&hide_share=true&hide_title=true&hide_embed_params=true" 
-                                    frameBorder="0" 
-                                    webkitallowfullscreen="true" 
-                                    mozallowfullscreen="true" 
                                     allowFullScreen={true}
-                                    style={{ width: '100%', height: '100%' }}
+                                    style={{ width: '100%', height: '100%', border: 'none' }}
                                     className="absolute inset-0"
                                 />
                             </div>
