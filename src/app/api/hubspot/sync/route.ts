@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
             for (const lead of leads) {
                 try {
                     const result = await hubspotService.syncLeadToHubSpot(userId, lead);
-                    results.push({ leadId: lead.id, success: true, ...result });
+                    results.push({ leadId: lead.id, ...result });
                 } catch (err: any) {
                     results.push({ leadId: lead.id, success: false, error: err.message });
                 }
