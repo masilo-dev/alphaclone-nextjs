@@ -18,6 +18,7 @@ import {
   Wifi,
   Signal,
   Command,
+  ChevronRight,
 } from 'lucide-react';
 
 interface AppLauncherProps {
