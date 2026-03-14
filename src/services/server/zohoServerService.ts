@@ -134,21 +134,40 @@ export const zohoServerService = {
             throw new Error('Database error fetching Zoho integration info');
         }
 
-        const accountId = integration?.config?.accountId || integration?.config?.zoid;
+        let accountId = integration?.config?.accountId || integration?.config?.zoid;
         if (!accountId && !endpoint.includes('accounts')) {
             console.error('[Zoho Proxy Debug] Account ID is missing in integration config:', integration.config);
-            // Try to auto-resolve accountId if it's missing but we have a token
+            // Try to auto-resolve accountId if it's missing but we have a token.
+            // IMPORTANT: persist and reuse it immediately to avoid recursive retries.
             try {
                 const accountsData = await this.proxyRequest(userId, 'accounts');
                 if (accountsData.data && accountsData.data.length > 0) {
                     const resolvedId = accountsData.data[0].accountId;
+                    const resolvedEmail = accountsData.data[0].emailAddress || accountsData.data[0].primaryEmail;
                     console.log('[Zoho Proxy Debug] Auto-resolved accountId:', resolvedId);
-                    return this.proxyRequest(userId, endpoint, options);
+
+                    await supabaseAdmin
+                        .from('integrations')
+                        .update({
+                            config: {
+                                ...(integration?.config || {}),
+                                accountId: resolvedId,
+                                zoid: resolvedId,
+                                email: resolvedEmail || integration?.config?.email,
+                            },
+                        })
+                        .eq('user_id', userId)
+                        .eq('type', 'zoho');
+
+                    accountId = resolvedId;
                 }
             } catch (e) {
                 console.error('[Zoho Proxy Debug] Auto-resolve failed:', e);
             }
-            throw new Error('Zoho account ID not found in database settings');
+
+            if (!accountId) {
+                throw new Error('Zoho account ID not found in database settings');
+            }
         }
 
         const mailApiHost = integration?.config?.mailApiHost || 'mail.zoho.com';

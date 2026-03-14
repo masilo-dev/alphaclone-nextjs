@@ -31,6 +31,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated assets and local diagnostics:
+    "public/sw.js",
+    "public/sw.js.map",
+    "public/workbox-*.js",
+    "lint_check.log",
+    "lint_err.txt",
   ]),
 ]);
 
