@@ -27,7 +27,15 @@
 - ✅ **URL 404 (URL_RULE_NOT_CONFIGURED)**: Fixed incorrect API endpoint construction in proxyRequest.
 - ✅ **Email TypeError**: Fixed `extractEmail` to robustly handle non-string inputs.
 - ✅ **Input Sanitization**: Ensured consistent string types for email addresses.
-- ✅ **Account Auto-resolution**: Optimized fetching and caching of primary account info.
+### 1c. **Security & Performance** ✅
+**Files:**
+- `next.config.ts` - CSP Headers
+- `src/app/sw.ts` - Service Worker
+
+**Fixed Issues:**
+- ✅ **CSP Violation (Cloudflare Turnstile)**: Added `https://challenges.cloudflare.com` to `connect-src` to allow verification calls.
+- ✅ **PWA Service Worker**: Excluded Cloudflare Turnstile from SW interception to ensure stable verification script loading.
+- ✅ **Vercel Safety**: Verified all headers and SW matchers are Vercel-compatible.
 
 ### 2. **Portfolio Editor FIXED** ✅
 **File:** `components/dashboard/PortfolioShowcase.tsx`

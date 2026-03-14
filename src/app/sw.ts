@@ -24,6 +24,7 @@ const serwist = new Serwist({
                     url.pathname.startsWith("/api/") ||
                     url.hostname.includes("supabase.co") ||
                     url.hostname.includes("daily.co") ||
+                    url.hostname.includes("challenges.cloudflare.com") ||
                     url.pathname.includes("/auth/v1/") ||
                     url.pathname.includes("/rest/v1/")
                 );

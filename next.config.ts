@@ -52,7 +52,7 @@ const nextConfig: NextConfig = {
       form-action 'self';
       frame-ancestors 'none';
       frame-src 'self' https://*.stripe.com https://js.stripe.com https://*.daily.co https://challenges.cloudflare.com;
-      connect-src 'self' https://*.supabase.co wss://*.supabase.co *.upstash.io *.stripe.com https://api.dicebear.com https://*.daily.co wss://*.daily.co https://*.sentry.io https://cdn.jsdelivr.net;
+      connect-src 'self' https://*.supabase.co wss://*.supabase.co *.upstash.io *.stripe.com https://api.dicebear.com https://*.daily.co wss://*.daily.co https://*.sentry.io https://cdn.jsdelivr.net https://challenges.cloudflare.com;
       worker-src 'self' blob: https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
       upgrade-insecure-requests;
     `.replace(/\s{2,}/g, ' ').trim();
