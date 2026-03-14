@@ -61,6 +61,11 @@ const envSchema = z.object({
     ZOHO_CLIENT_ID: z.string().optional(),
     ZOHO_CLIENT_SECRET: z.string().optional(),
 
+    // HubSpot OAuth
+    HUBSPOT_CLIENT_ID: z.string().optional(),
+    HUBSPOT_CLIENT_SECRET: z.string().optional(),
+    HUBSPOT_REDIRECT_URI: z.string().url().optional(),
+
     // Supabase Admin
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'Supabase service role key is required').optional(),
 });
@@ -102,6 +107,11 @@ function validateEnv() {
         // Zoho OAuth
         ZOHO_CLIENT_ID: process.env.ZOHO_CLIENT_ID || process.env.NEXT_PUBLIC_ZOHO_CLIENT_ID || process.env.VITE_ZOHO_CLIENT_ID,
         ZOHO_CLIENT_SECRET: process.env.ZOHO_CLIENT_SECRET || process.env.NEXT_PUBLIC_ZOHO_CLIENT_SECRET || process.env.VITE_ZOHO_CLIENT_SECRET,
+
+        // HubSpot OAuth
+        HUBSPOT_CLIENT_ID: process.env.HUBSPOT_CLIENT_ID || process.env.NEXT_PUBLIC_HUBSPOT_CLIENT_ID,
+        HUBSPOT_CLIENT_SECRET: process.env.HUBSPOT_CLIENT_SECRET || process.env.NEXT_PUBLIC_HUBSPOT_CLIENT_SECRET,
+        HUBSPOT_REDIRECT_URI: process.env.HUBSPOT_REDIRECT_URI || process.env.NEXT_PUBLIC_HUBSPOT_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech'}/api/auth/hubspot/callback`,
 
         // Stripe
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,

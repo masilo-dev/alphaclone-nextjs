@@ -146,6 +146,29 @@ const SalesAgent: React.FC = () => {
                 unitPrice: 0 // User to edit
             });
 
+            // 7. Sync to HubSpot (NEW)
+            try {
+                const { supabase } = await import('../../lib/supabase');
+                const { data: hubspotIntegration } = await supabase
+                    .from('integrations')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .eq('type', 'hubspot')
+                    .maybeSingle();
+
+                if (hubspotIntegration && hubspotIntegration.enabled) {
+                    console.log(`[SalesAgent] HubSpot connected, syncing lead ${lead.businessName}...`);
+                    await fetch('/api/hubspot/sync', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId, leads: [lead] })
+                    });
+                }
+            } catch (hsErr) {
+                console.error('HubSpot background sync failed:', hsErr);
+                // We don't fail the whole process if HubSpot fails
+            }
+
             return { success: true };
         } catch (err: any) {
             console.error("Auto-process error", err);
