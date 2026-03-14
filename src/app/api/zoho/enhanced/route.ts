@@ -103,17 +103,17 @@ async function getAccountInfo(userId: string) {
         // Fetch verified from-addresses for this account
         let fromAddresses = [];
         try {
-            const fromAddressesData = await zohoServerService.proxyRequest(userId, 'fromaddresses');
-            if (fromAddressesData?.data) {
-                fromAddresses = fromAddressesData.data.map((addr: any) => ({
-                    address: addr.fromAddress,
+            const sendAddressesData = await zohoServerService.proxyRequest(userId, 'sendaddresses');
+            if (sendAddressesData?.data) {
+                fromAddresses = sendAddressesData.data.map((addr: any) => ({
+                    address: addr.sendAddress,
                     isDefault: addr.isDefault,
                     displayName: addr.displayName
                 }));
             }
         } catch (e) {
-            console.warn('[Zoho Debug] Could not fetch from-addresses:', e);
-            // Fallback to the primary email if from-addresses call fails
+            console.warn('[Zoho Debug] Could not fetch send-addresses:', e);
+            // Fallback to the primary email if send-addresses call fails
             fromAddresses = [{ address: accountEmail, isDefault: true, displayName: accountsData.data[0].displayName }];
         }
 
@@ -173,7 +173,8 @@ async function sendEmail(userId: string, emailData: any) {
         const response = await zohoServerService.sendMessage(userId, {
             toAddress: toAddress,
             subject: emailData.subject,
-            content: emailData.content
+            content: emailData.content,
+            fromAddress: emailData.fromAddress || fromAddress
         });
 
         return NextResponse.json({
@@ -199,7 +200,7 @@ async function getEmails(userId: string, searchParams: URLSearchParams) {
         let endpoint: string;
         
         if (messageId) {
-            endpoint = `messages/${messageId}`;
+            endpoint = `messages/${messageId}/details`;
         } else {
             // Map folder names to Zoho folder IDs
             const folderMap: { [key: string]: string } = {

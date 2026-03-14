@@ -117,7 +117,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Documents', href: '/dashboard/business/documents', icon: FolderOpen },
 
   // 7. Integrations
-  { label: 'Zoho Email', href: '/dashboard/business/zoho', icon: Mail },
+  // (Removed redundant Zoho Email menu)
 
   // 8. Usage & Limits
   { label: 'Quota Manager', href: '/dashboard/business/quotas', icon: BarChart3 },

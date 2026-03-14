@@ -211,8 +211,47 @@ export const zohoServerService = {
         fromAddress?: string;
     }) {
         const supabaseAdmin = createSupabaseAdminClient();
-        
         let fromAddress = data.fromAddress;
+        
+        // 1. Actively try to get valid 'fromAddresses' to avoid 'Given FromAddress not exists!'
+        try {
+            const accountsData = await this.proxyRequest(userId, 'accounts');
+            if (accountsData.data && accountsData.data.length > 0) {
+                const acctId = accountsData.data[0].accountId;
+                let validAddresses: any[] = [];
+                try {
+                    const sendAddrReq = await this.proxyRequest(userId, 'sendaddresses');
+                    if (sendAddrReq.data && sendAddrReq.data.length > 0) {
+                        validAddresses = sendAddrReq.data;
+                    }
+                } catch {
+                    // Fallback to sendAddress inside account if sendaddresses API fails
+                    if (accountsData.data[0].sendAddress && accountsData.data[0].sendAddress.length > 0) {
+                        validAddresses = accountsData.data[0].sendAddress;
+                    }
+                }
+
+                if (validAddresses.length > 0) {
+                    if (fromAddress) {
+                        const cleanProvided = this.extractEmail(fromAddress).toLowerCase();
+                        const isValid = validAddresses.some(a => this.extractEmail(a.sendAddress || a.fromAddress || a.address || a.emailAddress).toLowerCase() === cleanProvided);
+                        if (!isValid) {
+                            console.warn(`[Zoho Send Debug] Provided fromAddress ${fromAddress} is not verified. Using default.`);
+                            const defaultAddr = validAddresses.find(a => a.isDefault) || validAddresses[0];
+                            fromAddress = defaultAddr.sendAddress || defaultAddr.fromAddress || defaultAddr.address || defaultAddr.emailAddress;
+                        }
+                    } else {
+                        const defaultAddr = validAddresses.find(a => a.isDefault) || validAddresses[0];
+                        fromAddress = defaultAddr.sendAddress || defaultAddr.fromAddress || defaultAddr.address || defaultAddr.emailAddress;
+                    }
+                } else if (!fromAddress) {
+                    // Fallback to primary account email if no validAddresses and no fromAddress 
+                    fromAddress = accountsData.data[0].emailAddress || accountsData.data[0].primaryEmail;
+                }
+            }
+        } catch (e) {
+            console.error('[Zoho Send Debug] Verified custom fetch failed, falling back to DB/params', e);
+        }
 
         if (!fromAddress) {
             const { data: integration, error } = await supabaseAdmin

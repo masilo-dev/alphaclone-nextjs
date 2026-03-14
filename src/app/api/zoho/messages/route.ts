@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     try {
         // If messageId is provided, fetch specific message details
         if (messageId) {
-            const endpoint = `messages/${messageId}`;
+            const endpoint = `messages/${messageId}/details`;
             const data = await zohoServerService.proxyRequest(userId, endpoint);
 
             // Map Zoho detail response
