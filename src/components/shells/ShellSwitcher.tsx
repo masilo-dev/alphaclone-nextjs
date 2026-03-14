@@ -13,8 +13,9 @@ export default function ShellSwitcher({ children }: { children: React.ReactNode 
     const pathname = usePathname();
 
     // optimization: Landing page and Booking pages are always "Marketing/Web" mode.
-    // Bypass PWA Loading/Splash screen completely for faster generic user access.
-    if (pathname === '/' || pathname?.startsWith('/book') || pathname?.startsWith('/meet')) {
+    // Bypass PWA Loading/Splash screen completely for faster generic user access, 
+    // unless we are specifically in PWA mode (where we want the branded splash).
+    if (!isPWA && (pathname === '/' || pathname?.startsWith('/book') || pathname?.startsWith('/meet'))) {
         return <MarketingShell>{children}</MarketingShell>;
     }
 
@@ -22,6 +23,7 @@ export default function ShellSwitcher({ children }: { children: React.ReactNode 
         console.log('[ShellSwitcher] Waiting for PWA status check...');
         return <Splash />;
     }
+
 
     console.log('[ShellSwitcher] Shell decision:', { isPWA, pathname });
 

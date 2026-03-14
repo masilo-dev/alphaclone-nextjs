@@ -7,6 +7,8 @@ import { User, Project } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+import SplashScreen from '@/components/ui/SplashScreen';
+
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -14,6 +16,8 @@ function HomeContent() {
   const [projects, setProjects] = useState<Project[]>([]);
   const hasRedirected = useRef(false);
   const [isPwa, setIsPwa] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     // Check if URL has ?mode=pwa OR if display-mode is standalone
@@ -22,6 +26,10 @@ function HomeContent() {
     if (mode === 'pwa' || isStandalone) {
       setIsPwa(true);
     }
+    
+    // Simulate initial load sequence
+    const timer = setTimeout(() => setIsInitialLoad(false), 2000);
+    return () => clearTimeout(timer);
   }, [searchParams]);
 
   // Auto-redirect authenticated users to dashboard (once auth state is settled)
@@ -29,9 +37,18 @@ function HomeContent() {
     if (!loading && user && !hasRedirected.current) {
       hasRedirected.current = true;
       console.log('Authenticated user detected on homepage, redirecting to dashboard...');
-      router.replace('/dashboard');
+      
+      // If PWA, show transition
+      if (isPwa) {
+        setIsTransitioning(true);
+        setTimeout(() => {
+          router.replace('/dashboard');
+        }, 1200);
+      } else {
+        router.replace('/dashboard');
+      }
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, isPwa]);
 
   // Handle new account notification
   useEffect(() => {
@@ -80,12 +97,21 @@ function HomeContent() {
   }, [searchParams, router]);
 
   const handleLogin = () => {
-    // Redirect is now handled by useEffect above
-    router.push('/dashboard');
+    if (isPwa) {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 1200);
+    } else {
+      router.push('/dashboard');
+    }
   };
 
   return (
     <main>
+      <SplashScreen isVisible={isInitialLoad && isPwa} mode="loading" />
+      <SplashScreen isVisible={isTransitioning} mode="opening" />
+      
       {isPwa ? (
         <AppLauncher onLogin={handleLogin} />
       ) : (
@@ -94,6 +120,7 @@ function HomeContent() {
     </main>
   );
 }
+
 
 export default function Home() {
   return (

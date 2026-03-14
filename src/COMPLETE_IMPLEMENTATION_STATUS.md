@@ -50,8 +50,10 @@
 - ✅ **Message Subscription Connectivity**: Added retry logic (3s-5s) for `CLOSED` and `CHANNEL_ERROR` states in Supabase real-time.
 - ✅ **Chart Sizing (Recharts)**: Added `minWidth` and `minHeight` to `ResponsiveContainer` to resolve console errors during resizing.
 - ✅ **Dicebear Avatars**: Permitted `*.dicebear.com` in CSP `img-src` and `connect-src` to fix `ERR_FAILED` issues.
+- ✅ **PWA Startup & Transition**: Implemented a premium splash screen and native-like expansion transition for PWA login.
 
 ### 2. **Portfolio Editor FIXED** ✅
+
 **File:** `components/dashboard/PortfolioShowcase.tsx`
 
 **Fixed Issues:**
