@@ -16,7 +16,7 @@ import {
     X
 } from 'lucide-react';
 import { Button } from '@/components/ui/UIComponents';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 
 interface HubspotIntegrationProps {
