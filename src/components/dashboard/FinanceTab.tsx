@@ -2,8 +2,9 @@
 
 import React from 'react';
 import { Button, Badge } from '../ui/UIComponents';
-import { CreditCard, CheckCircle, Download, TrendingUp, TrendingDown, DollarSign, FileDown, Zap, Star, Rocket, Check, ShieldCheck, ExternalLink } from 'lucide-react';
+import { CreditCard, CheckCircle, Download, TrendingUp, TrendingDown, DollarSign, FileDown, Zap, Star, Rocket, Check, ShieldCheck, ExternalLink, Eye, X } from 'lucide-react';
 import { User, Invoice } from '../../types';
+import { businessInvoiceService } from '../../services/businessInvoiceService';
 import { paymentService } from '../../services/paymentService';
 import { useTenant } from '@/contexts/TenantContext';
 import { useCurrency } from '@/hooks/useCurrency';
@@ -262,6 +263,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
     const { format } = useCurrency();
     const [isExporting, setIsExporting] = React.useState(false);
     const [subTab, setSubTab] = React.useState<'invoices' | 'quotes' | 'subscription'>(initialSubTab);
+    const [showPDFPreview, setShowPDFPreview] = React.useState<string | null>(null);
 
     const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
 
@@ -359,6 +361,36 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
             toast.error("Failed to export report");
         } finally {
             setIsExporting(false);
+        }
+    };
+
+    const handleViewPDF = async (inv: Invoice) => {
+        try {
+            if (!tenant) {
+                toast.error('Organization details missing');
+                return;
+            }
+
+            toast.loading('Generating preview...', { id: 'pdf-preview' });
+            
+            // Get full invoice details including business invoice specific fields if available
+            const { invoice: fullInvoice, error } = await businessInvoiceService.getInvoiceWithDetails(inv.id);
+            
+            if (error || !fullInvoice) {
+                // Fallback to basic invoice data if full record not found
+                const doc = businessInvoiceService.generatePDF(inv, tenant, { name: inv.clientId, email: '' });
+                const pdfDataUri = doc.output('datauristring');
+                setShowPDFPreview(pdfDataUri);
+            } else {
+                const doc = businessInvoiceService.generatePDF(fullInvoice, tenant, fullInvoice.client);
+                const pdfDataUri = doc.output('datauristring');
+                setShowPDFPreview(pdfDataUri);
+            }
+            
+            toast.dismiss('pdf-preview');
+        } catch (error) {
+            console.error('Error generating PDF preview:', error);
+            toast.error('Failed to generate PDF preview', { id: 'pdf-preview' });
         }
     };
 
@@ -642,6 +674,14 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                             <Button
                                                 size="sm"
                                                 variant="outline"
+                                                onClick={() => handleViewPDF(inv)}
+                                                title="View PDF"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
                                                 onClick={() => window.open(`/invoice/${inv.id}`, '_blank')}
                                                 title="View Web Receipt"
                                             >
@@ -692,6 +732,30 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                         window.dispatchEvent(event);
                     }}
                 />
+            )}
+
+            {/* PDF Preview Modal */}
+            {showPDFPreview && (
+                <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
+                    <div className="bg-white rounded-lg w-full max-w-4xl h-full max-h-[90vh] flex flex-col">
+                        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                            <h3 className="text-lg font-semibold text-gray-900">Invoice Preview</h3>
+                            <button
+                                onClick={() => setShowPDFPreview(null)}
+                                className="text-gray-400 hover:text-gray-600 p-2"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-hidden">
+                            <iframe
+                                src={showPDFPreview}
+                                className="w-full h-full border-0"
+                                title="Invoice Preview"
+                            />
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

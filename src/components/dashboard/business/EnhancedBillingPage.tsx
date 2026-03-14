@@ -192,10 +192,8 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         }
     };
 
-    const handleSendDraftInvoice = async (invoice: BusinessInvoice) => {
-        // For now, just update the status since we don't have client email in the BusinessInvoice interface
+    const handleMarkAsSent = async (invoice: BusinessInvoice) => {
         try {
-            // Update invoice status to sent
             const { error: updateError } = await businessInvoiceService.updateInvoice(invoice.id, {
                 status: 'sent',
                 isPublic: true
@@ -206,13 +204,31 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                 return;
             }
 
-            // For now, show a success message without actually sending email
-            // You would need to implement client email lookup based on clientId
-            toast.success('Invoice marked as sent successfully!');
-            loadInvoices(); // Refresh the list
+            toast.success('Invoice marked as sent');
+            loadInvoices();
         } catch (error) {
-            console.error('Error sending draft invoice:', error);
-            toast.error('Failed to send invoice');
+            console.error('Error marking invoice as sent:', error);
+            toast.error('Failed to update status');
+        }
+    };
+
+    const handleMarkAsDraft = async (invoice: BusinessInvoice) => {
+        try {
+            const { error: updateError } = await businessInvoiceService.updateInvoice(invoice.id, {
+                status: 'draft',
+                isPublic: false
+            });
+
+            if (updateError) {
+                toast.error('Failed to mark as draft');
+                return;
+            }
+
+            toast.success('Invoice marked as draft (Not Sent)');
+            loadInvoices();
+        } catch (error) {
+            console.error('Error marking invoice as draft:', error);
+            toast.error('Failed to update status');
         }
     };
 
@@ -541,11 +557,21 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             
                                             {invoice.status === 'draft' && (
                                                 <button
-                                                    onClick={() => handleSendDraftInvoice(invoice)}
-                                                    className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
-                                                    title="Send to Client"
+                                                    onClick={() => handleMarkAsSent(invoice)}
+                                                    className="p-2 text-slate-400 hover:text-teal-400 hover:bg-slate-700 rounded-lg transition-colors"
+                                                    title="Mark as Sent"
                                                 >
                                                     <Send className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                            
+                                            {invoice.status === 'sent' && (
+                                                <button
+                                                    onClick={() => handleMarkAsDraft(invoice)}
+                                                    className="p-2 text-slate-400 hover:text-yellow-400 hover:bg-slate-700 rounded-lg transition-colors"
+                                                    title="Mark as Not Sent (Draft)"
+                                                >
+                                                    <EyeOff className="w-4 h-4" />
                                                 </button>
                                             )}
                                             
