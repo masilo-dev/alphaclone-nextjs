@@ -177,9 +177,9 @@ export const zohoServerService = {
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error(`[Zoho Proxy Debug] Request to ${url} failed with status ${response.status}:`, errorText);
+            console.error(`[Zoho Proxy Debug] Request to ${url} failed with status ${response.status} (${response.statusText}):`, errorText);
 
-            let description = `Zoho API Error ${response.status}: ${errorText.substring(0, 150)}`;
+            let description = `Zoho API Error ${response.status} (${response.statusText}): ${errorText.substring(0, 150)}`;
             try {
                 const errorJson = JSON.parse(errorText);
                 description = errorJson.status?.description || errorJson.error_message || errorJson.error || description;

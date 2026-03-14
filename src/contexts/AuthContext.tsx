@@ -217,11 +217,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Safety net: force stop loading after 4s (reduced from 8s).
         // Only stops the spinner, does NOT clear the user state.
         const safetyTimeout = setTimeout(() => {
-            if (isMounted && loading) {
-                console.warn('[AuthContext] Safety timeout reached (4s). Forcing loading to false.');
+            if (loading) {
+                console.log('[AuthContext] Safety timeout reached (10s). Forcing loading to false.');
                 setLoading(false);
             }
-        }, 4000);
+        }, 10000); // Increased to 10s for better resilience on slower connections
 
         return () => {
             isMounted = false;

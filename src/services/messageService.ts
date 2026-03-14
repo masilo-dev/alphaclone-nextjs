@@ -417,11 +417,12 @@ export const messageService = {
                     console.log('✅ Subscribed to real-time messages (INSERT + UPDATE)');
                 } else if (status === 'CHANNEL_ERROR') {
                     console.error('❌ Failed to subscribe to messages:', err?.message || 'Unknown channel error');
-                    if (err?.message?.includes('insecure')) {
-                        console.error('WebSocket Error: Insecure connection detected. Ensure you are using HTTPS.');
-                    }
+                    // Retry after 5s on error
+                    setTimeout(() => messageService.subscribeToMessages(userId, isAdmin, callback), 5000);
                 } else if (status === 'CLOSED') {
-                    console.warn('⚠️ Message subscription closed');
+                    console.warn('⚠️ Message subscription closed, reconnecting...');
+                    // Reconnect after 3s
+                    setTimeout(() => messageService.subscribeToMessages(userId, isAdmin, callback), 3000);
                 } else if (status === 'TIMED_OUT') {
                     console.error('❌ Message subscription timed out - retrying in 5s...');
                     setTimeout(() => messageService.subscribeToMessages(userId, isAdmin, callback), 5000);
