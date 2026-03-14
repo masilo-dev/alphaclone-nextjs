@@ -2,7 +2,7 @@
   "name": "AlphaClone Systems - Enterprise Platform",
   "short_name": "AlphaClone",
   "description": "Enterprise-grade project management and communication platform with AI integration",
-  "start_url": "/",
+  "start_url": "/?mode=pwa",
   "scope": "/",
   "display": "standalone",
   "display_override": [

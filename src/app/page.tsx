@@ -1,16 +1,28 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import LandingPage from '@/components/LandingPage';
+import AppLauncher from '@/components/AppLauncher';
 import { User, Project } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const hasRedirected = useRef(false);
+  const [isPwa, setIsPwa] = useState(false);
+
+  useEffect(() => {
+    // Check if URL has ?mode=pwa OR if display-mode is standalone
+    const mode = searchParams.get('mode');
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+    if (mode === 'pwa' || isStandalone) {
+      setIsPwa(true);
+    }
+  }, [searchParams]);
 
   // Auto-redirect authenticated users to dashboard (once auth state is settled)
   useEffect(() => {
@@ -23,9 +35,8 @@ export default function Home() {
 
   // Handle new account notification
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const authStatus = params.get('auth_status');
-    const message = params.get('message');
+    const authStatus = searchParams.get('auth_status');
+    const message = searchParams.get('message');
 
     if (authStatus === 'new_account') {
       import('react-hot-toast').then(({ default: toast }) => {
@@ -36,8 +47,14 @@ export default function Home() {
             <button 
               onClick={() => {
                 toast.dismiss(t.id);
+                // For AppLauncher we trigger login modal via isLoginOpen which is internal, 
+                // but if we show this toast we assume they click "Sign In Now" and it forces a redirect to login or triggers modal
                 const loginBtn = document.querySelector('[data-login-trigger]') as HTMLButtonElement;
-                if (loginBtn) loginBtn.click();
+                if (loginBtn) {
+                    loginBtn.click();
+                } else {
+                    router.push('/register'); // Fallback
+                }
               }}
               className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-bold mt-2 hover:bg-teal-500 transition-colors"
             >
@@ -60,7 +77,7 @@ export default function Home() {
       // Clean up URL
       router.replace('/');
     }
-  }, [router]);
+  }, [searchParams, router]);
 
   const handleLogin = () => {
     // Redirect is now handled by useEffect above
@@ -69,7 +86,19 @@ export default function Home() {
 
   return (
     <main>
-      <LandingPage onLogin={handleLogin} projects={projects} />
+      {isPwa ? (
+        <AppLauncher onLogin={handleLogin} />
+      ) : (
+        <LandingPage onLogin={handleLogin} projects={projects} />
+      )}
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#020D1A]" />}>
+      <HomeContent />
+    </Suspense>
   );
 }
