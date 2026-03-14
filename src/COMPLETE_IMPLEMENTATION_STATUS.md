@@ -29,6 +29,8 @@
 - ✅ **Input Sanitization**: Ensured consistent string types for email addresses.
 - ✅ **Diagnostic Logging**: Enhanced `proxyRequest` to log status text and response body on error.
 - ✅ **Dynamic "From" Selection**: Added a visible and selectable "From" section to AI Outreach, Compose, and Reply views, supporting multiple Zoho aliases.
+- ✅ **Fixed Incorrect Endpoint**: Updated `sendaddresses` to `sendmailaddresses` to resolve 404 errors.
+- ✅ **Verified Sender Logic**: Improved `fromAddress` matching and fallbacks to prevent "Given FromAddress not exists!" errors.
 ### 1c. **Security & Performance** ✅
 **Files:**
 - `next.config.ts` - CSP Headers

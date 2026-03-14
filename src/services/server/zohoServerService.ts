@@ -220,12 +220,13 @@ export const zohoServerService = {
                 const acctId = accountsData.data[0].accountId;
                 let validAddresses: any[] = [];
                 try {
-                    const sendAddrReq = await this.proxyRequest(userId, 'sendaddresses');
+                    const sendAddrReq = await this.proxyRequest(userId, 'sendmailaddresses');
                     if (sendAddrReq.data && sendAddrReq.data.length > 0) {
                         validAddresses = sendAddrReq.data;
                     }
-                } catch {
-                    // Fallback to sendAddress inside account if sendaddresses API fails
+                } catch (sendAddrErr) {
+                    console.error('[Zoho Send Debug] Failed to fetch sendmailaddresses:', sendAddrErr);
+                    // Fallback to sendAddress inside account if sendmailaddresses API fails
                     if (accountsData.data[0].sendAddress && accountsData.data[0].sendAddress.length > 0) {
                         validAddresses = accountsData.data[0].sendAddress;
                     }
@@ -234,7 +235,10 @@ export const zohoServerService = {
                 if (validAddresses.length > 0) {
                     if (fromAddress) {
                         const cleanProvided = this.extractEmail(fromAddress).toLowerCase();
-                        const isValid = validAddresses.some(a => this.extractEmail(a.sendAddress || a.fromAddress || a.address || a.emailAddress).toLowerCase() === cleanProvided);
+                        const isValid = validAddresses.some(a => {
+                            const addr = a.sendAddress || a.fromAddress || a.address || a.emailAddress;
+                            return addr && this.extractEmail(addr).toLowerCase() === cleanProvided;
+                        });
                         if (!isValid) {
                             console.warn(`[Zoho Send Debug] Provided fromAddress ${fromAddress} is not verified. Using default.`);
                             const defaultAddr = validAddresses.find(a => a.isDefault) || validAddresses[0];
