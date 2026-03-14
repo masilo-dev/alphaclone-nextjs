@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, CheckCircle2, ShieldCheck, Zap, Globe, Link2, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
 import { zohoService } from '../../services/zohoService';
-import ZohoMailView from './business/ZohoMailView';
+import ZohoIntegration from './business/ZohoIntegration';
 import { Button } from '../ui/UIComponents';
 import { toast } from 'react-hot-toast';
 
@@ -78,7 +78,7 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
                         initial={{ opacity: 0, scale: 0.98 }}
                         animate={{ opacity: 1, scale: 1 }}
                     >
-                        <ZohoMailView userId={user.id} />
+                        <ZohoIntegration />
                     </motion.div>
                 ) : (
                     <motion.div
