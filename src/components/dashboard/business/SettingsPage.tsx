@@ -37,6 +37,7 @@ import CalendlySettings from './CalendlySettings';
 import ZohoIntegration from './ZohoIntegration';
 import { fileUploadService } from '../../../services/fileUploadService';
 import GmailIntegration from './GmailIntegration';
+import HubspotIntegration from './HubspotIntegration';
 import MFAEnrollment from './MFAEnrollment';
 import { authService } from '../../../services/authService';
 import { Button, Modal, Input } from '../../ui/UIComponents';
@@ -912,6 +913,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                         <GmailIntegration user={user} />
 
                         <ZohoIntegration />
+
+                        <HubspotIntegration />
 
                         {/* AI Autonomous Response Card */}
                         <div className="p-5 bg-slate-800/50 rounded-2xl border border-slate-700">

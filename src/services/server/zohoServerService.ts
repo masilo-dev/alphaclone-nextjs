@@ -195,10 +195,20 @@ export const zohoServerService = {
      * Extract clean email address from "Name <email@domain.com>" format
      */
     extractEmail(address: any): string {
-        if (!address || typeof address !== 'string') return '';
-        const match = address.match(/<([^>]+)>/);
+        if (!address) return '';
+        
+        let addressStr = '';
+        if (typeof address === 'string') {
+            addressStr = address;
+        } else if (typeof address === 'object') {
+            addressStr = address.mailId || address.address || address.emailAddress || '';
+        }
+
+        if (!addressStr) return '';
+        
+        const match = addressStr.match(/<([^>]+)>/);
         if (match) return match[1].trim();
-        return address.trim();
+        return addressStr.trim();
     },
 
     /**

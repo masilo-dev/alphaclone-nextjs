@@ -91,7 +91,17 @@ async function getAccountInfo(userId: string) {
 
         // Store the account ID in the user's integration config for future use
         const accountId = accountsData.data[0].accountId;
-        const accountEmail = accountsData.data[0].emailAddress || accountsData.data[0].primaryEmail;
+        
+        // Helper to extract email string from potential object response
+        const extractEmailString = (val: any) => {
+            if (!val) return null;
+            if (typeof val === 'string') return val;
+            return val.mailId || val.address || val.emailAddress || null;
+        };
+
+        const accountEmail = extractEmailString(accountsData.data[0].emailAddress) || 
+                            extractEmailString(accountsData.data[0].primaryEmail) || 
+                            '';
         
         // Update the integration config with the account ID and email
         await updateIntegrationConfig(userId, {
@@ -105,11 +115,14 @@ async function getAccountInfo(userId: string) {
         try {
             const sendAddressesData = await zohoServerService.proxyRequest(userId, 'sendaddresses');
             if (sendAddressesData?.data) {
-                fromAddresses = sendAddressesData.data.map((addr: any) => ({
-                    address: addr.sendAddress,
-                    isDefault: addr.isDefault,
-                    displayName: addr.displayName
-                }));
+                fromAddresses = sendAddressesData.data.map((addr: any) => {
+                    const address = extractEmailString(addr.sendAddress) || extractEmailString(addr.address) || '';
+                    return {
+                        address: address,
+                        isDefault: addr.isDefault,
+                        displayName: addr.displayName
+                    };
+                });
             }
         } catch (e) {
             console.warn('[Zoho Debug] Could not fetch send-addresses:', e);
