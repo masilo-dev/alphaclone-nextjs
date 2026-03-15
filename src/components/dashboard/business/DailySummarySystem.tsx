@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../../ui/UIComponents';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTenant } from '../../../contexts/TenantContext';
+import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 
 interface DailySummary {
@@ -49,86 +50,62 @@ const DailySummarySystem: React.FC = () => {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
-  // Mock data generator for demonstration
-  const generateMockSummary = (period: 'morning' | 'afternoon' | 'evening'): DailySummary => {
-    const now = new Date();
-    const baseMetrics = {
-      leadsGenerated: Math.floor(Math.random() * 20) + 5,
-      emailsSent: Math.floor(Math.random() * 50) + 10,
-      contractsCreated: Math.floor(Math.random() * 5) + 1,
-      invoicesIssued: Math.floor(Math.random() * 15) + 5,
-      tasksCompleted: Math.floor(Math.random() * 30) + 10,
-      meetingsScheduled: Math.floor(Math.random() * 8) + 2,
-      revenue: Math.floor(Math.random() * 5000) + 1000,
-      activeUsers: Math.floor(Math.random() * 25) + 10
-    };
-
-    const achievements = [
-      'Successfully generated 15 new leads through automated outreach',
-      'Completed 3 major client presentations',
-      'Onboarded 2 new team members',
-      'Achieved 95% email delivery rate',
-      'Closed deal worth $2,500',
-      'Resolved 8 customer support tickets'
-    ];
-
-    const alerts = [
-      'Lead quota approaching daily limit (35/40)',
-      '3 invoices overdue for payment',
-      'Email campaign showing lower engagement',
-      'Team member availability low for next week'
-    ];
-
-    const recommendations = [
-      'Consider upgrading lead generation strategy',
-      'Follow up on overdue invoices',
-      'Review email campaign content for better engagement',
-      'Schedule team meeting for project alignment',
-      'Focus on high-value lead nurturing'
-    ];
-
-    const nextActions = [
-      'Send follow-up emails to new leads',
-      'Review and approve pending contracts',
-      'Update project timelines',
-      'Prepare for upcoming client meetings',
-      'Analyze campaign performance metrics'
-    ];
-
-    return {
-      id: `${now.getTime()}-${period}-${Math.random().toString(36).substr(2, 9)}`,
-      date: now.toISOString().split('T')[0],
-      period,
-      timestamp: now.toISOString(),
-      metrics: baseMetrics,
-      achievements: achievements.slice(0, Math.floor(Math.random() * 3) + 2),
-      alerts: alerts.slice(0, Math.floor(Math.random() * 2) + 1),
-      recommendations: recommendations.slice(0, Math.floor(Math.random() * 3) + 2),
-      nextActions: nextActions.slice(0, Math.floor(Math.random() * 3) + 2)
-    };
-  };
 
   const loadSummaries = async () => {
+    if (!currentTenant) return;
+    
     try {
       setLoading(true);
       
-      // Generate mock summaries for the last 7 days
-      const mockSummaries: DailySummary[] = [];
-      const periods: ('morning' | 'afternoon' | 'evening')[] = ['morning', 'afternoon', 'evening'];
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
       
-      for (let i = 0; i < 7; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        
-        periods.forEach(period => {
-          if (i === 0 || Math.random() > 0.3) { // More recent days have more summaries
-            mockSummaries.push(generateMockSummary(period));
-          }
-        });
+      // Fetch metrics from different tables for today
+      const [
+        { count: leadsCount },
+        { count: emailsCount },
+        { count: contractsCount },
+        { data: invoiceData }
+      ] = await Promise.all([
+        supabase.from('leads').select('*', { count: 'exact', head: true }).eq('tenant_id', currentTenant.id).gte('created_at', startOfDay),
+        supabase.from('emails').select('*', { count: 'exact', head: true }).eq('tenant_id', currentTenant.id).gte('created_at', startOfDay),
+        supabase.from('contracts').select('*', { count: 'exact', head: true }).eq('tenant_id', currentTenant.id).gte('created_at', startOfDay),
+        supabase.from('invoices').select('total_amount').eq('tenant_id', currentTenant.id).gte('created_at', startOfDay)
+      ]);
+
+      const todayRevenue = invoiceData?.reduce((sum: number, inv: any) => sum + (inv.total_amount || 0), 0) || 0;
+
+      const todaySummary: DailySummary = {
+        id: `today-${now.getTime()}`,
+        date: now.toISOString().split('T')[0],
+        period: now.getHours() < 12 ? 'morning' : now.getHours() < 17 ? 'afternoon' : 'evening',
+        timestamp: now.toISOString(),
+        metrics: {
+          leadsGenerated: leadsCount || 0,
+          emailsSent: emailsCount || 0,
+          contractsCreated: contractsCount || 0,
+          invoicesIssued: invoiceData?.length || 0,
+          tasksCompleted: 0, // Placeholder as task table name might vary
+          meetingsScheduled: 0, // Placeholder
+          revenue: todayRevenue,
+          activeUsers: 1 // Default
+        },
+        achievements: [],
+        alerts: [],
+        recommendations: [],
+        nextActions: []
+      };
+
+      // Add basic achievements and alerts based on data
+      if (todaySummary.metrics.leadsGenerated > 0) {
+        todaySummary.achievements.push(`Successfully generated ${todaySummary.metrics.leadsGenerated} new leads today`);
+      }
+      if (todaySummary.metrics.revenue > 0) {
+        todaySummary.achievements.push(`Generated ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(todaySummary.metrics.revenue)} in revenue today`);
       }
 
-      setSummaries(mockSummaries.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
-      setCurrentSummary(mockSummaries[0] || null);
+      setSummaries([todaySummary]);
+      setCurrentSummary(todaySummary);
       setLastUpdated(new Date());
     } catch (error) {
       console.error('Error loading summaries:', error);

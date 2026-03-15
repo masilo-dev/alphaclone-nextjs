@@ -34,7 +34,7 @@ import { useTenant } from '../../../contexts/TenantContext';
 import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 import CalendlySettings from './CalendlySettings';
-import ZohoIntegration from './ZohoIntegration';
+import ZohoSettings from './ZohoSettings';
 import { fileUploadService } from '../../../services/fileUploadService';
 import GmailIntegration from './GmailIntegration';
 import HubspotIntegration from './HubspotIntegration';
@@ -912,7 +912,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 
                         <GmailIntegration user={user} />
 
-                        <ZohoIntegration />
+                        <ZohoSettings />
 
                         <HubspotIntegration />
 

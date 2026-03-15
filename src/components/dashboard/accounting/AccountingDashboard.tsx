@@ -91,7 +91,7 @@ export default function AccountingDashboard() {
                         totalRevenue: revenue,
                         totalExpenses: totalExp,
                         pendingInvoices: pending,
-                        cashBalance: cashBalance || revenue, // Fallback if no GL is cleanly set up yet
+                        cashBalance: cashBalance, // Accurately reflects COA asset balance
                         recentTransactions: simpleTransactions
                     });
                 }

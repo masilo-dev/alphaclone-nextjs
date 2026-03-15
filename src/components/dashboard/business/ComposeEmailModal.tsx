@@ -373,11 +373,11 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
                                     onClick={handleSend}
-                                    disabled={true}
+                                    disabled={sending}
                                     className="flex-1 sm:flex-none bg-[#f5d400] hover:bg-[#ffe100] text-slate-950 px-10 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl shadow-yellow-500/10 disabled:opacity-50 disabled:grayscale"
                                 >
                                     {sending ? <Loader2 className="w-4 h-4 animate-spin text-slate-900" /> : <Send className="w-4 h-4 stroke-[2.5px]" />}
-                                    Sending Coming Soon
+                                    {sending ? 'Sending...' : 'Send Now'}
                                 </motion.button>
                             </div>
                         </div>
