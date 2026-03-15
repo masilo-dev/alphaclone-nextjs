@@ -76,8 +76,10 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
 
   const checkConnection = async (uid: string) => {
     try {
-      const response = await fetch(`/api/zoho/enhanced?userId=${uid}&action=get_account_info`);
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/zoho/enhanced?userId=${uid}&action=get_account_info&t=${timestamp}`);
       const data = await response.json();
+      
       if (response.ok && data.success) {
         setIsConnected(true);
         setAccountInfo(data.data);
@@ -89,6 +91,14 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
           setComposeData(prev => ({ ...prev, from: data.data.email }));
         }
         loadMessages(uid, 'inbox');
+      } else if (response.status === 404) {
+        // Explicitly not connected
+        setIsConnected(false);
+        setAccountInfo(null);
+        setMessages([]);
+      } else {
+        // API error (500 etc.) - keep current state to avoid loop
+        console.warn('Zoho API check failed with status:', response.status, data.error || '');
       }
     } catch (err) {
       console.error('Connection check failed:', err);
@@ -130,7 +140,8 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
     if (folder === 'compose') return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/zoho/enhanced?userId=${uid}&action=get_messages&folder=${folder}`);
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/zoho/enhanced?userId=${uid}&action=get_messages&folder=${folder}&t=${timestamp}`);
       const data = await response.json();
       if (response.ok && data.success) {
         setMessages(data.data || []);

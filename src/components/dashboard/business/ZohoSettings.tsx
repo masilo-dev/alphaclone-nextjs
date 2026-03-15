@@ -25,17 +25,26 @@ const ZohoSettings: React.FC = () => {
   const checkConnection = async (uid: string) => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/zoho/enhanced?userId=${uid}&action=get_account_info`);
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/zoho/enhanced?userId=${uid}&action=get_account_info&t=${timestamp}`);
       const data = await response.json();
+      
       if (response.ok && data.success) {
         setIsConnected(true);
         setAccountInfo(data.data);
-      } else {
+      } else if (response.status === 404) {
+        // Explicitly not connected
         setIsConnected(false);
+        setAccountInfo(null);
+      } else {
+        // This is an API error (500, etc.)
+        // We DON'T set isConnected(false) here because we might still have a valid integration in DB
+        // Falling back to whatever we had or just suppressing the error if we want to avoid the "loop"
+        console.warn('Zoho API returned error but not 404. Keeping current state.', data.error);
       }
     } catch (err) {
       console.error('Connection check failed:', err);
-      setIsConnected(false);
+      // On network errors, don't immediately assume disconnected
     } finally {
       setLoading(false);
     }

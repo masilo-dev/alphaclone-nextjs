@@ -16,15 +16,15 @@ export const zohoServerService = {
                 .maybeSingle();
 
             if (error) {
-                console.error('[Zoho Token Debug] Supabase error fetching integration:', error);
+                console.error(`[Zoho Token Debug] Supabase error fetching integration for ${userId}:`, error);
                 return null;
             }
             if (!integration) {
-                console.error('[Zoho Token Debug] No Zoho integration found for user:', userId);
+                console.warn(`[Zoho Token Debug] No Zoho integration record found in database for user ${userId}. This will trigger 'Not Connected' UI.`);
                 return null;
             }
             if (!integration.config) {
-                console.error('[Zoho Token Debug] Integration found but config object is missing:', integration.id);
+                console.error(`[Zoho Token Debug] Integration found (ID: ${integration.id}) but config object is missing for user ${userId}`);
                 return null;
             }
 
@@ -177,7 +177,7 @@ export const zohoServerService = {
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error(`[Zoho Proxy Debug] Request to ${url} failed with status ${response.status} (${response.statusText}):`, errorText);
+            console.error(`[Zoho Proxy Error] Request to ${url} failed! Status: ${response.status} (${response.statusText}). Endpoint: ${endpoint}. Trace: ${errorText.substring(0, 500)}`);
 
             let description = `Zoho API Error ${response.status} (${response.statusText}): ${errorText.substring(0, 150)}`;
             try {

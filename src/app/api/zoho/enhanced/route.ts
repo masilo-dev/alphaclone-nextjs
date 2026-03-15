@@ -84,7 +84,29 @@ export async function POST(req: NextRequest) {
  */
 async function getAccountInfo(userId: string) {
     try {
-        // First, get the account ID from Zoho
+        // Check if integration exists in DB first
+        const { createSupabaseAdminClient } = await import('@/lib/supabase-server');
+        const supabaseAdmin = createSupabaseAdminClient();
+        const { data: integration, error: dbError } = await supabaseAdmin
+            .from('integrations')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('type', 'zoho')
+            .maybeSingle();
+
+        if (dbError) {
+            console.error('[Zoho Debug] Database error checking integration:', dbError);
+        }
+
+        if (!integration) {
+            console.warn(`[Zoho Debug] No integration record found in DB for user ${userId}. Returning 404.`);
+            return NextResponse.json({ 
+                error: 'Integration not found. Please connect your Zoho account.',
+                code: 'INTEGRATION_NOT_FOUND'
+            }, { status: 404 });
+        }
+
+        // Now fetch details from Zoho API
         const accountsData = await zohoServerService.proxyRequest(userId, 'accounts');
         
         if (!accountsData.data || accountsData.data.length === 0) {
