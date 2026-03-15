@@ -298,5 +298,27 @@ export const zohoServerService = {
                 mailFormat: 'html'
             }),
         });
+    },
+
+    /**
+     * Delete a message (move to trash or permanent)
+     */
+    async deleteMessage(userId: string, messageId: string) {
+        return this.proxyRequest(userId, `messages/${messageId}`, {
+            method: 'DELETE'
+        });
+    },
+
+    /**
+     * Move messages to a specific folder
+     */
+    async moveMessages(userId: string, messageIds: string[], targetFolderId: string) {
+        return this.proxyRequest(userId, 'messages', {
+            method: 'PUT',
+            body: JSON.stringify({
+                folderId: targetFolderId,
+                messageIds: messageIds
+            }),
+        });
     }
 };

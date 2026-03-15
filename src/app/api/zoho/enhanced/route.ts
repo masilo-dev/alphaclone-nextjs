@@ -62,6 +62,10 @@ export async function POST(req: NextRequest) {
         switch (action) {
             case 'send_email':
                 return await sendEmail(userId, data);
+            case 'delete_message':
+                return await deleteMessage(userId, data);
+            case 'move_to_folder':
+                return await moveMessages(userId, data);
             default:
                 return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
         }
@@ -113,10 +117,10 @@ async function getAccountInfo(userId: string) {
         // Fetch verified from-addresses for this account
         let fromAddresses = [];
         try {
-            const sendAddressesData = await zohoServerService.proxyRequest(userId, 'sendaddresses');
+            const sendAddressesData = await zohoServerService.proxyRequest(userId, 'sendmailaddresses');
             if (sendAddressesData?.data) {
                 fromAddresses = sendAddressesData.data.map((addr: any) => {
-                    const address = extractEmailString(addr.sendAddress) || extractEmailString(addr.address) || '';
+                    const address = addr.sendAddress || addr.fromAddress || addr.address || addr.emailAddress || '';
                     return {
                         address: address,
                         isDefault: addr.isDefault,
@@ -207,32 +211,33 @@ async function sendEmail(userId: string, emailData: any) {
  */
 async function getEmails(userId: string, searchParams: URLSearchParams) {
     try {
-        // Handle both 'folder' (common from frontend) and 'folderId' (Zoho's internal param)
         const folderId = searchParams.get('folderId') || searchParams.get('folder') || 'inbox';
         const messageId = searchParams.get('messageId');
 
-        let endpoint: string;
-        
         if (messageId) {
-            endpoint = `messages/${messageId}/details`;
-        } else {
-            // Map folder names to Zoho folder IDs
-            const folderMap: { [key: string]: string } = {
-                'inbox': 'inbox',
-                'sent': 'sent',
-                'drafts': 'drafts',
-                'trash': 'trash',
-                'spam': 'spam'
-            };
-            
-            const actualFolderId = folderMap[folderId.toLowerCase()] || folderId;
-            endpoint = `messages/view?folderId=${actualFolderId}`;
-            console.log(`[Zoho Debug] Fetching folder: ${actualFolderId} for user: ${userId}`);
+            const endpoint = `messages/${messageId}/details`;
+            const data = await zohoServerService.proxyRequest(userId, endpoint);
+            return NextResponse.json({
+                success: true,
+                data: data.data || {}
+            });
         }
 
+        // Map UI folder names to typical Zoho folder IDs
+        const folderMap: { [key: string]: string } = {
+            'inbox': 'inbox',
+            'sent': 'sent',
+            'drafts': 'drafts',
+            'trash': 'trash',
+            'spam': 'spam',
+            'starred': 'starred'
+        };
+
+        const actualFolderId = folderMap[folderId.toLowerCase()] || folderId;
+        const endpoint = `messages/view?folderId=${actualFolderId}`;
+        
         const data = await zohoServerService.proxyRequest(userId, endpoint);
         
-        // Ensure we handle the data structure correctly (Zoho usually returns { data: [...] })
         return NextResponse.json({
             success: true,
             data: data.data || []
@@ -243,6 +248,38 @@ async function getEmails(userId: string, searchParams: URLSearchParams) {
             error: `Failed to fetch emails: ${error.message}` 
         }, { status: 500 });
     }
+}
+
+/**
+ * Delete a message
+ */
+async function deleteMessage(userId: string, data: any) {
+    const { messageId } = data;
+    if (!messageId) throw new Error('messageId is required for deletion');
+    
+    const result = await zohoServerService.deleteMessage(userId, messageId);
+    return NextResponse.json({ success: true, data: result });
+}
+
+/**
+ * Move messages to folder
+ */
+async function moveMessages(userId: string, data: any) {
+    const { messageIds, targetFolderId } = data;
+    if (!messageIds || !targetFolderId) throw new Error('messageIds and targetFolderId are required');
+    
+    // Resolve folder name to ID if needed
+    const folderMap: { [key: string]: string } = {
+        'inbox': 'inbox',
+        'sent': 'sent',
+        'drafts': 'drafts',
+        'trash': 'trash',
+        'spam': 'spam'
+    };
+    const resolvedFolderId = folderMap[targetFolderId.toLowerCase()] || targetFolderId;
+    
+    const result = await zohoServerService.moveMessages(userId, Array.isArray(messageIds) ? messageIds : [messageIds], resolvedFolderId);
+    return NextResponse.json({ success: true, data: result });
 }
 
 /**

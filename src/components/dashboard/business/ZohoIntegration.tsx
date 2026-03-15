@@ -4,13 +4,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Mail, Send, Inbox, RefreshCw, Settings, ChevronDown, Paperclip,
   CheckCircle, AlertCircle, Loader2, Trash2, Star, Reply, Forward,
-  PenSquare, X, User, Clock, Search, Zap
+  PenSquare, X, User, Clock, Search, Zap, MoreVertical, Archive
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 
 interface ZohoIntegrationProps {
-  // Email-only props
   onEmailsSent?: (count: number) => void;
 }
 
@@ -40,14 +39,14 @@ interface EmailMessage {
   flagged?: boolean;
 }
 
-type TabType = 'inbox' | 'compose' | 'sent';
+type FolderType = 'inbox' | 'compose' | 'sent' | 'drafts' | 'trash' | 'starred';
 
 const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(false);
   const [accountInfo, setAccountInfo] = useState<ZohoAccount | null>(null);
   const [userId, setUserId] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<TabType>('inbox');
+  const [activeFolder, setActiveFolder] = useState<FolderType>('inbox');
   const [messages, setMessages] = useState<EmailMessage[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<EmailMessage | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,6 +61,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
   const [sendingEmail, setSendingEmail] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [deletingMessage, setDeletingMessage] = useState(false);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -81,7 +81,14 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
       if (response.ok && data.success) {
         setIsConnected(true);
         setAccountInfo(data.data);
-        loadInbox(uid);
+        // Initialize compose from address
+        if (data.data.fromAddresses?.length > 0) {
+          const defaultAddr = data.data.fromAddresses.find((a: any) => a.isDefault)?.address || data.data.fromAddresses[0].address;
+          setComposeData(prev => ({ ...prev, from: defaultAddr }));
+        } else {
+          setComposeData(prev => ({ ...prev, from: data.data.email }));
+        }
+        loadMessages(uid, 'inbox');
       }
     } catch (err) {
       console.error('Connection check failed:', err);
@@ -89,7 +96,6 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
   };
 
   const connectToZoho = () => {
-    // Redirect to the backend-managed OAuth flow
     const appUrl = window.location.origin;
     window.location.href = `/api/auth/zoho/connect?userId=${userId}`;
   };
@@ -114,48 +120,11 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
     }
   };
 
-  const loadAccountInfo = async (uid: string) => {
-    try {
-      const response = await fetch(`/api/zoho/enhanced?userId=${uid}&action=get_account_info`);
-      const data = await response.json();
-      if (response.ok && data.success) {
-        setAccountInfo(data.data);
-        // Set default from address if composing
-        if (data.data.fromAddresses?.length > 0) {
-          const defaultAddr = data.data.fromAddresses.find((a: any) => a.isDefault)?.address || data.data.fromAddresses[0].address;
-          setComposeData(prev => ({ ...prev, from: defaultAddr }));
-        } else {
-          setComposeData(prev => ({ ...prev, from: data.data.email }));
-        }
-        localStorage.setItem('zoho_account_info', JSON.stringify(data.data));
-      }
-    } catch (err) {
-      console.error('Failed to load account info:', err);
-    }
-  };
-
-  const loadInbox = async (uid: string) => {
+  const loadMessages = async (uid: string, folder: FolderType) => {
+    if (folder === 'compose') return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/zoho/enhanced?userId=${uid}&action=get_messages&folder=inbox`);
-      const data = await response.json();
-      if (response.ok && data.success) {
-        setMessages(data.data || []);
-      } else {
-        // Graceful empty state — no toast noise
-        setMessages([]);
-      }
-    } catch (err) {
-      setMessages([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadSentMessages = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/zoho/enhanced?userId=${userId}&action=get_messages&folder=sent`);
+      const response = await fetch(`/api/zoho/enhanced?userId=${uid}&action=get_messages&folder=${folder}`);
       const data = await response.json();
       if (response.ok && data.success) {
         setMessages(data.data || []);
@@ -169,12 +138,47 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
     }
   };
 
-  const handleTabChange = (tab: TabType) => {
-    setActiveTab(tab);
+  const handleFolderChange = (folder: FolderType) => {
+    setActiveFolder(folder);
     setSelectedMessage(null);
-    setIsComposing(false);
-    if (tab === 'inbox') loadInbox(userId);
-    if (tab === 'sent') loadSentMessages();
+    if (folder === 'compose') {
+      setIsComposing(true);
+    } else {
+      setIsComposing(false);
+      loadMessages(userId, folder);
+    }
+  };
+
+  const deleteMessage = async (messageId: string) => {
+    if (!userId || deletingMessage) return;
+    
+    setDeletingMessage(true);
+    try {
+      const response = await fetch('/api/zoho/enhanced', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          action: 'delete_message',
+          data: { messageId }
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Message deleted');
+        setMessages(prev => prev.filter(m => m.messageId !== messageId));
+        if (selectedMessage?.messageId === messageId) {
+          setSelectedMessage(null);
+        }
+      } else {
+        const data = await response.json();
+        toast.error(data.error || 'Failed to delete message');
+      }
+    } catch (err) {
+      toast.error('Network error deleting message');
+    } finally {
+      setDeletingMessage(false);
+    }
   };
 
   const generateAiReply = async () => {
@@ -202,7 +206,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
         subject: `Re: ${selectedMessage.subject}`,
         body: data.text
       });
-      setActiveTab('compose');
+      setActiveFolder('compose');
       setIsComposing(true);
       toast.success('AI Draft ready');
     } catch (err) {
@@ -215,10 +219,6 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
   const sendEmail = async () => {
     if (!composeData.to || !composeData.subject || !composeData.body) {
       toast.error('Please fill in To, Subject, and Body');
-      return;
-    }
-    if (!composeData.from) {
-      toast.error('No sender email selected');
       return;
     }
     setSendingEmail(true);
@@ -244,6 +244,8 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
         const defaultFrom = accountInfo?.fromAddresses?.find(a => a.isDefault)?.address || accountInfo?.email || '';
         setComposeData({ from: defaultFrom, to: '', cc: '', subject: '', body: '' });
         setIsComposing(false);
+        setActiveFolder('inbox');
+        loadMessages(userId, 'inbox');
         if (onEmailsSent) onEmailsSent(1);
       } else {
         toast.error(result.error || 'Failed to send email');
@@ -268,23 +270,24 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
     try {
-      return new Date(parseInt(dateStr)).toLocaleDateString('en-US', {
+      const date = dateStr.includes('-') ? new Date(dateStr) : new Date(parseInt(dateStr));
+      return date.toLocaleDateString('en-US', {
         month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
       });
-    } catch { return ''; }
+    } catch { return dateStr || ''; }
   };
 
-  // ─── Not Connected ────────────────────────────────────────────────────────
+  // ─── Not Connected State ───
   if (!isConnected) {
     return (
-      <div className="min-h-[500px] flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950 rounded-2xl border border-slate-800">
+      <div className="min-h-[500px] flex items-center justify-center bg-slate-900/60 rounded-2xl border border-slate-800">
         <div className="text-center max-w-sm px-6">
           <div className="w-20 h-20 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl">
             <Mail className="w-10 h-10 text-white" />
           </div>
           <h2 className="text-xl font-bold text-white mb-2">Zoho Mail</h2>
           <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-            Connect your Zoho Mail account to manage your emails directly from your dashboard.
+            Connect your Zoho Mail account to manage your professional communications directly from your dashboard.
           </p>
           <button
             onClick={connectToZoho}
@@ -298,52 +301,44 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
     );
   }
 
-  // ─── Connected ────────────────────────────────────────────────────────────
+  // ─── Connected State ───
   return (
     <div className="flex flex-col h-full bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden" 
-         style={{ minHeight: '500px', height: '100%', maxHeight: 'calc(100vh - 120px)' }}>
+         style={{ minHeight: '600px', height: '100%', maxHeight: 'calc(100vh - 120px)' }}>
 
       {/* ── Top Bar ── */}
-      <div className="flex flex-wrap items-center justify-between px-3 sm:px-5 py-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm shrink-0 gap-2">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <div className="w-8 h-8 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-lg flex items-center justify-center shadow shrink-0">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-lg flex items-center justify-center shadow">
             <Mail className="w-4 h-4 text-white" />
           </div>
-          <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-white truncate">Zoho Mail</h2>
-            {accountInfo && (
-              <p className="text-[10px] text-slate-400 flex items-center gap-1 truncate">
-                <CheckCircle className="w-3 h-3 text-emerald-400 shrink-0" />
-                <span className="truncate">{accountInfo.email}</span>
-              </p>
-            )}
+          <div>
+            <h2 className="text-sm font-semibold text-white">Zoho Mail</h2>
+            {accountInfo && <p className="text-[10px] text-emerald-400 flex items-center gap-1"><CheckCircle className="w-2.5 h-2.5" /> Connected</p>}
           </div>
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-2">
-          {selectedMessage && (
-            <button
-              onClick={() => setSelectedMessage(null)}
-              className="lg:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
-              title="Back to List"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => handleTabChange(activeTab)}
+            onClick={() => handleFolderChange(activeFolder)}
             disabled={loading}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
             title="Refresh"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
           <button
-            onClick={() => { setIsComposing(true); setActiveTab('compose'); }}
-            className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-xs font-semibold rounded-xl transition-all duration-200 shadow"
+            onClick={() => setShowSettings(!showSettings)}
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => handleFolderChange('compose')}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-sky-500/10"
           >
             <PenSquare className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Compose</span>
+            Compose
           </button>
         </div>
       </div>
@@ -358,289 +353,232 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
             </button>
           </div>
           {accountInfo && (
-            <div className="bg-slate-800 rounded-lg p-3 mb-4 border border-slate-700">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <p className="text-white text-sm font-medium">{accountInfo.displayName}</p>
-                  <p className="text-slate-400 text-xs">{accountInfo.email}</p>
-                </div>
-              </div>
+            <div className="bg-slate-800/50 rounded-lg p-3 mb-4 border border-slate-700">
+              <p className="text-white text-sm font-medium">{accountInfo.displayName}</p>
+              <p className="text-slate-400 text-xs truncate">{accountInfo.email}</p>
             </div>
           )}
           <button
             onClick={disconnect}
-            className="w-full py-2 text-sm text-red-400 border border-red-800 rounded-lg hover:bg-red-900/20 transition-colors"
+            className="w-full py-2 text-sm text-red-400 border border-red-800/50 rounded-lg hover:bg-red-500/10 transition-colors"
           >
-            Disconnect Account
+            Disconnect Zoho
           </button>
         </div>
       )}
 
-      {/* ── Tab Navigation ── */}
-      <div className="flex items-center gap-1 px-5 pt-3 pb-0 shrink-0">
-        {(['inbox', 'compose', 'sent'] as TabType[]).map((key) => {
-          const labels: Record<TabType, string> = { inbox: 'Inbox', compose: 'Compose', sent: 'Sent' };
-          const icons: Record<TabType, any> = { inbox: Inbox, compose: PenSquare, sent: Send };
-          const Icon = icons[key];
-          return (
-            <button
-              key={key}
-              onClick={() => key === 'compose' ? (setIsComposing(true), setActiveTab('compose')) : handleTabChange(key)}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors border-b-2 ${
-                activeTab === key
-                  ? 'text-sky-400 border-sky-500 bg-slate-800/50'
-                  : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/30'
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {labels[key]}
-            </button>
-          );
-        })}
-      </div>
+      {/* ── Main Layout (3-Pane) ── */}
+      <div className="flex flex-1 overflow-hidden">
+        
+        {/* Pane 1: Folders Sidebar */}
+        <div className="hidden sm:flex flex-col w-48 border-r border-slate-800 bg-slate-900/40 p-3 gap-1 shrink-0">
+          {(['inbox', 'sent', 'drafts', 'trash', 'starred'] as FolderType[]).map((key) => {
+            const labels: Record<FolderType, string> = { inbox: 'Inbox', compose: 'Compose', sent: 'Sent', drafts: 'Drafts', trash: 'Trash', starred: 'Starred' };
+            const icons: Record<FolderType, any> = { inbox: Inbox, compose: PenSquare, sent: Send, drafts: Clock, trash: Trash2, starred: Star };
+            const Icon = icons[key];
+            if (key === 'compose') return null;
+            return (
+              <button
+                key={key}
+                onClick={() => handleFolderChange(key)}
+                className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-xl transition-all ${
+                  activeFolder === key
+                    ? 'text-sky-400 bg-sky-400/10 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${activeFolder === key ? 'text-sky-400' : 'text-slate-500'}`} />
+                {labels[key]}
+              </button>
+            );
+          })}
+        </div>
 
-      {/* ── Main Content ── */}
-      <div className="flex flex-1 overflow-hidden border-t border-slate-800">
-
-        {/* Compose Panel */}
-        {activeTab === 'compose' && (
-          <div className="flex-1 p-4 sm:p-5 overflow-y-auto custom-scrollbar">
-            <div className="max-w-2xl mx-auto">
-              <h3 className="text-white font-semibold mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <PenSquare className="w-3.5 h-3.5 text-sky-400" />
-                  New Email
-                </div>
-              </h3>
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 border-b border-slate-700/50 pb-4 mb-4">
-                  <div className="w-8 h-8 bg-sky-500/10 rounded-lg flex items-center justify-center border border-sky-500/20 shrink-0">
-                    <User className="w-4 h-4 text-sky-400" />
+        {/* Pane 2: Message List / Compose Area */}
+        <div className="flex flex-1 overflow-hidden">
+          {activeFolder === 'compose' ? (
+            /* Compose Flow */
+            <div className="flex-1 flex flex-col items-center bg-slate-900/20 p-6 overflow-y-auto">
+              <div className="w-full max-w-2xl bg-slate-900/60 rounded-3xl border border-slate-800 p-8 shadow-2xl">
+                <h3 className="text-white font-bold text-lg mb-8 flex items-center gap-3">
+                   <PenSquare className="w-5 h-5 text-sky-400" />
+                   New Communication
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] text-slate-500 uppercase tracking-widest font-bold ml-1">From</label>
+                    <div className="relative group">
+                      <select
+                        value={composeData.from}
+                        onChange={(e) => setComposeData({ ...composeData, from: e.target.value })}
+                        className="w-full bg-slate-800/50 text-white text-sm rounded-xl px-4 py-2.5 outline-none border border-slate-700 focus:border-sky-500/50 transition-all appearance-none"
+                      >
+                        {accountInfo?.fromAddresses?.map((addr) => (
+                          <option key={addr.address} value={addr.address}>
+                            {addr.displayName || addr.address} &lt;{addr.address}&gt;
+                          </option>
+                        )) || <option value={accountInfo?.email}>{accountInfo?.email}</option>}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none group-hover:text-sky-400 transition-colors" />
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-0.5">Sender</p>
-                    {accountInfo?.fromAddresses && accountInfo.fromAddresses.length > 1 ? (
-                      <div className="relative group">
-                        <select
-                          value={composeData.from}
-                          onChange={(e) => setComposeData({ ...composeData, from: e.target.value })}
-                          className="w-full bg-transparent text-white text-sm font-bold outline-none cursor-pointer appearance-none pr-8 py-0.5"
-                        >
-                          {accountInfo.fromAddresses.map((addr) => (
-                            <option key={addr.address} value={addr.address} className="bg-slate-900 text-white">
-                              {addr.address} {addr.displayName ? `(${addr.displayName})` : ''}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none group-hover:text-sky-400 transition-colors" />
-                      </div>
-                    ) : (
-                      <p className="text-white text-sm font-bold truncate">{composeData.from || accountInfo?.email || 'Loading sender...'}</p>
-                    )}
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] text-slate-500 uppercase tracking-widest font-bold ml-1">To</label>
+                    <input
+                      type="text"
+                      value={composeData.to}
+                      onChange={(e) => setComposeData({ ...composeData, to: e.target.value })}
+                      placeholder="recipient@example.com"
+                      className="w-full bg-slate-800/50 text-white text-sm rounded-xl px-4 py-2.5 outline-none border border-slate-700 focus:border-sky-500/50 transition-all"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] text-slate-500 uppercase tracking-widest font-bold ml-1">Subject</label>
+                    <input
+                      type="text"
+                      value={composeData.subject}
+                      onChange={(e) => setComposeData({ ...composeData, subject: e.target.value })}
+                      placeholder="Enter subject line"
+                      className="w-full bg-slate-800/50 text-white text-sm rounded-xl px-4 py-2.5 outline-none border border-slate-700 focus:border-sky-500/50 transition-all"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] text-slate-500 uppercase tracking-widest font-bold ml-1">Message</label>
+                    <textarea
+                      value={composeData.body}
+                      onChange={(e) => setComposeData({ ...composeData, body: e.target.value })}
+                      placeholder="Compose your message..."
+                      className="w-full bg-slate-800/50 text-white text-sm rounded-xl px-4 py-3 outline-none border border-slate-700 focus:border-sky-500/50 transition-all min-h-[250px] resize-none"
+                    />
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 border-b border-slate-700 pb-3">
-                  <span className="text-slate-400 text-sm w-14 text-right">To</span>
-                  <input
-                    type="text"
-                    value={composeData.to}
-                    onChange={(e) => setComposeData({ ...composeData, to: e.target.value })}
-                    placeholder="recipient@example.com"
-                    className="flex-1 bg-transparent text-white text-sm placeholder:text-slate-600 outline-none"
-                  />
-                </div>
-                <div className="flex items-center gap-3 border-b border-slate-700 pb-3">
-                  <span className="text-slate-400 text-sm w-14 text-right">CC</span>
-                  <input
-                    type="text"
-                    value={composeData.cc}
-                    onChange={(e) => setComposeData({ ...composeData, cc: e.target.value })}
-                    placeholder="cc@example.com (optional)"
-                    className="flex-1 bg-transparent text-white text-sm placeholder:text-slate-600 outline-none"
-                  />
-                </div>
-                <div className="flex items-center gap-3 border-b border-slate-700 pb-3">
-                  <span className="text-slate-400 text-sm w-14 text-right">Subject</span>
-                  <input
-                    type="text"
-                    value={composeData.subject}
-                    onChange={(e) => setComposeData({ ...composeData, subject: e.target.value })}
-                    placeholder="Email subject"
-                    className="flex-1 bg-transparent text-white text-sm placeholder:text-slate-600 outline-none"
-                  />
-                </div>
-
-                <textarea
-                  value={composeData.body}
-                  onChange={(e) => setComposeData({ ...composeData, body: e.target.value })}
-                  placeholder="Write your message here..."
-                  className="w-full bg-transparent text-white text-sm placeholder:text-slate-600 outline-none resize-none mt-2 min-h-[250px] sm:min-h-[400px]"
-                />
-              </div>
-
-              <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-700">
-                <div className="flex items-center gap-2">
-                  <button className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700 transition-colors" title="Attach file">
-                    <Paperclip className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="flex items-center justify-end gap-2 sm:gap-3 py-4">
-                  <button
-                    onClick={() => { 
-                      setIsComposing(false); 
-                      setActiveTab('inbox'); 
-                      const defaultFrom = accountInfo?.fromAddresses?.find(a => a.isDefault)?.address || accountInfo?.email || '';
-                      setComposeData({ from: defaultFrom, to: '', cc: '', subject: '', body: '' }); 
-                    }}
-                    className="px-3 py-2 text-xs text-slate-400 hover:text-white transition-colors"
+                <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-800/50">
+                   <button
+                    onClick={() => { setActiveFolder('inbox'); setSelectedMessage(null); }}
+                    className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
                   >
                     Discard
                   </button>
                   <button
                     onClick={sendEmail}
                     disabled={sendingEmail}
-                    className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-sm font-bold rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-sky-500/20"
+                    className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-sm font-bold rounded-xl transition-all shadow-xl shadow-sky-500/20 disabled:opacity-50"
                   >
                     {sendingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    {sendingEmail ? 'Sending...' : 'Send Now'}
+                    {sendingEmail ? 'Sending...' : 'Schedule & Send'}
                   </button>
                 </div>
               </div>
-              {/* Extra spacing for mobile keyboards */}
-              <div className="h-20 lg:hidden" />
             </div>
-          </div>
-        )}
+          ) : (
+            /* Pane 2: List View */
+            <div className={`flex flex-1 overflow-hidden ${selectedMessage ? 'lg:flex' : 'flex'}`}>
+              <div className={`flex flex-col border-r border-slate-800 bg-slate-900/10 ${selectedMessage ? 'hidden lg:flex' : 'flex'} w-full lg:w-[350px] shrink-0`}>
+                <div className="p-4 border-b border-slate-800">
+                  <div className="relative group">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-hover:text-sky-500 transition-colors" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search messages..."
+                      className="w-full bg-slate-800/40 text-sm text-white rounded-xl pl-10 pr-4 py-2.5 outline-none border border-slate-800/80 focus:border-sky-500/30 transition-all"
+                    />
+                  </div>
+                </div>
 
-        {/* Inbox / Sent List + Detail */}
-        {(activeTab === 'inbox' || activeTab === 'sent') && (
-          <div className="flex flex-1 overflow-hidden">
-            {/* Message List */}
-            <div className={`${selectedMessage ? 'hidden lg:flex' : 'flex'} flex-col border-r border-slate-800 overflow-y-auto bg-slate-900/30`} style={{ width: '100%', maxWidth: selectedMessage ? '300px' : 'none', minWidth: '240px' }}>
-              {/* Search */}
-              <div className="p-3 border-b border-slate-800 shrink-0">
-                <div className="flex items-center gap-2 bg-slate-800 rounded-lg px-3 py-2">
-                  <Search className="w-4 h-4 text-slate-500" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search emails..."
-                    className="flex-1 bg-transparent text-sm text-white placeholder:text-slate-500 outline-none"
-                  />
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                  {loading ? (
+                    <div className="h-40 flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-sky-400" /></div>
+                  ) : filteredMessages.length === 0 ? (
+                    <div className="p-12 text-center">
+                      <Inbox className="w-10 h-10 text-slate-700 mx-auto mb-3" />
+                      <p className="text-slate-500 text-sm">No communications found</p>
+                    </div>
+                  ) : (
+                    filteredMessages.map((msg) => (
+                      <button
+                        key={msg.messageId}
+                        onClick={() => setSelectedMessage(msg)}
+                        className={`w-full text-left px-5 py-4 border-b border-slate-800/40 hover:bg-slate-800/30 transition-all relative ${selectedMessage?.messageId === msg.messageId ? 'bg-slate-800/60' : ''}`}
+                      >
+                        {selectedMessage?.messageId === msg.messageId && <div className="absolute left-0 top-0 bottom-0 w-1 bg-sky-500" />}
+                        <div className="flex justify-between items-start mb-1.5">
+                          <span className="text-sm font-bold text-white truncate max-w-[180px]">{msg.fromAddress || msg.toAddress}</span>
+                          <span className="text-[10px] text-slate-500 uppercase tracking-tighter shrink-0">{formatDate(msg.receivedTime || msg.sentDateInGMT)}</span>
+                        </div>
+                        <p className={`text-xs truncate ${selectedMessage?.messageId === msg.messageId ? 'text-sky-300' : 'text-slate-300'} font-medium`}>{msg.subject || '(No Subject)'}</p>
+                        <p className="text-[11px] text-slate-500 truncate mt-1 leading-relaxed opacity-80">{msg.summary}</p>
+                      </button>
+                    ))
+                  )}
                 </div>
               </div>
 
-              {loading ? (
-                <div className="flex-1 flex items-center justify-center">
-                  <Loader2 className="w-5 h-5 animate-spin text-sky-400" />
-                </div>
-              ) : filteredMessages.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-12">
-                  <Inbox className="w-8 h-8 text-slate-600 mb-3" />
-                  <p className="text-slate-500 text-sm">
-                    {searchQuery ? 'No results found' : activeTab === 'inbox' ? 'Your inbox is empty' : 'No sent emails'}
-                  </p>
-                </div>
-              ) : (
-                filteredMessages.map((msg) => (
-                  <button
-                    key={msg.messageId}
-                    onClick={() => setSelectedMessage(msg)}
-                    className={`w-full text-left px-4 py-3 border-b border-slate-800/50 transition-colors hover:bg-slate-800/50 ${
-                      selectedMessage?.messageId === msg.messageId ? 'bg-slate-800' : ''
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <span className="text-sm font-medium text-white truncate">{msg.fromAddress || msg.toAddress}</span>
-                      <span className="text-xs text-slate-500 shrink-0">
-                        {formatDate(msg.receivedTime || msg.sentDateInGMT)}
-                      </span>
-                    </div>
-                    <p className="text-sm text-slate-300 truncate">{msg.subject}</p>
-                    {msg.summary && (
-                      <p className="text-xs text-slate-500 truncate mt-0.5">{msg.summary}</p>
-                    )}
-                  </button>
-                ))
-              )}
-            </div>
-
-            {/* Message Detail */}
-            <div className={`${selectedMessage ? 'flex' : 'hidden lg:flex'} flex-1 flex-col overflow-hidden bg-slate-900/40`}>
-              {selectedMessage ? (
-                <div className="flex flex-col h-full overflow-hidden">
-                  <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 shrink-0">
-                    <button
-                      onClick={() => setSelectedMessage(null)}
-                      className="md:hidden flex items-center gap-2 text-sm text-slate-400 hover:text-white"
-                    >
-                      <ChevronDown className="w-4 h-4 rotate-90" /> Back
-                    </button>
-                    <div className="flex items-center gap-2 ml-auto">
-                      <button
-                        onClick={generateAiReply}
-                        disabled={aiGenerating}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 rounded-lg transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50"
-                      >
-                        {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
-                        {aiGenerating ? 'AI Generating...' : 'AI Assist'}
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (!selectedMessage) return;
-                          setComposeData({ 
-                            from: accountInfo?.fromAddresses?.find(a => a.isDefault)?.address || accountInfo?.email || '',
-                            to: selectedMessage.fromAddress, 
-                            cc: '', 
-                            subject: `Re: ${selectedMessage.subject}`, 
-                            body: '' 
-                          });
-                          setActiveTab('compose');
-                          setIsComposing(true);
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-                      >
-                        <Reply className="w-3.5 h-3.5" /> Reply
-                      </button>
-                      <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors">
-                        <Forward className="w-3.5 h-3.5" /> Forward
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto p-5">
-                    <h2 className="text-white text-lg font-semibold mb-4">{selectedMessage.subject}</h2>
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-9 h-9 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                        {(selectedMessage.fromAddress || '?')[0].toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-white">{selectedMessage.fromAddress}</p>
-                        <p className="text-xs text-slate-500 flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {formatDate(selectedMessage.receivedTime || selectedMessage.sentDateInGMT)}
-                        </p>
+              {/* Pane 3: Detail View */}
+              <div className={`flex flex-1 flex-col bg-slate-900/40 overflow-hidden ${selectedMessage ? 'flex' : 'hidden lg:flex'}`}>
+                {selectedMessage ? (
+                  <div className="flex flex-col h-full">
+                    {/* Detail Header */}
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/60 backdrop-blur-md">
+                      <button onClick={() => setSelectedMessage(null)} className="lg:hidden p-2 text-slate-400"><X className="w-5 h-5" /></button>
+                      <div className="flex items-center gap-2">
+                        <button onClick={generateAiReply} disabled={aiGenerating} className="flex items-center gap-2 px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-xs font-bold rounded-xl border border-indigo-500/20 transition-all">
+                          {aiGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />} AI Assist
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setComposeData({ from: accountInfo?.fromAddresses?.find(a => a.isDefault)?.address || accountInfo?.email || '', to: selectedMessage.fromAddress, cc: '', subject: `Re: ${selectedMessage.subject}`, body: '' });
+                            setActiveFolder('compose');
+                          }}
+                          className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                        >
+                          <Reply className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => deleteMessage(selectedMessage!.messageId)} 
+                          className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
-                    <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
-                      {selectedMessage.content || selectedMessage.summary || 'No message content available.'}
+
+                    {/* Detail Body */}
+                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                      <div className="max-w-3xl mx-auto">
+                        <h1 className="text-2xl font-bold text-white mb-6 leading-tight">{selectedMessage.subject}</h1>
+                        <div className="flex items-center gap-4 mb-8">
+                          <div className="w-12 h-12 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white text-lg font-black shadow-xl">
+                            {(selectedMessage.fromAddress || '?')[0].toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-base font-bold text-white leading-none mb-1">{selectedMessage.fromAddress}</p>
+                            <p className="text-xs text-slate-500 flex items-center gap-1.5"><Clock className="w-3 h-3" /> {formatDate(selectedMessage.receivedTime || selectedMessage.sentDateInGMT)}</p>
+                          </div>
+                        </div>
+                        <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap border-t border-slate-800/50 pt-8 mt-4 font-normal tracking-wide">
+                          {selectedMessage.content || selectedMessage.summary || 'No message content available.'}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
-                  <Mail className="w-12 h-12 text-slate-700 mb-4" />
-                  <p className="text-slate-500">Select an email to read</p>
-                </div>
-              )}
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center p-12 text-center opacity-40">
+                    <div className="w-20 h-20 bg-slate-800/50 rounded-full flex items-center justify-center mb-4 border border-slate-700">
+                      <Mail className="w-10 h-10 text-slate-600" />
+                    </div>
+                    <p className="text-slate-400 text-sm font-medium">Select a communication to view details</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Loader2, Sparkles, Wand2, User, Search, Check } from 'lucide-react';
+import { X, Send, Loader2, Sparkles, Wand2, User, Search, Check, ChevronDown } from 'lucide-react';
 import { Button } from '../../ui/UIComponents';
 import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
@@ -34,6 +34,9 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     const [aiPrompt, setAiPrompt] = useState('');
     const [generating, setGenerating] = useState(false);
     const [selectedTone, setSelectedTone] = useState('professional');
+    const [from, setFrom] = useState('');
+    const [accountInfo, setAccountInfo] = useState<any>(null);
+    const [fetchingAccount, setFetchingAccount] = useState(false);
     const [clients, setClients] = useState<any[]>([]);
     const [showContactDropdown, setShowContactDropdown] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -54,8 +57,26 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
             businessClientService.getClients(currentTenant.id).then(({ clients }) => {
                 setClients(clients || []);
             });
+            fetchAccountInfo();
         }
     }, [isOpen, currentTenant?.id]);
+
+    const fetchAccountInfo = async () => {
+        setFetchingAccount(true);
+        try {
+            const res = await fetch(`/api/zoho/enhanced?userId=${userId}&action=get_account_info`);
+            const data = await res.json();
+            if (res.ok && data.success) {
+                setAccountInfo(data.data);
+                const defaultFrom = data.data.fromAddresses?.find((a: any) => a.isDefault)?.address || data.data.email || '';
+                setFrom(defaultFrom);
+            }
+        } catch (err) {
+            console.error('Failed to fetch Zoho account info:', err);
+        } finally {
+            setFetchingAccount(false);
+        }
+    };
 
     React.useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -132,7 +153,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
         try {
             const { data: { session } } = await supabase.auth.getSession();
 
-            const res = await fetch('/api/zoho/messages', {
+            const res = await fetch('/api/zoho/enhanced', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -140,9 +161,13 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                 },
                 body: JSON.stringify({
                     userId,
-                    to,
-                    subject,
-                    content: body.replace(/\n/g, '<br/>')
+                    action: 'send_email',
+                    data: {
+                        to,
+                        subject,
+                        content: body.replace(/\n/g, '<br/>'),
+                        fromAddress: from
+                    }
                 })
             });
 
@@ -257,6 +282,34 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                             </motion.div>
 
                             <div className="grid grid-cols-1 gap-6">
+                                {/* FROM: SENDER */}
+                                <div>
+                                    <label className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Sender</label>
+                                    <div className="relative group">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 p-1.5 bg-white/5 rounded-lg group-focus-within:bg-[#f5d400]/10 transition-colors">
+                                            <User className="w-3.5 h-3.5 text-slate-500 group-focus-within:text-[#f5d400]" />
+                                        </div>
+                                        <select
+                                            value={from}
+                                            onChange={e => setFrom(e.target.value)}
+                                            className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-12 py-4 text-sm text-white focus:border-[#f5d400]/40 outline-none transition-all shadow-inner appearance-none cursor-pointer"
+                                        >
+                                            {fetchingAccount ? (
+                                                <option>Loading sender info...</option>
+                                            ) : accountInfo?.fromAddresses?.length > 0 ? (
+                                                accountInfo.fromAddresses.map((addr: any) => (
+                                                    <option key={addr.address} value={addr.address} className="bg-slate-900">
+                                                        {addr.displayName || addr.address} &lt;{addr.address}&gt;
+                                                    </option>
+                                                ))
+                                            ) : (
+                                                <option value={from}>{from || accountInfo?.email || 'No sender found'}</option>
+                                            )}
+                                        </select>
+                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none group-hover:text-[#f5d400] transition-colors" />
+                                    </div>
+                                </div>
+
                                 {/* TO: RECIPIENT */}
                                 <div className="relative" ref={dropdownRef}>
                                     <label className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Recipient</label>

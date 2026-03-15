@@ -63,7 +63,6 @@ const TaskScheduler = React.lazy(() => import('./TaskScheduler'));
 const ZohoIntegration = React.lazy(() => import('./ZohoIntegration'));
 
 const QuotaManager = React.lazy(() => import('./QuotaManager'));
-const PresentationTemplates = React.lazy(() => import('./PresentationTemplates'));
 const EnhancedDocumentSystem = React.lazy(() => import('./EnhancedDocumentSystem'));
 const DailySummarySystem = React.lazy(() => import('./DailySummarySystem'));
 
@@ -356,12 +355,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
                         <QuotaManager />
-                    </React.Suspense>
-                );
-            case '/dashboard/business/presentations':
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
-                        <PresentationTemplates />
                     </React.Suspense>
                 );
             case '/dashboard/business/documents':

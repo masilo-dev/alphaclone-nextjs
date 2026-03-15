@@ -121,7 +121,6 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
 
   // 8. Usage & Limits
   { label: 'Quota Manager', href: '/dashboard/business/quotas', icon: BarChart3 },
-  { label: 'Presentations', href: '/dashboard/business/presentations', icon: Presentation },
   { label: 'Documents', href: '/dashboard/business/documents', icon: FileText },
 
   // 9. Daily Summary
