@@ -55,13 +55,14 @@ export async function GET(req: NextRequest) {
             'ZohoMail.folders.READ'
         ].join(',');
 
+        const promptValue = searchParams.get('prompt') || 'consent';
         const authUrl = `https://${accountsDomain}/oauth/v2/auth?` +
             `client_id=${clientId}&` +
             `redirect_uri=${encodeURIComponent(redirectUri)}&` +
             `response_type=code&` +
             `scope=${scopes}&` +
             `access_type=offline&` +
-            `prompt=consent&` +
+            `prompt=${promptValue}&` +
             `state=${stateNonce}`;
 
         return NextResponse.redirect(authUrl);

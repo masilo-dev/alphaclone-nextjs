@@ -97,7 +97,8 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
 
   const connectToZoho = () => {
     const appUrl = window.location.origin;
-    window.location.href = `/api/auth/zoho/connect?userId=${userId}`;
+    // We add prompt=consent select_account to help force the account selection screen
+    window.location.href = `/api/auth/zoho/connect?userId=${userId}&prompt=select_account`;
   };
 
   const disconnect = async () => {
@@ -115,6 +116,11 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
         setMessages([]);
         setSelectedMessage(null);
         toast.success('Disconnected from Zoho Mail');
+        // Explicitly advise user on how to switch accounts
+        toast('To connect a different account, sign out of Zoho.com in this browser first.', {
+          icon: 'ℹ️',
+          duration: 6000
+        });
     } catch (err: any) {
         toast.error('Failed to disconnect: ' + err.message);
     }
