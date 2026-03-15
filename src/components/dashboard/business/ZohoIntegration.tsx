@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 
 interface ZohoIntegrationProps {
   onEmailsSent?: (count: number) => void;
+  user?: any;
 }
 
 interface ZohoFromAddress {
@@ -41,7 +42,7 @@ interface EmailMessage {
 
 type FolderType = 'inbox' | 'compose' | 'sent' | 'drafts' | 'trash' | 'starred';
 
-const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) => {
+const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, user }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(false);
   const [accountInfo, setAccountInfo] = useState<ZohoAccount | null>(null);
@@ -64,15 +65,21 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
   const [deletingMessage, setDeletingMessage] = useState(false);
 
   useEffect(() => {
-    const fetchSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.id) {
-        setUserId(session.user.id);
-        checkConnection(session.user.id);
+    let mounted = true;
+    const init = async () => {
+      let currentUserId = user?.id;
+      if (!currentUserId) {
+        const { data: { session } } = await supabase.auth.getSession();
+        currentUserId = session?.user?.id;
+      }
+      if (currentUserId && mounted) {
+        setUserId(currentUserId);
+        checkConnection(currentUserId);
       }
     };
-    fetchSession();
-  }, []);
+    init();
+    return () => { mounted = false; };
+  }, [user?.id]);
 
   const checkConnection = async (uid: string) => {
     try {

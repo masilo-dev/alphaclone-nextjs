@@ -912,7 +912,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 
                         <GmailIntegration user={user} />
 
-                        <ZohoSettings />
+                        <ZohoSettings user={user} />
 
                         <HubspotIntegration />
 

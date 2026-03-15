@@ -5,22 +5,34 @@ import { Mail, CheckCircle, Zap, RefreshCw, X, User, Loader2 } from 'lucide-reac
 import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 
-const ZohoSettings: React.FC = () => {
+interface ZohoSettingsProps {
+  user?: any;
+}
+
+const ZohoSettings: React.FC<ZohoSettingsProps> = ({ user }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [accountInfo, setAccountInfo] = useState<any>(null);
   const [userId, setUserId] = useState<string>('');
 
   useEffect(() => {
-    const fetchSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.id) {
-        setUserId(session.user.id);
-        checkConnection(session.user.id);
+    let mounted = true;
+    const init = async () => {
+      let currentUserId = user?.id;
+      if (!currentUserId) {
+        const { data: { session } } = await supabase.auth.getSession();
+        currentUserId = session?.user?.id;
+      }
+      if (currentUserId && mounted) {
+        setUserId(currentUserId);
+        checkConnection(currentUserId);
+      } else if (mounted) {
+        setLoading(false);
       }
     };
-    fetchSession();
-  }, []);
+    init();
+    return () => { mounted = false; };
+  }, [user?.id]);
 
   const checkConnection = async (uid: string) => {
     setLoading(true);

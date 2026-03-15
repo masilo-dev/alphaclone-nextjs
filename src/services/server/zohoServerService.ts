@@ -127,11 +127,13 @@ export const zohoServerService = {
             .select('config')
             .eq('user_id', userId)
             .eq('type', 'zoho')
-            .single();
+            .maybeSingle();
 
-        if (error) {
+        if (error || !integration) {
             console.error('[Zoho Proxy Debug] Failed to fetch integration for proxyRequest:', error);
-            throw new Error('Database error fetching Zoho integration info');
+            const err: any = new Error('Database error fetching Zoho integration info');
+            err.code = 'NOT_FOUND';
+            throw err;
         }
 
         const accountId = integration?.config?.accountId || integration?.config?.zoid;
@@ -273,7 +275,7 @@ export const zohoServerService = {
                 .select('config')
                 .eq('user_id', userId)
                 .eq('type', 'zoho')
-                .single();
+                .maybeSingle();
 
             if (error || !integration?.config?.email) {
                 console.error('[Zoho Send Debug] Failed to fetch sender email from config:', error || 'Missing email');

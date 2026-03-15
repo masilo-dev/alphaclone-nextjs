@@ -347,7 +347,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/zoho':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
-                        <ZohoIntegration />
+                        <ZohoIntegration user={user} />
                     </React.Suspense>
                 );
 
