@@ -478,8 +478,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
                   value={composeData.body}
                   onChange={(e) => setComposeData({ ...composeData, body: e.target.value })}
                   placeholder="Write your message here..."
-                  rows={14}
-                  className="w-full bg-transparent text-white text-sm placeholder:text-slate-600 outline-none resize-none mt-2"
+                  className="w-full bg-transparent text-white text-sm placeholder:text-slate-600 outline-none resize-none mt-2 min-h-[250px] sm:min-h-[400px]"
                 />
               </div>
 
@@ -489,7 +488,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
                     <Paperclip className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="flex items-center justify-end gap-2 sm:gap-3">
+                <div className="flex items-center justify-end gap-2 sm:gap-3 py-4">
                   <button
                     onClick={() => { 
                       setIsComposing(false); 
@@ -511,6 +510,8 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent }) 
                   </button>
                 </div>
               </div>
+              {/* Extra spacing for mobile keyboards */}
+              <div className="h-20 lg:hidden" />
             </div>
           </div>
         )}
