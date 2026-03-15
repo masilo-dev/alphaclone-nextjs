@@ -207,7 +207,8 @@ async function sendEmail(userId: string, emailData: any) {
  */
 async function getEmails(userId: string, searchParams: URLSearchParams) {
     try {
-        const folderId = searchParams.get('folderId') || 'inbox';
+        // Handle both 'folder' (common from frontend) and 'folderId' (Zoho's internal param)
+        const folderId = searchParams.get('folderId') || searchParams.get('folder') || 'inbox';
         const messageId = searchParams.get('messageId');
 
         let endpoint: string;
@@ -220,15 +221,18 @@ async function getEmails(userId: string, searchParams: URLSearchParams) {
                 'inbox': 'inbox',
                 'sent': 'sent',
                 'drafts': 'drafts',
-                'trash': 'trash'
+                'trash': 'trash',
+                'spam': 'spam'
             };
             
             const actualFolderId = folderMap[folderId.toLowerCase()] || folderId;
             endpoint = `messages/view?folderId=${actualFolderId}`;
+            console.log(`[Zoho Debug] Fetching folder: ${actualFolderId} for user: ${userId}`);
         }
 
         const data = await zohoServerService.proxyRequest(userId, endpoint);
         
+        // Ensure we handle the data structure correctly (Zoho usually returns { data: [...] })
         return NextResponse.json({
             success: true,
             data: data.data || []

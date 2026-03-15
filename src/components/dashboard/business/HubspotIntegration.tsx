@@ -149,36 +149,51 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
     };
 
     return (
-        <div className="relative">
-            <div className="glass-card rounded-2xl border border-white/10 overflow-hidden opacity-75 grayscale-[0.5]">
-                <div className="p-5 border-b border-white/5 bg-gradient-to-r from-orange-500/10 to-transparent">
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
-                                <img src="https://www.hubspot.com/hubfs/assets/hubspot.com/style-guide/brand-guidelines/guidelines_logos_sprocket_color.svg" alt="HubSpot" className="w-6 h-6" />
+        <div className="relative group">
+            <div className="glass-card rounded-xl border border-white/5 overflow-hidden transition-all duration-300 hover:border-orange-500/30 group-hover:shadow-lg group-hover:shadow-orange-500/5">
+                <div className="p-3 sm:p-4">
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center border border-orange-500/20 group-hover:bg-orange-500/30 transition-colors">
+                                <img 
+                                    src="https://www.hubspot.com/hubfs/assets/hubspot.com/style-guide/brand-guidelines/guidelines_logos_sprocket_color.svg" 
+                                    alt="HubSpot" 
+                                    className="w-4 h-4 opacity-80 group-hover:opacity-100 transition-opacity" 
+                                />
                             </div>
                             <div>
-                                <h2 className="text-lg font-bold text-white tracking-tight">HubSpot CRM</h2>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                    <span className="px-2 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 text-[10px] font-black uppercase tracking-widest">
-                                        Coming Soon
+                                <h2 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
+                                    HubSpot CRM
+                                    <span className="px-1.5 py-0.5 rounded-md bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[8px] font-black uppercase tracking-widest">
+                                        Soon
                                     </span>
-                                </div>
+                                </h2>
+                                <p className="text-slate-500 text-[10px] mt-0.5 line-clamp-1">Sync contacts and track deal stages automatically.</p>
                             </div>
+                        </div>
+                    </div>
+                    
+                    <div className="mt-3 overflow-hidden">
+                        <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">Development Progress</span>
+                            <span className="text-[8px] text-slate-400 font-black">75%</span>
+                        </div>
+                        <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+                            <motion.div 
+                                initial={{ width: 0 }}
+                                animate={{ width: '75%' }}
+                                transition={{ duration: 1, ease: "easeOut" }}
+                                className="h-full bg-gradient-to-r from-orange-600 to-orange-400" 
+                            />
                         </div>
                     </div>
                 </div>
-
-                <div className="p-6">
-                    <p className="text-slate-400 text-xs leading-relaxed max-w-md">
-                        Advanced HubSpot integration is currently under development. Soon you'll be able to sync contacts, track deal stages, and automate your sales workflow directly from AlphaClone.
-                    </p>
-                    <div className="mt-4 flex gap-2">
-                        <div className="h-1.5 w-1/3 bg-slate-800 rounded-full overflow-hidden">
-                            <div className="h-full w-3/4 bg-orange-500 animate-pulse" />
-                        </div>
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Development in progress</span>
-                    </div>
+            </div>
+            
+            {/* Subtle Overlay Badge */}
+            <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="bg-orange-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full shadow-lg shadow-orange-500/40">
+                    BETA
                 </div>
             </div>
         </div>

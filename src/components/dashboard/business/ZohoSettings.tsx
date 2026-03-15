@@ -136,7 +136,7 @@ const ZohoSettings: React.FC = () => {
 
             <div className="flex items-center justify-between pt-2">
               <p className="text-xs text-slate-500">
-                Manage your emails in the <span className="text-white font-semibold">Messages</span> tab.
+                Manage your emails in the <span className="text-white font-semibold">Mail</span> tab.
               </p>
               <button
                 onClick={disconnect}
