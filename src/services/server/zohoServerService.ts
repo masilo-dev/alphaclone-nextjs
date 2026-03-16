@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
 import { ENV } from '@/config/env';
+import { encrypt, decrypt } from '@/lib/encryption';
 
 export const zohoServerService = {
     /**
@@ -29,6 +30,18 @@ export const zohoServerService = {
             }
 
             const config = integration.config;
+            const secret = ENV.ENCRYPTION_SECRET;
+            
+            // Decrypt accessToken if secret is available
+            let accessToken = config.accessToken;
+            if (secret && accessToken && accessToken.includes(':')) {
+                try {
+                    accessToken = decrypt(accessToken, secret);
+                } catch (e) {
+                    console.error('[Zoho Token Debug] Failed to decrypt accessToken:', e);
+                }
+            }
+
             if (!config.expiryDate) {
                 console.error('[Zoho Token Debug] Config missing expiryDate:', config);
                 return null;
@@ -37,12 +50,23 @@ export const zohoServerService = {
             const expiresAt = new Date(config.expiryDate).getTime();
 
             if (Date.now() < expiresAt - 60000) { // If it expires in more than a minute
-                return config.accessToken;
+                return accessToken;
             }
 
             console.log('[Zoho Token Debug] Token expired, attempting refresh for integration:', integration.id);
+            
+            // Decrypt refreshToken
+            let refreshToken = config.refreshToken;
+            if (secret && refreshToken && refreshToken.includes(':')) {
+                try {
+                    refreshToken = decrypt(refreshToken, secret);
+                } catch (e) {
+                    console.error('[Zoho Token Debug] Failed to decrypt refreshToken:', e);
+                }
+            }
+
             // Refresh token
-            return await this.refreshToken(userId, config.refreshToken, integration.id);
+            return await this.refreshToken(userId, refreshToken, integration.id);
         } catch (err) {
             console.error('[Zoho Token Debug] Unexpected error in getValidToken:', err);
             return null;
@@ -91,14 +115,33 @@ export const zohoServerService = {
             const data = await response.json();
             if (data.error) {
                 console.error('[Zoho Refresh Error]', JSON.stringify(data));
+                
+                // If the error is 'invalid_grant', it usually means the refresh token is revoked or expired
+                if (data.error === 'invalid_grant' || data.error === 'access_denied') {
+                    console.warn(`[Zoho Refresh] Access revoked for user ${userId}. Disabling integration.`);
+                    await supabaseAdmin
+                        .from('integrations')
+                        .update({ 
+                            enabled: false,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', integrationId);
+                }
+                
                 throw new Error(data.error);
             }
 
             const expiresAt = new Date(Date.now() + (data.expires_in || 3600) * 1000).toISOString();
+            const secret = ENV.ENCRYPTION_SECRET;
+
+            let accessToken = data.access_token;
+            if (secret) {
+                accessToken = encrypt(accessToken, secret);
+            }
 
             const updatedConfig = {
                 ...(currentIntegration?.config || {}),
-                accessToken: data.access_token,
+                accessToken: accessToken,
                 expiryDate: expiresAt,
             };
 
@@ -108,9 +151,9 @@ export const zohoServerService = {
                 .eq('id', integrationId);
 
             return data.access_token;
-        } catch (err) {
-            console.error('Failed to refresh Zoho token:', err);
-            return null;
+        } catch (err: any) {
+            console.error('Failed to refresh Zoho token:', err.message || err);
+            throw err; // Re-throw to inform parent calls
         }
     },
 

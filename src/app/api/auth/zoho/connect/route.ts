@@ -1,17 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
-import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
+    
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    console.log(`[Zoho Connect Debug] Received Connect Request for User: ${userId}`);
-
-    if (!userId) {
-        console.error('[Zoho Connect Debug] Missing userId in request');
-        return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    if (!user) {
+        console.error('[Zoho Connect Debug] Unauthorized access attempt');
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const userId = user.id;
+    console.log(`[Zoho Connect Debug] Received Connect Request for User: ${userId}`);
 
     if (!ENV.ZOHO_CLIENT_ID) {
         console.error('[Zoho Connect Debug] ZOHO_CLIENT_ID is not configured in environment');

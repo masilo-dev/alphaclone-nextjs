@@ -120,11 +120,11 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
     { id: 'ca', name: 'Canada (.ca)', flag: '🇨🇦' },
   ];
 
-  const checkConnection = async (uid: string) => {
+  const checkConnection = async (uid?: string) => {
     setIsCheckingConnection(true);
     try {
       const timestamp = new Date().getTime();
-      const response = await fetch(`/api/zoho/enhanced?userId=${uid}&action=get_account_info&t=${timestamp}`);
+      const response = await fetch(`/api/zoho/accounts?t=${timestamp}`);
       const data = await response.json();
       
       if (response.ok && data.success) {
@@ -137,7 +137,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
         } else {
           setComposeData(prev => ({ ...prev, from: data.data.email }));
         }
-        loadMessages(uid, 'inbox');
+        loadMessages('inbox');
       } else if (response.status === 404) {
         // Explicitly not connected
         setIsConnected(false);
@@ -157,9 +157,8 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
   };
 
   const connectToZoho = () => {
-    const appUrl = window.location.origin;
     // We add prompt=consent select_account to help force the account selection screen
-    window.location.href = `/api/auth/zoho/connect?userId=${userId}&region=${selectedRegion}&prompt=select_account`;
+    window.location.href = `/api/auth/zoho/connect?region=${selectedRegion}&prompt=select_account`;
   };
 
   const disconnect = async () => {
@@ -187,12 +186,12 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
     }
   };
 
-  const loadMessages = async (uid: string, folder: FolderType) => {
+  const loadMessages = async (folder: FolderType) => {
     if (folder === 'compose') return;
     setLoading(true);
     try {
       const timestamp = new Date().getTime();
-      const response = await fetch(`/api/zoho/enhanced?userId=${uid}&action=get_messages&folder=${folder}&t=${timestamp}`);
+      const response = await fetch(`/api/zoho/messages?folder=${folder}&t=${timestamp}`);
       const data = await response.json();
       if (response.ok && data.success) {
         setMessages(data.data || []);
@@ -222,14 +221,9 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
     
     setDeletingMessage(true);
     try {
-      const response = await fetch('/api/zoho/enhanced', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          action: 'delete_message',
-          data: { messageId }
-        })
+      const response = await fetch(`/api/zoho/messages/${messageId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
       });
 
       if (response.ok) {
@@ -291,19 +285,15 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
     }
     setSendingEmail(true);
     try {
-      const resp = await fetch('/api/zoho/enhanced', {
+      const resp = await fetch('/api/zoho/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId,
-          action: 'send_email',
-          data: {
-            to: composeData.to,
-            cc: composeData.cc || undefined,
-            subject: composeData.subject,
-            content: composeData.body,
-            fromAddress: composeData.from,
-          },
+          to: composeData.to,
+          cc: composeData.cc || undefined,
+          subject: composeData.subject,
+          content: composeData.body,
+          fromAddress: composeData.from,
         }),
       });
       const result = await resp.json();

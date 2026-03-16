@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { encrypt } from '@/lib/encryption';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
@@ -128,6 +129,17 @@ export async function GET(req: NextRequest) {
             console.warn('[Zoho Callback Debug] No refresh token received and none found in existing integration. Future token refreshes will fail.');
         }
 
+        const secret = ENV.ENCRYPTION_SECRET;
+        let encryptedAccessToken = access_token;
+        let encryptedRefreshToken = finalRefreshToken;
+
+        if (secret) {
+            encryptedAccessToken = encrypt(access_token, secret);
+            if (finalRefreshToken) {
+                encryptedRefreshToken = encrypt(finalRefreshToken, secret);
+            }
+        }
+
         const integrationPayload = {
             user_id: userId,
             type: 'zoho',
@@ -135,8 +147,8 @@ export async function GET(req: NextRequest) {
             enabled: true,
             config: {
                 accountId,
-                accessToken: access_token,
-                refreshToken: finalRefreshToken,
+                accessToken: encryptedAccessToken,
+                refreshToken: encryptedRefreshToken,
                 expiryDate: expiresAt,
                 email,
                 accountsServer,

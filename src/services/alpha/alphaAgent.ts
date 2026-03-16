@@ -10,6 +10,7 @@ export interface AlphaMessage {
 
 export interface AlphaMissionStatus {
     id: string;
+    userId: string; // Restricted visibility
     description: string;
     status: 'idle' | 'running' | 'completed' | 'failed';
     logs: string[];
@@ -17,27 +18,34 @@ export interface AlphaMissionStatus {
     endTime?: Date;
 }
 
+export interface UserContext {
+    id: string;
+    name: string;
+    role: string;
+}
+
 class AlphaAgent {
     private activeMissions: Map<string, AlphaMissionStatus> = new Map();
 
-    async startMission(description: string): Promise<string> {
+    async startMission(description: string, user?: UserContext): Promise<string> {
         const missionId = Math.random().toString(36).substring(7);
         const mission: AlphaMissionStatus = {
             id: missionId,
+            userId: user?.id || 'anonymous',
             description,
             status: 'running',
-            logs: [`Mission started: ${description}`],
+            logs: [`Mission started: ${description}`, `AUTHORIZED_USER: ${user?.name || 'Anonymous'}`],
             startTime: new Date()
         };
         this.activeMissions.set(missionId, mission);
 
         // Run mission asynchronously
-        this.executeMission(missionId).catch(err => {
+        this.executeMission(missionId, user).catch(err => {
             console.error(`Mission ${missionId} failed:`, err);
             const m = this.activeMissions.get(missionId);
             if (m) {
                 m.status = 'failed';
-                m.logs.push(`Error: ${err.message}`);
+                m.logs.push(`SYSTEM ERROR: ${err.message}`);
                 m.endTime = new Date();
             }
         });
@@ -45,26 +53,25 @@ class AlphaAgent {
         return missionId;
     }
 
-    private async executeMission(missionId: string) {
+    private async executeMission(missionId: string, user?: UserContext) {
         const mission = this.activeMissions.get(missionId);
         if (!mission) return;
 
         try {
-            mission.logs.push('ALPHA ENGINE: Initializing neural mission loop...');
+            mission.logs.push(`ALPHA ENGINE: Initializing neural loop for ${user?.name || 'system'}...`);
             
             let iteration = 0;
             const maxIterations = 5;
             let missionAccomplished = false;
-            let currentContext = mission.description;
 
             while (iteration < maxIterations && !missionAccomplished) {
                 iteration++;
-                mission.logs.push(`EXECUTIVE PROTOCOL: Step ${iteration} - Analyzing Execution Path...`);
+                mission.logs.push(`EXECUTIVE PROTOCOL: [Step ${iteration}] - Calibrating Execution...`);
 
                 const systemPrompt = `You are Alpha, the Executive Productivity Engine for AlphaClone. 
-Your goal is INSTANT EXECUTION and PRODUCTIVITY. Do not over-analyze; execute the most efficient path.
+You are currently executing a mission for ${user?.name || 'an authorized operator'} (Role: ${user?.role || 'operator'}).
 
-Current Mission: ${mission.description}
+Mission: ${mission.description}
 Available Tools: ${Object.values(ALPHA_TOOLS).map(t => `${t.name}: ${t.description}`).join('\n')}
 
 Response Format:
@@ -72,15 +79,14 @@ Response Format:
 - If mission success: "FINALIZED: [Brief Execution Summary]"
 - If reasoning: "LOGIC: [Your executive reasoning]"
 
-Stay focused on productivity and account-specific outreach.`;
+Stay focused on high-speed productivity and strict data isolation for this user.`;
 
                 const aiResponse = await aiService.complete({
-                    prompt: `Current Mission Status & Logs:\n${mission.logs.join('\n')}\n\nDecision:`,
+                    prompt: `Context for ${user?.name}:\n${mission.logs.slice(-3).join('\n')}\n\nDecision:`,
                     systemPrompt,
                     provider: 'anthropic',
-                    model: 'claude-3-5-sonnet-20240620', // Faster response
-                    temperature: 0,
-                    maxTokens: 500
+                    model: 'claude-3-5-sonnet-20240620',
+                    temperature: 0
                 });
 
                 const content = aiResponse.content.trim();
@@ -92,54 +98,44 @@ Stay focused on productivity and account-specific outreach.`;
                         const [, toolName, argsJson] = match;
                         const tool = ALPHA_TOOLS[toolName];
                         if (tool) {
-                            mission.logs.push(`EXECUTING PROTOCOL: ${toolName}`);
+                            mission.logs.push(`DISPATCHING: ${toolName}`);
                             try {
                                 const args = JSON.parse(argsJson);
-                                const result = await tool.execute(args);
-                                mission.logs.push(`OUTPUT [${toolName}]: ${JSON.stringify(result).substring(0, 200)}...`);
-                                currentContext += `\nOutput: ${JSON.stringify(result)}`;
+                                // Automatically inject user context into tool args if missing
+                                const result = await tool.execute({ ...args, account_id: args.account_id || user?.id });
+                                mission.logs.push(`RESULT [${toolName}]: ${JSON.stringify(result).substring(0, 150)}...`);
                             } catch (e: any) {
-                                mission.logs.push(`EXECUTION ERROR [${toolName}]: ${e.message}`);
+                                mission.logs.push(`FAILED [${toolName}]: ${e.message}`);
                             }
                         }
                     }
                 } else if (content.startsWith('FINALIZED:')) {
                     missionAccomplished = true;
-                    mission.logs.push('MISSION STATUS: FULLY EXECUTED');
-                }
- else if (iteration === maxIterations) {
-                    mission.logs.push('MISSION WARNING: Max iterations reached. Closing loop.');
+                    mission.logs.push(`PROTOCOL FINALIZED: ${content.split('FINALIZED:')[1].trim()}`);
                 }
             }
 
             mission.status = 'completed';
             mission.endTime = new Date();
-            mission.logs.push('ALPHA ENGINE: Mission cycle complete. Hibernating.');
+            mission.logs.push('ALPHA ENGINE: Cycle complete. Entering power-save mode.');
             
-            // Auto-notify on finish if it was a significant mission
-            if (mission.logs.length > 5) {
-                await ALPHA_TOOLS.outreach.execute({
-                    to: 'admin@alphaclone.tech',
-                    subject: `Alpha Mission Report: ${mission.id.toUpperCase()}`,
-                    body: `Alpha has completed a mission.\n\nMission: ${mission.description}\n\nKey Findings:\n${mission.logs.filter(l => l.includes('RESULT') || l.includes('COMPLETE')).join('\n')}`,
-                    provider: 'resend'
-                });
-            }
-
         } catch (error: any) {
             mission.status = 'failed';
-            mission.logs.push(`SYSTEM CRITICAL: ${error.message}`);
+            mission.logs.push(`CRITICAL FAILURE: ${error.message}`);
             mission.endTime = new Date();
             throw error;
         }
     }
 
-    getMissionStatus(missionId: string): AlphaMissionStatus | undefined {
-        return this.activeMissions.get(missionId);
+    getMissionStatus(missionId: string, userId?: string): AlphaMissionStatus | undefined {
+        const mission = this.activeMissions.get(missionId);
+        if (mission && mission.userId === userId) return mission;
+        return undefined;
     }
 
-    getAllMissions(): AlphaMissionStatus[] {
-        return Array.from(this.activeMissions.values());
+    getAllMissions(userId?: string): AlphaMissionStatus[] {
+        return Array.from(this.activeMissions.values())
+            .filter(m => m.userId === userId || m.userId === 'anonymous');
     }
 }
 

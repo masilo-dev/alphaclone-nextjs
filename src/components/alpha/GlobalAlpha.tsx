@@ -1,15 +1,26 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Terminal, X, Zap, ChevronRight, Activity, Cpu } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+import { usePathname } from 'next/navigation';
 
 export default function GlobalAlpha() {
+    const { user, loading } = useAuth();
+    const pathname = usePathname();
+    
     const [isOpen, setIsOpen] = useState(false);
     const [prompt, setPrompt] = useState('');
     const [isDeploying, setIsDeploying] = useState(false);
     const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+    // RULE: Alpha is restricted to authenticated dashboard contexts. 
+    // Invisible on landing page (/) and if no user is present.
+    if (loading || !user || pathname === '/' || pathname === '/login' || pathname === '/register') {
+        return null;
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -73,7 +84,7 @@ export default function GlobalAlpha() {
                         <div className="p-3 border-b border-[#00FFD1]/10 flex items-center justify-between bg-[#001720]">
                             <div className="flex items-center gap-3">
                                 <Activity className="w-3 h-3 text-[#00FFD1] animate-pulse" />
-                                <span className="text-[10px] font-bold tracking-[0.4em] text-[#00FFD1] uppercase">Alpha_Executive_v.2</span>
+                                <span className="text-[10px] font-bold tracking-[0.4em] text-[#00FFD1] uppercase">Alpha_Executive_v.2.1</span>
                             </div>
                             <button onClick={() => setIsOpen(false)} className="hover:text-red-400 transition-colors">
                                 <X className="w-4 h-4" />
@@ -82,9 +93,12 @@ export default function GlobalAlpha() {
 
                         <div className="p-6 space-y-5">
                             <div className="space-y-1">
+                                <div className="text-[11px] text-white font-bold tracking-tight mb-1">
+                                    GREETINGS, {user.name.toUpperCase()}
+                                </div>
                                 <div className="text-[9px] text-[#00FFD1]/60 flex items-center gap-2">
                                     <Terminal className="w-2.5 h-2.5" />
-                                    <span>READY FOR INSTANT EXECUTION</span>
+                                    <span>AUTHORIZED_ID: {user.id.slice(0, 8)}</span>
                                 </div>
                             </div>
 
@@ -93,13 +107,13 @@ export default function GlobalAlpha() {
                                     <textarea
                                         value={prompt}
                                         onChange={(e) => setPrompt(e.target.value)}
-                                        placeholder="PROTOCOL_INPUT..."
+                                        placeholder="INITIALIZE_MISSION_FOR_ALPHA..."
                                         className="w-full bg-[#000508] border border-[#00FFD1]/20 p-4 text-xs text-[#00FFD1] placeholder:text-[#00FFD1]/20 focus:outline-none focus:border-[#00FFD1]/60 min-h-[120px] resize-none uppercase"
                                     />
                                     {status === 'success' && (
                                         <div className="absolute inset-0 bg-[#00FFD1] text-black flex flex-col items-center justify-center font-bold">
                                             <Zap className="w-8 h-8 mb-2 animate-bounce" />
-                                            <span className="text-xs tracking-widest">EXECUTING_NOW</span>
+                                            <span className="text-xs tracking-widest">PERSONALIZED_MISSION_ID_DISPATCHED</span>
                                         </div>
                                     )}
                                 </div>
@@ -110,7 +124,7 @@ export default function GlobalAlpha() {
                                         disabled={isDeploying || !prompt.trim()}
                                         className="flex-1 py-3 bg-[#00FFD1] text-black text-[10px] font-bold tracking-[0.2em] transition-all hover:bg-[#00D1FF] disabled:opacity-30 disabled:grayscale"
                                     >
-                                        {isDeploying ? 'DISPATCHING...' : 'INITIALIZE_MISSION'}
+                                        {isDeploying ? 'DISPATCHING...' : 'INIT_PERSONALIZED_PROTOCOL'}
                                     </button>
                                     <Link 
                                         href="/alpha" 
@@ -123,18 +137,12 @@ export default function GlobalAlpha() {
                             </form>
                         </div>
 
-                        <div className="px-6 py-2 bg-[#000508] border-t border-[#00FFD1]/10 flex items-center justify-between">
+                        <div className="px-6 py-2 bg-[#000508] border-t border-[#00FFD1]/10 flex items-center justify-between text-[8px] text-[#00FFD1]/40">
                             <div className="flex gap-4">
-                                <div className="flex items-center gap-1.5">
-                                    <div className="w-1 h-1 bg-[#00FFD1] rounded-full" />
-                                    <span className="text-[8px] text-[#00FFD1]/40">SEMANTIC: OK</span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                    <div className="w-1 h-1 bg-yellow-400 rounded-full" />
-                                    <span className="text-[8px] text-[#00FFD1]/40">TPS: HIGH</span>
-                                </div>
+                                <span>SECURE: YES</span>
+                                <span>SESSION: ACTIVE</span>
                             </div>
-                            <span className="text-[8px] text-[#00FFD1]/20 italic">UNHACKABLE_LAYER_7</span>
+                            <span className="italic uppercase">Operator_{user.role}</span>
                         </div>
                     </motion.div>
                 )}

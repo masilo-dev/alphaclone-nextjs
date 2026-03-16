@@ -31,6 +31,7 @@ export const rateLimitConfigs: {
     api: {
         standard: { limit: number; window: Duration };
         heavy: { limit: number; window: Duration };
+        zoho: { limit: number; window: Duration };
     };
     public: {
         contact: { limit: number; window: Duration };
@@ -49,6 +50,7 @@ export const rateLimitConfigs: {
     api: {
         standard: { limit: 100, window: '1m' }, // 100 requests per minute
         heavy: { limit: 20, window: '1m' }, // 20 requests per minute (AI, exports)
+        zoho: { limit: 30, window: '1m' }, // 30 requests per minute for Zoho Mail
     },
 
     // Public endpoints - lenient limits

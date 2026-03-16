@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { zohoServerService } from '@/services/server/zohoServerService';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
 
 /**
  * Enhanced Zoho API handler that properly handles multi-tenant scenarios
@@ -10,13 +11,21 @@ import { zohoServerService } from '@/services/server/zohoServerService';
  */
 
 export async function GET(req: NextRequest) {
+    // Apply rate limiting
+    const rateLimitRes = await rateLimitMiddleware(req, rateLimitConfigs.api.zoho);
+    if (rateLimitRes) return rateLimitRes;
+
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
     const action = searchParams.get('action') || 'get_account_info';
 
-    if (!userId) {
-        return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const userId = user.id;
 
     try {
         switch (action) {
@@ -37,12 +46,25 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-    try {
-        const { userId, action, data } = await req.json();
+    // Apply rate limiting
+    const rateLimitRes = await rateLimitMiddleware(req, rateLimitConfigs.api.zoho);
+    if (rateLimitRes) return rateLimitRes;
 
-        if (!userId || !action) {
+    try {
+        const { action, data } = await req.json();
+
+        const supabase = await createSupabaseServerClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const userId = user.id;
+
+        if (!action) {
             return NextResponse.json({ 
-                error: 'Missing required fields: userId and action are required' 
+                error: 'Missing required fields: action is required' 
             }, { status: 400 });
         }
 

@@ -1,139 +1,83 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { zohoServerService } from '@/services/server/zohoServerService';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
 
 export async function GET(req: NextRequest) {
+    const rateLimitRes = await rateLimitMiddleware(req, rateLimitConfigs.api.zoho);
+    if (rateLimitRes) return rateLimitRes;
+
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
-    const folderId = searchParams.get('folderId') || 'inbox';
+    const folderId = searchParams.get('folderId') || searchParams.get('folder') || 'inbox';
     const messageId = searchParams.get('messageId');
 
-    if (!userId) {
-        return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
-    }
-
     try {
-        // If messageId is provided, fetch specific message details
         if (messageId) {
-            const endpoint = `messages/${messageId}/details`;
-            const data = await zohoServerService.proxyRequest(userId, endpoint);
-
-            // Map Zoho detail response
-            const msg = data.data || {};
-            return NextResponse.json({
-                message: {
-                    id: msg.messageId,
-                    subject: msg.subject,
-                    content: msg.content,
-                    from: msg.sender,
-                    to: msg.toAddress,
-                    date: msg.sentTime
-                }
-            });
+            const data = await zohoServerService.proxyRequest(user.id, `messages/${messageId}/details`);
+            return NextResponse.json({ success: true, data: data.data || {} });
         }
 
-        // If we have a string like 'inbox', 'sent', etc, we need to map it to the actual Zoho folder ID
-        let actualFolderId = folderId;
-        if (['inbox', 'sent', 'starred', 'trash'].includes(folderId.toLowerCase())) {
-            // Fetch folders from Zoho
-            const foldersData = await zohoServerService.proxyRequest(userId, 'folders');
-            const folders = foldersData.data || [];
+        const folderPropMap: Record<string, string> = {
+            'inbox': 'isInbox', 'sent': 'isSent', 'drafts': 'isDraft', 'trash': 'isTrash', 'spam': 'isSpam'
+        };
+        const folderFallbackMap: Record<string, number> = {
+            'inbox': 7, 'sent': 5, 'drafts': 3, 'trash': 4, 'spam': 6
+        };
 
-            // Map our UI names to typical Zoho folder names
-            const nameToMatch = folderId.toLowerCase() === 'inbox' ? 'Inbox'
-                : folderId.toLowerCase() === 'sent' ? 'Sent'
-                    : folderId.toLowerCase() === 'trash' ? 'Trash'
-                        : 'Inbox'; // Default to inbox for starred or unknown for now (Zoho handles starred via flags, not folders typically, but we'll fallback)
-
-            const targetFolder = folders.find((f: any) => f.folderName?.toLowerCase() === nameToMatch.toLowerCase());
-            if (targetFolder && targetFolder.folderId) {
-                actualFolderId = targetFolder.folderId;
+        let actualFolderId: string | number = folderId;
+        const lcFolder = folderId.toLowerCase();
+        
+        if (folderPropMap[lcFolder] || lcFolder === 'starred') {
+            try {
+                const foldersData = await zohoServerService.proxyRequest(user.id, 'folders');
+                const targetFolder = foldersData?.data?.find((f: any) => 
+                    (folderPropMap[lcFolder] && f[folderPropMap[lcFolder]]) || f.folderName?.toLowerCase() === lcFolder
+                );
+                actualFolderId = targetFolder?.folderId || folderFallbackMap[lcFolder] || folderId;
+            } catch (e) {
+                actualFolderId = folderFallbackMap[lcFolder] || folderId;
             }
         }
 
-        const endpoint = `messages/view?folderId=${actualFolderId}`;
-        const data = await zohoServerService.proxyRequest(userId, endpoint);
+        let queryParams = `sortBy=date&order=desc&start=0&limit=50`;
+        if (lcFolder === 'starred') queryParams += `&flagid=2`;
+        else queryParams += `&folderId=${actualFolderId}`;
 
-        // Map Zoho response to internal ZohoMessage format
-        const messages = (data.data || []).map((msg: any) => ({
-            id: msg.messageId,
-            threadId: msg.threadId,
-            subject: msg.subject,
-            snippet: msg.summary,
-            from: msg.sender,
-            to: msg.toAddress,
-            date: msg.sentTime,
-            hasAttachments: msg.hasAttachment === '1'
-        }));
-
-        return NextResponse.json({ messages });
+        const data = await zohoServerService.proxyRequest(user.id, `messages/view?${queryParams}`);
+        return NextResponse.json({ success: true, data: data.data || [] });
     } catch (err: any) {
-        console.error('Zoho Messages Fetch Error:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return NextResponse.json({ error: err.message }, { status: err.status || 500 });
     }
 }
 
 export async function POST(req: NextRequest) {
-    try {
-        const { userId, to, subject, content } = await req.json();
+    const rateLimitRes = await rateLimitMiddleware(req, rateLimitConfigs.api.zoho);
+    if (rateLimitRes) return rateLimitRes;
 
-        if (!userId || !to || !subject || !content) {
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    try {
+        const body = await req.json();
+        const { to, subject, content, fromAddress } = body;
+
+        if (!to || !subject || !content) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        // Robustly fetch/verify account info (to fix "Invalid Input" issues related to mismatched fromAddress)
-        let fromAddress: string | undefined;
-        try {
-            const accountsData = await zohoServerService.proxyRequest(userId, 'accounts');
-            if (accountsData.data && accountsData.data.length > 0) {
-                const primaryAccount = accountsData.data[0];
-                fromAddress = primaryAccount.emailAddress || primaryAccount.primaryEmail;
-                
-                // Proactively update the integration config if we have new info
-                if (fromAddress || primaryAccount.accountId) {
-                    const { createSupabaseAdminClient } = await import('@/lib/supabase-server');
-                    const supabaseAdmin = createSupabaseAdminClient();
-                    
-                    const { data: integration } = await supabaseAdmin
-                        .from('integrations')
-                        .select('config')
-                        .eq('user_id', userId)
-                        .eq('type', 'zoho')
-                        .single();
-
-                    const updatedConfig = {
-                        ...(integration?.config || {}),
-                        email: fromAddress || integration?.config?.email,
-                        accountId: primaryAccount.accountId || integration?.config?.accountId,
-                        zoid: primaryAccount.accountId || integration?.config?.zoid
-                    };
-
-                    await supabaseAdmin
-                        .from('integrations')
-                        .update({ config: updatedConfig })
-                        .eq('user_id', userId)
-                        .eq('type', 'zoho');
-                }
-            }
-        } catch (accErr) {
-            console.error('[Zoho Send Debug] Failed to auto-resolve account info:', accErr);
-            // Continue with fallback in sendMessage if this fails
-        }
-
-        // Use the dedicated sendMessage method which handles mailFormat: 'html' and proper endpoint structure
-        const data = await zohoServerService.sendMessage(userId, {
-            toAddress: String(to || ''),
-            subject: subject,
-            content: content,
-            fromAddress: fromAddress
+        const response = await zohoServerService.sendMessage(user.id, {
+            toAddress: to, subject, content, fromAddress
         });
 
-        return NextResponse.json({ success: true, data });
+        return NextResponse.json({ success: true, data: response });
     } catch (err: any) {
-        console.error('Zoho Send Error:', err);
-        // Provide more detailed error info in the response for debugging
-        return NextResponse.json({ 
-            error: err.message,
-            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
-        }, { status: 500 });
+        return NextResponse.json({ error: err.message }, { status: err.status || 500 });
     }
 }
