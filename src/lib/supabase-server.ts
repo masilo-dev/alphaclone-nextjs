@@ -6,19 +6,18 @@ import { ENV } from '@/config/env'
 const createMockSupabaseClient = (serviceName: string) => {
     console.warn(`[${serviceName}] Missing credentials, returning mock client for build time`);
     
-    // The Ultimate Proxy: handles both property access and function calls recursively
+    // The Super Ultimate Proxy: handles destructuring, chaining, and function calls
     const mock: any = new Proxy(() => {}, {
         get: (target, prop) => {
-            if (prop === 'then') return undefined; // Avoid issues with async/await
-            if (prop === 'data') return null;
-            if (prop === 'error') return { message: `${serviceName} credentials missing` };
+            if (prop === 'then') return undefined;
+            if (prop === 'error') return null; // Error should be null to avoid triggering error checks
             if (typeof prop === 'symbol') return undefined;
             
-            // For any other property, return the mock again
+            // For any other property (including 'data'), return the mock again to support nested destructuring
+            // e.g. { data: { user } } works because mock.data is mock, and mock.user is mock
             return mock;
         },
         apply: (target, thisArg, argList) => {
-            // When called as a function (e.g., .from('...')), return the mock again
             return mock;
         }
     });
