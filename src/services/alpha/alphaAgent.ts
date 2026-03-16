@@ -1,5 +1,7 @@
 import { ALPHA_TOOLS } from './tools';
 import { aiService } from '../ai/aiService';
+import { alphaOrchestrator } from './alphaOrchestrator';
+import { parallelEngine } from './parallelEngine';
 
 export interface AlphaMessage {
     role: 'system' | 'user' | 'assistant' | 'tool';
@@ -10,7 +12,8 @@ export interface AlphaMessage {
 
 export interface AlphaMissionStatus {
     id: string;
-    userId: string; // Restricted visibility
+    userId: string; 
+    tenantId: string; // Fortress Isolation
     description: string;
     status: 'idle' | 'running' | 'completed' | 'failed';
     logs: string[];
@@ -32,6 +35,7 @@ class AlphaAgent {
         const mission: AlphaMissionStatus = {
             id: missionId,
             userId: user?.id || 'anonymous',
+            tenantId: user?.id || 'anonymous', // Mocking tenantId as userId for now
             description,
             status: 'running',
             logs: [`Mission started: ${description}`, `AUTHORIZED_USER: ${user?.name || 'Anonymous'}`],
@@ -58,70 +62,33 @@ class AlphaAgent {
         if (!mission) return;
 
         try {
-            mission.logs.push(`ALPHA ENGINE: Initializing neural loop for ${user?.name || 'system'}...`);
+            mission.logs.push(`ALPHA ORCHESTRATOR: Mapping mission trajectory for ${user?.name || 'Authorized Operator'}...`);
             
-            let iteration = 0;
-            const maxIterations = 5;
-            let missionAccomplished = false;
+            // 1. Plan Mission using Strategist
+            const tasks = await alphaOrchestrator.planMission(missionId, mission.description, user);
+            mission.logs.push(`PLAN_GENERATED: Decomposed into ${tasks.length} autonomous sub-tasks.`);
 
-            while (iteration < maxIterations && !missionAccomplished) {
-                iteration++;
-                mission.logs.push(`EXECUTIVE PROTOCOL: [Step ${iteration}] - Calibrating Execution...`);
+            // 2. Execute via Parallel Engine
+            await parallelEngine.processMission(missionId, user, (msg: string) => {
+                mission.logs.push(msg);
+            });
 
-                const systemPrompt = `You are Alpha, the Executive Productivity Engine for AlphaClone. 
-You are currently executing a mission for ${user?.name || 'an authorized operator'} (Role: ${user?.role || 'operator'}).
-
-Mission: ${mission.description}
-Available Tools: ${Object.values(ALPHA_TOOLS).map(t => `${t.name}: ${t.description}`).join('\n')}
-
-Response Format:
-- If executing a tool: "EXECUTE: tool_name|{args}"
-- If mission success: "FINALIZED: [Brief Execution Summary]"
-- If reasoning: "LOGIC: [Your executive reasoning]"
-
-Stay focused on high-speed productivity and strict data isolation for this user.`;
-
-                const aiResponse = await aiService.complete({
-                    prompt: `Context for ${user?.name}:\n${mission.logs.slice(-3).join('\n')}\n\nDecision:`,
-                    systemPrompt,
-                    provider: 'anthropic',
-                    model: 'claude-3-5-sonnet-20240620',
-                    temperature: 0
-                });
-
-                const content = aiResponse.content.trim();
-                mission.logs.push(`ALPHA: ${content}`);
-
-                if (content.startsWith('EXECUTE:')) {
-                    const match = content.match(/EXECUTE:\s*(\w+)\|({.*})/);
-                    if (match) {
-                        const [, toolName, argsJson] = match;
-                        const tool = ALPHA_TOOLS[toolName];
-                        if (tool) {
-                            mission.logs.push(`DISPATCHING: ${toolName}`);
-                            try {
-                                const args = JSON.parse(argsJson);
-                                // Automatically inject user context into tool args if missing
-                                const result = await tool.execute({ ...args, account_id: args.account_id || user?.id });
-                                mission.logs.push(`RESULT [${toolName}]: ${JSON.stringify(result).substring(0, 150)}...`);
-                            } catch (e: any) {
-                                mission.logs.push(`FAILED [${toolName}]: ${e.message}`);
-                            }
-                        }
-                    }
-                } else if (content.startsWith('FINALIZED:')) {
-                    missionAccomplished = true;
-                    mission.logs.push(`PROTOCOL FINALIZED: ${content.split('FINALIZED:')[1].trim()}`);
-                }
+            const allCompleted = tasks.every((t: any) => t.status === 'completed');
+            
+            if (allCompleted) {
+                mission.status = 'completed';
+                mission.logs.push(`MISSION_SUCCESS: All agents report task finalization.`);
+            } else {
+                mission.status = 'failed';
+                mission.logs.push(`MISSION_PARTIAL: Verification failed for one or more agents.`);
             }
 
-            mission.status = 'completed';
             mission.endTime = new Date();
-            mission.logs.push('ALPHA ENGINE: Cycle complete. Entering power-save mode.');
+            mission.logs.push('ALPHA FLEET: Returning to docking station.');
             
         } catch (error: any) {
             mission.status = 'failed';
-            mission.logs.push(`CRITICAL FAILURE: ${error.message}`);
+            mission.logs.push(`CRITICAL SWARM FAILURE: ${error.message}`);
             mission.endTime = new Date();
             throw error;
         }
