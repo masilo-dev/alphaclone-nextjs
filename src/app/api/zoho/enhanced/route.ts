@@ -247,7 +247,7 @@ async function getEmails(userId: string, searchParams: URLSearchParams) {
         let actualFolderId: string | number = folderId;
         const isNamedFolder = Object.keys(folderPropMap).includes(folderId.toLowerCase()) || folderId.toLowerCase() === 'starred';
         
-        // If it's a generic name like 'inbox', resolve to numeric folderId
+        // If it's a generic name like 'inbox', try to resolve to a numeric folderId from Zoho
         if (isNamedFolder) {
             try {
                 const foldersData = await zohoServerService.proxyRequest(userId, 'folders');
@@ -255,8 +255,9 @@ async function getEmails(userId: string, searchParams: URLSearchParams) {
                     const lcFolder = folderId.toLowerCase();
                     const targetProp = folderPropMap[lcFolder];
                     
+                    // Use permissive truthy check — Zoho may return true, "true", 1, or "1"
                     const targetFolder = foldersData.data.find((f: any) => 
-                        (targetProp && (f[targetProp] === true || f[targetProp] === 'true' || f[targetProp] === 1)) || 
+                        (targetProp && f[targetProp]) || 
                         f.folderName?.toLowerCase() === lcFolder
                     );
                     
@@ -264,33 +265,15 @@ async function getEmails(userId: string, searchParams: URLSearchParams) {
                         actualFolderId = targetFolder.folderId;
                         console.log(`[Zoho Debug] Resolved '${folderId}' to folderId: ${actualFolderId}`);
                     } else {
-                        // Fallback: try matching by folder name without flag
-                        const byName = foldersData.data.find((f: any) =>
-                            f.folderName?.toLowerCase() === lcFolder ||
-                            f.folderName?.toLowerCase() === (lcFolder === 'inbox' ? 'inbox' : lcFolder)
-                        );
-                        if (byName?.folderId) {
-                            actualFolderId = byName.folderId;
-                        } else {
-                            // Last resort: log what folders exist so we can debug
-                            console.warn(`[Zoho Debug] Could not resolve folder '${folderId}'. Available folders:`, 
-                                foldersData.data.map((f: any) => `${f.folderName}(${f.folderId})`).join(', '));
-                        }
+                        console.warn(`[Zoho Debug] Could not resolve folder '${folderId}'. Available:`, 
+                            foldersData.data.map((f: any) => `${f.folderName}(${f.folderId})`).join(', '));
+                        // Keep actualFolderId as the string name — Zoho may still handle it
                     }
                 }
             } catch (e: any) {
-                console.warn(`[Zoho Debug] Could not resolve folder ID for ${folderId}:`, e?.message);
+                // If folders fetch fails, proceed with the folder name and let Zoho handle it
+                console.warn(`[Zoho Debug] Could not fetch folder list for '${folderId}':`, e?.message);
             }
-        }
-
-        // If folder ID is still a string (unresolved name), we cannot proceed
-        if (typeof actualFolderId === 'string' && isNaN(Number(actualFolderId))) {
-            console.error(`[Zoho Debug] Folder ID '${actualFolderId}' could not be resolved to a number. Cannot fetch messages.`);
-            return NextResponse.json({
-                success: true,
-                data: [],
-                warning: `Could not resolve folder '${folderId}' to a Zoho folder ID.`
-            });
         }
 
         const endpoint = `messages/view?folderId=${actualFolderId}&sortedBy=date&order=desc&start=0&limit=50`;
