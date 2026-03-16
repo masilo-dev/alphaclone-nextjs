@@ -84,6 +84,32 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
 
   const [selectedRegion, setSelectedRegion] = useState('com');
   const [showRegionSelector, setShowRegionSelector] = useState(false);
+  const regionDetected = useRef(false);
+
+  useEffect(() => {
+    if (!isConnected && !regionDetected.current) {
+      try {
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const locale = navigator.language.toLowerCase();
+        
+        // Dynamic region detection heuristics
+        if (timeZone.startsWith('Europe/') || locale.includes('-eu') || locale.endsWith('-gb') || locale.endsWith('-fr') || locale.endsWith('-de')) {
+          setSelectedRegion('eu');
+        } else if (timeZone.startsWith('Asia/Calcutta') || timeZone.startsWith('Asia/Kolkata') || locale.endsWith('-in')) {
+          setSelectedRegion('in');
+        } else if (timeZone.startsWith('Australia/') || locale.endsWith('-au')) {
+          setSelectedRegion('au');
+        } else if (timeZone.startsWith('Asia/Tokyo') || locale.endsWith('-jp')) {
+          setSelectedRegion('jp');
+        } else if (timeZone.startsWith('America/Toronto') || locale.endsWith('-ca')) {
+          setSelectedRegion('ca');
+        }
+        regionDetected.current = true;
+      } catch (e) {
+        console.warn('Region detection failed:', e);
+      }
+    }
+  }, [isConnected]);
 
   const regions = [
     { id: 'com', name: 'United States (.com)', flag: '🇺🇸' },
