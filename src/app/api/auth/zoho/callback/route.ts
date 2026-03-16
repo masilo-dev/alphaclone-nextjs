@@ -30,12 +30,12 @@ export async function GET(req: NextRequest) {
             .maybeSingle();
 
         if (stateError) {
-            console.error(`[Zoho Callback Debug] State Query Error. Received: "${stateNonce}". DB Error:`, stateError.message);
+            console.error(`[Zoho Callback Debug] State Query Error for "${stateNonce}":`, stateError.message);
             return NextResponse.redirect(`${appUrl}/dashboard/settings?zoho=error&reason=db_error`);
         }
 
         if (!stateData) {
-            console.error(`[Zoho Callback Debug] State Verification Failed. Received: "${stateNonce}". Reason: State not found or expired.`);
+            console.error(`[Zoho Callback Debug] State Verification Failed for "${stateNonce}". Reason: State not found or expired.`);
             return NextResponse.redirect(`${appUrl}/dashboard/settings?zoho=error&reason=invalid_state`);
         }
 
@@ -46,39 +46,39 @@ export async function GET(req: NextRequest) {
         const clientId = ENV.ZOHO_CLIENT_ID;
         const clientSecret = ENV.ZOHO_CLIENT_SECRET;
 
-        // Detect Zoho DC (Data Center) from accounts-server if available, or default to .com
         const accountsServer = searchParams.get('accounts-server') || 'https://accounts.zoho.com';
         const tokenEndpoint = `${accountsServer}/oauth/v2/token`;
-
         const redirectUri = `${appUrl}/api/auth/zoho/callback`;
 
-        console.log(`[Zoho Callback] Exchanging code for tokens at: ${tokenEndpoint}`);
-        console.log(`[Zoho Callback] Using Redirect URI: ${redirectUri}`);
+        console.log(`[Zoho Callback Debug] Exchanging code for tokens at: ${tokenEndpoint}`);
+        
+        const tokenParams = new URLSearchParams({
+            code,
+            client_id: clientId!,
+            client_secret: clientSecret!,
+            redirect_uri: redirectUri,
+            grant_type: 'authorization_code',
+        });
 
         const tokenResponse = await fetch(tokenEndpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
-                code,
-                client_id: clientId!,
-                client_secret: clientSecret!,
-                redirect_uri: redirectUri,
-                grant_type: 'authorization_code',
-            }),
+            body: tokenParams,
         });
 
         const tokens = await tokenResponse.json();
 
         if (tokens.error) {
-            console.error('[Zoho Token Error]', tokens);
+            console.error('[Zoho Callback Debug] Token Exchange Failed:', tokens);
             throw new Error(tokens.error_description || tokens.error || 'Failed to exchange token');
         }
 
+        console.log(`[Zoho Callback Debug] Token Exchange Successful. Access Token Present: ${!!tokens.access_token}, Refresh Token Present: ${!!tokens.refresh_token}`);
+        
         const { access_token, refresh_token, expires_in } = tokens;
         const expiresAt = new Date(Date.now() + (expires_in || 3600) * 1000).toISOString();
 
-        // 3. Fetch Zoho Account ID (required for Mail API)
-        // Adjust Mail API endpoint based on accounts-server region
+        // 3. Fetch Zoho Account ID
         let mailApiHost = 'mail.zoho.com';
         if (accountsServer.includes('.eu')) mailApiHost = 'mail.zoho.eu';
         else if (accountsServer.includes('.in')) mailApiHost = 'mail.zoho.in';
@@ -86,25 +86,28 @@ export async function GET(req: NextRequest) {
         else if (accountsServer.includes('.jp')) mailApiHost = 'mail.zoho.jp';
         else if (accountsServer.includes('.ca')) mailApiHost = 'mail.zoho.ca';
 
-        console.log(`[Zoho Callback] Fetching account data from: https://${mailApiHost}/api/accounts`);
+        console.log(`[Zoho Callback Debug] Fetching account data from: https://${mailApiHost}/api/accounts`);
 
         const accountResponse = await fetch(`https://${mailApiHost}/api/accounts`, {
-            headers: {
-                Authorization: `Zoho-oauthtoken ${access_token}`
-            }
+            headers: { Authorization: `Zoho-oauthtoken ${access_token}` }
         });
 
         const accountData = await accountResponse.json();
+        console.log(`[Zoho Callback Debug] Account Data Received. Success: ${!!accountData.data}`);
+
         if (!accountData.data || accountData.data.length === 0) {
-            throw new Error('No Zoho Mail account found');
+            console.error('[Zoho Callback Debug] No Zoho Mail accounts found in response:', accountData);
+            throw new Error('No Zoho Mail account found. Please ensure you have a Zoho Mail account configured.');
         }
 
         const primaryAccount = accountData.data[0];
         const accountId = primaryAccount.accountId;
         const email = primaryAccount.emailAddress;
+        
+        console.log(`[Zoho Callback Debug] Primary Account Identified: ${email} (${accountId})`);
 
         // 4. Save to integrations table
-        // First get existing integration to preserve refresh_token if new one is not provided
+        console.log(`[Zoho Callback Debug] Checking for existing integration for user ${userId}`);
         const { data: existingIntegration } = await supabaseAdmin
             .from('integrations')
             .select('config')
@@ -113,32 +116,42 @@ export async function GET(req: NextRequest) {
             .maybeSingle();
 
         const finalRefreshToken = refresh_token || (existingIntegration?.config?.refreshToken);
+        
+        if (!finalRefreshToken) {
+            console.warn('[Zoho Callback Debug] No refresh token received and none found in existing integration. Future token refreshes will fail.');
+        }
 
+        const integrationPayload = {
+            user_id: userId,
+            type: 'zoho',
+            name: 'Zoho Mail',
+            enabled: true,
+            config: {
+                accountId,
+                accessToken: access_token,
+                refreshToken: finalRefreshToken,
+                expiryDate: expiresAt,
+                email,
+                accountsServer,
+                mailApiHost
+            },
+            updated_at: new Date().toISOString()
+        };
+
+        console.log(`[Zoho Callback Debug] Upserting integration for user ${userId}`);
         const { error: integrationError } = await supabaseAdmin
             .from('integrations')
-            .upsert({
-                user_id: userId,
-                type: 'zoho',
-                name: 'Zoho Mail',
-                enabled: true,
-                config: {
-                    accountId,
-                    accessToken: access_token,
-                    refreshToken: finalRefreshToken,
-                    expiryDate: expiresAt,
-                    email,
-                    accountsServer,
-                    mailApiHost
-                }
-            }, {
-                onConflict: 'user_id,type'
-            });
+            .upsert(integrationPayload, { onConflict: 'user_id,type' });
 
-        if (integrationError) throw integrationError;
+        if (integrationError) {
+            console.error('[Zoho Callback Debug] Database Upsert Failed:', integrationError);
+            throw integrationError;
+        }
 
+        console.log(`[Zoho Callback Debug] Integration Successful. Redirecting user ${userId} to dashboard.`);
         return NextResponse.redirect(`${appUrl}/dashboard/settings?zoho=connected`);
     } catch (err: any) {
-        console.error('Zoho Callback Error:', err);
+        console.error('[Zoho Callback Debug] Fatal Error:', err.message);
         return NextResponse.redirect(`${appUrl}/dashboard/settings?zoho=error&reason=${encodeURIComponent(err.message)}`);
     }
 }
