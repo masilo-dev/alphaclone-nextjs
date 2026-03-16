@@ -64,16 +64,17 @@ export const zohoServerService = {
                 .single();
 
             let accountsServer = currentIntegration?.config?.accountsServer;
-            const mailApiHost = currentIntegration?.config?.mailApiHost || 'mail.zoho.com';
+            let mailApiHost = currentIntegration?.config?.mailApiHost;
 
-            // If accountsServer is missing, derive it from mailApiHost (e.g. mail.zoho.eu -> accounts.zoho.eu)
-            if (!accountsServer) {
-                if (mailApiHost.includes('.eu')) accountsServer = 'https://accounts.zoho.eu';
-                else if (mailApiHost.includes('.in')) accountsServer = 'https://accounts.zoho.in';
-                else if (mailApiHost.includes('.com.au')) accountsServer = 'https://accounts.zoho.com.au';
-                else if (mailApiHost.includes('.jp')) accountsServer = 'https://accounts.zoho.jp';
-                else if (mailApiHost.includes('.ca')) accountsServer = 'https://accounts.zoho.ca';
-                else accountsServer = 'https://accounts.zoho.com';
+            // Robust derivation of hosts based on region if missing
+            if (!accountsServer || !mailApiHost) {
+                const region = currentIntegration?.config?.region || 'com';
+                if (!accountsServer) {
+                    accountsServer = region === 'com' ? 'https://accounts.zoho.com' : `https://accounts.zoho.${region}`;
+                }
+                if (!mailApiHost) {
+                    mailApiHost = region === 'com' ? 'mail.zoho.com' : `mail.zoho.${region}`;
+                }
             }
 
             const response = await fetch(`${accountsServer}/oauth/v2/token`, {
@@ -187,6 +188,13 @@ export const zohoServerService = {
 
         if (!response.ok) {
             const errorText = await response.text();
+            
+            // Auto-fallback to V2 for 404s on certain known paths if we are in V1
+            if (response.status === 404 && !endpoint.includes('v2/') && !endpoint.startsWith('http') && endpoint !== 'accounts') {
+                console.log(`[Zoho Proxy] 404 on ${endpoint}, attempting V2 fallback...`);
+                return this.proxyRequest(userId, `v2/${endpoint}`, options);
+            }
+
             console.error(`[Zoho Proxy Error] Request to ${url} failed! Status: ${response.status} (${response.statusText}). Endpoint: ${endpoint}. Trace: ${errorText.substring(0, 500)}`);
 
             let description = `Zoho API Error ${response.status} (${response.statusText}): ${errorText.substring(0, 150)}`;

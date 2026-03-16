@@ -23,10 +23,9 @@ export async function GET(req: NextRequest) {
         // 1. Verify the state nonce (Resilient to double-requests)
         console.log(`[Zoho Callback Debug] Verifying state: "${stateNonce}"`);
         
-        // Use a 2-step approach if deletion is failing or double-hitting
         const { data: stateData, error: stateError } = await supabaseAdmin
             .from('oauth_states')
-            .select('user_id, created_at')
+            .select('user_id, created_at, metadata')
             .eq('id', stateNonce)
             .maybeSingle();
 
@@ -37,27 +36,25 @@ export async function GET(req: NextRequest) {
 
         if (!stateData) {
             console.error(`[Zoho Callback Debug] State Verification Failed for "${stateNonce}". Reason: State not found in DB.`);
-            
-            // Helpful Diagnostic: Check for ANY recent states for this request's session if possible
-            // Actually, we can't easily know the user here without the state record, but we can check the table size
-            const { count } = await supabaseAdmin.from('oauth_states').select('*', { count: 'exact', head: true });
-            console.log(`[Zoho Callback Debug] Diagnostic: Total active states in DB: ${count}`);
-            
             return NextResponse.redirect(`${appUrl}/dashboard/settings?zoho=error&reason=invalid_state`);
         }
 
         console.log(`[Zoho Callback Debug] State found. Created at: ${stateData.created_at}. User: ${stateData.user_id}`);
         const userId = stateData.user_id;
-
-        // Consume state only after we know we're proceeding (optional)
-        // For now, let's keep it until after token exchange to handle potential retries
+        const metadata = stateData.metadata as { region?: string } | null;
+        const region = metadata?.region || 'com';
 
         // 2. Exchange authorization code for tokens
         const clientId = ENV.ZOHO_CLIENT_ID;
         const clientSecret = ENV.ZOHO_CLIENT_SECRET;
 
-        const accountsServer = searchParams.get('accounts-server') || 'https://accounts.zoho.com';
-        const tokenEndpoint = `${accountsServer}/oauth/v2/token`;
+        // Determine accounts server base on region (falling back to searchParams if Zoho provided it)
+        let accountsServer = searchParams.get('accounts-server');
+        if (!accountsServer) {
+            accountsServer = region === 'com' ? 'https://accounts.zoho.com' : `https://accounts.zoho.${region}`;
+        }
+        
+        const tokenEndpoint = accountsServer.endsWith('/') ? `${accountsServer}oauth/v2/token` : `${accountsServer}/oauth/v2/token`;
         const redirectUri = `${appUrl}/api/auth/zoho/callback`;
 
         console.log(`[Zoho Callback Debug] Exchanging code for tokens at: ${tokenEndpoint}`);
@@ -143,7 +140,8 @@ export async function GET(req: NextRequest) {
                 expiryDate: expiresAt,
                 email,
                 accountsServer,
-                mailApiHost
+                mailApiHost,
+                region
             },
             updated_at: new Date().toISOString()
         };

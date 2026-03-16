@@ -126,17 +126,7 @@ async function getAccountInfo(userId: string) {
         // Fetch verified from-addresses for this account
         let fromAddresses: any[] = [];
         try {
-            let sendAddressesData;
-            try {
-                sendAddressesData = await zohoServerService.proxyRequest(userId, 'sendmailaddresses');
-            } catch (v1Error: any) {
-                if (v1Error.status === 404) {
-                    console.log('[Zoho Debug] V1 sendmailaddresses failed with 404, trying V2...');
-                    sendAddressesData = await zohoServerService.proxyRequest(userId, 'v2/sendmailaddresses');
-                } else {
-                    throw v1Error;
-                }
-            }
+            const sendAddressesData = await zohoServerService.proxyRequest(userId, 'sendmailaddresses');
             
             if (sendAddressesData?.data) {
                 fromAddresses = sendAddressesData.data.map((addr: any) => {

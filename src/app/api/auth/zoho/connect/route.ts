@@ -31,11 +31,18 @@ export async function GET(req: NextRequest) {
         
         if (cleanupError) console.warn('[Zoho Connect Debug] State cleanup warning:', cleanupError.message);
 
+        // Support for different Zoho DCs (US, EU, IN, AU, JP, CA)
+        const region = searchParams.get('region') || 'com';
+        const accountsDomain = region === 'com' ? 'accounts.zoho.com' : `accounts.zoho.${region}`;
+
         // 2. Generate and persist new secure state
-        console.log(`[Zoho Connect Debug] Generating secure state for user: ${userId}`);
+        console.log(`[Zoho Connect Debug] Generating secure state for user: ${userId} and region: ${region}`);
         const { data: stateRecord, error: stateError } = await supabaseAdmin
             .from('oauth_states')
-            .insert({ user_id: userId })
+            .insert({ 
+                user_id: userId,
+                metadata: { region }
+            })
             .select('id')
             .single();
 
@@ -66,9 +73,6 @@ export async function GET(req: NextRequest) {
 
         console.log(`[Zoho Connect Debug] App URL: ${appUrl}, Redirect URI: ${redirectUri}`);
 
-        // Support for different Zoho DCs (US, EU, IN, AU, JP, CA)
-        const region = searchParams.get('region') || 'com';
-        const accountsDomain = region === 'com' ? 'accounts.zoho.com' : `accounts.zoho.${region}`;
 
         // Zoho Mail scopes
         const scopes = [

@@ -82,6 +82,18 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
     return () => { mounted = false; };
   }, [user?.id]);
 
+  const [selectedRegion, setSelectedRegion] = useState('com');
+  const [showRegionSelector, setShowRegionSelector] = useState(false);
+
+  const regions = [
+    { id: 'com', name: 'United States (.com)', flag: '🇺🇸' },
+    { id: 'eu', name: 'Europe (.eu)', flag: '🇪🇺' },
+    { id: 'in', name: 'India (.in)', flag: '🇮🇳' },
+    { id: 'au', name: 'Australia (.com.au)', flag: '🇦🇺' },
+    { id: 'jp', name: 'Japan (.jp)', flag: '🇯🇵' },
+    { id: 'ca', name: 'Canada (.ca)', flag: '🇨🇦' },
+  ];
+
   const checkConnection = async (uid: string) => {
     setIsCheckingConnection(true);
     try {
@@ -121,7 +133,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
   const connectToZoho = () => {
     const appUrl = window.location.origin;
     // We add prompt=consent select_account to help force the account selection screen
-    window.location.href = `/api/auth/zoho/connect?userId=${userId}&prompt=select_account`;
+    window.location.href = `/api/auth/zoho/connect?userId=${userId}&region=${selectedRegion}&prompt=select_account`;
   };
 
   const disconnect = async () => {
@@ -334,6 +346,48 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
           <p className="text-xs text-slate-400 mb-6 leading-relaxed">
             Connect your Zoho Mail account to manage your professional communications directly from your dashboard.
           </p>
+          
+          <div className="mb-6">
+            <label className="block text-left text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-2 ml-1">
+              Select Your Zoho Data Center (Zone)
+            </label>
+            <div className="relative">
+              <button 
+                onClick={() => setShowRegionSelector(!showRegionSelector)}
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-slate-800/50 border border-slate-700/50 text-white text-sm rounded-xl hover:bg-slate-800 transition-all"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="text-lg">{regions.find(r => r.id === selectedRegion)?.flag}</span>
+                  {regions.find(r => r.id === selectedRegion)?.name}
+                </span>
+                <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${showRegionSelector ? 'rotate-180' : ''}`} />
+              </button>
+
+              {showRegionSelector && (
+                <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                  {regions.map((region) => (
+                    <button
+                      key={region.id}
+                      onClick={() => {
+                        setSelectedRegion(region.id);
+                        setShowRegionSelector(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-left text-sm transition-colors ${
+                        selectedRegion === region.id ? 'bg-sky-500/20 text-sky-400' : 'text-slate-300 hover:bg-slate-700'
+                      }`}
+                    >
+                      <span className="text-lg">{region.flag}</span>
+                      {region.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <p className="mt-2 text-[10px] text-slate-500 text-left italic">
+              Most users should use .com. If you're in Europe, select .eu.
+            </p>
+          </div>
+
           <button
             onClick={connectToZoho}
             className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-sky-500/25"
@@ -400,7 +454,13 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
           {accountInfo && (
             <div className="bg-slate-800/50 rounded-lg p-3 mb-4 border border-slate-700">
               <p className="text-white text-sm font-medium">{accountInfo.displayName}</p>
-              <p className="text-slate-400 text-xs truncate">{accountInfo.email}</p>
+              <p className="text-slate-400 text-xs truncate mb-2">{accountInfo.email}</p>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-700 w-fit">
+                <span className="text-[10px] text-slate-400 uppercase tracking-tighter">Region:</span>
+                <span className="text-[10px] text-sky-400 font-bold uppercase">
+                  {(accountInfo as any).region || 'US (.com)'}
+                </span>
+              </div>
             </div>
           )}
           <button
