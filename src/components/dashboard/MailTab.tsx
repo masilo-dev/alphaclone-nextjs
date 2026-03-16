@@ -51,7 +51,7 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto py-12 px-6">
+        <div className="max-w-4xl mx-auto py-8 px-4">
             <AnimatePresence mode="wait">
                 {isLoading ? (
                     <motion.div
@@ -59,17 +59,17 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="flex flex-col items-center justify-center p-20 gap-6 bg-slate-900/40 backdrop-blur-3xl rounded-[3rem] border border-white/5 shadow-2xl"
+                        className="flex flex-col items-center justify-center p-12 gap-4 bg-slate-900/40 backdrop-blur-3xl rounded-[2rem] border border-white/5 shadow-2xl"
                     >
                         <div className="relative">
-                            <div className="w-20 h-20 border-4 border-teal-500/20 border-t-[#f5d400] rounded-full animate-spin" />
+                            <div className="w-12 h-12 border-4 border-teal-500/20 border-t-[#f5d400] rounded-full animate-spin" />
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <Zap className="w-8 h-8 text-[#f5d400] animate-pulse" />
+                                <Zap className="w-5 h-5 text-[#f5d400] animate-pulse" />
                             </div>
                         </div>
                         <div className="text-center">
-                            <p className="text-white font-black uppercase tracking-[0.3em] text-xs mb-2">Synchronizing Quantum Channels</p>
-                            <p className="text-slate-500 text-[10px] uppercase font-mono tracking-widest animate-pulse">Establishing secure link to Zoho-Node-Alpha...</p>
+                            <p className="text-white font-black uppercase tracking-[0.2em] text-[10px] mb-1">Synchronizing</p>
+                            <p className="text-slate-500 text-[9px] uppercase font-mono tracking-widest animate-pulse">Establishing secure link...</p>
                         </div>
                     </motion.div>
                 ) : isZohoIntegrated ? (
@@ -83,47 +83,47 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
                 ) : (
                     <motion.div
                         key="connect"
-                        initial={{ opacity: 0, y: 30 }}
+                        initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-slate-900 border border-white/10 rounded-[4rem] p-12 sm:p-20 text-center relative overflow-hidden shadow-[0_64px_128px_-32px_rgba(0,0,0,0.8)]"
+                        className="bg-slate-900 border border-white/10 rounded-[2.5rem] p-8 sm:p-12 text-center relative overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)]"
                     >
                         {/* Visual Background Elements */}
-                        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-[#f5d400]/40 to-transparent" />
-                        <div className="absolute -top-32 -right-32 w-96 h-96 bg-[#f5d400]/10 rounded-full blur-[100px]" />
-                        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-teal-500/10 rounded-full blur-[100px]" />
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#f5d400]/30 to-transparent" />
+                        <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#f5d400]/10 rounded-full blur-[80px]" />
+                        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-teal-500/10 rounded-full blur-[80px]" />
 
                         <motion.div
                             whileHover={{ rotate: 12, scale: 1.05 }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                            className="w-32 h-32 bg-gradient-to-br from-[#f5d400] to-[#e6c700] rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-2xl shadow-yellow-500/20 cursor-pointer"
+                            className="w-20 h-20 bg-gradient-to-br from-[#f5d400] to-[#e6c700] rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 shadow-xl shadow-yellow-500/10 cursor-pointer"
                         >
-                            <Mail className="w-16 h-16 text-slate-950" />
+                            <Mail className="w-10 h-10 text-slate-950" />
                         </motion.div>
 
-                        <h2 className="text-5xl sm:text-7xl font-black text-white mb-6 tracking-tight uppercase leading-none">
+                        <h2 className="text-3xl sm:text-5xl font-black text-white mb-4 tracking-tight uppercase leading-none">
                             Zoho Mail <br />
-                            <span className="text-[#f5d400] text-3xl sm:text-5xl">Neural Hub</span>
+                            <span className="text-[#f5d400] text-xl sm:text-3xl">Neural Hub</span>
                         </h2>
-                        <p className="text-slate-400 max-w-2xl mx-auto mb-12 text-lg leading-relaxed font-medium">
-                            Unleash high-frequency AI email automation. Quantum-safe thread synchronization and context-aware neural drafting for the ultra-productive enterprise.
+                        <p className="text-slate-400 max-w-xl mx-auto mb-8 text-base leading-relaxed font-medium">
+                            Unleash high-frequency AI email automation with quantum-safe thread synchronization.
                         </p>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
                             {[
-                                { icon: Zap, title: "Instant Sync", desc: "Real-time thread retrieval and multi-device coordination." },
-                                { icon: ShieldCheck, title: "Quantum Secure", desc: "OAuth2 authentication with dedicated token isolation." },
-                                { icon: Globe, title: "Unified Context", desc: "AI understands complex business relationships across Zoho threads." }
+                                { icon: Zap, title: "Instant Sync", desc: "Real-time thread retrieval." },
+                                { icon: ShieldCheck, title: "Secure", desc: "Dedicated token isolation." },
+                                { icon: Globe, title: "AI Context", desc: "Native business mapping." }
                             ].map((feature, i) => (
                                 <motion.div
                                     key={i}
-                                    initial={{ opacity: 0, y: 20 }}
+                                    initial={{ opacity: 0, y: 15 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.2 + (i * 0.1) }}
-                                    className="bg-white/2 backdrop-blur-xl border border-white/5 rounded-3xl p-8 text-left hover:border-[#f5d400]/30 transition-all group"
+                                    className="bg-white/2 backdrop-blur-xl border border-white/5 rounded-2xl p-6 text-left hover:border-[#f5d400]/30 transition-all group"
                                 >
-                                    <feature.icon className="w-8 h-8 text-[#f5d400] mb-4 group-hover:scale-110 transition-transform" />
-                                    <h4 className="text-white font-black text-sm mb-2 uppercase tracking-widest">{feature.title}</h4>
-                                    <p className="text-slate-500 text-xs leading-relaxed">{feature.desc}</p>
+                                    <feature.icon className="w-6 h-6 text-[#f5d400] mb-3 group-hover:scale-110 transition-transform" />
+                                    <h4 className="text-white font-black text-[10px] mb-1 uppercase tracking-widest">{feature.title}</h4>
+                                    <p className="text-slate-500 text-[9px] leading-relaxed">{feature.desc}</p>
                                 </motion.div>
                             ))}
                         </div>
@@ -135,22 +135,22 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
                             <Button
                                 onClick={handleConnectZoho}
                                 disabled={isConnecting}
-                                className="h-20 px-16 rounded-[2rem] bg-[#f5d400] hover:bg-[#ffe100] text-slate-950 font-black text-xl transition-all shadow-2xl shadow-yellow-500/20 flex items-center justify-center gap-4 mx-auto uppercase tracking-tighter"
+                                className="h-14 px-10 rounded-[1.2rem] bg-[#f5d400] hover:bg-[#ffe100] text-slate-950 font-black text-base transition-all shadow-xl shadow-yellow-500/10 flex items-center justify-center gap-3 mx-auto uppercase tracking-tighter"
                             >
-                                {isConnecting ? <Loader2 className="w-8 h-8 animate-spin" /> : <Link2 className="w-8 h-8 stroke-[3px]" />}
-                                Establish Link Now
+                                {isConnecting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Link2 className="w-5 h-5 stroke-[2.5px]" />}
+                                Establish Link
                             </Button>
                         </motion.div>
 
-                        <div className="mt-12 flex items-center justify-center gap-6 text-slate-500 text-[10px] uppercase font-black tracking-[0.3em] opacity-40">
-                            <span className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-teal-500 rounded-full animate-pulse" />
-                                Zoho Protocol v2.4
+                        <div className="mt-8 flex items-center justify-center gap-4 text-slate-500 text-[8px] uppercase font-black tracking-[0.2em] opacity-30">
+                            <span className="flex items-center gap-1.5">
+                                <div className="w-1 h-1 bg-teal-500 rounded-full animate-pulse" />
+                                v2.4
                             </span>
-                            <div className="w-1 h-1 bg-slate-800 rounded-full" />
-                            <span className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-[#f5d400] rounded-full animate-pulse" />
-                                AI Engine Active
+                            <div className="w-0.5 h-0.5 bg-slate-800 rounded-full" />
+                            <span className="flex items-center gap-1.5">
+                                <div className="w-1 h-1 bg-[#f5d400] rounded-full animate-pulse" />
+                                AI Active
                             </span>
                         </div>
                     </motion.div>
