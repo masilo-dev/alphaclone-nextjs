@@ -1,3 +1,4 @@
+import { NextRequest, NextResponse } from 'next/server';
 import { zohoServerService } from '@/services/server/zohoServerService';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
