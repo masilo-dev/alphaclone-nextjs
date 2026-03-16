@@ -244,15 +244,24 @@ async function getEmails(userId: string, searchParams: URLSearchParams) {
             'spam': 'isSpam'
         };
 
+        // Hardcoded fallbacks for standard folders if resolution fails
+        const folderFallbackMap: { [key: string]: number } = {
+            'inbox': 7,
+            'sent': 5,
+            'drafts': 3,
+            'trash': 4,
+            'spam': 6
+        };
+
         let actualFolderId: string | number = folderId;
-        const isNamedFolder = Object.keys(folderPropMap).includes(folderId.toLowerCase()) || folderId.toLowerCase() === 'starred';
+        const lcFolder = folderId.toLowerCase();
+        const isNamedFolder = Object.keys(folderPropMap).includes(lcFolder) || lcFolder === 'starred';
         
         // If it's a generic name like 'inbox', try to resolve to a numeric folderId from Zoho
         if (isNamedFolder) {
             try {
                 const foldersData = await zohoServerService.proxyRequest(userId, 'folders');
                 if (foldersData?.data && Array.isArray(foldersData.data)) {
-                    const lcFolder = folderId.toLowerCase();
                     const targetProp = folderPropMap[lcFolder];
                     
                     // Use permissive truthy check — Zoho may return true, "true", 1, or "1"
@@ -265,14 +274,27 @@ async function getEmails(userId: string, searchParams: URLSearchParams) {
                         actualFolderId = targetFolder.folderId;
                         console.log(`[Zoho Debug] Resolved '${folderId}' to folderId: ${actualFolderId}`);
                     } else {
-                        console.warn(`[Zoho Debug] Could not resolve folder '${folderId}'. Available:`, 
-                            foldersData.data.map((f: any) => `${f.folderName}(${f.folderId})`).join(', '));
-                        // Keep actualFolderId as the string name — Zoho may still handle it
+                        // Fallback to hardcoded ID if resolution failed
+                        if (folderFallbackMap[lcFolder]) {
+                            actualFolderId = folderFallbackMap[lcFolder];
+                            console.log(`[Zoho Debug] Resolution failed for '${folderId}', using fallback: ${actualFolderId}`);
+                        } else {
+                            console.warn(`[Zoho Debug] Could not resolve folder '${folderId}'. Available:`, 
+                                foldersData.data.map((f: any) => `${f.folderName}(${f.folderId})`).join(', '));
+                        }
                     }
+                } else if (folderFallbackMap[lcFolder]) {
+                    actualFolderId = folderFallbackMap[lcFolder];
+                    console.log(`[Zoho Debug] Folders API empty or invalid, using fallback for '${folderId}': ${actualFolderId}`);
                 }
             } catch (e: any) {
-                // If folders fetch fails, proceed with the folder name and let Zoho handle it
-                console.warn(`[Zoho Debug] Could not fetch folder list for '${folderId}':`, e?.message);
+                // If folders fetch fails, use fallback if available
+                if (folderFallbackMap[lcFolder]) {
+                    actualFolderId = folderFallbackMap[lcFolder];
+                    console.log(`[Zoho Debug] Folders API failed, using fallback for '${folderId}': ${actualFolderId}`);
+                } else {
+                    console.warn(`[Zoho Debug] Folders API failed and no fallback for '${folderId}':`, e?.message);
+                }
             }
         }
 
