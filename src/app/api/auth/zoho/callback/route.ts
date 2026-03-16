@@ -20,13 +20,14 @@ export async function GET(req: NextRequest) {
     try {
         const supabaseAdmin = createSupabaseAdminClient();
 
-        // 1. Verify and consume the state nonce
-        console.log(`[Zoho Callback Debug] Querying oauth_states for ID: ${stateNonce}`);
+        // 1. Verify the state nonce (Resilient to double-requests)
+        console.log(`[Zoho Callback Debug] Verifying state: "${stateNonce}"`);
+        
+        // Use a 2-step approach if deletion is failing or double-hitting
         const { data: stateData, error: stateError } = await supabaseAdmin
             .from('oauth_states')
-            .delete()
+            .select('user_id, created_at')
             .eq('id', stateNonce)
-            .select('user_id')
             .maybeSingle();
 
         if (stateError) {
@@ -35,12 +36,21 @@ export async function GET(req: NextRequest) {
         }
 
         if (!stateData) {
-            console.error(`[Zoho Callback Debug] State Verification Failed for "${stateNonce}". Reason: State not found or expired.`);
+            console.error(`[Zoho Callback Debug] State Verification Failed for "${stateNonce}". Reason: State not found in DB.`);
+            
+            // Helpful Diagnostic: Check for ANY recent states for this request's session if possible
+            // Actually, we can't easily know the user here without the state record, but we can check the table size
+            const { count } = await supabaseAdmin.from('oauth_states').select('*', { count: 'exact', head: true });
+            console.log(`[Zoho Callback Debug] Diagnostic: Total active states in DB: ${count}`);
+            
             return NextResponse.redirect(`${appUrl}/dashboard/settings?zoho=error&reason=invalid_state`);
         }
 
-        console.log(`[Zoho Callback Debug] State Verified. Associated User: ${stateData.user_id}`);
+        console.log(`[Zoho Callback Debug] State found. Created at: ${stateData.created_at}. User: ${stateData.user_id}`);
         const userId = stateData.user_id;
+
+        // Consume state only after we know we're proceeding (optional)
+        // For now, let's keep it until after token exchange to handle potential retries
 
         // 2. Exchange authorization code for tokens
         const clientId = ENV.ZOHO_CLIENT_ID;

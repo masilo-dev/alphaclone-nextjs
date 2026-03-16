@@ -44,6 +44,19 @@ export async function GET(req: NextRequest) {
             throw new Error('Failed to initialize secure connection. Database error.');
         }
 
+        // Verification Check: Try to read it back immediately
+        const { data: verifyRecord } = await supabaseAdmin
+            .from('oauth_states')
+            .select('id')
+            .eq('id', stateRecord.id)
+            .maybeSingle();
+        
+        if (!verifyRecord) {
+            console.error(`[Zoho Connect Debug] Critical: State was inserted but could not be read back for ID: ${stateRecord.id}`);
+        } else {
+            console.log(`[Zoho Connect Debug] State Persisted and Verified in DB: ${stateRecord.id}`);
+        }
+
         const stateNonce = stateRecord.id;
         console.log(`[Zoho Connect Debug] Generated State: ${stateNonce} for User: ${userId}`);
         
