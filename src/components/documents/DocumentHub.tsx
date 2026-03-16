@@ -608,8 +608,8 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                         modules={quillModules}
                                     />
                                 </div>
-                                {/* Hidden element required for rendering clean HTML to PDF without editor toolbars */}
-                                <div className="hidden">
+                                {/* Render off-screen (required for rendering clean HTML to PDF without editor toolbars) instead of display: hidden so canvas can capture it */}
+                                <div className="fixed -left-[9999px] top-0 opacity-0 pointer-events-none">
                                     {/* Removed 'prose prose-slate' because Tailwind uses oklch/lab which html2canvas cannot parse. Using exact hex codes and standard CSS mimics to prevent the color crash. */}
                                     <div
                                         id="editor-pdf-content"
@@ -621,77 +621,22 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                             </div>
                         </div>
                     ) : viewMode === 'presentation' ? (
-                        <div className="h-full flex overflow-hidden bg-slate-900">
-                            {/* Slides Sidebar */}
-                            <div className="w-48 bg-slate-950 border-r border-white/10 flex flex-col">
-                                <div className="p-4 overflow-y-auto flex-1 space-y-3">
-                                    {slides.map((slide, idx) => (
-                                        <button
-                                            key={slide.id}
-                                            onClick={() => setCurrentSlideIndex(idx)}
-                                            className={`w-full aspect-video rounded border-2 transition-all p-2 text-[8px] overflow-hidden text-left relative group ${currentSlideIndex === idx ? 'border-orange-500 bg-orange-500/10' : 'border-slate-800 hover:border-slate-600'}`}
-                                        >
-                                            <div className="font-bold text-white truncate">{slide.title || 'Untitled'}</div>
-                                            <div className="text-slate-500 truncate">{slide.content}</div>
-                                            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <span className="bg-slate-900 text-slate-400 text-[8px] px-1 rounded">{idx + 1}</span>
-                                            </div>
-                                        </button>
-                                    ))}
-                                    <button
-                                        onClick={() => {
-                                            const newSlide = { id: Date.now().toString(), title: 'New Slide', content: 'Click to edit' };
-                                            setSlides([...slides, newSlide]);
-                                            setCurrentSlideIndex(slides.length);
-                                        }}
-                                        className="w-full py-3 border-2 border-dashed border-slate-800 rounded hover:border-slate-600 hover:bg-slate-900 transition-all text-slate-500 hover:text-white text-xs font-bold flex items-center justify-center gap-1"
-                                    >
-                                        <Plus className="w-3 h-3" /> Add Slide
-                                    </button>
+                        <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-slate-950 relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-transparent to-teal-500/10 opacity-50 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+                            <div className="w-24 h-24 mb-6 relative z-10">
+                                <div className="absolute inset-0 bg-orange-500/20 blur-2xl rounded-full animate-pulse" />
+                                <div className="relative bg-slate-900 border border-white/10 p-6 rounded-3xl shadow-2xl flex items-center justify-center">
+                                    <Presentation className="w-12 h-12 text-orange-400" />
                                 </div>
                             </div>
-
-                            {/* Main Slide Editor */}
-                            <div className="flex-1 flex flex-col h-full overflow-hidden relative bg-slate-900">
-                                <div className="flex-1 p-8 sm:p-12 flex items-center justify-center overflow-auto">
-                                    <div
-                                        id="presentation-content"
-                                        className="aspect-video w-full max-w-4xl bg-white shadow-2xl rounded-sm p-12 flex flex-col relative"
-                                    >
-                                        <input
-                                            value={slides[currentSlideIndex]?.title || ''}
-                                            onChange={(e) => {
-                                                const newSlides = [...slides];
-                                                newSlides[currentSlideIndex].title = e.target.value;
-                                                setSlides(newSlides);
-                                            }}
-                                            placeholder="Click to add title"
-                                            className="text-4xl sm:text-5xl font-bold text-slate-900 border-none focus:ring-0 placeholder:text-slate-300 bg-transparent mb-6"
-                                        />
-                                        <textarea
-                                            value={slides[currentSlideIndex]?.content || ''}
-                                            onChange={(e) => {
-                                                const newSlides = [...slides];
-                                                newSlides[currentSlideIndex].content = e.target.value;
-                                                setSlides(newSlides);
-                                            }}
-                                            placeholder="Click to add text"
-                                            className="flex-1 text-xl sm:text-2xl text-slate-600 border-none focus:ring-0 placeholder:text-slate-200 bg-transparent resize-none leading-relaxed"
-                                        />
-                                        
-                                        {/* Logo / Branding Placeholder */}
-                                        <div className="absolute bottom-8 right-8 opacity-50">
-                                            {currentTenant?.logo_url ? (
-                                                <img src={currentTenant.logo_url} className="h-8 object-contain" alt="Logo" />
-                                            ) : (
-                                                <span className="text-slate-300 font-bold uppercase tracking-widest text-sm">
-                                                    {currentTenant?.name || 'COMPANY'}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
+                            <h3 className="text-3xl font-bold text-white mb-4 tracking-tight relative z-10">AI Presentations</h3>
+                            <div className="flex items-center gap-3 mb-8 bg-orange-500/10 px-4 py-2 rounded-full border border-orange-500/20 relative z-10">
+                                <div className="w-2 h-2 rounded-full bg-orange-500 animate-[ping_2s_ease-in-out_infinite]" />
+                                <span className="text-sm font-black text-orange-400 uppercase tracking-widest">Coming Soon</span>
                             </div>
+                            <p className="text-slate-400 max-w-md text-lg leading-relaxed relative z-10">
+                                Generate entire pitch decks and slide presentations in seconds through a simple prompt. Automatically styled to your brand guidelines.
+                            </p>
                         </div>
                     ) : fileUrl ? (
                         <div className="flex items-center justify-center h-full">

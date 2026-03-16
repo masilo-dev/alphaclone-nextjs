@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ 
             error: err.message || 'Internal server error',
             details: process.env.NODE_ENV === 'development' ? err.stack : undefined
-        }, { status: 500 });
+        }, { status: err.status || 500 });
     }
 }
 
@@ -170,7 +170,7 @@ async function getAccountInfo(userId: string) {
         console.error('Error fetching Zoho account info:', error);
         return NextResponse.json({ 
             error: `Failed to fetch Zoho account information: ${error.message}` 
-        }, { status: 500 });
+        }, { status: error.status || 500 });
     }
 }
 
@@ -224,7 +224,7 @@ async function sendEmail(userId: string, emailData: any) {
         console.error('Error sending Zoho email:', error);
         return NextResponse.json({ 
             error: `Failed to send email: ${error.message}` 
-        }, { status: 500 });
+        }, { status: error.status || 500 });
     }
 }
 
@@ -245,17 +245,40 @@ async function getEmails(userId: string, searchParams: URLSearchParams) {
             });
         }
 
-        // Map UI folder names to typical Zoho folder IDs
+        // Map UI folder names to typical Zoho folder properties
         const folderMap: { [key: string]: string } = {
-            'inbox': 'inbox',
-            'sent': 'sent',
-            'drafts': 'drafts',
-            'trash': 'trash',
-            'spam': 'spam',
-            'starred': 'starred'
+            'inbox': 'isInbox',
+            'sent': 'isSent',
+            'drafts': 'isDraft',
+            'trash': 'isTrash',
+            'spam': 'isSpam'
         };
 
-        const actualFolderId = folderMap[folderId.toLowerCase()] || folderId;
+        let actualFolderId = folderId;
+        
+        // If it's a generic word like 'inbox', fetch folders to find the real ID
+        if (Object.keys(folderMap).includes(folderId.toLowerCase()) || folderId.toLowerCase() === 'starred') {
+            try {
+                const foldersData = await zohoServerService.proxyRequest(userId, 'folders');
+                if (foldersData?.data && Array.isArray(foldersData.data)) {
+                    const lcFolder = folderId.toLowerCase();
+                    const targetProp = folderMap[lcFolder];
+                    
+                    const targetFolder = foldersData.data.find((f: any) => 
+                        (targetProp && f[targetProp]) || 
+                        f.folderName?.toLowerCase() === lcFolder
+                    );
+                    
+                    if (targetFolder) {
+                        actualFolderId = targetFolder.folderId;
+                        console.log(`[Zoho Debug] Resolved '${folderId}' to folderId: ${actualFolderId}`);
+                    }
+                }
+            } catch (e) {
+                console.warn(`[Zoho Debug] Could not resolve folder ID for ${folderId}`, e);
+            }
+        }
+
         const endpoint = `messages/view?folderId=${actualFolderId}`;
         
         const data = await zohoServerService.proxyRequest(userId, endpoint);
@@ -268,7 +291,7 @@ async function getEmails(userId: string, searchParams: URLSearchParams) {
         console.error('Error fetching Zoho emails:', error);
         return NextResponse.json({ 
             error: `Failed to fetch emails: ${error.message}` 
-        }, { status: 500 });
+        }, { status: error.status || 500 });
     }
 }
 

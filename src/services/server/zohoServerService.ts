@@ -187,7 +187,9 @@ export const zohoServerService = {
                 description = errorJson.status?.description || errorJson.error_message || errorJson.error || description;
             } catch (e) {
             }
-            throw new Error(description);
+            const err: any = new Error(description);
+            err.status = response.status;
+            throw err;
         }
 
         return await response.json();
