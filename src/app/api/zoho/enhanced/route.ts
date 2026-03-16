@@ -46,19 +46,6 @@ export async function POST(req: NextRequest) {
             }, { status: 400 });
         }
 
-        // Ensure account info is available before proceeding
-        const accountInfo = await getAccountInfo(userId);
-        if (!accountInfo.ok) {
-            return accountInfo;
-        }
-
-        const accountData = await accountInfo.json();
-        if (!accountData.data?.accountId) {
-            return NextResponse.json({ 
-                error: 'Failed to retrieve Zoho account information. Please ensure your Zoho integration is properly configured.' 
-            }, { status: 400 });
-        }
-
         switch (action) {
             case 'send_email':
                 return await sendEmail(userId, data);
@@ -74,7 +61,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ 
             error: err.message || 'Internal server error',
             details: process.env.NODE_ENV === 'development' ? err.stack : undefined
-        }, { status: 500 });
+        }, { status: err.status || 500 });
     }
 }
 
@@ -179,22 +166,7 @@ async function getAccountInfo(userId: string) {
  */
 async function sendEmail(userId: string, emailData: any) {
     try {
-        // Get account info to ensure we have the correct fromAddress
-        const accountInfo = await getAccountInfo(userId);
-        if (!accountInfo.ok) {
-            return accountInfo;
-        }
-
-        const accountData = await accountInfo.json();
-        const fromAddress = accountData.data.email;
-
-        if (!fromAddress) {
-            return NextResponse.json({ 
-                error: 'Could not determine sender email address from Zoho account' 
-            }, { status: 400 });
-        }
-
-        // Validate email data
+        // Validate email data first
         if (!emailData.to || !emailData.subject || !emailData.content) {
             return NextResponse.json({ 
                 error: 'Missing required email fields: to, subject, and content are required' 
@@ -204,22 +176,40 @@ async function sendEmail(userId: string, emailData: any) {
         // Ensure to is in the correct format
         let toAddress = emailData.to;
         if (Array.isArray(toAddress)) {
-            toAddress = toAddress.map(addr => typeof addr === 'string' ? addr : addr.email).join(', ');
+            toAddress = toAddress.map((addr: any) => typeof addr === 'string' ? addr : addr.email).join(', ');
         } else if (typeof toAddress === 'object' && toAddress.email) {
             toAddress = toAddress.email;
         }
 
+        // Resolve fromAddress: use provided one, or fetch from Zoho account info
+        let fromAddress = emailData.fromAddress;
+        if (!fromAddress) {
+            try {
+                const accountInfoRes = await getAccountInfo(userId);
+                if (accountInfoRes.ok) {
+                    const accountData = await accountInfoRes.json();
+                    fromAddress = accountData.data?.fromAddresses?.find((a: any) => a.isDefault)?.address 
+                        || accountData.data?.email;
+                }
+            } catch (e) {
+                console.warn('[Zoho Send] Could not auto-resolve fromAddress:', e);
+            }
+        }
+
+        if (!fromAddress) {
+            return NextResponse.json({ 
+                error: 'Could not determine sender email address. Please ensure Zoho is properly connected.' 
+            }, { status: 400 });
+        }
+
         const response = await zohoServerService.sendMessage(userId, {
-            toAddress: toAddress,
+            toAddress,
             subject: emailData.subject,
             content: emailData.content,
-            fromAddress: emailData.fromAddress || fromAddress
+            fromAddress // Pass it directly so sendMessage doesn't need to re-fetch
         });
 
-        return NextResponse.json({
-            success: true,
-            data: response
-        });
+        return NextResponse.json({ success: true, data: response });
     } catch (error: any) {
         console.error('Error sending Zoho email:', error);
         return NextResponse.json({ 
@@ -245,8 +235,8 @@ async function getEmails(userId: string, searchParams: URLSearchParams) {
             });
         }
 
-        // Map UI folder names to typical Zoho folder properties
-        const folderMap: { [key: string]: string } = {
+        // Map UI folder names to Zoho boolean folder properties
+        const folderPropMap: { [key: string]: string } = {
             'inbox': 'isInbox',
             'sent': 'isSent',
             'drafts': 'isDraft',
@@ -254,33 +244,56 @@ async function getEmails(userId: string, searchParams: URLSearchParams) {
             'spam': 'isSpam'
         };
 
-        let actualFolderId = folderId;
+        let actualFolderId: string | number = folderId;
+        const isNamedFolder = Object.keys(folderPropMap).includes(folderId.toLowerCase()) || folderId.toLowerCase() === 'starred';
         
-        // If it's a generic word like 'inbox', fetch folders to find the real ID
-        if (Object.keys(folderMap).includes(folderId.toLowerCase()) || folderId.toLowerCase() === 'starred') {
+        // If it's a generic name like 'inbox', resolve to numeric folderId
+        if (isNamedFolder) {
             try {
                 const foldersData = await zohoServerService.proxyRequest(userId, 'folders');
                 if (foldersData?.data && Array.isArray(foldersData.data)) {
                     const lcFolder = folderId.toLowerCase();
-                    const targetProp = folderMap[lcFolder];
+                    const targetProp = folderPropMap[lcFolder];
                     
                     const targetFolder = foldersData.data.find((f: any) => 
-                        (targetProp && f[targetProp]) || 
+                        (targetProp && (f[targetProp] === true || f[targetProp] === 'true' || f[targetProp] === 1)) || 
                         f.folderName?.toLowerCase() === lcFolder
                     );
                     
-                    if (targetFolder) {
+                    if (targetFolder?.folderId) {
                         actualFolderId = targetFolder.folderId;
                         console.log(`[Zoho Debug] Resolved '${folderId}' to folderId: ${actualFolderId}`);
+                    } else {
+                        // Fallback: try matching by folder name without flag
+                        const byName = foldersData.data.find((f: any) =>
+                            f.folderName?.toLowerCase() === lcFolder ||
+                            f.folderName?.toLowerCase() === (lcFolder === 'inbox' ? 'inbox' : lcFolder)
+                        );
+                        if (byName?.folderId) {
+                            actualFolderId = byName.folderId;
+                        } else {
+                            // Last resort: log what folders exist so we can debug
+                            console.warn(`[Zoho Debug] Could not resolve folder '${folderId}'. Available folders:`, 
+                                foldersData.data.map((f: any) => `${f.folderName}(${f.folderId})`).join(', '));
+                        }
                     }
                 }
-            } catch (e) {
-                console.warn(`[Zoho Debug] Could not resolve folder ID for ${folderId}`, e);
+            } catch (e: any) {
+                console.warn(`[Zoho Debug] Could not resolve folder ID for ${folderId}:`, e?.message);
             }
         }
 
-        const endpoint = `messages/view?folderId=${actualFolderId}`;
-        
+        // If folder ID is still a string (unresolved name), we cannot proceed
+        if (typeof actualFolderId === 'string' && isNaN(Number(actualFolderId))) {
+            console.error(`[Zoho Debug] Folder ID '${actualFolderId}' could not be resolved to a number. Cannot fetch messages.`);
+            return NextResponse.json({
+                success: true,
+                data: [],
+                warning: `Could not resolve folder '${folderId}' to a Zoho folder ID.`
+            });
+        }
+
+        const endpoint = `messages/view?folderId=${actualFolderId}&sortedBy=date&order=desc&start=0&limit=50`;
         const data = await zohoServerService.proxyRequest(userId, endpoint);
         
         return NextResponse.json({
