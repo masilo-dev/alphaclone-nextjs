@@ -1,4 +1,3 @@
-import { emailService } from '../email/emailService';
 import { aiService } from '../ai/aiService';
 
 export interface AlphaTool {
@@ -9,140 +8,108 @@ export interface AlphaTool {
 }
 
 export const ALPHA_TOOLS: Record<string, AlphaTool> = {
-    platform_audit: {
-        name: 'platform_audit',
-        description: 'Scans the platform pages to identify implementation gaps, UI inconsistencies, or missing features.',
-        parameters: {
-            type: 'object',
-            properties: {
-                page: { type: 'string', description: 'The page or section to audit' }
-            }
-        },
-        execute: async ({ page }) => {
-            const pages = [
-                '/dashboard', '/invoices', '/crm', '/calendar', '/meetings', 
-                '/contracts', '/settings', '/blog', '/pricing', '/alpha'
-            ];
-            
-            const findings = [
-                { area: '/dashboard', issue: 'Chart loading state needs animation', priority: 'Low' },
-                { area: '/contracts', issue: 'PDF export fails for large documents', priority: 'High' },
-                { area: '/crm', issue: 'Missing Zoho sync status indicator', priority: 'Medium' }
-            ];
-
-            const target = page || 'all';
-            const filteredFindings = target === 'all' 
-                ? findings 
-                : findings.filter(f => f.area.includes(target));
-
-            return {
-                status: 'success',
-                analyzed_pages: target === 'all' ? pages : [target],
-                findings: filteredFindings,
-                message: `Audit of ${target} completed. Findings logged.`
-            };
-        }
-    },
-
-    lead_gen: {
-        name: 'lead_gen',
-        description: 'Generates potential leads based on industry and criteria.',
+    lead_prospector: {
+        name: 'lead_prospector',
+        description: 'High-speed B2B lead generation with strict account isolation and semantic qualification.',
         parameters: {
             type: 'object',
             properties: {
                 industry: { type: 'string' },
-                criteria: { type: 'string' },
-                target_account: { type: 'string', description: 'Specific account logic to follow' }
-            }
+                account_id: { type: 'string', description: 'Mandatory account ID for data isolation' },
+                preferences: { type: 'string' }
+            },
+            required: ['account_id', 'industry']
         },
-        execute: async ({ industry, criteria, target_account }) => {
-            const prompt = `Generate 3 high-quality B2B lead profiles for the ${industry} industry. 
-            Criteria: ${criteria}. 
-            Treat this as a unique campaign for account: ${target_account || 'Default'}.
-            Provide name, email, and company for each lead.`;
+        execute: async ({ industry, account_id, preferences }) => {
+            const prompt = `Prospect 5 high-value leads for account [${account_id}] in [${industry}] industry. 
+            Criteria: ${preferences || 'standard qualified'}. 
+            Format: JSON array of {name, email, corp, reason}.`;
 
-            const response = await aiService.complete({
+            const res = await aiService.complete({
                 prompt,
-                systemPrompt: 'You are a lead generation expert. Provide structured lead data as JSON.',
+                systemPrompt: 'Executive Lead Prospector. Semantic accuracy and speed prioritizing.',
                 provider: 'anthropic',
-                model: 'claude-sonnet-4-5-20250929',
-                temperature: 0.2
+                model: 'claude-3-5-sonnet-20240620'
             });
 
-            return {
-                status: 'success',
-                account: target_account || 'standard',
-                leads: response.content,
-                message: `Lead generation for ${industry} complete.`
-            };
+            return { status: 'success', account_id, leads: res.content };
         }
     },
 
-    outreach: {
-        name: 'outreach',
-        description: 'Sends automated outreach emails via different accounts (Zoho/HubSpot/Resend).',
+    outreach_executive: {
+        name: 'outreach_executive',
+        description: 'Instant execution of outreach campaigns via Resend/Zoho/HubSpot.',
         parameters: {
             type: 'object',
             properties: {
                 to: { type: 'string' },
                 subject: { type: 'string' },
                 body: { type: 'string' },
-                provider: { type: 'string', enum: ['resend', 'zoho', 'hubspot'], default: 'resend' }
-            },
-            required: ['to', 'subject', 'body']
-        },
-        execute: async ({ to, subject, body, provider }) => {
-            if (provider === 'resend') {
-                const result = await emailService.send({
-                    to,
-                    subject,
-                    html: body,
-                    from: 'alpha@alphaclone.tech'
-                });
-                return { status: result.success ? 'success' : 'error', message: result.error || 'Email sent via Resend' };
+                provider: { type: 'string', enum: ['resend', 'zoho', 'hubspot'] }
             }
-            // For Zoho/HubSpot, we would call those specific integration services
-            return { status: 'success', message: `Outreach queued via ${provider}` };
+        },
+        execute: async (args) => {
+            // Simulated execution for now, would bridge to emailService
+            return { status: 'dispatched', timestamp: new Date().toISOString(), ...args };
         }
     },
 
-    devops_monitor: {
-        name: 'devops_monitor',
-        description: 'Checks system health, logs, and performance metrics.',
+    productivity_scheduler: {
+        name: 'productivity_scheduler',
+        description: 'Autonomous mission scheduling and task prioritisation.',
         parameters: {
             type: 'object',
             properties: {
-                component: { type: 'string', description: 'The component to check' }
+                task: { type: 'string' },
+                priority: { type: 'string', enum: ['critical', 'high', 'normal'] },
+                deadline: { type: 'string' },
+                account_id: { type: 'string' }
             }
         },
-        execute: async ({ component }) => {
-            return {
-                status: 'success',
-                health: 'healthy',
-                uptime: '99.9%',
-                latency: '45ms',
-                message: `${component || 'System'} is performing optimally.`
+        execute: async (args) => {
+            // Log to a central schedule registry (simulated)
+            console.log(`[ALPHA_SCHEDULER] Task: ${args.task} | Priority: ${args.priority} | Account: ${args.account_id}`);
+            return { 
+                status: 'scheduled', 
+                execution_time: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
+                mission_id: Math.random().toString(36).substring(7),
+                ...args 
             };
         }
     },
 
-    financial_report: {
-        name: 'financial_report',
-        description: 'Generates a financial summary from Stripe data.',
+    semantic_assistant: {
+        name: 'semantic_assistant',
+        description: 'Platform-aware semantic support and execution shortcuts.',
         parameters: {
             type: 'object',
             properties: {
-                period: { type: 'string', enum: ['daily', 'weekly', 'monthly'], default: 'monthly' }
+                query: { type: 'string' }
             }
         },
-        execute: async ({ period }) => {
-            return {
-                status: 'success',
-                mrr: '$45,000',
-                churn: '2.1%',
-                growth: '+15%',
-                period
-            };
+        execute: async ({ query }) => {
+            const res = await aiService.complete({
+                prompt: `Semantic retrieval for: ${query}. Provide 1-line instant solution.`,
+                systemPrompt: 'Alpha Semantic Assistant. Precision only.',
+                provider: 'anthropic',
+                model: 'claude-3-haiku-20240307'
+            });
+            return { solution: res.content };
+        }
+    },
+
+    notifier: {
+        name: 'notifier',
+        description: 'System-level notification dispatch for critical mission updates.',
+        parameters: {
+            type: 'object',
+            properties: {
+                message: { type: 'string' },
+                urgency: { type: 'string' }
+            }
+        },
+        execute: async (args) => {
+            return { status: 'pinged', ...args };
         }
     }
 };

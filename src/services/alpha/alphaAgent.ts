@@ -59,51 +59,55 @@ class AlphaAgent {
 
             while (iteration < maxIterations && !missionAccomplished) {
                 iteration++;
-                mission.logs.push(`PROTOCOL: Iteration ${iteration}/${maxIterations} - Analyzing context...`);
+                mission.logs.push(`EXECUTIVE PROTOCOL: Step ${iteration} - Analyzing Execution Path...`);
 
-                const systemPrompt = `You are Alpha, the ultimate autonomous platform engine for AlphaClone. 
+                const systemPrompt = `You are Alpha, the Executive Productivity Engine for AlphaClone. 
+Your goal is INSTANT EXECUTION and PRODUCTIVITY. Do not over-analyze; execute the most efficient path.
+
 Current Mission: ${mission.description}
 Available Tools: ${Object.values(ALPHA_TOOLS).map(t => `${t.name}: ${t.description}`).join('\n')}
 
-Based on the mission and current logs, decide the next step.
-If a tool is needed, respond with "TOOL: tool_name|{args_as_json}".
-If the mission is complete, respond with "COMPLETE: [Final Summary]".
-If you need more info or are stuck, respond with "REASONING: [Your thoughts]".`;
+Response Format:
+- If executing a tool: "EXECUTE: tool_name|{args}"
+- If mission success: "FINALIZED: [Brief Execution Summary]"
+- If reasoning: "LOGIC: [Your executive reasoning]"
+
+Stay focused on productivity and account-specific outreach.`;
 
                 const aiResponse = await aiService.complete({
                     prompt: `Current Mission Status & Logs:\n${mission.logs.join('\n')}\n\nDecision:`,
                     systemPrompt,
                     provider: 'anthropic',
-                    model: 'claude-sonnet-4-5-20250929',
-                    temperature: 0.1
+                    model: 'claude-3-5-sonnet-20240620', // Faster response
+                    temperature: 0,
+                    maxTokens: 500
                 });
 
                 const content = aiResponse.content.trim();
                 mission.logs.push(`ALPHA: ${content}`);
 
-                if (content.startsWith('TOOL:')) {
-                    const match = content.match(/TOOL:\s*(\w+)\|({.*})/);
+                if (content.startsWith('EXECUTE:')) {
+                    const match = content.match(/EXECUTE:\s*(\w+)\|({.*})/);
                     if (match) {
                         const [, toolName, argsJson] = match;
                         const tool = ALPHA_TOOLS[toolName];
                         if (tool) {
-                            mission.logs.push(`EXECUTING: ${toolName} with ${argsJson}`);
+                            mission.logs.push(`EXECUTING PROTOCOL: ${toolName}`);
                             try {
                                 const args = JSON.parse(argsJson);
                                 const result = await tool.execute(args);
-                                mission.logs.push(`RESULT [${toolName}]: ${JSON.stringify(result)}`);
-                                currentContext += `\nTool ${toolName} result: ${JSON.stringify(result)}`;
+                                mission.logs.push(`OUTPUT [${toolName}]: ${JSON.stringify(result).substring(0, 200)}...`);
+                                currentContext += `\nOutput: ${JSON.stringify(result)}`;
                             } catch (e: any) {
-                                mission.logs.push(`TOOL ERROR [${toolName}]: ${e.message}`);
+                                mission.logs.push(`EXECUTION ERROR [${toolName}]: ${e.message}`);
                             }
-                        } else {
-                            mission.logs.push(`PROTOCOL ERROR: Tool ${toolName} not found.`);
                         }
                     }
-                } else if (content.startsWith('COMPLETE:')) {
+                } else if (content.startsWith('FINALIZED:')) {
                     missionAccomplished = true;
-                    mission.logs.push('MISSION STATUS: SUCCESS');
-                } else if (iteration === maxIterations) {
+                    mission.logs.push('MISSION STATUS: FULLY EXECUTED');
+                }
+ else if (iteration === maxIterations) {
                     mission.logs.push('MISSION WARNING: Max iterations reached. Closing loop.');
                 }
             }

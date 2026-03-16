@@ -3,243 +3,240 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-    Cpu, 
+    Terminal, 
     Shield, 
     Activity, 
-    Send, 
     Zap, 
-    Search, 
-    CheckCircle2, 
-    AlertCircle, 
-    Terminal as TerminalIcon,
-    Database,
-    Globe,
-    TrendingUp,
-    Mail,
-    Users
+    Cpu, 
+    Lock, 
+    Target, 
+    Send,
+    ChevronRight,
+    Command,
+    X,
+    Maximize2,
+    Database
 } from 'lucide-react';
 
-interface MissionLog {
+interface MissionExecution {
     id: string;
     description: string;
     status: 'running' | 'completed' | 'failed';
     logs: string[];
-    startTime?: string;
+    timestamp: string;
 }
 
-export default function AlphaHub() {
-    const [missions, setMissions] = useState<MissionLog[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [newMission, setNewMission] = useState('');
-    const [activeTab, setActiveTab] = useState<'missions' | 'system' | 'stats'>('missions');
+export default function AlphaExecutive() {
+    const [missions, setMissions] = useState<MissionExecution[]>([]);
+    const [prompt, setPrompt] = useState('');
+    const [isExecuting, setIsExecuting] = useState(false);
+    const [typingText, setTypingText] = useState('');
     const logsEndRef = useRef<HTMLDivElement>(null);
 
+    const fullText = "SYSTEM_ALPHA_v2.0 // DIRECT_ACCESS_ENABLED // PROTOCOL_LEVEL_10";
+
     useEffect(() => {
-        fetchMissions();
-        const interval = setInterval(fetchMissions, 5000);
-        return () => clearInterval(interval);
+        let i = 0;
+        const timer = setInterval(() => {
+            setTypingText(fullText.slice(0, i));
+            i++;
+            if (i > fullText.length) clearInterval(timer);
+        }, 50);
+        return () => clearInterval(timer);
     }, []);
 
     useEffect(() => {
-        logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [missions]);
+        fetchStatus();
+        const interval = setInterval(fetchStatus, 3000);
+        return () => clearInterval(interval);
+    }, []);
 
-    const fetchMissions = async () => {
+    const fetchStatus = async () => {
         try {
             const res = await fetch('/api/alpha');
             const data = await res.json();
-            if (Array.isArray(data)) {
-                setMissions(data);
-            }
-        } catch (err) {
-            console.error('Failed to fetch missions:', err);
+            if (Array.isArray(data)) setMissions(data);
+        } catch (e) {
+            console.error(e);
         }
     };
 
-    const startMission = async (e: React.FormEvent) => {
+    const runMission = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMission.trim()) return;
+        if (!prompt.trim() || isExecuting) return;
 
-        setLoading(true);
+        setIsExecuting(true);
         try {
             await fetch('/api/alpha', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ description: newMission })
+                body: JSON.stringify({ description: prompt })
             });
-            setNewMission('');
-            fetchMissions();
-        } catch (err) {
-            console.error('Failed to start mission:', err);
+            setPrompt('');
+        } catch (e) {
+            console.error(e);
         } finally {
-            setLoading(false);
+            setIsExecuting(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-[#020D1A] text-white p-6 md:p-10 font-sans">
-            {/* Header */}
-            <header className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-teal-500/20 rounded-lg border border-teal-500/30">
-                            <Cpu className="text-teal-400 w-6 h-6 animate-pulse" />
-                        </div>
-                        <h1 className="text-3xl md:text-4xl font-bold hero-metallic-text tracking-tight">
-                            ALPHA SYSTEM ENGINE
-                        </h1>
+        <div className="fixed inset-0 bg-[#000508] text-[#00FFD1] font-mono overflow-hidden z-[10000]">
+            {/* Scanline Effect */}
+            <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-50 bg-[length:100%_2px,3px_100%]" />
+            
+            {/* Header / Security Bar */}
+            <header className="h-14 border-b border-[#00FFD1]/20 flex items-center justify-between px-6 bg-[#000A10]">
+                <div className="flex items-center gap-4">
+                    <motion.div 
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                        className="p-1 border border-[#00FFD1] rounded-sm"
+                    >
+                        <Lock className="w-3 h-3" />
+                    </motion.div>
+                    <div className="flex flex-col">
+                        <span className="text-[10px] text-[#00FFD1]/50 leading-none mb-1">SECURE_SHELL</span>
+                        <span className="text-xs font-bold tracking-widest uppercase">{typingText}</span>
                     </div>
-                    <p className="text-slate-400 max-w-2xl">
-                        Autonomous platform oversight and mission control. Monitoring DevOps, Marketing, Outreach, and Financial systems in real-time.
-                    </p>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="glass-card px-4 py-2 rounded-full border border-teal-500/20 flex items-center gap-2">
-                        <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse" />
-                        <span className="text-xs font-mono text-teal-400 uppercase tracking-widest">System Online</span>
+                <div className="flex items-center gap-6">
+                    <div className="hidden md:flex items-center gap-8 text-[10px] tracking-tighter opacity-70">
+                        <div className="flex items-center gap-2">
+                            <Activity className="w-3 h-3 text-yellow-400" />
+                            <span>NODE_STATUS: STABLE</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Database className="w-3 h-3 text-blue-400" />
+                            <span>LATENCY: 14MS</span>
+                        </div>
+                    </div>
+                    <div className="flex gap-2">
+                        <div className="w-3 h-3 bg-[#00FFD1]/10 border border-[#00FFD1]/30" />
+                        <div className="w-3 h-3 bg-red-500/50 border border-red-500" />
                     </div>
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                {/* Left Column: System Status Matrix */}
-                <div className="lg:col-span-4 space-y-6">
-                    <section className="glass-card p-6 rounded-2xl relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <Shield className="w-24 h-24 text-teal-400" />
-                        </div>
-                        <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                            <Activity className="w-5 h-5 text-teal-400" />
-                            System Node Matrix
-                        </h3>
-                        
-                        <div className="space-y-4">
-                            {[
-                                { name: 'Core API Gateway', status: 'Operational', color: 'text-teal-400', icon: Globe },
-                                { name: 'DevOps Monitor', status: 'Scanning', color: 'text-blue-400', icon: Zap },
-                                { name: 'Marketing Engine', status: 'Optimizing', color: 'text-purple-400', icon: TrendingUp },
-                                { name: 'Outreach Protocol', status: 'Ready', color: 'text-teal-400', icon: Mail },
-                                { name: 'Financial Registry', status: 'Synced', color: 'text-emerald-400', icon: Database },
-                                { name: 'Lead Gen Neural', status: 'Idle', color: 'text-slate-400', icon: Search }
-                            ].map((node, i) => (
-                                <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 transition-all">
-                                    <div className="flex items-center gap-3">
-                                        <node.icon className={`w-4 h-4 ${node.color}`} />
-                                        <span className="text-sm text-slate-300 font-medium">{node.name}</span>
-                                    </div>
-                                    <span className={`text-[10px] uppercase tracking-widest font-bold ${node.color}`}>
-                                        {node.status}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-
-                    <section className="glass-card p-6 rounded-2xl">
-                        <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                            <TerminalIcon className="w-5 h-5 text-teal-400" />
-                            Autonomous Controls
-                        </h3>
-                        <form onSubmit={startMission} className="space-y-4">
-                            <div className="relative">
-                                <textarea 
-                                    value={newMission}
-                                    onChange={(e) => setNewMission(e.target.value)}
-                                    placeholder="Assign mission to Alpha (e.g., 'Audit system for UI gaps' or 'Generate 5 leads for tech industry')"
-                                    className="w-full bg-black/40 border border-teal-500/20 rounded-xl p-4 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50 min-h-[100px] resize-none"
-                                />
-                            </div>
+            <div className="grid grid-cols-1 md:grid-cols-12 h-[calc(100vh-56px)]">
+                {/* Left: Execution Control */}
+                <div className="md:col-span-4 border-r border-[#00FFD1]/10 p-6 flex flex-col gap-6 bg-[#00080D]">
+                    <div className="space-y-4">
+                        <h2 className="text-sm font-bold flex items-center gap-2 text-white italic">
+                            <Command className="w-4 h-4 text-[#00FFD1]" />
+                            IMMEDIATE_EXECUTION_PRIORITY
+                        </h2>
+                        <form onSubmit={runMission} className="relative group">
+                            <textarea 
+                                value={prompt}
+                                onChange={(e) => setPrompt(e.target.value)}
+                                placeholder="ENTER MISSION PROTOCOL..."
+                                className="w-full bg-[#00121A] border border-[#00FFD1]/20 p-4 text-xs focus:outline-none focus:border-[#00FFD1] min-h-[150px] resize-none transition-all placeholder:opacity-30 uppercase"
+                            />
                             <button 
                                 type="submit"
-                                disabled={loading || !newMission}
-                                className="w-full py-4 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-500 hover:to-blue-500 rounded-xl font-bold text-sm tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-2 group"
+                                disabled={isExecuting || !prompt.trim()}
+                                className="absolute bottom-4 right-4 p-2 bg-[#00FFD1] text-black hover:bg-[#00D1FF] transition-all disabled:opacity-30"
                             >
-                                {loading ? 'DEPLOYING...' : 'DEPLOY MISSION'}
-                                <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                <ChevronRight className="w-4 h-4" />
                             </button>
                         </form>
-                    </section>
-
-                    <section className="glass-card p-6 rounded-2xl">
-                        <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                            <Shield className="w-5 h-5 text-teal-400" />
-                            Engine Architecture
-                        </h3>
-                        <div className="space-y-4 text-xs leading-relaxed text-slate-400 font-mono">
-                            <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-                                <b className="text-teal-400 block mb-1">NEURAL MISSION LOOP</b>
-                                Alpha uses a recursive ReAct loop to reason through multi-step commands, selecting the optimal tool for each phase.
-                            </div>
-                            <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-                                <b className="text-blue-400 block mb-1">CROSS-PLATFORM AUDIT</b>
-                                The Platform Audit protocol scans all system nodes (/crm, /finance, /devops) to maintain high-integrity architecture.
-                            </div>
-                            <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-                                <b className="text-purple-400 block mb-1">AUTONOMOUS OUTREACH</b>
-                                Multi-account lead generation and Resend notifications are handled as unique system background processes.
-                            </div>
-                        </div>
-                    </section>
-                </div>
-
-                {/* Right Column: Mission Console */}
-                <div className="lg:col-span-8 flex flex-col h-[700px]">
-                    <div className="flex items-center gap-1 p-1 bg-white/5 rounded-t-2xl w-fit border-t border-x border-white/10 ml-4">
-                        <button 
-                            onClick={() => setActiveTab('missions')}
-                            className={`px-6 py-2 rounded-lg text-xs font-bold tracking-widest transition-all ${activeTab === 'missions' ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30' : 'text-slate-500 hover:text-slate-300'}`}
-                        >
-                            MISSIONS
-                        </button>
                     </div>
 
-                    <div className="flex-1 glass-card rounded-2xl rounded-tl-none border border-white/10 p-4 relative overflow-hidden flex flex-col">
-                        <div className="flex-1 overflow-y-auto space-y-6 pr-2 custom-scrollbar">
+                    <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar">
+                        <h3 className="text-[10px] font-bold text-[#00FFD1]/50 tracking-[0.3em]">CAPABILITY_MATRIX</h3>
+                        {[
+                            { icon: Target, label: 'LEAD_PROSPECTOR', status: 'ACTIVE' },
+                            { icon: Send, label: 'OUTREACH_EXECUTIVE', status: 'READY' },
+                            { icon: Zap, label: 'FAST_SCHEDULER', status: 'IDLE' },
+                            { icon: Shield, label: 'SEMANTIC_SECURE', status: 'ENABLED' }
+                        ].map((cap, i) => (
+                            <div key={i} className="group p-3 border border-[#00FFD1]/10 bg-[#00121A] hover:border-[#00FFD1]/40 flex items-center justify-between transition-all">
+                                <div className="flex items-center gap-3">
+                                    <cap.icon className="w-3 h-3 opacity-50 group-hover:opacity-100" />
+                                    <span className="text-[10px] font-bold group-hover:text-white">{cap.label}</span>
+                                </div>
+                                <span className={`text-[8px] px-1.5 py-0.5 border ${cap.status === 'ACTIVE' ? 'border-[#00FFD1] bg-[#00FFD1]/10' : 'border-white/10 opacity-30 italic'}`}>
+                                    {cap.status}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="p-4 bg-[#00FFD1]/5 border border-[#00FFD1]/20">
+                        <p className="text-[9px] leading-relaxed opacity-60 uppercase italic">
+                            Warning: Alpha Engine operates with High-High Privilege. Every execution is logged semantically to the core registry.
+                        </p>
+                    </div>
+                </div>
+
+                {/* Right: Real-time Mission Stream */}
+                <div className="md:col-span-8 p-6 flex flex-col bg-[#000508]">
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xs font-bold tracking-widest flex items-center gap-2">
+                            <Activity className="w-3 h-3 animate-pulse" />
+                            MISSION_CORE_STREAM
+                        </h2>
+                        <span className="text-[9px] opacity-40 italic">STREAMING_REALTIME_LOGS</span>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto space-y-6 pr-4 custom-scrollbar">
+                        <AnimatePresence>
                             {missions.length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center opacity-30">
-                                    <TerminalIcon className="w-16 h-16 mb-4" />
-                                    <p className="text-sm font-mono tracking-widest uppercase">No active missions in memory.</p>
+                                <div className="h-full flex flex-col items-center justify-center opacity-20 italic">
+                                    <Cpu className="w-12 h-12 mb-4 animate-pulse" />
+                                    <p className="text-xs tracking-tighter uppercase font-bold text-center">Awaiting System Deployment...</p>
                                 </div>
                             ) : (
-                                missions.map((mission) => (
+                                [...missions].reverse().map((mission) => (
                                     <motion.div 
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
                                         key={mission.id} 
-                                        className="p-4 rounded-xl bg-white/5 border border-white/5"
+                                        className="border border-[#00FFD1]/10 bg-[#000F15] p-5 relative group hover:border-[#00FFD1]/30 transition-all"
                                     >
-                                        <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center justify-between mb-4 border-b border-[#00FFD1]/10 pb-3">
                                             <div className="flex items-center gap-3">
-                                                <div className={`p-1.5 rounded-md ${mission.status === 'completed' ? 'bg-teal-500/20 text-teal-400' : mission.status === 'failed' ? 'bg-red-500/20 text-red-400' : 'bg-blue-500/20 text-blue-400'}`}>
-                                                    {mission.status === 'completed' ? <CheckCircle2 className="w-4 h-4" /> : mission.status === 'failed' ? <AlertCircle className="w-4 h-4" /> : <Activity className="w-4 h-4 animate-spin" />}
-                                                </div>
-                                                <h4 className="font-mono text-sm tracking-tight text-white font-semibold">
-                                                    ID: {mission.id.toUpperCase()} - {mission.description}
-                                                </h4>
+                                                <div className={`w-2 h-2 rounded-full ${mission.status === 'completed' ? 'bg-[#00FFD1]' : 'bg-[#00D1FF] animate-pulse'}`} />
+                                                <span className="text-[11px] font-bold text-white uppercase">{mission.description}</span>
                                             </div>
-                                            <span className="text-[10px] font-mono text-slate-500">
-                                                {mission.startTime ? new Date(mission.startTime).toLocaleTimeString() : ''}
-                                            </span>
+                                            <span className="text-[9px] font-mono opacity-40">[{mission.id.slice(0, 8)}]</span>
                                         </div>
 
-                                        <div className="bg-black/50 rounded-lg p-4 font-mono text-xs space-y-2 border border-white/5 max-h-[250px] overflow-y-auto custom-scrollbar">
+                                        <div className="space-y-2 max-h-[300px] overflow-y-auto font-mono text-[10px]">
                                             {mission.logs.map((log, li) => (
-                                                <div key={li} className="flex gap-3">
-                                                    <span className="text-slate-600 select-none">[{li.toString().padStart(2, '0')}]</span>
-                                                    <span className={log.includes('Error') ? 'text-red-400' : log.includes('Executing') ? 'text-blue-400' : 'text-slate-300'}>
+                                                <div key={li} className="flex gap-4 group/log">
+                                                    <span className="opacity-20 select-none">{li.toString().padStart(3, '0')}</span>
+                                                    <span className={`flex-1 ${log.includes('ERROR') ? 'text-red-400 bg-red-400/10 px-1' : log.includes('EXECUTING') ? 'text-white font-bold underline decoration-[#00FFD1]/40' : 'text-[#00FFD1]/80 hover:text-white transition-colors'}`}>
                                                         {log}
                                                     </span>
                                                 </div>
                                             ))}
                                             <div ref={logsEndRef} />
                                         </div>
+
+                                        {mission.status === 'completed' && (
+                                            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Lock className="w-3 h-3 text-[#00FFD1]" />
+                                            </div>
+                                        )}
                                     </motion.div>
                                 ))
                             )}
-                        </div>
+                        </AnimatePresence>
                     </div>
                 </div>
+            </div>
+
+            {/* Global Overlay Static */}
+            <div className="fixed bottom-0 left-0 right-0 h-1 bg-[#00FFD1]/20">
+                <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+                    className="h-full bg-[#00FFD1]"
+                />
             </div>
         </div>
     );

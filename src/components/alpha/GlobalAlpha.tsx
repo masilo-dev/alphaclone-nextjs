@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Cpu, X, Terminal, Send, Activity, ChevronRight } from 'lucide-react';
+import { Terminal, X, Zap, ChevronRight, Activity, Cpu } from 'lucide-react';
 import Link from 'next/link';
 
 export default function GlobalAlpha() {
@@ -29,7 +29,7 @@ export default function GlobalAlpha() {
                 setTimeout(() => {
                     setStatus('idle');
                     setIsOpen(false);
-                }, 2000);
+                }, 1500);
             } else {
                 setStatus('error');
             }
@@ -42,42 +42,50 @@ export default function GlobalAlpha() {
 
     return (
         <>
-            {/* Floating Toggle Button */}
+            {/* Semantic Clip Toggle */}
             <motion.button
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                whileHover={{ scale: 1.1 }}
+                whileHover={{ scale: 1.1, boxShadow: "0 0 20px rgba(0,255,209,0.4)" }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsOpen(!isOpen)}
-                className="fixed bottom-6 right-6 z-[9999] p-4 bg-gradient-to-br from-teal-500 to-blue-600 rounded-full shadow-[0_0_20px_rgba(20,184,166,0.4)] border border-white/20 group"
+                className="fixed bottom-6 right-6 z-[9999] w-14 h-14 bg-[#000F15] border border-[#00FFD1]/40 rounded-sm flex items-center justify-center group"
             >
-                <Cpu className={`w-6 h-6 text-white ${isOpen ? 'rotate-90' : ''} transition-transform duration-300`} />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-teal-300 rounded-full animate-ping" />
+                <div className="absolute inset-0 bg-[#00FFD1]/5 animate-pulse" />
+                <Cpu className={`w-6 h-6 text-[#00FFD1] ${isOpen ? 'rotate-90' : ''} transition-transform duration-500`} />
+                <div className="absolute top-0 right-0 p-1">
+                    <div className="w-1.5 h-1.5 bg-[#00FFD1] animate-ping" />
+                </div>
             </motion.button>
 
-            {/* Alpha Quick Terminal */}
+            {/* Semantic Assistant Overlay */}
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: 100, scale: 0.9 }}
+                        initial={{ opacity: 0, y: 50, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 100, scale: 0.9 }}
-                        className="fixed bottom-24 right-6 z-[9999] w-[350px] md:w-[400px] glass-panel rounded-2xl border border-teal-500/30 overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]"
+                        exit={{ opacity: 0, y: 50, scale: 0.95 }}
+                        className="fixed bottom-24 right-6 z-[9999] w-[380px] bg-[#000F15] border border-[#00FFD1]/30 shadow-[0_0_100px_rgba(0,0,0,1)] overflow-hidden font-mono"
                     >
-                        <div className="p-4 border-b border-white/10 flex items-center justify-between bg-teal-500/10">
-                            <div className="flex items-center gap-2">
-                                <Activity className="w-4 h-4 text-teal-400 animate-pulse" />
-                                <span className="text-xs font-bold tracking-[0.2em] text-teal-400 uppercase">Alpha Engine</span>
+                        {/* Scanline Overlay */}
+                        <div className="absolute inset-0 pointer-events-none opacity-[0.02] bg-[length:100%_2px] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)]" />
+
+                        <div className="p-3 border-b border-[#00FFD1]/10 flex items-center justify-between bg-[#001720]">
+                            <div className="flex items-center gap-3">
+                                <Activity className="w-3 h-3 text-[#00FFD1] animate-pulse" />
+                                <span className="text-[10px] font-bold tracking-[0.4em] text-[#00FFD1] uppercase">Alpha_Executive_v.2</span>
                             </div>
-                            <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-white/10 rounded-md transition-all">
-                                <X className="w-4 h-4 text-slate-400" />
+                            <button onClick={() => setIsOpen(false)} className="hover:text-red-400 transition-colors">
+                                <X className="w-4 h-4" />
                             </button>
                         </div>
 
-                        <div className="p-6 space-y-4">
-                            <div className="flex items-center gap-3 text-xs font-mono text-slate-400">
-                                <Terminal className="w-3 h-3" />
-                                <span>READY FOR MISSION PROTOCOL</span>
+                        <div className="p-6 space-y-5">
+                            <div className="space-y-1">
+                                <div className="text-[9px] text-[#00FFD1]/60 flex items-center gap-2">
+                                    <Terminal className="w-2.5 h-2.5" />
+                                    <span>READY FOR INSTANT EXECUTION</span>
+                                </div>
                             </div>
 
                             <form onSubmit={handleSubmit} className="space-y-4">
@@ -85,50 +93,48 @@ export default function GlobalAlpha() {
                                     <textarea
                                         value={prompt}
                                         onChange={(e) => setPrompt(e.target.value)}
-                                        placeholder="Command Alpha System..."
-                                        className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50 min-h-[120px] resize-none font-mono"
+                                        placeholder="PROTOCOL_INPUT..."
+                                        className="w-full bg-[#000508] border border-[#00FFD1]/20 p-4 text-xs text-[#00FFD1] placeholder:text-[#00FFD1]/20 focus:outline-none focus:border-[#00FFD1]/60 min-h-[120px] resize-none uppercase"
                                     />
                                     {status === 'success' && (
-                                        <div className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-xl animate-fade-in">
-                                            <div className="text-center">
-                                                <div className="text-teal-400 font-bold tracking-widest text-xs mb-2">MISSION DEPLOYED</div>
-                                                <div className="text-[10px] text-slate-400 uppercase">Alpha is processing.</div>
-                                            </div>
+                                        <div className="absolute inset-0 bg-[#00FFD1] text-black flex flex-col items-center justify-center font-bold">
+                                            <Zap className="w-8 h-8 mb-2 animate-bounce" />
+                                            <span className="text-xs tracking-widest">EXECUTING_NOW</span>
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="flex items-center gap-2">
+                                <div className="flex gap-2">
                                     <button
                                         type="submit"
                                         disabled={isDeploying || !prompt.trim()}
-                                        className="flex-1 py-3 bg-teal-600 hover:bg-teal-500 rounded-lg text-xs font-bold tracking-widest text-white transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                        className="flex-1 py-3 bg-[#00FFD1] text-black text-[10px] font-bold tracking-[0.2em] transition-all hover:bg-[#00D1FF] disabled:opacity-30 disabled:grayscale"
                                     >
-                                        {isDeploying ? 'PREPARING...' : 'INITIALIZE'}
-                                        <ChevronRight className="w-3 h-3" />
+                                        {isDeploying ? 'DISPATCHING...' : 'INITIALIZE_MISSION'}
                                     </button>
                                     <Link 
                                         href="/alpha" 
                                         onClick={() => setIsOpen(false)}
-                                        className="p-3 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 transition-all group"
+                                        className="px-4 bg-[#001720] border border-[#00FFD1]/20 flex items-center justify-center transition-all hover:border-[#00FFD1] group"
                                     >
-                                        <motion.div whileHover={{ scale: 1.1 }}>
-                                            <Activity className="w-4 h-4 text-slate-300 group-hover:text-teal-400" />
-                                        </motion.div>
+                                        <ChevronRight className="w-4 h-4 text-[#00FFD1] group-hover:translate-x-1 transition-transform" />
                                     </Link>
                                 </div>
                             </form>
                         </div>
 
-                        <div className="px-6 py-3 bg-white/5 border-t border-white/5 flex items-center gap-4">
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-1.5 h-1.5 bg-teal-500 rounded-full animate-pulse" />
-                                <span className="text-[10px] text-slate-500 font-mono">CPU: 12%</span>
+                        <div className="px-6 py-2 bg-[#000508] border-t border-[#00FFD1]/10 flex items-center justify-between">
+                            <div className="flex gap-4">
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-1 h-1 bg-[#00FFD1] rounded-full" />
+                                    <span className="text-[8px] text-[#00FFD1]/40">SEMANTIC: OK</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-1 h-1 bg-yellow-400 rounded-full" />
+                                    <span className="text-[8px] text-[#00FFD1]/40">TPS: HIGH</span>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
-                                <span className="text-[10px] text-slate-500 font-mono">MEM: 1.2GB</span>
-                            </div>
+                            <span className="text-[8px] text-[#00FFD1]/20 italic">UNHACKABLE_LAYER_7</span>
                         </div>
                     </motion.div>
                 )}
