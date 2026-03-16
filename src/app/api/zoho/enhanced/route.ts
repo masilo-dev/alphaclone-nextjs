@@ -3,6 +3,8 @@ import { zohoServerService } from '@/services/server/zohoServerService';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Enhanced Zoho API handler that properly handles multi-tenant scenarios
  * Addresses the "Invalid Input" errors by:

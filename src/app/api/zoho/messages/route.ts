@@ -3,6 +3,8 @@ import { zohoServerService } from '@/services/server/zohoServerService';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
     const rateLimitRes = await rateLimitMiddleware(req, rateLimitConfigs.api.zoho);
     if (rateLimitRes) return rateLimitRes;
