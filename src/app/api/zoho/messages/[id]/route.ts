@@ -5,8 +5,9 @@ import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
 
 export async function DELETE(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
     const rateLimitRes = await rateLimitMiddleware(req, rateLimitConfigs.api.zoho);
     if (rateLimitRes) return rateLimitRes;
 
@@ -16,7 +17,7 @@ export async function DELETE(
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     try {
-        const result = await zohoServerService.deleteMessage(user.id, params.id);
+        const result = await zohoServerService.deleteMessage(user.id, id);
         return NextResponse.json({ success: true, data: result });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: err.status || 500 });
@@ -25,8 +26,9 @@ export async function DELETE(
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
     const rateLimitRes = await rateLimitMiddleware(req, rateLimitConfigs.api.zoho);
     if (rateLimitRes) return rateLimitRes;
 
@@ -36,7 +38,7 @@ export async function GET(
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     try {
-        const data = await zohoServerService.proxyRequest(user.id, `messages/${params.id}/details`);
+        const data = await zohoServerService.proxyRequest(user.id, `messages/${id}/details`);
         return NextResponse.json({ success: true, data: data.data || {} });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: err.status || 500 });

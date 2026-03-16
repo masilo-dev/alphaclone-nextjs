@@ -212,7 +212,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
       setIsComposing(true);
     } else {
       setIsComposing(false);
-      loadMessages(userId, folder);
+      loadMessages(folder);
     }
   };
 
@@ -303,7 +303,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
         setComposeData({ from: defaultFrom, to: '', cc: '', subject: '', body: '' });
         setIsComposing(false);
         setActiveFolder('inbox');
-        loadMessages(userId, 'inbox');
+        loadMessages('inbox');
         if (onEmailsSent) onEmailsSent(1);
       } else {
         toast.error(result.error || 'Failed to send email');
