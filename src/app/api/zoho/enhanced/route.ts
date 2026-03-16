@@ -124,9 +124,20 @@ async function getAccountInfo(userId: string) {
         });
 
         // Fetch verified from-addresses for this account
-        let fromAddresses = [];
+        let fromAddresses: any[] = [];
         try {
-            const sendAddressesData = await zohoServerService.proxyRequest(userId, 'sendmailaddresses');
+            let sendAddressesData;
+            try {
+                sendAddressesData = await zohoServerService.proxyRequest(userId, 'sendmailaddresses');
+            } catch (v1Error: any) {
+                if (v1Error.status === 404) {
+                    console.log('[Zoho Debug] V1 sendmailaddresses failed with 404, trying V2...');
+                    sendAddressesData = await zohoServerService.proxyRequest(userId, 'v2/sendmailaddresses');
+                } else {
+                    throw v1Error;
+                }
+            }
+            
             if (sendAddressesData?.data) {
                 fromAddresses = sendAddressesData.data.map((addr: any) => {
                     const address = addr.sendAddress || addr.fromAddress || addr.address || addr.emailAddress || '';
@@ -298,7 +309,15 @@ async function getEmails(userId: string, searchParams: URLSearchParams) {
             }
         }
 
-        const endpoint = `messages/view?folderId=${actualFolderId}&sortedBy=date&order=desc&start=0&limit=50`;
+        let queryParams = `sortBy=date&order=desc&start=0&limit=50`;
+        
+        if (lcFolder === 'starred') {
+            queryParams += `&flagid=2`;
+        } else {
+            queryParams += `&folderId=${actualFolderId}`;
+        }
+
+        const endpoint = `messages/view?${queryParams}`;
         const data = await zohoServerService.proxyRequest(userId, endpoint);
         
         return NextResponse.json({

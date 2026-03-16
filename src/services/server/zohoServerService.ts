@@ -165,9 +165,12 @@ export const zohoServerService = {
             url = endpoint;
         } else if (endpoint === 'accounts') {
             url = `https://${mailApiHost}/api/accounts`; // Root accounts list
+        } else if (endpoint.startsWith('v2/')) {
+            // Support explicit v2 paths: v2/messages -> /api/v2/accounts/{id}/messages
+            const v2Path = endpoint.substring(3);
+            url = `https://${mailApiHost}/api/v2/accounts/${accountId}/${v2Path}`;
         } else {
             // Standard V1 path: https://{host}/api/accounts/{accountId}/{endpoint}
-            // Removing /v2/ as it causes URL_RULE_NOT_CONFIGURED on some regional accounts (like .eu)
             url = `https://${mailApiHost}/api/accounts/${accountId}/${endpoint}`; 
         }
 
