@@ -164,9 +164,11 @@ export const zohoServerService = {
         if (endpoint.startsWith('http')) {
             url = endpoint;
         } else if (endpoint === 'accounts') {
-            url = `https://${mailApiHost}/api/accounts`; // V1 for root accounts list
+            url = `https://${mailApiHost}/api/accounts`; // Root accounts list
         } else {
-            url = `https://${mailApiHost}/api/v2/accounts/${accountId}/${endpoint}`; // V2 for actions
+            // Standard V1 path: https://{host}/api/accounts/{accountId}/{endpoint}
+            // Removing /v2/ as it causes URL_RULE_NOT_CONFIGURED on some regional accounts (like .eu)
+            url = `https://${mailApiHost}/api/accounts/${accountId}/${endpoint}`; 
         }
 
         console.log(`[Zoho Proxy Debug] Sending request to URL: ${url}`);
