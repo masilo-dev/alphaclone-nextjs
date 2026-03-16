@@ -27,11 +27,15 @@ export async function GET(req: NextRequest) {
             .delete()
             .eq('id', stateNonce)
             .select('user_id')
-            .single();
+            .maybeSingle();
 
-        if (stateError || !stateData) {
-            console.error(`[Zoho Callback Debug] State Verification Failed. Received: "${stateNonce}". DB Error:`, stateError?.message || 'Record not found');
-            // Check if there are ANY records in the table for this user (if we had the user ID)
+        if (stateError) {
+            console.error(`[Zoho Callback Debug] State Query Error. Received: "${stateNonce}". DB Error:`, stateError.message);
+            return NextResponse.redirect(`${appUrl}/dashboard/settings?zoho=error&reason=db_error`);
+        }
+
+        if (!stateData) {
+            console.error(`[Zoho Callback Debug] State Verification Failed. Received: "${stateNonce}". Reason: State not found or expired.`);
             return NextResponse.redirect(`${appUrl}/dashboard/settings?zoho=error&reason=invalid_state`);
         }
 

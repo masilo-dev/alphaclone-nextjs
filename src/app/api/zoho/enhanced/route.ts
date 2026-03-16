@@ -86,9 +86,9 @@ async function getAccountInfo(userId: string) {
         }
 
         if (!integration) {
-            console.warn(`[Zoho Debug] No integration record found in DB for user ${userId}. Returning 404.`);
+            console.warn(`[Zoho Debug] No integration record found in DB for user ${userId}. This is expected if the account is not yet connected. returning 404.`);
             return NextResponse.json({ 
-                error: 'Integration not found. Please connect your Zoho account.',
+                error: 'Zoho account not connected. Please go to Settings to connect your account.',
                 code: 'INTEGRATION_NOT_FOUND'
             }, { status: 404 });
         }

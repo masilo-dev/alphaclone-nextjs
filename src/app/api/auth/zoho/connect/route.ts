@@ -32,10 +32,12 @@ export async function GET(req: NextRequest) {
             .single();
 
         if (stateError || !stateRecord) {
+            console.error(`[Zoho Connect Error] Failed to generate state for user ${userId}:`, stateError);
             throw new Error('Failed to initialize secure connection');
         }
 
         const stateNonce = stateRecord.id;
+        console.log(`[Zoho Connect] Generated State: ${stateNonce} for User: ${userId}`);
         const clientId = ENV.ZOHO_CLIENT_ID;
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin || 'https://alphaclone.tech';
 
