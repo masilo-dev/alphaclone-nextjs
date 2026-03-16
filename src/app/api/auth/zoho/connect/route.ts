@@ -41,6 +41,9 @@ export async function GET(req: NextRequest) {
 
         const redirectUri = `${appUrl}/api/auth/zoho/callback`;
 
+        console.log(`[Zoho Connect Debug] User: ${userId}, State: ${stateNonce}, URL: ${appUrl}`);
+        console.log(`[Zoho Connect Debug] Redirect URI: ${redirectUri}`);
+
         // Support for different Zoho DCs (US, EU, IN, AU, JP, CA)
         const region = searchParams.get('region') || 'com';
         const accountsDomain = region === 'com' ? 'accounts.zoho.com' : `accounts.zoho.${region}`;

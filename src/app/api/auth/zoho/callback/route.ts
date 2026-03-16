@@ -10,8 +10,10 @@ export async function GET(req: NextRequest) {
     // Use the request's own origin so local dev redirects go back to localhost
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin || 'https://alphaclone.tech';
 
+    console.log(`[Zoho Callback Debug] Received State: ${stateNonce}, Code Present: ${!!code}, URL: ${appUrl}`);
 
     if (!code || !stateNonce) {
+        console.warn(`[Zoho Callback Debug] Missing params. State: ${stateNonce}, Code: ${!!code}`);
         return NextResponse.redirect(`${appUrl}/dashboard/settings?zoho=error&reason=missing_params`);
     }
 
@@ -27,6 +29,7 @@ export async function GET(req: NextRequest) {
             .single();
 
         if (stateError || !stateData) {
+            console.error(`[Zoho Callback Debug] Invalid State: ${stateNonce}. Error:`, stateError?.message || 'State not found in DB');
             return NextResponse.redirect(`${appUrl}/dashboard/settings?zoho=error&reason=invalid_state`);
         }
 
