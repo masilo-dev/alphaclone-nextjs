@@ -154,17 +154,20 @@ export const zohoServerService = {
         }
 
         const mailApiHost = integration?.config?.mailApiHost || 'mail.zoho.com';
-        const baseUrl = `https://${mailApiHost}/api/v2`; // Use V2 API
         
-        // Correctly construct the URL:
-        // 1. If absolute URL, use it
-        // 2. If 'accounts', it's always https://{host}/api/v2/accounts
-        // 3. Otherwise, it's https://{host}/api/v2/accounts/{accountId}/{endpoint}
-        const url = endpoint.startsWith('http')
-            ? endpoint
-            : endpoint === 'accounts'
-                ? `${baseUrl}/accounts`
-                : `${baseUrl}/accounts/${accountId}/${endpoint}`;
+        // Correctly construct the URL using hybrid versioning:
+        // 1. If absolute URL, use it as is
+        // 2. If endpoint is exactly 'accounts', use v1: https://{host}/api/accounts
+        // 3. Otherwise, use v2: https://{host}/api/v2/accounts/{accountId}/{endpoint}
+        
+        let url = '';
+        if (endpoint.startsWith('http')) {
+            url = endpoint;
+        } else if (endpoint === 'accounts') {
+            url = `https://${mailApiHost}/api/accounts`; // V1 for root accounts list
+        } else {
+            url = `https://${mailApiHost}/api/v2/accounts/${accountId}/${endpoint}`; // V2 for actions
+        }
 
         console.log(`[Zoho Proxy Debug] Sending request to URL: ${url}`);
 

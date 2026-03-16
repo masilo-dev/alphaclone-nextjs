@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
         const supabaseAdmin = createSupabaseAdminClient();
 
         // 1. Verify and consume the state nonce
+        console.log(`[Zoho Callback Debug] Querying oauth_states for ID: ${stateNonce}`);
         const { data: stateData, error: stateError } = await supabaseAdmin
             .from('oauth_states')
             .delete()
@@ -29,10 +30,12 @@ export async function GET(req: NextRequest) {
             .single();
 
         if (stateError || !stateData) {
-            console.error(`[Zoho Callback Debug] Invalid State: ${stateNonce}. Error:`, stateError?.message || 'State not found in DB');
+            console.error(`[Zoho Callback Debug] State Verification Failed. Received: "${stateNonce}". DB Error:`, stateError?.message || 'Record not found');
+            // Check if there are ANY records in the table for this user (if we had the user ID)
             return NextResponse.redirect(`${appUrl}/dashboard/settings?zoho=error&reason=invalid_state`);
         }
 
+        console.log(`[Zoho Callback Debug] State Verified. Associated User: ${stateData.user_id}`);
         const userId = stateData.user_id;
 
         // 2. Exchange authorization code for tokens
