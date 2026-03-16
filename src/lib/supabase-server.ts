@@ -6,19 +6,24 @@ import { ENV } from '@/config/env'
 const createMockSupabaseClient = (serviceName: string) => {
     console.warn(`[${serviceName}] Missing credentials, returning mock client for build time`);
     
-    // Recursive proxy to handle method chaining like .from().select().eq()
-    const handler: ProxyHandler<any> = {
+    // The Ultimate Proxy: handles both property access and function calls recursively
+    const mock: any = new Proxy(() => {}, {
         get: (target, prop) => {
             if (prop === 'then') return undefined; // Avoid issues with async/await
             if (prop === 'data') return null;
             if (prop === 'error') return { message: `${serviceName} credentials missing` };
+            if (typeof prop === 'symbol') return undefined;
             
-            // Return a function that returns the proxy again to support chaining
-            return () => new Proxy({}, handler);
+            // For any other property, return the mock again
+            return mock;
+        },
+        apply: (target, thisArg, argList) => {
+            // When called as a function (e.g., .from('...')), return the mock again
+            return mock;
         }
-    };
+    });
     
-    return new Proxy({}, handler);
+    return mock;
 };
 
 /**

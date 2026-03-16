@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
+
+export const dynamic = 'force-dynamic';
 import { encrypt } from '@/lib/encryption';
 
 export async function GET(req: NextRequest) {
