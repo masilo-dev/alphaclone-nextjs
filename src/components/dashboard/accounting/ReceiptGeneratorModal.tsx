@@ -1,0 +1,775 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Button } from '../../ui/UIComponents';
+import { X, Download, Eye, FileText, Printer, Share2, Search, List, Plus, Sparkles } from 'lucide-react';
+import { useTenant } from '../../../contexts/TenantContext';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { googleDriveService } from '../../../services/googleDriveService';
+import { supabase } from '../../../lib/supabase';
+import { businessClientService, BusinessClient } from '../../../services/businessClientService';
+import toast from 'react-hot-toast';
+
+interface ReceiptItem {
+    description: string;
+    quantity: number;
+    price: number;
+}
+
+interface ReceiptGeneratorModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGeneratorModalProps) {
+    const { currentTenant } = useTenant();
+
+    const [receiptData, setReceiptData] = useState(() => ({
+        receiptNumber: `REC-${Date.now().toString().slice(-6)}`,
+        date: new Date().toISOString().split('T')[0],
+        clientName: '',
+        clientEmail: '',
+        paymentMethod: 'Credit Card',
+        receivedBy: '',
+        template: 'professional' as 'professional' | 'modern',
+        items: [{ description: '', quantity: 1, price: 0 }] as ReceiptItem[],
+        discountAmount: 0,
+        taxRate: 0,
+        notes: 'Thank you for your business.'
+    }));
+
+    const [isPreviewMode, setIsPreviewMode] = useState(false);
+    const [isSavingToDrive, setIsSavingToDrive] = useState(false);
+    const [clients, setClients] = useState<BusinessClient[]>([]);
+    const [myServices, setMyServices] = useState<Record<string, any>>({});
+    const [showContactDropdown, setShowContactDropdown] = useState(false);
+    const [contactSearch, setContactSearch] = useState('');
+    const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowContactDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    React.useEffect(() => {
+        const fetchDropdownData = async () => {
+            const tenantId = currentTenant?.id;
+            if (!tenantId || !isOpen) return;
+
+            try {
+                const [clientsRes, settingsRes] = await Promise.all([
+                    businessClientService.getClients(tenantId),
+                    supabase
+                        .from('business_settings')
+                        .select('settings')
+                        .eq('tenant_id', tenantId)
+                        .maybeSingle()
+                ]);
+
+                if (clientsRes.clients) {
+                    setClients(clientsRes.clients);
+                }
+
+                if (settingsRes.data?.settings?.my_services) {
+                    setMyServices(settingsRes.data.settings.my_services);
+                }
+            } catch (err) {
+                console.error('Error fetching dropdown data:', err);
+            }
+        };
+
+        fetchDropdownData();
+    }, [currentTenant?.id, isOpen]);
+
+    if (!isOpen) return null;
+
+    const handleAddItem = () => {
+        setReceiptData(prev => ({
+            ...prev,
+            items: [...prev.items, { description: '', quantity: 1, price: 0 }]
+        }));
+    };
+
+    const handleRemoveItem = (index: number) => {
+        setReceiptData(prev => ({
+            ...prev,
+            items: prev.items.filter((_, i) => i !== index)
+        }));
+    };
+
+    const handleItemChange = (index: number, field: keyof ReceiptItem, value: any) => {
+        const newItems = [...receiptData.items];
+        newItems[index] = { ...newItems[index], [field]: value };
+        setReceiptData(prev => ({ ...prev, items: newItems }));
+    };
+
+    const calculateSubtotal = () => {
+        return Math.round(receiptData.items.reduce((sum, item) => sum + (item.quantity * item.price), 0) * 100) / 100;
+    };
+
+    const calculateTax = (subtotal: number) => {
+        const taxableAmount = Math.max(0, subtotal - receiptData.discountAmount);
+        return Math.round((taxableAmount * (receiptData.taxRate / 100)) * 100) / 100;
+    };
+
+    const calculateTotal = () => {
+        const subtotal = calculateSubtotal();
+        const tax = calculateTax(subtotal);
+        return Math.round((subtotal - receiptData.discountAmount + tax) * 100) / 100;
+    };
+
+    const handleSaveToDrive = async () => {
+        if (!receiptData.clientName) {
+            toast.error('Client name is required');
+            return;
+        }
+
+        setIsSavingToDrive(true);
+        const toastId = toast.loading('Exporting to Google Drive...');
+
+        try {
+            const { data: { user: authUser } } = await supabase.auth.getUser();
+            if (!authUser) throw new Error('Not authenticated');
+
+            const doc = new jsPDF();
+            // We need to re-generate the PDF content for the blob
+            // Using the same logic as in generatePDF
+            // For brevity, I'll extract a helper or just re-run the professional template logic here
+            // since that's the default and most professional.
+
+            // To be DRY, let's just use the generatePDF logic but return the doc instead of saving
+            const docToSave = generatePDF('blob') as jsPDF;
+            if (!docToSave) throw new Error('Failed to generate document');
+
+            const pdfBlob = docToSave.output('blob');
+            await googleDriveService.uploadFile(
+                authUser.id,
+                pdfBlob,
+                `Receipt_${receiptData.receiptNumber}.pdf`
+            );
+
+            toast.success('Successfully saved to Google Drive!', { id: toastId });
+        } catch (err: any) {
+            console.error('Google Drive Export Error:', err);
+            toast.error(err.message || 'Failed to save to Google Drive', { id: toastId });
+        } finally {
+            setIsSavingToDrive(false);
+        }
+    };
+
+    const generatePDF = (mode: 'download' | 'preview' | 'blob') => {
+        if (!receiptData.clientName) {
+            toast.error('Client name is required');
+            return;
+        }
+
+        try {
+            const doc = new jsPDF();
+            const total = calculateTotal();
+            const subtotal = calculateSubtotal();
+
+            if (receiptData.template === 'professional') {
+                // Template 1: Professional / Standard
+                // Header
+                doc.setFontSize(22);
+                doc.setTextColor(30, 41, 59); // Slate 800
+                doc.text('RECEIPT', 14, 22);
+
+                doc.setFontSize(10);
+                doc.setTextColor(100, 116, 139); // Slate 500
+                doc.text(`Receipt #: ${receiptData.receiptNumber}`, 14, 30);
+                doc.text(`Date: ${receiptData.date}`, 14, 35);
+
+                // Business Info (Top Right)
+                doc.setFontSize(12);
+                doc.setTextColor(30, 41, 59);
+                doc.text(currentTenant?.name || 'Your Company', 140, 22);
+                doc.setFontSize(10);
+                doc.setTextColor(100, 116, 139);
+                if (currentTenant?.domain) {
+                    doc.text(currentTenant.domain, 140, 30);
+                }
+
+                // Client Info
+                doc.setFontSize(11);
+                doc.setTextColor(30, 41, 59);
+                doc.text('Bill To:', 14, 50);
+                doc.setFontSize(10);
+                doc.setTextColor(100, 116, 139);
+                doc.text(receiptData.clientName, 14, 56);
+                if (receiptData.clientEmail) {
+                    doc.text(receiptData.clientEmail, 14, 62);
+                }
+
+                // Payment Details
+                doc.setFontSize(11);
+                doc.setTextColor(30, 41, 59);
+                doc.text('Payment Details:', 140, 50);
+                doc.setFontSize(10);
+                doc.setTextColor(100, 116, 139);
+                doc.text(`Method: ${receiptData.paymentMethod}`, 140, 56);
+                if (receiptData.receivedBy) {
+                    doc.text(`Received By: ${receiptData.receivedBy}`, 140, 62);
+                }
+
+                // Items Table
+                autoTable(doc, {
+                    startY: 75,
+                    head: [['Description', 'Qty', 'Price', 'Total']],
+                    body: receiptData.items.map(item => [
+                        item.description,
+                        item.quantity.toString(),
+                        `$${item.price.toFixed(2)}`,
+                        `$${(item.quantity * item.price).toFixed(2)}`
+                    ]),
+                    theme: 'grid',
+                    headStyles: { fillColor: [241, 245, 249], textColor: [71, 85, 105], fontStyle: 'bold' },
+                    styles: { fontSize: 10, textColor: [51, 65, 85] },
+                });
+
+                // Totals
+                const finalY = (doc as any).lastAutoTable.finalY || 100;
+                doc.setFontSize(10);
+                doc.setTextColor(30, 41, 59); // Slate 800
+                doc.text('Subtotal:', 140, finalY + 10);
+                doc.text(`$${subtotal.toFixed(2)}`, 170, finalY + 10, { align: 'right' });
+
+                if (receiptData.discountAmount > 0) {
+                    doc.text('Discount:', 140, finalY + 16);
+                    doc.text(`-$${receiptData.discountAmount.toFixed(2)}`, 170, finalY + 16, { align: 'right' });
+                }
+
+                if (receiptData.taxRate > 0) {
+                    const taxLineY = receiptData.discountAmount > 0 ? 22 : 16;
+                    doc.text(`Tax (${receiptData.taxRate}%):`, 140, finalY + taxLineY);
+                    doc.text(`$${calculateTax(subtotal).toFixed(2)}`, 170, finalY + taxLineY, { align: 'right' });
+                }
+
+                const totalLineY = (receiptData.discountAmount > 0 ? 6 : 0) + (receiptData.taxRate > 0 ? 6 : 0) + 20;
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(30, 41, 59);
+                doc.text('Total Paid:', 140, finalY + totalLineY);
+                doc.text(`$${total.toFixed(2)}`, 170, finalY + totalLineY, { align: 'right' });
+
+                // Notes
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor(100, 116, 139);
+                doc.text(receiptData.notes, 14, finalY + totalLineY + 15);
+
+            } else {
+                // Template 2: Modern / Minimalist
+                // Header Accent Component
+                doc.setFillColor(15, 23, 42); // slate 900
+                doc.rect(0, 0, 210, 40, 'F');
+
+                doc.setFontSize(24);
+                doc.setTextColor(255, 255, 255);
+                doc.text('RECEIPT', 14, 25);
+
+                doc.setFontSize(12);
+                doc.text(currentTenant?.name || 'Your Company', 140, 25);
+
+                // Receipt Details
+                doc.setFontSize(10);
+                doc.setTextColor(100, 116, 139); // slate 500
+                doc.text('RECEIPT NUMBER', 14, 55);
+                doc.text('DATE PAID', 70, 55);
+
+                doc.setFontSize(11);
+                doc.setTextColor(15, 23, 42); // slate 900
+                doc.text(receiptData.receiptNumber, 14, 62);
+                doc.text(receiptData.date, 70, 62);
+
+                // Client Info
+                doc.setFontSize(10);
+                doc.setTextColor(100, 116, 139);
+                doc.text('ISSUED TO', 140, 55);
+
+                doc.setFontSize(11);
+                doc.setTextColor(15, 23, 42);
+                doc.text(receiptData.clientName, 140, 62);
+                if (receiptData.clientEmail) {
+                    doc.setFontSize(10);
+                    doc.setTextColor(100, 116, 139);
+                    doc.text(receiptData.clientEmail, 140, 68);
+                }
+
+                // Payment Details
+                doc.setFontSize(10);
+                doc.setTextColor(100, 116, 139);
+                doc.text('PAYMENT METHOD', 14, 76);
+                doc.text('RECEIVED BY', 70, 76);
+
+                doc.setFontSize(11);
+                doc.setTextColor(15, 23, 42);
+                doc.text(receiptData.paymentMethod || 'N/A', 14, 83);
+                doc.text(receiptData.receivedBy || 'N/A', 70, 83);
+
+                autoTable(doc, {
+                    startY: 95,
+                    head: [['Description', 'Qty', 'Price', 'Total']],
+                    body: receiptData.items.map(item => [
+                        item.description,
+                        item.quantity.toString(),
+                        `$${item.price.toFixed(2)}`,
+                        `$${(item.quantity * item.price).toFixed(2)}`
+                    ]),
+                    theme: 'plain',
+                    headStyles: { textColor: [100, 116, 139], fontStyle: 'normal' },
+                    styles: { fontSize: 10, textColor: [15, 23, 42] },
+                    alternateRowStyles: { fillColor: [248, 250, 252] } // slate 50 / very light
+                });
+
+                const finalY = (doc as any).lastAutoTable.finalY || 100;
+
+                // Totals
+                const totalsY = finalY + 10;
+                doc.setFontSize(10);
+                doc.setTextColor(100, 116, 139);
+                doc.text('Subtotal:', 140, totalsY);
+                doc.text(`$${subtotal.toFixed(2)}`, 196, totalsY, { align: 'right' });
+
+                let currentTotalY = totalsY + 6;
+                if (receiptData.discountAmount > 0) {
+                    doc.text('Discount:', 140, currentTotalY);
+                    doc.text(`-$${receiptData.discountAmount.toFixed(2)}`, 196, currentTotalY, { align: 'right' });
+                    currentTotalY += 6;
+                }
+
+                if (receiptData.taxRate > 0) {
+                    doc.text(`Tax (${receiptData.taxRate}%):`, 140, currentTotalY);
+                    doc.text(`$${calculateTax(subtotal).toFixed(2)}`, 196, currentTotalY, { align: 'right' });
+                    currentTotalY += 6;
+                }
+
+                // Big Total Area
+                doc.setFillColor(241, 245, 249); // slate 100
+                doc.rect(130, currentTotalY + 4, 66, 25, 'F');
+
+                doc.setFontSize(11);
+                doc.setTextColor(100, 116, 139);
+                doc.text('Total Paid', 135, currentTotalY + 12);
+
+                doc.setFontSize(16);
+                doc.setTextColor(15, 23, 42);
+                doc.setFont('helvetica', 'bold');
+                doc.text(`$${total.toFixed(2)}`, 135, currentTotalY + 22);
+
+                // Notes
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor(100, 116, 139);
+                doc.text(receiptData.notes, 14, currentTotalY + 40);
+            }
+
+            if (mode === 'download') {
+                doc.save(`Receipt_${receiptData.receiptNumber}.pdf`);
+                toast.success('Receipt downloaded successfully!');
+                onClose();
+            } else if (mode === 'preview') {
+                // Preview mode (Opens in new tab)
+                const pdfDataUri = doc.output('datauristring');
+                const win = window.open();
+                if (win) {
+                    win.document.write(`<iframe width='100%' height='100%' src='${pdfDataUri}'></iframe>`);
+                } else {
+                    toast.error('Could not open preview. Please allow popups.');
+                }
+            } else if (mode === 'blob') {
+                return doc;
+            }
+        } catch (error) {
+            console.error("PDF Generation error:", error);
+            toast.error('Failed to generate receipt');
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-slate-900 rounded-xl border border-slate-700 w-full max-w-4xl shadow-2xl my-8 flex flex-col max-h-[90vh]">
+                <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/95 backdrop-blur-sm rounded-t-xl shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-teal-500/10 flex items-center justify-center text-teal-400">
+                            <FileText className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-white">Generate Receipt</h2>
+                            <p className="text-sm text-slate-400">Create and download professional receipts for your clients</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div className="p-6 space-y-8 overflow-y-auto grow">
+                    {/* General Information */}
+                    <div>
+                        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">Receipt Details</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-2">Receipt Number</label>
+                                <input
+                                    type="text"
+                                    value={receiptData.receiptNumber}
+                                    onChange={(e) => setReceiptData({ ...receiptData, receiptNumber: e.target.value })}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 transition-colors"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-2">Date</label>
+                                <input
+                                    type="date"
+                                    value={receiptData.date}
+                                    onChange={(e) => setReceiptData({ ...receiptData, date: e.target.value })}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 transition-colors"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Client Information */}
+                    <div>
+                        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">Client Information</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-2">Client Name <span className="text-rose-400">*</span></label>
+                                <div className="relative" ref={dropdownRef}>
+                                    <input
+                                        type="text"
+                                        value={receiptData.clientName}
+                                        onChange={(e) => {
+                                            setReceiptData({ ...receiptData, clientName: e.target.value });
+                                            setContactSearch(e.target.value);
+                                            setShowContactDropdown(true);
+                                        }}
+                                        onFocus={() => setShowContactDropdown(true)}
+                                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 transition-colors"
+                                        placeholder="Jane Doe or Acme Corp"
+                                    />
+                                    {showContactDropdown && (clients.length > 0) && (
+                                        <div className="absolute z-10 w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg shadow-xl max-h-60 overflow-y-auto custom-scrollbar">
+                                            {clients
+                                                .filter(c => c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
+                                                    (c.email && c.email.toLowerCase().includes(contactSearch.toLowerCase())))
+                                                .map(client => (
+                                                    <div
+                                                        key={client.id}
+                                                        onClick={() => {
+                                                            setReceiptData({
+                                                                ...receiptData,
+                                                                clientName: client.name,
+                                                                clientEmail: client.email || ''
+                                                            });
+                                                            setShowContactDropdown(false);
+                                                        }}
+                                                        className="px-4 py-2 hover:bg-slate-800 cursor-pointer border-b border-slate-800 last:border-0"
+                                                    >
+                                                        <div className="text-sm font-medium text-white">{client.name}</div>
+                                                        {client.email && <div className="text-xs text-slate-500">{client.email}</div>}
+                                                    </div>
+                                                ))}
+                                            {clients.filter(c => c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
+                                                (c.email && c.email.toLowerCase().includes(contactSearch.toLowerCase()))).length === 0 && (
+                                                    <div className="px-4 py-3 text-sm text-slate-500 italic">No contacts found</div>
+                                                )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-2">Client Email</label>
+                                <input
+                                    type="email"
+                                    value={receiptData.clientEmail}
+                                    onChange={(e) => setReceiptData({ ...receiptData, clientEmail: e.target.value })}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 transition-colors"
+                                    placeholder="jane@example.com"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Payment Information */}
+                    <div>
+                        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">Payment Details</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-2">Payment Method</label>
+                                <select
+                                    value={receiptData.paymentMethod}
+                                    onChange={(e) => setReceiptData({ ...receiptData, paymentMethod: e.target.value })}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 transition-colors"
+                                >
+                                    <option value="Credit Card">Credit Card</option>
+                                    <option value="Bank Transfer">Bank Transfer</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Mobile Money">Mobile Money</option>
+                                    <option value="Check">Check</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-2">Received By</label>
+                                <input
+                                    type="text"
+                                    value={receiptData.receivedBy}
+                                    onChange={(e) => setReceiptData({ ...receiptData, receivedBy: e.target.value })}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 transition-colors"
+                                    placeholder="Name of receiver"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Line Items */}
+                    <div>
+                        <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
+                            <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Line Items</h3>
+                            <button
+                                onClick={handleAddItem}
+                                className="text-sm text-teal-400 hover:text-teal-300 font-medium"
+                            >
+                                + Add Item
+                            </button>
+                        </div>
+
+                        {/* Quick Add Services */}
+                        {Object.keys(myServices).length > 0 && (
+                            <div className="mb-6 p-4 bg-teal-500/5 border border-teal-500/10 rounded-xl">
+                                <label className="block text-[10px] font-bold text-teal-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                    <Sparkles className="w-3 h-3" />
+                                    Quick Add from My Services
+                                </label>
+                                <div className="flex flex-wrap gap-2">
+                                    {Object.entries(myServices).map(([id, service]: [string, any]) => (
+                                        <button
+                                            key={id}
+                                            onClick={() => {
+                                                const emptyIdx = receiptData.items.findIndex(item => !item.description);
+                                                if (emptyIdx !== -1) {
+                                                    handleItemChange(emptyIdx, 'description', service.name);
+                                                    handleItemChange(emptyIdx, 'price', service.defaultPrice || 0);
+                                                } else {
+                                                    setReceiptData(prev => ({
+                                                        ...prev,
+                                                        items: [...prev.items, {
+                                                            description: service.name,
+                                                            quantity: 1,
+                                                            price: service.defaultPrice || 0
+                                                        }]
+                                                    }));
+                                                }
+                                                toast.success(`Added ${service.name}`);
+                                            }}
+                                            className="px-3 py-1.5 bg-slate-900 border border-slate-700 hover:border-teal-500 hover:bg-teal-500/10 rounded-lg text-xs text-slate-300 transition-all flex items-center gap-2 group"
+                                        >
+                                            <Plus className="w-3 h-3 text-teal-500 group-hover:scale-110 transition-transform" />
+                                            {service.name}
+                                            <span className="text-slate-500 ml-1 font-mono">${service.defaultPrice}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="space-y-4">
+                            {receiptData.items.map((item, index) => (
+                                <div key={index} className="flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-slate-800/50 p-4 rounded-lg border border-slate-700/50">
+                                    <div className="flex-1 w-full">
+                                        <label className="block text-xs text-slate-500 mb-1">Description</label>
+                                        <input
+                                            type="text"
+                                            value={item.description}
+                                            onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors"
+                                            placeholder="Consulting services..."
+                                        />
+                                    </div>
+                                    <div className="w-full sm:w-24">
+                                        <label className="block text-xs text-slate-500 mb-1">Qty</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={item.quantity}
+                                            onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value) || 1)}
+                                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors"
+                                        />
+                                    </div>
+                                    <div className="w-full sm:w-32">
+                                        <label className="block text-xs text-slate-500 mb-1">Price ($)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={item.price}
+                                            onChange={(e) => handleItemChange(index, 'price', parseFloat(e.target.value) || 0)}
+                                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors"
+                                        />
+                                    </div>
+                                    {receiptData.items.length > 1 && (
+                                        <button
+                                            onClick={() => handleRemoveItem(index)}
+                                            className="mt-5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-400/10 rounded-lg transition-colors"
+                                        >
+                                            <X className="w-5 h-5" />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 bg-slate-800/30 p-4 rounded-xl border border-slate-700/50">
+                            <div className="flex flex-wrap gap-4 w-full sm:w-auto">
+                                <div>
+                                    <label className="block text-xs text-slate-500 mb-1">Discount ($)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={receiptData.discountAmount}
+                                        onChange={(e) => setReceiptData({ ...receiptData, discountAmount: parseFloat(e.target.value) || 0 })}
+                                        className="w-24 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs text-slate-500 mb-1">Tax (%)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.1"
+                                        value={receiptData.taxRate}
+                                        onChange={(e) => setReceiptData({ ...receiptData, taxRate: parseFloat(e.target.value) || 0 })}
+                                        className="w-24 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors"
+                                    />
+                                </div>
+                            </div>
+                            <div className="text-right w-full sm:w-auto">
+                                <div className="space-y-1">
+                                    <div className="flex justify-end gap-10 text-slate-400 text-sm">
+                                        <span>Subtotal</span>
+                                        <span>${calculateSubtotal().toFixed(2)}</span>
+                                    </div>
+                                    {receiptData.discountAmount > 0 && (
+                                        <div className="flex justify-end gap-10 text-rose-400 text-sm">
+                                            <span>Discount</span>
+                                            <span>-${receiptData.discountAmount.toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    {receiptData.taxRate > 0 && (
+                                        <div className="flex justify-end gap-10 text-slate-400 text-sm">
+                                            <span>Tax ({receiptData.taxRate}%)</span>
+                                            <span>${calculateTax(calculateSubtotal()).toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    <div className="pt-2 border-t border-slate-700">
+                                        <p className="text-slate-400 text-xs uppercase tracking-widest font-bold">Total Amount Received</p>
+                                        <p className="text-3xl font-black text-white italic tracking-tight">${calculateTotal().toFixed(2)}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Template Selection & Notes */}
+                    <div>
+                        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">Styling & Notes</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-2">Template Style</label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div
+                                        onClick={() => setReceiptData({ ...receiptData, template: 'professional' })}
+                                        className={`cursor-pointer p-4 rounded-xl border-2 transition-all ${receiptData.template === 'professional' ? 'border-teal-500 bg-teal-500/10' : 'border-slate-700 hover:border-slate-500 bg-slate-800/50'}`}
+                                    >
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className={`font-medium ${receiptData.template === 'professional' ? 'text-teal-400' : 'text-slate-300'}`}>Professional</span>
+                                            {receiptData.template === 'professional' && <div className="w-2 h-2 rounded-full bg-teal-500" />}
+                                        </div>
+                                        <div className="w-full h-16 bg-slate-700/30 rounded-lg flex flex-col gap-1 p-2">
+                                            <div className="w-1/2 h-2 bg-slate-600 rounded"></div>
+                                            <div className="w-2/3 h-2 bg-slate-600 rounded"></div>
+                                            <div className="mt-2 w-full h-8 bg-slate-600/50 rounded"></div>
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        onClick={() => setReceiptData({ ...receiptData, template: 'modern' })}
+                                        className={`cursor-pointer p-4 rounded-xl border-2 transition-all ${receiptData.template === 'modern' ? 'border-teal-500 bg-teal-500/10' : 'border-slate-700 hover:border-slate-500 bg-slate-800/50'}`}
+                                    >
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className={`font-medium ${receiptData.template === 'modern' ? 'text-teal-400' : 'text-slate-300'}`}>Modern</span>
+                                            {receiptData.template === 'modern' && <div className="w-2 h-2 rounded-full bg-teal-500" />}
+                                        </div>
+                                        <div className="w-full h-16 bg-slate-700/30 rounded-lg flex flex-col p-0 overflow-hidden">
+                                            <div className="w-full h-4 bg-slate-600 mb-1"></div>
+                                            <div className="px-2 w-1/2 h-2 bg-slate-600/50 rounded my-1"></div>
+                                            <div className="px-2 mt-auto self-end w-1/3 h-4 bg-slate-500/50 rounded-tl"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-2">Notes / Footer</label>
+                                <textarea
+                                    value={receiptData.notes}
+                                    onChange={(e) => setReceiptData({ ...receiptData, notes: e.target.value })}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 transition-colors h-28 resize-none"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div className="px-6 py-4 border-t border-slate-800 flex flex-wrap justify-end gap-3 bg-slate-900/95 rounded-b-xl shrink-0">
+                    <Button variant="outline" onClick={onClose} className="border-slate-700 hover:bg-slate-800 text-white">
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => window.print()}
+                        className="border-slate-700 text-slate-300 hover:text-white"
+                    >
+                        <Printer className="w-4 h-4 mr-2" />
+                        Print
+                    </Button>
+                    <Button
+                        onClick={() => generatePDF('preview')}
+                        className="bg-slate-700 hover:bg-slate-600 text-white border border-slate-600"
+                        disabled={!receiptData.clientName}
+                    >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Preview
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={handleSaveToDrive}
+                        disabled={isSavingToDrive || !receiptData.clientName}
+                        className="border-slate-700 text-slate-300 hover:text-white"
+                    >
+                        <Share2 className={`w-4 h-4 mr-2 ${isSavingToDrive ? 'animate-spin' : ''}`} />
+                        {isSavingToDrive ? 'Saving...' : 'To Drive'}
+                    </Button>
+                    <Button
+                        onClick={() => generatePDF('download')}
+                        className="bg-teal-500 hover:bg-teal-600 text-white border-0"
+                        disabled={!receiptData.clientName}
+                    >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+}

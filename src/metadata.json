@@ -1,0 +1,9 @@
+{
+  "name": "AlphaClone Systems",
+  "description": "Enterprise-grade AI-assisted dashboard and collaboration platform.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera",
+    "geolocation"
+  ]
+}

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accept Your AlphaClone Invitation</title>
+    <style>
+        body {
+            font-family: 'Inter', Helvetica, Arial, sans-serif;
+            background-color: #020617;
+            color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .wrapper {
+            width: 100%;
+            table-layout: fixed;
+            background-color: #020617;
+            padding-bottom: 40px;
+        }
+
+        .main {
+            background-color: #0f172a;
+            margin: 40px auto;
+            width: 100%;
+            max-width: 600px;
+            border-radius: 24px;
+            border: 1px solid #1e293b;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            padding: 40px 0 20px 0;
+            text-align: center;
+        }
+
+        .logo {
+            width: 64px;
+            height: 64px;
+        }
+
+        .content {
+            padding: 0 40px 40px 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            color: #ffffff;
+            letter-spacing: -0.025em;
+        }
+
+        p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #94a3b8;
+            margin-bottom: 32px;
+        }
+
+        .btn-container {
+            margin-bottom: 32px;
+        }
+
+        .btn {
+            background-color: #14b8a6;
+            background-image: linear-gradient(to right, #0d9488, #14b8a6);
+            color: #ffffff;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            box-shadow: 0 10px 15px -3px rgba(20, 184, 166, 0.3);
+        }
+
+        .footer {
+            padding: 20px 40px;
+            background-color: #020617;
+            text-align: center;
+            border-top: 1px solid #1e293b;
+        }
+
+        .footer p {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 0;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #1e293b, transparent);
+            margin: 24px 0;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .main {
+                margin: 20px;
+                border-radius: 16px;
+            }
+
+            .content {
+                padding: 0 24px 32px 24px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="main">
+            <div class="header">
+                <img src="https://alphaclone.tech/logo.png" alt="AlphaClone Systems" class="logo">
+            </div>
+            <div class="content">
+                <h1>Unlock Your Command Center.</h1>
+                <p>You've been invited to join an AlphaClone workspace. Accept your invitation below to set up your
+                    profile and start the mission.</p>
+                <div class="btn-container">
+                    <a href="{{ .ConfirmationURL }}" class="btn">Accept Invitation</a>
+                </div>
+                <div class="divider"></div>
+                <p style="font-size: 12px; word-break: break-all; color: #38bdf8;">{{ .ConfirmationURL }}</p>
+            </div>
+            <div class="footer">
+                <p>&copy; 2026 AlphaClone Systems. Built for Excellence.</p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
