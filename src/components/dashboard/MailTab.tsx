@@ -45,9 +45,8 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
 
     const handleConnectZoho = () => {
         setIsConnecting(true);
-        // Redirect to Zoho OAuth flow with current path as returnTo
-        const currentPath = window.location.pathname;
-        window.location.href = `/api/auth/zoho/connect?userId=${user.id}&returnTo=${encodeURIComponent(currentPath)}`;
+        // OAuth connect must be /api/auth/zoho/connect with no query params
+        window.location.href = `/api/auth/zoho/connect`;
     };
 
     return (
