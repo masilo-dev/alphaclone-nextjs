@@ -195,7 +195,6 @@ export const zohoServerService = {
         const token = await this.getValidToken(userId);
         if (!token) throw new Error('Zoho not connected: Valid token could not be retrieved');
 
-        // Need accountId for most requests. We should store it in config.
         const supabaseAdmin = createSupabaseAdminClient();
         const { data: integration, error } = await supabaseAdmin
             .from('integrations')
@@ -205,54 +204,47 @@ export const zohoServerService = {
             .maybeSingle();
 
         if (error || !integration) {
-            console.error('[Zoho Proxy Debug] Failed to fetch integration for proxyRequest:', error);
-            const err: any = new Error('Database error fetching Zoho integration info');
-            err.code = 'NOT_FOUND';
-            throw err;
+            throw new Error('Database error fetching Zoho integration info');
         }
 
-        const accountId = integration?.config?.accountId || integration?.config?.zoid;
+        let accountId = integration?.config?.accountId || integration?.config?.zoid;
+
+        // ✅ Fix 1: Auto-resolve AND SAVE accountId if missing
         if (!accountId && !endpoint.includes('accounts')) {
-            console.error('[Zoho Proxy Debug] Account ID is missing in integration config:', integration.config);
-            // Try to auto-resolve accountId if it's missing but we have a token
-            try {
-                const accountsData = await this.proxyRequest(userId, 'accounts');
-                if (accountsData.data && accountsData.data.length > 0) {
-                    const resolvedId = accountsData.data[0].accountId;
-                    console.log('[Zoho Proxy Debug] Auto-resolved accountId:', resolvedId);
-                    return this.proxyRequest(userId, endpoint, options);
-                }
-            } catch (e) {
-                console.error('[Zoho Proxy Debug] Auto-resolve failed:', e);
-            }
-            throw new Error('Zoho account ID not found in database settings');
+            console.log('[Zoho Proxy] accountId missing, auto-resolving...');
+            const accountsData = await this.proxyRequest(userId, 'accounts');
+            if (!accountsData.data?.length) throw new Error('No Zoho accounts found');
+            
+            accountId = accountsData.data[0].accountId;
+
+            // Save it so we don't repeat this every request
+            await supabaseAdmin
+                .from('integrations')
+                .update({ config: { ...integration.config, accountId, zoid: accountId } })
+                .eq('user_id', userId)
+                .eq('type', 'zoho');
+
+            console.log('[Zoho Proxy] Saved resolved accountId:', accountId);
         }
 
+        // ✅ Fix 2: Default to mail.zoho.eu not mail.zoho.com
         const rawMailApiHost = integration?.config?.mailApiHost;
         const mailApiHost = (rawMailApiHost && typeof rawMailApiHost === 'string' && !rawMailApiHost.startsWith('['))
             ? rawMailApiHost
-            : 'mail.zoho.com';
-        
-        // Correctly construct the URL using hybrid versioning:
-        // 1. If absolute URL, use it as is
-        // 2. If endpoint is exactly 'accounts', use v1: https://{host}/api/accounts
-        // 3. Otherwise, use v2: https://{host}/api/v2/accounts/{accountId}/{endpoint}
-        
+            : 'mail.zoho.eu'; // ← was mail.zoho.com
+
+        // ✅ Fix 3: Remove v2 routing entirely — Zoho EU uses v1 for everything
         let url = '';
         if (endpoint.startsWith('http')) {
             url = endpoint;
         } else if (endpoint === 'accounts') {
-            url = `https://${mailApiHost}/api/accounts`; // Root accounts list
-        } else if (endpoint.startsWith('v2/')) {
-            // Support explicit v2 paths: v2/messages -> /api/v2/accounts/{id}/messages
-            const v2Path = endpoint.substring(3);
-            url = `https://${mailApiHost}/api/v2/accounts/${accountId}/${v2Path}`;
+            url = `https://${mailApiHost}/api/accounts`;
         } else {
-            // Standard V1 path: https://{host}/api/accounts/{accountId}/{endpoint}
-            url = `https://${mailApiHost}/api/accounts/${accountId}/${endpoint}`; 
+            // Always use V1: /api/accounts/{accountId}/{endpoint}
+            url = `https://${mailApiHost}/api/accounts/${accountId}/${endpoint}`;
         }
 
-        console.log(`[Zoho Proxy Debug] Sending request to URL: ${url}`);
+        console.log(`[Zoho Proxy] → ${url}`);
 
         const response = await fetch(url, {
             ...options,
@@ -265,23 +257,14 @@ export const zohoServerService = {
 
         if (!response.ok) {
             const errorText = await response.text();
-            
-            // Auto-fallback to V2 for 404s on certain known paths if we are in V1
-            // DISABLED for sendmailaddresses as it is V1-only
-            if (response.status === 404 && !endpoint.includes('v2/') && !endpoint.startsWith('http') && 
-                endpoint !== 'accounts' && !endpoint.includes('sendmailaddresses')) {
-                console.log(`[Zoho Proxy] 404 on ${endpoint}, attempting V2 fallback...`);
-                return this.proxyRequest(userId, `v2/${endpoint}`, options);
-            }
+            console.error(`[Zoho Proxy Error] ${url} → ${response.status}: ${errorText.substring(0, 500)}`);
 
-            console.error(`[Zoho Proxy Error] Request to ${url} failed! Status: ${response.status} (${response.statusText}). Endpoint: ${endpoint}. Trace: ${errorText.substring(0, 500)}`);
-
-            let description = `Zoho API Error ${response.status} (${response.statusText}): ${errorText.substring(0, 150)}`;
+            let description = `Zoho API Error ${response.status}: ${errorText.substring(0, 150)}`;
             try {
                 const errorJson = JSON.parse(errorText);
                 description = errorJson.status?.description || errorJson.error_message || errorJson.error || description;
-            } catch (e) {
-            }
+            } catch (e) {}
+
             const err: any = new Error(description);
             err.status = response.status;
             throw err;
