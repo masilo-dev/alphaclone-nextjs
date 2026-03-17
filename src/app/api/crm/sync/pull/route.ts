@@ -42,7 +42,7 @@ export async function POST(req: Request) {
         let syncedCount = 0;
 
         // Sync from HubSpot
-        const hubspot = integrations.find(i => i.type === 'hubspot');
+        const hubspot = integrations.find((i: any) => i.type === 'hubspot');
         if (hubspot) {
             try {
                 const contacts = await hubspotService.getContacts(userId, 100);
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
         }
 
         // Sync from Zoho (TODO: Implement getLeads in zohoServerService)
-        const zoho = integrations.find(i => i.type === 'zoho');
+        const zoho = integrations.find((i: any) => i.type === 'zoho');
         if (zoho) {
             results.push({ provider: 'zoho', status: 'skipped', note: 'Pull not implemented for Zoho yet' });
         }

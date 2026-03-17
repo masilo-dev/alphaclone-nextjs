@@ -32,7 +32,7 @@ export async function POST(req: Request) {
         const results = [];
 
         // Sync to Zoho (CRM)
-        const zoho = integrations.find(i => i.type === 'zoho');
+        const zoho = integrations.find((i: any) => i.type === 'zoho');
         if (zoho) {
             try {
                 const res = await zohoServerService.createCRMLead(userId, deal);
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
         }
 
         // Sync to HubSpot
-        const hubspot = integrations.find(i => i.type === 'hubspot');
+        const hubspot = integrations.find((i: any) => i.type === 'hubspot');
         if (hubspot) {
             try {
                 const res = await hubspotService.syncLeadToHubSpot(userId, deal);
