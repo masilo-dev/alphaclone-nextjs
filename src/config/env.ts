@@ -66,6 +66,9 @@ const envSchema = z.object({
     HUBSPOT_CLIENT_SECRET: z.string().optional(),
     HUBSPOT_REDIRECT_URI: z.string().url().optional(),
 
+    // Supabase Admin
+    SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+
     // Encryption
     ENCRYPTION_SECRET: z.string().length(32, 'Encryption secret must be exactly 32 characters').optional(),
 });

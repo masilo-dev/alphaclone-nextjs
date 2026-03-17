@@ -15,6 +15,9 @@ const createMockSupabaseClient = (serviceName: string) => {
             if (prop === 'toString' || prop === 'valueOf') return () => '[Mock Supabase Object]';
             if (prop === 'id') return 'mock-uuid-for-build';
 
+            // Special case for properties often used in URL construction
+            if (prop === 'region') return 'com';
+
             // For any other property (including 'data'), return the mock again to support nested destructuring
             // e.g. { data: { user } } works because mock.data is mock, and mock.user is mock
             return mock;
