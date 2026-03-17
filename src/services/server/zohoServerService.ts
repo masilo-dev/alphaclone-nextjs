@@ -127,6 +127,11 @@ export const zohoServerService = {
                 }
             }
 
+            // Ensure mailApiHost is a clean domain
+            if (mailApiHost.startsWith('http')) {
+                try { mailApiHost = new URL(mailApiHost).host; } catch {}
+            }
+
             const response = await fetch(`${accountsServer}/oauth/v2/token`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -262,7 +267,9 @@ export const zohoServerService = {
             const errorText = await response.text();
             
             // Auto-fallback to V2 for 404s on certain known paths if we are in V1
-            if (response.status === 404 && !endpoint.includes('v2/') && !endpoint.startsWith('http') && endpoint !== 'accounts') {
+            // DISABLED for sendmailaddresses as it is V1-only
+            if (response.status === 404 && !endpoint.includes('v2/') && !endpoint.startsWith('http') && 
+                endpoint !== 'accounts' && !endpoint.includes('sendmailaddresses')) {
                 console.log(`[Zoho Proxy] 404 on ${endpoint}, attempting V2 fallback...`);
                 return this.proxyRequest(userId, `v2/${endpoint}`, options);
             }
