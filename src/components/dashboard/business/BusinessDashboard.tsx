@@ -385,6 +385,21 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     </React.Suspense>
                 );
 
+            // Finance tab for tenant_admin (shared with admin/client via FinanceTab)
+            case '/dashboard/finance': {
+                const FinanceTab = React.lazy(() => import('../FinanceTab'));
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={6} />}>
+                        <FinanceTab
+                            user={user}
+                            filteredInvoices={[]}
+                            handlePayClick={() => {}}
+                            onCreateInvoice={() => {}}
+                        />
+                    </React.Suspense>
+                );
+            }
+
             default:
                 return <BusinessHome user={user} stats={dashboardStats} />;
         }
@@ -594,9 +609,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                             <motion.div
                                 key={activeTab}
                                 initial={{ opacity: 0, scale: 0.99, y: 5 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.99, y: -5 }}
-                                transition={{ duration: 0.2, ease: "easeOut" }}
+                                animate={{ opacity: 1, scale: 1, y: 0, pointerEvents: 'auto' }}
+                                exit={{ opacity: 0, scale: 0.99, y: -5, pointerEvents: 'none' }}
+                                transition={{ duration: 0.15, ease: "easeOut" }}
                                 className="h-full w-full"
                             >
                                 {renderBusinessContent()}

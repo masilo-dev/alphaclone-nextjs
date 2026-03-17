@@ -43,7 +43,7 @@ interface DocumentHubProps {
     user: User;
 }
 
-type ViewMode = 'list' | 'viewer' | 'editor' | 'image' | 'presentation';
+type ViewMode = 'list' | 'viewer' | 'editor' | 'image' | 'presentation' | 'designer';
 
 interface Slide {
     id: string;
@@ -98,6 +98,8 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [selectedFile, setSelectedFile] = useState<HubFile | null>(null);
     const [fileUrl, setFileUrl] = useState<string | null>(null);
+    const [aiPrompt, setAiPrompt] = useState('');
+    const [isGeneratingAI, setIsGeneratingAI] = useState(false);
     const [editorContent, setEditorContent] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [storageUsed, setStorageUsed] = useState(0);
@@ -464,21 +466,75 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         }
     };
 
+    const handleAIDesign = async () => {
+        if (!aiPrompt.trim()) {
+            toast.error('Please describe the document you want to create');
+            return;
+        }
+
+        setIsGeneratingAI(true);
+        const toastId = toast.loading('AI is designing your professional document...');
+        try {
+            const response = await fetch('/api/ai/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: [
+                        {
+                            role: 'system',
+                            content: `You are a professional document designer for AlphaClone. Create a high-quality, colorful, and professional HTML/CSS document based on the user's description. 
+                            Use modern typography (Inter, system fonts), vibrant colors, and clear sections. 
+                            Format your response as valid HTML content that can be placed inside a <div>.
+                            IMPORTANT: Use inline styles for all elements to ensure they render correctly in PDF.
+                            Include a sophisticated header, organized content, and a professional footer.
+                            Use colors like Teal (#14b8a6), Slate (#0f172a), and Violet (#7c3aed) for a premium look.
+                            Make sure the background is colorful and professional, not just white.`
+                        },
+                        {
+                            role: 'user',
+                            content: aiPrompt
+                        }
+                    ],
+                    type: 'document_design'
+                })
+            });
+
+            if (!response.ok) throw new Error('AI generation failed');
+            const data = await response.json();
+            
+            const generatedHtml = data.content || data.text;
+            
+            setEditorContent(generatedHtml);
+            setSelectedFile({
+                id: 'ai-design',
+                original_filename: `AI-Design-${format(new Date(), 'yyyy-MM-dd-HHmm')}.docx`,
+                file_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                file_size: 0,
+                storage_path: '',
+                created_at: new Date().toISOString(),
+                deleted_at: null
+            });
+            setViewMode('editor');
+            setAiPrompt('');
+            toast.success('Professional design ready for review!', { id: toastId });
+        } catch (error) {
+            console.error('AI Design error:', error);
+            toast.error('Failed to generate design', { id: toastId });
+        } finally {
+            setIsGeneratingAI(false);
+        }
+    };
+
     const handleDownloadAsPDF = async (flattenViewer = false) => {
         if (!selectedFile) return;
         setIsSaving(true);
-        const toastId = toast.loading('Generating PDF...');
+        const toastId = toast.loading('Generating premium PDF...');
         try {
-            // Dynamically import html2pdf to avoid SSR issues
             const html2pdf = (await import('html2pdf.js')).default;
-
             let element: HTMLElement | null = null;
-
-            // Search for our dedicated content container
             element = document.getElementById('editor-pdf-content');
 
             if (!element) {
-                // Fallback to the viewer wrapper if specific ID not found
                 element = document.querySelector('.document-viewer-container') as HTMLElement;
             }
 
@@ -487,22 +543,28 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                 return;
             }
 
+            // Create a clone for PDF generation to inject better styles
+            const printElement = element.cloneNode(true) as HTMLElement;
+            printElement.style.padding = '40px';
+            printElement.style.color = '#ffffff';
+            printElement.style.fontFamily = 'Inter, system-ui, sans-serif';
+
             const opt: any = {
                 margin: 0,
                 filename: selectedFile.original_filename.replace(/\.(doc|docx|txt)$/i, '.pdf'),
                 image: { type: 'jpeg', quality: 1 },
                 html2canvas: {
-                    scale: 3, // Higher scale for better quality
+                    scale: 3,
                     useCORS: true,
                     logging: false,
                     letterRendering: true,
-                    backgroundColor: '#ffffff' // Ensure white background
+                    backgroundColor: currentTenant?.brand_color_primary || '#0f172a'
                 },
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
 
-            await html2pdf().from(element).set(opt).save();
-            toast.success('Downloaded as PDF', { id: toastId });
+            await html2pdf().from(printElement).set(opt).save();
+            toast.success('Professional PDF generated!', { id: toastId });
         } catch (error) {
             console.error('PDF generation error:', error);
             toast.error('Failed to generate PDF', { id: toastId });
@@ -674,7 +736,8 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
 
     // ── LIST MODE ─────────────────────────────────────────────────────────────
     return (
-        <div className="space-y-4 p-4 sm:p-6" style={{ touchAction: 'pan-y' }}>
+        <>
+            <div className="space-y-4 p-4 sm:p-6" style={{ touchAction: 'pan-y' }}>
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
@@ -702,7 +765,15 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                             <Trash2 className="w-3.5 h-3.5" /> Empty Trash
                         </button>
                     ) : (
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+                            <button
+                                onClick={() => setViewMode('designer')}
+                                className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-violet-500/20 group"
+                            >
+                                <Presentation className="w-3.5 h-3.5 group-hover:rotate-12 transition-transform" />
+                                <span className="hidden sm:inline">AI Designer</span>
+                            </button>
+
                             <label className="cursor-pointer">
                                 <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-colors border border-white/5">
                                     {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
@@ -914,6 +985,87 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                 </div>
             )}
         </div>
+        
+        {/* AI Designer Interface */}
+        {viewMode === 'designer' && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl p-4 animate-in fade-in duration-300">
+                <div className="w-full max-w-3xl bg-slate-900 border border-white/10 rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+                    <div className="p-8 border-b border-white/5 bg-gradient-to-br from-violet-600/20 to-transparent">
+                        <div className="flex items-center justify-between mb-8">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-violet-600 flex items-center justify-center">
+                                    <Presentation className="w-7 h-7 text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-black text-white italic tracking-tighter uppercase">AI Document Designer</h3>
+                                    <p className="text-slate-400 text-sm font-medium">Transform descriptions into professional assets</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Creation Intent</label>
+                                <textarea
+                                    value={aiPrompt}
+                                    onChange={(e) => setAiPrompt(e.target.value)}
+                                    placeholder="Describe the document you want... e.g., 'A professional project proposal for a tech company with a clear timeline and budget section, using a teal and slate color palette.'"
+                                    className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/50 min-h-[160px] resize-none transition-all text-sm leading-relaxed"
+                                />
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <button
+                                    onClick={handleAIDesign}
+                                    disabled={isGeneratingAI || !aiPrompt.trim()}
+                                    className="flex-1 flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black uppercase tracking-tighter transition-all disabled:opacity-50 shadow-xl shadow-violet-500/20 group"
+                                >
+                                    {isGeneratingAI ? (
+                                        <>
+                                            <Loader2 className="w-6 h-6 animate-spin" />
+                                            Architecting Design...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <ScanLine className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                                            Initialize PDF Generation
+                                        </>
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('list')}
+                                    className="px-8 py-4 rounded-2xl bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="p-6 bg-slate-950/50 border-t border-white/5">
+                        <div className="flex items-center gap-4">
+                            <div className="flex -space-x-2">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 overflow-hidden">
+                                        <div className={`w-full h-full bg-gradient-to-br ${i === 1 ? 'from-teal-500 to-blue-500' : i === 2 ? 'from-violet-500 to-purple-500' : 'from-orange-500 to-red-500'}`} />
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                                Utilizing deep learning models for professional typography and layout optimization
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+        </>
     );
 };
 

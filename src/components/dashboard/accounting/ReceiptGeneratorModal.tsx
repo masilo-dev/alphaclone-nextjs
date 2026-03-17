@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Button } from '../../ui/UIComponents';
-import { X, Download, Eye, FileText, Printer, Share2, Search, List, Plus, Sparkles } from 'lucide-react';
+import { Button, Modal, Input } from '../../ui/UIComponents';
+import { X, Download, Eye, FileText, Printer, Share2, Search, List, Plus, Sparkles, Trash2, Mail, User, CreditCard } from 'lucide-react';
 import { useTenant } from '../../../contexts/TenantContext';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -394,382 +394,359 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div className="bg-slate-900 rounded-xl border border-slate-700 w-full max-w-4xl shadow-2xl my-8 flex flex-col max-h-[90vh]">
-                <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/95 backdrop-blur-sm rounded-t-xl shrink-0">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-teal-500/10 flex items-center justify-center text-teal-400">
-                            <FileText className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-bold text-white">Generate Receipt</h2>
-                            <p className="text-sm text-slate-400">Create and download professional receipts for your clients</p>
-                        </div>
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="Generate Professional Receipt"
+            maxWidth="max-w-4xl"
+        >
+            <div className="space-y-8">
+                {/* Receipt Details */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+                        <FileText className="w-4 h-4 text-teal-400" />
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Receipt Metadata</h3>
                     </div>
-                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
-                        <X className="w-5 h-5" />
-                    </button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input
+                            label="Receipt Number"
+                            value={receiptData.receiptNumber}
+                            onChange={(e) => setReceiptData({ ...receiptData, receiptNumber: e.target.value })}
+                        />
+                        <Input
+                            label="Date"
+                            type="date"
+                            value={receiptData.date}
+                            onChange={(e) => setReceiptData({ ...receiptData, date: e.target.value })}
+                        />
+                    </div>
                 </div>
 
-                <div className="p-6 space-y-8 overflow-y-auto grow">
-                    {/* General Information */}
-                    <div>
-                        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">Receipt Details</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-2">Receipt Number</label>
-                                <input
-                                    type="text"
-                                    value={receiptData.receiptNumber}
-                                    onChange={(e) => setReceiptData({ ...receiptData, receiptNumber: e.target.value })}
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 transition-colors"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-2">Date</label>
-                                <input
-                                    type="date"
-                                    value={receiptData.date}
-                                    onChange={(e) => setReceiptData({ ...receiptData, date: e.target.value })}
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 transition-colors"
-                                />
-                            </div>
+                {/* Client Information */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+                        <User className="w-4 h-4 text-teal-400" />
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Client Credentials</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="relative" ref={dropdownRef}>
+                            <Input
+                                label="Client Name *"
+                                value={receiptData.clientName}
+                                onChange={(e) => {
+                                    setReceiptData({ ...receiptData, clientName: e.target.value });
+                                    setContactSearch(e.target.value);
+                                    setShowContactDropdown(true);
+                                }}
+                                onFocus={() => setShowContactDropdown(true)}
+                                placeholder="Jane Doe or Acme Corp"
+                            />
+                            {showContactDropdown && (clients.length > 0) && (
+                                <div className="absolute z-[120] w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto custom-scrollbar backdrop-blur-md">
+                                    {clients
+                                        .filter(c => c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
+                                            (c.email && c.email.toLowerCase().includes(contactSearch.toLowerCase())))
+                                        .map(client => (
+                                            <div
+                                                key={client.id}
+                                                onClick={() => {
+                                                    setReceiptData({
+                                                        ...receiptData,
+                                                        clientName: client.name,
+                                                        clientEmail: client.email || ''
+                                                    });
+                                                    setShowContactDropdown(false);
+                                                }}
+                                                className="px-4 py-3 hover:bg-teal-500/10 cursor-pointer border-b border-slate-800 last:border-0 transition-colors group"
+                                            >
+                                                <div className="text-sm font-medium text-white group-hover:text-teal-400 transition-colors">{client.name}</div>
+                                                {client.email && <div className="text-xs text-slate-500">{client.email}</div>}
+                                            </div>
+                                        ))}
+                                </div>
+                            )}
                         </div>
+                        <Input
+                            label="Client Email"
+                            type="email"
+                            icon={<Mail className="w-4 h-4" />}
+                            value={receiptData.clientEmail}
+                            onChange={(e) => setReceiptData({ ...receiptData, clientEmail: e.target.value })}
+                            placeholder="jane@example.com"
+                        />
+                    </div>
+                </div>
+
+                {/* Payment Information */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+                        <CreditCard className="w-4 h-4 text-teal-400" />
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Transaction Logistics</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Payment Method</label>
+                            <select
+                                value={receiptData.paymentMethod}
+                                onChange={(e) => setReceiptData({ ...receiptData, paymentMethod: e.target.value })}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all cursor-pointer"
+                            >
+                                <option value="Credit Card">Credit Card</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Mobile Money">Mobile Money</option>
+                                <option value="Check">Check</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <Input
+                            label="Received By"
+                            value={receiptData.receivedBy}
+                            onChange={(e) => setReceiptData({ ...receiptData, receivedBy: e.target.value })}
+                            placeholder="Name of receiver"
+                        />
+                    </div>
+                </div>
+
+                {/* Line Items */}
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Inventory Entries</h3>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleAddItem}
+                            icon={<Plus className="w-4 h-4" />}
+                            className="text-teal-400 hover:text-teal-300"
+                        >
+                            Add Item
+                        </Button>
                     </div>
 
-                    {/* Client Information */}
-                    <div>
-                        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">Client Information</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-2">Client Name <span className="text-rose-400">*</span></label>
-                                <div className="relative" ref={dropdownRef}>
+                    {/* Quick Add Services */}
+                    {Object.keys(myServices).length > 0 && (
+                        <div className="p-4 bg-teal-500/5 border border-teal-500/10 rounded-2xl">
+                            <label className="block text-[10px] font-bold text-teal-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                <Sparkles className="w-3 h-3" />
+                                Protocol Fast-Sync
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                {Object.entries(myServices).map(([id, service]: [string, any]) => (
+                                    <button
+                                        key={id}
+                                        onClick={() => {
+                                            const emptyIdx = receiptData.items.findIndex(item => !item.description);
+                                            if (emptyIdx !== -1) {
+                                                handleItemChange(emptyIdx, 'description', service.name);
+                                                handleItemChange(emptyIdx, 'price', service.defaultPrice || 0);
+                                            } else {
+                                                setReceiptData(prev => ({
+                                                    ...prev,
+                                                    items: [...prev.items, {
+                                                        description: service.name,
+                                                        quantity: 1,
+                                                        price: service.defaultPrice || 0
+                                                    }]
+                                                }));
+                                            }
+                                            toast.success(`Added ${service.name}`);
+                                        }}
+                                        className="px-3 py-1.5 bg-slate-900 border border-slate-700 hover:border-teal-500 hover:bg-teal-500/10 rounded-xl text-xs text-slate-300 transition-all flex items-center gap-2 group"
+                                    >
+                                        <Plus className="w-3 h-3 text-teal-500 group-hover:scale-110 transition-transform" />
+                                        {service.name}
+                                        <span className="text-slate-500 ml-1 font-mono">${service.defaultPrice}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="space-y-3">
+                        {receiptData.items.map((item, index) => (
+                            <div key={index} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center bg-slate-900/50 p-4 rounded-2xl border border-slate-800 transition-all hover:border-slate-700">
+                                <div className="flex-1 w-full">
                                     <input
                                         type="text"
-                                        value={receiptData.clientName}
-                                        onChange={(e) => {
-                                            setReceiptData({ ...receiptData, clientName: e.target.value });
-                                            setContactSearch(e.target.value);
-                                            setShowContactDropdown(true);
-                                        }}
-                                        onFocus={() => setShowContactDropdown(true)}
-                                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 transition-colors"
-                                        placeholder="Jane Doe or Acme Corp"
+                                        value={item.description}
+                                        onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all"
+                                        placeholder="Service or Product description..."
                                     />
-                                    {showContactDropdown && (clients.length > 0) && (
-                                        <div className="absolute z-10 w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg shadow-xl max-h-60 overflow-y-auto custom-scrollbar">
-                                            {clients
-                                                .filter(c => c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
-                                                    (c.email && c.email.toLowerCase().includes(contactSearch.toLowerCase())))
-                                                .map(client => (
-                                                    <div
-                                                        key={client.id}
-                                                        onClick={() => {
-                                                            setReceiptData({
-                                                                ...receiptData,
-                                                                clientName: client.name,
-                                                                clientEmail: client.email || ''
-                                                            });
-                                                            setShowContactDropdown(false);
-                                                        }}
-                                                        className="px-4 py-2 hover:bg-slate-800 cursor-pointer border-b border-slate-800 last:border-0"
-                                                    >
-                                                        <div className="text-sm font-medium text-white">{client.name}</div>
-                                                        {client.email && <div className="text-xs text-slate-500">{client.email}</div>}
-                                                    </div>
-                                                ))}
-                                            {clients.filter(c => c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
-                                                (c.email && c.email.toLowerCase().includes(contactSearch.toLowerCase()))).length === 0 && (
-                                                    <div className="px-4 py-3 text-sm text-slate-500 italic">No contacts found</div>
-                                                )}
-                                        </div>
-                                    )}
                                 </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-2">Client Email</label>
-                                <input
-                                    type="email"
-                                    value={receiptData.clientEmail}
-                                    onChange={(e) => setReceiptData({ ...receiptData, clientEmail: e.target.value })}
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 transition-colors"
-                                    placeholder="jane@example.com"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Payment Information */}
-                    <div>
-                        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">Payment Details</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-2">Payment Method</label>
-                                <select
-                                    value={receiptData.paymentMethod}
-                                    onChange={(e) => setReceiptData({ ...receiptData, paymentMethod: e.target.value })}
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 transition-colors"
-                                >
-                                    <option value="Credit Card">Credit Card</option>
-                                    <option value="Bank Transfer">Bank Transfer</option>
-                                    <option value="Cash">Cash</option>
-                                    <option value="Mobile Money">Mobile Money</option>
-                                    <option value="Check">Check</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-2">Received By</label>
-                                <input
-                                    type="text"
-                                    value={receiptData.receivedBy}
-                                    onChange={(e) => setReceiptData({ ...receiptData, receivedBy: e.target.value })}
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 transition-colors"
-                                    placeholder="Name of receiver"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Line Items */}
-                    <div>
-                        <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
-                            <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Line Items</h3>
-                            <button
-                                onClick={handleAddItem}
-                                className="text-sm text-teal-400 hover:text-teal-300 font-medium"
-                            >
-                                + Add Item
-                            </button>
-                        </div>
-
-                        {/* Quick Add Services */}
-                        {Object.keys(myServices).length > 0 && (
-                            <div className="mb-6 p-4 bg-teal-500/5 border border-teal-500/10 rounded-xl">
-                                <label className="block text-[10px] font-bold text-teal-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                    <Sparkles className="w-3 h-3" />
-                                    Quick Add from My Services
-                                </label>
-                                <div className="flex flex-wrap gap-2">
-                                    {Object.entries(myServices).map(([id, service]: [string, any]) => (
-                                        <button
-                                            key={id}
-                                            onClick={() => {
-                                                const emptyIdx = receiptData.items.findIndex(item => !item.description);
-                                                if (emptyIdx !== -1) {
-                                                    handleItemChange(emptyIdx, 'description', service.name);
-                                                    handleItemChange(emptyIdx, 'price', service.defaultPrice || 0);
-                                                } else {
-                                                    setReceiptData(prev => ({
-                                                        ...prev,
-                                                        items: [...prev.items, {
-                                                            description: service.name,
-                                                            quantity: 1,
-                                                            price: service.defaultPrice || 0
-                                                        }]
-                                                    }));
-                                                }
-                                                toast.success(`Added ${service.name}`);
-                                            }}
-                                            className="px-3 py-1.5 bg-slate-900 border border-slate-700 hover:border-teal-500 hover:bg-teal-500/10 rounded-lg text-xs text-slate-300 transition-all flex items-center gap-2 group"
-                                        >
-                                            <Plus className="w-3 h-3 text-teal-500 group-hover:scale-110 transition-transform" />
-                                            {service.name}
-                                            <span className="text-slate-500 ml-1 font-mono">${service.defaultPrice}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="space-y-4">
-                            {receiptData.items.map((item, index) => (
-                                <div key={index} className="flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-slate-800/50 p-4 rounded-lg border border-slate-700/50">
-                                    <div className="flex-1 w-full">
-                                        <label className="block text-xs text-slate-500 mb-1">Description</label>
-                                        <input
-                                            type="text"
-                                            value={item.description}
-                                            onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors"
-                                            placeholder="Consulting services..."
-                                        />
-                                    </div>
-                                    <div className="w-full sm:w-24">
-                                        <label className="block text-xs text-slate-500 mb-1">Qty</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            value={item.quantity}
-                                            onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value) || 1)}
-                                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors"
-                                        />
-                                    </div>
-                                    <div className="w-full sm:w-32">
-                                        <label className="block text-xs text-slate-500 mb-1">Price ($)</label>
+                                <div className="flex gap-3 w-full sm:w-auto">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={item.quantity}
+                                        onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value) || 1)}
+                                        className="w-20 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-sm text-center text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all"
+                                        placeholder="Qty"
+                                    />
+                                    <div className="relative w-32">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 text-sm">$</span>
                                         <input
                                             type="number"
                                             min="0"
                                             step="0.01"
                                             value={item.price}
                                             onChange={(e) => handleItemChange(index, 'price', parseFloat(e.target.value) || 0)}
-                                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors"
+                                            className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-7 pr-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all font-mono"
+                                            placeholder="0.00"
                                         />
                                     </div>
                                     {receiptData.items.length > 1 && (
                                         <button
                                             onClick={() => handleRemoveItem(index)}
-                                            className="mt-5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-400/10 rounded-lg transition-colors"
+                                            className="p-2 text-slate-600 hover:text-red-400 transition-colors"
                                         >
-                                            <X className="w-5 h-5" />
+                                            <Trash2 className="w-5 h-5" />
                                         </button>
                                     )}
                                 </div>
-                            ))}
-                        </div>
-
-                        <div className="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 bg-slate-800/30 p-4 rounded-xl border border-slate-700/50">
-                            <div className="flex flex-wrap gap-4 w-full sm:w-auto">
-                                <div>
-                                    <label className="block text-xs text-slate-500 mb-1">Discount ($)</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={receiptData.discountAmount}
-                                        onChange={(e) => setReceiptData({ ...receiptData, discountAmount: parseFloat(e.target.value) || 0 })}
-                                        className="w-24 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs text-slate-500 mb-1">Tax (%)</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.1"
-                                        value={receiptData.taxRate}
-                                        onChange={(e) => setReceiptData({ ...receiptData, taxRate: parseFloat(e.target.value) || 0 })}
-                                        className="w-24 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors"
-                                    />
-                                </div>
                             </div>
-                            <div className="text-right w-full sm:w-auto">
-                                <div className="space-y-1">
-                                    <div className="flex justify-end gap-10 text-slate-400 text-sm">
-                                        <span>Subtotal</span>
-                                        <span>${calculateSubtotal().toFixed(2)}</span>
-                                    </div>
-                                    {receiptData.discountAmount > 0 && (
-                                        <div className="flex justify-end gap-10 text-rose-400 text-sm">
-                                            <span>Discount</span>
-                                            <span>-${receiptData.discountAmount.toFixed(2)}</span>
-                                        </div>
-                                    )}
-                                    {receiptData.taxRate > 0 && (
-                                        <div className="flex justify-end gap-10 text-slate-400 text-sm">
-                                            <span>Tax ({receiptData.taxRate}%)</span>
-                                            <span>${calculateTax(calculateSubtotal()).toFixed(2)}</span>
-                                        </div>
-                                    )}
-                                    <div className="pt-2 border-t border-slate-700">
-                                        <p className="text-slate-400 text-xs uppercase tracking-widest font-bold">Total Amount Received</p>
-                                        <p className="text-3xl font-black text-white italic tracking-tight">${calculateTotal().toFixed(2)}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        ))}
                     </div>
 
-                    {/* Template Selection & Notes */}
-                    <div>
-                        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">Styling & Notes</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-2">Template Style</label>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div
-                                        onClick={() => setReceiptData({ ...receiptData, template: 'professional' })}
-                                        className={`cursor-pointer p-4 rounded-xl border-2 transition-all ${receiptData.template === 'professional' ? 'border-teal-500 bg-teal-500/10' : 'border-slate-700 hover:border-slate-500 bg-slate-800/50'}`}
-                                    >
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className={`font-medium ${receiptData.template === 'professional' ? 'text-teal-400' : 'text-slate-300'}`}>Professional</span>
-                                            {receiptData.template === 'professional' && <div className="w-2 h-2 rounded-full bg-teal-500" />}
-                                        </div>
-                                        <div className="w-full h-16 bg-slate-700/30 rounded-lg flex flex-col gap-1 p-2">
-                                            <div className="w-1/2 h-2 bg-slate-600 rounded"></div>
-                                            <div className="w-2/3 h-2 bg-slate-600 rounded"></div>
-                                            <div className="mt-2 w-full h-8 bg-slate-600/50 rounded"></div>
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        onClick={() => setReceiptData({ ...receiptData, template: 'modern' })}
-                                        className={`cursor-pointer p-4 rounded-xl border-2 transition-all ${receiptData.template === 'modern' ? 'border-teal-500 bg-teal-500/10' : 'border-slate-700 hover:border-slate-500 bg-slate-800/50'}`}
-                                    >
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className={`font-medium ${receiptData.template === 'modern' ? 'text-teal-400' : 'text-slate-300'}`}>Modern</span>
-                                            {receiptData.template === 'modern' && <div className="w-2 h-2 rounded-full bg-teal-500" />}
-                                        </div>
-                                        <div className="w-full h-16 bg-slate-700/30 rounded-lg flex flex-col p-0 overflow-hidden">
-                                            <div className="w-full h-4 bg-slate-600 mb-1"></div>
-                                            <div className="px-2 w-1/2 h-2 bg-slate-600/50 rounded my-1"></div>
-                                            <div className="px-2 mt-auto self-end w-1/3 h-4 bg-slate-500/50 rounded-tl"></div>
-                                        </div>
-                                    </div>
-                                </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-end bg-slate-900/40 p-6 rounded-2xl border border-slate-800/50">
+                        <div className="flex gap-4">
+                            <div className="flex-1">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block ml-1">Discount ($)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={receiptData.discountAmount}
+                                    onChange={(e) => setReceiptData({ ...receiptData, discountAmount: parseFloat(e.target.value) || 0 })}
+                                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all font-mono"
+                                />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-2">Notes / Footer</label>
-                                <textarea
-                                    value={receiptData.notes}
-                                    onChange={(e) => setReceiptData({ ...receiptData, notes: e.target.value })}
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-teal-500 transition-colors h-28 resize-none"
+                            <div className="flex-1">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block ml-1">Tax Rate (%)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.1"
+                                    value={receiptData.taxRate}
+                                    onChange={(e) => setReceiptData({ ...receiptData, taxRate: parseFloat(e.target.value) || 0 })}
+                                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all font-mono"
                                 />
                             </div>
                         </div>
+                        <div className="space-y-1.5 text-right">
+                            <div className="flex justify-end gap-10 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                                <span>Subtotal</span>
+                                <span className="font-mono text-slate-300">${calculateSubtotal().toFixed(2)}</span>
+                            </div>
+                            {receiptData.discountAmount > 0 && (
+                                <div className="flex justify-end gap-10 text-rose-500/70 text-xs font-bold uppercase tracking-wider">
+                                    <span>Discount</span>
+                                    <span className="font-mono">-${receiptData.discountAmount.toFixed(2)}</span>
+                                </div>
+                            )}
+                            {receiptData.taxRate > 0 && (
+                                <div className="flex justify-end gap-10 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                                    <span>Tax ({receiptData.taxRate}%)</span>
+                                    <span className="font-mono text-slate-300">${calculateTax(calculateSubtotal()).toFixed(2)}</span>
+                                </div>
+                            )}
+                            <div className="pt-3 border-t border-slate-800/50">
+                                <p className="text-[10px] font-black text-teal-400 uppercase tracking-[0.2em] mb-1">Total Payload Value</p>
+                                <p className="text-4xl font-black text-white tracking-tighter italic">${calculateTotal().toFixed(2)}</p>
+                            </div>
+                        </div>
                     </div>
-
                 </div>
 
-                <div className="px-6 py-4 border-t border-slate-800 flex flex-wrap justify-end gap-3 bg-slate-900/95 rounded-b-xl shrink-0">
-                    <Button variant="outline" onClick={onClose} className="border-slate-700 hover:bg-slate-800 text-white">
-                        Cancel
+                {/* Styling & Notes */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+                        <Sparkles className="w-4 h-4 text-teal-400" />
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Interface & Annotation</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => setReceiptData({ ...receiptData, template: 'professional' })}
+                                className={`group p-4 rounded-2xl border-2 transition-all flex flex-col gap-3 ${receiptData.template === 'professional' ? 'border-teal-500 bg-teal-500/5' : 'border-slate-800 hover:border-slate-700 bg-slate-900/50'}`}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <span className={`text-xs font-bold uppercase tracking-widest ${receiptData.template === 'professional' ? 'text-teal-400' : 'text-slate-500 group-hover:text-slate-300'}`}>Standard</span>
+                                    <div className={`w-2 h-2 rounded-full transition-all ${receiptData.template === 'professional' ? 'bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.6)]' : 'bg-slate-800'}`} />
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="h-1.5 w-full bg-slate-800 rounded opacity-40"></div>
+                                    <div className="h-1.5 w-2/3 bg-slate-800 rounded opacity-40"></div>
+                                    <div className="h-6 w-full bg-slate-800 rounded-md mt-2 opacity-20"></div>
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => setReceiptData({ ...receiptData, template: 'modern' })}
+                                className={`group p-4 rounded-2xl border-2 transition-all flex flex-col gap-3 ${receiptData.template === 'modern' ? 'border-teal-500 bg-teal-500/5' : 'border-slate-800 hover:border-slate-700 bg-slate-900/50'}`}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <span className={`text-xs font-bold uppercase tracking-widest ${receiptData.template === 'modern' ? 'text-teal-400' : 'text-slate-500 group-hover:text-slate-300'}`}>Modern</span>
+                                    <div className={`w-2 h-2 rounded-full transition-all ${receiptData.template === 'modern' ? 'bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.6)]' : 'bg-slate-800'}`} />
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="h-4 w-full bg-teal-500/10 rounded-sm"></div>
+                                    <div className="h-1.5 w-1/2 bg-slate-800 rounded opacity-40"></div>
+                                    <div className="h-4 w-1/3 bg-slate-800 rounded-sm ml-auto opacity-20"></div>
+                                </div>
+                            </button>
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Annotation / Footer</label>
+                            <textarea
+                                value={receiptData.notes}
+                                onChange={(e) => setReceiptData({ ...receiptData, notes: e.target.value })}
+                                className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all h-[110px] resize-none placeholder-slate-800"
+                                placeholder="Synaptic notes for the client..."
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Final Actions */}
+                <div className="flex flex-wrap gap-3 pt-6 border-t border-slate-800/50">
+                    <Button variant="ghost" onClick={onClose}>
+                        Abort
                     </Button>
+                    <div className="flex-1" />
                     <Button
-                        variant="outline"
+                        variant="ghost"
                         onClick={() => window.print()}
-                        className="border-slate-700 text-slate-300 hover:text-white"
+                        icon={<Printer className="w-4 h-4" />}
                     >
-                        <Printer className="w-4 h-4 mr-2" />
                         Print
                     </Button>
                     <Button
+                        variant="secondary"
                         onClick={() => generatePDF('preview')}
-                        className="bg-slate-700 hover:bg-slate-600 text-white border border-slate-600"
                         disabled={!receiptData.clientName}
+                        icon={<Eye className="w-4 h-4" />}
                     >
-                        <Eye className="w-4 h-4 mr-2" />
-                        Preview
+                        Review
                     </Button>
                     <Button
-                        variant="outline"
+                        variant="secondary"
                         onClick={handleSaveToDrive}
                         disabled={isSavingToDrive || !receiptData.clientName}
-                        className="border-slate-700 text-slate-300 hover:text-white"
+                        isLoading={isSavingToDrive}
+                        icon={<Share2 className="w-4 h-4" />}
                     >
-                        <Share2 className={`w-4 h-4 mr-2 ${isSavingToDrive ? 'animate-spin' : ''}`} />
-                        {isSavingToDrive ? 'Saving...' : 'To Drive'}
+                        Archival Drive
                     </Button>
                     <Button
                         onClick={() => generatePDF('download')}
-                        className="bg-teal-500 hover:bg-teal-600 text-white border-0"
                         disabled={!receiptData.clientName}
+                        icon={<Download className="w-4 h-4" />}
                     >
-                        <Download className="w-4 h-4 mr-2" />
-                        Download
+                        Hard Copy
                     </Button>
                 </div>
             </div>
-        </div>
+        </Modal>
     );
 }

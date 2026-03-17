@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { ChartOfAccount } from '../../../services/accounting/chartOfAccountsService';
 import { journalEntryService } from '../../../services/accounting/journalEntryService';
+import { Modal, Input, Button } from '../../ui/UIComponents';
+import { Plus, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface JournalEntryModalProps {
     isOpen: boolean;
@@ -101,85 +103,72 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
     const totalCredits = formData.lines.reduce((sum, line) => sum + (line.creditAmount || 0), 0);
     const isBalanced = Math.abs(totalDebits - totalCredits) < 0.01;
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto p-4">
-            <div className="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-4xl my-8 max-h-[90vh] overflow-y-auto">
-                <h2 className="text-xl font-bold text-white mb-4">Create Journal Entry</h2>
-
-                <div className="space-y-4 mb-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">
-                                Date *
-                            </label>
-                            <input
-                                type="date"
-                                value={formData.entryDate}
-                                onChange={(e) => setFormData({ ...formData, entryDate: e.target.value })}
-                                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">
-                                Reference
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.reference}
-                                onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
-                                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                placeholder="e.g., INV-001"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">
-                            Description *
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                            placeholder="e.g., Record monthly rent expense"
-                        />
-                    </div>
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="Create Journal Entry"
+            maxWidth="max-w-4xl"
+        >
+            <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                        label="Date *"
+                        type="date"
+                        value={formData.entryDate}
+                        onChange={(e) => setFormData({ ...formData, entryDate: e.target.value })}
+                    />
+                    <Input
+                        label="Reference"
+                        type="text"
+                        value={formData.reference}
+                        onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
+                        placeholder="e.g., INV-001"
+                    />
                 </div>
 
+                <Input
+                    label="Description *"
+                    type="text"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="e.g., Record monthly rent expense"
+                />
+
                 {/* Entry Lines */}
-                <div className="mb-6">
-                    <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-lg font-semibold text-white">Entry Lines</h3>
-                        <button
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Entry Lines</h3>
+                        <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={addLine}
-                            className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+                            icon={<Plus className="w-4 h-4" />}
+                            className="text-teal-400 hover:text-teal-300"
                         >
-                            + Add Line
-                        </button>
+                            Add Line
+                        </Button>
                     </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-slate-700">
+                    <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/50">
+                        <table className="min-w-full divide-y divide-slate-800">
                             <thead className="bg-slate-900">
                                 <tr>
-                                    <th className="px-3 py-2 text-left text-xs font-medium text-slate-400 uppercase">Account</th>
-                                    <th className="px-3 py-2 text-left text-xs font-medium text-slate-400 uppercase">Description</th>
-                                    <th className="px-3 py-2 text-right text-xs font-medium text-slate-400 uppercase">Debit</th>
-                                    <th className="px-3 py-2 text-right text-xs font-medium text-slate-400 uppercase">Credit</th>
-                                    <th className="px-3 py-2"></th>
+                                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Account</th>
+                                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Description</th>
+                                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Debit</th>
+                                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Credit</th>
+                                    <th className="px-4 py-3"></th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-slate-800 divide-y divide-slate-700">
+                            <tbody className="divide-y divide-slate-800">
                                 {formData.lines.map((line, index) => (
-                                    <tr key={index}>
+                                    <tr key={index} className="group hover:bg-slate-800/30 transition-colors">
                                         <td className="px-3 py-2">
                                             <select
                                                 value={line.accountId}
                                                 onChange={(e) => updateLine(index, 'accountId', e.target.value)}
-                                                className="w-full px-2 py-1 bg-slate-700 border border-slate-600 text-white rounded text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all cursor-pointer"
                                             >
                                                 <option value="">Select account...</option>
                                                 {accounts.map(account => (
@@ -194,7 +183,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                                                 type="text"
                                                 value={line.description}
                                                 onChange={(e) => updateLine(index, 'description', e.target.value)}
-                                                className="w-full px-2 py-1 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all"
                                                 placeholder="Line description..."
                                             />
                                         </td>
@@ -207,7 +196,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                                                     updateLine(index, 'debitAmount', parseFloat(e.target.value) || 0);
                                                     updateLine(index, 'creditAmount', 0);
                                                 }}
-                                                className="w-full px-2 py-1 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded text-sm text-right focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 text-right focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all font-mono"
                                                 placeholder="0.00"
                                             />
                                         </td>
@@ -220,67 +209,66 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                                                     updateLine(index, 'creditAmount', parseFloat(e.target.value) || 0);
                                                     updateLine(index, 'debitAmount', 0);
                                                 }}
-                                                className="w-full px-2 py-1 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded text-sm text-right focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 text-right focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all font-mono"
                                                 placeholder="0.00"
                                             />
                                         </td>
-                                        <td className="px-3 py-2">
+                                        <td className="px-3 py-2 text-center">
                                             {formData.lines.length > 2 && (
                                                 <button
                                                     onClick={() => removeLine(index)}
-                                                    className="text-red-400 hover:text-red-300 text-sm transition-colors"
+                                                    className="p-2 text-slate-500 hover:text-red-400 transition-colors"
                                                 >
-                                                    Remove
+                                                    <Trash2 className="w-4 h-4" />
                                                 </button>
                                             )}
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
-                            <tfoot className="bg-slate-900">
-                                <tr>
-                                    <td colSpan={2} className="px-3 py-2 text-right font-semibold text-white">Totals:</td>
-                                    <td className="px-3 py-2 text-right font-mono font-semibold text-white">
-                                        ${totalDebits.toFixed(2)}
+                            <tfoot className="bg-slate-900/80">
+                                <tr className="divide-x divide-slate-800">
+                                    <td colSpan={2} className="px-4 py-3 text-right font-bold text-slate-400 text-xs uppercase tracking-widest">Totals</td>
+                                    <td className="px-4 py-3 text-right font-mono font-bold text-teal-400">
+                                        ${totalDebits.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </td>
-                                    <td className="px-3 py-2 text-right font-mono font-semibold text-white">
-                                        ${totalCredits.toFixed(2)}
+                                    <td className="px-4 py-3 text-right font-mono font-bold text-teal-400">
+                                        ${totalCredits.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </td>
-                                    <td className="px-3 py-2"></td>
-                                </tr>
-                                <tr>
-                                    <td colSpan={5} className="px-3 py-2 text-center">
-                                        {isBalanced ? (
-                                            <span className="text-green-400 font-semibold">✓ Entry is balanced</span>
-                                        ) : (
-                                            <span className="text-red-400 font-semibold">
-                                                ⚠ Entry not balanced (difference: ${Math.abs(totalDebits - totalCredits).toFixed(2)})
-                                            </span>
-                                        )}
-                                    </td>
+                                    <td></td>
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
+
+                    <div className={`p-4 rounded-xl border flex items-center justify-center gap-3 transition-all ${isBalanced ? 'bg-teal-500/5 border-teal-500/20 text-teal-400' : 'bg-red-500/5 border-red-500/20 text-red-400'}`}>
+                        {isBalanced ? (
+                            <><CheckCircle2 className="w-5 h-5" /><span className="text-sm font-bold uppercase tracking-tight">Protocol Balanced</span></>
+                        ) : (
+                            <><AlertCircle className="w-5 h-5" /><span className="text-sm font-bold uppercase tracking-tight">Imbalance Detected: ${(totalDebits - totalCredits).toFixed(2)}</span></>
+                        )}
+                    </div>
                 </div>
 
-                <div className="flex gap-3">
-                    <button
+                <div className="flex gap-4 pt-4">
+                    <Button
+                        variant="ghost"
                         onClick={onClose}
-                        className="flex-1 px-4 py-2 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 transition-colors"
+                        className="flex-1"
                         disabled={loading}
                     >
-                        Cancel
-                    </button>
-                    <button
+                        Discard
+                    </Button>
+                    <Button
                         onClick={handleCreate}
                         disabled={!isBalanced || loading}
-                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        isLoading={loading}
+                        className="flex-[2]"
                     >
-                        {loading ? 'Processing...' : 'Create & Post Entry'}
-                    </button>
+                        Sync to General Ledger
+                    </Button>
                 </div>
             </div>
-        </div>
+        </Modal>
     );
 }

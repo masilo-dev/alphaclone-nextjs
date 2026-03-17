@@ -40,12 +40,11 @@ export const MODEL_PRICING = {
   'gpt-4': { input: 30, output: 60 },
   'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
 
-  // Anthropic (per 1M tokens) - Updated for 4.5
-  'claude-4-5-sonnet': { input: 3, output: 15 },
-  'claude-4-5-haiku': { input: 0.25, output: 1.25 },
-  'claude-3-5-sonnet': { input: 3, output: 15 },
-  'claude-3-opus': { input: 15, output: 75 },
-  'claude-3-haiku': { input: 0.25, output: 1.25 },
+  // Anthropic (per 1M tokens)
+  'claude-3-5-sonnet-20241022': { input: 3, output: 15 },
+  'claude-3-5-haiku-20241022': { input: 0.25, output: 1.25 },
+  'claude-3-opus-20240229': { input: 15, output: 75 },
+  'claude-3-haiku-20240307': { input: 0.25, output: 1.25 },
 };
 
 export interface AIRequestOptions {
@@ -148,7 +147,7 @@ async function completeWithAnthropic(options: AIRequestOptions): Promise<AIRespo
     throw new Error('Anthropic API key not configured');
   }
 
-  const model = options.model || 'claude-sonnet-4-5-20250929';
+  const model = options.model || 'claude-3-5-sonnet-20241022';
 
   const message = await anthropic.messages.create({
     model: model,
@@ -339,7 +338,7 @@ async function chatWithAnthropic(
     throw new Error('Anthropic API key not configured');
   }
 
-  const selectedModel = model || 'claude-sonnet-4-5-20250929';
+  const selectedModel = model || 'claude-3-5-sonnet-20241022';
 
   // Ensure history alternates and starts with 'user'
   const messages: Anthropic.MessageParam[] = [];
@@ -584,6 +583,6 @@ export function estimateCost(prompt: string, model: string): number {
   const promptTokens = Math.ceil(prompt.length / 4);
   const completionTokens = 500; // Assume 500 token response
 
-  const pricing = (MODEL_PRICING as any)[model] || MODEL_PRICING['claude-3-5-sonnet'];
+  const pricing = (MODEL_PRICING as any)[model] || MODEL_PRICING['claude-3-5-sonnet-20241022'];
   return (promptTokens * pricing.input + completionTokens * pricing.output) / 1_000_000;
 }

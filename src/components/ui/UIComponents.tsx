@@ -1,6 +1,5 @@
-
-import React from 'react';
-import { Loader2, X } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Loader2, X, ChevronDown, MoreVertical } from 'lucide-react';
 
 // --- Button ---
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -96,25 +95,42 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLTe
   error?: string;
   hint?: string;
   textarea?: boolean;
+  icon?: React.ReactNode;
 }
 
-export const Input: React.FC<InputProps> = ({ label, error, className = '', textarea = false, ...props }) => {
+export const Input: React.FC<InputProps> = ({
+  label,
+  error,
+  icon,
+  className = '',
+  textarea = false,
+  ...props
+}) => {
   return (
     <div className="w-full">
       {label && <label className="block text-sm font-medium text-slate-300 mb-1.5">{label}</label>}
-      {textarea ? (
-        <textarea
-          className={`w-full bg-slate-900 border ${error ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all min-h-[100px] resize-y ${className}`}
-          {...(props as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
-        />
-      ) : (
-        <input
-          className={`w-full bg-slate-900 border ${error ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all ${className}`}
-          {...(props as React.InputHTMLAttributes<HTMLInputElement>)}
-        />
-      )}
+      <div className="relative group">
+        {icon && (
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors">
+            {icon}
+          </div>
+        )}
+        {textarea ? (
+          <textarea
+            className={`w-full bg-slate-900 border ${error ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all min-h-[100px] resize-y ${icon ? 'pl-11' : ''} ${className}`}
+            {...(props as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
+          />
+        ) : (
+          <input
+            className={`w-full bg-slate-900 border ${error ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all ${icon ? 'pl-11' : ''} ${className}`}
+            {...(props as React.InputHTMLAttributes<HTMLInputElement>)}
+          />
+        )}
+      </div>
       {error && <p className="mt-1 text-xs text-red-400">{error}</p>}
-      {!error && (props as any).hint && <p className="mt-1 text-[10px] text-slate-500 italic">{(props as any).hint}</p>}
+      {!error && (props as any).hint && (
+        <p className="mt-1 text-[10px] text-slate-500 italic">{(props as any).hint}</p>
+      )}
     </div>
   );
 };
@@ -211,3 +227,65 @@ export const TableHead: React.FC<React.ThHTMLAttributes<HTMLTableCellElement>> =
 export const TableCell: React.FC<React.TdHTMLAttributes<HTMLTableCellElement>> = ({ className = '', ...props }) => (
   <td className={`p-4 align-middle [&:has([role=checkbox])]:pr-0 ${className}`} {...props} />
 );
+
+// --- Dropdown ---
+interface DropdownItem {
+  label: string;
+  icon?: React.ReactNode;
+  onClick: () => void;
+  variant?: 'default' | 'danger';
+}
+
+interface DropdownProps {
+  trigger: React.ReactNode;
+  items: DropdownItem[];
+  align?: 'left' | 'right';
+  className?: string;
+}
+
+export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'right', className = '' }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className={`relative ${className}`} ref={dropdownRef}>
+      <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
+        {trigger}
+      </div>
+
+      {isOpen && (
+        <div className={`absolute z-[110] mt-2 w-56 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl animate-in fade-in zoom-in duration-200 ${align === 'right' ? 'right-0' : 'left-0'}`}>
+          <div className="p-2 space-y-1">
+            {items.map((item, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  item.onClick();
+                  setIsOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-xl transition-all ${
+                  item.variant === 'danger'
+                    ? 'text-red-400 hover:bg-red-500/10'
+                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                }`}
+              >
+                {item.icon && <span className="shrink-0">{item.icon}</span>}
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

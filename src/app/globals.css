@@ -66,6 +66,7 @@
 :root {
   --background: #020D1A;
   --foreground: #f8fafc;
+  color-scheme: dark;
 }
 
 body {

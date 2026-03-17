@@ -15,8 +15,15 @@ import {
     FileText,
     Download,
     Edit,
-    Trash2
+    Trash2,
+    MoreVertical,
+    FilePlus,
+    Calendar,
+    History,
+    MessageSquare,
+    Receipt
 } from 'lucide-react';
+import { Button, Input, Modal, Badge, Dropdown, Card } from '../../ui/UIComponents';
 import { useDropzone } from 'react-dropzone';
 import { supabase } from '../../../lib/supabase';
 import { dailyService } from '../../../services/dailyService';
@@ -43,6 +50,10 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [showImportModal, setShowImportModal] = useState(false);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
+    const [showProposalModal, setShowProposalModal] = useState(false);
+    const [selectedClientForProposal, setSelectedClientForProposal] = useState<BusinessClient | null>(null);
+    const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+    const [selectedClientForInvoice, setSelectedClientForInvoice] = useState<BusinessClient | null>(null);
 
     useEffect(() => {
         if (currentTenant) {
@@ -192,37 +203,37 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold">My Clients</h2>
-                    <p className="text-slate-400 mt-1">{clients.length} total clients</p>
+                    <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase">Client Nexus</h2>
+                    <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="blue">{clients.length} Active nodes</Badge>
+                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Global CRM Database</p>
+                    </div>
                 </div>
                 <div className="flex gap-3">
-                    <button
+                    <Button
+                        variant="outline"
                         onClick={() => setShowImportModal(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors"
+                        icon={<Upload className="w-4 h-4" />}
                     >
-                        <Upload className="w-4 h-4" />
                         Import
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         onClick={() => setShowAddModal(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors"
+                        icon={<Plus className="w-4 h-4" />}
                     >
-                        <Plus className="w-4 h-4" />
                         Add Client
-                    </button>
+                    </Button>
 
-                    <div className="flex border border-slate-700 rounded-lg overflow-hidden">
+                    <div className="flex bg-slate-900 border border-slate-800 rounded-xl overflow-hidden p-1">
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-teal-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-                            title="List View"
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
                         >
                             <List className="w-5 h-5" />
                         </button>
                         <button
                             onClick={() => setViewMode('board')}
-                            className={`p-2 transition-colors ${viewMode === 'board' ? 'bg-teal-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-                            title="Board View"
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'board' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
                         >
                             <LayoutGrid className="w-5 h-5" />
                         </button>
@@ -269,12 +280,53 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 }}
                                 onDelete={handleDeleteClient}
                                 onCall={handleCallClient}
+                                onCreateProposal={(c) => {
+                                    setSelectedClientForProposal(c);
+                                    setShowProposalModal(true);
+                                }}
+                                onCreateInvoice={(c) => {
+                                    setSelectedClientForInvoice(c);
+                                    setShowInvoiceModal(true);
+                                }}
                             />
                         ))}
                     </div>
                 </>
             ) : (
                 <CRMTab userId={user.id} userRole={user.role} />
+            )}
+
+            {/* Create Proposal Modal */}
+            {showProposalModal && selectedClientForProposal && (
+                <CreateProposalModal
+                    client={selectedClientForProposal}
+                    user={user}
+                    onClose={() => {
+                        setShowProposalModal(false);
+                        setSelectedClientForProposal(null);
+                    }}
+                    onCreated={() => {
+                        setShowProposalModal(false);
+                        setSelectedClientForProposal(null);
+                        toast.success('Proposal project created!');
+                    }}
+                />
+            )}
+
+            {/* Create Invoice Modal */}
+            {showInvoiceModal && selectedClientForInvoice && (
+                <CreateClientInvoiceModal
+                    client={selectedClientForInvoice}
+                    onClose={() => {
+                        setShowInvoiceModal(false);
+                        setSelectedClientForInvoice(null);
+                    }}
+                    onCreated={() => {
+                        setShowInvoiceModal(false);
+                        setSelectedClientForInvoice(null);
+                        toast.success('Invoice created successfully!');
+                    }}
+                />
             )}
 
             {filteredClients.length === 0 && (
@@ -314,47 +366,98 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     );
 };
 
-const ClientCard = ({ client, onEdit, onDelete, onCall }: { client: BusinessClient; onEdit: (c: BusinessClient) => void; onDelete: (id: string) => void; onCall: (c: BusinessClient) => void }) => {
-    const stageColors = {
-        lead: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-        prospect: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-        customer: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
-        lost: 'bg-red-500/10 text-red-400 border-red-500/20'
-    };
+const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCreateInvoice }: { 
+    client: BusinessClient; 
+    onEdit: (c: BusinessClient) => void; 
+    onDelete: (id: string) => void; 
+    onCall: (c: BusinessClient) => void;
+    onCreateProposal: (c: BusinessClient) => void;
+    onCreateInvoice: (c: BusinessClient) => void;
+}) => {
+    const stageVariants = {
+        lead: 'blue',
+        prospect: 'warning',
+        customer: 'success',
+        lost: 'error'
+    } as const;
+
+    const dropdownItems = [
+        {
+            label: 'Create Proposal',
+            icon: <FilePlus className="w-4 h-4" />,
+            onClick: () => onCreateProposal(client)
+        },
+        {
+            label: 'Create Invoice',
+            icon: <Receipt className="w-4 h-4" />,
+            onClick: () => onCreateInvoice(client)
+        },
+        {
+            label: 'Send Email',
+            icon: <Mail className="w-4 h-4" />,
+            onClick: () => {
+                if (client.email) {
+                    window.open(`mailto:${client.email}`);
+                } else {
+                    toast.error('No email address on file for this client.');
+                }
+            }
+        },
+        {
+            label: 'Schedule Meeting',
+            icon: <Calendar className="w-4 h-4" />,
+            onClick: () => toast('Calendar integration coming soon!', { icon: '📅' })
+        },
+        {
+            label: 'View History',
+            icon: <History className="w-4 h-4" />,
+            onClick: () => toast('Activity history coming soon!', { icon: '📋' })
+        },
+        {
+            label: 'Edit Client',
+            icon: <Edit className="w-4 h-4" />,
+            onClick: () => onEdit(client)
+        },
+        {
+            label: 'Delete Client',
+            icon: <Trash2 className="w-4 h-4" />,
+            onClick: () => onDelete(client.id),
+            variant: 'danger' as const
+        }
+    ];
 
     return (
-        <div className="bg-slate-900/50 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 transition-all group relative shadow-sm flex flex-col h-full">
+        <Card hoverEffect className="flex flex-col h-full !p-5">
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0 mr-2">
-                    <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold">
+                    <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white">
                         {client.name.charAt(0)}
                     </div>
                     <div className="min-w-0">
-                        <h3 className="font-semibold truncate" title={client.name}>{client.name}</h3>
+                        <h3 className="font-semibold text-white truncate" title={client.name}>{client.name}</h3>
                         {client.industry && <p className="text-xs text-slate-400 truncate">{client.industry}</p>}
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            window.location.href = `/dashboard/business/projects?create=true&clientId=${client.id}`;
-                        }}
-                        className="text-xs bg-slate-800 border border-slate-700 text-slate-300 px-2 py-1.5 rounded-lg hover:border-teal-500 hover:text-teal-400 transition-colors hidden sm:block"
-                    >
-                        Proposal
-                    </button>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onCall(client);
-                        }}
-                        className="p-1.5 bg-slate-800 border border-slate-700 hover:bg-teal-500/10 hover:border-teal-500/50 rounded-lg transition-colors group/call active:scale-95"
-                        title="Video Call"
-                    >
-                        <Phone className="w-4 h-4 text-slate-400 group-hover/call:text-teal-400" />
-                    </button>
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onCall(client)}
+                        className="!p-2 hover:bg-teal-500/10 hover:text-teal-400"
+                        icon={<Phone className="w-4 h-4" />}
+                    />
+                    <Dropdown
+                        trigger={
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                className="!p-2 hover:bg-slate-700"
+                                icon={<MoreVertical className="w-4 h-4" />}
+                            />
+                        }
+                        items={dropdownItems}
+                    />
                 </div>
             </div>
 
@@ -375,34 +478,17 @@ const ClientCard = ({ client, onEdit, onDelete, onCall }: { client: BusinessClie
 
             <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-800/50">
                 <div className="flex items-center gap-2">
-                    <span className={`text-xs px-2 py-1 rounded-full border ${stageColors[client.salesStage]}`}>
+                    <Badge variant={stageVariants[client.salesStage as keyof typeof stageVariants] || 'neutral'}>
                         {client.salesStage.charAt(0).toUpperCase() + client.salesStage.slice(1)}
-                    </span>
+                    </Badge>
                     {client.value > 0 && (
                         <span className="text-sm font-semibold text-teal-400">
                             ${client.value.toLocaleString()}
                         </span>
                     )}
                 </div>
-
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onEdit(client); }}
-                        className="p-1.5 hover:bg-teal-500/10 text-slate-400 hover:text-teal-400 rounded transition-all"
-                        title="Edit Client"
-                    >
-                        <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onDelete(client.id); }}
-                        className="p-1.5 hover:bg-red-500/10 text-slate-400 hover:text-red-400 rounded transition-all"
-                        title="Delete Client"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </button>
-                </div>
             </div>
-        </div>
+        </Card>
     );
 };
 
@@ -424,120 +510,85 @@ const AddClientModal = ({ onClose, onAdd }: any) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-2xl w-full">
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold">Add New Client</h3>
-                    <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded">
-                        <X className="w-5 h-5" />
-                    </button>
+        <Modal isOpen={true} onClose={onClose} title="Register New Client Entity" maxWidth="max-w-2xl">
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Input
+                        label="Full Name"
+                        required
+                        placeholder="John Doe"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        icon={<Users className="w-5 h-5" />}
+                    />
+                    <Input
+                        label="Email Address"
+                        type="email"
+                        placeholder="john@example.com"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        icon={<Mail className="w-5 h-5" />}
+                    />
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Name *</label>
-                        <input
-                            type="text"
-                            required
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        />
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Input
+                        label="Phone Number"
+                        type="tel"
+                        placeholder="+1 (555) 000-0000"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        icon={<Phone className="w-5 h-5" />}
+                    />
+                    <Input
+                        label="Industry"
+                        placeholder="e.g. Technology"
+                        value={formData.industry}
+                        onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                        icon={<Building className="w-5 h-5" />}
+                    />
+                </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Email</label>
-                            <input
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Phone</label>
-                            <input
-                                type="tel"
-                                value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Industry</label>
-                            <input
-                                type="text"
-                                value={formData.industry}
-                                onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Location</label>
-                            <input
-                                type="text"
-                                value={formData.location}
-                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Stage</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-1.5">
+                        <label className="block text-sm font-medium text-slate-300">Target Stage</label>
                         <select
                             value={formData.salesStage}
                             onChange={(e) => setFormData({ ...formData, salesStage: e.target.value as any })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all font-medium"
                         >
                             <option value="lead">Lead</option>
                             <option value="prospect">Prospect</option>
                             <option value="customer">Customer</option>
                         </select>
                     </div>
+                    <Input
+                        label="Potential Value ($)"
+                        type="number"
+                        placeholder="0.00"
+                        value={formData.value}
+                        onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) || 0 })}
+                    />
+                </div>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Potential Value ($)</label>
-                        <input
-                            type="number"
-                            value={formData.value}
-                            onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) || 0 })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Description</label>
-                        <textarea
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            rows={3}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        />
-                    </div>
+                <Input
+                    label="Biographical Notes"
+                    textarea
+                    placeholder="Key client details..."
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                />
 
-
-                    <div className="flex gap-3 pt-4">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="flex-1 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors"
-                        >
-                            Add Client
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                <div className="flex gap-4 pt-4 border-t border-slate-800">
+                    <Button variant="ghost" className="flex-1" onClick={onClose}>
+                        Abort Registration
+                    </Button>
+                    <Button type="submit" className="flex-1">
+                        Initialize Client Node
+                    </Button>
+                </div>
+            </form>
+        </Modal>
     );
 };
 
@@ -559,75 +610,48 @@ const EditClientModal = ({ client, onClose, onSave }: { client: BusinessClient; 
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-2xl w-full">
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold">Edit Client</h3>
-                    <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded">
-                        <X className="w-5 h-5" />
-                    </button>
+        <Modal isOpen={true} onClose={onClose} title="Edit Client Information" maxWidth="max-w-2xl">
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Input
+                        label="Full Name"
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        icon={<Users className="w-5 h-5" />}
+                    />
+                    <Input
+                        label="Email Address"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        icon={<Mail className="w-5 h-5" />}
+                    />
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Name *</label>
-                        <input
-                            type="text"
-                            required
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        />
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Input
+                        label="Phone Number"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        icon={<Phone className="w-5 h-5" />}
+                    />
+                    <Input
+                        label="Industry"
+                        value={formData.industry}
+                        onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                        icon={<Building className="w-5 h-5" />}
+                    />
+                </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Email</label>
-                            <input
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Phone</label>
-                            <input
-                                type="tel"
-                                value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Industry</label>
-                            <input
-                                type="text"
-                                value={formData.industry}
-                                onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Location</label>
-                            <input
-                                type="text"
-                                value={formData.location}
-                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Stage</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-1.5">
+                        <label className="block text-sm font-medium text-slate-300">Sales Stage</label>
                         <select
                             value={formData.salesStage}
                             onChange={(e) => setFormData({ ...formData, salesStage: e.target.value as any })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
                         >
                             <option value="lead">Lead</option>
                             <option value="prospect">Prospect</option>
@@ -635,45 +659,31 @@ const EditClientModal = ({ client, onClose, onSave }: { client: BusinessClient; 
                             <option value="lost">Lost</option>
                         </select>
                     </div>
+                    <Input
+                        label="Potential Value ($)"
+                        type="number"
+                        value={formData.value}
+                        onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) || 0 })}
+                    />
+                </div>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Potential Value ($)</label>
-                        <input
-                            type="number"
-                            value={formData.value}
-                            onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) || 0 })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        />
-                    </div>
+                <Input
+                    label="Description"
+                    textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                />
 
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Description</label>
-                        <textarea
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            rows={3}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        />
-                    </div>
-
-                    <div className="flex gap-3 pt-4">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="flex-1 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors"
-                        >
-                            Save Changes
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                <div className="flex gap-4 pt-4 border-t border-slate-800">
+                    <Button variant="outline" className="flex-1" onClick={onClose}>
+                        Discard Changes
+                    </Button>
+                    <Button type="submit" className="flex-1">
+                        Save Identity Updates
+                    </Button>
+                </div>
+            </form>
+        </Modal>
     );
 };
 
@@ -790,6 +800,230 @@ const ImportClientsModal = ({ onClose, onImport }: any) => {
                 )}
             </div>
         </div>
+    );
+};
+
+const CreateProposalModal = ({ client, user, onClose, onCreated }: { client: BusinessClient; user: User; onClose: () => void; onCreated: () => void }) => {
+    const [formData, setFormData] = useState({
+        name: `Proposal for ${client.name}`,
+        category: 'Consulting',
+        description: `Project proposal for ${client.name}. Generated from Client Nexus.`,
+        budget: client.value || 0
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        try {
+            const { projectService } = await import('../../../services/projectService');
+            const { error } = await projectService.createProject({
+                ownerId: user.id,
+                ownerName: user.name,
+                name: formData.name,
+                category: formData.category,
+                description: formData.description,
+                status: 'Pending',
+                currentStage: 'Proposal',
+                progress: 0,
+                dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                team: [],
+                image: '',
+                contractStatus: 'None',
+                clientId: client.id,
+                budget: formData.budget,
+                isPublic: false,
+                showInPortfolio: false,
+                resources: [],
+                startDate: new Date().toISOString()
+            } as any);
+
+            if (error) {
+                toast.error(`Failed to create proposal: ${error}`);
+            } else {
+                onCreated();
+            }
+        } catch (err) {
+            toast.error('An unexpected error occurred.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <Modal isOpen={true} onClose={onClose} title="Initialize Project Proposal" maxWidth="max-w-xl">
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="p-4 bg-teal-500/10 border border-teal-500/20 rounded-xl mb-4">
+                    <p className="text-sm text-teal-200">
+                        Initializing a formal proposal for <strong>{client.name}</strong>. This creates a pending project in your pipeline.
+                    </p>
+                </div>
+
+                <Input
+                    label="Project Title"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                        <label className="block text-sm font-medium text-slate-300">Project Category</label>
+                        <select
+                            value={formData.category}
+                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
+                        >
+                            <option value="Web">Web Development</option>
+                            <option value="Mobile">Mobile App</option>
+                            <option value="AI">AI / Automation</option>
+                            <option value="Consulting">Strategic Consulting</option>
+                            <option value="Design">UI/UX Design</option>
+                        </select>
+                    </div>
+                    <Input
+                        label="Projected Budget ($)"
+                        type="number"
+                        value={formData.budget}
+                        onChange={(e) => setFormData({ ...formData, budget: parseFloat(e.target.value) || 0 })}
+                    />
+                </div>
+
+                <Input
+                    label="Scope & Objectives"
+                    textarea
+                    placeholder="Describe the high-level goals of this proposal..."
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                />
+
+                <div className="flex gap-4 pt-4 border-t border-slate-800">
+                    <Button variant="ghost" className="flex-1" onClick={onClose} disabled={isSubmitting}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" className="flex-1" isLoading={isSubmitting}>
+                        Generate Proposal
+                    </Button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+
+const CreateClientInvoiceModal = ({ client, onClose, onCreated }: { client: BusinessClient; onClose: () => void; onCreated: () => void }) => {
+    const { currentTenant } = useTenant();
+    const [formData, setFormData] = useState({
+        invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
+        description: `Services for ${client.name}`,
+        amount: client.value || 0,
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        notes: ''
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!currentTenant) {
+            toast.error('No active tenant. Please refresh the page.');
+            return;
+        }
+        setIsSubmitting(true);
+        try {
+            const { businessInvoiceService } = await import('../../../services/businessInvoiceService');
+            const { error } = await businessInvoiceService.createInvoice(currentTenant.id, {
+                invoiceNumber: formData.invoiceNumber,
+                clientId: client.id,
+                issueDate: new Date().toISOString().split('T')[0],
+                dueDate: formData.dueDate,
+                lineItems: [
+                    {
+                        description: formData.description,
+                        quantity: 1,
+                        rate: formData.amount,
+                        amount: formData.amount
+                    }
+                ],
+                subtotal: formData.amount,
+                taxRate: 0,
+                tax: 0,
+                discountAmount: 0,
+                total: formData.amount,
+                status: 'draft',
+                notes: formData.notes,
+                isPublic: false
+            });
+
+            if (error) {
+                toast.error(`Failed to create invoice: ${error}`);
+            } else {
+                onCreated();
+            }
+        } catch (err) {
+            toast.error('An unexpected error occurred.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <Modal isOpen={true} onClose={onClose} title="Create Invoice" maxWidth="max-w-xl">
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="p-3 bg-teal-500/10 border border-teal-500/20 rounded-xl">
+                    <p className="text-sm text-teal-200">
+                        Creating invoice for <strong>{client.name}</strong>
+                        {client.email && <span className="text-teal-400"> · {client.email}</span>}
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <Input
+                        label="Invoice #"
+                        required
+                        value={formData.invoiceNumber}
+                        onChange={(e) => setFormData({ ...formData, invoiceNumber: e.target.value })}
+                    />
+                    <Input
+                        label="Due Date"
+                        type="date"
+                        required
+                        value={formData.dueDate}
+                        onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                    />
+                </div>
+
+                <Input
+                    label="Description"
+                    required
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                />
+
+                <Input
+                    label="Amount ($)"
+                    type="number"
+                    required
+                    value={formData.amount}
+                    onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
+                />
+
+                <Input
+                    label="Notes (optional)"
+                    textarea
+                    placeholder="Payment terms, additional details..."
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                />
+
+                <div className="flex gap-4 pt-2 border-t border-slate-800">
+                    <Button variant="ghost" className="flex-1" onClick={onClose} disabled={isSubmitting}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" className="flex-1" isLoading={isSubmitting}>
+                        Create Invoice
+                    </Button>
+                </div>
+            </form>
+        </Modal>
     );
 };
 
