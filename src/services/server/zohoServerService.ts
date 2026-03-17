@@ -2,6 +2,34 @@ import { createSupabaseAdminClient } from '@/lib/supabase-server';
 import { ENV } from '@/config/env';
 import { encrypt, decrypt } from '@/lib/encryption';
 
+/**
+ * Checks if a token string is in the encrypted format: iv:authTag:encrypted (all hex parts).
+ * Zoho JWTs contain dots and are NOT in this format.
+ */
+function isEncryptedFormat(token: string): boolean {
+    if (!token || typeof token !== 'string') return false;
+    const parts = token.split(':');
+    if (parts.length !== 3) return false;
+    return parts.every(p => p.length > 0 && /^[0-9a-f]+$/i.test(p));
+}
+
+/**
+ * Safely decrypts a token. Falls back to returning plaintext if:
+ * - No secret is set
+ * - Token is not in encrypted format
+ * - Decryption fails (e.g. tokens saved before encryption was configured)
+ */
+function safeDecrypt(token: string | null | undefined, secret: string | undefined): string | null {
+    if (!token) return null;
+    if (!secret || !isEncryptedFormat(token)) return token; // plaintext token or no secret
+    try {
+        return decrypt(token, secret);
+    } catch (e) {
+        console.warn('[Zoho Token] Decryption failed, using token as plaintext. It may need to be re-saved.', e);
+        return token; // fall back to plaintext so connection is not broken
+    }
+}
+
 export const zohoServerService = {
     /**
      * Get valid access token (refreshes if needed)
@@ -32,15 +60,8 @@ export const zohoServerService = {
             const config = integration.config;
             const secret = ENV.ENCRYPTION_SECRET;
             
-            // Decrypt accessToken if secret is available
-            let accessToken = config.accessToken;
-            if (secret && accessToken && accessToken.includes(':')) {
-                try {
-                    accessToken = decrypt(accessToken, secret);
-                } catch (e) {
-                    console.error('[Zoho Token Debug] Failed to decrypt accessToken:', e);
-                }
-            }
+            // safeDecrypt handles both plaintext and encrypted tokens gracefully
+            const accessToken = safeDecrypt(config.accessToken, secret);
 
             if (!config.expiryDate) {
                 console.error('[Zoho Token Debug] Config missing expiryDate:', config);
@@ -55,14 +76,12 @@ export const zohoServerService = {
 
             console.log('[Zoho Token Debug] Token expired, attempting refresh for integration:', integration.id);
             
-            // Decrypt refreshToken
-            let refreshToken = config.refreshToken;
-            if (secret && refreshToken && refreshToken.includes(':')) {
-                try {
-                    refreshToken = decrypt(refreshToken, secret);
-                } catch (e) {
-                    console.error('[Zoho Token Debug] Failed to decrypt refreshToken:', e);
-                }
+            // safeDecrypt handles both plaintext and encrypted refresh tokens
+            const refreshToken = safeDecrypt(config.refreshToken, secret);
+
+            if (!refreshToken) {
+                console.error('[Zoho Token Debug] No refresh token available, cannot refresh access token.');
+                return null;
             }
 
             // Refresh token
