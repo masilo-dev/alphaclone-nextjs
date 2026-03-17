@@ -63,7 +63,7 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
                             .eq('enabled', true);
 
                         if (integrations) {
-                            const zoho = integrations.find(i => i.type === 'zoho');
+                            const zoho = integrations.find((i: any) => i.type === 'zoho');
                             if (zoho) {
                                 await zohoServerService.createCRMLead(userId, {
                                     name: `AI Prospect: ${industry}`,
@@ -71,7 +71,7 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
                                     description: res.content
                                 }).catch(e => console.error('Agent Zoho Sync Failed:', e));
                             }
-                            const hubspot = integrations.find(i => i.type === 'hubspot');
+                            const hubspot = integrations.find((i: any) => i.type === 'hubspot');
                             if (hubspot) {
                                 await hubspotService.syncLeadToHubSpot(userId, {
                                     firstname: 'AI Prospect',
