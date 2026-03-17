@@ -9,7 +9,6 @@ import { useTenant } from '../../contexts/TenantContext';
 import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '../../services/universalServiceCatalog';
 import { ChevronDown, Sparkles } from 'lucide-react';
 
-
 interface LineItem {
     description: string;
     quantity: number;
@@ -27,6 +26,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const { currentTenant } = useTenant();
     const [step, setStep] = useState<'edit' | 'preview' | 'success'>('edit');
     const [selectedTemplate, setSelectedTemplate] = useState<1 | 2 | 3 | 4 | 5>(1);
+    const [lastCreatedFile, setLastCreatedFile] = useState<any>(null);
 
     // Form state
     const [lineItems, setLineItems] = useState<LineItem[]>([{ description: '', quantity: 1, rate: 0 }]);
@@ -69,7 +69,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 const [settingsRes, clientsRes] = await Promise.all([
                     supabase
                         .from('business_settings')
-                        .select('bank_details, mobile_payment_details, organization_name')
+                        .select('bank_details, mobile_payment_details, organization_name, settings')
                         .eq('tenant_id', tenantId)
                         .maybeSingle(),
                     // Fetch Business Clients
@@ -135,6 +135,13 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         toast.success('Invoice preview generated');
     };
 
+    const handleOpenFile = async (file: any) => {
+        if (!file?.storage_path) return;
+        const { fileUploadService } = await import('../../services/fileUploadService');
+        const proxiedUrl = fileUploadService.getProxiedUrl('uploads', file.storage_path);
+        window.open(proxiedUrl, '_blank');
+    };
+
     const getSubtotal = () => Math.round(lineItems.reduce((sum, item) => sum + (item.quantity * item.rate), 0) * 100) / 100;
     const getTaxAmount = () => {
         const subtotal = getSubtotal();
@@ -154,18 +161,17 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             return;
         }
 
-        const invoiceSubtotal = getSubtotal();
-        const taxAmount = getTaxAmount();
-        const invoiceTotal = getTotal();
         setIsSubmitting(true);
-
-        const project = projects.find(p => p.id === selectedProjectId);
-        // Use selected client, or project's linked client. 
-        // Do NOT use project.ownerId as it is a User ID, not a Business Client ID.
-        const finalClientId = selectedClientId || project?.clientId || undefined;
-
         try {
             const { businessInvoiceService } = await import('../../services/businessInvoiceService');
+            const { fileUploadService } = await import('../../services/fileUploadService');
+
+            const invoiceSubtotal = getSubtotal();
+            const taxAmount = getTaxAmount();
+            const invoiceTotal = getTotal();
+
+            const project = projects.find(p => p.id === selectedProjectId);
+            const finalClientId = selectedClientId || project?.clientId || undefined;
 
             const formattedLineItems = lineItems.map(item => ({
                 description: item.description,
@@ -174,60 +180,76 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 amount: Math.round(item.quantity * item.rate * 100) / 100
             }));
 
-            // Map to BusinessInvoice schema
             const invoiceData = {
                 clientId: finalClientId,
                 projectId: selectedProjectId || undefined,
                 issueDate: new Date().toISOString().split('T')[0],
                 dueDate: dueDate,
-                status: 'draft' as const, // Always start as draft, user can send/finalize later
+                status: 'pending' as const,
                 subtotal: invoiceSubtotal,
                 taxRate: taxRate,
                 tax: taxAmount,
                 discountAmount: discountAmount,
                 total: invoiceTotal,
                 lineItems: formattedLineItems,
-                // Send specific details
-                mobilePaymentDetails: mobileDetails,
+                paymentMethod: paymentMethod,
+                bankDetails: paymentMethod === 'bank' ? bankDetails : undefined,
+                mobilePaymentDetails: paymentMethod === 'mobile_money' ? mobileDetails : undefined,
                 signature: signatureType === 'draw' && signatureData ? { type: 'draw' as const, data: signatureData }
                     : signatureType === 'type' && typedSignature ? { type: 'type' as const, data: typedSignature }
                         : undefined,
-                // Legacy support / fallback logic handled in service/PDF
-                notes: undefined,
-                isPublic: false
+                currency: 'USD'
             };
 
-            const { invoice, error } = await businessInvoiceService.createInvoice(currentTenant.id, invoiceData);
+            const { invoice, error } = await businessInvoiceService.createInvoice(currentTenant.id, invoiceData as any);
 
             if (error) {
-                console.error('Invoice creation error:', error);
-                toast.error(`Failed to create invoice: ${error}`);
-            } else if (invoice) {
+                throw new Error(error);
+            }
+
+            if (invoice) {
                 setCreatedInvoiceId(invoice.id);
-                // Store full invoice for PDF consistency
                 setCreatedInvoice(invoice);
 
-                // Auto-save to Document Hub
+                // Auto-save PDF
                 try {
-                    const { fileUploadService } = await import('../../services/fileUploadService');
                     const client = clients.find(c => c.id === finalClientId);
-
+                    // generatePDF(invoice: any, tenant: any, client: any, signature?: { type: 'draw' | 'type', data: string })
                     const doc = businessInvoiceService.generatePDF(invoice, currentTenant, client, invoiceData.signature);
                     const pdfBlob = doc.output('blob');
-                    const pdfFile = new File([pdfBlob], `Invoice-${invoice.invoiceNumber || invoice.id}.pdf`, { type: 'application/pdf' });
+                    
+                    const filename = `Invoice_${invoice.invoiceNumber || invoice.id}_${Date.now()}.pdf`;
+                    const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
+                    
+                    const uploadedFile = await fileUploadService.uploadFile(
+                        pdfFile,
+                        'invoice',
+                        invoice.id,
+                        currentTenant.id, // userId
+                        currentTenant.id, // tenantId
+                        {
+                            category: 'Invoices',
+                            tags: ['Automated', 'Invoice']
+                        }
+                    );
 
-                    await fileUploadService.uploadFile(pdfFile, 'invoice', invoice.id);
+                    if (uploadedFile && uploadedFile.success) {
+                        // We need the full file object for handleOpenFile, but uploadFile returns FileUploadResult
+                        // Let's fetch the file record or just pass enough info
+                        const { file: fullFile } = await fileUploadService.getFileInfo(uploadedFile.fileId!);
+                        setLastCreatedFile(fullFile);
+                    }
                 } catch (pdfErr) {
-                    console.error('Failed to auto-save invoice PDF to Document Hub:', pdfErr);
+                    console.error('Failed to auto-save invoice PDF:', pdfErr);
                 }
 
                 setStep('success');
-                toast.success('Invoice created successfully!');
+                toast.success('Invoice created and saved');
                 onInvoiceCreated();
             }
-        } catch (err) {
-            console.error('Invoice submission error:', err);
-            toast.error('Failed to create invoice. Please try again.');
+        } catch (err: any) {
+            console.error('Invoice creation error:', err);
+            toast.error(err.message || 'Failed to create invoice');
         } finally {
             setIsSubmitting(false);
         }
@@ -237,23 +259,18 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         try {
             const { businessInvoiceService } = await import('../../services/businessInvoiceService');
 
-            // If we have a finalized invoice, use its data for the PDF
             if (createdInvoice) {
-                const client = clients.find(c => c.id === createdInvoice.client_id || createdInvoice.clientId);
+                const client = clients.find(c => c.id === (createdInvoice.client_id || createdInvoice.clientId));
                 const signature = signatureType === 'draw' && signatureData ? { type: 'draw' as const, data: signatureData }
                     : signatureType === 'type' && typedSignature ? { type: 'type' as const, data: typedSignature }
                         : undefined;
 
                 const doc = businessInvoiceService.generatePDF(createdInvoice, currentTenant, client, signature);
                 doc.save(`Invoice-${createdInvoice.invoice_number || createdInvoice.invoiceNumber || createdInvoice.id}.pdf`);
-                toast.success('PDF downloaded!');
                 return;
             }
 
-            const tenant = currentTenant;
-            const project = projects.find(p => p.id === selectedProjectId);
-            const client = clients.find(c => c.id === selectedClientId);
-
+            // Draft PDF
             const formattedLineItems = lineItems.map(item => ({
                 description: item.description,
                 quantity: item.quantity,
@@ -261,39 +278,29 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 amount: Math.round(item.quantity * item.rate * 100) / 100
             }));
 
-            const amountNum = getSubtotal();
-
-            // Build invoice object for preview/draft PDF
             const invoiceData = {
                 id: 'DRAFT',
                 invoiceNumber: `DRAFT-${Date.now().toString().slice(-4)}`,
                 issueDate: new Date().toISOString().split('T')[0],
                 dueDate: dueDate,
                 status: 'draft' as const,
-                subtotal: amountNum,
-                tax: 0,
-                total: amountNum,
+                subtotal: getSubtotal(),
+                tax: getTaxAmount(),
+                total: getTotal(),
                 lineItems: formattedLineItems,
                 bankDetails: bankDetails,
-                mobilePaymentDetails: mobileDetails,
-                client: client ? {
-                    name: client.name,
-                    email: client.email
-                } : undefined,
-                project: project ? {
-                    name: project.name
-                } : undefined
+                mobilePaymentDetails: mobileDetails
             };
 
+            const client = clients.find(c => c.id === selectedClientId);
             const signature = signatureType === 'draw' && signatureData ? { type: 'draw' as const, data: signatureData }
                 : signatureType === 'type' && typedSignature ? { type: 'type' as const, data: typedSignature }
                     : undefined;
 
-            const doc = businessInvoiceService.generatePDF(invoiceData, tenant, invoiceData.client, signature);
-            doc.save(`Invoice-${invoiceData.invoiceNumber}.pdf`);
-            toast.success('Draft PDF downloaded!');
+            const doc = businessInvoiceService.generatePDF(invoiceData, currentTenant, client, signature);
+            doc.save(`Invoice-DRAFT.pdf`);
         } catch (err) {
-            console.error('PDF generation error:', err);
+            console.error('PDF error:', err);
             toast.error('Failed to generate PDF');
         }
     };
@@ -317,15 +324,12 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const handleCopyPaymentLink = async () => {
         if (!createdInvoiceId) return;
         try {
-            const origin = window.location.origin;
-            // Enable public access by marking as public first
             const { businessInvoiceService } = await import('../../services/businessInvoiceService');
             await businessInvoiceService.updateInvoice(createdInvoiceId, { isPublic: true, status: 'sent' });
-            const paymentUrl = `${origin}/invoice/${createdInvoiceId}`;
+            const paymentUrl = `${window.location.origin}/invoice/${createdInvoiceId}`;
             await navigator.clipboard.writeText(paymentUrl);
-            toast.success('Payment link copied to clipboard! Share it with your client.');
+            toast.success('Payment link copied!');
         } catch (err) {
-            console.error('Failed to copy payment link:', err);
             toast.error('Failed to copy link');
         }
     };
@@ -343,7 +347,6 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     return (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 backdrop-blur-sm overflow-y-auto">
             <div className="w-full max-w-4xl bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl my-8">
-                {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-slate-800">
                     <div>
                         <h2 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -356,401 +359,159 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             {step === 'success' && 'Invoice created successfully'}
                         </p>
                     </div>
-                    <button onClick={handleClose} className="text-slate-400 hover:text-white transition-colors">
+                    <button onClick={handleClose} className="text-slate-400 hover:text-white">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
 
                 <div className="p-6 max-h-[70vh] overflow-y-auto">
-                    {/* STEP 1: Edit Details */}
                     {step === 'edit' && (
                         <div className="space-y-6">
                             <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl p-4 flex items-start gap-3">
                                 <Edit3 className="w-5 h-5 text-teal-400 mt-0.5" />
                                 <div>
                                     <h3 className="text-teal-400 font-bold text-sm">Invoice Details</h3>
-                                    <p className="text-slate-400 text-xs mt-1">
-                                        Fill in the invoice information. You'll see a preview before saving.
-                                    </p>
+                                    <p className="text-slate-400 text-xs mt-1">Fill in the invoice information.</p>
                                 </div>
                             </div>
 
-                            {/* Template Selector */}
                             <div className="border-b border-slate-800 pb-6">
                                 <h3 className="text-white font-bold mb-3 flex items-center gap-2">
                                     <Sparkles className="w-5 h-5 text-teal-400" />
                                     Choose Style
                                 </h3>
                                 <div className="grid grid-cols-5 gap-2">
-                                    {[
-                                        { id: 1, name: 'Classic', color: 'bg-white' },
-                                        { id: 2, name: 'Modern', color: 'bg-teal-50' },
-                                        { id: 3, name: 'Dark', color: 'bg-slate-900 border border-white/20' },
-                                        { id: 4, name: 'Minimal', color: 'bg-gray-50' },
-                                        { id: 5, name: 'Bold', color: 'bg-slate-200' }
-                                    ].map((t) => (
+                                    {[1, 2, 3, 4, 5].map((id) => (
                                         <button
-                                            key={t.id}
-                                            onClick={() => setSelectedTemplate(t.id as any)}
-                                            className={`relative aspect-[3/4] rounded-lg border-2 transition-all overflow-hidden group ${selectedTemplate === t.id ? 'border-teal-500 ring-2 ring-teal-500/20' : 'border-slate-700 hover:border-slate-500'}`}
+                                            key={id}
+                                            onClick={() => setSelectedTemplate(id as any)}
+                                            className={`relative aspect-[3/4] rounded-lg border-2 transition-all ${selectedTemplate === id ? 'border-teal-500 ring-2 ring-teal-500/20' : 'border-slate-700 hover:border-slate-500'}`}
                                         >
-                                            <div className={`absolute inset-0 ${t.color} opacity-50`} />
-                                            <div className="absolute inset-x-2 top-2 h-2 bg-current opacity-20 rounded-sm" />
-                                            <div className="absolute inset-x-2 top-5 bottom-2 bg-current opacity-10 rounded-sm" />
-                                            
-                                            {selectedTemplate === t.id && (
-                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
-                                                    <CheckCircle2 className="w-6 h-6 text-teal-400 drop-shadow-lg" />
+                                            <div className="absolute inset-x-2 top-2 h-2 bg-current opacity-20" />
+                                            {selectedTemplate === id && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                                    <CheckCircle2 className="w-6 h-6 text-teal-400" />
                                                 </div>
                                             )}
-                                            <span className="absolute bottom-1 left-0 right-0 text-[9px] text-center font-bold uppercase tracking-wider text-white bg-black/50 py-0.5">
-                                                {t.name}
-                                            </span>
                                         </button>
                                     ))}
                                 </div>
                             </div>
 
-                            {/* Quick Templates */}
-                            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="flex-1 text-[10px] uppercase font-bold"
-                                    onClick={() => {
-                                        setLineItems([{ description: 'Standard Consultation', quantity: 1, rate: 500 }]);
-                                        setDueDate(new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]);
-                                    }}
-                                >
-                                    ⚡ Standard Template
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="flex-1 text-[10px] uppercase font-bold"
-                                    onClick={() => {
-                                        setLineItems([{ description: 'Development Milestone', quantity: 1, rate: 2500 }]);
-                                        setDueDate(new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0]);
-                                    }}
-                                >
-                                    ⚡ Dev Milestone
-                                </Button>
-                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-1">Project</label>
+                                    <select
+                                        className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                                        value={selectedProjectId}
+                                        onChange={(e) => setSelectedProjectId(e.target.value)}
+                                    >
+                                        <option value="">Standalone Invoice</option>
+                                        {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                    </select>
+                                </div>
 
-                            {/* Client & Project Selection */}
-                            <div className="border-t border-slate-800 pt-4">
-                                <h3 className="text-white font-bold mb-3 flex items-center gap-2">
-                                    <FileText className="w-5 h-5 text-teal-400" />
-                                    Client & Project (Optional)
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1">Link to Project</label>
-                                        <select
-                                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
-                                            value={selectedProjectId}
-                                            onChange={(e) => {
-                                                setSelectedProjectId(e.target.value);
-                                                if (e.target.value) setSelectedClientId('');
-                                            }}
-                                        >
-                                            <option value="">Standalone Invoice</option>
-                                            {projects.map(p => (
-                                                <option key={p.id} value={p.id}>{p.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div className="relative" ref={dropdownRef}>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1">Select Client</label>
-                                        <div className="relative group">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 p-1 bg-white/5 rounded-lg group-focus-within:bg-teal-500/10 transition-colors">
-                                                <Users className="w-3 h-3 text-slate-500 group-focus-within:text-teal-400" />
-                                            </div>
-                                            <input
-                                                type="text"
-                                                value={selectedClientId ? clients.find(c => c.id === selectedClientId)?.name || '' : searchQuery}
-                                                onChange={(e) => {
-                                                    setSearchQuery(e.target.value);
-                                                    setShowContactDropdown(true);
-                                                    if (selectedClientId) setSelectedClientId('');
-                                                }}
-                                                onFocus={() => setShowContactDropdown(true)}
-                                                placeholder="Search client database..."
-                                                className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-10 py-2.5 text-sm text-white focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700"
-                                            />
+                                <div className="relative" ref={dropdownRef}>
+                                    <label className="block text-sm font-medium text-slate-300 mb-1">Client</label>
+                                    <div className="relative">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                                            <Users className="w-3 h-3 text-slate-500" />
                                         </div>
-
-                                        <AnimatePresence>
-                                            {showContactDropdown && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, y: -10, scale: 0.98 }}
-                                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                    exit={{ opacity: 0, y: -10, scale: 0.98 }}
-                                                    className="absolute left-0 right-0 top-full mt-2 bg-slate-900 border border-white/10 rounded-2xl shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8)] z-[60] max-h-60 overflow-y-auto p-1.5 backdrop-blur-2xl"
-                                                >
-                                                    {clients.filter(c =>
-                                                        c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                                        c.email?.toLowerCase().includes(searchQuery.toLowerCase())
-                                                    ).length > 0 ? (
-                                                        clients
-                                                            .filter(c =>
-                                                                c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                                                c.email?.toLowerCase().includes(searchQuery.toLowerCase())
-                                                            )
-                                                            .map(client => (
-                                                                <button
-                                                                    key={client.id}
-                                                                    onClick={() => {
-                                                                        setSelectedClientId(client.id);
-                                                                        setShowContactDropdown(false);
-                                                                        setSearchQuery('');
-                                                                    }}
-                                                                    className="w-full text-left p-2.5 rounded-xl hover:bg-white/5 transition-all group flex items-center justify-between border border-transparent hover:border-white/5 mb-0.5"
-                                                                >
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center border border-teal-500/20">
-                                                                            <span className="text-[10px] font-black text-teal-400">{client.name?.charAt(0)}</span>
-                                                                        </div>
-                                                                        <div>
-                                                                            <p className="text-xs font-bold text-slate-200 group-hover:text-white transition-colors">{client.name}</p>
-                                                                            <p className="text-[9px] text-slate-500 font-mono">{client.email}</p>
-                                                                        </div>
-                                                                    </div>
-                                                                    {selectedClientId === client.id && (
-                                                                        <CheckCircle className="w-3.5 h-3.5 text-teal-400" />
-                                                                    )}
-                                                                </button>
-                                                            ))
-                                                    ) : (
-                                                        <div className="p-6 text-center">
-                                                            <Search className="w-6 h-6 mx-auto mb-2 text-slate-700 opacity-20" />
-                                                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">No matches found</p>
-                                                        </div>
-                                                    )}
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
+                                        <input
+                                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-10 py-2.5 text-sm text-white outline-none focus:ring-2 focus:ring-teal-500"
+                                            type="text"
+                                            value={selectedClientId ? clients.find(c => c.id === selectedClientId)?.name || '' : searchQuery}
+                                            onChange={(e) => {
+                                                setSearchQuery(e.target.value);
+                                                setShowContactDropdown(true);
+                                                if (selectedClientId) setSelectedClientId('');
+                                            }}
+                                            onFocus={() => setShowContactDropdown(true)}
+                                            placeholder="Search clients..."
+                                        />
                                     </div>
+                                    <AnimatePresence>
+                                        {showContactDropdown && (
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.95 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                exit={{ opacity: 0, scale: 0.95 }}
+                                                className="absolute w-full mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto p-2"
+                                            >
+                                                {clients.filter(c => c.name?.toLowerCase().includes(searchQuery.toLowerCase())).map(c => (
+                                                    <button
+                                                        key={c.id}
+                                                        onClick={() => {
+                                                            setSelectedClientId(c.id);
+                                                            setShowContactDropdown(false);
+                                                        }}
+                                                        className="w-full text-left p-2 rounded-lg hover:bg-white/5 flex items-center gap-3"
+                                                    >
+                                                        <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center">
+                                                            <span className="text-teal-400 text-xs font-bold">{c.name?.charAt(0)}</span>
+                                                        </div>
+                                                        <span className="text-sm text-slate-200">{c.name}</span>
+                                                    </button>
+                                                ))}
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
                             </div>
 
-                            {/* Invoice Details */}
                             <div className="border-t border-slate-800 pt-4">
-                                <h3 className="text-white font-bold mb-3 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <DollarSign className="w-5 h-5 text-green-400" />
-                                        Line Items
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="text-[10px] uppercase border-teal-500/30 text-teal-400 hover:bg-teal-500/10"
-                                            onClick={() => {
-                                                const newItems = [...lineItems, { description: '', quantity: 1, rate: 0 }];
-                                                setLineItems(newItems);
-                                            }}
-                                        >
-                                            + Add Custom
-                                        </Button>
-                                    </div>
-                                </h3>
-
-                                {/* Select from "My Services" Dropdown */}
-                                {Object.keys(myServices).length > 0 && (
-                                    <div className="mb-4 p-4 bg-teal-500/5 border border-teal-500/20 rounded-xl">
-                                        <label className="block text-[10px] font-bold text-teal-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                            <List className="w-3 h-3" />
-                                            Quick Add from My Services
-                                        </label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {Object.entries(myServices).map(([id, service]: [string, any]) => (
-                                                <button
-                                                    key={id}
-                                                    onClick={() => {
-                                                        // Replace the first empty item or add a new one
-                                                        const emptyIdx = lineItems.findIndex(item => !item.description);
-                                                        if (emptyIdx !== -1) {
-                                                            const newItems = [...lineItems];
-                                                            newItems[emptyIdx] = {
-                                                                description: service.name,
-                                                                quantity: 1,
-                                                                rate: service.defaultPrice || 0
-                                                            };
-                                                            setLineItems(newItems);
-                                                        } else {
-                                                            setLineItems([...lineItems, {
-                                                                description: service.name,
-                                                                quantity: 1,
-                                                                rate: service.defaultPrice || 0
-                                                            }]);
-                                                        }
-                                                        toast.success(`Added ${service.name}`);
-                                                    }}
-                                                    className="px-3 py-1.5 bg-slate-950 border border-slate-700 hover:border-teal-400 hover:bg-teal-400/10 rounded-lg text-xs text-slate-300 transition-all flex items-center gap-2"
-                                                >
-                                                    <Plus className="w-3 h-3 text-teal-400" />
-                                                    {service.name} (${service.defaultPrice})
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
+                                <h3 className="text-white font-bold mb-3">Line Items</h3>
                                 <div className="space-y-4">
                                     {lineItems.map((item, index) => (
-                                        <div key={index} className="relative bg-slate-900/50 p-4 rounded-xl border border-slate-800 hover:border-slate-700 transition-all">
-                                            {/* Service Quick Select for empty items */}
-                                            {item.description === '' && (
-                                                <div className="mb-4">
-                                                    <label className="block text-[10px] font-bold text-teal-500 uppercase tracking-widest mb-2 flex items-center gap-1">
-                                                        <Sparkles className="w-3 h-3" />
-                                                        Quick Select Service
-                                                    </label>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {UNIVERSAL_SERVICE_CATALOG
-                                                            .filter(cat => userSectors.length === 0 || userSectors.includes(cat.name))
-                                                            .flatMap(cat => cat.services)
-                                                            .slice(0, 8) // Show top candidates or first few
-                                                            .map(service => (
-                                                                <button
-                                                                    key={service.id}
-                                                                    onClick={() => {
-                                                                        const newItems = [...lineItems];
-                                                                        newItems[index] = {
-                                                                            description: service.name,
-                                                                            quantity: 1,
-                                                                            rate: service.defaultPrice
-                                                                        };
-                                                                        setLineItems(newItems);
-                                                                    }}
-                                                                    className="px-3 py-1.5 bg-slate-950 border border-slate-700 hover:border-teal-500/50 hover:bg-teal-500/5 rounded-lg text-xs text-slate-300 transition-all"
-                                                                >
-                                                                    {service.name}
-                                                                </button>
-                                                            ))}
-
-                                                        <select
-                                                            className="px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-teal-500"
-                                                            onChange={(e) => {
-                                                                if (!e.target.value) return;
-                                                                const service = UNIVERSAL_SERVICE_CATALOG
-                                                                    .flatMap(cat => cat.services)
-                                                                    .find(s => s.id === e.target.value);
-                                                                if (service) {
-                                                                    const newItems = [...lineItems];
-                                                                    newItems[index] = {
-                                                                        description: service.name,
-                                                                        quantity: 1,
-                                                                        rate: service.defaultPrice
-                                                                    };
-                                                                    setLineItems(newItems);
-                                                                }
-                                                            }}
-                                                            value=""
-                                                        >
-                                                            <option value="">More services...</option>
-                                                            {UNIVERSAL_SERVICE_CATALOG
-                                                                .filter(cat => userSectors.length === 0 || userSectors.includes(cat.name))
-                                                                .map(cat => (
-                                                                    <optgroup key={cat.name} label={cat.name}>
-                                                                        {cat.services.map(s => (
-                                                                            <option key={s.id} value={s.id}>{s.name} (${s.defaultPrice})</option>
-                                                                        ))}
-                                                                    </optgroup>
-                                                                ))}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-                                                <div className="md:col-span-6">
-                                                    <Input
-                                                        label={index === 0 ? "Description *" : ""}
-                                                        value={item.description}
-                                                        onChange={(e) => {
-                                                            const newItems = [...lineItems];
-                                                            newItems[index].description = e.target.value;
-                                                            setLineItems(newItems);
-                                                        }}
-                                                        placeholder="e.g. Logo Design"
-                                                    />
-                                                </div>
-                                                <div className="md:col-span-2">
-                                                    <Input
-                                                        label={index === 0 ? "Qty *" : ""}
-                                                        type="number"
-                                                        value={item.quantity.toString()}
-                                                        onChange={(e) => {
-                                                            const newItems = [...lineItems];
-                                                            newItems[index].quantity = parseInt(e.target.value) || 0;
-                                                            setLineItems(newItems);
-                                                        }}
-                                                        min="1"
-                                                    />
-                                                </div>
-                                                <div className="md:col-span-3">
-                                                    <Input
-                                                        label={index === 0 ? "Rate ($) *" : ""}
-                                                        type="number"
-                                                        value={item.rate.toString()}
-                                                        onChange={(e) => {
-                                                            const newItems = [...lineItems];
-                                                            newItems[index].rate = parseFloat(e.target.value) || 0;
-                                                            setLineItems(newItems);
-                                                        }}
-                                                        placeholder="0.00"
-                                                    />
-                                                </div>
-                                                <div className="md:col-span-1 pb-2 flex justify-end">
-                                                    <button
-                                                        onClick={() => {
-                                                            if (lineItems.length > 1) {
-                                                                setLineItems(lineItems.filter((_, i) => i !== index));
-                                                            } else {
-                                                                setLineItems([{ description: '', quantity: 1, rate: 0 }]);
-                                                            }
-                                                        }}
-                                                        className="text-slate-500 hover:text-red-400 transition-colors p-2"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                    </button>
-                                                </div>
+                                        <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                                            <div className="md:col-span-6">
+                                                <Input
+                                                    label={index === 0 ? "Description" : ""}
+                                                    value={item.description}
+                                                    onChange={(e) => {
+                                                        const newItems = [...lineItems];
+                                                        newItems[index].description = e.target.value;
+                                                        setLineItems(newItems);
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="md:col-span-2">
+                                                <Input
+                                                    label={index === 0 ? "Qty" : ""}
+                                                    type="number"
+                                                    value={item.quantity.toString()}
+                                                    onChange={(e) => {
+                                                        const newItems = [...lineItems];
+                                                        newItems[index].quantity = parseInt(e.target.value) || 0;
+                                                        setLineItems(newItems);
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="md:col-span-3">
+                                                <Input
+                                                    label={index === 0 ? "Rate ($)" : ""}
+                                                    type="number"
+                                                    value={item.rate.toString()}
+                                                    onChange={(e) => {
+                                                        const newItems = [...lineItems];
+                                                        newItems[index].rate = parseFloat(e.target.value) || 0;
+                                                        setLineItems(newItems);
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="md:col-span-1 pb-2 flex justify-end">
+                                                <button onClick={() => setLineItems(lineItems.filter((_, i) => i !== index))} className="text-slate-500 hover:text-red-400">
+                                                    <X className="w-4 h-4" />
+                                                </button>
                                             </div>
                                         </div>
                                     ))}
-                                </div>
-                                <div className="mt-4 flex justify-between items-end">
-                                    <div className="w-1/2">
-                                        <Input
-                                            label="Due Date *"
-                                            type="date"
-                                            value={dueDate}
-                                            onChange={(e) => setDueDate(e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="flex gap-4">
-                                        <div className="w-24">
-                                            <Input
-                                                label="Tax (%)"
-                                                type="number"
-                                                value={taxRate.toString()}
-                                                onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-                                                min="0"
-                                            />
-                                        </div>
-                                        <div className="w-24">
-                                            <Input
-                                                label="Discount ($)"
-                                                type="number"
-                                                value={discountAmount.toString()}
-                                                onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 0)}
-                                                min="0"
-                                            />
-                                        </div>
-                                        <div className="text-right ml-4">
+                                    <Button size="sm" variant="outline" onClick={() => setLineItems([...lineItems, { description: '', quantity: 1, rate: 0 }])}>
+                                        + Add Item
+                                    </Button>
+                                    <div className="flex gap-4 justify-between items-end border-t border-slate-800 pt-4">
+                                        <div className="w-1/2"><Input label="Due Date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
+                                        <div className="text-right">
                                             <p className="text-slate-400 text-sm">Total</p>
                                             <p className="text-xl font-bold text-white">${getTotal().toFixed(2)}</p>
                                         </div>
@@ -758,382 +519,45 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 </div>
                             </div>
 
-                            {/* Payment Method */}
-                            <div className="border-t border-slate-800 pt-4">
-                                <h3 className="text-white font-bold mb-3">Payment Method</h3>
-                                <select
-                                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
-                                    value={paymentMethod}
-                                    onChange={(e) => handleMethodChange(e.target.value as any)}
-                                >
-                                    <option value="stripe">Stripe (Card / Online)</option>
-                                    <option value="bank">Bank Transfer (Manual)</option>
-                                    <option value="mobile_money">Mobile Payment (Manual)</option>
-                                </select>
-
-                                {paymentMethod === 'bank' && (
-                                    <div className="mt-4 animate-fade-in">
-                                        <label className="block text-sm font-medium text-slate-300 mb-1">
-                                            Bank Transfer Details
-                                            <span className="text-xs text-slate-500 ml-2 font-normal">(Editable for this invoice)</span>
-                                        </label>
-                                        <textarea
-                                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono"
-                                            rows={4}
-                                            value={bankDetails}
-                                            onChange={(e) => setBankDetails(e.target.value)}
-                                            placeholder="Bank Name, Account Number, SWIFT Code..."
-                                        />
-                                    </div>
-                                )}
-
-                                {paymentMethod === 'mobile_money' && (
-                                    <div className="mt-4 animate-fade-in">
-                                        <label className="block text-sm font-medium text-slate-300 mb-1">
-                                            Mobile Money Details
-                                            <span className="text-xs text-slate-500 ml-2 font-normal">(Editable for this invoice)</span>
-                                        </label>
-                                        <textarea
-                                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono"
-                                            rows={3}
-                                            value={mobileDetails}
-                                            onChange={(e) => setMobileDetails(e.target.value)}
-                                            placeholder="Provider Name, Phone Number, Name..."
-                                        />
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-slate-800">
-                                <Button variant="outline" onClick={handleClose} className="w-full sm:w-auto">Cancel</Button>
-                                <Button onClick={handleGeneratePreview} className="bg-teal-600 hover:bg-teal-500 w-full sm:w-auto">
-                                    <Save className="w-4 h-4 mr-2" />
-                                    Generate Preview
-                                </Button>
+                            <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                                <Button variant="outline" onClick={handleClose}>Cancel</Button>
+                                <Button onClick={handleGeneratePreview} className="bg-teal-600">Preview</Button>
                             </div>
                         </div>
                     )}
 
-                    {/* STEP 2: Preview Invoice */}
                     {step === 'preview' && (
                         <div className="space-y-6">
-                            {/* Invoice Preview Container block */}
-                            <div className={`p-4 sm:p-6 md:p-8 rounded-lg border-4 transition-all duration-300 ${
-                                selectedTemplate === 1 ? 'bg-white text-black border-slate-700' :
-                                selectedTemplate === 2 ? 'bg-slate-50 text-slate-800 border-teal-500' :
-                                selectedTemplate === 3 ? 'bg-slate-950 text-white border-slate-800' :
-                                selectedTemplate === 4 ? 'bg-white text-slate-900 border-transparent shadow-xl' :
-                                'bg-white text-black border-black' // Bold
-                            }`}>
-                                {/* Template-specific Header Background */}
-                                {selectedTemplate === 2 && (
-                                    <div className="absolute top-0 left-0 right-0 h-32 bg-teal-600/10 -z-10 rounded-t-lg" />
-                                )}
-                                {selectedTemplate === 5 && (
-                                    <div className="absolute top-0 left-0 right-0 h-4 bg-black" />
-                                )}
-
-                                {/* Header */}
-                                <div className={`flex flex-col sm:flex-row justify-between items-start gap-4 mb-8 ${selectedTemplate === 5 ? 'border-b-4 border-black pb-6' : ''}`}>
-                                    {currentTenant?.logo_url ? (
-                                        <img src={currentTenant.logo_url} alt="Logo" className="h-12 sm:h-16 object-contain" />
-                                    ) : (
-                                        <div className={`h-12 w-12 rounded-lg flex items-center justify-center font-bold text-xl ${
-                                            selectedTemplate === 2 ? 'bg-teal-600 text-white' :
-                                            selectedTemplate === 3 ? 'bg-white/10 text-white' :
-                                            'bg-black text-white'
-                                        }`}>
-                                            {(currentTenant?.name || 'A').charAt(0)}
-                                        </div>
-                                    )}
-                                    <div className="text-left sm:text-right">
-                                        <h1 className={`text-2xl sm:text-3xl font-bold ${
-                                            selectedTemplate === 2 ? 'text-teal-700' :
-                                            selectedTemplate === 3 ? 'text-teal-400' :
-                                            selectedTemplate === 5 ? 'text-4xl uppercase tracking-tighter' :
-                                            ''
-                                        }`}>INVOICE</h1>
-                                        <p className={`text-sm ${selectedTemplate === 3 ? 'text-slate-400' : 'text-gray-600'}`}>
-                                            #{createdInvoiceId || 'DRAFT'}
-                                        </p>
-                                    </div>
+                            <div className={`p-6 rounded-lg ${selectedTemplate === 3 ? 'bg-slate-950 text-white' : 'bg-white text-black'}`}>
+                                <h1 className="text-3xl font-bold">INVOICE</h1>
+                                <p className="opacity-50 mt-1">#DRAFT</p>
+                                <div className="mt-8">
+                                    <h3 className="font-bold uppercase opacity-50 text-xs">Bill To:</h3>
+                                    <p className="text-lg font-bold">{selectedClient?.name || 'Client'}</p>
+                                    <p className="opacity-70">{selectedClient?.email}</p>
                                 </div>
-
-                                {/* Business Info */}
-                                <div className="mb-8">
-                                    <h2 className={`font-bold text-base sm:text-lg ${selectedTemplate === 2 ? 'text-teal-800' : ''}`}>
-                                        {currentTenant?.name || tenantDefaults?.organizationName || 'Organization Name Missing'}
-                                    </h2>
-                                    {(!currentTenant?.name && !tenantDefaults?.organizationName) && (
-                                        <p className="text-red-500 text-xs mt-1">⚠️ Please set your organization name in Settings</p>
-                                    )}
-                                    <p className={`text-sm ${selectedTemplate === 3 ? 'text-slate-400' : 'text-gray-600'}`}>Professional Services</p>
-                                </div>
-
-                                {/* Client Info */}
-                                {(selectedProject || selectedClient) && (
-                                    <div className={`mb-8 p-4 rounded-lg ${
-                                        selectedTemplate === 2 ? 'bg-teal-500/5 border border-teal-500/20' :
-                                        selectedTemplate === 3 ? 'bg-white/5 border border-white/10' :
-                                        selectedTemplate === 5 ? 'border-l-4 border-black bg-gray-50' :
-                                        ''
-                                    }`}>
-                                        <h3 className={`font-bold text-sm mb-2 ${selectedTemplate === 2 ? 'text-teal-700' : 'uppercase tracking-wider opacity-70'}`}>Bill To:</h3>
-                                        <p className={`font-bold text-lg ${selectedTemplate === 3 ? 'text-white' : 'text-gray-900'}`}>
-                                            {selectedProject?.ownerName || selectedClient?.name || 'Client'}
-                                        </p>
-                                        {selectedProject && <p className={`text-sm ${selectedTemplate === 3 ? 'text-slate-400' : 'text-gray-600'}`}>Project: {selectedProject.name}</p>}
-                                        {selectedClient && <p className={`text-sm ${selectedTemplate === 3 ? 'text-slate-400' : 'text-gray-600'}`}>{selectedClient.email}</p>}
-                                    </div>
-                                )}
-
-                                {/* Invoice Details Grid */}
-                                <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 text-sm p-4 rounded-lg ${
-                                    selectedTemplate === 3 ? 'bg-white/5' : 'bg-gray-50'
-                                }`}>
-                                    <div>
-                                        <p className={`${selectedTemplate === 3 ? 'text-slate-400' : 'text-gray-600'}`}>Issue Date:</p>
-                                        <p className="font-semibold">{new Date().toLocaleDateString()}</p>
-                                    </div>
-                                    <div>
-                                        <p className={`${selectedTemplate === 3 ? 'text-slate-400' : 'text-gray-600'}`}>Due Date:</p>
-                                        <p className="font-semibold">{new Date(dueDate).toLocaleDateString()}</p>
-                                    </div>
-                                </div>
-
-                                {/* Line Items */}
-                                <div className="overflow-x-auto mb-8">
-                                    <table className="w-full text-sm">
-                                        <thead className={`border-b-2 ${
-                                            selectedTemplate === 2 ? 'border-teal-500 text-teal-700' :
-                                            selectedTemplate === 3 ? 'border-slate-700 text-slate-400' :
-                                            selectedTemplate === 5 ? 'border-black text-black uppercase' :
-                                            'border-gray-300'
-                                        }`}>
-                                            <tr>
-                                                <th className="text-left py-2 pl-2">Item Description</th>
-                                                <th className="text-right py-2">Qty</th>
-                                                <th className="text-right py-2">Rate</th>
-                                                <th className="text-right py-2 pr-2">Amount</th>
+                                <table className="w-full mt-8 text-sm">
+                                    <thead className="border-b"><tr><th className="text-left py-2">Item</th><th className="text-right py-2">Qty</th><th className="text-right py-2">Amount</th></tr></thead>
+                                    <tbody>
+                                        {lineItems.map((item, i) => (
+                                            <tr key={i} className="border-b border-gray-100">
+                                                <td className="py-3 font-medium">{item.description}</td>
+                                                <td className="text-right">{item.quantity}</td>
+                                                <td className="text-right font-bold">${(item.quantity * item.rate).toFixed(2)}</td>
                                             </tr>
-                                        </thead>
-                                        <tbody className={`${selectedTemplate === 3 ? 'text-slate-300' : ''}`}>
-                                            {lineItems.map((item, idx) => (
-                                                <tr key={idx} className={`border-b ${selectedTemplate === 3 ? 'border-slate-800' : 'border-gray-100'}`}>
-                                                    <td className={`py-3 pl-2 font-medium ${selectedTemplate === 3 ? 'text-white' : 'text-gray-800'}`}>{item.description}</td>
-                                                    <td className="text-right py-3">{item.quantity}</td>
-                                                    <td className="text-right py-3">${item.rate.toFixed(2)}</td>
-                                                    <td className="text-right py-3 pr-2 font-semibold">${(item.quantity * item.rate).toFixed(2)}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-
-                                {/* Total */}
-                                <div className="flex justify-end mb-8">
-                                    <div className={`w-full sm:w-64 p-4 rounded-lg ${
-                                        selectedTemplate === 2 ? 'bg-teal-500/10' :
-                                        selectedTemplate === 3 ? 'bg-teal-500/10 border border-teal-500/20' :
-                                        selectedTemplate === 5 ? 'bg-black text-white' :
-                                        ''
-                                    }`}>
-                                        <div className="flex justify-between py-2 text-sm">
-                                            <span className={`${selectedTemplate === 3 ? 'text-slate-400' : selectedTemplate === 5 ? 'text-gray-400' : 'text-gray-600'}`}>Subtotal:</span>
-                                            <span>${getSubtotal().toFixed(2)}</span>
-                                        </div>
-                                        {taxRate > 0 && (
-                                            <div className={`flex justify-between py-2 text-sm ${selectedTemplate === 3 ? 'text-slate-400' : selectedTemplate === 5 ? 'text-gray-400' : 'text-gray-600'}`}>
-                                                <span>Tax ({taxRate}%):</span>
-                                                <span>+${getTaxAmount().toFixed(2)}</span>
-                                            </div>
-                                        )}
-                                        {discountAmount > 0 && (
-                                            <div className="flex justify-between py-2 text-sm text-green-500">
-                                                <span>Discount:</span>
-                                                <span>-${discountAmount.toFixed(2)}</span>
-                                            </div>
-                                        )}
-                                        <div className={`flex justify-between py-2 border-t-2 font-bold text-base sm:text-lg mt-2 ${
-                                            selectedTemplate === 2 ? 'border-teal-500 text-teal-800' :
-                                            selectedTemplate === 3 ? 'border-teal-500/50 text-teal-400' :
-                                            selectedTemplate === 5 ? 'border-white text-white' :
-                                            'border-gray-800'
-                                        }`}>
-                                            <span>Total:</span>
-                                            <span>${getTotal().toFixed(2)} USD</span>
-                                        </div>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                <div className="flex justify-end mt-4">
+                                    <div className="w-64 text-right">
+                                        <p className="font-bold text-xl border-t pt-2">Total: ${getTotal().toFixed(2)} USD</p>
                                     </div>
                                 </div>
-
-                                {/* Payment Instructions */}
-                                {(paymentMethod !== 'stripe' || bankDetails || mobileDetails) && (
-                                    <div className={`p-4 rounded-lg ${
-                                        selectedTemplate === 3 ? 'bg-white/5 border border-white/10' : 'bg-gray-100'
-                                    }`}>
-                                        <h3 className="font-bold text-sm mb-2">Payment Instructions:</h3>
-
-                                        {bankDetails && (
-                                            <div className="mb-3">
-                                                <p className={`text-xs font-bold uppercase ${selectedTemplate === 3 ? 'text-slate-500' : 'text-gray-500'}`}>Bank Transfer</p>
-                                                <p className={`text-sm whitespace-pre-wrap font-mono ${selectedTemplate === 3 ? 'text-slate-300' : 'text-gray-700'}`}>{bankDetails}</p>
-                                            </div>
-                                        )}
-
-                                        {mobileDetails && (
-                                            <div className="mb-3">
-                                                <p className={`text-xs font-bold uppercase ${selectedTemplate === 3 ? 'text-slate-500' : 'text-gray-500'}`}>Mobile Money</p>
-                                                <p className={`text-sm whitespace-pre-wrap font-mono ${selectedTemplate === 3 ? 'text-slate-300' : 'text-gray-700'}`}>{mobileDetails}</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Signature Section */}
-                                <div className={`mt-6 border-t-2 pt-6 ${selectedTemplate === 3 ? 'border-slate-800' : 'border-gray-200'}`}>
-                                    <div className="flex flex-col sm:flex-row items-center justify-between mb-3 gap-3">
-                                        <h3 className={`font-bold text-sm flex items-center gap-2 ${selectedTemplate === 3 ? 'text-slate-300' : ''}`}>
-                                            <PenLine className={`w-4 h-4 ${selectedTemplate === 3 ? 'text-slate-400' : 'text-gray-600'}`} />
-                                            Authorized Signature
-                                        </h3>
-                                        <div className="flex items-center gap-4">
-                                            <div className={`flex rounded-lg p-1 ${selectedTemplate === 3 ? 'bg-white/10' : 'bg-gray-100'}`}>
-                                                <button
-                                                    onClick={() => setSignatureType('draw')}
-                                                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${signatureType === 'draw' ? (selectedTemplate === 3 ? 'bg-teal-600 text-white' : 'bg-white shadow-sm text-teal-600') : (selectedTemplate === 3 ? 'text-slate-400 hover:text-white' : 'text-gray-500 hover:text-gray-700')}`}
-                                                >
-                                                    DRAW
-                                                </button>
-                                                <button
-                                                    onClick={() => setSignatureType('type')}
-                                                    className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${signatureType === 'type' ? (selectedTemplate === 3 ? 'bg-teal-600 text-white' : 'bg-white shadow-sm text-teal-600') : (selectedTemplate === 3 ? 'text-slate-400 hover:text-white' : 'text-gray-500 hover:text-gray-700')}`}
-                                                >
-                                                    TYPE
-                                                </button>
-                                            </div>
-                                            {(signatureData || typedSignature) && (
-                                                <button
-                                                    onClick={() => {
-                                                        setSignatureData(null);
-                                                        setTypedSignature('');
-                                                        if (canvasRef.current) {
-                                                            const ctx = canvasRef.current.getContext('2d')!;
-                                                            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-                                                        }
-                                                    }}
-                                                    className="text-xs text-red-500 hover:text-red-700 font-medium"
-                                                >
-                                                    Clear
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {signatureType === 'draw' ? (
-                                        signatureData ? (
-                                            <div className={`border-2 border-dashed rounded-lg p-2 ${selectedTemplate === 3 ? 'border-slate-700 bg-white/5' : 'border-gray-300 bg-gray-50'}`}>
-                                                <img src={signatureData} alt="Signature" className={`max-h-20 mx-auto ${selectedTemplate === 3 ? 'invert' : ''}`} />
-                                            </div>
-                                        ) : (
-                                            <div>
-                                                <canvas
-                                                    ref={canvasRef}
-                                                    width={500}
-                                                    height={100}
-                                                    className={`w-full border-2 border-dashed rounded-lg cursor-crosshair ${selectedTemplate === 3 ? 'border-slate-700 bg-white/5' : 'border-gray-300 bg-gray-50'}`}
-                                                    style={{ touchAction: 'none' }}
-                                                    onMouseDown={(e) => {
-                                                        isDrawing.current = true;
-                                                        const canvas = canvasRef.current!;
-                                                        const ctx = canvas.getContext('2d')!;
-                                                        const rect = canvas.getBoundingClientRect();
-                                                        ctx.beginPath();
-                                                        ctx.moveTo((e.clientX - rect.left) * (canvas.width / rect.width), (e.clientY - rect.top) * (canvas.height / rect.height));
-                                                    }}
-                                                    onMouseMove={(e) => {
-                                                        if (!isDrawing.current) return;
-                                                        const canvas = canvasRef.current!;
-                                                        const ctx = canvas.getContext('2d')!;
-                                                        const rect = canvas.getBoundingClientRect();
-                                                        ctx.lineWidth = 2;
-                                                        ctx.lineCap = 'round';
-                                                        ctx.strokeStyle = selectedTemplate === 3 ? '#ffffff' : '#1e293b';
-                                                        ctx.lineTo((e.clientX - rect.left) * (canvas.width / rect.width), (e.clientY - rect.top) * (canvas.height / rect.height));
-                                                        ctx.stroke();
-                                                    }}
-                                                    onMouseUp={() => { isDrawing.current = false; setSignatureData(canvasRef.current!.toDataURL()); }}
-                                                    onMouseLeave={() => { isDrawing.current = false; }}
-                                                    onTouchStart={(e) => {
-                                                        e.preventDefault(); isDrawing.current = true;
-                                                        const canvas = canvasRef.current!;
-                                                        const ctx = canvas.getContext('2d')!;
-                                                        const rect = canvas.getBoundingClientRect();
-                                                        const t = e.touches[0];
-                                                        ctx.beginPath();
-                                                        ctx.moveTo((t.clientX - rect.left) * (canvas.width / rect.width), (t.clientY - rect.top) * (canvas.height / rect.height));
-                                                    }}
-                                                    onTouchMove={(e) => {
-                                                        e.preventDefault();
-                                                        if (!isDrawing.current) return;
-                                                        const canvas = canvasRef.current!;
-                                                        const ctx = canvas.getContext('2d')!;
-                                                        const rect = canvas.getBoundingClientRect();
-                                                        const t = e.touches[0];
-                                                        ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = selectedTemplate === 3 ? '#ffffff' : '#1e293b';
-                                                        ctx.lineTo((t.clientX - rect.left) * (canvas.width / rect.width), (t.clientY - rect.top) * (canvas.height / rect.height));
-                                                        ctx.stroke();
-                                                    }}
-                                                    onTouchEnd={() => { isDrawing.current = false; setSignatureData(canvasRef.current!.toDataURL()); }}
-                                                />
-                                                <p className={`text-xs text-center mt-1 uppercase tracking-tighter font-bold ${selectedTemplate === 3 ? 'text-slate-500' : 'text-gray-400'}`}>Draw your signature above</p>
-                                            </div>
-                                        )
-                                    ) : (
-                                        <div className="space-y-3">
-                                            <input
-                                                type="text"
-                                                className={`w-full border-2 border-dashed rounded-lg px-4 py-3 focus:outline-none focus:border-teal-500 transition-colors ${selectedTemplate === 3 ? 'bg-white/5 border-slate-700 text-white placeholder-slate-500' : 'bg-gray-50 border-gray-300 text-gray-800'}`}
-                                                placeholder="Type your full legal name..."
-                                                value={typedSignature}
-                                                onChange={(e) => setTypedSignature(e.target.value)}
-                                            />
-                                            {typedSignature && (
-                                                <div className={`p-4 border rounded-lg text-center ${selectedTemplate === 3 ? 'bg-white/5 border-slate-700' : 'bg-gray-50 border-gray-200'}`}>
-                                                    <span className={`text-3xl font-cursive block ${selectedTemplate === 3 ? 'text-white' : 'text-gray-800'}`} style={{ fontFamily: "'Dancing Script', 'Sacramento', cursive" }}>
-                                                        {typedSignature}
-                                                    </span>
-                                                    <p className={`text-[10px] mt-2 uppercase tracking-widest font-bold ${selectedTemplate === 3 ? 'text-slate-500' : 'text-gray-400'}`}>Digital Signature Preview</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {paymentMethod === 'stripe' && (
-                                    <div className={`p-4 rounded-lg mt-6 ${selectedTemplate === 3 ? 'bg-blue-500/20' : 'bg-blue-50'}`}>
-                                        <p className={`text-sm ${selectedTemplate === 3 ? 'text-blue-300' : 'text-blue-800'}`}>
-                                            <strong>Payment Method:</strong> Online payment via Stripe (Card/Online)
-                                        </p>
-                                    </div>
-                                )}
                             </div>
-
-                            {/* Actions */}
-                            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center pt-4 border-t border-slate-800 gap-3">
-                                <div className="flex flex-col sm:flex-row gap-3">
-                                    <Button variant="outline" onClick={() => setStep('edit')} className="w-full sm:w-auto">
-                                        <Edit3 className="w-4 h-4 mr-2" />
-                                        Edit Details
-                                    </Button>
-                                    <Button variant="outline" onClick={handleDownloadPDF} className="w-full sm:w-auto">
-                                        <Download className="w-4 h-4 mr-2" />
-                                        Download Draft
-                                    </Button>
-                                </div>
-                                <div className="flex flex-col sm:flex-row gap-3">
-                                    <Button variant="outline" onClick={handleClose} className="w-full sm:w-auto">Cancel</Button>
-                                    <Button onClick={handleSaveInvoice} disabled={isSubmitting} className="bg-green-600 hover:bg-green-500 w-full sm:w-auto">
-                                        <CheckCircle className="w-4 h-4 mr-2" />
+                            <div className="flex justify-between gap-3 pt-4 border-t border-slate-800">
+                                <Button variant="outline" onClick={() => setStep('edit')}>Edit</Button>
+                                <div className="flex gap-3">
+                                    <Button onClick={handleSaveInvoice} disabled={isSubmitting} className="bg-green-600">
                                         {isSubmitting ? 'Saving...' : 'Save & Finalize'}
                                     </Button>
                                 </div>
@@ -1141,43 +565,21 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                         </div>
                     )}
 
-                    {/* STEP 3: Success */}
                     {step === 'success' && (
                         <div className="flex flex-col items-center justify-center py-12 text-center animate-fade-in-up">
-                            <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mb-6">
-                                <CheckCircle className="w-10 h-10 text-green-400" />
-                            </div>
-                            <h3 className="text-2xl font-bold text-white mb-2">Invoice Created Successfully!</h3>
-                            <p className="text-slate-400 max-w-md mb-8">
-                                Your invoice has been saved. Download the PDF or send your client a secure payment link.
-                            </p>
-
-                            {/* Share Invoice Link */}
-                            <div className="w-full max-w-sm mb-6">
-                                <button
-                                    onClick={handleCopyPaymentLink}
-                                    className="w-full py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-lg flex items-center justify-center gap-2 transition-all"
-                                >
-                                    <Copy className="w-4 h-4" />
-                                    Copy &amp; Share Invoice Link
-                                </button>
-                                <p className="text-xs text-slate-500 text-center mt-2">Clients can view the invoice and pay via bank or mobile money</p>
-                            </div>
-
-                            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                                <Button variant="outline" onClick={handleDownloadPDF} className="w-full sm:w-auto">
-                                    <Download className="w-4 h-4 mr-2" />
-                                    Download PDF
-                                </Button>
-                                <Button onClick={handleClose} className="bg-teal-600 hover:bg-teal-500 w-full sm:w-auto">
-                                    Close Window
-                                </Button>
+                            <CheckCircle className="w-16 h-16 text-green-400 mb-4" />
+                            <h3 className="text-2xl font-bold text-white mb-2">Success!</h3>
+                            <p className="text-slate-400 mb-8 px-8">Invoice saved to Document Hub.</p>
+                            <div className="flex flex-col gap-3 w-64">
+                                <Button onClick={() => lastCreatedFile && handleOpenFile(lastCreatedFile)} className="bg-teal-600">Sign & Finalize</Button>
+                                <Button variant="outline" onClick={handleDownloadPDF}>Download</Button>
+                                <Button variant="ghost" onClick={handleClose}>Done</Button>
                             </div>
                         </div>
                     )}
                 </div>
-            </div >
-        </div >
+            </div>
+        </div>
     );
 };
 

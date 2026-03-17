@@ -862,18 +862,18 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                     </>
                                 ) : (
                                     <>
-                                        {file.file_type !== 'application/pdf' && (
-                                            <button
-                                                onClick={() => handleOpenFile(file)}
-                                                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 hover:text-teal-300 transition-colors text-sm sm:text-xs font-bold border border-teal-500/20"
-                                            >
-                                                {file.file_type.includes('image') ? (
-                                                    <><Eye className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> View Image</>
-                                                ) : (
-                                                    <><Edit3 className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> Open Editor</>
-                                                )}
-                                            </button>
-                                        )}
+                                        <button
+                                            onClick={() => handleOpenFile(file)}
+                                            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 hover:text-teal-300 transition-colors text-sm sm:text-xs font-bold border border-teal-500/20"
+                                        >
+                                            {file.file_type.includes('image') ? (
+                                                <><Eye className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> View Image</>
+                                            ) : file.file_type === 'application/pdf' ? (
+                                                <><Edit3 className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> Open / Sign</>
+                                            ) : (
+                                                <><Edit3 className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> Open Editor</>
+                                            )}
+                                        </button>
                                         <button
                                             onClick={() => handleDownload(file)}
                                             className="p-2 sm:p-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-transparent flex justify-center items-center"
