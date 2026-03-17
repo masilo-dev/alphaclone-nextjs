@@ -90,13 +90,20 @@ export const zohoServerService = {
             let accountsServer = currentIntegration?.config?.accountsServer;
             let mailApiHost = currentIntegration?.config?.mailApiHost;
 
-            // Robust derivation of hosts based on region if missing
-            if (!accountsServer || !mailApiHost) {
+            // Validate that accountsServer is a real URL (guard against mock client returning non-URL strings)
+            const isValidUrl = (url: any): boolean => {
+                if (!url || typeof url !== 'string') return false;
+                try { new URL(url); return true; } catch { return false; }
+            };
+
+            // Robust derivation of hosts based on region if missing or invalid
+            if (!isValidUrl(accountsServer) || !mailApiHost) {
                 const region = currentIntegration?.config?.region || 'com';
-                if (!accountsServer) {
+                if (!isValidUrl(accountsServer)) {
                     accountsServer = region === 'com' ? 'https://accounts.zoho.com' : `https://accounts.zoho.${region}`;
+                    console.warn(`[Zoho Refresh] accountsServer was invalid, derived from region "${region}": ${accountsServer}`);
                 }
-                if (!mailApiHost) {
+                if (!mailApiHost || typeof mailApiHost !== 'string' || mailApiHost.startsWith('[')) {
                     mailApiHost = region === 'com' ? 'mail.zoho.com' : `mail.zoho.${region}`;
                 }
             }
@@ -197,7 +204,10 @@ export const zohoServerService = {
             throw new Error('Zoho account ID not found in database settings');
         }
 
-        const mailApiHost = integration?.config?.mailApiHost || 'mail.zoho.com';
+        const rawMailApiHost = integration?.config?.mailApiHost;
+        const mailApiHost = (rawMailApiHost && typeof rawMailApiHost === 'string' && !rawMailApiHost.startsWith('['))
+            ? rawMailApiHost
+            : 'mail.zoho.com';
         
         // Correctly construct the URL using hybrid versioning:
         // 1. If absolute URL, use it as is
