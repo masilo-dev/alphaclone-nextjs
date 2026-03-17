@@ -64,7 +64,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     const fetchAccountInfo = async () => {
         setFetchingAccount(true);
         try {
-            const res = await fetch(`/api/zoho/enhanced?userId=${userId}&action=get_account_info`);
+            const res = await fetch(`/api/zoho?action=get_account_info`);
             const data = await res.json();
             if (res.ok && data.success) {
                 setAccountInfo(data.data);
@@ -149,18 +149,13 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
             return;
         }
 
-        setSending(true);
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-
-            const res = await fetch('/api/zoho/enhanced', {
+            const res = await fetch('/api/zoho', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session?.access_token}`
                 },
                 body: JSON.stringify({
-                    userId,
                     action: 'send_email',
                     data: {
                         to,

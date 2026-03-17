@@ -123,8 +123,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
   const checkConnection = async (uid?: string) => {
     setIsCheckingConnection(true);
     try {
-      const timestamp = new Date().getTime();
-      const response = await fetch(`/api/zoho/accounts?t=${timestamp}`);
+      const response = await fetch(`/api/zoho?action=get_account_info`);
       const data = await response.json();
       
       if (response.ok && data.success) {
@@ -157,8 +156,8 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
   };
 
   const connectToZoho = () => {
-    // We add prompt=consent select_account to help force the account selection screen
-    window.location.href = `/api/auth/zoho/connect?region=${selectedRegion}&prompt=select_account`;
+    // OAuth connect must be /api/auth/zoho/connect with no query params
+    window.location.href = `/api/auth/zoho/connect`;
   };
 
   const disconnect = async () => {
@@ -190,8 +189,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
     if (folder === 'compose') return;
     setLoading(true);
     try {
-      const timestamp = new Date().getTime();
-      const response = await fetch(`/api/zoho/messages?folder=${folder}&t=${timestamp}`);
+      const response = await fetch(`/api/zoho?action=get_messages&folder=${folder}`);
       const data = await response.json();
       if (response.ok && data.success) {
         setMessages(data.data || []);
@@ -221,9 +219,13 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
     
     setDeletingMessage(true);
     try {
-      const response = await fetch(`/api/zoho/messages/${messageId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
+      const response = await fetch(`/api/zoho`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete_message',
+          data: { messageId }
+        })
       });
 
       if (response.ok) {
@@ -285,15 +287,18 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
     }
     setSendingEmail(true);
     try {
-      const resp = await fetch('/api/zoho/messages', {
+      const resp = await fetch('/api/zoho', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to: composeData.to,
-          cc: composeData.cc || undefined,
-          subject: composeData.subject,
-          content: composeData.body,
-          fromAddress: composeData.from,
+          action: 'send_email',
+          data: {
+            to: composeData.to,
+            cc: composeData.cc || undefined,
+            subject: composeData.subject,
+            content: composeData.body,
+            fromAddress: composeData.from,
+          }
         }),
       });
       const result = await resp.json();

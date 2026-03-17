@@ -57,7 +57,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
     const fetchAccountInfo = async () => {
         setFetchingAccount(true);
         try {
-            const response = await fetch(`/api/zoho/enhanced?userId=${userId}&action=get_account_info`);
+            const response = await fetch(`/api/zoho?action=get_account_info`);
             const data = await response.json();
             if (response.ok && data.success && data.data.fromAddresses) {
                 setFromAddresses(data.data.fromAddresses);
@@ -106,18 +106,19 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
         try {
             const { data: { session } } = await supabase.auth.getSession();
 
-            const response = await fetch('/api/zoho/outreach', {
+            const response = await fetch('/api/zoho', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session?.access_token}`
                 },
                 body: JSON.stringify({
-                    userId,
-                    leadIds: selectedLeads,
-                    customPrompt,
-                    tone: selectedTone,
-                    fromAddress: selectedFromAddress
+                    action: 'outreach',
+                    data: {
+                        leadIds: selectedLeads,
+                        customPrompt,
+                        tone: selectedTone,
+                        fromAddress: selectedFromAddress
+                    }
                 })
             });
 

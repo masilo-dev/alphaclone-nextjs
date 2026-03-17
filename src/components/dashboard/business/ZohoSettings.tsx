@@ -37,8 +37,7 @@ const ZohoSettings: React.FC<ZohoSettingsProps> = ({ user }) => {
   const checkConnection = async (uid: string) => {
     setLoading(true);
     try {
-      const timestamp = new Date().getTime();
-      const response = await fetch(`/api/zoho/enhanced?userId=${uid}&action=get_account_info&t=${timestamp}`);
+      const response = await fetch(`/api/zoho?action=get_account_info`);
       const data = await response.json();
       
       if (response.ok && data.success) {
@@ -67,7 +66,7 @@ const ZohoSettings: React.FC<ZohoSettingsProps> = ({ user }) => {
       toast.error('User session not found');
       return;
     }
-    window.location.href = `/api/auth/zoho/connect?userId=${userId}`;
+    window.location.href = '/api/auth/zoho/connect';
   };
 
   const disconnect = async () => {

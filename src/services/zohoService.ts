@@ -43,19 +43,13 @@ export const zohoService = {
         return data.config;
     },
 
-    /**
-     * List messages from Zoho
-     */
-    async listMessages(userId: string, folderId: string = 'inbox'): Promise<{ messages: ZohoMessage[]; error: string | null }> {
+    async listMessages(folderId: string = 'inbox'): Promise<{ messages: ZohoMessage[]; error: string | null }> {
         try {
-            const config = await this.getConfig(userId);
-            if (!config) throw new Error('Zoho integration not configured');
-
-            const response = await fetch(`/api/zoho/messages?userId=${userId}&folderId=${folderId}`);
+            const response = await fetch(`/api/zoho?action=get_messages&folder=${folderId}`);
             if (!response.ok) throw new Error('Failed to fetch Zoho messages');
 
             const data = await response.json();
-            return { messages: data.messages || [], error: null };
+            return { messages: data.data || [], error: null };
         } catch (err: any) {
             console.error('Zoho ListMessages Error:', err);
             return { messages: [], error: err.message };
@@ -65,15 +59,15 @@ export const zohoService = {
     /**
      * Send message via Zoho
      */
-    async sendMessage(userId: string, to: string, subject: string, content: string): Promise<{ success: boolean; error: string | null }> {
+    async sendMessage(to: string, subject: string, content: string, fromAddress?: string): Promise<{ success: boolean; error: string | null }> {
         try {
-            const config = await this.getConfig(userId);
-            if (!config) throw new Error('Zoho integration not configured');
-
-            const response = await fetch('/api/zoho/messages', {
+            const response = await fetch('/api/zoho', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, to, subject, content })
+                body: JSON.stringify({ 
+                    action: 'send_email', 
+                    data: { to, subject, content, fromAddress } 
+                })
             });
 
             if (!response.ok) {

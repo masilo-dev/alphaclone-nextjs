@@ -72,10 +72,8 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
                 return;
             }
 
-            // Use the existing /api/zoho/messages route (takes userId + folderId query params)
-            const res = await fetch(`/api/zoho/messages?userId=${userId}&folderId=${folder}`, {
-                headers: { 'Authorization': `Bearer ${session.access_token}` }
-            });
+            // Hit consolidated /api/zoho route
+            const res = await fetch(`/api/zoho?action=get_messages&folder=${folder}`);
 
             if (!res.ok) {
                 const err = await res.json();
@@ -83,8 +81,8 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
             }
 
             const data = await res.json();
-            // Map from the existing route's format: {id, subject, from, to, date, snippet}
-            const mapped = (data.messages || []).map((m: any) => ({
+            // Use data.data from consolidated route
+            const mapped = (data.data || []).map((m: any) => ({
                 messageId: m.id || m.messageId,
                 subject: m.subject,
                 fromAddress: m.from || m.fromAddress,
@@ -116,17 +114,15 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
                 const { data: { session } } = await supabase.auth.getSession();
                 if (!session?.access_token) return;
 
-                const res = await fetch(`/api/zoho/messages?userId=${userId}&messageId=${email.messageId}`, {
-                    headers: { 'Authorization': `Bearer ${session.access_token}` }
-                });
+                const res = await fetch(`/api/zoho?action=get_messages&messageId=${email.messageId}`);
 
                 if (res.ok) {
                     const data = await res.json();
-                    if (data.message && data.message.content) {
-                        setSelected({ ...email, content: data.message.content });
+                    if (data.data && data.data.content) {
+                        setSelected({ ...email, content: data.data.content });
                         // Update the email in the list as well to cache it
                         setEmails(prev => prev.map(e =>
-                            e.messageId === email.messageId ? { ...e, content: data.message.content } : e
+                            e.messageId === email.messageId ? { ...e, content: data.data.content } : e
                         ));
                     }
                 }
@@ -143,18 +139,18 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
         setSending(true);
         try {
             const { data: { session } } = await supabase.auth.getSession();
-            // Use existing /api/zoho/messages POST route (userId, to, subject, content)
-            const res = await fetch('/api/zoho/messages', {
+            const res = await fetch('/api/zoho', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session?.access_token}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    userId,
-                    to: selected.fromAddress,
-                    subject: `Re: ${selected.subject}`,
-                    content: replyBody,
+                    action: 'send_email',
+                    data: {
+                        to: selected.fromAddress,
+                        subject: `Re: ${selected.subject}`,
+                        content: replyBody,
+                    }
                 })
             });
 
