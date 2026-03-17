@@ -1,0 +1,87 @@
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
+import { zohoServerService } from '@/services/server/zohoServerService';
+import { hubspotService } from '@/services/hubspotService';
+import { createSupabaseAdminClient } from '@/lib/supabase-server';
+
+export async function POST(req: Request) {
+    const supabase = createRouteHandlerClient({ cookies });
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    try {
+        const userId = user.id;
+        const { data: tenantUser } = await supabase
+            .from('tenant_users')
+            .select('tenant_id')
+            .eq('user_id', userId)
+            .limit(1)
+            .maybeSingle();
+
+        const tenantId = tenantUser?.tenant_id;
+        if (!tenantId) {
+            return NextResponse.json({ success: false, error: 'Tenant not found' });
+        }
+
+        const supabaseAdmin = createSupabaseAdminClient();
+        const { data: integrations, error } = await supabaseAdmin
+            .from('integrations')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('enabled', true);
+
+        if (error || !integrations) {
+            return NextResponse.json({ success: false, error: 'Failed to fetch integrations' });
+        }
+
+        const results = [];
+        let syncedCount = 0;
+
+        // Sync from HubSpot
+        const hubspot = integrations.find(i => i.type === 'hubspot');
+        if (hubspot) {
+            try {
+                const contacts = await hubspotService.getContacts(userId, 100);
+                for (const contact of contacts) {
+                    const { firstname, lastname, email, company } = contact.properties;
+                    const name = `${firstname || ''} ${lastname || ''}`.trim() || email || 'Unknown';
+                    
+                    // Upsert to Deals
+                    const { error: upsertError } = await supabaseAdmin
+                        .from('deals')
+                        .upsert({
+                            tenant_id: tenantId,
+                            name: name,
+                            contact_id: null, // Should link to contact if possible
+                            owner_id: userId,
+                            stage: 'lead', // Default stage for synced leads
+                            source: 'hubspot',
+                            value: 0,
+                            description: `Imported from HubSpot (Company: ${company || 'N/A'})`
+                        }, { onConflict: 'tenant_id, name' }); // Assuming unique name per tenant, ideally use email if unique constraint exists
+
+                    if (!upsertError) syncedCount++;
+                }
+                results.push({ provider: 'hubspot', status: 'success', count: contacts.length });
+            } catch (e: any) {
+                console.error('HubSpot Pull Error:', e);
+                results.push({ provider: 'hubspot', status: 'failed', error: e.message });
+            }
+        }
+
+        // Sync from Zoho (TODO: Implement getLeads in zohoServerService)
+        const zoho = integrations.find(i => i.type === 'zoho');
+        if (zoho) {
+            results.push({ provider: 'zoho', status: 'skipped', note: 'Pull not implemented for Zoho yet' });
+        }
+
+        return NextResponse.json({ success: true, results, syncedCount });
+    } catch (err: any) {
+        console.error('CRM Pull Error:', err);
+        return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    }
+}

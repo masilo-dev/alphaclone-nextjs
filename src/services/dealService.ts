@@ -4,6 +4,7 @@ import { tenantService } from './tenancy/TenantService';
 import { fileUploadService } from './fileUploadService';
 import { journalEntryService } from './accounting/journalEntryService';
 import { chartOfAccountsService } from './accounting/chartOfAccountsService';
+import { UnifiedCRMService } from './crm/UnifiedCRMService';
 
 export type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
 export type DealSource = 'referral' | 'website' | 'cold_outreach' | 'social_media' | 'event' | 'partner' | 'organic' | 'other';
@@ -329,6 +330,10 @@ export const dealService: DealService = {
                 updatedAt: data.updated_at,
             };
 
+            // SYNC TO EXTERNAL CRM
+            // Non-blocking sync to avoid UI delay
+            UnifiedCRMService.syncDeal(deal).catch(err => console.error('Background CRM Sync Failed:', err));
+
             return { deal, error: null };
         } catch (err) {
             return { deal: null, error: err instanceof Error ? err.message : 'Unknown error' };
@@ -475,6 +480,9 @@ export const dealService: DealService = {
                 createdAt: data.created_at,
                 updatedAt: data.updated_at,
             };
+
+            // SYNC TO EXTERNAL CRM
+            UnifiedCRMService.syncDeal(deal).catch(err => console.error('Background CRM Sync Failed:', err));
 
             return { deal, error: null };
         } catch (err) {

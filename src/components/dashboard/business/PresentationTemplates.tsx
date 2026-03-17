@@ -36,7 +36,7 @@ const PRESENTATION_TEMPLATES: PresentationTemplate[] = [
         name: 'AlphaClone Corporate',
         description: 'Professional corporate presentation with modern design',
         category: 'Corporate',
-        thumbnail: '🏢',
+        thumbnail: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=500&q=80',
         colors: ['#1e40af', '#3b82f6', '#60a5fa', '#93c5fd'],
         fonts: ['Inter', 'Roboto', 'Arial'],
         slideCount: 12,
@@ -48,7 +48,7 @@ const PRESENTATION_TEMPLATES: PresentationTemplate[] = [
         name: 'Tech Innovation',
         description: 'Cutting-edge technology presentation with dynamic elements',
         category: 'Technology',
-        thumbnail: '⚡',
+        thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=500&q=80',
         colors: ['#7c3aed', '#a855f7', '#c084fc', '#ddd6fe'],
         fonts: ['Space Grotesk', 'Inter', 'Arial'],
         slideCount: 15,
@@ -60,7 +60,7 @@ const PRESENTATION_TEMPLATES: PresentationTemplate[] = [
         name: 'Creative Studio',
         description: 'Bold and creative design for creative agencies',
         category: 'Creative',
-        thumbnail: '🎨',
+        thumbnail: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=500&q=80',
         colors: ['#dc2626', '#ef4444', '#f87171', '#fca5a5'],
         fonts: ['Poppins', 'Montserrat', 'Arial'],
         slideCount: 10,
@@ -84,7 +84,7 @@ const PRESENTATION_TEMPLATES: PresentationTemplate[] = [
         name: 'Startup Pitch',
         description: 'Perfect for startup pitches and investor presentations',
         category: 'Startup',
-        thumbnail: '🚀',
+        thumbnail: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=500&q=80',
         colors: ['#059669', '#10b981', '#34d399', '#6ee7b7'],
         fonts: ['Inter', 'Roboto', 'Arial'],
         slideCount: 20,
@@ -96,7 +96,7 @@ const PRESENTATION_TEMPLATES: PresentationTemplate[] = [
         name: 'Luxury Premium',
         description: 'High-end luxury presentation for premium brands',
         category: 'Luxury',
-        thumbnail: '💎',
+        thumbnail: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=500&q=80',
         colors: ['#1e293b', '#334155', '#475569', '#64748b'],
         fonts: ['Playfair Display', 'Cormorant Garamond', 'Georgia'],
         slideCount: 14,
@@ -409,7 +409,9 @@ export default function PresentationTemplates() {
                                     onClick={() => handleTemplateSelect(template)}
                                 >
                                     <div className="text-center">
-                                        <div className="text-6xl mb-4">{template.thumbnail}</div>
+                                        <div className="mb-4 h-32 w-full overflow-hidden rounded-lg">
+                                            <img src={template.thumbnail} alt={template.name} className="w-full h-full object-cover" />
+                                        </div>
                                         <h3 className="text-xl font-bold text-white mb-2">{template.name}</h3>
                                         <p className="text-gray-400 text-sm mb-4">{template.description}</p>
 
@@ -449,7 +451,9 @@ export default function PresentationTemplates() {
                             {/* Template Info */}
                             <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
                                 <div className="text-center mb-4">
-                                    <div className="text-4xl mb-2">{selectedTemplate.thumbnail}</div>
+                                    <div className="mb-4 h-48 w-full overflow-hidden rounded-lg">
+                                        <img src={selectedTemplate.thumbnail} alt={selectedTemplate.name} className="w-full h-full object-cover" />
+                                    </div>
                                     <h3 className="text-lg font-bold text-white">{selectedTemplate.name}</h3>
                                 </div>
 

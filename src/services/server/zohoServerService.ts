@@ -396,5 +396,57 @@ export const zohoServerService = {
                 messageIds: messageIds
             }),
         });
+    },
+
+    /**
+     * Create a Lead in Zoho CRM
+     * Note: Requires ZohoCRM.modules.ALL scope
+     */
+    async createCRMLead(userId: string, leadData: any) {
+        const token = await this.getValidToken(userId);
+        if (!token) throw new Error('Zoho token not found');
+
+        const supabaseAdmin = createSupabaseAdminClient();
+        const { data: integration } = await supabaseAdmin
+            .from('integrations')
+            .select('config')
+            .eq('user_id', userId)
+            .eq('type', 'zoho')
+            .maybeSingle();
+        
+        const region = integration?.config?.region || 'com';
+        // Map region to CRM API host
+        const crmHost = region === 'cn' ? 'www.zohoapis.com.cn' : 
+                       region === 'eu' ? 'www.zohoapis.eu' :
+                       region === 'in' ? 'www.zohoapis.in' :
+                       region === 'au' ? 'www.zohoapis.com.au' :
+                       'www.zohoapis.com';
+        
+        const url = `https://${crmHost}/crm/v2/Leads`;
+        
+        console.log(`[Zoho CRM] Creating lead at ${url}`);
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Zoho-oauthtoken ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                data: [{
+                    Last_Name: leadData.name?.split(' ').slice(1).join(' ') || leadData.name || 'Unknown',
+                    First_Name: leadData.name?.split(' ')[0] || '',
+                    Email: leadData.email,
+                    Company: leadData.company || 'Unknown',
+                    Description: leadData.description || 'Synced from AlphaClone'
+                }]
+            })
+        });
+        
+        const data = await response.json();
+        if (data.code === 'INVALID_TOKEN') {
+            throw new Error('Invalid Token or Scope for Zoho CRM');
+        }
+        return data;
     }
 };

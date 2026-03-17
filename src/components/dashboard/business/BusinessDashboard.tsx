@@ -330,8 +330,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return <DealsTab userId={user.id} userRole={user.role} />;
             case '/dashboard/business/contracts':
                 return <ContractDashboard user={user} initialTab="details" />;
-            case '/dashboard/business/documents':
-                return <DocumentHub user={user} />;
+            // Duplicate DocumentHub removed to allow EnhancedDocumentSystem to take precedence
             case '/dashboard/business/quotes':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>

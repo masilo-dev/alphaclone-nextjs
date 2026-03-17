@@ -34,10 +34,19 @@ async function getAuthUser() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
+    // Fetch Tenant ID
+    const { data: tenantUser } = await supabase
+        .from('tenant_users')
+        .select('tenant_id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .maybeSingle();
+
     return {
         id: user.id,
         name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-        role: user.user_metadata?.role || 'operator'
+        role: user.user_metadata?.role || 'operator',
+        tenantId: tenantUser?.tenant_id
     };
 }
 

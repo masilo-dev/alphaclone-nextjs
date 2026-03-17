@@ -48,7 +48,12 @@ Response Format:
                     if (tool) {
                         try {
                             const args = JSON.parse(argsJson);
-                            const result = await tool.execute({ ...args, account_id: args.account_id || user?.id });
+                            const result = await tool.execute({ 
+                                ...args, 
+                                userId: user?.id,
+                                tenantId: user?.tenantId,
+                                account_id: args.account_id || user?.id 
+                            });
                             alphaOrchestrator.updateTaskStatus(task.parentId, task.id, 'completed', result);
                             logCallback(`SUCCESS [${toolName}]: Execution verified.`);
                             

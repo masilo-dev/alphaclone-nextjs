@@ -25,6 +25,7 @@ export interface UserContext {
     id: string;
     name: string;
     role: string;
+    tenantId?: string;
 }
 
 class AlphaAgent {
@@ -35,7 +36,7 @@ class AlphaAgent {
         const mission: AlphaMissionStatus = {
             id: missionId,
             userId: user?.id || 'anonymous',
-            tenantId: user?.id || 'anonymous', // Mocking tenantId as userId for now
+            tenantId: user?.tenantId || user?.id || 'anonymous',
             description,
             status: 'running',
             logs: [`Mission started: ${description}`, `AUTHORIZED_USER: ${user?.name || 'Anonymous'}`],

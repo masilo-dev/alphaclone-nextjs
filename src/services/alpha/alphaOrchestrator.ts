@@ -4,6 +4,7 @@ import { UserContext } from './alphaAgent';
 import { memorySystem } from './memorySystem';
 import { healingEngine } from './healingEngine';
 import { tenantFortress } from './fortressLayer';
+import { userContextService } from './UserContextService';
 
 export interface SubTask {
     id: string;
@@ -22,15 +23,19 @@ export class AlphaOrchestrator {
         const strategist = AGENT_FLEET.strategist;
         
         // FORTRESS VALIDATION: Enforce tenant isolation at the entry point
-        const tenantId = user?.id || 'anonymous'; // In production, this would be org_id
+        const tenantId = user?.tenantId || user?.id || 'anonymous'; 
         await tenantFortress.validateAccess(user || { id: 'anonymous', name: 'Anonymous', role: 'operator' }, tenantId);
         
         // Recall past successful patterns for THIS tenant ONLY
         const pastPatterns = await memorySystem.getPatterns(tenantId);
         
+        // Fetch User's Historical Context (Tasks, Projects, Calendar) for Prediction
+        const userHistory = await userContextService.getFullContext(user?.id || '', tenantId);
+
         const prompt = `Decompose the following mission into a sequence of sub-tasks for our agent fleet.
 MISSION: ${description}
 USER_CONTEXT: ${user?.name} (${user?.role})
+USER_HISTORY: ${JSON.stringify(userHistory)}
 FLEET_CAPABILITIES: ${JSON.stringify(AGENT_FLEET)}
 LEARNED_PATTERNS: ${JSON.stringify(pastPatterns)}
 

@@ -83,15 +83,6 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
     localStorage.setItem('scheduled-tasks', JSON.stringify(tasks));
   }, [tasks]);
 
-  useEffect(() => {
-    // Check for due tasks every minute
-    const interval = setInterval(() => {
-      checkAndRunTasks();
-    }, 60000); // Check every minute
-
-    return () => clearInterval(interval);
-  }, [tasks]);
-
   const checkAndRunTasks = async () => {
     const now = new Date();
     const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
@@ -254,6 +245,15 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
     console.log('Running custom task:', task);
     return { total: 1, successful: 1, failed: 0 };
   };
+
+  useEffect(() => {
+    // Check for due tasks every minute
+    const interval = setInterval(() => {
+      checkAndRunTasks();
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [tasks]);
 
   const addTask = () => {
     if (!newTask.title || !newTask.description) {

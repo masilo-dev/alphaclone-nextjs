@@ -27,7 +27,7 @@ import { useTenant } from '../../../contexts/TenantContext';
 import { businessInvoiceService, BusinessInvoice } from '../../../services/businessInvoiceService';
 import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
-import CreateInvoiceModal from '../CreateInvoiceModal';
+import EnhancedInvoiceModal from '../EnhancedInvoiceModal';
 import { Button } from '../../ui/UIComponents';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
@@ -557,6 +557,19 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             
                                             {invoice.status === 'draft' && (
                                                 <button
+                                                    onClick={() => {
+                                                        setSelectedInvoice(invoice);
+                                                        setShowCreateModal(true);
+                                                    }}
+                                                    className="p-2 text-slate-400 hover:text-blue-400 hover:bg-slate-700 rounded-lg transition-colors"
+                                                    title="Edit Invoice"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                            
+                                            {invoice.status === 'draft' && (
+                                                <button
                                                     onClick={() => handleMarkAsSent(invoice)}
                                                     className="p-2 text-slate-400 hover:text-teal-400 hover:bg-slate-700 rounded-lg transition-colors"
                                                     title="Mark as Sent"
@@ -647,12 +660,16 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                 </div>
             )}
 
-            {/* Create Invoice Modal */}
-            <CreateInvoiceModal
+            {/* Create/Edit Invoice Modal */}
+            <EnhancedInvoiceModal
                 isOpen={showCreateModal}
-                onClose={() => setShowCreateModal(false)}
-                onInvoiceCreated={loadInvoices}
-                projects={[]} // You may want to pass actual projects here
+                onClose={() => {
+                    setShowCreateModal(false);
+                    setSelectedInvoice(null);
+                }}
+                onSuccess={loadInvoices}
+                mode={selectedInvoice ? 'edit' : 'create'}
+                invoice={selectedInvoice}
             />
         </div>
     );
