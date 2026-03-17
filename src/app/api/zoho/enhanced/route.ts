@@ -324,7 +324,7 @@ async function getEmails(userId: string, searchParams: URLSearchParams) {
             }
         }
 
-        let queryParams = `sortBy=date&sortOrder=desc&start=0&limit=50`;
+        let queryParams = `sortBy=date&sortorder=desc&start=0&limit=50`;
         
         if (lcFolder === 'starred') {
             queryParams += `&flagid=2`;
