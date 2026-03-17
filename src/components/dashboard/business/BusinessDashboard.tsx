@@ -51,6 +51,7 @@ const TasksTab = React.lazy(() => import('../TasksTab'));
 import SalesAgent from '../SalesAgent';
 const DealsTab = React.lazy(() => import('../DealsTab'));
 const QuotesTab = React.lazy(() => import('../QuotesTab'));
+const ClientsPage = React.lazy(() => import('./ClientsPage'));
 import AlphaCloneContractModal from '../../contracts/AlphaCloneContractModal';
 import ContractDashboard from '../../contracts/ContractDashboard';
 import DocumentHub from '../../documents/DocumentHub';
@@ -311,9 +312,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/clients':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
-                        <CRMTab
-                            userId={user.id}
-                            userRole={user.role}
+                        <ClientsPage
+                            user={user}
                         />
                     </React.Suspense>
                 );
