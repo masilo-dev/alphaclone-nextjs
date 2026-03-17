@@ -12,7 +12,9 @@ const createMockSupabaseClient = (serviceName: string) => {
             if (prop === 'then') return undefined;
             if (prop === 'error') return null; // Error should be null to avoid triggering error checks
             if (typeof prop === 'symbol') return undefined;
-            
+            if (prop === 'toString' || prop === 'valueOf') return () => '[Mock Supabase Object]';
+            if (prop === 'id') return 'mock-uuid-for-build';
+
             // For any other property (including 'data'), return the mock again to support nested destructuring
             // e.g. { data: { user } } works because mock.data is mock, and mock.user is mock
             return mock;
