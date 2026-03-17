@@ -1,4 +1,4 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { zohoServerService } from '@/services/server/zohoServerService';
@@ -6,7 +6,7 @@ import { hubspotService } from '@/services/hubspotService';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
 
 export async function POST(req: Request) {
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
