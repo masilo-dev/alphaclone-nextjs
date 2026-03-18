@@ -205,7 +205,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase">Client Nexus</h2>
+                    <h2 className="text-xl font-black text-white italic tracking-tighter uppercase">Client Nexus</h2>
                     <div className="flex items-center gap-2 mt-1">
                         <Badge variant="blue">{clients.length} Active nodes</Badge>
                         <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Global CRM Database</p>
@@ -347,27 +347,27 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 shrink-0">
-                                    <div className="bg-slate-800/50 p-4 rounded-xl">
+                                    <div className="bg-slate-800/50 p-3 rounded-xl">
                                         <p className="text-sm text-slate-400 mb-1">Email</p>
                                         <div className="flex items-center gap-2 text-white">
                                             <Mail className="w-4 h-4 text-teal-500 shrink-0" />
                                             <span className="truncate" title={selectedClient.email || 'N/A'}>{selectedClient.email || 'N/A'}</span>
                                         </div>
                                     </div>
-                                    <div className="bg-slate-800/50 p-4 rounded-xl">
+                                    <div className="bg-slate-800/50 p-3 rounded-xl">
                                         <p className="text-sm text-slate-400 mb-1">Phone</p>
                                         <div className="flex items-center gap-2 text-white">
                                             <Phone className="w-4 h-4 text-teal-500 shrink-0" />
                                             <span className="truncate">{selectedClient.phone || 'N/A'}</span>
                                         </div>
                                     </div>
-                                    <div className="bg-slate-800/50 p-4 rounded-xl">
+                                    <div className="bg-slate-800/50 p-3 rounded-xl">
                                         <p className="text-sm text-slate-400 mb-1">Sales Stage</p>
                                         <Badge variant={selectedClient.salesStage === 'customer' ? 'success' : selectedClient.salesStage === 'lost' ? 'error' : 'blue'}>
                                             {selectedClient.salesStage.charAt(0).toUpperCase() + selectedClient.salesStage.slice(1)}
                                         </Badge>
                                     </div>
-                                    <div className="bg-slate-800/50 p-4 rounded-xl">
+                                    <div className="bg-slate-800/50 p-3 rounded-xl">
                                         <p className="text-sm text-slate-400 mb-1">Potential Value</p>
                                         <p className="font-semibold text-teal-400">${selectedClient.value.toLocaleString()}</p>
                                     </div>
@@ -375,7 +375,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
                                 {selectedClient.description && (
                                     <div className="mb-6 shrink-0">
-                                        <h3 className="text-lg font-semibold text-white mb-2">Description</h3>
+                                        <h3 className="text-base font-semibold text-white mb-2">Description</h3>
                                         <div className="bg-slate-800/50 p-4 rounded-xl text-slate-300 whitespace-pre-wrap">
                                             {selectedClient.description}
                                         </div>
@@ -383,41 +383,45 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 )}
 
                                 <div className="mt-auto">
-                                    <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
+                                    <h3 className="text-base font-semibold text-white mb-4">Quick Actions</h3>
                                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                                         <Button
                                             variant="secondary"
-                                            className="w-full flex-col h-auto py-3 gap-2"
+                                            size="sm"
+                                            className="w-full h-10 gap-2"
                                             onClick={() => {
                                                 setSelectedClientForProposal(selectedClient);
                                                 setShowProposalModal(true);
                                             }}
-                                            icon={<FilePlus className="w-5 h-5 mb-1" />}
+                                            icon={<FilePlus className="w-4 h-4" />}
                                         >
                                             Proposal
                                         </Button>
                                         <Button
                                             variant="outline"
-                                            className="w-full flex-col h-auto py-3 gap-2 border-teal-500/30 text-teal-400 hover:bg-teal-500/10 hover:text-teal-300"
+                                            size="sm"
+                                            className="w-full h-10 gap-2 border-teal-500/30 text-teal-400 hover:bg-teal-500/10 hover:text-teal-300"
                                             onClick={() => {
                                                 setSelectedClientForInvoice(selectedClient);
                                                 setShowInvoiceModal(true);
                                             }}
-                                            icon={<Receipt className="w-5 h-5 mb-1" />}
+                                            icon={<Receipt className="w-4 h-4" />}
                                         >
                                             Invoice
                                         </Button>
                                         <Button
                                             variant="outline"
-                                            className="w-full flex-col h-auto py-3 gap-2"
+                                            size="sm"
+                                            className="w-full h-10 gap-2"
                                             onClick={() => handleCallClient(selectedClient)}
-                                            icon={<Phone className="w-5 h-5 mb-1" />}
+                                            icon={<Phone className="w-4 h-4" />}
                                         >
                                             Call
                                         </Button>
                                         <Button
                                             variant="outline"
-                                            className="w-full flex-col h-auto py-3 gap-2"
+                                            size="sm"
+                                            className="w-full h-10 gap-2"
                                             onClick={() => {
                                                 if (selectedClient.email) {
                                                     window.open(`mailto:${selectedClient.email}`);
@@ -425,7 +429,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                     toast.error('No email address on file.');
                                                 }
                                             }}
-                                            icon={<Mail className="w-5 h-5 mb-1" />}
+                                            icon={<Mail className="w-4 h-4" />}
                                         >
                                             Email
                                         </Button>
@@ -576,7 +580,7 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
     ];
 
     return (
-        <Card hoverEffect className="flex flex-col h-full !p-5 relative z-10 hover:z-[60] focus-within:z-[60] transition-all">
+        <Card hoverEffect className="flex flex-col h-full !p-3 relative z-10 hover:z-[60] focus-within:z-[60] transition-all">
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0 mr-2">
                     <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white">

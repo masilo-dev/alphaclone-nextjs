@@ -55,7 +55,7 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold">CRM Pipeline</h1>
+                    <h1 className="text-lg font-bold">CRM Pipeline</h1>
                     <p className="text-slate-400 text-sm">Manage deals and sync with external platforms</p>
                 </div>
                 <div className="flex gap-3">

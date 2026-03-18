@@ -1,0 +1,48 @@
+
+> alphaclone-nextjs@0.1.0 build
+> next build --webpack
+
+▲ Next.js 16.1.6 (webpack)
+- Environments: .env
+- Experiments (use with caution):
+  ✓ scrollRestoration
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ (serwist) Bundling the service worker script with the URL '/sw.js' and the scope '/'...
+Failed to compile.
+
+./src/components/dashboard/business/ClientsPage.tsx
+Error:   x Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+     ,-[C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\business\ClientsPage.tsx:440:1]
+ 437 |                                 <Users className="w-16 h-16 mb-4 text-slate-700" />
+ 438 |                                 <p className="text-lg font-medium text-slate-400">Select a client to view details</p>
+ 439 |                             </div>
+ 440 |                         )}
+     :                          ^
+ 441 |                     </div>
+ 442 |                 </div>
+ 443 |             ) : (
+     `----
+  x Unterminated regexp literal
+     ,-[C:\Users\Alphacone IO\alphaclone-nextjs-6\src\components\dashboard\business\ClientsPage.tsx:442:1]
+ 439 |                             </div>
+ 440 |                         )}
+ 441 |                     </div>
+ 442 |                 </div>
+     :                  ^^^^^
+ 443 |             ) : (
+ 444 |                 <CRMTab userId={user.id} userRole={user.role} />
+ 445 |             )}
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/dashboard/business/ClientsPage.tsx
+./src/components/Dashboard.tsx
+./src/app/dashboard/[[...slug]]/page.tsx
+
+
+> Build failed because of webpack errors
