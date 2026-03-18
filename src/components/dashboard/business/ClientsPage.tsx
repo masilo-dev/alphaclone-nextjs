@@ -21,7 +21,8 @@ import {
     Calendar,
     History,
     MessageSquare,
-    Receipt
+    Receipt,
+    ChevronLeft
 } from 'lucide-react';
 import { Button, Input, Modal, Badge, Dropdown, Card } from '../../ui/UIComponents';
 import { useDropzone } from 'react-dropzone';
@@ -243,8 +244,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             </div>
 
             {viewMode === 'list' ? (
-                <div className="flex flex-col md:flex-row gap-6 md:h-[calc(100vh-[clamp(200px,25vh,300px)])] min-h-[500px]">
-                    <div className={`flex flex-col gap-4 ${selectedClient ? 'hidden lg:flex w-full lg:w-1/3 lg:max-w-[350px]' : 'w-full'}`}>
+                <div className="flex flex-col md:flex-row gap-6 h-[calc(100vh-140px)] overflow-hidden">
+                    <div className={`flex flex-col gap-4 h-full ${selectedClient ? 'hidden lg:flex w-full lg:w-1/3 lg:max-w-[350px]' : 'w-full'} overflow-hidden`}>
                         {/* Filters */}
                         <div className="flex flex-col gap-4 shrink-0">
                             <div className="relative">
@@ -298,8 +299,23 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     {/* Desktop Split Pane Right Side */}
                     <div className={`flex-1 ${!selectedClient ? 'hidden md:flex' : 'flex'} flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden`}>
                         {selectedClient ? (
-                            <div className="p-6 flex flex-col h-full overflow-y-auto custom-scrollbar">
-                                <div className="flex justify-between items-start mb-6 shrink-0">
+                            <div className="flex flex-col h-full overflow-hidden">
+                                {/* Mobile Header with Back Button */}
+                                <div className="md:hidden flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 shrink-0">
+                                    <button 
+                                        onClick={() => setSelectedClient(null)}
+                                        className="flex items-center gap-2 text-teal-400 font-medium hover:text-teal-300 transition-colors"
+                                    >
+                                        <ChevronLeft className="w-5 h-5" />
+                                        Back to List
+                                    </button>
+                                    <Badge variant={selectedClient.salesStage === 'customer' ? 'success' : selectedClient.salesStage === 'lost' ? 'error' : 'blue'}>
+                                        {selectedClient.salesStage.charAt(0).toUpperCase() + selectedClient.salesStage.slice(1)}
+                                    </Badge>
+                                </div>
+
+                                <div className="p-4 md:p-6 flex flex-col h-full overflow-y-auto custom-scrollbar ios-scroll">
+                                    <div className="flex justify-between items-start mb-6 shrink-0">
                                     <div className="flex items-center gap-4">
                                         <div className="w-16 h-16 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-2xl">
                                             {selectedClient.name.charAt(0)}
@@ -324,7 +340,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                 { label: 'Delete Client', icon: <Trash2 className="w-4 h-4"/>, onClick: () => { handleDeleteClient(selectedClient.id); setSelectedClient(null); }, variant: 'danger' }
                                             ]}
                                         />
-                                        <Button className="md:hidden" size="sm" variant="ghost" onClick={() => setSelectedClient(null)}>
+                                        <Button className="hidden" size="sm" variant="ghost" onClick={() => setSelectedClient(null)}>
                                             <X className="w-5 h-5"/>
                                         </Button>
                                     </div>
@@ -414,6 +430,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             Email
                                         </Button>
                                     </div>
+                                </div>
                                 </div>
                             </div>
                         ) : (
