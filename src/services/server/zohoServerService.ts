@@ -292,7 +292,7 @@ export const zohoServerService = {
             url = `https://${mailApiHost}/api/accounts/${accountId}/${endpoint}`;
         }
 
-        console.log(`[Zoho Proxy] → ${url}`);
+        console.log(`[Zoho Proxy] Requesting: ${url}`);
 
         const response = await fetch(url, {
             ...options,

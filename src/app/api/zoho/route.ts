@@ -201,21 +201,38 @@ async function getMessages(userId: string, searchParams: URLSearchParams) {
     if (folderPropMap[lcFolder] || lcFolder === 'starred') {
         try {
             const foldersData = await zohoServerService.proxyRequest(userId, 'folders');
-            const targetFolder = foldersData?.data?.find((f: any) => 
-                (folderPropMap[lcFolder] && f[folderPropMap[lcFolder]]) || f.folderName?.toLowerCase() === lcFolder
+            // Support both data array and nested folders
+            const folders = Array.isArray(foldersData?.data) ? foldersData.data : foldersData?.data?.folders || [];
+            
+            const targetFolder = folders.find((f: any) => 
+                (folderPropMap[lcFolder] && f[folderPropMap[lcFolder]]) || 
+                f.folderName?.toLowerCase() === lcFolder ||
+                f.folderType?.toLowerCase() === lcFolder
             );
             actualFolderId = targetFolder?.folderId || folderFallbackMap[lcFolder] || folderId;
         } catch (e) {
+            console.error('[Zoho API] Folder resolution failed:', e);
             actualFolderId = folderFallbackMap[lcFolder] || folderId;
         }
     }
 
-    let queryParams = `start=1&limit=50`;
+    let queryParams = `start=1&limit=50&sortBy=date&order=desc`;
     if (lcFolder === 'starred') queryParams += `&flagid=2`;
     else queryParams += `&folderId=${actualFolderId}`;
 
     const data = await zohoServerService.proxyRequest(userId, `messages/view?${queryParams}`);
-    return NextResponse.json({ success: true, data: data.data || [] });
+    
+    // Normalize data for the UI
+    const messages = (data.data || []).map((m: any) => ({
+        ...m,
+        id: m.messageId || m.id,
+        date: m.receivedTime || m.sentDateInGMT || m.date,
+        from: m.fromAddress || m.sender || m.from,
+        to: m.toAddress || m.to,
+        snippet: m.summary || m.snippet || ''
+    }));
+
+    return NextResponse.json({ success: true, data: messages });
 }
 
 async function sendEmail(userId: string, data: any) {

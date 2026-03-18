@@ -13,5 +13,8 @@
 - Enhanced Zoho error mapping to provide descriptive feedback for specific error codes (e.g., rate limits, account status).
 - Removed legacy Zoho CRM logic and AI tool integrations (`createCRMLead`) to focus exclusively on robust email management.
 - Corrected regional host derivation logic and enabled auto-correction of database records for improved reliability.
+- Resolved Zoho "ZERO CONVERSATION" issue by implementing strict `sortBy=date&order=desc` sorting and robust folder ID resolution.
+- Standardized Zoho API response payload with normalized fields (`id`, `date`, `from`, `snippet`) for simplified UI rendering.
+- Enhanced Zoho Mail UI with resilient date parsing and improved folder synchronization.
 
 Vercel Build Status: Confirmed Safe (Zoho fixes verified with `tsc`).

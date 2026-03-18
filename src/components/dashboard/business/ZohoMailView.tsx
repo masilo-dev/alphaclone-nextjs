@@ -312,7 +312,13 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
                                                 {email.fromAddress?.split('<')[0].trim() || 'Unidentified'}
                                             </span>
                                             <span className="text-[9px] text-slate-500 font-mono">
-                                                {email.receivedTime ? new Date(Number(email.receivedTime)).toLocaleDateString() : ''}
+                                                {(() => {
+                                                    if (!email.receivedTime) return '';
+                                                    const d = email.receivedTime.includes('-') || email.receivedTime.includes(':') 
+                                                        ? new Date(email.receivedTime) 
+                                                        : new Date(Number(email.receivedTime));
+                                                    return isNaN(d.getTime()) ? email.receivedTime : d.toLocaleDateString();
+                                                })()}
                                             </span>
                                         </div>
                                         <h4 className="text-sm font-bold text-slate-100 truncate group-hover:text-white transition-colors mb-1.5 leading-tight">
