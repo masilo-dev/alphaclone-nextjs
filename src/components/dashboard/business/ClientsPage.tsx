@@ -54,6 +54,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [selectedClientForProposal, setSelectedClientForProposal] = useState<BusinessClient | null>(null);
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
     const [selectedClientForInvoice, setSelectedClientForInvoice] = useState<BusinessClient | null>(null);
+    const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(null);
 
     useEffect(() => {
         if (currentTenant) {
@@ -242,56 +243,187 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             </div>
 
             {viewMode === 'list' ? (
-                <>
-                    {/* Filters */}
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <div className="flex-1 relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                            <input
-                                type="text"
-                                placeholder="Search clients..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all font-medium"
-                            />
+                <div className="flex flex-col md:flex-row gap-6 md:h-[calc(100vh-[clamp(200px,25vh,300px)])] min-h-[500px]">
+                    <div className={`flex flex-col gap-4 ${selectedClient ? 'hidden lg:flex w-full lg:w-1/3 lg:max-w-[350px]' : 'w-full'}`}>
+                        {/* Filters */}
+                        <div className="flex flex-col gap-4 shrink-0">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search clients..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all font-medium"
+                                />
+                            </div>
+                            <select
+                                value={selectedStage}
+                                onChange={(e) => setSelectedStage(e.target.value)}
+                                className="px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all font-medium"
+                            >
+                                <option value="all">All Stages</option>
+                                <option value="lead">Leads</option>
+                                <option value="prospect">Prospects</option>
+                                <option value="customer">Customers</option>
+                                <option value="lost">Lost</option>
+                            </select>
                         </div>
-                        <select
-                            value={selectedStage}
-                            onChange={(e) => setSelectedStage(e.target.value)}
-                            className="px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all font-medium min-w-[140px]"
-                        >
-                            <option value="all">All Stages</option>
-                            <option value="lead">Leads</option>
-                            <option value="prospect">Prospects</option>
-                            <option value="customer">Customers</option>
-                            <option value="lost">Lost</option>
-                        </select>
+
+                        {/* Client List */}
+                        <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                            {filteredClients.map(client => (
+                                <div
+                                    key={client.id}
+                                    onClick={() => setSelectedClient(client)}
+                                    className={`p-4 rounded-xl cursor-pointer transition-all border ${selectedClient?.id === client.id ? 'bg-teal-500/10 border-teal-500 shadow-sm shadow-teal-500/20' : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'}`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white">
+                                            {client.name.charAt(0)}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <h3 className="font-semibold text-white truncate">{client.name}</h3>
+                                            {client.industry && <p className="text-xs text-slate-400 truncate">{client.industry}</p>}
+                                        </div>
+                                        <Badge variant={client.salesStage === 'customer' ? 'success' : client.salesStage === 'lost' ? 'error' : 'blue'}>
+                                            {client.salesStage.charAt(0).toUpperCase() + client.salesStage.slice(1)}
+                                        </Badge>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
-                    {/* Client List */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filteredClients.map(client => (
-                            <ClientCard
-                                key={client.id}
-                                client={client}
-                                onEdit={(client) => {
-                                    setEditingClient(client);
-                                    setShowEditModal(true);
-                                }}
-                                onDelete={handleDeleteClient}
-                                onCall={handleCallClient}
-                                onCreateProposal={(c) => {
-                                    setSelectedClientForProposal(c);
-                                    setShowProposalModal(true);
-                                }}
-                                onCreateInvoice={(c) => {
-                                    setSelectedClientForInvoice(c);
-                                    setShowInvoiceModal(true);
-                                }}
-                            />
-                        ))}
+                    {/* Desktop Split Pane Right Side */}
+                    <div className={`flex-1 ${!selectedClient ? 'hidden md:flex' : 'flex'} flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden`}>
+                        {selectedClient ? (
+                            <div className="p-6 flex flex-col h-full overflow-y-auto custom-scrollbar">
+                                <div className="flex justify-between items-start mb-6 shrink-0">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-16 h-16 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-2xl">
+                                            {selectedClient.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <h2 className="text-2xl font-bold text-white">{selectedClient.name}</h2>
+                                            {selectedClient.industry && <p className="text-slate-400">{selectedClient.industry}</p>}
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Dropdown
+                                            trigger={
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="!p-2 hover:bg-slate-800"
+                                                    icon={<MoreVertical className="w-5 h-5" />}
+                                                />
+                                            }
+                                            items={[
+                                                { label: 'Edit Client', icon: <Edit className="w-4 h-4"/>, onClick: () => { setEditingClient(selectedClient); setShowEditModal(true); } },
+                                                { label: 'Delete Client', icon: <Trash2 className="w-4 h-4"/>, onClick: () => { handleDeleteClient(selectedClient.id); setSelectedClient(null); }, variant: 'danger' }
+                                            ]}
+                                        />
+                                        <Button className="md:hidden" size="sm" variant="ghost" onClick={() => setSelectedClient(null)}>
+                                            <X className="w-5 h-5"/>
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 shrink-0">
+                                    <div className="bg-slate-800/50 p-4 rounded-xl">
+                                        <p className="text-sm text-slate-400 mb-1">Email</p>
+                                        <div className="flex items-center gap-2 text-white">
+                                            <Mail className="w-4 h-4 text-teal-500 shrink-0" />
+                                            <span className="truncate" title={selectedClient.email || 'N/A'}>{selectedClient.email || 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-slate-800/50 p-4 rounded-xl">
+                                        <p className="text-sm text-slate-400 mb-1">Phone</p>
+                                        <div className="flex items-center gap-2 text-white">
+                                            <Phone className="w-4 h-4 text-teal-500 shrink-0" />
+                                            <span className="truncate">{selectedClient.phone || 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-slate-800/50 p-4 rounded-xl">
+                                        <p className="text-sm text-slate-400 mb-1">Sales Stage</p>
+                                        <Badge variant={selectedClient.salesStage === 'customer' ? 'success' : selectedClient.salesStage === 'lost' ? 'error' : 'blue'}>
+                                            {selectedClient.salesStage.charAt(0).toUpperCase() + selectedClient.salesStage.slice(1)}
+                                        </Badge>
+                                    </div>
+                                    <div className="bg-slate-800/50 p-4 rounded-xl">
+                                        <p className="text-sm text-slate-400 mb-1">Potential Value</p>
+                                        <p className="font-semibold text-teal-400">${selectedClient.value.toLocaleString()}</p>
+                                    </div>
+                                </div>
+
+                                {selectedClient.description && (
+                                    <div className="mb-6 shrink-0">
+                                        <h3 className="text-lg font-semibold text-white mb-2">Description</h3>
+                                        <div className="bg-slate-800/50 p-4 rounded-xl text-slate-300 whitespace-pre-wrap">
+                                            {selectedClient.description}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="mt-auto">
+                                    <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                        <Button
+                                            variant="secondary"
+                                            className="w-full flex-col h-auto py-3 gap-2"
+                                            onClick={() => {
+                                                setSelectedClientForProposal(selectedClient);
+                                                setShowProposalModal(true);
+                                            }}
+                                            icon={<FilePlus className="w-5 h-5 mb-1" />}
+                                        >
+                                            Proposal
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full flex-col h-auto py-3 gap-2 border-teal-500/30 text-teal-400 hover:bg-teal-500/10 hover:text-teal-300"
+                                            onClick={() => {
+                                                setSelectedClientForInvoice(selectedClient);
+                                                setShowInvoiceModal(true);
+                                            }}
+                                            icon={<Receipt className="w-5 h-5 mb-1" />}
+                                        >
+                                            Invoice
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full flex-col h-auto py-3 gap-2"
+                                            onClick={() => handleCallClient(selectedClient)}
+                                            icon={<Phone className="w-5 h-5 mb-1" />}
+                                        >
+                                            Call
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full flex-col h-auto py-3 gap-2"
+                                            onClick={() => {
+                                                if (selectedClient.email) {
+                                                    window.open(`mailto:${selectedClient.email}`);
+                                                } else {
+                                                    toast.error('No email address on file.');
+                                                }
+                                            }}
+                                            icon={<Mail className="w-5 h-5 mb-1" />}
+                                        >
+                                            Email
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex-1 flex flex-col items-center justify-center bg-slate-800/10 text-slate-500">
+                                <Users className="w-16 h-16 mb-4 text-slate-700" />
+                                <p className="text-lg font-medium text-slate-400">Select a client to view details</p>
+                            </div>
+                        )}
                     </div>
-                </>
+                </div>
             ) : (
                 <CRMTab userId={user.id} userRole={user.role} />
             )}
@@ -427,7 +559,7 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
     ];
 
     return (
-        <Card hoverEffect className="flex flex-col h-full !p-5">
+        <Card hoverEffect className="flex flex-col h-full !p-5 relative z-10 hover:z-[60] focus-within:z-[60] transition-all">
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0 mr-2">
                     <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white">

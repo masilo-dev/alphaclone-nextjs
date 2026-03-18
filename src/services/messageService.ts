@@ -338,14 +338,14 @@ export const messageService = {
             .on(
                 'postgres_changes' as any,
                 {
-                    event: 'INSERT',
+                    event: '*',
                     schema: 'public',
                     table: 'messages',
-                    // ✅ FIXED: Simplified filter - Supabase Realtime doesn't support complex AND/OR
-                    // We filter by tenant_id only, then filter in callback
                     filter: `tenant_id=eq.${tenantId}`
                 },
                 (payload: any) => {
+                    if (payload.eventType !== 'INSERT' && payload.eventType !== 'UPDATE') return;
+                    
                     const m = payload.new;
 
                     // ✅ Client-side filter: Only show messages involving this user
@@ -371,45 +371,7 @@ export const messageService = {
                         edited_at: m.edited_at,
                         group_id: m.group_id
                     };
-                    callback(message, 'INSERT');
-                }
-            )
-            .on(
-                'postgres_changes' as any,
-                {
-                    event: 'UPDATE',
-                    schema: 'public',
-                    table: 'messages',
-                    // ✅ FIXED: Simplified filter for updates too
-                    filter: `tenant_id=eq.${tenantId}`
-                },
-                (payload: any) => {
-                    const m = payload.new;
-
-                    // ✅ Client-side filter: Only show messages involving this user
-                    if (!isAdmin && m.sender_id !== userId && m.recipient_id !== userId) {
-                        return; // Skip this message
-                    }
-
-                    const message: ChatMessage = {
-                        id: m.id,
-                        role: m.sender_role as 'user' | 'model' | 'system',
-                        senderName: m.sender_name,
-                        senderId: m.sender_id,
-                        recipientId: m.recipient_id,
-                        text: m.text,
-                        timestamp: new Date(m.created_at),
-                        isThinking: m.is_thinking,
-                        attachments: m.attachments || [],
-                        readAt: m.read_at ? new Date(m.read_at) : null,
-                        deliveredAt: m.delivered_at ? new Date(m.delivered_at) : null,
-                        priority: m.priority as any,
-                        reactions: m.reactions || {},
-                        reply_to: m.reply_to,
-                        edited_at: m.edited_at,
-                        group_id: m.group_id
-                    };
-                    callback(message, 'UPDATE');
+                    callback(message, payload.eventType as 'INSERT' | 'UPDATE');
                 }
             )
             .subscribe(async (status: string, err?: Error) => {
