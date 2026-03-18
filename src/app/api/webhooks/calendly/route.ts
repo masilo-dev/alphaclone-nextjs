@@ -75,6 +75,10 @@ export async function POST(req: Request) {
             await handleInviteeCreated(payload.payload, supabaseAdmin);
         } else if (payload.event === 'invitee.canceled') {
             await handleInviteeCanceled(payload.payload, supabaseAdmin);
+        } else if (payload.event === 'invitee.no_show.created') {
+            await handleInviteeNoShow(payload.payload, supabaseAdmin);
+        } else if (payload.event === 'meeting_recap.created') {
+            await handleMeetingRecap(payload.payload, supabaseAdmin);
         }
 
         return NextResponse.json({ success: true });
@@ -206,4 +210,53 @@ async function handleInviteeCanceled(payload: any, supabase: any) {
         .from('video_calls')
         .update({ status: 'cancelled' })
         .filter('metadata->>calendly_invitee_uri', 'eq', inviteeUri);
+}
+
+async function handleInviteeNoShow(payload: any, supabase: any) {
+    const { invitee: inviteeUri } = payload;
+
+    // Update status to 'missed' in bookings
+    await supabase
+        .from('bookings')
+        .update({ status: 'missed' })
+        .filter('metadata->>calendly_invitee_uri', 'eq', inviteeUri);
+    
+    // Log visibility for human oversight
+    console.log(`[Calendly] Marked no-show for invitee: ${inviteeUri}`);
+}
+
+async function handleMeetingRecap(payload: any, supabase: any) {
+    const { 
+        event: eventUri, 
+        summary, 
+        transcript_url,
+        action_items 
+    } = payload;
+
+    // Store the recap in the persistent memory / knowledge base
+    // Use the eventUri to link to the existing booking/meeting context
+    const { data: booking } = await supabase
+        .from('bookings')
+        .select('id, tenant_id, metadata')
+        .filter('metadata->>calendly_event_uri', 'eq', eventUri)
+        .maybeSingle();
+
+    if (booking) {
+        // Create an entry in a 'meeting_notes' or similar table if it exists, 
+        // or update the metadata of the booking
+        await supabase
+            .from('bookings')
+            .update({
+                client_notes: (summary || '') + '\n\nAction Items:\n' + (action_items?.join('\n') || 'None'),
+                metadata: {
+                    ...booking.metadata,
+                    recap_received: true,
+                    transcript_url,
+                    action_items
+                }
+            })
+            .eq('id', booking.id);
+            
+        console.log(`[Calendly] Insight synchronized for event: ${eventUri}`);
+    }
 }
