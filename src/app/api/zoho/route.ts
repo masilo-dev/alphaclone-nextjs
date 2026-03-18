@@ -31,6 +31,10 @@ export async function GET(req: NextRequest) {
 
     const userId = user.id;
 
+    if (!action) {
+        return NextResponse.json({ error: 'Action parameter is required (e.g., action=get_account_info)' }, { status: 400 });
+    }
+
     try {
         switch (action) {
             case 'get_account_info':
@@ -38,7 +42,7 @@ export async function GET(req: NextRequest) {
             case 'get_messages':
                 return await getMessages(userId, searchParams);
             default:
-                return NextResponse.json({ error: 'Invalid action. Specify action=get_account_info or action=get_messages' }, { status: 400 });
+                return NextResponse.json({ error: `Invalid action "${action}". Specify action=get_account_info or action=get_messages` }, { status: 400 });
         }
     } catch (err: any) {
         console.error(`Zoho API GET Error (${action}):`, err);
@@ -196,7 +200,7 @@ async function getMessages(userId: string, searchParams: URLSearchParams) {
         }
     }
 
-    let queryParams = `sortBy=date&sortorder=desc&start=0&limit=50`;
+    let queryParams = `sortBy=date&sortOrder=desc&start=0&limit=50`;
     if (lcFolder === 'starred') queryParams += `&flagid=2`;
     else queryParams += `&folderId=${actualFolderId}`;
 
