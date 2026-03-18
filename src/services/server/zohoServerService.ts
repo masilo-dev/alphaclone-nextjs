@@ -21,12 +21,21 @@ function isEncryptedFormat(token: string): boolean {
  */
 function safeDecrypt(token: string | null | undefined, secret: string | undefined): string | null {
     if (!token) return null;
-    if (!secret || !isEncryptedFormat(token)) return token; // plaintext token or no secret
+    
+    const isEncrypted = isEncryptedFormat(token);
+    
+    if (isEncrypted && !secret) {
+        console.error('[Zoho Token] Detected encrypted token but ENCRYPTION_SECRET is missing. Decryption impossible.');
+        return token; // Fallback to returning ciphertext, which will likely fail later but at least it's logged
+    }
+
+    if (!isEncrypted) return token; // already plaintext
+
     try {
-        return decrypt(token, secret);
+        return decrypt(token, secret!);
     } catch (e) {
-        console.warn('[Zoho Token] Decryption failed, using token as plaintext. It may need to be re-saved.', e);
-        return token; // fall back to plaintext so connection is not broken
+        console.error('[Zoho Token] Decryption failed. The secret may have changed or the token is corrupted.', e);
+        return token; // fallback to plaintext
     }
 }
 
@@ -69,49 +78,46 @@ export const zohoServerService = {
 
             if (error) {
                 console.error(`[Zoho Token Debug] Supabase error fetching integration for ${userId}:`, error);
-                return null;
+                throw new Error(`Database error: ${error.message}`);
             }
             if (!integration) {
-                console.warn(`[Zoho Token Debug] No Zoho integration record found in database for user ${userId}. This will trigger 'Not Connected' UI.`);
+                console.warn(`[Zoho Token Debug] No Zoho integration record found for user ${userId}.`);
                 return null;
             }
             if (!integration.config) {
-                console.error(`[Zoho Token Debug] Integration found (ID: ${integration.id}) but config object is missing for user ${userId}`);
-                return null;
+                console.error(`[Zoho Token Debug] Integration found but config is null for user ${userId}`);
+                throw new Error('Zoho integration configuration is missing.');
             }
 
             const config = integration.config;
             const secret = ENV.ENCRYPTION_SECRET;
             
-            // safeDecrypt handles both plaintext and encrypted tokens gracefully
             const accessToken = safeDecrypt(config.accessToken, secret);
 
             if (!config.expiryDate) {
-                console.error('[Zoho Token Debug] Config missing expiryDate:', config);
-                return null;
+                console.warn('[Zoho Token Debug] Config missing expiryDate, attempting refresh anyway.');
+            } else {
+                const expiresAt = new Date(config.expiryDate).getTime();
+                if (Date.now() < expiresAt - 60000) { // If it expires in more than a minute
+                    return accessToken;
+                }
             }
 
-            const expiresAt = new Date(config.expiryDate).getTime();
-
-            if (Date.now() < expiresAt - 60000) { // If it expires in more than a minute
-                return accessToken;
-            }
-
-            console.log('[Zoho Token Debug] Token expired, attempting refresh for integration:', integration.id);
+            console.log('[Zoho Token Debug] Token expired or missing expiry, attempting refresh...');
             
-            // safeDecrypt handles both plaintext and encrypted refresh tokens
             const refreshToken = safeDecrypt(config.refreshToken, secret);
 
             if (!refreshToken) {
-                console.error('[Zoho Token Debug] No refresh token available, cannot refresh access token.');
-                return null;
+                console.error('[Zoho Token Debug] No refresh token available.');
+                throw new Error('Zoho session expired and no refresh token available. Please reconnect.');
             }
 
             // Refresh token
             return await this.refreshToken(userId, refreshToken, integration.id);
-        } catch (err) {
-            console.error('[Zoho Token Debug] Unexpected error in getValidToken:', err);
-            return null;
+        } catch (err: any) {
+            console.error('[Zoho Token Debug] Error in getValidToken:', err.message || err);
+            // Re-throw so proxyRequest can catch it and report a descriptive error
+            throw err;
         }
     },
 
@@ -155,13 +161,18 @@ export const zohoServerService = {
                 try { mailApiHost = new URL(mailApiHost).host; } catch {}
             }
 
+            if (!ENV.ZOHO_CLIENT_ID || !ENV.ZOHO_CLIENT_SECRET) {
+                console.error('[Zoho Refresh] CRITICAL: ZOHO_CLIENT_ID or ZOHO_CLIENT_SECRET is missing from environment.');
+                throw new Error('Server configuration error: Zoho client credentials missing.');
+            }
+
             const response = await fetch(`${accountsServer}/oauth/v2/token`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({
                     refresh_token: refreshToken,
-                    client_id: ENV.ZOHO_CLIENT_ID || '',
-                    client_secret: ENV.ZOHO_CLIENT_SECRET || '',
+                    client_id: ENV.ZOHO_CLIENT_ID,
+                    client_secret: ENV.ZOHO_CLIENT_SECRET,
                     grant_type: 'refresh_token',
                 }),
             });
@@ -215,8 +226,21 @@ export const zohoServerService = {
      * Proxy request to Zoho Mail API
      */
     async proxyRequest(userId: string, endpoint: string, options: RequestInit = {}, isRetry = false): Promise<any> {
-        let token = await this.getValidToken(userId);
-        if (!token) throw new Error('Zoho not connected: Valid token could not be retrieved');
+        let token: string | null = null;
+        try {
+            token = await this.getValidToken(userId);
+        } catch (err: any) {
+            // Re-package error to be caught by API route
+            const apiErr: any = new Error(`Zoho connection failed: ${err.message}`);
+            apiErr.status = 401; // Most token errors imply a need for re-auth
+            throw apiErr;
+        }
+
+        if (!token) {
+            const apiErr: any = new Error('Zoho account not connected.');
+            apiErr.status = 404;
+            throw apiErr;
+        }
 
         const supabaseAdmin = createSupabaseAdminClient();
         const { data: integration, error } = await supabaseAdmin

@@ -48,10 +48,15 @@ export async function GET(req: NextRequest) {
         }
     } catch (err: any) {
         console.error(`Zoho API GET Error (${action}):`, err);
+        
+        // If it's a known error from the service, it will have a .status
+        const status = err.status || 500;
+        
         return NextResponse.json({ 
             error: err.message || 'Internal server error',
+            code: err.code || (status === 401 ? 'UNAUTHORIZED' : status === 404 ? 'NOT_FOUND' : 'INTERNAL_ERROR'),
             details: process.env.NODE_ENV === 'development' ? err.stack : undefined
-        }, { status: err.status || 500 });
+        }, { status });
     }
 }
 
@@ -101,10 +106,15 @@ export async function POST(req: NextRequest) {
         }
     } catch (err: any) {
         console.error('Zoho API POST Error:', err);
+        
+        // If it's a known error from the service, it will have a .status
+        const status = err.status || 500;
+        
         return NextResponse.json({ 
             error: err.message || 'Internal server error',
+            code: err.code || (status === 401 ? 'UNAUTHORIZED' : status === 404 ? 'NOT_FOUND' : 'INTERNAL_ERROR'),
             details: process.env.NODE_ENV === 'development' ? err.stack : undefined
-        }, { status: err.status || 500 });
+        }, { status });
     }
 }
 
