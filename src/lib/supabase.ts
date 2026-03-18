@@ -44,20 +44,15 @@ export const createClient = () => {
                 persistSession: true,
                 autoRefreshToken: true,
                 detectSessionInUrl: true,
-                // In some versions of Gotrue/Supabase-js, disabling locks is done by providing
-                // a custom storage that doesn't use locks, or by specific flow flags.
-                // We'll ensure standard persistence is active which is more resilient 
-                // than the default 'memory' fallback that often happens on lock failure.
             },
             global: {
-                fetch: (...args) => fetch(...args), // Ensure we use the global fetch
+                fetch: (...args) => fetch(...args),
             },
             realtime: {
                 params: {
                     eventsPerSecond: 10,
                 },
-                // Explicitly set the transport to use secure WebSocket
-                // This prevents the browser from blocking insecure connections on HTTPS pages
+                // Increased timeout for connection attempts to be more resilient
                 timeout: 30000,
             }
         }

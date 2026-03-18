@@ -30,6 +30,29 @@ function safeDecrypt(token: string | null | undefined, secret: string | undefine
     }
 }
 
+/**
+ * Derives the correct Zoho accounts and mail hosts based on the region string.
+ * Supports: com, eu, in, au, cn, jp
+ */
+function deriveRegionalHosts(region: string = 'com') {
+    const r = region.toLowerCase();
+    const accountsServer = r === 'cn' ? 'https://accounts.zoho.com.cn' : 
+                          r === 'eu' ? 'https://accounts.zoho.eu' :
+                          r === 'in' ? 'https://accounts.zoho.in' :
+                          r === 'au' ? 'https://accounts.zoho.com.au' :
+                          r === 'jp' ? 'https://accounts.zoho.jp' :
+                          'https://accounts.zoho.com';
+
+    const mailApiHost = r === 'cn' ? 'mail.zoho.com.cn' :
+                       r === 'eu' ? 'mail.zoho.eu' :
+                       r === 'in' ? 'mail.zoho.in' :
+                       r === 'au' ? 'mail.zoho.com.au' :
+                       r === 'jp' ? 'mail.zoho.jp' :
+                       'mail.zoho.com';
+
+    return { accountsServer, mailApiHost };
+}
+
 export const zohoServerService = {
     /**
      * Get valid access token (refreshes if needed)
@@ -99,32 +122,32 @@ export const zohoServerService = {
         try {
             const supabaseAdmin = createSupabaseAdminClient();
 
-            // Get current config to merge and find the right accountsServer
-            const { data: currentIntegration } = await supabaseAdmin
+            const currentIntegration = (await supabaseAdmin
                 .from('integrations')
                 .select('config')
                 .eq('id', integrationId)
-                .single();
+                .single()).data;
 
-            let accountsServer = currentIntegration?.config?.accountsServer;
-            let mailApiHost = currentIntegration?.config?.mailApiHost;
-
-            // Validate that accountsServer is a real URL (guard against mock client returning non-URL strings)
+            // Validate that accountsServer is a real URL
             const isValidUrl = (url: any): boolean => {
                 if (!url || typeof url !== 'string') return false;
                 try { new URL(url); return true; } catch { return false; }
             };
 
+            let accountsServer = currentIntegration?.config?.accountsServer;
+            let mailApiHost = currentIntegration?.config?.mailApiHost;
+
             // Robust derivation of hosts based on region if missing or invalid
-            if (!isValidUrl(accountsServer) || !mailApiHost) {
-                const region = currentIntegration?.config?.region || 'com';
-                if (!isValidUrl(accountsServer)) {
-                    accountsServer = region === 'com' ? 'https://accounts.zoho.com' : `https://accounts.zoho.${region}`;
-                    console.warn(`[Zoho Refresh] accountsServer was invalid, derived from region "${region}": ${accountsServer}`);
-                }
-                if (!mailApiHost || typeof mailApiHost !== 'string' || mailApiHost.startsWith('[')) {
-                    mailApiHost = region === 'com' ? 'mail.zoho.com' : `mail.zoho.${region}`;
-                }
+            const region = currentIntegration?.config?.region || 'com';
+            const derived = deriveRegionalHosts(region);
+
+            if (!isValidUrl(accountsServer)) {
+                accountsServer = derived.accountsServer;
+                console.warn(`[Zoho Refresh] accountsServer was invalid, derived from region "${region}": ${accountsServer}`);
+            }
+
+            if (!mailApiHost || typeof mailApiHost !== 'string' || mailApiHost.startsWith('[')) {
+                mailApiHost = derived.mailApiHost;
             }
 
             // Ensure mailApiHost is a clean domain
@@ -227,13 +250,39 @@ export const zohoServerService = {
             console.log('[Zoho Proxy] Saved resolved accountId:', accountId);
         }
 
-        // ✅ Fix 2: Default to mail.zoho.eu not mail.zoho.com
-        const rawMailApiHost = integration?.config?.mailApiHost;
-        const mailApiHost = (rawMailApiHost && typeof rawMailApiHost === 'string' && !rawMailApiHost.startsWith('['))
-            ? rawMailApiHost
-            : 'mail.zoho.eu'; // ← was mail.zoho.com
+        // ✅ Fix 2: Dynamically derive hosts instead of hardcoding .eu
+        const region = integration?.config?.region || 'com';
+        const derived = deriveRegionalHosts(region);
+        
+        let mailApiHost = integration?.config?.mailApiHost;
+        let accountsServer = integration?.config?.accountsServer;
 
-        // ✅ Fix 3: Remove v2 routing entirely — Zoho EU uses v1 for everything
+        // Force correction if there is a mismatch detected or hosts are missing/invalid
+        const needsCorrection = !mailApiHost || 
+                               !accountsServer || 
+                               (region === 'com' && mailApiHost.includes('.eu')) ||
+                               (region === 'eu' && mailApiHost.includes('.com'));
+
+        if (needsCorrection) {
+            console.warn(`[Zoho Proxy] Regional mismatch detected for user ${userId} (Region: ${region}). Correcting hosts...`);
+            mailApiHost = derived.mailApiHost;
+            accountsServer = derived.accountsServer;
+
+            // Self-healing: Update DB so we don't repeat this check
+            await supabaseAdmin
+                .from('integrations')
+                .update({ 
+                    config: { 
+                        ...(integration.config || {}), 
+                        mailApiHost, 
+                        accountsServer 
+                    } 
+                })
+                .eq('user_id', userId)
+                .eq('type', 'zoho');
+        }
+
+        // ✅ Fix 3: Remove v2 routing entirely — Zoho EU and US V1 is often more stable for these endpoints
         let url = '';
         if (endpoint.startsWith('http')) {
             url = endpoint;
