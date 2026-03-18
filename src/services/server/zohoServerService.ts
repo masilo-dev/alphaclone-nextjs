@@ -214,14 +214,14 @@ export const zohoServerService = {
     /**
      * Proxy request to Zoho Mail API
      */
-    async proxyRequest(userId: string, endpoint: string, options: RequestInit = {}): Promise<any> {
-        const token = await this.getValidToken(userId);
+    async proxyRequest(userId: string, endpoint: string, options: RequestInit = {}, isRetry = false): Promise<any> {
+        let token = await this.getValidToken(userId);
         if (!token) throw new Error('Zoho not connected: Valid token could not be retrieved');
 
         const supabaseAdmin = createSupabaseAdminClient();
         const { data: integration, error } = await supabaseAdmin
             .from('integrations')
-            .select('config')
+            .select('id, config')
             .eq('user_id', userId)
             .eq('type', 'zoho')
             .maybeSingle();
@@ -278,11 +278,10 @@ export const zohoServerService = {
                         accountsServer 
                     } 
                 })
-                .eq('user_id', userId)
-                .eq('type', 'zoho');
+                .eq('id', integration.id); // Optimized: use integration.id directly
         }
 
-        // ✅ Fix 3: Remove v2 routing entirely — Zoho EU and US V1 is often more stable for these endpoints
+        // ✅ Fix 3: Construct API URL
         let url = '';
         if (endpoint.startsWith('http')) {
             url = endpoint;
@@ -304,6 +303,25 @@ export const zohoServerService = {
             },
         });
 
+        // ✅ NEW: Handle 401 Unauthorized by attempting a forced token refresh (retry once)
+        if (response.status === 401 && !isRetry) {
+            console.warn(`[Zoho Proxy] 401 Unauthorized for ${url}. Attempting token refresh...`);
+            
+            const refreshToken = safeDecrypt(integration.config.refreshToken, ENV.ENCRYPTION_SECRET);
+            if (refreshToken) {
+                try {
+                    await this.refreshToken(userId, refreshToken, integration.id);
+                    // Successfully refreshed, now retry the request
+                    return this.proxyRequest(userId, endpoint, options, true);
+                } catch (refreshErr) {
+                    console.error('[Zoho Proxy] Failed to refresh token during 401 retry:', refreshErr);
+                    // Refresh failed, proceed to normal error handling
+                }
+            } else {
+                console.error('[Zoho Proxy] No refresh token found, cannot retry 401 error.');
+            }
+        }
+
         if (!response.ok) {
             const errorText = await response.text();
             console.error(`[Zoho Proxy Error] ${url} → ${response.status}: ${errorText.substring(0, 500)}`);
@@ -311,7 +329,9 @@ export const zohoServerService = {
             let description = `Zoho API Error ${response.status}: ${errorText.substring(0, 150)}`;
             try {
                 const errorJson = JSON.parse(errorText);
-                description = errorJson.status?.description || errorJson.error_message || errorJson.error || description;
+                description = errorJson.data?.errorCode === 'INVALID_OAUTHTOKEN' 
+                    ? 'Zoho access token expired. Refreshing...' 
+                    : (errorJson.status?.description || errorJson.error_message || errorJson.error || description);
             } catch (e) {}
 
             const err: any = new Error(description);
