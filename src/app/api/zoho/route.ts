@@ -41,8 +41,10 @@ export async function GET(req: NextRequest) {
                 return await getAccountInfo(userId);
             case 'get_messages':
                 return await getMessages(userId, searchParams);
+            case 'search_messages':
+                return await searchMessages(userId, searchParams);
             default:
-                return NextResponse.json({ error: `Invalid action "${action}". Specify action=get_account_info or action=get_messages` }, { status: 400 });
+                return NextResponse.json({ error: `Invalid action "${action}". Specify action=get_account_info, action=get_messages, or action=search_messages` }, { status: 400 });
         }
     } catch (err: any) {
         console.error(`Zoho API GET Error (${action}):`, err);
@@ -200,7 +202,7 @@ async function getMessages(userId: string, searchParams: URLSearchParams) {
         }
     }
 
-    let queryParams = `start=0&limit=50`;
+    let queryParams = `start=1&limit=50`;
     if (lcFolder === 'starred') queryParams += `&flagid=2`;
     else queryParams += `&folderId=${actualFolderId}`;
 
@@ -299,6 +301,17 @@ Subject: [Subject]
     }
 
     return NextResponse.json({ success: true, processedCount: leads.length, results });
+}
+
+async function searchMessages(userId: string, searchParams: URLSearchParams) {
+    const searchParam = searchParams.get('term') || searchParams.get('query') || '';
+    if (!searchParam) {
+        return NextResponse.json({ error: 'Search term is required' }, { status: 400 });
+    }
+
+    // Zoho V1 search endpoint
+    const data = await zohoServerService.proxyRequest(userId, `messages/search?searchKey=${encodeURIComponent(searchParam)}&start=1&limit=50`);
+    return NextResponse.json({ success: true, data: data.data || [] });
 }
 
 /**

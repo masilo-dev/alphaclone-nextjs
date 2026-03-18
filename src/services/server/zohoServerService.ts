@@ -329,9 +329,23 @@ export const zohoServerService = {
             let description = `Zoho API Error ${response.status}: ${errorText.substring(0, 150)}`;
             try {
                 const errorJson = JSON.parse(errorText);
-                description = errorJson.data?.errorCode === 'INVALID_OAUTHTOKEN' 
-                    ? 'Zoho access token expired. Refreshing...' 
-                    : (errorJson.status?.description || errorJson.error_message || errorJson.error || description);
+                const errorCode = errorJson.data?.errorCode || errorJson.errorCode || errorJson.error;
+                
+                const errorMessageMap: Record<string, string> = {
+                    'INVALID_OAUTHTOKEN': 'Zoho session expired. Refreshing...',
+                    'LIMIT_EXCEEDED': 'Zoho API rate limit reached. Please try again in a few minutes.',
+                    'FOLDER_NOT_FOUND': 'The requested mail folder was not found.',
+                    'INVALID_INPUT': 'Invalid request parameters sent to Zoho.',
+                    'USER_DISABLED': 'This Zoho account is currently disabled.',
+                    'ACCESS_DENIED': 'Access to this Zoho resource is denied. Check permissions.',
+                    'INTERNAL_ERROR': 'Zoho internal server error. Please try again later.'
+                };
+
+                description = errorMessageMap[errorCode as string] || 
+                             errorJson.status?.description || 
+                             errorJson.error_message || 
+                             errorJson.error || 
+                             description;
             } catch (e) {}
 
             const err: any = new Error(description);
@@ -456,56 +470,4 @@ export const zohoServerService = {
             }),
         });
     },
-
-    /**
-     * Create a Lead in Zoho CRM
-     * Note: Requires ZohoCRM.modules.ALL scope
-     */
-    async createCRMLead(userId: string, leadData: any) {
-        const token = await this.getValidToken(userId);
-        if (!token) throw new Error('Zoho token not found');
-
-        const supabaseAdmin = createSupabaseAdminClient();
-        const { data: integration } = await supabaseAdmin
-            .from('integrations')
-            .select('config')
-            .eq('user_id', userId)
-            .eq('type', 'zoho')
-            .maybeSingle();
-        
-        const region = integration?.config?.region || 'com';
-        // Map region to CRM API host
-        const crmHost = region === 'cn' ? 'www.zohoapis.com.cn' : 
-                       region === 'eu' ? 'www.zohoapis.eu' :
-                       region === 'in' ? 'www.zohoapis.in' :
-                       region === 'au' ? 'www.zohoapis.com.au' :
-                       'www.zohoapis.com';
-        
-        const url = `https://${crmHost}/crm/v2/Leads`;
-        
-        console.log(`[Zoho CRM] Creating lead at ${url}`);
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Zoho-oauthtoken ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                data: [{
-                    Last_Name: leadData.name?.split(' ').slice(1).join(' ') || leadData.name || 'Unknown',
-                    First_Name: leadData.name?.split(' ')[0] || '',
-                    Email: leadData.email,
-                    Company: leadData.company || 'Unknown',
-                    Description: leadData.description || 'Synced from AlphaClone'
-                }]
-            })
-        });
-        
-        const data = await response.json();
-        if (data.code === 'INVALID_TOKEN') {
-            throw new Error('Invalid Token or Scope for Zoho CRM');
-        }
-        return data;
-    }
 };

@@ -8,8 +8,10 @@
 - Optimized Client Nexus UI footprint: reduced header sizes and compacted "Quick Actions" (Call/Email) buttons for improved screen real estate.
 - Fixed Zoho API 401 Unauthorized errors by implementing recursive token refresh and retry logic in `zohoServerService.ts`.
 - Resolved Zoho API 400 Bad Request (`EXTRA_PARAM_FOUND`) errors by removing unsupported `sortBy` and `sortOrder` parameters from `messages/view` endpoint.
+- Refined Zoho Mail pagination to use 1-indexed `start` parameter, ensuring alignment with Zoho V1 API specifications.
+- Implemented `search_messages` action in Zoho API handler for full email activity search support.
+- Enhanced Zoho error mapping to provide descriptive feedback for specific error codes (e.g., rate limits, account status).
+- Removed legacy Zoho CRM logic to focus exclusively on robust email management.
 - Corrected regional host derivation logic and enabled auto-correction of database records for improved reliability.
-- Optimized Supabase Realtime connectivity by increasing WebSocket timeout and forcing secure transport.
-- Upgraded Calendly integration (API v2.2026): enabled programmatic scheduling for autonomous AI bookings.
 
 Vercel Build Status: Confirmed Safe (Zoho fixes verified with `tsc`).
