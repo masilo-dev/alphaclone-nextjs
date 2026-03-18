@@ -31,18 +31,6 @@ export async function POST(req: Request) {
 
         const results = [];
 
-        // Sync to Zoho (CRM)
-        const zoho = integrations.find((i: any) => i.type === 'zoho');
-        if (zoho) {
-            try {
-                const res = await zohoServerService.createCRMLead(userId, deal);
-                results.push({ provider: 'zoho', status: 'success', data: res });
-            } catch (e: any) {
-                console.error('Zoho Sync Error:', e);
-                results.push({ provider: 'zoho', status: 'failed', error: e.message });
-            }
-        }
-
         // Sync to HubSpot
         const hubspot = integrations.find((i: any) => i.type === 'hubspot');
         if (hubspot) {

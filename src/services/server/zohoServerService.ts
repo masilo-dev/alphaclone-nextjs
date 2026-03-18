@@ -470,4 +470,82 @@ export const zohoServerService = {
             }),
         });
     },
+
+    /**
+     * Update message status (Read/Unread/Star)
+     * mode: markAsRead, markAsUnread, setFlag, applyLabel
+     */
+    async updateMessage(userId: string, messageId: string, mode: string, params: any = {}) {
+        return this.proxyRequest(userId, `messages/${messageId}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                mode,
+                ...params
+            }),
+        });
+    },
+
+    /**
+     * Reply to an email
+     */
+    async replyMessage(userId: string, messageId: string, data: {
+        toAddress: string;
+        subject: string;
+        content: string;
+        fromAddress?: string;
+    }) {
+        return this.proxyRequest(userId, `messages/${messageId}/reply`, {
+            method: 'POST',
+            body: JSON.stringify({
+                fromAddress: data.fromAddress,
+                toAddress: data.toAddress,
+                subject: data.subject,
+                content: data.content,
+                mailFormat: 'html'
+            }),
+        });
+    },
+
+    /**
+     * Forward an email
+     */
+    async forwardMessage(userId: string, messageId: string, data: {
+        toAddress: string;
+        subject: string;
+        content: string;
+        fromAddress?: string;
+    }) {
+        return this.proxyRequest(userId, `messages/${messageId}/forward`, {
+            method: 'POST',
+            body: JSON.stringify({
+                fromAddress: data.fromAddress,
+                toAddress: data.toAddress,
+                subject: data.subject,
+                content: data.content,
+                mailFormat: 'html'
+            }),
+        });
+    },
+
+    /**
+     * Save an email as draft
+     */
+    async saveDraft(userId: string, data: {
+        toAddress: string;
+        subject: string;
+        content: string;
+        fromAddress?: string;
+    }) {
+        return this.proxyRequest(userId, 'messages', {
+            method: 'POST',
+            body: JSON.stringify({
+                mode: 'saveDraft',
+                fromAddress: data.fromAddress,
+                toAddress: data.toAddress,
+                subject: data.subject,
+                content: data.content,
+                mailFormat: 'html'
+            }),
+        });
+    },
 };

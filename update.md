@@ -11,7 +11,7 @@
 - Refined Zoho Mail pagination to use 1-indexed `start` parameter, ensuring alignment with Zoho V1 API specifications.
 - Implemented `search_messages` action in Zoho API handler for full email activity search support.
 - Enhanced Zoho error mapping to provide descriptive feedback for specific error codes (e.g., rate limits, account status).
-- Removed legacy Zoho CRM logic to focus exclusively on robust email management.
+- Removed legacy Zoho CRM logic and AI tool integrations (`createCRMLead`) to focus exclusively on robust email management.
 - Corrected regional host derivation logic and enabled auto-correction of database records for improved reliability.
 
 Vercel Build Status: Confirmed Safe (Zoho fixes verified with `tsc`).

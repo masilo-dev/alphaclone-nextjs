@@ -80,6 +80,14 @@ export async function POST(req: NextRequest) {
         switch (action) {
             case 'send_email':
                 return await sendEmail(userId, data);
+            case 'reply_email':
+                return await replyEmail(userId, data);
+            case 'forward_email':
+                return await forwardEmail(userId, data);
+            case 'save_draft':
+                return await saveDraft(userId, data);
+            case 'update_message':
+                return await updateMessage(userId, data);
             case 'delete_message':
                 return await deleteMessage(userId, data);
             case 'move_to_folder':
@@ -220,6 +228,51 @@ async function sendEmail(userId: string, data: any) {
         toAddress: to, subject, content, fromAddress
     });
 
+    return NextResponse.json({ success: true, data: response });
+}
+
+async function replyEmail(userId: string, data: any) {
+    const { messageId, to, subject, content, fromAddress } = data;
+    if (!messageId || !to || !subject || !content) {
+        return NextResponse.json({ error: 'Missing required fields: messageId, to, subject, content' }, { status: 400 });
+    }
+
+    const response = await zohoServerService.replyMessage(userId, messageId, {
+        toAddress: to, subject, content, fromAddress
+    });
+
+    return NextResponse.json({ success: true, data: response });
+}
+
+async function forwardEmail(userId: string, data: any) {
+    const { messageId, to, subject, content, fromAddress } = data;
+    if (!messageId || !to || !subject || !content) {
+        return NextResponse.json({ error: 'Missing required fields: messageId, to, subject, content' }, { status: 400 });
+    }
+
+    const response = await zohoServerService.forwardMessage(userId, messageId, {
+        toAddress: to, subject, content, fromAddress
+    });
+
+    return NextResponse.json({ success: true, data: response });
+}
+
+async function saveDraft(userId: string, data: any) {
+    const { to, subject, content, fromAddress } = data;
+    const response = await zohoServerService.saveDraft(userId, {
+        toAddress: to || '', subject: subject || '(No Subject)', content: content || '', fromAddress
+    });
+
+    return NextResponse.json({ success: true, data: response });
+}
+
+async function updateMessage(userId: string, data: any) {
+    const { messageId, mode, params } = data;
+    if (!messageId || !mode) {
+        return NextResponse.json({ error: 'Missing required fields: messageId, mode' }, { status: 400 });
+    }
+
+    const response = await zohoServerService.updateMessage(userId, messageId, mode, params || {});
     return NextResponse.json({ success: true, data: response });
 }
 
