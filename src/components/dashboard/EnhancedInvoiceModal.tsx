@@ -51,6 +51,7 @@ interface InvoiceFormData {
   dueDate: string;
   notes: string;
   template: string;
+  paymentMethods: string[];
 }
 
 const INVOICE_TEMPLATES = [
