@@ -49,7 +49,6 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [myServices, setMyServices] = useState<Record<string, any>>({});
     const [showServiceDropdown, setShowServiceDropdown] = useState<{ index: number; open: boolean }>({ index: -1, open: false });
     const [enablePaymentLinks, setEnablePaymentLinks] = useState(false); // DISABLED by default
-    const [sendAsDraft, setSendAsDraft] = useState(false);
     const [clientEmail, setClientEmail] = useState('');
 
     // Set default bank and mobile money details from tenant
@@ -152,8 +151,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 signature: signatureData,
                 signatureType: signatureType,
                 typedSignature: typedSignature,
-                status: sendAsDraft ? 'draft' : 'sent',
-                isPublic: !sendAsDraft, // Only make public if not draft
+                status: 'draft',
+                isPublic: enablePaymentLinks, // Only make public if payment links are enabled
                 enablePaymentLinks: enablePaymentLinks // Explicitly set payment links status
             };
 
@@ -169,11 +168,6 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             setStep('success');
             onInvoiceCreated();
 
-            // Send email notification if not draft
-            if (!sendAsDraft && clientEmail) {
-                await sendInvoiceEmail(invoice);
-            }
-
         } catch (error) {
             console.error('Failed to create invoice:', error);
             toast.error('Failed to create invoice');
@@ -182,31 +176,6 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         }
     };
 
-    const sendInvoiceEmail = async (invoice: any) => {
-        try {
-            const { emailCampaignService } = await import('../../services/emailCampaignService');
-            const invoiceUrl = `${window.location.origin}/invoice/${invoice.id}`;
-
-            await emailCampaignService.sendTransactionalEmail(
-                clientEmail,
-                `New Invoice from ${currentTenant?.name || 'Your Business'}`,
-                {
-                    invoiceNumber: invoice.invoiceNumber,
-                    amount: calculateTotal(),
-                    dueDate: dueDate,
-                    invoiceUrl: invoiceUrl,
-                    clientName: clients.find(c => c.id === selectedClientId)?.name || 'Client',
-                    businessName: currentTenant?.name || 'Your Business',
-                    paymentInstructions: getPaymentInstructions()
-                }
-            );
-
-            toast.success('Invoice sent to client via email');
-        } catch (error) {
-            console.error('Failed to send invoice email:', error);
-            toast.error('Failed to send invoice email');
-        }
-    };
 
     const getPaymentInstructions = () => {
         switch (paymentMethod) {
@@ -235,7 +204,6 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         setSignatureType('draw');
         setTypedSignature('');
         setEnablePaymentLinks(false);
-        setSendAsDraft(false);
         setClientEmail('');
         setStep('edit');
     };
@@ -341,39 +309,6 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 </div>
                             </div>
 
-                            {/* Draft Option */}
-                            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-                                <div className="flex items-start gap-3">
-                                    <Mail className="w-5 h-5 text-blue-400 mt-0.5" />
-                                    <div className="flex-1">
-                                        <h3 className="text-blue-400 font-bold text-sm">Send Options</h3>
-                                        <div className="mt-3 space-y-3">
-                                            <label className="flex items-center space-x-2">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={sendAsDraft}
-                                                    onChange={(e) => setSendAsDraft(e.target.checked)}
-                                                    className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-                                                />
-                                                <span className="text-sm text-white">Save as draft (don't send to client)</span>
-                                            </label>
-
-                                            {!sendAsDraft && (
-                                                <div className="ml-6">
-                                                    <Input
-                                                        label="Client Email (for invoice notification)"
-                                                        type="email"
-                                                        value={clientEmail}
-                                                        onChange={(e) => setClientEmail(e.target.value)}
-                                                        placeholder="client@example.com"
-                                                        className="text-sm"
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
 
                             {/* Template Selector */}
                             <div className="border-b border-slate-800 pb-6">
@@ -918,8 +853,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 <div className="space-y-1 text-sm text-slate-300">
                                     <div className="flex justify-between">
                                         <span>Status:</span>
-                                        <span className={sendAsDraft ? "text-yellow-400" : "text-green-400"}>
-                                            {sendAsDraft ? "Draft (Internal Only)" : "Sent to Client"}
+                                        <span className="text-yellow-400">
+                                            Saved (Not Sent)
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
@@ -928,12 +863,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                             {enablePaymentLinks ? "Enabled" : "Disabled"}
                                         </span>
                                     </div>
-                                    {!sendAsDraft && (
-                                        <div className="flex justify-between">
-                                            <span>Client Notification:</span>
-                                            <span className="text-green-400">Email will be sent</span>
-                                        </div>
-                                    )}
+
                                 </div>
                             </div>
                         </div>
@@ -947,10 +877,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
                             <h3 className="text-2xl font-bold text-white mb-2">Invoice Created Successfully!</h3>
                             <p className="text-slate-400 max-w-md mx-auto mb-8">
-                                {sendAsDraft
-                                    ? "Your invoice has been saved as a draft. You can send it to the client later."
-                                    : "Your invoice has been created and sent to the client."
-                                }
+                                Your invoice has been saved successfully. You can download the PDF to send it manually to your client.
                             </p>
 
                             {/* Payment Link - Only show if enabled */}
@@ -981,19 +908,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 text-left">
                                 <h4 className="text-white font-bold mb-2">Next Steps</h4>
                                 <ul className="text-slate-300 text-sm space-y-1">
-                                    {sendAsDraft ? (
-                                        <>
-                                            <li>• Review and edit the draft as needed</li>
-                                            <li>• Send to client when ready</li>
-                                            <li>• Track payment status</li>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <li>• Track payment status in your dashboard</li>
-                                            <li>• Send reminders if needed</li>
-                                            <li>• Mark as paid when payment is received</li>
-                                        </>
-                                    )}
+                                    <li>• Download the PDF and send it to your client</li>
+                                    <li>• Copy the payment link if enabled and send it manually</li>
+                                    <li>• You can mark it as paid later when payment is received</li>
                                 </ul>
                             </div>
                         </div>
@@ -1037,7 +954,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 ) : (
                                     <>
                                         <Save className="w-4 h-4" />
-                                        {sendAsDraft ? 'Save as Draft' : 'Create Invoice'}
+                                        Save Invoice
                                     </>
                                 )}
                             </Button>

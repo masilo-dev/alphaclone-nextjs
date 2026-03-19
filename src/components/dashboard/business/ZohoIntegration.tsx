@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Mail, Send, Inbox, RefreshCw, Settings, ChevronDown, Paperclip,
   CheckCircle, AlertCircle, Loader2, Trash2, Star, Reply, Forward,
-  PenSquare, X, User, Clock, Search, Zap, MoreVertical, Archive
+  PenSquare, X, User, Clock, Search, Zap, MoreVertical, Archive, Users
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
+import { businessClientService, BusinessClient } from '../../../services/businessClientService';
 import toast from 'react-hot-toast';
 
 interface ZohoIntegrationProps {
@@ -67,6 +68,17 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
   const [aiGenerating, setAiGenerating] = useState(false);
   const [deletingMessage, setDeletingMessage] = useState(false);
 
+  // ── Contact Directory for compose 'To' picker ──
+  const [contacts, setContacts] = useState<BusinessClient[]>([]);
+  const [contactSearch, setContactSearch] = useState('');
+  const [showContactPicker, setShowContactPicker] = useState(false);
+  const contactPickerRef = useRef<HTMLDivElement>(null);
+
+  const filteredContacts = contacts.filter(c =>
+    c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
+    (c.email || '').toLowerCase().includes(contactSearch.toLowerCase())
+  );
+
   const resetCompose = () => {
     const defaultFrom = accountInfo?.fromAddresses?.find((a: any) => a.isDefault)?.address || accountInfo?.email || '';
     setComposeData({ from: defaultFrom, to: '', cc: '', subject: '', body: '' });
@@ -90,6 +102,40 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
     init();
     return () => { mounted = false; };
   }, [user?.id]);
+
+  // Load contacts from client directory once user/tenant is available
+  useEffect(() => {
+    const loadContacts = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const uid = user?.id || session?.user?.id;
+        if (!uid) return;
+        // Fetch tenant id from profiles
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('id', uid)
+          .single();
+        if (!profile?.tenant_id) return;
+        const { clients } = await businessClientService.getClients(profile.tenant_id, 1, 100);
+        setContacts(clients.filter(c => !!c.email));
+      } catch (e) {
+        console.warn('Could not load contacts for compose picker:', e);
+      }
+    };
+    loadContacts();
+  }, [user?.id]);
+
+  // Close contact picker on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (contactPickerRef.current && !contactPickerRef.current.contains(e.target as Node)) {
+        setShowContactPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const [selectedRegion, setSelectedRegion] = useState('com');
   const [showRegionSelector, setShowRegionSelector] = useState(false);
@@ -670,15 +716,75 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-1.5" ref={contactPickerRef}>
                       <label className="text-[10px] text-slate-500 uppercase tracking-widest font-bold ml-1">To</label>
-                      <input
-                        type="text"
-                        value={composeData.to}
-                        onChange={(e) => setComposeData({ ...composeData, to: e.target.value })}
-                        placeholder="recipient@example.com"
-                        className="w-full bg-slate-800/50 text-white text-sm rounded-xl px-4 py-2.5 outline-none border border-slate-700 focus:border-sky-500/50 transition-all"
-                      />
+                      <div className="relative">
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={composeData.to}
+                            onChange={(e) => setComposeData({ ...composeData, to: e.target.value })}
+                            placeholder="recipient@example.com or pick from contacts"
+                            className="flex-1 bg-slate-800/50 text-white text-sm rounded-xl px-4 py-2.5 outline-none border border-slate-700 focus:border-sky-500/50 transition-all"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => { setContactSearch(''); setShowContactPicker(v => !v); }}
+                            title="Pick from client directory"
+                            className="flex items-center gap-1.5 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white text-xs font-medium rounded-xl transition-colors border border-slate-600"
+                          >
+                            <Users className="w-3.5 h-3.5" />
+                            Contacts
+                          </button>
+                        </div>
+
+                        {showContactPicker && (
+                          <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
+                            <div className="p-2 border-b border-slate-700">
+                              <div className="relative">
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                                <input
+                                  autoFocus
+                                  type="text"
+                                  value={contactSearch}
+                                  onChange={(e) => setContactSearch(e.target.value)}
+                                  placeholder="Search clients..."
+                                  className="w-full bg-slate-900 text-white text-xs rounded-lg pl-8 pr-3 py-2 outline-none border border-slate-700 focus:border-sky-500/50 transition-all"
+                                />
+                              </div>
+                            </div>
+                            <div className="max-h-48 overflow-y-auto">
+                              {filteredContacts.length === 0 ? (
+                                <p className="text-slate-500 text-xs text-center py-4">No clients with email found</p>
+                              ) : filteredContacts.map(contact => (
+                                <button
+                                  key={contact.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setComposeData(prev => ({ ...prev, to: contact.email || '' }));
+                                    setShowContactPicker(false);
+                                    setContactSearch('');
+                                  }}
+                                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-700 transition-colors"
+                                >
+                                  <div className="w-7 h-7 rounded-full bg-sky-600/30 border border-sky-500/20 flex items-center justify-center shrink-0">
+                                    <User className="w-3.5 h-3.5 text-sky-400" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-white text-xs font-medium truncate">{contact.name}</p>
+                                    <p className="text-slate-400 text-[10px] truncate">{contact.email}</p>
+                                  </div>
+                                  <span className={`ml-auto text-[9px] px-1.5 py-0.5 rounded-md font-medium shrink-0 ${
+                                    contact.salesStage === 'customer' ? 'bg-emerald-500/20 text-emerald-400' :
+                                    contact.salesStage === 'lead' ? 'bg-amber-500/20 text-amber-400' :
+                                    'bg-sky-500/20 text-sky-400'
+                                  }`}>{contact.salesStage}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex flex-col gap-1.5">

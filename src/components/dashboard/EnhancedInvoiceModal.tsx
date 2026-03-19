@@ -22,7 +22,6 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { businessInvoiceService } from '@/services/businessInvoiceService';
-import { emailCampaignService } from '@/services/emailCampaignService';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 // Removed unused import causing build failure
@@ -52,10 +51,6 @@ interface InvoiceFormData {
   dueDate: string;
   notes: string;
   template: string;
-  paymentMethods: string[];
-  sendEmail: boolean;
-  emailSubject: string;
-  emailMessage: string;
 }
 
 const INVOICE_TEMPLATES = [
@@ -100,10 +95,7 @@ export default function EnhancedInvoiceModal({
     dueDate: '',
     notes: '',
     template: 'modern',
-    paymentMethods: ['stripe'],
-    sendEmail: true,
-    emailSubject: '',
-    emailMessage: ''
+    paymentMethods: ['stripe']
   });
 
   // Load invoice data if editing
@@ -120,10 +112,7 @@ export default function EnhancedInvoiceModal({
         dueDate: invoice.dueDate || '',
         notes: invoice.notes || '',
         template: invoice.template || 'modern',
-        paymentMethods: invoice.paymentMethods || ['stripe'],
-        sendEmail: true,
-        emailSubject: `Invoice ${invoice.invoiceNumber} from ${user?.name}`,
-        emailMessage: `Dear ${invoice.clientName},\n\nPlease find your invoice attached.\n\nThank you for your business!`
+        paymentMethods: invoice.paymentMethods || ['stripe']
       });
     }
   }, [invoice, mode, user?.name]);
@@ -236,27 +225,10 @@ export default function EnhancedInvoiceModal({
 
       if (!finalInvoice) throw new Error("Failed to retrieve invoice information");
 
-      // Generate payment link
+      // Generate payment link if needed (isPublic is true)
       const paymentUrl = `${window.location.origin}/invoice/${finalInvoice.id}`;
 
-      // Send email if enabled
-      if (formData.sendEmail) {
-        await emailCampaignService.sendTransactionalEmail(
-          formData.clientEmail,
-          formData.emailSubject,
-          {
-            invoiceUrl: paymentUrl,
-            invoiceNumber: finalInvoice.invoiceNumber || `INV-${finalInvoice.id.slice(0, 8)}`,
-            amount: formData.total,
-            dueDate: formData.dueDate,
-            clientName: formData.clientName,
-            message: formData.emailMessage,
-            paymentMethods: formData.paymentMethods.join(', ')
-          }
-        );
-      }
-
-      toast.success("Invoice sent successfully");
+      toast.success("Invoice finalized successfully");
 
       onSuccess?.(finalInvoice);
       onClose();
@@ -485,42 +457,6 @@ export default function EnhancedInvoiceModal({
         </div>
       </div>
 
-      <div className="border-t border-slate-800 pt-6">
-        <label className="flex items-center mb-4 text-white">
-          <input
-            type="checkbox"
-            checked={formData.sendEmail}
-            onChange={(e) => setFormData(prev => ({ ...prev, sendEmail: e.target.checked }))}
-            className="mr-2 rounded border-slate-600 text-teal-600 focus:ring-teal-500 bg-slate-900"
-          />
-          <span className="font-medium">Send email notification to client</span>
-        </label>
-
-        {formData.sendEmail && (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Email Subject</label>
-              <input
-                type="text"
-                value={formData.emailSubject}
-                onChange={(e) => setFormData(prev => ({ ...prev, emailSubject: e.target.value }))}
-                className="w-full px-3 py-2 bg-slate-800 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                placeholder="Enter email subject"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Email Message</label>
-              <textarea
-                value={formData.emailMessage}
-                onChange={(e) => setFormData(prev => ({ ...prev, emailMessage: e.target.value }))}
-                className="w-full px-3 py-2 bg-slate-800 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                rows={4}
-                placeholder="Enter email message"
-              />
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 
@@ -620,10 +556,10 @@ export default function EnhancedInvoiceModal({
         <div className="flex items-center justify-between p-6 border-b border-slate-800">
           <div>
             <h2 className="text-xl font-semibold text-white">
-              {mode === 'create' ? 'Create Invoice' : mode === 'edit' ? 'Edit Invoice' : 'Send Invoice'}
+              {mode === 'create' ? 'Create Invoice' : mode === 'edit' ? 'Edit Invoice' : 'Finalize Invoice'}
             </h2>
             <p className="text-sm text-slate-400">
-              {mode === 'send' ? 'Review and send invoice to client' : 'Create a professional invoice for your client'}
+              {mode === 'send' ? 'Review and finalize invoice' : 'Create a professional invoice for your client'}
             </p>
           </div>
           <button
@@ -706,16 +642,16 @@ export default function EnhancedInvoiceModal({
 
             <button
               onClick={handleSendInvoice}
-              disabled={isSending || !formData.clientName || !formData.clientEmail}
+              disabled={isSending || !formData.clientName}
               className={cn(
                 "flex items-center space-x-2 px-6 py-2 rounded-lg font-medium transition-colors",
-                isSending || !formData.clientName || !formData.clientEmail
+                isSending || !formData.clientName
                   ? "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700"
                   : "bg-teal-600 text-white hover:bg-teal-500"
               )}
             >
-              <Send className="w-4 h-4" />
-              <span>{mode === 'send' ? 'Send Invoice' : 'Send to Client'}</span>
+              <Check className="w-4 h-4" />
+              <span>{mode === 'send' ? 'Finalize Invoice' : 'Finalize'}</span>
             </button>
           </div>
         </div>

@@ -33,6 +33,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import CRMTab from '../CRMTab';
 import { LayoutGrid, List } from 'lucide-react';
+import { CommunicationModal } from '../crm/CommunicationModal';
 
 interface ClientsPageProps {
     user: User;
@@ -55,6 +56,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [selectedClientForProposal, setSelectedClientForProposal] = useState<BusinessClient | null>(null);
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
     const [selectedClientForInvoice, setSelectedClientForInvoice] = useState<BusinessClient | null>(null);
+    const [showCommunicationModal, setShowCommunicationModal] = useState(false);
+    const [selectedClientForCommunication, setSelectedClientForCommunication] = useState<BusinessClient | null>(null);
     const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(null);
 
     useEffect(() => {
@@ -424,7 +427,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             className="w-full h-10 gap-2"
                                             onClick={() => {
                                                 if (selectedClient.email) {
-                                                    window.open(`mailto:${selectedClient.email}`);
+                                                    setSelectedClientForCommunication(selectedClient);
+                                                    setShowCommunicationModal(true);
                                                 } else {
                                                     toast.error('No email address on file.');
                                                 }
@@ -482,6 +486,22 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 />
             )}
 
+            {/* Communication Modal */}
+            {showCommunicationModal && selectedClientForCommunication && (
+                <CommunicationModal
+                    client={selectedClientForCommunication}
+                    user={user}
+                    onClose={() => {
+                        setShowCommunicationModal(false);
+                        setSelectedClientForCommunication(null);
+                    }}
+                    onSent={() => {
+                        setShowCommunicationModal(false);
+                        setSelectedClientForCommunication(null);
+                    }}
+                />
+            )}
+
             {filteredClients.length === 0 && (
                 <div className="text-center py-12 text-slate-400">
                     No clients found. Add your first client to get started!
@@ -519,13 +539,14 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     );
 };
 
-const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCreateInvoice }: { 
+const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCreateInvoice, onSendEmail }: { 
     client: BusinessClient; 
     onEdit: (c: BusinessClient) => void; 
     onDelete: (id: string) => void; 
     onCall: (c: BusinessClient) => void;
     onCreateProposal: (c: BusinessClient) => void;
     onCreateInvoice: (c: BusinessClient) => void;
+    onSendEmail: (c: BusinessClient) => void;
 }) => {
     const stageVariants = {
         lead: 'blue',
@@ -550,7 +571,7 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
             icon: <Mail className="w-4 h-4" />,
             onClick: () => {
                 if (client.email) {
-                    window.open(`mailto:${client.email}`);
+                    onSendEmail(client);
                 } else {
                     toast.error('No email address on file for this client.');
                 }
