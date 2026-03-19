@@ -720,7 +720,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     </div>
 
                                     {signatureType === 'draw' && (
-                                        <div className="bg-white rounded-lg p-4">
+                                        <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
                                             <canvas
                                                 ref={(canvas) => {
                                                     if (canvas) {
@@ -823,15 +823,15 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
 
                             {/* Invoice Preview */}
-                            <div className="bg-white rounded-lg p-6 text-black">
+                            <div className="bg-slate-950 rounded-lg p-6 text-white border border-slate-800">
                                 <div className="flex justify-between items-start mb-6">
                                     <div>
                                         <h2 className="text-2xl font-bold">{currentTenant?.name || 'Business Name'}</h2>
-                                        <p className="text-gray-600">Invoice</p>
+                                        <p className="text-slate-400">Invoice</p>
                                     </div>
                                     <div className="text-right">
                                         <p className="font-bold">Invoice #INV-{Date.now().toString().slice(-6)}</p>
-                                        <p className="text-gray-600">Due: {dueDate}</p>
+                                        <p className="text-slate-400">Due: {dueDate}</p>
                                     </div>
                                 </div>
 
@@ -839,7 +839,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     <div>
                                         <h3 className="font-bold mb-2">Bill To:</h3>
                                         <p>{selectedClient?.name || 'Client Name'}</p>
-                                        <p className="text-gray-600">{selectedClient?.email || 'client@example.com'}</p>
+                                        <p className="text-slate-400">{selectedClient?.email || 'client@example.com'}</p>
                                     </div>
                                     <div>
                                         <h3 className="font-bold mb-2">Project:</h3>
@@ -849,7 +849,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
                                 <table className="w-full mb-6">
                                     <thead>
-                                        <tr className="border-b-2 border-gray-300">
+                                        <tr className="border-b-2 border-slate-700">
                                             <th className="text-left py-2">Description</th>
                                             <th className="text-right py-2">Qty</th>
                                             <th className="text-right py-2">Rate</th>
@@ -858,7 +858,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     </thead>
                                     <tbody>
                                         {lineItems.filter(item => item.description.trim()).map((item, index) => (
-                                            <tr key={index} className="border-b border-gray-200">
+                                            <tr key={index} className="border-b border-slate-800/50">
                                                 <td className="py-2">{item.description}</td>
                                                 <td className="text-right py-2">{item.quantity}</td>
                                                 <td className="text-right py-2">${item.rate.toFixed(2)}</td>
@@ -882,12 +882,12 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                 </div>
                                             )}
                                             {discountAmount > 0 && (
-                                                <div className="flex justify-between text-red-600">
+                                                <div className="flex justify-between text-red-400">
                                                     <span>Discount:</span>
                                                     <span>-${discountAmount.toFixed(2)}</span>
                                                 </div>
                                             )}
-                                            <div className="border-t border-gray-300 pt-2 flex justify-between font-bold text-lg">
+                                            <div className="border-t border-slate-700 pt-2 flex justify-between font-bold text-lg">
                                                 <span>Total:</span>
                                                 <span>${calculateTotal().toFixed(2)}</span>
                                             </div>
@@ -897,15 +897,17 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
                                 {signatureData && (
                                     <div className="mt-6">
-                                        <p className="text-gray-600 mb-2">Authorized Signature:</p>
-                                        <img src={signatureData} alt="Signature" className="h-16" />
+                                        <p className="text-slate-400 mb-2">Authorized Signature:</p>
+                                        <div className="bg-slate-200/10 inline-block p-2 rounded max-h-24">
+                                            <img src={signatureData} alt="Signature" className="h-16 invert" />
+                                        </div>
                                     </div>
                                 )}
 
                                 {typedSignature && (
                                     <div className="mt-6">
-                                        <p className="text-gray-600 mb-2">Authorized Signature:</p>
-                                        <p className="text-2xl font-script">{typedSignature}</p>
+                                        <p className="text-slate-400 mb-2">Authorized Signature:</p>
+                                        <p className="text-2xl font-script text-white">{typedSignature}</p>
                                     </div>
                                 )}
                             </div>

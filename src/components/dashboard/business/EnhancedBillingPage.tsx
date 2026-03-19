@@ -639,12 +639,12 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             {/* PDF Preview Modal */}
             {showPDFPreview && (
                 <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg w-full max-w-4xl h-full max-h-[90vh] flex flex-col">
-                        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                            <h3 className="text-lg font-semibold text-gray-900">Invoice Preview</h3>
+                    <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-lg w-full max-w-4xl h-full max-h-[90vh] flex flex-col">
+                        <div className="flex items-center justify-between p-4 border-b border-slate-800">
+                            <h3 className="text-lg font-semibold text-white">Invoice Preview</h3>
                             <button
                                 onClick={() => setShowPDFPreview(null)}
-                                className="text-gray-400 hover:text-gray-600"
+                                className="text-slate-400 hover:text-white transition-colors"
                             >
                                 <X className="w-6 h-6" />
                             </button>
