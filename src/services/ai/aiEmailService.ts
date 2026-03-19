@@ -124,7 +124,11 @@ Return the response in JSON format with "subject" and "body" keys.`;
                     if (provider === 'gmail') {
                         await gmailService.sendMessage(userId, emailMsg.from, response.subject, response.body, emailMsg.threadId);
                     } else {
-                        await zohoService.sendMessage(userId, emailMsg.from, response.subject, response.body);
+                        await zohoService.sendMessage({ 
+                            to: emailMsg.from, 
+                            subject: response.subject, 
+                            content: response.body 
+                        });
                     }
                     responded++;
                 }
