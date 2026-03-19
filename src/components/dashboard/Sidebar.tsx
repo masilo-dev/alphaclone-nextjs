@@ -91,7 +91,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                 className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-1'} py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 bg-gradient-to-r from-purple-600/20 to-teal-600/20 border border-teal-500/30 text-teal-400 hover:from-purple-600/30 hover:to-teal-600/30 hover:border-teal-400 shadow-lg shadow-teal-500/10 mb-2`}
                             >
                                 <ShieldAlert className={`w-5 h-5 flex-shrink-0`} />
-                                <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'} transition-all`}>Global Command</span>
+                                <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'} transition-all`}>Admin Panel</span>
                             </button>
                         </div>
                     )}

@@ -3,9 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import {
-    Target, Users, Award, TrendingUp, Zap, Shield, Globe,
-    Check, ArrowRight, Heart, Lightbulb, Building2,
-    Clock, Star, BarChart3, CircuitBoard, Lock, Layers
+    Globe, ArrowRight, Building2, Clock, CircuitBoard
 } from 'lucide-react';
 import { Button } from '../ui/UIComponents';
 import PublicNavigation from '../PublicNavigation';
@@ -28,83 +26,72 @@ const AboutPage: React.FC = () => {
         {
             year: '2022',
             title: 'Identifying the Operational Gap',
-            desc: 'We saw countless service businesses struggling with software fragmentation—paying for a CRM, invoicing tools, scheduling systems, and document signers, none of which talked to each other. Information was constantly falling through the cracks.',
+            desc: 'We saw service businesses struggling with software fragmentation: CRM, invoicing, scheduling, contracts, and communication all lived in separate tools that did not share context.',
         },
         {
             year: '2023',
             title: 'The Unified Platform',
-            desc: 'We launched AlphaClone as a centralized Business Operating System. By consolidating client management, financials, and project delivery into a single dashboard, our early users eliminated redundant subscriptions and saved an average of 15 hours per week in administrative overhead.',
+            desc: 'We launched AlphaClone as a centralized business platform so teams could manage client relationships, delivery work, and core operations in one place.',
         },
         {
             year: '2024',
             title: 'The AI Growth Agent',
-            desc: 'We introduced the AI Growth Agent, transforming AlphaClone from a management tool into a growth engine. Small businesses gained the capability to automatically discover, qualify, and engage leads 24/7 without needing a dedicated sales team.',
+            desc: 'We introduced AI support for lead discovery, qualification, and outreach preparation so sales work could be handled more consistently and with less manual effort.',
         },
         {
-            year: '2025–26',
+            year: '2025-26',
             title: 'The Complete Business OS',
-            desc: 'With advanced contract drafting, enterprise-grade accounting, HD video meetings, and powerful automation now standard, AlphaClone provides professional service teams the exact same operational infrastructure as Fortune 500 companies—starting at just $15/month.',
+            desc: 'AlphaClone expanded into a fuller operating layer with contracts, accounting, meetings, automations, and connected workflows designed for professional service teams.',
         },
     ];
 
     const values = [
         {
-            icon: Target,
             title: 'Obsessed with Real Business Outcomes',
-            desc: "We don't measure success by feature count or interface polish. We measure it by whether using AlphaClone actually makes your business more profitable, more organized, and less stressful. Every decision we make is filtered through this lens.",
+            desc: "We do not measure success by feature count. We measure it by whether the product makes a business more organized, more profitable, and easier to run.",
         },
         {
-            icon: Lightbulb,
             title: 'Radical Simplicity',
-            desc: 'The hardest engineering challenge is building something powerful that is also easy to use. We invest enormous effort in making complex functionality feel simple and intuitive. If a business owner needs to read a manual to use a feature, we\'ve failed.',
+            desc: 'Powerful systems should still feel straightforward. If a business owner needs a manual to complete a common task, the product has failed that user.',
         },
         {
-            icon: Heart,
             title: 'Built for the Non-Technical Majority',
-            desc: 'The vast majority of business owners are not software engineers. They have expertise in their craft — law, design, marketing, consulting, finance — not in configuring SaaS tools. We build for them, in their language, around their actual workflows.',
+            desc: 'Most business owners are not software engineers. We build around their workflows instead of asking them to think like an IT department.',
         },
         {
-            icon: Lock,
             title: 'Data Privacy as a Default',
-            desc: 'Your business data — your clients, your contracts, your financials — is more sensitive than most people treat it. We protect it with enterprise-grade encryption, strict access controls, and transparent data governance. We never sell your data.',
+            desc: 'Client records, contracts, and financial data are sensitive business assets. We treat privacy, permissions, and auditability as product requirements.',
         },
         {
-            icon: CircuitBoard,
             title: 'AI That Serves, Not Replaces',
-            desc: 'We believe AI should amplify human capability, not replace human judgment. Our AI Growth Agent finds leads and starts conversations, but you close the deal. Our contract AI drafts, but you review. The AI does the repetitive work; you do the high-value work.',
+            desc: 'AI should reduce repetitive work and support better decisions. It should not add noise or remove human judgment from important business actions.',
         },
         {
-            icon: Layers,
             title: 'One Platform, Zero Silos',
-            desc: 'The reason most business tools fail small businesses is that they operate in isolation. An invoice tool doesn\'t know about your CRM. Your calendar doesn\'t know about your tasks. AlphaClone is designed from the ground up as a unified system where everything is connected.',
+            desc: 'Client work breaks down when CRM, invoicing, meetings, and delivery tools do not share context. We design the platform as one connected system.',
         },
     ];
 
     const whySection = [
         {
-            title: 'Why AlphaClone is a Game Changer for Non-Technical Business Owners',
-            points: [
-                {
-                    headline: 'You stop losing information between tools',
-                    body: "When you use 6 different apps, information falls through the cracks constantly. A client emails you about a contract change, but that email doesn't appear in your project management tool. An invoice is overdue, but the person chasing it doesn't know the client relationship history. With AlphaClone, everything is connected. The email, the invoice, the contract, the project, and the CRM record are all one unified picture.",
-                },
-                {
-                    headline: 'You stop paying for the same feature in multiple places',
-                    body: "You're paying for calendar features in Notion, Calendly, and Google Calendar. You're paying for document storage in Dropbox, Notion, and Google Drive. You're paying for communication tools in Slack, Gmail, and Zoom. AlphaClone consolidates all of this into tools that are actually connected to each other — so you're not duplicating functionality across subscriptions.",
-                },
-                {
-                    headline: 'Your business looks more professional immediately',
-                    body: "When you send a branded invoice, a professionally drafted contract, and schedule a meeting through your branded booking page — all from the same platform — it projects a level of operational sophistication that your competitors using cobbled-together free tools simply cannot match. Clients notice. It builds trust.",
-                },
-                {
-                    headline: "The AI works while you sleep",
-                    body: "The single biggest leverage point in the AlphaClone platform for most business owners is the Growth Agent. While you're delivering work for existing clients, the AI is identifying new prospects, qualifying them, and managing initial outreach. You wake up to warm leads in your CRM that are ready for a real conversation — not cold calls you have to make yourself.",
-                },
-                {
-                    headline: 'You make faster, smarter decisions',
-                    body: "When all your business data lives in one place, you can actually see the health of your business at a glance. Which clients generate the most revenue? Which deals are stuck in the pipeline? What's your average invoice payment time? These questions were previously hard to answer without hours of spreadsheet work. With AlphaClone, they're answered in real time on your dashboard.",
-                },
-            ],
+            headline: 'You stop losing information between tools',
+            body: "When the CRM, inbox, project workspace, invoices, and contracts are disconnected, details get lost. AlphaClone is designed to keep those records tied to the same client and the same workflow.",
+        },
+        {
+            headline: 'You stop paying for overlapping software',
+            body: 'Many teams pay for multiple tools that cover the same basic jobs: communication, scheduling, storage, billing, and task management. A unified platform reduces that overlap.',
+        },
+        {
+            headline: 'Your client experience becomes more consistent',
+            body: 'Branded invoices, contracts, meetings, and delivery updates coming from one system creates a more professional and more trustworthy experience for clients.',
+        },
+        {
+            headline: 'AI can handle repetitive growth work in the background',
+            body: 'The Growth Agent is meant to support prospecting, qualification, and outreach preparation so teams spend more time on qualified conversations and less time on repetitive admin.',
+        },
+        {
+            headline: 'Decision-making gets faster',
+            body: 'When revenue, pipeline activity, project delivery, and client communication live in one platform, teams can answer operational questions without piecing together reports from several systems.',
         },
     ];
 
@@ -113,7 +100,6 @@ const AboutPage: React.FC = () => {
             <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
 
             <div className="pt-20">
-                {/* Hero */}
                 <section className="bg-gradient-to-b from-slate-900/60 to-transparent border-b border-slate-800/50 py-20">
                     <div className="max-w-4xl mx-auto px-4 text-center">
                         <AnimateIn type="fadeIn" delay={0}>
@@ -124,21 +110,17 @@ const AboutPage: React.FC = () => {
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.1}>
                             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                                We Built the Business OS We Wished{' '}
-                                <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-400">
-                                    Existed
-                                </span>
+                                We Built the Business Platform We Wanted to Use
                             </h1>
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.2}>
                             <p className="text-xl text-slate-300 leading-relaxed max-w-3xl mx-auto">
-                                AlphaClone Systems was built to solve the frustration of software fragmentation. Service businesses were paying for 9 different subscriptions and spending more time managing tools than clients. We built the complete platform that does it all—bringing enterprise-grade CRM, invoicing, lead generation, and operations into one unified dashboard.
+                                AlphaClone exists to help service businesses run CRM, billing, scheduling, contracts, communication, and delivery from one connected system instead of a patchwork of separate apps.
                             </p>
                         </AnimateIn>
                     </div>
                 </section>
 
-                {/* Stats */}
                 <section className="py-16 bg-transparent">
                     <div className="max-w-6xl mx-auto px-4">
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
@@ -155,7 +137,6 @@ const AboutPage: React.FC = () => {
                     </div>
                 </section>
 
-                {/* The Mission */}
                 <section className="py-24 bg-white/[0.02] backdrop-blur-sm border-y border-slate-800/60 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/5 blur-[120px] -z-10" />
                     <div className="max-w-6xl mx-auto px-4">
@@ -170,27 +151,29 @@ const AboutPage: React.FC = () => {
                                 <AnimateIn type="fadeUp" delay={0.1}>
                                     <div className="space-y-6 text-slate-300 leading-relaxed text-lg">
                                         <p>
-                                            <strong className="text-white text-2xl block mb-4">To level the playing field for every business owner.</strong>
-                                            Enterprise companies have entire IT departments and hundreds of thousands of dollars to spend on infrastructure. They get organized client relationships, automated lead generation, and secure data management as a default.
+                                            <strong className="text-white text-2xl block mb-4">To give smaller teams the operational quality of much larger companies.</strong>
+                                            Most service businesses do not fail because they lack effort. They fail because their systems are fragmented, their data is scattered, and too much of the day is spent on manual coordination.
                                         </p>
                                         <p>
-                                            We've taken that same high-end operational power and packaged it into a single, unified platform that any business owner can set up in 30 minutes. Starting at $15/month.
+                                            We built AlphaClone to reduce that friction. The product is meant to help teams keep client work, internal operations, and revenue workflows connected.
                                         </p>
                                     </div>
                                 </AnimateIn>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 {[
-                                    { title: 'Democratizing Tech', desc: 'Enterprise power without the enterprise price tag.', icon: Zap },
-                                    { title: 'Eliminating Friction', desc: 'No more context switching between 10 different apps.', icon: Layers },
-                                    { title: 'Human Centric', desc: 'AI that serves your workflows, not replaces them.', icon: Users },
-                                    { title: 'Data Sovereignty', desc: 'Your data, your control, protected by AES-256.', icon: Lock }
+                                    { title: 'Built for service businesses', desc: 'CRM, invoicing, scheduling, contracts, and communication in one operating layer.' },
+                                    { title: 'Designed to reduce tool sprawl', desc: 'Less copying, less context switching, and fewer handoffs between disconnected apps.' },
+                                    { title: 'Practical automation', desc: 'AI and workflows should remove repetitive work without making the product harder to run.' },
+                                    { title: 'Clear ownership of data', desc: 'Permissions, activity history, and shared records stay tied to the same operating system.' }
                                 ].map((item, i) => (
                                     <AnimateIn key={i} type="stagger" index={i}>
                                         <div className="p-6 rounded-2xl bg-white/[0.04] border border-slate-700/50 backdrop-blur-sm">
-                                            <item.icon className="w-8 h-8 text-teal-400 mb-4" />
+                                            <div className="text-xs font-semibold tracking-[0.22em] uppercase text-teal-400 mb-3">
+                                                0{i + 1}
+                                            </div>
                                             <h3 className="text-white font-bold mb-2">{item.title}</h3>
-                                            <p className="text-slate-400 text-sm">{item.desc}</p>
+                                            <p className="text-slate-400 text-sm leading-relaxed">{item.desc}</p>
                                         </div>
                                     </AnimateIn>
                                 ))}
@@ -199,26 +182,21 @@ const AboutPage: React.FC = () => {
                     </div>
                 </section>
 
-                {/* Why AlphaClone is a Game Changer */}
                 <section className="py-16 bg-transparent">
                     <div className="max-w-4xl mx-auto px-4">
                         <AnimateIn type="fadeLeft">
-                            <div className="flex items-center gap-3 mb-8">
-                                <Zap className="w-6 h-6 text-amber-400" />
-                                <h2 className="text-3xl font-bold">{whySection[0].title}</h2>
+                            <div className="mb-8">
+                                <h2 className="text-3xl font-bold">Why This Matters for Business Owners</h2>
                             </div>
                         </AnimateIn>
                         <div className="space-y-8">
-                            {whySection[0].points.map((point, i) => (
+                            {whySection.map((point, i) => (
                                 <AnimateIn key={i} type="fadeUp" delay={i * 0.07}>
                                     <div className="p-6 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60">
-                                        <div className="flex items-start gap-4 mb-3 group/item">
-                                            <div className="w-5 h-5 rounded-full bg-teal-500/10 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover/item:bg-teal-500/20 transition-colors">
-                                                <Check className="w-3 h-3 text-teal-400" />
-                                            </div>
-                                            <h3 className="text-lg font-bold text-white">{point.headline}</h3>
+                                        <div className="border-l-2 border-teal-500/50 pl-4">
+                                            <h3 className="text-lg font-bold text-white mb-3">{point.headline}</h3>
+                                            <p className="text-slate-400 leading-relaxed">{point.body}</p>
                                         </div>
-                                        <p className="text-slate-400 leading-relaxed pl-9">{point.body}</p>
                                     </div>
                                 </AnimateIn>
                             ))}
@@ -226,7 +204,6 @@ const AboutPage: React.FC = () => {
                     </div>
                 </section>
 
-                {/* Our Story Timeline */}
                 <section className="py-16 bg-white/[0.02] backdrop-blur-sm border-y border-slate-800/60">
                     <div className="max-w-4xl mx-auto px-4">
                         <div className="flex items-center gap-3 mb-12">
@@ -254,19 +231,20 @@ const AboutPage: React.FC = () => {
                     </div>
                 </section>
 
-                {/* Values */}
                 <section className="py-16 bg-transparent">
                     <div className="max-w-6xl mx-auto px-4">
                         <div className="text-center mb-12">
                             <h2 className="text-3xl font-bold mb-4">What We Believe In</h2>
                             <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                                These aren't mission statement buzzwords — they're the principles that dictate every product decision, support interaction, and partnership we make.
+                                These are the operating principles behind our product decisions, support work, and roadmap.
                             </p>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {values.map((value, idx) => (
                                 <div key={idx} className="p-6 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60 hover:border-teal-500/30 transition-colors">
-                                    <value.icon className="w-8 h-8 text-teal-400 mb-4" />
+                                    <div className="text-xs font-semibold tracking-[0.22em] uppercase text-teal-400 mb-3">
+                                        Principle {idx + 1}
+                                    </div>
                                     <h3 className="text-lg font-bold mb-3">{value.title}</h3>
                                     <p className="text-slate-400 text-sm leading-relaxed">{value.desc}</p>
                                 </div>
@@ -275,7 +253,6 @@ const AboutPage: React.FC = () => {
                     </div>
                 </section>
 
-                {/* Technology Philosophy */}
                 <section className="py-16 bg-white/[0.02] backdrop-blur-sm border-y border-slate-800/60">
                     <div className="max-w-4xl mx-auto px-4">
                         <div className="flex items-center gap-3 mb-8">
@@ -284,28 +261,27 @@ const AboutPage: React.FC = () => {
                         </div>
                         <div className="space-y-6 text-slate-400 leading-relaxed">
                             <p>
-                                AlphaClone is built on modern, enterprise-grade technology — the same stack used by companies like Vercel, Linear, and Notion. Our backend runs on Supabase, providing PostgreSQL-grade data reliability with real-time capabilities. Our infrastructure is deployed globally via serverless edge networks, ensuring sub-100ms response times regardless of where your team is located.
+                                AlphaClone is built on a modern web stack designed for reliability, structured data, and fast iteration. The platform supports multi-tenant business workflows without forcing teams into several disconnected systems.
                             </p>
                             <p>
-                                The AI features are built on top of purpose-trained models fine-tuned specifically for business contexts. We don't use generic AI responses — our Growth Agent, contract drafting, and analytics are all specialized for the actual patterns and language of professional service businesses.
+                                The AI features are focused on practical business tasks such as lead qualification, drafting support, and workflow assistance. The goal is to remove repetitive work, not generate noise.
                             </p>
                             <p>
-                                Our security architecture is designed around the principle of zero-trust — every request is authenticated, every action is logged, and access is granted based on explicit permissions rather than assumed trust. This means your data remains yours, always, with a complete audit trail of who accessed what and when.
+                                Our security model is based on authenticated requests, explicit access rules, and traceable system activity. That gives teams clearer visibility into who can do what inside the platform.
                             </p>
                             <p>
-                                We build in public, update frequently, and ship features based on direct feedback from the businesses using the platform. Our development cycle is measured in days, not quarters — which means when a feature gets requested repeatedly by users, it typically appears in the product within weeks.
+                                We ship based on direct product feedback from businesses using the platform. That keeps the roadmap tied to operational value instead of surface-level feature inflation.
                             </p>
                         </div>
                     </div>
                 </section>
 
-                {/* CTA */}
                 <section className="py-24">
                     <div className="max-w-3xl mx-auto px-4 text-center">
                         <AnimateIn type="scaleIn">
                             <h2 className="text-3xl font-bold mb-6">Join the Businesses Running Smarter</h2>
                             <p className="text-slate-400 text-lg mb-10">
-                                Start your free trial today. See in 30 minutes why hundreds of business owners have replaced their entire SaaS stack with AlphaClone.
+                                Start your free trial and see how a connected operating platform can simplify client work, revenue workflows, and team operations.
                             </p>
                             <div className="flex flex-col sm:flex-row justify-center gap-4">
                                 <Link href="/register">

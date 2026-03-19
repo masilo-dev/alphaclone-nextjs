@@ -177,12 +177,12 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
                             <span className="text-slate-400 text-sm font-medium">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</span>
                         </div>
                         <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
-                            {greeting.text}, <span className="text-teal-400">{firstName}</span>! 👋
+                            {greeting.text}, <span className="text-teal-400">{firstName}</span>
                         </h2>
                         <p className="text-slate-400 text-sm mt-1">
                             {invoiceStats.overdue > 0
                                 ? `You have ${invoiceStats.overdue} overdue invoice${invoiceStats.overdue !== 1 ? 's' : ''} that need your attention.`
-                                : `Everything looks great — no overdue invoices today.`}
+                                : 'Everything looks great. No overdue invoices today.'}
                         </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">

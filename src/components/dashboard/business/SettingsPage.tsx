@@ -905,29 +905,31 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                 {/* Email & Integrations Tab */}
                 {activeTab === 'integrations' && (
                     <div className="space-y-6">
-                        <div>
+                        <div className="max-w-5xl">
                             <h3 className="text-xl font-bold mb-1">Email Integrations</h3>
-                            <p className="text-slate-400 mb-6">Connect your professional email accounts for unified inbox management.</p>
+                            <p className="text-slate-400 mb-6">Connect your email and CRM tools without oversized setup cards or duplicate admin panels.</p>
                         </div>
 
-                        <GmailIntegration user={user} />
+                        <div className="space-y-4">
+                            <GmailIntegration user={user} />
 
-                        <ZohoSettings user={user} />
+                            <ZohoSettings user={user} />
 
-                        <HubspotIntegration />
+                            <HubspotIntegration />
+                        </div>
 
                         {/* AI Autonomous Response Card */}
-                        <div className="p-5 bg-slate-800/50 rounded-2xl border border-slate-700">
-                            <div className="flex items-start gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-teal-500/10 flex items-center justify-center shrink-0">
+                        <div className="p-4 bg-slate-800/50 rounded-2xl border border-slate-700 max-w-5xl">
+                            <div className="flex items-start gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center shrink-0">
                                     <span className="text-2xl">🤖</span>
                                 </div>
                                 <div className="flex-1">
-                                    <h4 className="text-lg font-bold text-white mb-1">AI Autonomous Responses</h4>
+                                    <h4 className="text-base font-bold text-white mb-1">AI Email Responses</h4>
                                     <p className="text-sm text-slate-400 leading-relaxed">
-                                        Automatically respond to professional emails using AI. Filters out no-reply, transactional, and automated messages.
+                                        Use AI to draft replies for client inquiries, sales prospects, and support follow-up.
                                     </p>
-                                    <div className="mt-4 p-3 bg-slate-900/50 rounded-xl border border-slate-700 text-xs text-slate-400 space-y-1">
+                                    <div className="mt-3 p-3 bg-slate-900/50 rounded-xl border border-slate-700 text-xs text-slate-400 space-y-1">
                                         <p className="text-teal-400 font-semibold">✅ Will respond to:</p>
                                         <p>Client inquiries, sales prospects, support requests</p>
                                         <p className="text-red-400 font-semibold mt-2">🚫 Will skip:</p>
@@ -938,9 +940,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                         </div>
 
                         {/* Campaign info card */}
-                        <div className="p-5 bg-slate-800/50 rounded-2xl border border-slate-700">
-                            <div className="flex items-start gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+                        <div className="p-4 bg-slate-800/50 rounded-2xl border border-slate-700 max-w-5xl">
+                            <div className="flex items-start gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
                                     <span className="text-2xl">📧</span>
                                 </div>
                                 <div>

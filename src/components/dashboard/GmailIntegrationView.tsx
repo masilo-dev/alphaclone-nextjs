@@ -202,7 +202,7 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
                             {isThreadLoading ? (
                                 <div className="flex flex-col items-center justify-center h-full gap-4">
                                     <div className="w-10 h-10 border-2 border-teal-500/20 border-t-teal-500 rounded-full animate-spin"></div>
-                                    <p className="text-xs text-slate-400 animate-pulse uppercase tracking-[0.2em]">Decompressing Neural Thread...</p>
+                                    <p className="text-xs text-slate-400 animate-pulse uppercase tracking-[0.2em]">Loading email thread...</p>
                                 </div>
                             ) : (
                                 threadMessages.map((msg, idx) => (

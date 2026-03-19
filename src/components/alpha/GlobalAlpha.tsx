@@ -84,7 +84,7 @@ export default function GlobalAlpha() {
                         <div className="p-3 border-b border-[#00FFD1]/10 flex items-center justify-between bg-[#001720]">
                             <div className="flex items-center gap-3">
                                 <Activity className="w-3 h-3 text-[#00FFD1] animate-pulse" />
-                                <span className="text-[10px] font-bold tracking-[0.4em] text-[#00FFD1] uppercase">Alpha_Executive_v.2.1</span>
+                                <span className="text-[10px] font-bold tracking-[0.4em] text-[#00FFD1] uppercase">Alpha_Executive_Beta</span>
                             </div>
                             <button onClick={() => setIsOpen(false)} className="hover:text-red-400 transition-colors">
                                 <X className="w-4 h-4" />
@@ -102,18 +102,22 @@ export default function GlobalAlpha() {
                                 </div>
                             </div>
 
+                            <div className="border border-yellow-500/20 bg-yellow-500/10 p-3 text-[9px] leading-relaxed text-yellow-200">
+                                Assisted execution is available. Persistent autonomous mission control is still in beta and may not retain mission history across sessions yet.
+                            </div>
+
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div className="relative">
                                     <textarea
                                         value={prompt}
                                         onChange={(e) => setPrompt(e.target.value)}
-                                        placeholder="INITIALIZE_MISSION_FOR_ALPHA..."
+                                        placeholder="DESCRIBE THE TASK YOU WANT ALPHA TO HELP WITH..."
                                         className="w-full bg-[#000508] border border-[#00FFD1]/20 p-4 text-xs text-[#00FFD1] placeholder:text-[#00FFD1]/20 focus:outline-none focus:border-[#00FFD1]/60 min-h-[120px] resize-none uppercase"
                                     />
                                     {status === 'success' && (
                                         <div className="absolute inset-0 bg-[#00FFD1] text-black flex flex-col items-center justify-center font-bold">
                                             <Zap className="w-8 h-8 mb-2 animate-bounce" />
-                                            <span className="text-xs tracking-widest">PERSONALIZED_MISSION_ID_DISPATCHED</span>
+                                            <span className="text-xs tracking-widest">MISSION_QUEUED</span>
                                         </div>
                                     )}
                                 </div>
@@ -124,7 +128,7 @@ export default function GlobalAlpha() {
                                         disabled={isDeploying || !prompt.trim()}
                                         className="flex-1 py-3 bg-[#00FFD1] text-black text-[10px] font-bold tracking-[0.2em] transition-all hover:bg-[#00D1FF] disabled:opacity-30 disabled:grayscale"
                                     >
-                                        {isDeploying ? 'DISPATCHING...' : 'INIT_PERSONALIZED_PROTOCOL'}
+                                        {isDeploying ? 'DISPATCHING...' : 'START BETA TASK'}
                                     </button>
                                     <Link 
                                         href="/alpha" 

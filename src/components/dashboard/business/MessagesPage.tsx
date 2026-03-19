@@ -80,14 +80,14 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
                     </div>
                     <h2 className="text-2xl font-black text-white mb-3">Connect Your Mail</h2>
                     <p className="text-slate-400 mb-8 leading-relaxed">
-                        Connect Gmail or Zoho Mail to manage your inbox, send replies, and let AI handle routine correspondence — all from here.
+                        Connect Gmail or Zoho Mail to manage your inbox, send replies, and let AI handle routine correspondence from one workspace.
                     </p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                         {/* Gmail option */}
                         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5 text-left">
                             <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center mb-3">
-                                <span className="text-xl">📧</span>
+                                <Mail className="w-5 h-5 text-red-400" />
                             </div>
                             <h4 className="text-white font-bold mb-1">Gmail</h4>
                             <p className="text-slate-400 text-xs leading-relaxed mb-4">
@@ -102,7 +102,7 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
                         {/* Zoho option */}
                         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-5 text-left">
                             <div className="w-10 h-10 rounded-xl bg-[#f5d400]/10 flex items-center justify-center mb-3">
-                                <span className="text-xl">✉️</span>
+                                <Mail className="w-5 h-5 text-[#f5d400]" />
                             </div>
                             <h4 className="text-white font-bold mb-1">Zoho Mail</h4>
                             <p className="text-slate-400 text-xs leading-relaxed mb-4">
@@ -141,7 +141,7 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
                             : 'text-slate-400 hover:text-white'
                             }`}
                     >
-                        <span>📧</span> Gmail
+                        <Mail className="w-4 h-4" /> Gmail
                         {gmailConnected && (
                             <CheckCircle2 className="w-3.5 h-3.5 text-teal-300 opacity-80" />
                         )}
@@ -153,7 +153,7 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
                             : 'text-slate-400 hover:text-white'
                             }`}
                     >
-                        <span>✉️</span> Zoho Mail
+                        <Mail className="w-4 h-4" /> Zoho Mail
                         {zohoConnected && (
                             <CheckCircle2 className="w-3.5 h-3.5 opacity-60" />
                         )}
@@ -198,7 +198,7 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
                                     <p className="text-xs text-slate-500">Loading Zoho...</p>
                                 </div>
                             }>
-                                <ZohoEmailIntegration />
+                                <ZohoEmailIntegration user={user} />
                             </Suspense>
                         </motion.div>
                     )}

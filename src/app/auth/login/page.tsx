@@ -527,7 +527,7 @@ function LoginContent() {
                                             ))}
                                         </div>
                                         <p className="text-xs text-teal-400 mt-3 text-center flex items-center justify-center gap-2">
-                                            <span>✨ Includes 14-Day Free Trial</span>
+                                            <span>Includes 14-Day Free Trial</span>
                                             <span className="w-1 h-1 rounded-full bg-teal-500" />
                                             <span>No Card Required</span>
                                         </p>

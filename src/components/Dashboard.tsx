@@ -1173,10 +1173,10 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
                 <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">
-                  {user.role === 'admin' ? 'PROJECT MANAGER' : 'MY ACTIVE PROJECTS'}
+                  {user.role === 'admin' ? 'All Projects' : 'My Projects'}
                 </h2>
                 <div className="text-[10px] text-slate-500 font-mono mt-1 uppercase tracking-widest">
-                  {filteredProjects.length} Directives Synchronized
+                  {filteredProjects.length} Projects
                 </div>
               </div>
               <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-2 sm:gap-4 mt-2 sm:mt-0">
@@ -1257,7 +1257,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                             {/* Stage Indicator */}
                             <div className="mt-auto">
                               <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-widest mb-2 font-mono">
-                                <span>Phase Status</span>
+                                <span>Stage</span>
                                 <span className="text-teal-400 font-black">{p.currentStage}</span>
                               </div>
                               <div className="w-full h-1.5 bg-slate-950 rounded-full flex gap-1 p-0.5 border border-white/5 shadow-inner">
@@ -1282,7 +1282,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                     className="px-3 py-2 bg-slate-800/40 hover:bg-teal-500/10 text-slate-400 hover:text-teal-400 text-[10px] font-black uppercase tracking-widest rounded-xl border border-white/5 hover:border-teal-500/20 transition-all flex items-center justify-center gap-2"
                                   >
                                     <MessageSquare className="w-3.5 h-3.5" />
-                                    Signals
+                                    Message
                                   </button>
                                 ) : (
                                   <button
@@ -1290,7 +1290,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                     className="px-3 py-2 bg-slate-800/40 hover:bg-teal-500/10 text-slate-400 hover:text-teal-400 text-[10px] font-black uppercase tracking-widest rounded-xl border border-white/5 hover:border-teal-500/20 transition-all flex items-center justify-center gap-2"
                                   >
                                     <MessageSquare className="w-3.5 h-3.5" />
-                                    Uplink
+                                    Message
                                   </button>
                                 )}
                                 <button
@@ -1298,7 +1298,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                   className="px-3 py-2 bg-slate-800/40 hover:bg-blue-500/10 text-slate-400 hover:text-blue-400 text-[10px] font-black uppercase tracking-widest rounded-xl border border-white/5 hover:border-blue-500/20 transition-all flex items-center justify-center gap-2"
                                 >
                                   <Video className="w-3.5 h-3.5" />
-                                  Comm
+                                  Meeting
                                 </button>
                               </div>
 
@@ -1313,7 +1313,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                       className="flex-1 px-3 py-2 bg-slate-950/50 hover:bg-slate-900 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-xl border border-white/5 hover:border-white/10 transition-all flex items-center justify-center gap-2"
                                     >
                                       <ListChecks className="w-3.5 h-3.5" />
-                                      Stages
+                                      Milestones
                                     </button>
                                     <button
                                       onClick={() => handleShareProject(p.id)}
@@ -1329,7 +1329,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                       className="w-full px-3 py-2 bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 text-[10px] font-black uppercase tracking-widest rounded-xl border border-violet-500/20 transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-500/5"
                                     >
                                       <FileCheck className="w-3.5 h-3.5" />
-                                      {p.contractStatus === 'Sent' || p.contractStatus === 'Signed' ? 'Review Protocol' : 'Issue Protocol'}
+                                      {p.contractStatus === 'Sent' || p.contractStatus === 'Signed' ? 'Review Contract' : 'Send Contract'}
                                     </button>
                                   )}
                                 </div>
@@ -1347,7 +1347,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                 </div>
                               ) : (
                                 <div className="flex justify-between items-center bg-slate-950/30 p-2 rounded-lg border border-white/5">
-                                  <span className="text-[10px] font-mono text-slate-500 uppercase">Operational Progress</span>
+                                  <span className="text-[10px] font-mono text-slate-500 uppercase">Progress</span>
                                   <span className="text-xs font-black text-teal-400">{p.progress}%</span>
                                 </div>
                               )}
@@ -1371,10 +1371,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <table className="hidden md:table w-full text-left border-collapse">
                     <thead>
                       <tr className="border-b border-white/5 bg-slate-900/60 font-mono">
-                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Directive Code</th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Project</th>
                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Status</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Lifecycle Stage</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Operations</th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Stage</th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
@@ -1841,13 +1841,13 @@ const Dashboard: React.FC<DashboardProps> = ({
       )}
 
       {createTaskOpen && (
-        <Modal isOpen={createTaskOpen} onClose={() => setCreateTaskOpen(false)} title="Intelligence Capture">
+        <Modal isOpen={createTaskOpen} onClose={() => setCreateTaskOpen(false)} title="Create Task">
           <div className="p-6 text-center space-y-4">
             <div className="w-16 h-16 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto text-teal-400">
               <Zap className="w-8 h-8 animate-pulse" />
             </div>
-            <p className="text-slate-300 text-sm">Please navigate to the <b>Tasks</b> tab to use the full neural capture engine for new objectives.</p>
-            <Button onClick={() => { setCreateTaskOpen(false); setActiveTab('/dashboard/tasks'); router.push('/dashboard/tasks'); }} className="w-full bg-teal-500 hover:bg-teal-400">Initialize Neural Sync</Button>
+            <p className="text-slate-300 text-sm">Open the <b>Tasks</b> page to create and manage tasks.</p>
+            <Button onClick={() => { setCreateTaskOpen(false); setActiveTab('/dashboard/tasks'); router.push('/dashboard/tasks'); }} className="w-full bg-teal-500 hover:bg-teal-400">Open Tasks</Button>
           </div>
         </Modal>
       )}

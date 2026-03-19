@@ -843,14 +843,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                   <div className="text-center mb-16">
                      <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading text-white mb-6">About AlphaClone Systems</h2>
                      <p className="text-slate-400 max-w-2xl mx-auto text-lg">
-                        We are custom development specialists who believe every business deserves technology built specifically for their unique challenges and opportunities.
+                        AlphaClone brings CRM, billing, scheduling, messaging, and delivery workflows into one platform so service businesses can run from a single operating system instead of a stack of disconnected tools.
                      </p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                      {[
-                        { icon: Target, title: "Custom-First Approach", desc: "We reject templates and generic solutions. Every line of code is written specifically for your business requirements." },
-                        { icon: Zap, title: "Rapid Custom Development", desc: "Our streamlined process delivers complex custom solutions in 14 days or less, faster than most companies can implement generic platforms." },
-                        { icon: Award, title: "Proven Track Record", desc: "Our custom solutions have helped businesses increase efficiency by 67%, reduce costs by 34%, and achieve measurable ROI within 90 days." }
+                        { label: "Operations", title: "One connected workspace", desc: "Keep clients, projects, invoices, meetings, and documents in the same system so teams are not constantly switching tools." },
+                        { label: "Growth", title: "Built to support revenue work", desc: "Lead management, follow-up, proposals, contracts, and delivery all live in the same workflow instead of separate apps." },
+                        { label: "Control", title: "Clearer data and ownership", desc: "When work happens in one platform, reporting, permissions, and activity history become easier to trust and easier to manage." }
                      ].map((card, i) => (
                         <motion.div
                            key={i}
@@ -860,9 +860,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            whileHover={{ y: -5 }}
                            className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 hover:border-teal-500/30 transition-all group backdrop-blur-md"
                         >
-                           <div className="w-14 h-14 bg-slate-800/50 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                              <card.icon className="w-7 h-7 text-teal-400" />
-                           </div>
+                           <div className="text-xs font-semibold tracking-[0.22em] uppercase text-teal-400 mb-4">{card.label}</div>
                            <h3 className="text-xl font-bold text-white mb-4">{card.title}</h3>
                            <p className="text-slate-400 leading-relaxed">{card.desc}</p>
                         </motion.div>

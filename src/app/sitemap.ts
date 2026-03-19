@@ -5,19 +5,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const baseUrl = 'https://alphaclone.tech'; // Updated domain
 
     // 1. Static Marketing Routes
-    const highPriorityRoutes = ['', '/services', '/about', '/guide', '/docs', '/pricing'].map((route) => ({
+    const highPriorityRoutes = ['', '/services', '/about', '/guide', '/docs', '/pricing', '/contact', '/auth/login'].map((route) => ({
         url: `${baseUrl}${route}`,
         lastModified: new Date('2026-03-05'),
         changeFrequency: 'weekly' as const,
-        priority: route === '' ? 1.0 : 0.9,
+        priority: route === '' ? 1.0 : route === '/auth/login' ? 0.8 : 0.9,
     }));
 
     const standardRoutes = [
         '/ecosystem',
         '/who-we-serve',
-        '/compare',
         '/blog',
-        '/contact',
     ].map((route) => ({
         url: `${baseUrl}${route}`,
         lastModified: new Date('2026-03-05'),

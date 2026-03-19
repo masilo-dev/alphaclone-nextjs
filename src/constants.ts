@@ -93,8 +93,8 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
 
   // 2. Acquisition & Sales Pipeline
   { label: 'AI Growth', href: '/dashboard/sales-agent', icon: Zap },
-  { label: 'Leads', href: '/dashboard/leads', icon: TrendingUp },
-  { label: 'Contacts', href: '/dashboard/crm', icon: Users },
+  { label: 'Deals', href: '/dashboard/deals', icon: TrendingUp },
+  { label: 'Contacts', href: '/dashboard/business/clients', icon: Users },
 
   // 3. Communication & Scheduling
   { label: 'Mail', href: '/dashboard/mail', icon: Mail },
@@ -109,11 +109,11 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   // 5. Execution & Fulfillment 
   { label: 'Projects', href: '/dashboard/business/projects', icon: Briefcase },
   { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
-  { label: 'Task Scheduler', href: '/dashboard/business/tasks', icon: Clock },
+  { label: 'Recurring Tasks', href: '/dashboard/business/tasks', icon: Clock },
 
   // 6. Finances & Records
-  { label: 'Invoices', href: '/dashboard/business/billing', icon: DollarSign },
-  { label: 'Finance', href: '/dashboard/accounting', icon: BarChart3 },
+  { label: 'Billing', href: '/dashboard/business/billing', icon: DollarSign },
+  { label: 'Accounting', href: '/dashboard/accounting', icon: BarChart3 },
   { label: 'Documents', href: '/dashboard/business/documents', icon: FolderOpen },
 
   // 7. Integrations
@@ -121,7 +121,6 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
 
   // 8. Usage & Limits
   { label: 'Quota Manager', href: '/dashboard/business/quotas', icon: BarChart3 },
-  { label: 'Documents', href: '/dashboard/business/documents', icon: FileText },
 
   // 9. Daily Summary
   { label: 'Daily Summary', href: '/dashboard/business/daily-summary', icon: BarChart3 },

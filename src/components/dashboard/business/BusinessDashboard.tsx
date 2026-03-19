@@ -308,6 +308,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
             // New Routes
             case '/dashboard/crm':
+            case '/dashboard/contacts':
             case '/dashboard/business/clients':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
@@ -325,6 +326,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/sales-agent':
                 return <SalesAgent />;
             case '/dashboard/leads':
+            case '/dashboard/deals':
             case '/dashboard/business/leads': // Fallback
                 return <DealsTab userId={user.id} userRole={user.role} />;
             case '/dashboard/business/contracts':
@@ -407,26 +409,28 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     // Get current page title
     const getPageTitle = () => {
         switch (activeTab) {
-            case '/dashboard': return 'AlphaClone Home';
-            case '/dashboard/business/clients': return 'Client Directory';
+            case '/dashboard': return 'Dashboard';
+            case '/dashboard/crm':
+            case '/dashboard/contacts':
+            case '/dashboard/business/clients': return 'Contacts';
             case '/dashboard/business/projects': return 'Projects';
             case '/dashboard/business/team': return 'Team Management';
             case '/dashboard/business/messages': return 'Messages';
             case '/dashboard/business/calendar': return 'Calendar';
-            case '/dashboard/business/billing': return 'Invoices & Billing';
+            case '/dashboard/business/billing': return 'Billing';
             case '/dashboard/business/reports': return 'Analytics & Reports';
             case '/dashboard/business/settings': return 'Settings';
             case '/dashboard/business/contracts': return 'Contracts';
             case '/dashboard/business/documents': return 'Document Hub';
             case '/dashboard/business/quotes': return 'Quotes & Proposals';
             case '/dashboard/business/booking': return 'Scheduling & Booking';
-            case '/dashboard/crm': return 'CRM';
             case '/dashboard/tasks': return 'Tasks';
-            case '/dashboard/sales-agent': return 'Sales Agent';
-            case '/dashboard/leads': return 'Leads & Pipelines';
+            case '/dashboard/sales-agent': return 'AI Growth';
+            case '/dashboard/deals':
+            case '/dashboard/leads': return 'Deals';
             case '/dashboard/accounting': return 'Accounting Dashboard';
             case '/dashboard/mail':
-            case '/dashboard/gmail': return 'Mail Command Center';
+            case '/dashboard/gmail': return 'Mail';
             default: return 'AlphaClone';
         }
     };
@@ -583,7 +587,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                     alt="Profile"
                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                     onError={(e) => {
-                                        // Prevent infinite loop — fall back to inline initials SVG, never dicebear again
+                                        // Prevent infinite loop; fall back to inline initials SVG.
                                         e.currentTarget.onerror = null;
                                         const initials = (user.name || user.email || 'U').charAt(0).toUpperCase();
                                         e.currentTarget.src = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><rect width='40' height='40' fill='%230f766e'/><text x='50%' y='50%' font-size='18' fill='white' text-anchor='middle' dominant-baseline='central' font-family='sans-serif'>${initials}</text></svg>`)}`;
@@ -601,7 +605,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     '/dashboard/business/projects',
                     '/dashboard/tasks',
                     '/dashboard/sales-agent',
-                    '/dashboard/crm'
+                    '/dashboard/crm',
+                    '/dashboard/contacts',
+                    '/dashboard/business/clients'
                 ].includes(activeTab) ? 'overflow-hidden p-0' : 'overflow-y-auto p-4 md:p-8 dashboard-content-padding'}`}>
                     <WidgetErrorBoundary title="Business Dashboard Error">
                         <AnimatePresence mode="wait">
@@ -632,4 +638,3 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         </div>
     );
 }
-

@@ -8,6 +8,8 @@ import { Analytics } from "@vercel/analytics/next";
 import CookieConsent from "@/components/common/CookieConsent";
 import NativeInteractions from "@/components/common/NativeInteractions";
 import GlobalAlpha from "@/components/alpha/GlobalAlpha";
+import { WebVitals } from "@/components/common/WebVitals";
+import PrismBackground from "@/components/common/PrismBackground";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,34 +39,36 @@ const sora = Sora({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://alphaclone.tech'),
+  metadataBase: new URL("https://alphaclone.tech"),
   title: {
-    default: "AlphaClone Systems | Unified AI Business Operating System",
+    default: "AlphaClone Systems | CRM, Billing, Scheduling, and Operations in One Platform",
     template: "%s | AlphaClone Systems",
   },
-  description: "Eliminate SaaS bloat and operational friction with AlphaClone. The technically superior, AI-powered Business OS that unifies CRM, invoicing, contracts, AI growth automation, video meetings, and accounting into one high-performance architecture.",
+  description:
+    "AlphaClone is all-in-one business software for service businesses. Manage CRM, invoicing, contracts, scheduling, messaging, documents, meetings, and operations in one connected platform.",
   keywords: [
-    "AI Business OS",
-    "Unified Business Platform",
-    "Autonomous Growth Agent",
-    "Enterprise CRM Intelligence",
-    "Mission Control Software",
-    "SaaS Consolidation",
-    "Operational Excellence AI",
+    "all in one business software",
+    "service business software",
+    "CRM invoicing scheduling platform",
+    "business operations platform",
+    "client management software",
+    "billing and contracts software",
+    "workflow automation platform",
+    "small business operating system",
     "AlphaClone Systems",
-    "Business Automation",
-    "Project Operations Hub",
-    "Data Sovereignty",
-    "Custom AI Integration"
+    "business automation",
+    "CRM and billing software",
+    "project and client management platform",
   ],
   authors: [{ name: "AlphaClone Systems", url: "https://alphaclone.tech" }],
   creator: "AlphaClone Systems",
   publisher: "AlphaClone Systems",
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
-  alternates: { canonical: 'https://alphaclone.tech' },
+  alternates: { canonical: "https://alphaclone.tech" },
   openGraph: {
-    title: "AlphaClone Systems | Unified AI Business Operating System",
-    description: "Eliminate SaaS bloat and operational friction. Replace 10+ tools with one unified AI Business OS. CRM, finance, contracts, AI sales agent, video meetings — unified.",
+    title: "AlphaClone Systems | CRM, Billing, Scheduling, and Operations in One Platform",
+    description:
+      "AlphaClone combines CRM, invoicing, contracts, scheduling, messaging, documents, meetings, and operations in one connected platform for service businesses.",
     type: "website",
     url: "https://alphaclone.tech",
     siteName: "AlphaClone Systems",
@@ -72,8 +76,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "AlphaClone Systems | Unified AI Business Operating System",
-    description: "Eliminate SaaS bloat with the AI-powered Business OS. Replace 10+ tools with one unified platform. CRM, finance, contracts, AI sales, meetings — unified.",
+    title: "AlphaClone Systems | CRM, Billing, Scheduling, and Operations in One Platform",
+    description:
+      "CRM, invoicing, contracts, scheduling, messaging, documents, meetings, and operations in one connected platform.",
     creator: "@AlphaCloneSys",
   },
 };
@@ -85,41 +90,60 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-import { WebVitals } from "@/components/common/WebVitals";
-import PrismBackground from "@/components/common/PrismBackground";
-
 const organizationSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name: 'AlphaClone Systems Business OS',
-  operatingSystem: 'Web-based',
-  applicationCategory: 'BusinessApplication',
-  url: 'https://alphaclone.tech',
-  logo: 'https://alphaclone.tech/favicon.ico',
-  description: 'Unified AI-powered Business Operating System that unifies CRM, invoicing, contracts, AI growth automation, video meetings, and financial accounting into a single high-performance architecture.',
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "AlphaClone Systems",
+  operatingSystem: "Web-based",
+  applicationCategory: "BusinessApplication",
+  url: "https://alphaclone.tech",
+  logo: "https://alphaclone.tech/favicon.ico",
+  description:
+    "All-in-one business software for service businesses that combines CRM, invoicing, contracts, scheduling, messaging, documents, meetings, and operations in one platform.",
   offers: {
-    '@type': 'AggregateOffer',
-    priceCurrency: 'USD',
-    lowPrice: '15',
-    highPrice: '80',
-    offerCount: '3',
+    "@type": "AggregateOffer",
+    priceCurrency: "USD",
+    lowPrice: "15",
+    highPrice: "80",
+    offerCount: "3",
   },
   aggregateRating: {
-    '@type': 'AggregateRating',
-    ratingValue: '4.9',
-    ratingCount: '125',
+    "@type": "AggregateRating",
+    ratingValue: "4.9",
+    ratingCount: "125",
   },
   publisher: {
-    '@type': 'Organization',
-    name: 'AlphaClone Systems',
-    url: 'https://alphaclone.tech',
-    logo: 'https://alphaclone.tech/favicon.ico',
-    sameAs: [
-      'https://www.linkedin.com/company/alphaclone-systems',
-      'https://www.g2.com/products/alphaclone',
-      'https://www.crunchbase.com/organization/alphaclone-systems',
-    ],
-  }
+    "@type": "Organization",
+    name: "AlphaClone Systems",
+    url: "https://alphaclone.tech",
+    logo: "https://alphaclone.tech/favicon.ico",
+  },
+};
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "AlphaClone Systems",
+  url: "https://alphaclone.tech",
+  description: "All-in-one business software for service businesses.",
+  potentialAction: {
+    "@type": "SearchAction",
+    target: "https://alphaclone.tech/docs?query={search_term_string}",
+    "query-input": "required name=search_term_string",
+  },
+};
+
+const navigationSchema = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: "Primary Site Navigation",
+  itemListElement: [
+    { "@type": "SiteNavigationElement", position: 1, name: "About", url: "https://alphaclone.tech/about" },
+    { "@type": "SiteNavigationElement", position: 2, name: "Documentation", url: "https://alphaclone.tech/docs" },
+    { "@type": "SiteNavigationElement", position: 3, name: "Pricing", url: "https://alphaclone.tech/pricing" },
+    { "@type": "SiteNavigationElement", position: 4, name: "Contact", url: "https://alphaclone.tech/contact" },
+    { "@type": "SiteNavigationElement", position: 5, name: "Login", url: "https://alphaclone.tech/auth/login" },
+  ],
 };
 
 export default function RootLayout({
@@ -136,6 +160,14 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(navigationSchema) }}
         />
         <WebVitals />
         <Providers>

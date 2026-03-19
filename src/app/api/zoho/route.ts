@@ -231,6 +231,14 @@ async function getMessages(userId: string, searchParams: URLSearchParams) {
     else queryParams += `&folderId=${actualFolderId}`;
 
     const data = await zohoServerService.proxyRequest(userId, `messages/view?${queryParams}`);
+    const supabaseAdmin = createSupabaseAdminClient();
+    const { data: integration } = await supabaseAdmin
+        .from('integrations')
+        .select('config')
+        .eq('user_id', userId)
+        .eq('type', 'zoho')
+        .maybeSingle();
+    const accountEmail = integration?.config?.email || null;
     
     // Normalize data for the UI
     const messages = (data.data || []).map((m: any) => ({
@@ -242,7 +250,7 @@ async function getMessages(userId: string, searchParams: URLSearchParams) {
         snippet: m.summary || m.snippet || ''
     }));
 
-    return NextResponse.json({ success: true, data: messages });
+    return NextResponse.json({ success: true, data: messages, accountEmail });
 }
 
 async function sendEmail(userId: string, data: any) {
@@ -312,9 +320,10 @@ async function deleteMessage(userId: string, data: any) {
 }
 
 async function moveMessages(userId: string, data: any) {
-    const { messageIds, targetFolderId } = data;
+    let { messageIds, targetFolderId } = data;
     if (!messageIds || !targetFolderId) return NextResponse.json({ error: 'messageIds and targetFolderId required' }, { status: 400 });
-    
+
+    targetFolderId = await resolveFolderId(userId, targetFolderId);
     const result = await zohoServerService.moveMessages(userId, Array.isArray(messageIds) ? messageIds : [messageIds], targetFolderId);
     return NextResponse.json({ success: true, data: result });
 }
@@ -402,4 +411,34 @@ function extractEmailString(val: any) {
     if (!val) return null;
     if (typeof val === 'string') return val;
     return val.mailId || val.address || val.emailAddress || null;
+}
+
+async function resolveFolderId(userId: string, folderRef: string) {
+    if (/^\d+$/.test(folderRef)) return folderRef;
+
+    const normalized = String(folderRef).toLowerCase();
+    const folderPropMap: Record<string, string> = {
+        inbox: 'isInbox',
+        sent: 'isSent',
+        drafts: 'isDraft',
+        trash: 'isTrash',
+        spam: 'isSpam',
+    };
+
+    const foldersData = await zohoServerService.proxyRequest(userId, 'folders');
+    const folders = Array.isArray(foldersData?.data) ? foldersData.data : foldersData?.data?.folders || [];
+
+    const targetFolder = folders.find((folder: any) =>
+        (folderPropMap[normalized] && folder[folderPropMap[normalized]]) ||
+        folder.folderName?.toLowerCase() === normalized ||
+        folder.folderType?.toLowerCase() === normalized
+    );
+
+    if (!targetFolder?.folderId) {
+        const err: any = new Error(`Folder "${folderRef}" could not be resolved`);
+        err.status = 400;
+        throw err;
+    }
+
+    return String(targetFolder.folderId);
 }

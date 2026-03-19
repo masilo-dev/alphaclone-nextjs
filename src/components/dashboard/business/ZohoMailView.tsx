@@ -18,7 +18,8 @@ import {
     ExternalLink,
     Plus,
     Sparkles,
-    Wand2
+    Wand2,
+    Forward
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { Button, Badge } from '../../ui/UIComponents';
@@ -62,6 +63,14 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
     const [aiReplyGenerating, setAiReplyGenerating] = useState(false);
     const [aiReplyDrafting, setAiReplyDrafting] = useState(false);
     const [composeDefaults, setComposeDefaults] = useState({ to: '', subject: '', body: '' });
+
+    const formatEmailDate = (value?: string) => {
+        if (!value) return '';
+        const parsed = value.includes('-') || value.includes(':')
+            ? new Date(value)
+            : new Date(Number(value));
+        return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString();
+    };
 
     const fetchEmails = async (folder: string = activeFolder) => {
         setLoading(true);
@@ -138,18 +147,19 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
         if (!replyBody.trim() || !selected) return;
         setSending(true);
         try {
-            const { data: { session } } = await supabase.auth.getSession();
             const res = await fetch('/api/zoho', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    action: 'send_email',
+                    action: 'reply_email',
                     data: {
+                        messageId: selected.messageId,
                         to: selected.fromAddress,
                         subject: `Re: ${selected.subject}`,
                         content: replyBody,
+                        fromAddress: accountEmail || undefined,
                     }
                 })
             });
@@ -162,10 +172,64 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
             toast.success('Reply sent via Zoho Mail');
             setReplyBody('');
             setAiReplyDrafting(false);
+            fetchEmails(activeFolder);
         } catch (err: any) {
             toast.error(err.message || 'Failed to send');
         } finally {
             setSending(false);
+        }
+    };
+
+    const handleDeleteSelected = async () => {
+        if (!selected) return;
+        try {
+            const res = await fetch('/api/zoho', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'delete_message',
+                    data: { messageId: selected.messageId }
+                })
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || 'Failed to delete message');
+            }
+
+            toast.success('Message deleted');
+            setEmails(prev => prev.filter(email => email.messageId !== selected.messageId));
+            setSelected(null);
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to delete');
+        }
+    };
+
+    const handleArchiveSelected = async () => {
+        if (!selected) return;
+        try {
+            const res = await fetch('/api/zoho', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'move_to_folder',
+                    data: {
+                        messageIds: [selected.messageId],
+                        targetFolderId: 'archive',
+                    }
+                })
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || 'Failed to archive message');
+            }
+
+            toast.success('Message archived');
+            setEmails(prev => prev.filter(email => email.messageId !== selected.messageId));
+            setSelected(null);
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to archive');
         }
     };
 
@@ -382,11 +446,22 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
                                         <Sparkles className="w-3.5 h-3.5" />
                                         Advanced Draft
                                     </motion.button>
-                                    <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
-                                        <button className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all" title="Archive"><Archive className="w-4 h-4" /></button>
-                                        <button className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all" title="Delete"><Trash2 className="w-4 h-4" /></button>
-                                        <button className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"><MoreVertical className="w-4 h-4" /></button>
-                                    </div>
+                                        <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
+                                        <button onClick={handleArchiveSelected} className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all" title="Archive"><Archive className="w-4 h-4" /></button>
+                                        <button onClick={handleDeleteSelected} className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                                        <button
+                                            onClick={() => {
+                                                setComposeDefaults({
+                                                    to: '',
+                                                    subject: `Fwd: ${selected.subject}`,
+                                                    body: `\n\n--- Forwarded Message ---\nFrom: ${selected.fromAddress}\nSubject: ${selected.subject}\n\n${(selected.content || selected.summary || '').replace(/<[^>]*>/g, '')}`
+                                                });
+                                                setIsComposeOpen(true);
+                                            }}
+                                            className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+                                            title="Forward"
+                                        ><Forward className="w-4 h-4" /></button>
+                                        </div>
                                 </div>
                             </div>
 
@@ -409,7 +484,7 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
                                                     <p className="text-[10px] text-slate-500 font-mono">{selected.fromAddress}</p>
                                                     <div className="w-1 h-1 rounded-full bg-slate-700" />
                                                     <p className="text-[10px] text-slate-500 font-mono">
-                                                        {selected.receivedTime ? new Date(Number(selected.receivedTime)).toLocaleString() : ''}
+                                                        {formatEmailDate(selected.receivedTime)}
                                                     </p>
                                                 </div>
                                             </div>

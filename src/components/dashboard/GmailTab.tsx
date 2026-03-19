@@ -39,7 +39,7 @@ const GmailTab: React.FC<GmailTabProps> = ({ user }) => {
         return (
             <div className="flex flex-col items-center justify-center p-12 gap-4">
                 <div className="w-12 h-12 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin"></div>
-                <p className="text-slate-400 font-medium animate-pulse uppercase tracking-[0.2em] text-xs">Synchronizing Neural Channels...</p>
+                <p className="text-slate-400 font-medium animate-pulse uppercase tracking-[0.2em] text-xs">Syncing Gmail...</p>
             </div>
         );
     }
@@ -64,9 +64,9 @@ const GmailTab: React.FC<GmailTabProps> = ({ user }) => {
                     <Mail className="w-12 h-12 text-slate-950 -rotate-3" />
                 </div>
 
-                <h2 className="text-4xl font-black text-white mb-4 tracking-tight">GMAIL COMMANDER</h2>
+                <h2 className="text-4xl font-black text-white mb-4 tracking-tight">Gmail Integration</h2>
                 <p className="text-slate-400 max-w-xl mx-auto mb-8 leading-relaxed">
-                    Unleash high-frequency AI email automation. Quantum-safe thread synchronization and context-aware neural drafting for the ultra-productive agent.
+                    Connect Gmail to sync threads, draft replies, and manage conversations from your workspace.
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
@@ -77,13 +77,13 @@ const GmailTab: React.FC<GmailTabProps> = ({ user }) => {
                     </div>
                     <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-6 text-left">
                         <ShieldCheck className="w-6 h-6 text-teal-400 mb-3" />
-                        <h4 className="text-white font-bold text-sm mb-1">Quantum-Safe</h4>
-                        <p className="text-slate-500 text-xs">OAuth2 authentication with dedicated token isolation.</p>
+                        <h4 className="text-white font-bold text-sm mb-1">Secure</h4>
+                        <p className="text-slate-500 text-xs">OAuth2 authentication with protected account access.</p>
                     </div>
                     <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-6 text-left">
                         <Globe className="w-6 h-6 text-teal-400 mb-3" />
-                        <h4 className="text-white font-bold text-sm mb-1">Universal Context</h4>
-                        <p className="text-slate-500 text-xs">AI understands complex business relationships across threads.</p>
+                        <h4 className="text-white font-bold text-sm mb-1">Shared Context</h4>
+                        <p className="text-slate-500 text-xs">Use email alongside the rest of your business data.</p>
                     </div>
                 </div>
 
@@ -91,7 +91,7 @@ const GmailTab: React.FC<GmailTabProps> = ({ user }) => {
                     onClick={handleConnect}
                     className="h-16 px-10 rounded-2xl bg-white hover:bg-slate-100 text-slate-950 font-black text-lg transition-transform hover:scale-105 active:scale-95 shadow-xl"
                 >
-                    <Link2 className="w-6 h-6 mr-2" /> CONNECT GMAIL NOW
+                    <Link2 className="w-6 h-6 mr-2" /> Connect Gmail
                 </Button>
 
                 <p className="text-slate-500 text-[10px] uppercase tracking-widest font-bold mt-8 opacity-50">

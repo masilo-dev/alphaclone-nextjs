@@ -60,10 +60,19 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
     subject: '',
     body: '',
   });
+  const [composeMode, setComposeMode] = useState<'send' | 'reply' | 'forward'>('send');
+  const [composeMessageId, setComposeMessageId] = useState<string | null>(null);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [deletingMessage, setDeletingMessage] = useState(false);
+
+  const resetCompose = () => {
+    const defaultFrom = accountInfo?.fromAddresses?.find((a: any) => a.isDefault)?.address || accountInfo?.email || '';
+    setComposeData({ from: defaultFrom, to: '', cc: '', subject: '', body: '' });
+    setComposeMode('send');
+    setComposeMessageId(null);
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -156,8 +165,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
   };
 
   const connectToZoho = () => {
-    // OAuth connect must be /api/auth/zoho/connect with no query params
-    window.location.href = `/api/auth/zoho/connect`;
+    window.location.href = `/api/auth/zoho/connect?region=${encodeURIComponent(selectedRegion)}`;
   };
 
   const disconnect = async () => {
@@ -177,7 +185,6 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
         toast.success('Disconnected from Zoho Mail');
         // Explicitly advise user on how to switch accounts
         toast('To connect a different account, sign out of Zoho.com in this browser first.', {
-          icon: 'ℹ️',
           duration: 6000
         });
     } catch (err: any) {
@@ -207,6 +214,8 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
     setActiveFolder(folder);
     setSelectedMessage(null);
     if (folder === 'compose') {
+      setComposeMode('send');
+      setComposeMessageId(null);
       setIsComposing(true);
     } else {
       setIsComposing(false);
@@ -270,6 +279,8 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
         subject: `Re: ${selectedMessage.subject}`,
         body: data.text
       });
+      setComposeMode('reply');
+      setComposeMessageId(selectedMessage.messageId);
       setActiveFolder('compose');
       setIsComposing(true);
       toast.success('AI Draft ready');
@@ -287,12 +298,18 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
     }
     setSendingEmail(true);
     try {
+      const action = composeMode === 'reply' && composeMessageId
+        ? 'reply_email'
+        : composeMode === 'forward' && composeMessageId
+          ? 'forward_email'
+          : 'send_email';
       const resp = await fetch('/api/zoho', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'send_email',
+          action,
           data: {
+            ...(composeMessageId ? { messageId: composeMessageId } : {}),
             to: composeData.to,
             cc: composeData.cc || undefined,
             subject: composeData.subject,
@@ -303,9 +320,8 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
       });
       const result = await resp.json();
       if (resp.ok && result.success) {
-        toast.success('Email sent successfully!');
-        const defaultFrom = accountInfo?.fromAddresses?.find(a => a.isDefault)?.address || accountInfo?.email || '';
-        setComposeData({ from: defaultFrom, to: '', cc: '', subject: '', body: '' });
+        toast.success(composeMode === 'reply' ? 'Reply sent successfully.' : composeMode === 'forward' ? 'Forward sent successfully.' : 'Email sent successfully.');
+        resetCompose();
         setIsComposing(false);
         setActiveFolder('inbox');
         loadMessages('inbox');
@@ -319,6 +335,105 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
       setSendingEmail(false);
     }
   };
+
+  const saveDraft = async () => {
+    setSendingEmail(true);
+    try {
+      const resp = await fetch('/api/zoho', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'save_draft',
+          data: {
+            to: composeData.to,
+            subject: composeData.subject,
+            content: composeData.body,
+            fromAddress: composeData.from,
+          }
+        }),
+      });
+      const result = await resp.json();
+      if (resp.ok && result.success) {
+        toast.success('Draft saved.');
+        resetCompose();
+        setIsComposing(false);
+        setActiveFolder('drafts');
+        loadMessages('drafts');
+      } else {
+        toast.error(result.error || 'Failed to save draft');
+      }
+    } catch (err) {
+      toast.error('Error saving draft');
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  const toggleStar = async (message: EmailMessage) => {
+    try {
+      const nextFlagged = !message.flagged;
+      const resp = await fetch('/api/zoho', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_message',
+          data: {
+            messageId: message.messageId,
+            mode: 'setFlag',
+            params: {
+              flagId: nextFlagged ? '2' : '0'
+            }
+          }
+        })
+      });
+      const result = await resp.json();
+      if (!(resp.ok && result.success)) {
+        throw new Error(result.error || 'Failed to update star');
+      }
+
+      setMessages(prev => prev.map(m => m.messageId === message.messageId ? { ...m, flagged: nextFlagged } : m));
+      if (selectedMessage?.messageId === message.messageId) {
+        setSelectedMessage({ ...selectedMessage, flagged: nextFlagged });
+      }
+      if (activeFolder === 'starred' && !nextFlagged) {
+        setMessages(prev => prev.filter(m => m.messageId !== message.messageId));
+        if (selectedMessage?.messageId === message.messageId) {
+          setSelectedMessage(null);
+        }
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update star');
+    }
+  };
+
+  useEffect(() => {
+    if (!isConnected || activeFolder === 'compose') return;
+
+    const term = searchQuery.trim();
+    const timeoutId = window.setTimeout(async () => {
+      if (!term) {
+        loadMessages(activeFolder);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/zoho?action=search_messages&term=${encodeURIComponent(term)}`);
+        const data = await response.json();
+        if (response.ok && data.success) {
+          setMessages(data.data || []);
+        } else {
+          setMessages([]);
+        }
+      } catch {
+        setMessages([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchQuery, activeFolder, isConnected]);
 
   const filteredMessages = messages.filter((m) => {
     if (!searchQuery) return true;
@@ -358,14 +473,14 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
   // ─── Not Connected State ───
   if (!isConnected) {
     return (
-      <div className="min-h-[400px] flex items-center justify-center bg-slate-900/60 rounded-2xl border border-slate-800">
-        <div className="text-center max-w-sm px-6">
-          <div className="w-20 h-20 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl">
-            <Mail className="w-10 h-10 text-white" />
+      <div className="min-h-[360px] flex items-center justify-center bg-slate-900/60 rounded-2xl border border-slate-800">
+        <div className="text-center max-w-lg px-5 py-6">
+          <div className="w-16 h-16 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-xl">
+            <Mail className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-xl font-bold text-white mb-2">Zoho Mail</h2>
-          <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-            Connect your Zoho Mail account to manage your professional communications directly from your dashboard.
+          <p className="text-sm text-slate-400 mb-5 leading-relaxed">
+            Connect Zoho Mail to read, send, reply, forward, save drafts, and manage inbox activity from one workspace.
           </p>
           
           <div className="mb-6">
@@ -378,7 +493,9 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
                 className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-slate-800/50 border border-slate-700/50 text-white text-sm rounded-xl hover:bg-slate-800 transition-all"
               >
                 <span className="flex items-center gap-2">
-                  <span className="text-lg">{regions.find(r => r.id === selectedRegion)?.flag}</span>
+                  <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md border border-slate-600 bg-slate-900 px-1.5 text-[10px] font-bold text-slate-300">
+                    {selectedRegion.toUpperCase()}
+                  </span>
                   {regions.find(r => r.id === selectedRegion)?.name}
                 </span>
                 <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${showRegionSelector ? 'rotate-180' : ''}`} />
@@ -397,7 +514,9 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
                         selectedRegion === region.id ? 'bg-sky-500/20 text-sky-400' : 'text-slate-300 hover:bg-slate-700'
                       }`}
                     >
-                      <span className="text-lg">{region.flag}</span>
+                      <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md border border-slate-600 bg-slate-900 px-1.5 text-[10px] font-bold text-slate-300">
+                        {region.id.toUpperCase()}
+                      </span>
                       {region.name}
                     </button>
                   ))}
@@ -424,7 +543,7 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
   // ─── Connected State ───
   return (
     <div className="flex flex-col bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden h-full" 
-         style={{ minHeight: 'min(600px, calc(100vh - 120px))', maxHeight: 'calc(100vh - 80px)' }}>
+         style={{ minHeight: 'min(560px, calc(100vh - 140px))', maxHeight: 'calc(100vh - 90px)' }}>
 
       {/* ── Top Bar ── */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm shrink-0">
@@ -588,19 +707,28 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
               {/* Sticky action bar — always visible */}
               <div className="shrink-0 flex items-center justify-between px-5 py-4 border-t border-slate-800 bg-slate-900/80 backdrop-blur-sm">
                 <button
-                  onClick={() => { setActiveFolder('inbox'); setSelectedMessage(null); }}
+                  onClick={() => { resetCompose(); setActiveFolder('inbox'); setSelectedMessage(null); }}
                   className="px-4 py-2.5 text-sm text-slate-400 hover:text-white transition-colors"
                 >
                   Discard
                 </button>
-                <button
-                  onClick={sendEmail}
-                  disabled={sendingEmail}
-                  className="flex items-center gap-2 px-6 sm:px-8 py-2.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-sm font-bold rounded-xl transition-all shadow-xl shadow-sky-500/20 disabled:opacity-50"
-                >
-                  {sendingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  {sendingEmail ? 'Sending...' : 'Send Email'}
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={saveDraft}
+                    disabled={sendingEmail}
+                    className="px-4 py-2.5 text-sm text-slate-300 hover:text-white transition-colors disabled:opacity-50"
+                  >
+                    Save Draft
+                  </button>
+                  <button
+                    onClick={sendEmail}
+                    disabled={sendingEmail}
+                    className="flex items-center gap-2 px-6 sm:px-8 py-2.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-sm font-bold rounded-xl transition-all shadow-xl shadow-sky-500/20 disabled:opacity-50"
+                  >
+                    {sendingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    {sendingEmail ? 'Sending...' : composeMode === 'reply' ? 'Send Reply' : composeMode === 'forward' ? 'Send Forward' : 'Send Email'}
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -632,7 +760,22 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
                     filteredMessages.map((msg) => (
                       <button
                         key={msg.messageId}
-                        onClick={() => setSelectedMessage(msg)}
+                        onClick={() => {
+                          setSelectedMessage(msg);
+                          if (!msg.flagged && activeFolder !== 'starred') {
+                            fetch(`/api/zoho`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                action: 'update_message',
+                                data: {
+                                  messageId: msg.messageId,
+                                  mode: 'markAsRead'
+                                }
+                              })
+                            }).catch(() => null);
+                          }
+                        }}
                         className={`w-full text-left px-5 py-4 border-b border-slate-800/40 hover:bg-slate-800/30 transition-all relative ${selectedMessage?.messageId === msg.messageId ? 'bg-slate-800/60' : ''}`}
                       >
                         {selectedMessage?.messageId === msg.messageId && <div className="absolute left-0 top-0 bottom-0 w-1 bg-sky-500" />}
@@ -641,7 +784,10 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
                           <span className="text-[10px] text-slate-500 uppercase tracking-tighter shrink-0">{formatDate(msg.receivedTime || msg.sentDateInGMT)}</span>
                         </div>
                         <p className={`text-xs truncate ${selectedMessage?.messageId === msg.messageId ? 'text-sky-300' : 'text-slate-300'} font-medium`}>{msg.subject || '(No Subject)'}</p>
-                        <p className="text-[11px] text-slate-500 truncate mt-1 leading-relaxed opacity-80">{msg.summary}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {msg.flagged && <Star className="w-3 h-3 text-amber-400 fill-amber-400" />}
+                          <p className="text-[11px] text-slate-500 truncate leading-relaxed opacity-80">{msg.summary}</p>
+                        </div>
                       </button>
                     ))
                   )}
@@ -662,11 +808,36 @@ const ZohoEmailIntegration: React.FC<ZohoIntegrationProps> = ({ onEmailsSent, us
                         <button 
                           onClick={() => {
                             setComposeData({ from: accountInfo?.fromAddresses?.find(a => a.isDefault)?.address || accountInfo?.email || '', to: selectedMessage.fromAddress, cc: '', subject: `Re: ${selectedMessage.subject}`, body: '' });
+                            setComposeMode('reply');
+                            setComposeMessageId(selectedMessage.messageId);
                             setActiveFolder('compose');
                           }}
                           className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
                         >
                           <Reply className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setComposeData({
+                              from: accountInfo?.fromAddresses?.find(a => a.isDefault)?.address || accountInfo?.email || '',
+                              to: '',
+                              cc: '',
+                              subject: `Fwd: ${selectedMessage.subject}`,
+                              body: `\n\n--- Forwarded Message ---\nFrom: ${selectedMessage.fromAddress}\nSubject: ${selectedMessage.subject}\n\n${selectedMessage.content || selectedMessage.summary || ''}`
+                            });
+                            setComposeMode('forward');
+                            setComposeMessageId(selectedMessage.messageId);
+                            setActiveFolder('compose');
+                          }}
+                          className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                        >
+                          <Forward className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => toggleStar(selectedMessage)}
+                          className={`p-2 hover:bg-slate-800 rounded-lg transition-colors ${selectedMessage.flagged ? 'text-amber-400' : 'text-slate-400 hover:text-amber-400'}`}
+                        >
+                          <Star className={`w-4 h-4 ${selectedMessage.flagged ? 'fill-amber-400' : ''}`} />
                         </button>
                         <button 
                           onClick={() => deleteMessage(selectedMessage!.messageId)} 

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import LandingPage from '@/components/LandingPage';
 import AppLauncher from '@/components/AppLauncher';
-import { User, Project } from '@/types';
+import { Project } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -20,25 +20,21 @@ function HomeContent() {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
-    // Check if URL has ?mode=pwa OR if display-mode is standalone
     const mode = searchParams.get('mode');
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
     if (mode === 'pwa' || isStandalone) {
       setIsPwa(true);
     }
-    
-    // Simulate initial load sequence
+
     const timer = setTimeout(() => setIsInitialLoad(false), 2000);
     return () => clearTimeout(timer);
   }, [searchParams]);
 
-  // Auto-redirect authenticated users to dashboard (once auth state is settled)
   useEffect(() => {
     if (!loading && user && !hasRedirected.current) {
       hasRedirected.current = true;
       console.log('Authenticated user detected on homepage, redirecting to dashboard...');
-      
-      // If PWA, show transition
+
       if (isPwa) {
         setIsTransitioning(true);
         setTimeout(() => {
@@ -50,7 +46,6 @@ function HomeContent() {
     }
   }, [user, loading, router, isPwa]);
 
-  // Handle new account notification
   useEffect(() => {
     const authStatus = searchParams.get('auth_status');
     const message = searchParams.get('message');
@@ -59,18 +54,16 @@ function HomeContent() {
       import('react-hot-toast').then(({ default: toast }) => {
         toast((t) => (
           <div className="flex flex-col gap-2">
-            <span className="font-bold text-lg">Account Created! 🎉</span>
+            <span className="font-bold text-lg">Account Created</span>
             <span>{message || 'Please sign in again to confirm your account and access the dashboard.'}</span>
-            <button 
+            <button
               onClick={() => {
                 toast.dismiss(t.id);
-                // For AppLauncher we trigger login modal via isLoginOpen which is internal, 
-                // but if we show this toast we assume they click "Sign In Now" and it forces a redirect to login or triggers modal
                 const loginBtn = document.querySelector('[data-login-trigger]') as HTMLButtonElement;
                 if (loginBtn) {
-                    loginBtn.click();
+                  loginBtn.click();
                 } else {
-                    router.push('/register'); // Fallback
+                  router.push('/register');
                 }
               }}
               className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-bold mt-2 hover:bg-teal-500 transition-colors"
@@ -90,8 +83,7 @@ function HomeContent() {
           }
         });
       });
-      
-      // Clean up URL
+
       router.replace('/');
     }
   }, [searchParams, router]);
@@ -111,7 +103,7 @@ function HomeContent() {
     <main>
       <SplashScreen isVisible={isInitialLoad && isPwa} mode="loading" />
       <SplashScreen isVisible={isTransitioning} mode="opening" />
-      
+
       {isPwa ? (
         <AppLauncher onLogin={handleLogin} />
       ) : (
@@ -120,7 +112,6 @@ function HomeContent() {
     </main>
   );
 }
-
 
 export default function Home() {
   return (
