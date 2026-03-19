@@ -54,7 +54,10 @@ export async function GET(req: NextRequest) {
         // Determine accounts server base on region (falling back to searchParams if Zoho provided it)
         let accountsServer = searchParams.get('accounts-server');
         if (!accountsServer) {
-            accountsServer = region === 'com' ? 'https://accounts.zoho.com' : `https://accounts.zoho.${region}`;
+            accountsServer = region === 'com' ? 'https://accounts.zoho.com' : 
+                             region === 'au' ? 'https://accounts.zoho.com.au' :
+                             region === 'cn' ? 'https://accounts.zoho.com.cn' :
+                             `https://accounts.zoho.${region}`;
         }
         
         const tokenEndpoint = accountsServer.endsWith('/') ? `${accountsServer}oauth/v2/token` : `${accountsServer}/oauth/v2/token`;
@@ -75,8 +78,15 @@ export async function GET(req: NextRequest) {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: tokenParams,
         });
-
-        const tokens = await tokenResponse.json();
+        
+        const tokenRawText = await tokenResponse.text();
+        let tokens: any;
+        try {
+            tokens = JSON.parse(tokenRawText);
+        } catch (e) {
+            console.error('[Zoho Callback Debug] Failed to parse tokens as JSON. Raw body:', tokenRawText.substring(0, 500));
+            throw new Error(`Invalid response from Zoho Token endpoint. Status: ${tokenResponse.status}`);
+        }
 
         if (tokens.error) {
             console.error('[Zoho Callback Debug] Token Exchange Failed:', tokens);
@@ -105,8 +115,15 @@ export async function GET(req: NextRequest) {
         const accountResponse = await fetch(`https://${mailApiHost}/api/accounts`, {
             headers: { Authorization: `Zoho-oauthtoken ${access_token}` }
         });
-
-        const accountData = await accountResponse.json();
+ 
+        const accountRawText = await accountResponse.text();
+        let accountData: any;
+        try {
+            accountData = JSON.parse(accountRawText);
+        } catch (e) {
+            console.error('[Zoho Callback Debug] Failed to parse account data as JSON. Raw body:', accountRawText.substring(0, 500));
+            throw new Error(`Invalid response from Zoho Accounts endpoint. Status: ${accountResponse.status}`);
+        }
         console.log(`[Zoho Callback Debug] Account Data Received. Success: ${!!accountData.data}`);
 
         if (!accountData.data || accountData.data.length === 0) {
