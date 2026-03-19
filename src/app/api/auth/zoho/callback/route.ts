@@ -99,16 +99,17 @@ export async function GET(req: NextRequest) {
         const expiresAt = new Date(Date.now() + (expires_in || 3600) * 1000).toISOString();
 
         // 3. Fetch Zoho Account ID
-        // Use api_domain if provided, otherwise fall back to manual derivation
-        let mailApiHost = api_domain ? api_domain.replace('https://', '') : 'mail.zoho.com';
+        // CRITICAL: We derive the mailApiHost from the accountsServer to ensure we use the 'mail.' subdomain.
+        // The 'api_domain' returned by Zoho can sometimes point to CRM or other non-mail API hosts.
+        let mailApiHost = 'mail.zoho.com';
+        if (accountsServer.includes('.eu')) mailApiHost = 'mail.zoho.eu';
+        else if (accountsServer.includes('.in')) mailApiHost = 'mail.zoho.in';
+        else if (accountsServer.includes('.com.au')) mailApiHost = 'mail.zoho.com.au';
+        else if (accountsServer.includes('.jp')) mailApiHost = 'mail.zoho.jp';
+        else if (accountsServer.includes('.ca')) mailApiHost = 'mail.zoho.ca';
+        else if (accountsServer.includes('.cn')) mailApiHost = 'mail.zoho.com.cn';
         
-        if (!api_domain) {
-            if (accountsServer.includes('.eu')) mailApiHost = 'mail.zoho.eu';
-            else if (accountsServer.includes('.in')) mailApiHost = 'mail.zoho.in';
-            else if (accountsServer.includes('.com.au')) mailApiHost = 'mail.zoho.com.au';
-            else if (accountsServer.includes('.jp')) mailApiHost = 'mail.zoho.jp';
-            else if (accountsServer.includes('.ca')) mailApiHost = 'mail.zoho.ca';
-        }
+        console.log(`[Zoho Callback Debug] Resolved mailApiHost: ${mailApiHost} (from accountsServer: ${accountsServer}, api_domain: ${api_domain})`);
 
         console.log(`[Zoho Callback Debug] Fetching account data from: https://${mailApiHost}/api/accounts`);
 

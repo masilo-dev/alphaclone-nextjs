@@ -147,9 +147,9 @@ export const zohoServerService = {
             const region = currentIntegration?.config?.region || 'com';
             const derived = deriveRegionalHosts(region);
 
-            // Prioritize stored apiDomain if available
-            if (currentIntegration?.config?.apiDomain) {
-                mailApiHost = currentIntegration.config.apiDomain.replace('https://', '');
+            // Use stored mailApiHost if valid, otherwise derive from region
+            if (!mailApiHost || typeof mailApiHost !== 'string' || mailApiHost.startsWith('[') || mailApiHost.includes('zohoapis')) {
+                mailApiHost = derived.mailApiHost;
             }
 
             if (!isValidUrl(accountsServer)) {
@@ -295,13 +295,8 @@ export const zohoServerService = {
         if (needsCorrection) {
             console.warn(`[Zoho Proxy] Regional mismatch detected for user ${userId} (Region: ${region}). Correcting hosts...`);
             
-            // Prioritize stored apiDomain over derivation if it exists
-            if (integration.config?.apiDomain) {
-                mailApiHost = integration.config.apiDomain.replace('https://', '');
-            } else {
-                mailApiHost = derived.mailApiHost;
-            }
-            
+            // Derive correct mail host from region mapping
+            mailApiHost = derived.mailApiHost;
             accountsServer = derived.accountsServer;
 
             // Self-healing: Update DB so we don't repeat this check
