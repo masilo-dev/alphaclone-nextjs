@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Loader2, Sparkles, Wand2, User, Search, Check, ChevronDown } from 'lucide-react';
+import { X, Send, Loader2, Sparkles, Wand2, User, Search, Check, ChevronDown, Plus } from 'lucide-react';
 import { Button } from '../../ui/UIComponents';
 import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
@@ -28,8 +28,13 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 }) => {
     const { currentTenant } = useTenant();
     const [to, setTo] = useState(initialTo);
+    const [cc, setCc] = useState('');
+    const [bcc, setBcc] = useState('');
+    const [showCcBcc, setShowCcBcc] = useState(false);
     const [subject, setSubject] = useState(initialSubject);
     const [body, setBody] = useState(initialBody);
+    const [attachments, setAttachments] = useState<{ id: string, name: string, size: number }[]>([]);
+    const [uploading, setUploading] = useState(false);
     const [sending, setSending] = useState(false);
     const [aiPrompt, setAiPrompt] = useState('');
     const [generating, setGenerating] = useState(false);
@@ -41,6 +46,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     const [showContactDropdown, setShowContactDropdown] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const dropdownRef = React.useRef<HTMLDivElement>(null);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     React.useEffect(() => {
         if (isOpen) {
@@ -100,6 +106,45 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
         { id: 'creative', label: 'Creative' },
     ];
 
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('action', 'upload_attachment');
+
+            const res = await fetch('/api/zoho', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!res.ok) throw new Error('Upload failed');
+            const data = await res.json();
+            
+            if (data.success && data.data) {
+                const attId = data.data.attachmentId || data.data.id;
+                setAttachments(prev => [...prev, { 
+                    id: attId, 
+                    name: file.name, 
+                    size: file.size 
+                }]);
+                toast.success('File attached');
+            }
+        } catch (err) {
+            toast.error('Failed to upload attachment');
+        } finally {
+            setUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const removeAttachment = (id: string) => {
+        setAttachments(prev => prev.filter(a => a.id !== id));
+    };
+
     const handleAIGenerate = async () => {
         if (!aiPrompt.trim()) {
             toast.error('Please describe what you want the AI to write');
@@ -125,14 +170,12 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
             const data = await res.json();
 
             try {
-                // The AI might return the JSON wrapped in markdown or just plain
                 const cleanedText = data.text.replace(/```json|```/g, '').trim();
                 const parsed = JSON.parse(cleanedText);
                 setSubject(parsed.subject || '');
                 setBody(parsed.body || '');
                 toast.success('Draft generated!');
             } catch (parseError) {
-                // Fallback if not JSON
                 setBody(data.text);
                 toast.success('Draft ready (body only)');
             }
@@ -145,10 +188,11 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 
     const handleSend = async () => {
         if (!to || !subject || !body) {
-            toast.error('All fields are required');
+            toast.error('Recipient, Subject, and Body are required');
             return;
         }
 
+        setSending(true);
         try {
             const res = await fetch('/api/zoho', {
                 method: 'POST',
@@ -159,9 +203,12 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                     action: 'send_email',
                     data: {
                         to,
+                        ccAddress: cc,
+                        bccAddress: bcc,
                         subject,
                         content: body.replace(/\n/g, '<br/>'),
-                        fromAddress: from
+                        fromAddress: from,
+                        attachmentIds: attachments.map(a => a.id)
                     }
                 })
             });
@@ -174,8 +221,11 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
             toast.success('Email sent via Zoho Mail');
             onClose();
             setTo('');
+            setCc('');
+            setBcc('');
             setSubject('');
             setBody('');
+            setAttachments([]);
         } catch (err: any) {
             toast.error(err.message || 'Failed to send');
         } finally {
@@ -324,8 +374,45 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                             placeholder="Search database or protocol address..."
                                             className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-12 py-4 text-sm text-white focus:border-[#f5d400]/40 outline-none transition-all shadow-inner placeholder:text-slate-700"
                                         />
+                                        <button 
+                                            onClick={() => setShowCcBcc(!showCcBcc)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500 hover:text-[#f5d400] transition-colors"
+                                        >
+                                            {showCcBcc ? 'HIDE CC' : 'CC/BCC'}
+                                        </button>
                                     </div>
 
+                                    {/* CC / BCC FIELDS */}
+                                    <AnimatePresence>
+                                        {showCcBcc && (
+                                            <motion.div 
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                className="grid grid-cols-2 gap-4 overflow-hidden mt-4"
+                                            >
+                                                <div>
+                                                    <label className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] block mb-2 px-1">CC</label>
+                                                    <input
+                                                        type="text"
+                                                        value={cc}
+                                                        onChange={e => setCc(e.target.value)}
+                                                        className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-2 text-xs text-white focus:border-[#f5d400]/40 outline-none transition-all"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] block mb-2 px-1">BCC</label>
+                                                    <input
+                                                        type="text"
+                                                        value={bcc}
+                                                        onChange={e => setBcc(e.target.value)}
+                                                        className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-2 text-xs text-white focus:border-[#f5d400]/40 outline-none transition-all"
+                                                    />
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                    
                                     <AnimatePresence>
                                         {showContactDropdown && (searchQuery.length > 0 || filteredClients.length > 0) && (
                                             <motion.div
@@ -395,11 +482,54 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                             value={body}
                                             onChange={e => setBody(e.target.value)}
                                             placeholder="Begin data transmission..."
-                                            className="w-full bg-slate-950/50 border border-white/10 rounded-[2rem] px-6 py-6 text-sm text-white focus:border-[#f5d400]/40 outline-none transition-all min-h-[250px] resize-none shadow-inner placeholder:text-slate-700 font-medium leading-relaxed custom-scrollbar"
+                                            className="w-full bg-slate-950/50 border border-white/10 rounded-[2rem] px-6 py-6 text-sm text-white focus:border-[#f5d400]/40 outline-none transition-all min-h-[200px] resize-none shadow-inner placeholder:text-slate-700 font-medium leading-relaxed custom-scrollbar"
                                         />
                                         <div className="absolute bottom-4 right-4 text-[10px] font-mono text-slate-600 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/5">
                                             SYNS: {body.length} CHARS
                                         </div>
+                                    </div>
+                                </div>
+
+                                {/* ATTACHMENTS */}
+                                <div>
+                                    <div className="flex items-center justify-between mb-3 px-1">
+                                        <label className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em]">Payload Attachments</label>
+                                        <button 
+                                            onClick={() => fileInputRef.current?.click()}
+                                            disabled={uploading}
+                                            className="text-[9px] font-black text-[#f5d400] uppercase tracking-widest flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+                                        >
+                                            {uploading ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Plus className="w-2.5 h-2.5" />}
+                                            {uploading ? 'Uploading...' : 'Attach File'}
+                                        </button>
+                                        <input 
+                                            type="file" 
+                                            ref={fileInputRef} 
+                                            className="hidden" 
+                                            onChange={handleFileUpload}
+                                        />
+                                    </div>
+                                    
+                                    <div className="flex flex-wrap gap-2">
+                                        {attachments.map(att => (
+                                            <div 
+                                                key={att.id}
+                                                className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-xl text-[10px] text-slate-300 group/att hover:border-[#f5d400]/30 transition-all"
+                                            >
+                                                <span className="truncate max-w-[150px]">{att.name}</span>
+                                                <button 
+                                                    onClick={() => removeAttachment(att.id)}
+                                                    className="p-1 text-slate-500 hover:text-red-400 opacity-0 group-hover/att:opacity-100 transition-all"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {attachments.length === 0 && (
+                                            <div className="w-full py-4 border border-dashed border-white/5 rounded-2xl flex items-center justify-center">
+                                                <p className="text-[10px] text-slate-700 font-black uppercase tracking-widest">No local files attached</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

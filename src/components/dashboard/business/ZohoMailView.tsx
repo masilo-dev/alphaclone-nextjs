@@ -30,8 +30,10 @@ import ComposeEmailModal from './ComposeEmailModal';
 const FOLDERS = [
     { id: 'inbox', label: 'Inbox', icon: Mail },
     { id: 'sent', label: 'Sent', icon: Send },
+    { id: 'drafts', label: 'Drafts', icon: Archive }, // Using Archive icon for drafts as a fallback if no specific one
     { id: 'starred', label: 'Starred', icon: Star },
     { id: 'trash', label: 'Trash', icon: Trash2 },
+    { id: 'spam', label: 'Spam', icon: AlertCircle },
 ];
 
 interface ZohoMailViewProps {
@@ -47,6 +49,10 @@ interface ZohoEmail {
     summary: string;
     content?: string;
     flagged?: boolean;
+    isRead?: boolean;
+    hasAttachments?: boolean;
+    folderId?: string;
+    attachments?: any[];
 }
 
 const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
@@ -98,6 +104,9 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
                 toAddress: m.to || m.toAddress,
                 receivedTime: m.date || m.receivedTime,
                 summary: m.snippet || m.summary || '',
+                isRead: m.status === '1' || m.isRead === true,
+                hasAttachments: m.hasAttachments || false,
+                folderId: m.folderId
             }));
             setEmails(mapped);
             if (data.accountEmail) setAccountEmail(data.accountEmail);
@@ -117,21 +126,48 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
     const handleSelectEmail = async (email: ZohoEmail) => {
         setSelected(email);
         setReplyBody('');
+        
+        // Mark as read if unread
+        if (!email.isRead) {
+            try {
+                fetch('/api/zoho', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'update_message',
+                        data: { messageId: email.messageId, mode: 'markAsRead' }
+                    })
+                });
+                setEmails(prev => prev.map(e => e.messageId === email.messageId ? { ...e, isRead: true } : e));
+            } catch (e) {
+                console.error('Failed to mark as read');
+            }
+        }
+
         if (!email.content) {
             setLoadingEmail(true);
             try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (!session?.access_token) return;
-
-                const res = await fetch(`/api/zoho?action=get_messages&messageId=${email.messageId}`);
+                const fId = email.folderId || activeFolder;
+                const res = await fetch(`/api/zoho?action=get_message_content&messageId=${email.messageId}&folderId=${fId}`);
 
                 if (res.ok) {
                     const data = await res.json();
                     if (data.data && data.data.content) {
-                        setSelected({ ...email, content: data.data.content });
-                        // Update the email in the list as well to cache it
+                        const newContent = data.data.content;
+                        
+                        // Also fetch attachment info if it has attachments
+                        let attachments = [];
+                        if (email.hasAttachments) {
+                            const attRes = await fetch(`/api/zoho?action=get_attachment_info&messageId=${email.messageId}&folderId=${fId}`);
+                            if (attRes.ok) {
+                                const attData = await attRes.json();
+                                attachments = attData.data || [];
+                            }
+                        }
+
+                        setSelected({ ...email, content: newContent, attachments, isRead: true });
                         setEmails(prev => prev.map(e =>
-                            e.messageId === email.messageId ? { ...e, content: data.data.content } : e
+                            e.messageId === email.messageId ? { ...e, content: newContent, attachments, isRead: true } : e
                         ));
                     }
                 }
@@ -230,6 +266,47 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
             setSelected(null);
         } catch (err: any) {
             toast.error(err.message || 'Failed to archive');
+        }
+    };
+
+    const handleMarkAsSpam = async () => {
+        if (!selected) return;
+        try {
+            const res = await fetch('/api/zoho', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'mark_spam',
+                    data: { messageId: selected.messageId }
+                })
+            });
+
+            if (!res.ok) throw new Error('Failed to mark as spam');
+            toast.success('Marked as spam');
+            setEmails(prev => prev.filter(email => email.messageId !== selected.messageId));
+            setSelected(null);
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to report spam');
+        }
+    };
+
+    const downloadAttachment = async (attachmentId: string, fileName: string) => {
+        if (!selected) return;
+        try {
+            const res = await fetch(`/api/zoho?action=download_attachment&messageId=${selected.messageId}&attachmentId=${attachmentId}`);
+            if (!res.ok) throw new Error('Download failed');
+            
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (err) {
+            toast.error('Failed to download attachment');
         }
     };
 
@@ -369,8 +446,11 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
                                         className={`w-full text-left p-4 rounded-2xl transition-all border group relative ${selected?.messageId === email.messageId
                                             ? 'bg-teal-500/10 border-teal-500/30 shadow-lg shadow-teal-500/5'
                                             : 'border-transparent hover:bg-white/5 hover:border-white/10'
-                                            }`}
+                                            } ${!email.isRead ? 'font-bold' : ''}`}
                                     >
+                                        {!email.isRead && (
+                                            <div className="absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-teal-500 shadow-[0_0_8px_#14b8a6]" />
+                                        )}
                                         <div className="flex justify-between items-start mb-2">
                                             <span className="text-[10px] font-black text-[#f5d400] truncate max-w-[150px] uppercase tracking-widest">
                                                 {email.fromAddress?.split('<')[0].trim() || 'Unidentified'}
@@ -447,6 +527,7 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
                                         Advanced Draft
                                     </motion.button>
                                         <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
+                                        <button onClick={handleMarkAsSpam} className="p-2 text-slate-400 hover:text-orange-400 hover:bg-orange-500/10 rounded-lg transition-all" title="Spam"><AlertCircle className="w-4 h-4" /></button>
                                         <button onClick={handleArchiveSelected} className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all" title="Archive"><Archive className="w-4 h-4" /></button>
                                         <button onClick={handleDeleteSelected} className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all" title="Delete"><Trash2 className="w-4 h-4" /></button>
                                         <button
@@ -494,6 +575,40 @@ const ZohoMailView: React.FC<ZohoMailViewProps> = ({ userId }) => {
                                             className="prose prose-invert prose-slate max-w-none text-slate-300 text-[15px] leading-relaxed font-medium transition-all"
                                             dangerouslySetInnerHTML={{ __html: selected.content || selected.summary || '' }}
                                         />
+
+                                        {/* Attachments Section */}
+                                        {selected.attachments && selected.attachments.length > 0 && (
+                                            <div className="mt-12 pt-8 border-t border-white/5">
+                                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-6 flex items-center gap-3">
+                                                    <span className="w-8 h-[1px] bg-slate-800" />
+                                                    Payload Attachments ({selected.attachments.length})
+                                                </h4>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    {selected.attachments.map((att: any) => (
+                                                        <div 
+                                                            key={att.attachmentId}
+                                                            className="flex items-center justify-between p-4 bg-white/2 border border-white/5 rounded-2xl group/att hover:border-teal-500/30 transition-all shadow-sm"
+                                                        >
+                                                            <div className="flex items-center gap-3 min-w-0">
+                                                                <div className="w-10 h-10 rounded-xl bg-teal-500/5 flex items-center justify-center border border-teal-500/10 group-hover/att:bg-teal-500/10 transition-colors">
+                                                                    <Archive className="w-5 h-5 text-teal-400" />
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <p className="text-xs font-bold text-white truncate">{att.attachmentName}</p>
+                                                                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">{(att.fileSize / 1024).toFixed(1)} KB</p>
+                                                                </div>
+                                                            </div>
+                                                            <button 
+                                                                onClick={() => downloadAttachment(att.attachmentId, att.attachmentName)}
+                                                                className="p-2.5 bg-white/5 hover:bg-teal-500 hover:text-white text-slate-400 rounded-xl transition-all border border-white/5 hover:border-teal-400 shadow-lg"
+                                                            >
+                                                                <ExternalLink className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>

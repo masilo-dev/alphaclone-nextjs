@@ -36,9 +36,12 @@ export async function GET(req: NextRequest) {
         
         if (cleanupError) console.warn('[Zoho Connect Debug] State cleanup warning:', cleanupError.message);
 
-        // Support for different Zoho DCs (US, EU, IN, AU, JP, CA)
+        // Support for different Zoho DCs (US, EU, IN, AU, JP, CA, CN)
         const region = searchParams.get('region') || 'com';
-        const accountsDomain = region === 'com' ? 'accounts.zoho.com' : `accounts.zoho.${region}`;
+        const accountsDomain = region === 'com' ? 'accounts.zoho.com' : 
+                               region === 'au' ? 'accounts.zoho.com.au' :
+                               region === 'cn' ? 'accounts.zoho.com.cn' :
+                               `accounts.zoho.${region}`;
 
         // 2. Generate and persist new secure state
         console.log(`[Zoho Connect Debug] Generating secure state for user: ${userId} and region: ${region}`);
@@ -81,12 +84,10 @@ export async function GET(req: NextRequest) {
 
         // Zoho Mail scopes
         const scopes = [
-            'ZohoMail.messages.READ',
-            'ZohoMail.messages.CREATE',
-            'ZohoMail.messages.UPDATE',
-            'ZohoMail.messages.DELETE',
+            'ZohoMail.messages.ALL', // Use ALL for full access (includes READ/CREATE/UPDATE/DELETE/MOVE)
             'ZohoMail.accounts.READ',
-            'ZohoMail.folders.READ'
+            'ZohoMail.folders.READ',
+            'ZohoMail.attachments.READ' // CRITICAL: Required for downloading attachments
         ].join(',');
 
         const promptValue = searchParams.get('prompt') || 'consent';

@@ -85,16 +85,20 @@ export async function GET(req: NextRequest) {
 
         console.log(`[Zoho Callback Debug] Token Exchange Successful. Access Token Present: ${!!tokens.access_token}, Refresh Token Present: ${!!tokens.refresh_token}`);
         
-        const { access_token, refresh_token, expires_in } = tokens;
+        const { access_token, refresh_token, expires_in, api_domain } = tokens;
         const expiresAt = new Date(Date.now() + (expires_in || 3600) * 1000).toISOString();
 
         // 3. Fetch Zoho Account ID
-        let mailApiHost = 'mail.zoho.com';
-        if (accountsServer.includes('.eu')) mailApiHost = 'mail.zoho.eu';
-        else if (accountsServer.includes('.in')) mailApiHost = 'mail.zoho.in';
-        else if (accountsServer.includes('.com.au')) mailApiHost = 'mail.zoho.com.au';
-        else if (accountsServer.includes('.jp')) mailApiHost = 'mail.zoho.jp';
-        else if (accountsServer.includes('.ca')) mailApiHost = 'mail.zoho.ca';
+        // Use api_domain if provided, otherwise fall back to manual derivation
+        let mailApiHost = api_domain ? api_domain.replace('https://', '') : 'mail.zoho.com';
+        
+        if (!api_domain) {
+            if (accountsServer.includes('.eu')) mailApiHost = 'mail.zoho.eu';
+            else if (accountsServer.includes('.in')) mailApiHost = 'mail.zoho.in';
+            else if (accountsServer.includes('.com.au')) mailApiHost = 'mail.zoho.com.au';
+            else if (accountsServer.includes('.jp')) mailApiHost = 'mail.zoho.jp';
+            else if (accountsServer.includes('.ca')) mailApiHost = 'mail.zoho.ca';
+        }
 
         console.log(`[Zoho Callback Debug] Fetching account data from: https://${mailApiHost}/api/accounts`);
 
@@ -155,6 +159,7 @@ export async function GET(req: NextRequest) {
                 email,
                 accountsServer,
                 mailApiHost,
+                apiDomain: api_domain,
                 region
             },
             updated_at: new Date().toISOString()

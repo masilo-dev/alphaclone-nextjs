@@ -41,6 +41,16 @@ export async function GET(req: NextRequest) {
                 return await getAccountInfo(userId);
             case 'get_messages':
                 return await getMessages(userId, searchParams);
+            case 'get_message_content':
+                return await getMessageContent(userId, searchParams);
+            case 'get_attachment_info':
+                return await getAttachmentInfo(userId, searchParams);
+            case 'download_attachment':
+                return await downloadAttachment(userId, searchParams);
+            case 'get_thread':
+                return await getThread(userId, searchParams);
+            case 'list_labels':
+                return await listLabels(userId);
             case 'search_messages':
                 return await searchMessages(userId, searchParams);
             default:
@@ -102,7 +112,18 @@ export async function POST(req: NextRequest) {
                 // Adapting to match the existing outreach handler's expected structure
                 return await handleOutreach(userId, data || body);
             default:
-                return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+            case 'upload_attachment':
+                return await uploadAttachment(req, userId);
+            case 'apply_label':
+                return await applyLabel(userId, data);
+            case 'remove_label':
+                return await removeLabel(userId, data);
+            case 'batch_mark_read':
+                return await batchMarkRead(userId, data);
+            case 'mark_spam':
+                return await markSpam(userId, data);
+            case 'create_label':
+                return await createLabel(userId, data);
         }
     } catch (err: any) {
         console.error('Zoho API POST Error:', err);
@@ -411,6 +432,96 @@ function extractEmailString(val: any) {
     if (!val) return null;
     if (typeof val === 'string') return val;
     return val.mailId || val.address || val.emailAddress || null;
+}
+
+/**
+ * EXTENDED ACTION HANDLERS
+ */
+
+async function getMessageContent(userId: string, searchParams: URLSearchParams) {
+    const fId = searchParams.get('folderId') || 'inbox';
+    const mId = searchParams.get('messageId');
+    if (!mId) return NextResponse.json({ error: 'messageId is required' }, { status: 400 });
+    const content = await zohoServerService.getMessageContent(userId, fId, mId);
+    return NextResponse.json({ success: true, data: content.data || {} });
+}
+
+async function getAttachmentInfo(userId: string, searchParams: URLSearchParams) {
+    const fId = searchParams.get('folderId') || 'inbox';
+    const mId = searchParams.get('messageId');
+    if (!mId) return NextResponse.json({ error: 'messageId is required' }, { status: 400 });
+    const info = await zohoServerService.getAttachmentInfo(userId, fId, mId);
+    return NextResponse.json({ success: true, data: info.data || [] });
+}
+
+async function downloadAttachment(userId: string, searchParams: URLSearchParams) {
+    const mId = searchParams.get('messageId');
+    const aId = searchParams.get('attachmentId');
+    if (!mId || !aId) return NextResponse.json({ error: 'messageId and attachmentId required' }, { status: 400 });
+    
+    const response = await zohoServerService.downloadAttachment(userId, mId, aId);
+    return new Response(response.body, {
+        headers: {
+            'Content-Type': response.headers.get('Content-Type') || 'application/octet-stream',
+            'Content-Disposition': response.headers.get('Content-Disposition') || 'attachment',
+        }
+    });
+}
+
+async function getThread(userId: string, searchParams: URLSearchParams) {
+    const tId = searchParams.get('threadId');
+    if (!tId) return NextResponse.json({ error: 'threadId is required' }, { status: 400 });
+    const thread = await zohoServerService.getThread(userId, tId);
+    return NextResponse.json({ success: true, data: thread.data || {} });
+}
+
+async function listLabels(userId: string) {
+    const labels = await zohoServerService.listLabels(userId);
+    return NextResponse.json({ success: true, data: labels.data || [] });
+}
+
+async function uploadAttachment(req: NextRequest, userId: string) {
+    try {
+        const formData = await req.formData();
+        const file = formData.get('file') as File;
+        if (!file) return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+        
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const res = await zohoServerService.uploadAttachment(userId, buffer, file.name, file.type);
+        return NextResponse.json({ success: true, data: res.data || {} });
+    } catch (e: any) {
+        return NextResponse.json({ error: e.message || 'Upload failed' }, { status: 500 });
+    }
+}
+
+async function applyLabel(userId: string, data: any) {
+    if (!data.messageId || !data.labelId) return NextResponse.json({ error: 'messageId and labelId required' }, { status: 400 });
+    const res = await zohoServerService.applyLabel(userId, data.messageId, data.labelId);
+    return NextResponse.json({ success: true, data: res });
+}
+
+async function removeLabel(userId: string, data: any) {
+    if (!data.messageId || !data.labelId) return NextResponse.json({ error: 'messageId and labelId required' }, { status: 400 });
+    const res = await zohoServerService.removeLabel(userId, data.messageId, data.labelId);
+    return NextResponse.json({ success: true, data: res });
+}
+
+async function batchMarkRead(userId: string, data: any) {
+    if (!data.messageIds) return NextResponse.json({ error: 'messageIds array required' }, { status: 400 });
+    const res = await zohoServerService.batchMarkAsRead(userId, data.messageIds);
+    return NextResponse.json({ success: true, data: res });
+}
+
+async function markSpam(userId: string, data: any) {
+    if (!data.messageId) return NextResponse.json({ error: 'messageId required' }, { status: 400 });
+    const res = await zohoServerService.markAsSpam(userId, data.messageId);
+    return NextResponse.json({ success: true, data: res });
+}
+
+async function createLabel(userId: string, data: any) {
+    if (!data.labelName) return NextResponse.json({ error: 'labelName required' }, { status: 400 });
+    const res = await zohoServerService.createLabel(userId, data.labelName, data.color);
+    return NextResponse.json({ success: true, data: res });
 }
 
 async function resolveFolderId(userId: string, folderRef: string) {

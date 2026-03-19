@@ -52,6 +52,7 @@ function deriveRegionalHosts(region: string = 'com') {
                           r === 'jp' ? 'https://accounts.zoho.jp' :
                           'https://accounts.zoho.com';
 
+    // The mailApiHost can be overridden by apiDomain from OAuth response
     const mailApiHost = r === 'cn' ? 'mail.zoho.com.cn' :
                        r === 'eu' ? 'mail.zoho.eu' :
                        r === 'in' ? 'mail.zoho.in' :
@@ -143,9 +144,13 @@ export const zohoServerService = {
             let accountsServer = currentIntegration?.config?.accountsServer;
             let mailApiHost = currentIntegration?.config?.mailApiHost;
 
-            // Robust derivation of hosts based on region if missing or invalid
             const region = currentIntegration?.config?.region || 'com';
             const derived = deriveRegionalHosts(region);
+
+            // Prioritize stored apiDomain if available
+            if (currentIntegration?.config?.apiDomain) {
+                mailApiHost = currentIntegration.config.apiDomain.replace('https://', '');
+            }
 
             if (!isValidUrl(accountsServer)) {
                 accountsServer = derived.accountsServer;
@@ -289,7 +294,14 @@ export const zohoServerService = {
 
         if (needsCorrection) {
             console.warn(`[Zoho Proxy] Regional mismatch detected for user ${userId} (Region: ${region}). Correcting hosts...`);
-            mailApiHost = derived.mailApiHost;
+            
+            // Prioritize stored apiDomain over derivation if it exists
+            if (integration.config?.apiDomain) {
+                mailApiHost = integration.config.apiDomain.replace('https://', '');
+            } else {
+                mailApiHost = derived.mailApiHost;
+            }
+            
             accountsServer = derived.accountsServer;
 
             // Self-healing: Update DB so we don't repeat this check
@@ -401,6 +413,164 @@ export const zohoServerService = {
     },
 
     /**
+     * Get the full HTML/text content of an email using the correct /content endpoint
+     */
+    async getMessageContent(userId: string, folderId: string, messageId: string) {
+        return this.proxyRequest(userId, `folders/${folderId}/messages/${messageId}/content`);
+    },
+
+    /**
+     * Get technical headers of a specific email
+     */
+    async getMessageHeaders(userId: string, folderId: string, messageId: string) {
+        return this.proxyRequest(userId, `folders/${folderId}/messages/${messageId}/header`);
+    },
+
+    /**
+     * Upload an attachment to Zoho before sending. Returns attachmentIds to include in send.
+     * fileBuffer: Buffer, fileName: string, mimeType: string
+     */
+    async uploadAttachment(userId: string, fileBuffer: Buffer, fileName: string, mimeType: string): Promise<any> {
+        // Use global FormData available in modern Node.js environments (Next.js)
+        const form = new FormData();
+        const blob = new Blob([new Uint8Array(fileBuffer)], { type: mimeType });
+        form.append('attach', blob, fileName);
+
+        const supabaseAdmin = createSupabaseAdminClient();
+        const { data: integration } = await supabaseAdmin
+            .from('integrations')
+            .select('id, config')
+            .eq('user_id', userId)
+            .eq('type', 'zoho')
+            .maybeSingle();
+
+        const token = await this.getValidToken(userId);
+        if (!token) throw new Error('Zoho not connected');
+
+        const region = integration?.config?.region || 'com';
+        const { mailApiHost } = deriveRegionalHosts(region);
+        const accountId = integration?.config?.accountId;
+        const url = `https://${mailApiHost}/api/accounts/${accountId}/messages/attachments`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                Authorization: `Zoho-oauthtoken ${token}`,
+                // NOTE: Do NOT set Content-Type header when using FormData with fetch. 
+                // The browser/Node will automatically set it with the correct boundary.
+            },
+            body: form as any,
+        });
+
+        if (!response.ok) {
+            const txt = await response.text();
+            throw new Error(`Attachment upload failed: ${txt.substring(0, 200)}`);
+        }
+
+        return response.json();
+    },
+
+    /**
+     * Get attachment metadata for a message
+     */
+    async getAttachmentInfo(userId: string, folderId: string, messageId: string) {
+        return this.proxyRequest(userId, `folders/${folderId}/messages/${messageId}/attachmentinfo`);
+    },
+
+    /**
+     * Returns the raw download URL for an attachment (proxy approach)
+     */
+    async downloadAttachment(userId: string, messageId: string, attachmentId: string) {
+        // Zoho requires the token in the header so we proxy it through
+        const supabaseAdmin = createSupabaseAdminClient();
+        const { data: integration } = await supabaseAdmin
+            .from('integrations')
+            .select('id, config')
+            .eq('user_id', userId)
+            .eq('type', 'zoho')
+            .maybeSingle();
+
+        const token = await this.getValidToken(userId);
+        if (!token) throw new Error('Zoho not connected');
+
+        const region = integration?.config?.region || 'com';
+        const { mailApiHost } = deriveRegionalHosts(region);
+        const accountId = integration?.config?.accountId;
+        const url = `https://${mailApiHost}/api/accounts/${accountId}/messages/${messageId}/attachments/${attachmentId}`;
+
+        const response = await fetch(url, {
+            headers: { Authorization: `Zoho-oauthtoken ${token}` },
+        });
+
+        if (!response.ok) throw new Error(`Attachment download failed: ${response.status}`);
+        return response; // Caller streams this
+    },
+
+    /**
+     * Retrieve a full conversation thread
+     */
+    async getThread(userId: string, threadId: string) {
+        return this.proxyRequest(userId, `threads/${threadId}`);
+    },
+
+    /**
+     * Apply a label to a message
+     */
+    async applyLabel(userId: string, messageId: string, labelId: string) {
+        return this.proxyRequest(userId, `messages/${messageId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ mode: 'applyLabel', labelId }),
+        });
+    },
+
+    /**
+     * Remove a label from a message
+     */
+    async removeLabel(userId: string, messageId: string, labelId: string) {
+        return this.proxyRequest(userId, `messages/${messageId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ mode: 'removeLabel', labelId }),
+        });
+    },
+
+    /**
+     * Batch mark multiple messages as read in one API call
+     */
+    async batchMarkAsRead(userId: string, messageIds: string[]) {
+        return this.proxyRequest(userId, 'messages', {
+            method: 'PUT',
+            body: JSON.stringify({ mode: 'markAsRead', messageIds }),
+        });
+    },
+
+    /**
+     * Mark a single message as spam
+     */
+    async markAsSpam(userId: string, messageId: string) {
+        return this.proxyRequest(userId, `messages/${messageId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ mode: 'markAsSpam' }),
+        });
+    },
+
+    /**
+     * List all labels / tags for the account
+     */
+    async listLabels(userId: string) {
+        return this.proxyRequest(userId, 'labels');
+    },
+
+    /**
+     * Create a new label
+     */
+    async createLabel(userId: string, labelName: string, color?: string) {
+        return this.proxyRequest(userId, 'labels', {
+            method: 'POST',
+            body: JSON.stringify({ labelName, color: color || '#4f46e5' }),
+        });
+    },
+
+    /**
      * Send email via Zoho Mail API
      */
     async sendMessage(userId: string, data: {
@@ -408,6 +578,9 @@ export const zohoServerService = {
         subject: string;
         content: string;
         fromAddress?: string;
+        ccAddress?: string;
+        bccAddress?: string;
+        attachmentIds?: string[];
     }) {
         const supabaseAdmin = createSupabaseAdminClient();
         let fromAddress = data.fromAddress;
@@ -461,15 +634,20 @@ export const zohoServerService = {
 
         console.log(`[Zoho Send Debug] Sending email: From ${cleanFrom} To ${cleanTo}`);
 
+        const payload: Record<string, any> = {
+            fromAddress: cleanFrom,
+            toAddress: cleanTo,
+            subject: data.subject,
+            content: data.content,
+            mailFormat: 'html',
+        };
+        if (data.ccAddress) payload.ccAddress = data.ccAddress;
+        if (data.bccAddress) payload.bccAddress = data.bccAddress;
+        if (data.attachmentIds?.length) payload.attachmentIds = data.attachmentIds;
+
         return this.proxyRequest(userId, 'messages', {
             method: 'POST',
-            body: JSON.stringify({
-                fromAddress: cleanFrom,
-                toAddress: cleanTo,
-                subject: data.subject,
-                content: data.content,
-                mailFormat: 'html'
-            }),
+            body: JSON.stringify(payload),
         });
     },
 
@@ -517,16 +695,24 @@ export const zohoServerService = {
         subject: string;
         content: string;
         fromAddress?: string;
+        ccAddress?: string;
+        bccAddress?: string;
+        attachmentIds?: string[];
     }) {
+        const payload: Record<string, any> = {
+            fromAddress: data.fromAddress,
+            toAddress: data.toAddress,
+            subject: data.subject,
+            content: data.content,
+            mailFormat: 'html'
+        };
+        if (data.ccAddress) payload.ccAddress = data.ccAddress;
+        if (data.bccAddress) payload.bccAddress = data.bccAddress;
+        if (data.attachmentIds?.length) payload.attachmentIds = data.attachmentIds;
+
         return this.proxyRequest(userId, `messages/${messageId}/reply`, {
             method: 'POST',
-            body: JSON.stringify({
-                fromAddress: data.fromAddress,
-                toAddress: data.toAddress,
-                subject: data.subject,
-                content: data.content,
-                mailFormat: 'html'
-            }),
+            body: JSON.stringify(payload),
         });
     },
 
@@ -538,16 +724,24 @@ export const zohoServerService = {
         subject: string;
         content: string;
         fromAddress?: string;
+        ccAddress?: string;
+        bccAddress?: string;
+        attachmentIds?: string[];
     }) {
+        const payload: Record<string, any> = {
+            fromAddress: data.fromAddress,
+            toAddress: data.toAddress,
+            subject: data.subject,
+            content: data.content,
+            mailFormat: 'html'
+        };
+        if (data.ccAddress) payload.ccAddress = data.ccAddress;
+        if (data.bccAddress) payload.bccAddress = data.bccAddress;
+        if (data.attachmentIds?.length) payload.attachmentIds = data.attachmentIds;
+
         return this.proxyRequest(userId, `messages/${messageId}/forward`, {
             method: 'POST',
-            body: JSON.stringify({
-                fromAddress: data.fromAddress,
-                toAddress: data.toAddress,
-                subject: data.subject,
-                content: data.content,
-                mailFormat: 'html'
-            }),
+            body: JSON.stringify(payload),
         });
     },
 
@@ -559,17 +753,25 @@ export const zohoServerService = {
         subject: string;
         content: string;
         fromAddress?: string;
+        ccAddress?: string;
+        bccAddress?: string;
+        attachmentIds?: string[];
     }) {
+        const payload: Record<string, any> = {
+            mode: 'saveDraft',
+            fromAddress: data.fromAddress,
+            toAddress: data.toAddress,
+            subject: data.subject,
+            content: data.content,
+            mailFormat: 'html',
+        };
+        if (data.ccAddress) payload.ccAddress = data.ccAddress;
+        if (data.bccAddress) payload.bccAddress = data.bccAddress;
+        if (data.attachmentIds?.length) payload.attachmentIds = data.attachmentIds;
+
         return this.proxyRequest(userId, 'messages', {
             method: 'POST',
-            body: JSON.stringify({
-                mode: 'saveDraft',
-                fromAddress: data.fromAddress,
-                toAddress: data.toAddress,
-                subject: data.subject,
-                content: data.content,
-                mailFormat: 'html'
-            }),
+            body: JSON.stringify(payload),
         });
     },
 };
