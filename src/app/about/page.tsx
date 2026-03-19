@@ -2,29 +2,30 @@ import type { Metadata } from 'next';
 import AboutPage from '@/components/pages/AboutPage';
 
 export const metadata: Metadata = {
-    title: 'About AlphaClone Systems | Building the Unified AI Business OS',
-    description: 'AlphaClone Systems was built to end the era of SaaS bloat. We are on a mission to provide every high-performance team with a technically superior, AI-powered Business OS — one unified architecture to replace the chaos of 10+ disconnected tools.',
+    title: 'About AlphaClone Systems | Unified CRM, Billing, Scheduling, and Operations',
+    description: 'Learn how AlphaClone Systems builds a unified business platform for service businesses by combining CRM, invoicing, scheduling, contracts, messaging, and operations in one product.',
     keywords: [
         'about AlphaClone Systems',
-        'AI Business OS mission',
-        'end SaaS bloat',
-        'AI-powered business platform',
+        'service business software platform',
+        'CRM invoicing scheduling software',
+        'business operations platform',
         'unified operations software',
-        'operational excellence company',
-        'Data Sovereignty platform',
-        'enterprise AI for small business',
+        'client management and billing platform',
+        'all in one business software',
+        'business workflow automation platform',
+        'small business operations software',
     ],
     alternates: { canonical: 'https://alphaclone.tech/about' },
     openGraph: {
-        title: 'About AlphaClone | Building the Unified AI Business OS',
-        description: 'We built AlphaClone to eliminate SaaS bloat. One AI-powered Business OS. One unified architecture. Built for high-performance teams.',
+        title: 'About AlphaClone | Unified Business Software for Service Teams',
+        description: 'AlphaClone combines CRM, billing, scheduling, contracts, communication, and operations into one connected platform for service businesses.',
         url: 'https://alphaclone.tech/about',
         type: 'website',
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'About AlphaClone | Building the Unified AI Business OS',
-        description: 'We built AlphaClone to end SaaS bloat. One unified, AI-powered Business OS for high-performance teams.',
+        title: 'About AlphaClone | Unified Business Software for Service Teams',
+        description: 'CRM, invoicing, scheduling, contracts, messaging, and operations in one connected platform.',
     },
 };
 

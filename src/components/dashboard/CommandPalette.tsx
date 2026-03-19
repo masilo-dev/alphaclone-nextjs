@@ -255,10 +255,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                     <span className="text-[10px] text-slate-600 font-bold uppercase tracking-wider">Select</span>
                                 </div>
                             </div>
-                            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-2">
-                                <Sparkles className="w-3 h-3 text-teal-500" />
-                                Power-User Command Matrix
-                            </div>
+                                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-2">
+                                    <Sparkles className="w-3 h-3 text-teal-500" />
+                                    Quick Actions
+                                </div>
                         </div>
                     </motion.div>
                 </div>

@@ -5,9 +5,12 @@ import {
     Briefcase,
     MessageSquare,
     Menu,
-    DollarSign
+    DollarSign,
+    Users,
+    CheckSquare,
+    Calendar
 } from 'lucide-react';
-import { NavItem, UserRole } from '../../types';
+import { UserRole } from '../../types';
 
 interface BottomNavProps {
     activeTab: string;
@@ -26,14 +29,23 @@ const BottomNav: React.FC<BottomNavProps> = ({
 }) => {
     const router = useRouter();
 
-    // Define the core top-level mobile destinations
-    // We limit to 5 items max for standard bottom nav patterns
-    const MOBILE_NAV_ITEMS = [
-        { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
-        { label: 'Projects', href: '/dashboard/projects', icon: Briefcase },
-        { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
-        { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
-    ];
+    const mobileNavItems = useMemo(() => {
+        if (userRole === 'tenant_admin') {
+            return [
+                { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
+                { label: 'Contacts', href: '/dashboard/business/clients', icon: Users },
+                { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
+                { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
+            ];
+        }
+
+        return [
+            { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
+            { label: 'Projects', href: '/dashboard/projects', icon: Briefcase },
+            { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
+            { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
+        ];
+    }, [userRole]);
 
     const handleNavClick = (href: string) => {
         onNavigate(href);
@@ -43,7 +55,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
     return (
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 pb-safe z-50 h-[calc(env(safe-area-inset-bottom,20px)+64px)]">
             <div className="flex justify-around items-center h-16">
-                {MOBILE_NAV_ITEMS.map((item) => {
+                {mobileNavItems.map((item) => {
                     const isActive = activeTab === item.href;
                     return (
                         <button

@@ -266,7 +266,7 @@ const SalesAgent: React.FC = () => {
 
     // Chat State
     const [messages, setMessages] = useState([
-        { id: 1, sender: 'agent', text: 'Hello! I am your AI Sales Agent. I can help you find leads, draft outreach messages, or manage your CRM. What would you like to do today?' }
+        { id: 1, sender: 'agent', text: 'Hello. I can help you find leads, draft outreach messages, and prepare CRM follow-up. Assisted workflows are available now; fully autonomous execution is still in beta.' }
     ]);
     const [inputText, setInputText] = useState('');
     const [pendingSearch, setPendingSearch] = useState<{ industry: string, location: string, filters?: string } | null>(null);
@@ -913,12 +913,16 @@ const SalesAgent: React.FC = () => {
                 <div className="min-w-0">
                     <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500 flex items-center gap-2 sm:gap-3">
                         <Bot className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-teal-400 flex-shrink-0" />
-                        <span className="truncate">AlphaClone Growth Agent</span>
+                        <span className="truncate">Growth Agent</span>
                     </h2>
-                    <p className="text-slate-400 mt-1 text-xs sm:text-sm flex items-center gap-2">
-                        <span>Intelligent Lead Discovery Powered by Claude & GPT-4</span>
-                        <Zap className="w-3 h-3 text-teal-400 animate-pulse" />
-                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                        <span className="inline-flex items-center rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-1 font-semibold text-amber-300">
+                            Beta
+                        </span>
+                        <span className="text-slate-400">
+                            Lead discovery and assisted outreach are available now. Fully autonomous agent execution is still limited.
+                        </span>
+                    </div>
                 </div>
                 <div className="flex bg-slate-800 p-1 rounded-lg self-start sm:self-auto">
                     <button
@@ -934,6 +938,11 @@ const SalesAgent: React.FC = () => {
                         Agent Chat
                     </button>
                 </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/5 bg-slate-900/50 px-4 py-3 text-sm text-slate-300">
+                <span className="font-semibold text-white">Current status:</span> search, draft generation, CRM handoff, and quote creation work today.
+                Long-running autonomous missions and persistent mission history still need hardening before this should be treated as a fully autonomous agent.
             </div>
 
             {/* Aerial View - Mini Widget during search or navigation */}

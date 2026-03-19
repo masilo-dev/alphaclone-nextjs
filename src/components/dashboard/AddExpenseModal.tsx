@@ -171,7 +171,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                 </div>
                                 <div>
                                     <h2 className="text-lg font-black text-white uppercase tracking-tight">Record Outflow</h2>
-                                    <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">General Ledger · Entry Protocol</p>
+                                    <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">General Ledger · Expense Entry</p>
                                 </div>
                             </div>
                             <button
@@ -203,7 +203,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Quantum Amount ({currencyCode})</label>
+                                                <label className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Amount ({currencyCode})</label>
                                                 <input
                                                     type="number"
                                                     value={amount}
@@ -279,8 +279,8 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                 <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-inner">
                                                     <Receipt className="w-8 h-8 text-slate-500 group-hover:text-red-500 transition-colors" />
                                                 </div>
-                                                <p className="text-sm text-slate-300 font-bold">Inject Digital Evidence</p>
-                                                <p className="text-[10px] text-slate-500 mt-2 uppercase tracking-widest font-mono">PDF, IMAGE · MAX 5MB</p>
+                                                <p className="text-sm text-slate-300 font-bold">Upload Receipt</p>
+                                                <p className="text-[10px] text-slate-500 mt-2 uppercase tracking-widest font-mono">PDF, Image · Max 5MB</p>
                                             </div>
                                         </div>
                                     </motion.div>
@@ -294,12 +294,12 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                         <div className="w-24 h-24 bg-green-500/10 rounded-[2.5rem] flex items-center justify-center mb-8 border border-green-500/20 shadow-[0_20px_40px_-10px_rgba(34,197,94,0.3)]">
                                             <CheckCircle className="w-12 h-12 text-green-400" />
                                         </div>
-                                        <h3 className="text-3xl font-black text-white mb-4 uppercase tracking-tighter">Entry Committed</h3>
+                                        <h3 className="text-3xl font-black text-white mb-4 uppercase tracking-tighter">Expense Saved</h3>
                                         <p className="text-slate-500 max-w-sm mb-10 text-lg leading-relaxed font-medium">
-                                            Transmission successful. Journal entry synchronization is complete within the General Ledger.
+                                            The expense entry was saved successfully and posted to the ledger.
                                         </p>
                                         <Button onClick={handleClose} className="h-14 px-12 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] outline-none">
-                                            Conclude Session
+                                            Close
                                         </Button>
                                     </motion.div>
                                 )}
@@ -310,7 +310,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                         {step === 'edit' && (
                             <div className="p-8 border-t border-white/5 bg-white/2 flex items-center justify-between">
                                 <div className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] hidden sm:block">
-                                    Ledger State: ASYNCHRONOUS
+                                    Ledger entry
                                 </div>
                                 <div className="flex items-center gap-4 w-full sm:w-auto">
                                     <button
@@ -327,7 +327,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                         className="flex-1 sm:flex-none bg-red-600 hover:bg-red-500 text-white px-10 py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl shadow-red-600/20 disabled:opacity-50 disabled:grayscale"
                                     >
                                         {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 stroke-[2.5px]" />}
-                                        Commit Protocol
+                                        Save Expense
                                     </motion.button>
                                 </div>
                             </div>

@@ -243,7 +243,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
 
                     <div className={`p-4 rounded-xl border flex items-center justify-center gap-3 transition-all ${isBalanced ? 'bg-teal-500/5 border-teal-500/20 text-teal-400' : 'bg-red-500/5 border-red-500/20 text-red-400'}`}>
                         {isBalanced ? (
-                            <><CheckCircle2 className="w-5 h-5" /><span className="text-sm font-bold uppercase tracking-tight">Protocol Balanced</span></>
+                            <><CheckCircle2 className="w-5 h-5" /><span className="text-sm font-bold uppercase tracking-tight">Entry Balanced</span></>
                         ) : (
                             <><AlertCircle className="w-5 h-5" /><span className="text-sm font-bold uppercase tracking-tight">Imbalance Detected: ${(totalDebits - totalCredits).toFixed(2)}</span></>
                         )}

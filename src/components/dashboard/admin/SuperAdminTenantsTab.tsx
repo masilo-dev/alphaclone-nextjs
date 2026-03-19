@@ -72,7 +72,7 @@ const SuperAdminTenantsTab: React.FC = () => {
                 <div>
                     <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                         <Building2 className="w-6 h-6 text-teal-400" />
-                        Platform Command Center
+                        Platform Overview
                     </h2>
                     <p className="text-slate-400">Manage all tenants on the platform</p>
                 </div>
@@ -266,4 +266,3 @@ const StatCard = ({ label, value, trend, color = 'text-white' }: any) => (
 );
 
 export default SuperAdminTenantsTab;
-

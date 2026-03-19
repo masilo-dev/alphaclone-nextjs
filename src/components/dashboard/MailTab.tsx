@@ -26,8 +26,7 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
             const connected = await zohoService.checkIntegration(user.id);
             setIsZohoIntegrated(connected);
             if (connected && searchParams.get('zoho') === 'connected') {
-                toast.success('Zoho Mail Connected Successfully!', {
-                    icon: '🚀',
+                toast.success('Zoho Mail connected successfully.', {
                     duration: 5000,
                 });
             }
@@ -101,17 +100,17 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
 
                         <h2 className="text-3xl sm:text-5xl font-black text-white mb-4 tracking-tight uppercase leading-none">
                             Zoho Mail <br />
-                            <span className="text-[#f5d400] text-xl sm:text-3xl">Neural Hub</span>
+                            <span className="text-[#f5d400] text-xl sm:text-3xl">Integration</span>
                         </h2>
                         <p className="text-slate-400 max-w-xl mx-auto mb-8 text-base leading-relaxed font-medium">
-                            Unleash high-frequency AI email automation with quantum-safe thread synchronization.
+                            Connect Zoho Mail to sync threads, manage business conversations, and keep email inside your workspace.
                         </p>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
                             {[
-                                { icon: Zap, title: "Instant Sync", desc: "Real-time thread retrieval." },
-                                { icon: ShieldCheck, title: "Secure", desc: "Dedicated token isolation." },
-                                { icon: Globe, title: "AI Context", desc: "Native business mapping." }
+                                { icon: Zap, title: "Instant Sync", desc: "Keep mail activity up to date." },
+                                { icon: ShieldCheck, title: "Secure", desc: "Protected account connection." },
+                                { icon: Globe, title: "Shared Context", desc: "Use email inside your workspace." }
                             ].map((feature, i) => (
                                 <motion.div
                                     key={i}

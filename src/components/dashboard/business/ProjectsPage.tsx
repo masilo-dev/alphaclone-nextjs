@@ -123,7 +123,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     setProjects(prev => prev.map(p => p.id === editingProject.id ? { ...p, ...projectData } : p));
                     setEditingProject(null);
                 } else {
-                    alert(`Mission Update Failed: ${error}`);
+                    alert(`Project update failed: ${error}`);
                 }
             } else {
                 const projectToCreate: any = {
@@ -139,11 +139,11 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     showInPortfolio: false
                 };
 
-                console.log("Initiating Mission:", projectToCreate);
+                console.log("Creating project:", projectToCreate);
                 const { project, error } = await projectService.createProject(projectToCreate);
 
                 if (error) {
-                    alert(`Mission Initialization Failed: ${error}`);
+                    alert(`Project creation failed: ${error}`);
                     console.error("Creation Error:", error);
                 } else if (project) {
                     setProjects(prev => [project, ...prev]);
@@ -189,7 +189,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
         return (
             <div className="flex flex-col items-center justify-center h-full gap-4">
                 <div className="w-12 h-12 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin"></div>
-                <div className="text-slate-500 font-black text-xs uppercase tracking-widest animate-pulse">Syncing Mission Data...</div>
+                <div className="text-slate-500 font-black text-xs uppercase tracking-widest animate-pulse">Loading projects...</div>
             </div>
         );
     }
@@ -204,12 +204,12 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                             <Briefcase className="w-6 h-6 text-white" />
                         </div>
                         <h2 className="text-3xl lg:text-4xl font-bold text-white tracking-tight">
-                            Projects <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400">Mission Control</span>
+                            Projects <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400">Overview</span>
                         </h2>
                     </div>
                     <p className="text-slate-500 font-mono text-[10px] uppercase tracking-[0.2em] ml-1 mt-2 flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                        {projects.length} Active Missions
+                        {projects.length} Active Projects
                     </p>
                 </div>
 
@@ -220,7 +220,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                             className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${viewMode === 'list' ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
                         >
                             <LayoutList className="w-4 h-4" />
-                            <span className="text-xs font-black uppercase tracking-wider">Directives</span>
+                            <span className="text-xs font-black uppercase tracking-wider">List</span>
                         </button>
                         <button
                             onClick={() => setViewMode('timeline')}
@@ -250,7 +250,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                         className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white text-slate-900 hover:bg-violet-50 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl hover:shadow-white/10 active:scale-95"
                     >
                         <Plus className="w-4 h-4" />
-                        New Mission
+                        New Project
                     </button>
                 </div>
             </div>
@@ -261,18 +261,18 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     <div className="h-full flex flex-col space-y-4">
                         {/* List Header */}
                         <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-3 bg-slate-900/40 border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 font-mono">
-                            <div className="col-span-5">Mission Objective</div>
+                            <div className="col-span-5">Project</div>
                             <div className="col-span-2 text-center">Status</div>
                             <div className="col-span-2 text-center">Health & Risk</div>
                             <div className="col-span-2 text-center">Countdown</div>
-                            <div className="col-span-1 text-right">Ops</div>
+                            <div className="col-span-1 text-right">Actions</div>
                         </div>
 
                         <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
                             {filteredProjects.length === 0 ? (
                                 <div className="py-20 flex flex-col items-center justify-center text-slate-500 bg-slate-900/20 rounded-3xl border border-dashed border-white/5">
                                     <Target className="w-16 h-16 mb-4 opacity-20" />
-                                    <p className="font-mono text-sm uppercase tracking-widest">No Active Missions Found</p>
+                                    <p className="font-mono text-sm uppercase tracking-widest">No Projects Found</p>
                                 </div>
                             ) : (
                                 filteredProjects.map((project) => (
@@ -433,14 +433,14 @@ const ProjectListRow = ({
                 <button
                     onClick={() => onEdit(project)}
                     className="p-2 hover:bg-violet-500/10 text-slate-500 hover:text-violet-400 rounded-lg transition-all"
-                    title="Mission Config"
+                    title="Edit project"
                 >
                     <Activity className="w-4 h-4" />
                 </button>
                 <button
                     onClick={() => onDelete(project.id)}
                     className="p-2 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-lg transition-all"
-                    title="Abort Mission"
+                    title="Delete project"
                 >
                     <Trash2 className="w-4 h-4" />
                 </button>
@@ -464,7 +464,7 @@ const ProjectHealthDashboard = ({ projects }: { projects: BusinessProject[] }) =
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <HealthStatCard
-                    label="Total Missions"
+                    label="Total Projects"
                     value={stats.total}
                     icon={Briefcase}
                     color="text-violet-400"
@@ -570,12 +570,12 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-[100] p-4">
             <div className="bg-slate-900 border border-white/10 rounded-[2rem] p-8 max-w-md w-full shadow-2xl shadow-violet-500/10 animate-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between mb-8">
-                    <h3 className="text-xl font-bold text-white">{initialData ? 'Edit Mission' : 'New Mission'}</h3>
+                    <h3 className="text-xl font-bold text-white">{initialData ? 'Edit Project' : 'New Project'}</h3>
                     <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl transition-colors"><X className="w-5 h-5 text-slate-400" /></button>
                 </div>
                 <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-5">
                     <div className="space-y-1.5">
-                        <label className="text-sm font-semibold text-slate-300 ml-1">Mission Name *</label>
+                        <label className="text-sm font-semibold text-slate-300 ml-1">Project Name *</label>
                         <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-medium focus:border-violet-400 outline-none transition-all shadow-inner" placeholder="Website Redesign..." />
                     </div>
@@ -644,7 +644,7 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
 
                     <div className="flex gap-4 pt-6">
                         <button type="button" onClick={onClose} className="flex-1 px-6 py-4 bg-slate-800 hover:bg-slate-700 rounded-2xl font-bold text-sm text-slate-300 transition-all">Cancel</button>
-                        <button type="submit" className="flex-1 px-6 py-4 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl font-bold text-sm transition-all shadow-lg shadow-violet-500/20 active:scale-95">{initialData ? 'Save Changes' : 'Initialize Mission'}</button>
+                        <button type="submit" className="flex-1 px-6 py-4 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl font-bold text-sm transition-all shadow-lg shadow-violet-500/20 active:scale-95">{initialData ? 'Save Changes' : 'Create Project'}</button>
                     </div>
                 </form>
             </div>

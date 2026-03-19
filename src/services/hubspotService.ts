@@ -112,6 +112,52 @@ export const hubspotService = {
         }
     },
 
+    async findContactByEmail(userId: string, email: string) {
+        const token = await this.getValidToken(userId);
+        const response = await fetch('https://api.hubapi.com/crm/v3/objects/contacts/search', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                filterGroups: [
+                    {
+                        filters: [
+                            {
+                                propertyName: 'email',
+                                operator: 'EQ',
+                                value: email
+                            }
+                        ]
+                    }
+                ],
+                properties: ['firstname', 'lastname', 'email', 'phone', 'company'],
+                limit: 1
+            })
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Failed to search contacts');
+        return data.results?.[0] || null;
+    },
+
+    async updateContact(userId: string, contactId: string, properties: Record<string, any>) {
+        const token = await this.getValidToken(userId);
+        const response = await fetch(`https://api.hubapi.com/crm/v3/objects/contacts/${contactId}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ properties })
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Failed to update contact');
+        return data;
+    },
+
     /**
      * Create or update contact in HubSpot
      */
@@ -138,12 +184,18 @@ export const hubspotService = {
 
             const data = await response.json();
             
-            // If contact already exists, try searching and updating
             if (response.status === 409) {
-                // HubSpot 409 usually means "Contact already exists"
-                // In a production app, we would search by email and then PATCH
-                console.log('HubSpot contact already exists, skipping create');
-                return { success: true, message: 'Contact already exists' };
+                if (!lead.email) {
+                    return { success: true, message: 'Contact already exists' };
+                }
+
+                const existing = await this.findContactByEmail(userId, lead.email);
+                if (!existing?.id) {
+                    return { success: true, message: 'Contact already exists' };
+                }
+
+                const updated = await this.updateContact(userId, existing.id, properties);
+                return { success: true, data: updated, message: 'Contact updated' };
             }
 
             if (!response.ok) throw new Error(data.message || 'Failed to sync lead');
