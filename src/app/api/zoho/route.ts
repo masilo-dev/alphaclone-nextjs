@@ -226,7 +226,7 @@ async function getMessages(userId: string, searchParams: URLSearchParams) {
         }
     }
 
-    let queryParams = `start=1&limit=50&sortBy=date&order=desc`;
+    let queryParams = `start=1&limit=50&sortBy=date&sortOrder=desc`;
     if (lcFolder === 'starred') queryParams += `&flagid=2`;
     else queryParams += `&folderId=${actualFolderId}`;
 
