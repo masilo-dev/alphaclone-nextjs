@@ -11,9 +11,10 @@ export async function GET(req: NextRequest) {
     const stateNonce = searchParams.get('state');
 
     // Use the request's own origin so local dev redirects go back to localhost
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin || 'https://alphaclone.tech';
-
-    console.log(`[Zoho Callback Debug] Received State: ${stateNonce}, Code Present: ${!!code}, URL: ${appUrl}`);
+    // Priority: ENV.NEXT_PUBLIC_APP_URL > req.nextUrl.origin > Fallback
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || (req.nextUrl.origin !== 'null' ? req.nextUrl.origin : null) || 'https://alphaclone.tech';
+    
+    console.log(`[Zoho Callback Debug] Received Params - State: ${stateNonce}, Code Present: ${!!code}, App URL: ${appUrl}`);
 
     if (!code || !stateNonce) {
         console.warn(`[Zoho Callback Debug] Missing params. State: ${stateNonce}, Code: ${!!code}`);
@@ -38,8 +39,11 @@ export async function GET(req: NextRequest) {
         }
 
         if (!stateData) {
-            console.error(`[Zoho Callback Debug] State Verification Failed for "${stateNonce}". Reason: State not found in DB.`);
-            return NextResponse.redirect(`${appUrl}/dashboard/settings?zoho=error&reason=invalid_state`);
+            // DIAGNOSTIC: Log why it might have failed
+            console.error(`[Zoho Callback Debug] State Verification Failed for "${stateNonce}". Reason: State not found in 'oauth_states' table.`);
+            
+            // Helpful hint for user: If multiple logins were attempted, the state might be from an old session.
+            return NextResponse.redirect(`${appUrl}/dashboard/settings?zoho=error&reason=invalid_state_check_logs`);
         }
 
         console.log(`[Zoho Callback Debug] State found. Created at: ${stateData.created_at}. User: ${stateData.user_id}`);

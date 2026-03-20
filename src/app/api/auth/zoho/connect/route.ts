@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
         console.log(`[Zoho Connect Debug] Generated State: ${stateNonce} for User: ${userId}`);
         
         const clientId = ENV.ZOHO_CLIENT_ID;
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin || 'https://alphaclone.tech';
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || (req.nextUrl.origin !== 'null' ? req.nextUrl.origin : null) || 'https://alphaclone.tech';
         const redirectUri = `${appUrl}/api/auth/zoho/callback`;
 
         console.log(`[Zoho Connect Debug] App URL: ${appUrl}, Redirect URI: ${redirectUri}`);
