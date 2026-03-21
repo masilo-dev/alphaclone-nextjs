@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { zohoServerService, deriveRegionalHosts } from '@/services/server/zohoServerService';
 
 export const dynamic = 'force-dynamic';
 import { encrypt } from '@/lib/encryption';
@@ -55,14 +56,8 @@ export async function GET(req: NextRequest) {
         const clientId = ENV.ZOHO_CLIENT_ID;
         const clientSecret = ENV.ZOHO_CLIENT_SECRET;
 
-        // Determine accounts server base on region (falling back to searchParams if Zoho provided it)
-        let accountsServer = searchParams.get('accounts-server');
-        if (!accountsServer) {
-            accountsServer = region === 'com' ? 'https://accounts.zoho.com' : 
-                             region === 'au' ? 'https://accounts.zoho.com.au' :
-                             region === 'cn' ? 'https://accounts.zoho.com.cn' :
-                             `https://accounts.zoho.${region}`;
-        }
+        // Determine accounts server base on region
+        const { accountsServer } = deriveRegionalHosts(region);
         
         const tokenEndpoint = accountsServer.endsWith('/') ? `${accountsServer}oauth/v2/token` : `${accountsServer}/oauth/v2/token`;
         const redirectUri = `${appUrl}/api/auth/zoho/callback`;
@@ -102,16 +97,20 @@ export async function GET(req: NextRequest) {
         const { access_token, refresh_token, expires_in, api_domain } = tokens;
         const expiresAt = new Date(Date.now() + (expires_in || 3600) * 1000).toISOString();
 
-        // 3. Fetch Zoho Account ID
-        // CRITICAL: We derive the mailApiHost from the accountsServer to ensure we use the 'mail.' subdomain.
-        // The 'api_domain' returned by Zoho can sometimes point to CRM or other non-mail API hosts.
-        let mailApiHost = 'mail.zoho.com';
-        if (accountsServer.includes('.eu')) mailApiHost = 'mail.zoho.eu';
-        else if (accountsServer.includes('.in')) mailApiHost = 'mail.zoho.in';
-        else if (accountsServer.includes('.com.au')) mailApiHost = 'mail.zoho.com.au';
-        else if (accountsServer.includes('.jp')) mailApiHost = 'mail.zoho.jp';
-        else if (accountsServer.includes('.ca')) mailApiHost = 'mail.zoho.ca';
-        else if (accountsServer.includes('.cn')) mailApiHost = 'mail.zoho.com.cn';
+        // 3. Resolve Mail API Host
+        // CRITICAL: We prioritize api_domain from Zoho if present, 
+        // otherwise fallback to our regional derivation.
+        let mailApiHost = deriveRegionalHosts(region).mailApiHost;
+        
+        if (api_domain) {
+            // api_domain usually looks like "https://mail.zoho.com" or "mail.zoho.com"
+            try {
+                mailApiHost = api_domain.includes('://') ? new URL(api_domain).host : api_domain;
+                console.log(`[Zoho Callback] Using api_domain from Zoho: ${mailApiHost}`);
+            } catch (e) {
+                console.warn(`[Zoho Callback] Failed to parse api_domain "${api_domain}", falling back to derived host.`);
+            }
+        }
         
         console.log(`[Zoho Callback Debug] Resolved mailApiHost: ${mailApiHost} (from accountsServer: ${accountsServer}, api_domain: ${api_domain})`);
 

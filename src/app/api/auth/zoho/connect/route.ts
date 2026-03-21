@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
 import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase-server';
+import { zohoServerService, deriveRegionalHosts } from '@/services/server/zohoServerService';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,12 +37,12 @@ export async function GET(req: NextRequest) {
         
         if (cleanupError) console.warn('[Zoho Connect Debug] State cleanup warning:', cleanupError.message);
 
-        // Support for different Zoho DCs (US, EU, IN, AU, JP, CA, CN)
+        // Support for different Zoho DCs
         const region = searchParams.get('region') || 'com';
-        const accountsDomain = region === 'com' ? 'accounts.zoho.com' : 
-                               region === 'au' ? 'accounts.zoho.com.au' :
-                               region === 'cn' ? 'accounts.zoho.com.cn' :
-                               `accounts.zoho.${region}`;
+        const { accountsServer } = deriveRegionalHosts(region);
+        
+        // Extract domain from accountsServer URL
+        const accountsDomain = new URL(accountsServer).host;
 
         // 2. Generate and persist new secure state
         console.log(`[Zoho Connect Debug] Generating secure state for user: ${userId} and region: ${region}`);

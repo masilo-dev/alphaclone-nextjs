@@ -41,24 +41,30 @@ function safeDecrypt(token: string | null | undefined, secret: string | undefine
 
 /**
  * Derives the correct Zoho accounts and mail hosts based on the region string.
- * Supports: com, eu, in, au, cn, jp
+ * Supports: com, eu, in, au, cn, jp, ca
  */
-function deriveRegionalHosts(region: string = 'com') {
+export function deriveRegionalHosts(region: string = 'com') {
     const r = region.toLowerCase();
-    const accountsServer = r === 'cn' ? 'https://accounts.zoho.com.cn' : 
-                          r === 'eu' ? 'https://accounts.zoho.eu' :
-                          r === 'in' ? 'https://accounts.zoho.in' :
-                          r === 'au' ? 'https://accounts.zoho.com.au' :
-                          r === 'jp' ? 'https://accounts.zoho.jp' :
-                          'https://accounts.zoho.com';
+    
+    // Accounts Server Mapping
+    const accountsServer = 
+        r === 'cn' ? 'https://accounts.zoho.com.cn' : 
+        r === 'eu' ? 'https://accounts.zoho.eu' :
+        r === 'in' ? 'https://accounts.zoho.in' :
+        r === 'au' ? 'https://accounts.zoho.com.au' :
+        r === 'jp' ? 'https://accounts.zoho.jp' :
+        r === 'ca' ? 'https://accounts.zoho.ca' :
+        'https://accounts.zoho.com';
 
-    // The mailApiHost can be overridden by apiDomain from OAuth response
-    const mailApiHost = r === 'cn' ? 'mail.zoho.com.cn' :
-                       r === 'eu' ? 'mail.zoho.eu' :
-                       r === 'in' ? 'mail.zoho.in' :
-                       r === 'au' ? 'mail.zoho.com.au' :
-                       r === 'jp' ? 'mail.zoho.jp' :
-                       'mail.zoho.com';
+    // Mail API Host Mapping
+    const mailApiHost = 
+        r === 'cn' ? 'mail.zoho.com.cn' :
+        r === 'eu' ? 'mail.zoho.eu' :
+        r === 'in' ? 'mail.zoho.in' :
+        r === 'au' ? 'mail.zoho.com.au' :
+        r === 'jp' ? 'mail.zoho.jp' :
+        r === 'ca' ? 'mail.zoho.ca' :
+        'mail.zoho.com';
 
     return { accountsServer, mailApiHost };
 }
@@ -289,13 +295,12 @@ export const zohoServerService = {
         // Force correction if there is a mismatch detected or hosts are missing/invalid
         const needsCorrection = !mailApiHost || 
                                !accountsServer || 
-                               (region === 'com' && mailApiHost.includes('.eu')) ||
-                               (region === 'eu' && mailApiHost.includes('.com'));
+                               mailApiHost !== derived.mailApiHost ||
+                               accountsServer !== derived.accountsServer;
 
         if (needsCorrection) {
-            console.warn(`[Zoho Proxy] Regional mismatch detected for user ${userId} (Region: ${region}). Correcting hosts...`);
+            console.warn(`[Zoho Proxy] Regional mismatch or missing hosts detected for user ${userId} (Region: ${region}). Correcting...`);
             
-            // Derive correct mail host from region mapping
             mailApiHost = derived.mailApiHost;
             accountsServer = derived.accountsServer;
 
@@ -306,10 +311,11 @@ export const zohoServerService = {
                     config: { 
                         ...(integration.config || {}), 
                         mailApiHost, 
-                        accountsServer 
+                        accountsServer,
+                        region // Ensure region is persisted if it wasn't
                     } 
                 })
-                .eq('id', integration.id); // Optimized: use integration.id directly
+                .eq('id', integration.id);
         }
 
         // ✅ Fix 3: Construct API URL
