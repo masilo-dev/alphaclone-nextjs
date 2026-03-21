@@ -16,5 +16,9 @@
 - Resolved Zoho "ZERO CONVERSATION" issue by implementing strict `sortBy=date&order=desc` sorting and robust folder ID resolution.
 - Standardized Zoho API response payload with normalized fields (`id`, `date`, `from`, `snippet`) for simplified UI rendering.
 - Enhanced Zoho Mail UI with resilient date parsing and improved folder synchronization.
+- Upgraded system-wide AI models to **Claude 4.5/4.6** (Claude Sonnet 4.6 & Claude Haiku 4.5) for improved 2026 reasoning and performance.
+- Implemented `aiHealthService.ts` for real-time monitoring of AI provider connectivity and key validity.
+- Resolved model ID mismatch by standardizing all agent fleet roles on 2026 frontier models.
+- Established a strategic roadmap for **Long-Term AI Memory** and **Capability-Based Orchestration** to ensure 10-year platform longevity.
 
-Vercel Build Status: Confirmed Safe (Zoho fixes verified with `tsc`).
+Vercel Build Status: Confirmed Safe (AI upgrades verified with `tsc`).

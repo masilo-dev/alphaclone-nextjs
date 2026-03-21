@@ -40,11 +40,13 @@ export const MODEL_PRICING = {
   'gpt-4': { input: 30, output: 60 },
   'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
 
-  // Anthropic (per 1M tokens)
+  // Anthropic (per 1M tokens) - 2025/2026 pricing
+  'claude-sonnet-4-6-20260217': { input: 3, output: 15 },
+  'claude-sonnet-4-5-20250929': { input: 3, output: 15 },
+  'claude-haiku-4-5-20251015': { input: 0.25, output: 1.25 },
   'claude-3-5-sonnet-20241022': { input: 3, output: 15 },
   'claude-3-5-haiku-20241022': { input: 0.25, output: 1.25 },
   'claude-3-opus-20240229': { input: 15, output: 75 },
-  'claude-3-haiku-20240307': { input: 0.25, output: 1.25 },
 };
 
 export interface AIRequestOptions {
@@ -564,15 +566,15 @@ export function getRecommendedModel(taskType: string): { provider: 'anthropic' |
   const recommendations: Record<string, { provider: 'anthropic' | 'openai' | 'gemini' | 'openrouter'; model: string }> = {
     'contract_generation': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
     'document_analysis': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
-    'code_generation': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
+    'code_generation': { provider: 'anthropic', model: 'claude-sonnet-4-6-20260217' },
     'email_drafting': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
     'summarization': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
-    'chat': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
-    'quick_task': { provider: 'anthropic', model: 'claude-haiku-4.5' },
+    'chat': { provider: 'anthropic', model: 'claude-sonnet-4-6-20260217' },
+    'quick_task': { provider: 'anthropic', model: 'claude-haiku-4-5-20251015' },
     'translation': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
   };
 
-  return recommendations[taskType] || { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' };
+  return recommendations[taskType] || { provider: 'anthropic', model: 'claude-sonnet-4-6-20260217' };
 }
 
 /**

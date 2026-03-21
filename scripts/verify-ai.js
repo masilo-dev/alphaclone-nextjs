@@ -30,9 +30,9 @@ async function testAnthropic() {
     try {
         const anthropic = new Anthropic({ apiKey: KEYS.ANTHROPIC });
         const message = await anthropic.messages.create({
-            model: 'claude-haiku-4.5',
+            model: 'claude-sonnet-4-6-20260217',
             max_tokens: 10,
-            messages: [{ role: 'user', content: 'Say "Anthropic OK"' }],
+            messages: [{ role: 'user', content: 'Say "Anthropic 4.6 OK"' }],
         });
         console.log('✅ Anthropic: Success!', message.content[0].text);
     } catch (error) {

@@ -14,20 +14,20 @@ export interface AgentConfig {
 export const AGENT_FLEET: Record<AgentRole, AgentConfig> = {
     strategist: {
         id: 'strategist',
-        model: 'claude-3-5-sonnet-20240620', // Using Sonnet for reasoning
+        model: 'claude-sonnet-4-6-20260217', // Using latest 4.6 for reasoning
         role: 'Mission Architect',
         description: 'Decomposes complex goals into actionable sub-tasks and sequences.'
     },
     researcher: {
         id: 'researcher',
-        model: 'claude-3-5-sonnet-20240620',
+        model: 'claude-sonnet-4-5-20250929',
         role: 'Intelligence Gatherer',
         description: 'Performs deep platform audits and gathers real-time data for execution.',
         tools: ['lead_prospector', 'semantic_assistant']
     },
     executor: {
         id: 'executor',
-        model: 'claude-3-haiku-20240307', // Haiku for speed
+        model: 'claude-haiku-4-5-20251015', // Haiku 4.5 for speed
         role: 'Action Specialist',
         description: 'Executes specific tasks at high speed with parallel capabilities.',
         parallel: true,
@@ -36,14 +36,14 @@ export const AGENT_FLEET: Record<AgentRole, AgentConfig> = {
     },
     qa: {
         id: 'qa',
-        model: 'claude-3-5-sonnet-20240620', // Sonnet for high precision
+        model: 'claude-sonnet-4-5-20250929', // Sonnet 4.5 for high precision
         role: 'Quality Assurance',
         description: 'Validates agent outputs for tone, accuracy, and compliance before finalization.',
         checkpoints: ['tone', 'accuracy', 'compliance']
     },
     learning: {
         id: 'learning',
-        model: 'claude-3-5-sonnet-20240620',
+        model: 'claude-sonnet-4-6-20260217',
         role: 'Evolution Engine',
         description: 'Analyzes mission outcomes to refine future strategies and patterns.'
     }
