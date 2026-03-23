@@ -24,7 +24,7 @@ export async function getPublishedSeoArticles() {
         .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return (data || []) as SeoArticleRecord[];
+    return (Array.isArray(data) ? data : []) as SeoArticleRecord[];
 }
 
 export async function getPublishedSeoArticleBySlug(slug: string) {
