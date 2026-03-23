@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { gmailServerService } from '@/services/server/gmailServerService';
-import { createSupabaseAdminClient } from '@/lib/supabase-server';
-import { generateText } from '@/services/aiRouter';
+import { gmailServerService } from '../../../services/server/gmailServerService';
+import { createSupabaseAdminClient } from '../../../lib/supabase-server';
+import { routeAIRequest as generateText } from '../../../services/aiRouter';
 
 export async function POST(req: NextRequest) {
     try {

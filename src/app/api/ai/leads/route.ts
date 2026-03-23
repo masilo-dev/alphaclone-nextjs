@@ -111,18 +111,19 @@ Strict Schema:
         if (leads.length > 0) {
             console.log('[Lead Gen] Running Rigorous Claude 4.5 Data Scientist Audit...');
             try {
-                const verificationPrompt = `You are a Senior SDR and Data Scientist Auditor at AlphaClone using Claude 4.5.
+                const verificationPrompt = `You are a Senior Strategic SDR and Data Scientist Auditor at AlphaClone using Claude 4.5.
 Analyze these ${leads.length} leads for "${industry}" in "${location}". 
-Perform a deep-fidelity audit and ENRICHMENT of contact info.
+Perform a deep-fidelity audit and HYPER-PERSONALIZATION ENRICHMENT.
 
 Leads to Audit/Enrich:
 ${JSON.stringify(leads.map(l => ({ name: l.businessName, site: l.website, phone: l.phone, email: l.email, industry: l.industry })), null, 2)}
 
 AUDIT & ENRICHMENT PARAMETERS:
-1. Realtime Contact Verification: Ensure the phone number and email are valid for this business type in this region.
-2. Email Discovery: If any lead is missing a business email, use your knowledge of the business domain "${industry}" and standard business email patterns (e.g., info@domain.com, contact@domain.com) to provide a high-probability verified email.
-3. Niche Analysis: Does the business EXACTLY match "${industry}"?
-4. Trust Score Analysis: Score each lead from 0-100 based on data fidelity.
+1. Contact Verification: Ensure phone and email are valid. Discover missing ones using domain heuristics.
+2. Tech Stack & Pain Points: Identify likely tech stack and 3 specific operational pain points.
+3. Outreach Hook: Write a hyper-personalized, non-generic first line for an email (max 20 words).
+4. Strategic Strategy: Assign a strategy (ROI_FOCUS, PROBLEM_SOLVER, or CASUAL_INTRO).
+5. Value Proposition: A concise 1-sentence reason why AlphaClone's AI automation specifically helps THIS business.
 
 Strict Output JSON:
 {
@@ -132,9 +133,13 @@ Strict Output JSON:
       "email": "VERIFIED_EMAIL",
       "phone": "VERIFIED_PHONE",
       "isVerified": boolean, 
-      "trustScore": number, 
-      "dataAnalysis": "Senior Data Scientist audit notes on validity",
-      "sdrInsight": "Strategic outreach recommendation"
+      "trustScore": 0-100, 
+      "techStack": ["...", "..."],
+      "painPoints": ["...", "..."],
+      "outreachHook": "Personalized first line",
+      "strategy": "ROI_FOCUS" | "PROBLEM_SOLVER" | "CASUAL_INTRO",
+      "valueProposition": "Custom USP for this business",
+      "dataAnalysis": "Senior audit notes"
     }
   ]
 }`;
@@ -159,7 +164,11 @@ Strict Output JSON:
                                     isVerified: e.isVerified,
                                     trustScore: e.trustScore,
                                     verificationNotes: e.dataAnalysis,
-                                    sdrInsight: e.sdrInsight
+                                    techStack: e.techStack || [],
+                                    painPoints: e.painPoints || [],
+                                    outreachHook: e.outreachHook || '',
+                                    strategy: e.strategy || 'PROBLEM_SOLVER',
+                                    valueProposition: e.valueProposition || ''
                                 };
                             }
                             return lead;

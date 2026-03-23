@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ENV } from '../config/env';
+import { Lead } from './leadService';
 
 // API Keys from validated ENV
 const GEMINI_API_KEY = ENV.VITE_GEMINI_API_KEY || '';
@@ -187,22 +188,46 @@ export const chatWithAI = async (
 };
 
 /**
- * Generate a personalized outreach message
+ * Generate a hyper-personalized outreach message using deep business context
  */
-export const generateOutreachMessage = async (lead: any) => {
-    const prompt = `Write a short, professional cold email to "${lead.businessName}" (Industry: ${lead.industry}, Location: ${lead.location}).
-    
-    Sender: AlphaClone Systems (AI & Automation Agency).
-    Goal: Offer to automate their workflow or improve their digital presence.
-    Tone: Premium, concise, helpful.
-    
-    Format:
-    Subject: [Subject Here]
-    
-    [Body Here]`;
+export const generateOutreachMessage = async (lead: Lead) => {
+    // Strategy-specific guidance
+    const strategyGuards: Record<string, string> = {
+        'ROI_FOCUS': 'Focus heavily on measurable growth, efficiency gains, and bottom-line impact.',
+        'PROBLEM_SOLVER': 'Focus on specific operational headaches and how AI automation eliminates them.',
+        'CASUAL_INTRO': 'Keep it lightweight, relationship-focused, and highly observational.'
+    };
 
-    const { text } = await generateText(prompt, 500);
-    return text || "Draft generation failed.";
+    const strategy = lead.strategy || 'PROBLEM_SOLVER';
+    const guard = strategyGuards[strategy] || strategyGuards['PROBLEM_SOLVER'];
+
+    const prompt = `You are a World-Class Sales Strategist and Copywriting Expert (Claude 4.5).
+Your task is to write a hyper-personalized, high-conversion cold email for this lead.
+
+LEAD INTELLIGENCE:
+- Business: ${lead.businessName}
+- Industry: ${lead.industry}
+- Tech Stack: ${lead.techStack?.join(', ') || 'Standard'}
+- Pain Points: ${lead.painPoints?.join(', ') || 'Manual workflows, scaling limitations'}
+- AI Hook: ${lead.outreachHook || 'N/A'}
+- Unique Value Prop: ${lead.valueProposition || 'N/A'}
+
+STRATEGY: ${strategy}
+GUIDANCE: ${guard}
+
+GOALS:
+1. Use the "AI Hook" or a variation of it as the opening line.
+2. Reference their specific industry or tech stack naturally.
+3. Keep it under 100 words. No fluff. No generic "I hope this finds you well".
+4. The call to action should be a low-friction "quick chat" or "free audit".
+
+FORMAT:
+Subject: [Compelling, short subject line]
+
+[Body]`;
+
+    const { text } = await generateText(prompt, 600, 'claude-sonnet-4-5-20250929');
+    return text || "Personalized draft generation failed.";
 };
 
 /**

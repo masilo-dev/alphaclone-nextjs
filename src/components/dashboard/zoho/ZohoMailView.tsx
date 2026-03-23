@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
     Mail, Send, Inbox, Archive, Trash2, Search, Loader2, Plus, 
     ArrowLeft, Menu, X, MoreVertical, Sparkles, Reply, Forward,
-    MoreHorizontal, CheckCircle2, RotateCcw, AlertCircle, FileText
+    MoreHorizontal, CheckCircle2, RotateCcw, AlertCircle, FileText, ShieldCheck
 } from 'lucide-react';
 import { generateEmailReply } from '@/services/unifiedAIService';
 import { motion, AnimatePresence } from 'framer-motion';

@@ -25,6 +25,11 @@ export interface Lead {
     isVerified?: boolean;
     trustScore?: number;
     verificationNotes?: string;
+    outreachHook?: string;
+    strategy?: string;
+    techStack?: string[];
+    painPoints?: string[];
+    valueProposition?: string;
     lat?: number;
     lng?: number;
     isAddressValid?: boolean;
@@ -87,6 +92,11 @@ export const leadService = {
                 isVerified: l.is_verified,
                 trustScore: l.trust_score,
                 verificationNotes: l.verification_notes,
+                outreachHook: l.outreach_hook,
+                strategy: l.strategy,
+                techStack: l.tech_stack || [],
+                painPoints: l.pain_points || [],
+                valueProposition: l.value_proposition,
                 lat: l.latitude,
                 lng: l.longitude,
                 status: l.stage === 'lead' ? 'New' : l.stage,
@@ -134,6 +144,11 @@ export const leadService = {
                 is_verified: lead.isVerified || false,
                 trust_score: lead.trustScore || 0,
                 verification_notes: lead.verificationNotes,
+                outreach_hook: lead.outreachHook,
+                strategy: lead.strategy,
+                tech_stack: lead.techStack || [],
+                pain_points: lead.painPoints || [],
+                value_proposition: lead.valueProposition,
                 latitude: lead.lat,
                 longitude: lead.lng,
                 sdr_insight: lead.sdrInsight
@@ -168,6 +183,11 @@ export const leadService = {
                 isVerified: data.is_verified,
                 trustScore: data.trust_score,
                 verificationNotes: data.verification_notes,
+                outreachHook: data.outreach_hook,
+                strategy: data.strategy,
+                techStack: data.tech_stack || [],
+                painPoints: data.pain_points || [],
+                valueProposition: data.value_proposition,
                 sdrInsight: data.sdr_insight
             };
 
@@ -214,6 +234,11 @@ export const leadService = {
                 outreach_status: l.outreachStatus || 'pending',
                 is_verified: l.isVerified || false,
                 trust_score: l.trustScore || 0,
+                outreach_hook: l.outreachHook,
+                strategy: l.strategy,
+                tech_stack: l.techStack || [],
+                pain_points: l.painPoints || [],
+                value_proposition: l.valueProposition,
                 latitude: l.lat,
                 longitude: l.lng,
                 sdr_insight: l.sdrInsight
@@ -279,6 +304,11 @@ export const leadService = {
         if (updates.trustScore !== undefined) dbPayload.trust_score = updates.trustScore;
         if (updates.verificationNotes !== undefined) dbPayload.verification_notes = updates.verificationNotes;
         if (updates.isAddressValid !== undefined) dbPayload.is_address_valid = updates.isAddressValid;
+        if (updates.outreachHook !== undefined) dbPayload.outreach_hook = updates.outreachHook;
+        if (updates.strategy !== undefined) dbPayload.strategy = updates.strategy;
+        if (updates.techStack !== undefined) dbPayload.tech_stack = updates.techStack;
+        if (updates.painPoints !== undefined) dbPayload.pain_points = updates.painPoints;
+        if (updates.valueProposition !== undefined) dbPayload.value_proposition = updates.valueProposition;
         if (updates.lat !== undefined) dbPayload.latitude = updates.lat;
         if (updates.lng !== undefined) dbPayload.longitude = updates.lng;
         if (updates.sdrInsight !== undefined) dbPayload.sdr_insight = updates.sdrInsight;
@@ -335,6 +365,11 @@ export const leadService = {
                 isVerified: data.is_verified,
                 trustScore: data.trust_score,
                 verificationNotes: data.verification_notes,
+                outreachHook: data.outreach_hook,
+                strategy: data.strategy,
+                techStack: data.tech_stack || [],
+                painPoints: data.pain_points || [],
+                valueProposition: data.value_proposition,
                 sdrInsight: data.sdr_insight
             };
 

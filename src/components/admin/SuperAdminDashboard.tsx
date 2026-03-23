@@ -297,6 +297,11 @@ function GrowthTab() {
                         <MessageSquare className="w-3 h-3 flex-shrink-0" />
                         {lead.email || 'No email found'}
                       </div>
+                      {lead.outreachHook && (
+                        <div className="mt-2 text-[11px] text-teal-400/80 italic line-clamp-1 border-l border-teal-500/30 pl-2">
+                          "{lead.outreachHook}"
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

@@ -1,5 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Plus, Phone, Mail, Globe, MapPin, User, Bot, MessageSquare, Save, UserPlus, CheckCircle2, Zap, Layout, Send, CheckSquare, ArrowRight, History, FileText } from 'lucide-react';
+import { 
+    X, 
+    Mail, 
+    Phone, 
+    Globe, 
+    MapPin, 
+    Calendar, 
+    CheckCircle2, 
+    Clock, 
+    Plus, 
+    CheckSquare, 
+    FileText, 
+    MessageSquare, 
+    Bot, 
+    Zap, 
+    Send,
+    Database,
+    AlertCircle,
+    Layout,
+    ArrowRight,
+    History as HistoryIcon
+} from 'lucide-react';
 import { Modal, Button, Input, Card, Badge } from '../../ui/UIComponents';
 import { Lead, leadService } from '../../../services/leadService';
 import { taskService, Task } from '../../../services/taskService';
@@ -778,6 +799,71 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                     </div>
                                 </Card>
 
+                                {lead.outreachHook && (
+                                    <Card className="p-6 border-purple-500/30 bg-indigo-500/5">
+                                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                            <Zap className="w-5 h-5 text-purple-400" />
+                                            Strategic Hook
+                                        </h3>
+                                        <div className="p-4 bg-slate-900/50 rounded-lg border border-purple-500/20">
+                                            <p className="text-purple-200 text-sm font-medium italic">
+                                                "{lead.outreachHook}"
+                                            </p>
+                                        </div>
+                                        {lead.strategy && (
+                                            <div className="mt-3 flex items-center gap-2">
+                                                <Badge variant="neutral" className="bg-purple-500/20 border-purple-500/30 text-purple-300 text-[10px] py-0">
+                                                    STRATEGY: {lead.strategy.replace('_', ' ')}
+                                                </Badge>
+                                            </div>
+                                        )}
+                                    </Card>
+                                )}
+
+                                {( (lead.techStack && lead.techStack.length > 0) || (lead.painPoints && lead.painPoints.length > 0) || lead.valueProposition) && (
+                                    <Card className="p-6 bg-slate-900/40">
+                                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                            <Database className="w-5 h-5 text-blue-400" />
+                                            Business Intelligence
+                                        </h3>
+                                        <div className="grid grid-cols-1 gap-5">
+                                            {lead.valueProposition && (
+                                                <div className="p-3 bg-blue-500/5 border border-blue-500/10 rounded-lg">
+                                                    <span className="text-[10px] text-blue-400 uppercase font-bold tracking-widest block mb-1">Tailored Value Prop</span>
+                                                    <p className="text-sm text-slate-300 leading-relaxed">{lead.valueProposition}</p>
+                                                </div>
+                                            )}
+                                            
+                                            {lead.techStack && lead.techStack.length > 0 && (
+                                                <div>
+                                                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest block mb-2">Tech Stack</span>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {lead.techStack.map((tech, i) => (
+                                                            <Badge key={i} variant="blue" className="bg-blue-500/10 border-blue-500/20 text-blue-400 font-mono text-[10px]">
+                                                                {tech}
+                                                            </Badge>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
+                                            {lead.painPoints && lead.painPoints.length > 0 && (
+                                                <div>
+                                                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest block mb-2">Pain Points</span>
+                                                    <div className="space-y-2">
+                                                        {lead.painPoints.map((point, i) => (
+                                                            <div key={i} className="flex items-start gap-2 text-sm text-slate-300 bg-slate-900/50 p-2 rounded border border-white/5">
+                                                                <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                                                                {point}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </Card>
+                                )}
+
                                 {lead.outreachMessage && (
                                     <Card className="p-6 bg-slate-900/40 border-slate-800">
                                         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -970,7 +1056,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                 ))}
                                 {activities.length === 0 && (
                                     <div className="text-center py-12 text-slate-500">
-                                        <History className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                                        <HistoryIcon className="w-12 h-12 mx-auto mb-3 opacity-20" />
                                         <p>No activity recorded yet for this lead.</p>
                                     </div>
                                 )}

@@ -1147,8 +1147,15 @@ const SalesAgent: React.FC = () => {
                                                             className="rounded border-slate-700 bg-slate-900"
                                                         />
                                                     </td>
-                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 font-medium text-white max-w-[120px] sm:max-w-none truncate hover:text-teal-400 cursor-pointer" onClick={() => setSelectedLeadForDetail(lead)}>
-                                                        {lead.businessName}
+                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 font-medium text-white max-w-[120px] sm:max-w-none truncate cursor-pointer group/name" onClick={() => setSelectedLeadForDetail(lead)}>
+                                                        <div className="flex flex-col">
+                                                            <span className="hover:text-teal-400">{lead.businessName}</span>
+                                                            {lead.outreachHook && (
+                                                                <span className="text-[10px] text-purple-400 font-bold italic line-clamp-1 opacity-80 group-hover/name:opacity-100 flex items-center gap-1">
+                                                                    <Zap className="w-2.5 h-2.5" /> {lead.outreachHook}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                     <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden md:table-cell">{lead.industry || '-'}</td>
                                                     <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden lg:table-cell">{lead.location || '-'}</td>

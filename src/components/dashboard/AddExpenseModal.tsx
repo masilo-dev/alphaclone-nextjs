@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Receipt, CheckCircle, Save, Users, Loader2, Search } from 'lucide-react';
+import { X, Receipt, CheckCircle, Save, Users, Loader2, Search, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from '../ui/UIComponents';
 import toast from 'react-hot-toast';
