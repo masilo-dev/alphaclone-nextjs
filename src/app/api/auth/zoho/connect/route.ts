@@ -8,7 +8,10 @@ export async function GET(req: NextRequest) {
 
     const hosts = ZohoService.getHostsByRegion(region);
     const clientId = process.env.ZOHO_CLIENT_ID;
-    const redirectUri = process.env.ZOHO_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/zoho/callback`;
+    
+    // Robust redirect URI fallback
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${req.nextUrl.protocol}//${req.headers.get('host')}`;
+    const redirectUri = process.env.ZOHO_REDIRECT_URI || `${appUrl}/api/auth/zoho/callback`;
 
     if (!clientId) {
         return NextResponse.json({ error: 'Zoho Client ID not configured' }, { status: 500 });

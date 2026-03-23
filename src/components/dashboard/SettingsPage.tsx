@@ -31,6 +31,7 @@ import StripeConnectSettings from './business/StripeConnectSettings';
 import BrandingSettings from './settings/BrandingSettings';
 import { Building, Trash2 } from 'lucide-react';
 import { authService } from '../../services/authService';
+import ZohoIntegration from './business/ZohoIntegration';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -754,6 +755,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             {/* <div className="border-b border-slate-800 pb-12">
                                 <GmailIntegration user={user} />
                             </div> */}
+                            <div className="border-b border-slate-800 pb-12">
+                                <ZohoIntegration user={user} />
+                            </div>
                             <div className="border-b border-slate-800 pb-12">
                                 <StripeConnectSettings />
                             </div>

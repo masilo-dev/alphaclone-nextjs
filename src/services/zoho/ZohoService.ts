@@ -140,4 +140,23 @@ export class ZohoService {
         };
         return hosts[region] || hosts.US;
     }
+
+    /**
+     * Check if Zoho is integrated and valid
+     */
+    async checkIntegration(): Promise<boolean> {
+        const config = await this.getConfig();
+        return !!(config && config.refreshToken);
+    }
+
+    /**
+     * Disconnect Zoho integration
+     */
+    async disconnect(): Promise<void> {
+        await supabase
+            .from('integrations')
+            .delete()
+            .eq('user_id', this.userId)
+            .eq('type', 'zoho');
+    }
 }

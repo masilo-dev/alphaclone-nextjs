@@ -9,7 +9,8 @@ export async function GET(req: NextRequest) {
     const error = searchParams.get('error');
 
     if (error) {
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/integrations?error=${error}`);
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${req.nextUrl.protocol}//${req.headers.get('host')}`;
+        return NextResponse.redirect(`${appUrl}/dashboard/settings?section=booking&error=${error}`);
     }
 
     if (!code || !stateStr) {
@@ -20,6 +21,9 @@ export async function GET(req: NextRequest) {
         const { region, state } = JSON.parse(stateStr);
         const hosts = ZohoService.getHostsByRegion(region);
         
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${req.nextUrl.protocol}//${req.headers.get('host')}`;
+        const redirectUri = process.env.ZOHO_REDIRECT_URI || `${appUrl}/api/auth/zoho/callback`;
+
         // Exchange code for tokens
         const response = await fetch(`${hosts.accounts}/oauth/v2/token`, {
             method: 'POST',
@@ -29,7 +33,7 @@ export async function GET(req: NextRequest) {
                 client_id: process.env.ZOHO_CLIENT_ID || '',
                 client_secret: process.env.ZOHO_CLIENT_SECRET || '',
                 grant_type: 'authorization_code',
-                redirect_uri: process.env.ZOHO_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/zoho/callback`,
+                redirect_uri: redirectUri,
             }),
         });
 
@@ -62,9 +66,10 @@ export async function GET(req: NextRequest) {
             accountId: accountId
         });
 
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/integrations?success=zoho_connected`);
+        return NextResponse.redirect(`${appUrl}/dashboard/settings?section=booking&success=zoho_connected`);
     } catch (err: any) {
         console.error('Zoho Auth Callback Error:', err);
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/integrations?error=${encodeURIComponent(err.message)}`);
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${req.nextUrl.protocol}//${req.headers.get('host')}`;
+        return NextResponse.redirect(`${appUrl}/dashboard/settings?section=booking&error=${encodeURIComponent(err.message)}`);
     }
 }

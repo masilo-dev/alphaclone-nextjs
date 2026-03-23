@@ -29,8 +29,8 @@ export default function ZohoCRMIntegration() {
     };
 
     const handleConnect = () => {
-        // You should pass the current user ID as state here
-        window.location.href = '/api/auth/zoho/connect?region=US&state=CURRENT_USER_ID';
+        // Redirect to settings where the robust region-aware connection is handled
+        window.location.href = '/dashboard/settings?section=booking';
     };
 
     return (
