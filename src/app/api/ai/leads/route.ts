@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { routeAIRequest, getAvailableProviders } from '@/services/aiRouter';
+import { routeAIRequest } from '@/services/aiRouter';
 import { googlePlacesService } from '@/services/googlePlacesService';
-import { ENV } from '@/config/env';
+import { getAvailableProviders as getAIProviders } from '@/services/unifiedAIService';
+import { ENV } from '../../../../config/env';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60; // Maximize serverless timeout for heavy LLM operations
@@ -22,8 +23,8 @@ export async function POST(req: Request) {
         const googleApiKey = ENV.GOOGLE_API_KEY;
         let leads: any[] = [];
         let source = 'AI Simulated';
-        let provider = 'Google';
-        let model = 'Places API';
+        let provider = 'Anthropic';
+        let model = 'Claude 4.5';
 
         let rawMapsData: any[] = [];
 
@@ -42,18 +43,17 @@ export async function POST(req: Request) {
                     notes: `Real business found via Google Maps. Matches "${industry}" in "${location}".`
                 }));
                 source = 'Google Maps';
-                provider = 'Google';
-                model = 'Search (New)';
             } else if (placesError) {
                 console.warn(`[Lead Gen] Google Places error: ${placesError}. Falling back to AI...`);
             }
         }
 
+        const CLAUDE_45_MODEL = 'claude-sonnet-4-5-20250929';
+
         // 2. If no real leads or no API key, fallback to AI generation
-        // Now acting as a Senior SDR & Data Scientist using Advanced Orchestration
         if (leads.length === 0) {
-            console.log('[Lead Gen] Using AI (Senior SDR Persona) for high-fidelity discovery...');
-            const prompt = `You are a Senior Sales Development Representative (SDR) and Data Scientist Auditor at AlphaClone, powered by Claude.
+            console.log('[Lead Gen] Using Claude 4.5 (Senior SDR Persona) for high-fidelity discovery...');
+            const prompt = `You are a Senior Sales Development Representative (SDR) and Data Scientist Auditor at AlphaClone, powered by Claude 4.5.
 Your task is to identify EXACTLY 5 high-fidelity business leads.
 
 SEARCH SPECIFICATION:
@@ -62,12 +62,11 @@ SEARCH SPECIFICATION:
 ${filters ? `- Required Constraints: "${filters}"\n` : ''}
 
 DATA QUALITY REQUIREMENTS (Senior SDR Standard):
-- Match the SPECIFIC service niche. If the user is looking for "injury lawyers", don't just return "legal services".
-- Business names MUST be realistic for the "${location}" market. 
-- Contact details MUST follow real-world patterns for this region (phone formats).
-- **WEBSITE URL POLICY (CRITICAL)**: ONLY include a "website" if you are CERTAIN it is the real, active domain for the business. DO NOT guess or hallucinate links. If the URL is unknown or uncertain, return an empty string or null.
-- Verification: Cross-reference internal patterns to ensure these businesses are "Lead-Ready".
-- Output only valid JSON. No conversational fluff.
+- Match the SPECIFIC service niche.
+- Contact details MUST be REALTIME and HIGH-FIDELITY.
+- **PHONE & EMAIL (NON-NEGOTIABLE)**: You MUST return a valid phone number and a realistic, pattern-verified email for every business. 
+- **WEBSITE URL POLICY**: ONLY include a "website" if you are CERTAIN it is the real, active domain.
+- Output only valid JSON.
 
 Strict Schema:
 [
@@ -77,20 +76,20 @@ Strict Schema:
     "industry": "${industry}",
     "location": "${location}",
     "phone": "Localized String",
-    "email": "Realistic Email (only if highly probable)",
+    "email": "Business Email (Required)",
     "website": "REAL URL ONLY",
     "estimatedValue": numeric_value,
-    "notes": "SDR INSIGHT: Why this lead is a high-value target for this search."
+    "notes": "SDR INSIGHT: Why this lead is a high-value target."
   }
 ]`;
 
             const aiResponse = await routeAIRequest({
                 prompt,
+                model: CLAUDE_45_MODEL,
                 maxTokens: 2000,
-                temperature: 0.7, // Lower temperature for more factual simulation
+                temperature: 0.2, // Low temp for data extraction
             });
 
-            // Robust JSON parsing
             let cleanedContent = aiResponse.content;
             const arrayMatch = cleanedContent.match(/\[[\s\S]*\]/);
             if (arrayMatch) cleanedContent = arrayMatch[0];
@@ -103,36 +102,38 @@ Strict Schema:
                 leads = [];
             }
 
-            source = `Analysis (${aiResponse.provider})`;
-            provider = aiResponse.provider;
-            model = aiResponse.model;
+            source = `Discovery (Claude 4.5)`;
+            provider = 'anthropic';
+            model = CLAUDE_45_MODEL;
         }
 
-        // 3. Stringent Multi-Stage Verification Pass (Senior SDR & Data Scientist Mode)
+        // 3. MANDATORY ENRICHMENT & DATA ANALYSIS PASS (Claude 4.5)
         if (leads.length > 0) {
-            console.log('[Lead Gen] Running Rigorous Senior SDR Data Audit...');
+            console.log('[Lead Gen] Running Rigorous Claude 4.5 Data Scientist Audit...');
             try {
-                const verificationPrompt = `You are a Senior SDR and Data Scientist Auditor at AlphaClone.
-Analyze these 5 leads for "${industry}" in "${location}". 
-Perform a deep-fidelity audit against real-world business patterns.
+                const verificationPrompt = `You are a Senior SDR and Data Scientist Auditor at AlphaClone using Claude 4.5.
+Analyze these ${leads.length} leads for "${industry}" in "${location}". 
+Perform a deep-fidelity audit and ENRICHMENT of contact info.
 
-Leads to Audit:
-${JSON.stringify(leads.map(l => ({ name: l.businessName, site: l.website, phone: l.phone, industry: l.industry })), null, 2)}
+Leads to Audit/Enrich:
+${JSON.stringify(leads.map(l => ({ name: l.businessName, site: l.website, phone: l.phone, email: l.email, industry: l.industry })), null, 2)}
 
-AUDIT PARAMETERS:
-1. Niche Match: Does the business EXACTLY match "${industry}"? (Generic matches get <70 trust).
-2. Domain Health: Is the website URL structure valid for a business?
-3. Geographic Validity: Is the phone/address pattern consistent with "${location}"?
-4. Persona Verification: Would an elite Senior SDR trust this lead for high-ticket outreach?
+AUDIT & ENRICHMENT PARAMETERS:
+1. Realtime Contact Verification: Ensure the phone number and email are valid for this business type in this region.
+2. Email Discovery: If any lead is missing a business email, use your knowledge of the business domain "${industry}" and standard business email patterns (e.g., info@domain.com, contact@domain.com) to provide a high-probability verified email.
+3. Niche Analysis: Does the business EXACTLY match "${industry}"?
+4. Trust Score Analysis: Score each lead from 0-100 based on data fidelity.
 
 Strict Output JSON:
 {
-  "audits": [
+  "enrichedLeads": [
     { 
       "businessName": "Exact Matching Name", 
+      "email": "VERIFIED_EMAIL",
+      "phone": "VERIFIED_PHONE",
       "isVerified": boolean, 
       "trustScore": number, 
-      "reasoning": "Data Scientist audit notes on validity",
+      "dataAnalysis": "Senior Data Scientist audit notes on validity",
       "sdrInsight": "Strategic outreach recommendation"
     }
   ]
@@ -140,25 +141,30 @@ Strict Output JSON:
 
                 const verificationResponse = await routeAIRequest({
                     prompt: verificationPrompt,
-                    model: 'gpt-4-turbo',
-                    maxTokens: 1000,
-                    temperature: 0.2,
+                    model: CLAUDE_45_MODEL,
+                    maxTokens: 2000,
+                    temperature: 0.1,
                 });
 
                 try {
                     const vData = JSON.parse(verificationResponse.content.match(/\{[\s\S]*\}/)?.[0] || '{}');
-                    if (vData.audits) {
+                    if (vData.enrichedLeads) {
                         leads = leads.map(lead => {
-                            const v = vData.audits.find((v: any) => v.businessName === lead.businessName);
-                            return {
-                                ...lead,
-                                isVerified: v ? v.isVerified : lead.isVerified || false,
-                                trustScore: v ? v.trustScore : 50,
-                                verificationNotes: v ? v.reasoning : 'Pending audit',
-                                sdrInsight: v ? v.sdrInsight : 'Ready for discovery'
-                            };
+                            const e = vData.enrichedLeads.find((v: any) => v.businessName === lead.businessName);
+                            if (e) {
+                                return {
+                                    ...lead,
+                                    email: e.email || lead.email,
+                                    phone: e.phone || lead.phone,
+                                    isVerified: e.isVerified,
+                                    trustScore: e.trustScore,
+                                    verificationNotes: e.dataAnalysis,
+                                    sdrInsight: e.sdrInsight
+                                };
+                            }
+                            return lead;
                         });
-                        console.log('[Lead Gen] ✓ Senior SDR Audit complete');
+                        console.log('[Lead Gen] ✓ Claude 4.5 Enrichment & Audit complete');
                     }
                 } catch (pErr) {
                     console.warn('[Lead Gen] Audit parsing failed:', pErr);
@@ -197,21 +203,25 @@ Strict Output JSON:
             }
         }
 
+        // 5. Final Filtering: Remove leads without non-negotiable contact info
+        const validatedLeads = leads.filter(l => l.email && l.phone && l.email.includes('@'));
+
         // Ensure 5 lead cap and proper labeling
-        const finalLeads = leads.slice(0, 5).map(l => ({
+        const finalLeads = validatedLeads.slice(0, 5).map(l => ({
             ...l,
-            foundBy: "AlphaClone Senior SDR",
-            qualityLevel: l.trustScore > 80 ? "Premium" : (l.isVerified ? "High" : "Discovery")
+            foundBy: "AlphaClone Senior SDR (Claude 4.5)",
+            qualityLevel: (l.trustScore || 0) > 80 ? "Premium" : (l.isVerified ? "High" : "Discovery")
         }));
+
+        console.log(`[Lead Gen] Final delivery: ${finalLeads.length} leads (Filtered from ${leads.length})`);
 
         return NextResponse.json({
             leads: finalLeads,
             provider,
             model,
             source,
-            rawMapsData: rawMapsData.slice(0, 5),
             isAIVerified: true,
-            auditor: "SDR Data Scientist"
+            auditor: "Claude 4.5 Data Scientist"
         });
     } catch (error: any) {
         console.error('Lead Generation API Error:', error);

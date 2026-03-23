@@ -38,6 +38,7 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
   { label: 'Meetings', href: '/dashboard/conference', icon: Video },
   { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
   { label: 'Mail', href: '/dashboard/mail', icon: Mail },
+  { label: 'Zoho Mail', href: '/dashboard/zoho/mail', icon: Mail },
   { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
   { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
   { label: 'Creative Intel Lab', href: '/dashboard/ai-studio', icon: Palette },
@@ -58,16 +59,8 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Calendar', href: '/dashboard/calendar' },
       { label: 'Meetings', href: '/dashboard/meetings' },
       { label: 'Mail', href: '/dashboard/mail' },
+      { label: 'Zoho Mail', href: '/dashboard/zoho/mail' },
       { label: 'Messages', href: '/dashboard/messages' },
-    ]
-  },
-  {
-    label: 'Creative Intel',
-    href: '#',
-    icon: Layers,
-    subItems: [
-      { label: 'SEO', href: '/dashboard/articles' },
-      { label: 'Improvements', href: '/dashboard/admin/improvements' },
     ]
   },
   {
@@ -75,6 +68,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     href: '#',
     icon: TrendingUp,
     subItems: [
+      { label: 'Zoho Sync', href: '/dashboard/zoho/crm' },
       { label: 'Tasks', href: '/dashboard/tasks' },
       { label: 'Deals', href: '/dashboard/deals' },
       { label: 'Forecast', href: '/dashboard/forecast' },
@@ -95,9 +89,11 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'AI Growth', href: '/dashboard/sales-agent', icon: Zap },
   { label: 'Deals', href: '/dashboard/deals', icon: TrendingUp },
   { label: 'Contacts', href: '/dashboard/business/clients', icon: Users },
+  { label: 'Zoho CRM', href: '/dashboard/zoho/crm', icon: Zap },
 
   // 3. Communication & Scheduling
   { label: 'Mail', href: '/dashboard/mail', icon: Mail },
+  { label: 'Zoho Mail', href: '/dashboard/zoho/mail', icon: Mail },
   { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
   { label: 'Booking', href: '/dashboard/business/booking', icon: Clock },
   { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
@@ -117,8 +113,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Documents', href: '/dashboard/business/documents', icon: FolderOpen },
 
   // 7. Integrations
-  // (Removed redundant Zoho Email menu)
-
+  // Move Zoho items to their respective functional sections
   // 8. Usage & Limits
   { label: 'Quota Manager', href: '/dashboard/business/quotas', icon: BarChart3 },
 

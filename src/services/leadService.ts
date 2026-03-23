@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
 import { fileUploadService } from './fileUploadService';
+import { UnifiedCRMService } from './crm/UnifiedCRMService';
 
 export interface Lead {
     id: string;
@@ -170,6 +171,9 @@ export const leadService = {
                 sdrInsight: data.sdr_insight
             };
 
+            // SYNC TO EXTERNAL CRM
+            UnifiedCRMService.syncLead(newLead).catch((err: any) => console.error('Background CRM Lead Sync Failed:', err));
+
             return { lead: newLead, error: null };
         } catch (err) {
             return { lead: null, error: err instanceof Error ? err.message : 'Unknown error' };
@@ -285,6 +289,13 @@ export const leadService = {
             .eq('id', id)
             .eq('tenant_id', tenantId);
 
+        if (!error && updates.stage) {
+            // Trigger sync on stage update
+            this.getLeadById(id).then(({ lead }) => {
+                if (lead) UnifiedCRMService.syncLead(lead).catch((err: any) => console.error('Background CRM Lead Sync Failed:', err));
+            });
+        }
+
         return { error: error ? error.message : null };
     },
 
@@ -326,6 +337,9 @@ export const leadService = {
                 verificationNotes: data.verification_notes,
                 sdrInsight: data.sdr_insight
             };
+
+            // SYNC TO EXTERNAL CRM
+            UnifiedCRMService.syncLead(lead).catch((err: any) => console.error('Background CRM Lead Sync Failed:', err));
 
             return { lead, error: null };
         } catch (err) {

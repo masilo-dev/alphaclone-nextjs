@@ -36,10 +36,12 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
         items: [{ description: '', quantity: 1, price: 0 }] as ReceiptItem[],
         discountAmount: 0,
         taxRate: 0,
-        notes: 'Thank you for your business.'
+        notes: 'Thank you for your business.',
+        accentColor: '#0ea5e9' // Default Sky-500
     }));
 
     const [isPreviewMode, setIsPreviewMode] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [isSavingToDrive, setIsSavingToDrive] = useState(false);
     const [clients, setClients] = useState<BusinessClient[]>([]);
     const [myServices, setMyServices] = useState<Record<string, any>>({});
@@ -138,14 +140,8 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
             const { data: { user: authUser } } = await supabase.auth.getUser();
             if (!authUser) throw new Error('Not authenticated');
 
-            const doc = new jsPDF();
-            // We need to re-generate the PDF content for the blob
-            // Using the same logic as in generatePDF
-            // For brevity, I'll extract a helper or just re-run the professional template logic here
-            // since that's the default and most professional.
-
-            // To be DRY, let's just use the generatePDF logic but return the doc instead of saving
-            const docToSave = generatePDF('blob') as jsPDF;
+            // Use the centralized generatePDF logic
+            const docToSave = generatePDF('blob') as any;
             if (!docToSave) throw new Error('Failed to generate document');
 
             const pdfBlob = docToSave.output('blob');
@@ -164,232 +160,195 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
         }
     };
 
-    const generatePDF = (mode: 'download' | 'preview' | 'blob') => {
+    const handleSaveAndFinalize = async () => {
+        if (!currentTenant?.id) return;
         if (!receiptData.clientName) {
             toast.error('Client name is required');
             return;
         }
 
+        setIsSaving(true);
+        const toastId = toast.loading('Saving receipt...');
+
         try {
-            const doc = new jsPDF();
-            const total = calculateTotal();
-            const subtotal = calculateSubtotal();
+            const currentTotal = calculateTotal();
+            const currentSubtotal = calculateSubtotal();
+            const currentTax = calculateTax(currentSubtotal);
 
-            if (receiptData.template === 'professional') {
-                // Template 1: Professional / Standard
-                // Header
-                doc.setFontSize(22);
-                doc.setTextColor(30, 41, 59); // Slate 800
-                doc.text('RECEIPT', 14, 22);
+            // Prepare metadata to be stored in the notes field as JSON
+            const metadata = {
+                type: 'receipt',
+                clientName: receiptData.clientName,
+                clientEmail: receiptData.clientEmail,
+                template: receiptData.template,
+                accentColor: receiptData.accentColor,
+                receivedBy: receiptData.receivedBy,
+                originalNotes: receiptData.notes
+            };
 
-                doc.setFontSize(10);
-                doc.setTextColor(100, 116, 139); // Slate 500
-                doc.text(`Receipt #: ${receiptData.receiptNumber}`, 14, 30);
-                doc.text(`Date: ${receiptData.date}`, 14, 35);
+            const payload = {
+                tenant_id: currentTenant.id,
+                invoice_number: receiptData.receiptNumber || `REC-${Date.now().toString().slice(-6)}`,
+                client_id: null,
+                issue_date: receiptData.date,
+                due_date: receiptData.date,
+                status: 'paid',
+                subtotal: currentSubtotal,
+                tax_rate: receiptData.taxRate,
+                tax: currentTax,
+                discount_amount: receiptData.discountAmount,
+                total: currentTotal,
+                line_items: receiptData.items.map(item => ({
+                    description: item.description,
+                    quantity: item.quantity,
+                    rate: item.price,
+                    amount: item.quantity * item.price
+                })),
+                notes: `---METADATA---${JSON.stringify(metadata)}---METADATA---\n${receiptData.notes}`,
+                bank_details: receiptData.paymentMethod
+            };
 
-                // Business Info (Top Right)
-                doc.setFontSize(12);
-                doc.setTextColor(30, 41, 59);
-                doc.text(currentTenant?.name || 'Your Company', 140, 22);
-                doc.setFontSize(10);
-                doc.setTextColor(100, 116, 139);
-                if (currentTenant?.domain) {
-                    doc.text(currentTenant.domain, 140, 30);
-                }
+            const { error } = await supabase
+                .from('business_invoices')
+                .insert(payload);
 
-                // Client Info
-                doc.setFontSize(11);
-                doc.setTextColor(30, 41, 59);
-                doc.text('Bill To:', 14, 50);
-                doc.setFontSize(10);
-                doc.setTextColor(100, 116, 139);
-                doc.text(receiptData.clientName, 14, 56);
-                if (receiptData.clientEmail) {
-                    doc.text(receiptData.clientEmail, 14, 62);
-                }
+            if (error) throw error;
 
-                // Payment Details
-                doc.setFontSize(11);
-                doc.setTextColor(30, 41, 59);
-                doc.text('Payment Details:', 140, 50);
-                doc.setFontSize(10);
-                doc.setTextColor(100, 116, 139);
-                doc.text(`Method: ${receiptData.paymentMethod}`, 140, 56);
-                if (receiptData.receivedBy) {
-                    doc.text(`Received By: ${receiptData.receivedBy}`, 140, 62);
-                }
+            toast.success('Receipt saved and finalized', { id: toastId });
+            onClose();
+        } catch (err: any) {
+            console.error('Error saving receipt:', err);
+            toast.error(`Error saving: ${err.message}`, { id: toastId });
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
-                // Items Table
-                autoTable(doc, {
-                    startY: 75,
-                    head: [['Description', 'Qty', 'Price', 'Total']],
-                    body: receiptData.items.map(item => [
-                        item.description,
-                        item.quantity.toString(),
-                        `$${item.price.toFixed(2)}`,
-                        `$${(item.quantity * item.price).toFixed(2)}`
-                    ]),
-                    theme: 'grid',
-                    headStyles: { fillColor: [241, 245, 249], textColor: [71, 85, 105], fontStyle: 'bold' },
-                    styles: { fontSize: 10, textColor: [51, 65, 85] },
-                });
+    const generatePDF = (mode: 'download' | 'preview' | 'blob' = 'download') => {
+        if (!receiptData.clientName) {
+            toast.error('Client name is required');
+            return;
+        }
 
-                // Totals
-                const finalY = (doc as any).lastAutoTable.finalY || 100;
-                doc.setFontSize(10);
-                doc.setTextColor(30, 41, 59); // Slate 800
-                doc.text('Subtotal:', 140, finalY + 10);
-                doc.text(`$${subtotal.toFixed(2)}`, 170, finalY + 10, { align: 'right' });
+        const doc = new jsPDF({
+            orientation: 'p',
+            unit: 'mm',
+            format: 'a4'
+        });
 
-                if (receiptData.discountAmount > 0) {
-                    doc.text('Discount:', 140, finalY + 16);
-                    doc.text(`-$${receiptData.discountAmount.toFixed(2)}`, 170, finalY + 16, { align: 'right' });
-                }
+        const colors = {
+            primary: '#1e293b',
+            accent: receiptData.accentColor || '#0ea5e9',
+            text: '#334155',
+            light: '#f8fafc',
+            border: '#e2e8f0'
+        };
 
-                if (receiptData.taxRate > 0) {
-                    const taxLineY = receiptData.discountAmount > 0 ? 22 : 16;
-                    doc.text(`Tax (${receiptData.taxRate}%):`, 140, finalY + taxLineY);
-                    doc.text(`$${calculateTax(subtotal).toFixed(2)}`, 170, finalY + taxLineY, { align: 'right' });
-                }
+        if (receiptData.template === 'professional') {
+            // Header with accent color
+            doc.setFillColor(colors.primary);
+            doc.rect(0, 0, 210, 40, 'F');
+            
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(24);
+            doc.text('RECEIPT', 15, 25);
+            
+            doc.setFontSize(10);
+            doc.text(`No: ${receiptData.receiptNumber}`, 195, 20, { align: 'right' });
+            doc.text(`Date: ${receiptData.date}`, 195, 27, { align: 'right' });
 
-                const totalLineY = (receiptData.discountAmount > 0 ? 6 : 0) + (receiptData.taxRate > 0 ? 6 : 0) + 20;
-                doc.setFontSize(12);
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(30, 41, 59);
-                doc.text('Total Paid:', 140, finalY + totalLineY);
-                doc.text(`$${total.toFixed(2)}`, 170, finalY + totalLineY, { align: 'right' });
+            // Accent Bar
+            doc.setFillColor(colors.accent);
+            doc.rect(0, 40, 210, 2, 'F');
 
-                // Notes
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(10);
-                doc.setTextColor(100, 116, 139);
-                doc.text(receiptData.notes, 14, finalY + totalLineY + 15);
+            // Content
+            doc.setTextColor(colors.text);
+            doc.setFontSize(10);
+            doc.text('FROM:', 15, 55);
+            doc.setFont('helvetica', 'bold');
+            doc.text(currentTenant?.name || 'AlphaClone Partner', 15, 62);
+            doc.setFont('helvetica', 'normal');
+            
+            doc.text('BILL TO:', 120, 55);
+            doc.setFont('helvetica', 'bold');
+            doc.text(receiptData.clientName || 'Valued Client', 120, 62);
+            doc.setFont('helvetica', 'normal');
+            if (receiptData.clientEmail) doc.text(receiptData.clientEmail, 120, 68);
 
-            } else {
-                // Template 2: Modern / Minimalist
-                // Header Accent Component
-                doc.setFillColor(15, 23, 42); // slate 900
-                doc.rect(0, 0, 210, 40, 'F');
+            // Table
+            autoTable(doc, {
+                startY: 80,
+                head: [['Description', 'Qty', 'Price', 'Amount']],
+                body: receiptData.items.map(item => [
+                    item.description,
+                    item.quantity,
+                    `$${item.price.toFixed(2)}`,
+                    `$${(item.quantity * item.price).toFixed(2)}`
+                ]),
+                headStyles: { fillColor: colors.accent as any, textColor: 255 },
+                styles: { fontSize: 9 },
+                columnStyles: { 3: { halign: 'right' } }
+            });
+        } else {
+            // Modern Template
+            doc.setFillColor(colors.accent as any);
+            doc.rect(0, 0, 80, 297, 'F');
 
-                doc.setFontSize(24);
-                doc.setTextColor(255, 255, 255);
-                doc.text('RECEIPT', 14, 25);
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(24);
+            doc.text('RECEIPT', 15, 30);
+            
+            doc.setFontSize(10);
+            doc.text(receiptData.receiptNumber, 15, 40);
+            doc.text(receiptData.date, 15, 46);
 
-                doc.setFontSize(12);
-                doc.text(currentTenant?.name || 'Your Company', 140, 25);
+            doc.setTextColor(30, 41, 59);
+            const startX = 90;
+            doc.text('FROM:', startX, 30);
+            doc.setFont('helvetica', 'bold');
+            doc.text(currentTenant?.name || 'AlphaClone Partner', startX, 37);
+            
+            doc.setFont('helvetica', 'normal');
+            doc.text('BILL TO:', startX, 55);
+            doc.setFont('helvetica', 'bold');
+            doc.text(receiptData.clientName || 'Valued Client', startX, 62);
 
-                // Receipt Details
-                doc.setFontSize(10);
-                doc.setTextColor(100, 116, 139); // slate 500
-                doc.text('RECEIPT NUMBER', 14, 55);
-                doc.text('DATE PAID', 70, 55);
+            autoTable(doc, {
+                startY: 80,
+                margin: { left: 90 },
+                head: [['Description', 'Amount']],
+                body: receiptData.items.map(item => [
+                    item.description,
+                    `$${(item.quantity * item.price).toFixed(2)}`
+                ]),
+                headStyles: { fillColor: [30, 41, 59], textColor: 255 },
+                theme: 'plain'
+            });
+        }
 
-                doc.setFontSize(11);
-                doc.setTextColor(15, 23, 42); // slate 900
-                doc.text(receiptData.receiptNumber, 14, 62);
-                doc.text(receiptData.date, 70, 62);
+        // Totals
+        const subtotal = calculateSubtotal();
+        const tax = calculateTax(subtotal);
+        const total = calculateTotal();
+        const finalY = (doc as any).lastAutoTable.finalY + 10;
 
-                // Client Info
-                doc.setFontSize(10);
-                doc.setTextColor(100, 116, 139);
-                doc.text('ISSUED TO', 140, 55);
+        doc.text(`Subtotal: $${subtotal.toFixed(2)}`, 195, finalY, { align: 'right' });
+        doc.text(`Tax: $${tax.toFixed(2)}`, 195, finalY + 7, { align: 'right' });
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(colors.accent as any);
+        doc.text(`Total: $${total.toFixed(2)}`, 195, finalY + 17, { align: 'right' });
 
-                doc.setFontSize(11);
-                doc.setTextColor(15, 23, 42);
-                doc.text(receiptData.clientName, 140, 62);
-                if (receiptData.clientEmail) {
-                    doc.setFontSize(10);
-                    doc.setTextColor(100, 116, 139);
-                    doc.text(receiptData.clientEmail, 140, 68);
-                }
-
-                // Payment Details
-                doc.setFontSize(10);
-                doc.setTextColor(100, 116, 139);
-                doc.text('PAYMENT METHOD', 14, 76);
-                doc.text('RECEIVED BY', 70, 76);
-
-                doc.setFontSize(11);
-                doc.setTextColor(15, 23, 42);
-                doc.text(receiptData.paymentMethod || 'N/A', 14, 83);
-                doc.text(receiptData.receivedBy || 'N/A', 70, 83);
-
-                autoTable(doc, {
-                    startY: 95,
-                    head: [['Description', 'Qty', 'Price', 'Total']],
-                    body: receiptData.items.map(item => [
-                        item.description,
-                        item.quantity.toString(),
-                        `$${item.price.toFixed(2)}`,
-                        `$${(item.quantity * item.price).toFixed(2)}`
-                    ]),
-                    theme: 'plain',
-                    headStyles: { textColor: [100, 116, 139], fontStyle: 'normal' },
-                    styles: { fontSize: 10, textColor: [15, 23, 42] },
-                    alternateRowStyles: { fillColor: [248, 250, 252] } // slate 50 / very light
-                });
-
-                const finalY = (doc as any).lastAutoTable.finalY || 100;
-
-                // Totals
-                const totalsY = finalY + 10;
-                doc.setFontSize(10);
-                doc.setTextColor(100, 116, 139);
-                doc.text('Subtotal:', 140, totalsY);
-                doc.text(`$${subtotal.toFixed(2)}`, 196, totalsY, { align: 'right' });
-
-                let currentTotalY = totalsY + 6;
-                if (receiptData.discountAmount > 0) {
-                    doc.text('Discount:', 140, currentTotalY);
-                    doc.text(`-$${receiptData.discountAmount.toFixed(2)}`, 196, currentTotalY, { align: 'right' });
-                    currentTotalY += 6;
-                }
-
-                if (receiptData.taxRate > 0) {
-                    doc.text(`Tax (${receiptData.taxRate}%):`, 140, currentTotalY);
-                    doc.text(`$${calculateTax(subtotal).toFixed(2)}`, 196, currentTotalY, { align: 'right' });
-                    currentTotalY += 6;
-                }
-
-                // Big Total Area
-                doc.setFillColor(241, 245, 249); // slate 100
-                doc.rect(130, currentTotalY + 4, 66, 25, 'F');
-
-                doc.setFontSize(11);
-                doc.setTextColor(100, 116, 139);
-                doc.text('Total Paid', 135, currentTotalY + 12);
-
-                doc.setFontSize(16);
-                doc.setTextColor(15, 23, 42);
-                doc.setFont('helvetica', 'bold');
-                doc.text(`$${total.toFixed(2)}`, 135, currentTotalY + 22);
-
-                // Notes
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(10);
-                doc.setTextColor(100, 116, 139);
-                doc.text(receiptData.notes, 14, currentTotalY + 40);
-            }
-
-            if (mode === 'download') {
-                doc.save(`Receipt_${receiptData.receiptNumber}.pdf`);
-                toast.success('Receipt downloaded successfully!');
-                onClose();
-            } else if (mode === 'preview') {
-                // Preview mode (Opens in new tab)
-                const pdfDataUri = doc.output('datauristring');
-                const win = window.open();
-                if (win) {
-                    win.document.write(`<iframe width='100%' height='100%' src='${pdfDataUri}'></iframe>`);
-                } else {
-                    toast.error('Could not open preview. Please allow popups.');
-                }
-            } else if (mode === 'blob') {
-                return doc;
-            }
-        } catch (error) {
-            console.error("PDF Generation error:", error);
-            toast.error('Failed to generate receipt');
+        if (mode === 'blob') return doc;
+        if (mode === 'download') {
+            doc.save(`Receipt_${receiptData.receiptNumber}.pdf`);
+            toast.success('Receipt downloaded successfully!');
+            onClose();
+        } else {
+            const pdfBlob = doc.output('blob');
+            const url = URL.createObjectURL(pdfBlob);
+            window.open(url, '_blank');
+            setTimeout(() => URL.revokeObjectURL(url), 100);
         }
     };
 
@@ -665,36 +624,49 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Interface & Annotation</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="grid grid-cols-2 gap-3">
-                            <button
-                                onClick={() => setReceiptData({ ...receiptData, template: 'professional' })}
-                                className={`group p-4 rounded-2xl border-2 transition-all flex flex-col gap-3 ${receiptData.template === 'professional' ? 'border-teal-500 bg-teal-500/5' : 'border-slate-800 hover:border-slate-700 bg-slate-900/50'}`}
-                            >
-                                <div className="flex items-center justify-between">
-                                    <span className={`text-xs font-bold uppercase tracking-widest ${receiptData.template === 'professional' ? 'text-teal-400' : 'text-slate-500 group-hover:text-slate-300'}`}>Standard</span>
-                                    <div className={`w-2 h-2 rounded-full transition-all ${receiptData.template === 'professional' ? 'bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.6)]' : 'bg-slate-800'}`} />
-                                </div>
-                                <div className="space-y-1">
-                                    <div className="h-1.5 w-full bg-slate-800 rounded opacity-40"></div>
-                                    <div className="h-1.5 w-2/3 bg-slate-800 rounded opacity-40"></div>
-                                    <div className="h-6 w-full bg-slate-800 rounded-md mt-2 opacity-20"></div>
-                                </div>
-                            </button>
+                        <div className="flex flex-col gap-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                <button 
+                                    onClick={() => setReceiptData(prev => ({ ...prev, template: 'professional' }))}
+                                    className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${receiptData.template === 'professional' ? 'bg-teal-600/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.2)]' : 'bg-slate-800/50 border-slate-700 hober:bg-slate-800'}`}
+                                >
+                                    <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
+                                        <FileText className="w-4 h-4 text-white" />
+                                    </div>
+                                    <span className="text-sm font-medium text-white">Standard</span>
+                                </button>
+                                <button 
+                                    onClick={() => setReceiptData(prev => ({ ...prev, template: 'modern' }))}
+                                    className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${receiptData.template === 'modern' ? 'bg-teal-600/10 border-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.2)]' : 'bg-slate-800/50 border-slate-700 hober:bg-slate-800'}`}
+                                >
+                                    <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
+                                        <Sparkles className="w-4 h-4 text-white" />
+                                    </div>
+                                    <span className="text-sm font-medium text-white">Modern</span>
+                                </button>
+                            </div>
 
-                            <button
-                                onClick={() => setReceiptData({ ...receiptData, template: 'modern' })}
-                                className={`group p-4 rounded-2xl border-2 transition-all flex flex-col gap-3 ${receiptData.template === 'modern' ? 'border-teal-500 bg-teal-500/5' : 'border-slate-800 hover:border-slate-700 bg-slate-900/50'}`}
-                            >
-                                <div className="flex items-center justify-between">
-                                    <span className={`text-xs font-bold uppercase tracking-widest ${receiptData.template === 'modern' ? 'text-teal-400' : 'text-slate-500 group-hover:text-slate-300'}`}>Modern</span>
-                                    <div className={`w-2 h-2 rounded-full transition-all ${receiptData.template === 'modern' ? 'bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.6)]' : 'bg-slate-800'}`} />
+                            <div className="space-y-2">
+                                <p className="text-xs text-slate-400 font-medium px-1">ACCENT COLOR</p>
+                                <div className="flex flex-wrap gap-2 px-1">
+                                    {[
+                                        { name: 'Teal', color: '#14b8a6' },
+                                        { name: 'Indigo', color: '#6366f1' },
+                                        { name: 'Rose', color: '#f43f5e' },
+                                        { name: 'Amber', color: '#f59e0b' },
+                                        { name: 'Emerald', color: '#10b981' },
+                                        { name: 'Slate', color: '#475569' }
+                                    ].map(preset => (
+                                        <button
+                                            key={preset.name}
+                                            onClick={() => setReceiptData(prev => ({ ...prev, accentColor: preset.color }))}
+                                            className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${receiptData.accentColor === preset.color ? 'border-white scale-110 shadow-lg' : 'border-transparent opacity-80'}`}
+                                            style={{ backgroundColor: preset.color }}
+                                            title={preset.name}
+                                        />
+                                    ))}
                                 </div>
-                                <div className="space-y-1">
-                                    <div className="h-4 w-full bg-teal-500/10 rounded-sm"></div>
-                                    <div className="h-1.5 w-1/2 bg-slate-800 rounded opacity-40"></div>
-                                    <div className="h-4 w-1/3 bg-slate-800 rounded-sm ml-auto opacity-20"></div>
-                                </div>
-                            </button>
+                            </div>
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Annotation / Footer</label>
@@ -720,14 +692,6 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                         icon={<Printer className="w-4 h-4" />}
                     >
                         Print
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        onClick={() => generatePDF('preview')}
-                        disabled={!receiptData.clientName}
-                        icon={<Eye className="w-4 h-4" />}
-                    >
-                        Review
                     </Button>
                     <Button
                         variant="secondary"

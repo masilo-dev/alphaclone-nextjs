@@ -4,8 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Zap, Server } from 'lucide-react';
-import { zohoService } from '../../services/zohoService';
-import ZohoIntegration from './business/ZohoIntegration';
 import { GmailIntegrationView } from './GmailIntegrationView';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../ui/UIComponents';
@@ -17,7 +15,6 @@ interface MailTabProps {
 
 const MailTab: React.FC<MailTabProps> = ({ user }) => {
     const searchParams = useSearchParams();
-    const [isZohoIntegrated, setIsZohoIntegrated] = useState<boolean | null>(null);
     const [isGmailIntegrated, setIsGmailIntegrated] = useState<boolean | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isConnecting, setIsConnecting] = useState(false);
@@ -26,15 +23,6 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
         if (!user?.id) return;
         setIsLoading(true);
         try {
-            // Check Zoho
-            let connectedZoho = false;
-            try {
-                connectedZoho = await zohoService.checkIntegration(user.id);
-            } catch (zErr) {
-                console.error('Failed to check Zoho integration:', zErr);
-            }
-            setIsZohoIntegrated(connectedZoho);
-            
             // Check Gmail
             let connectedGmail = false;
             try {
@@ -48,8 +36,8 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
             }
             setIsGmailIntegrated(connectedGmail);
 
-            if ((connectedZoho || connectedGmail) && (searchParams.get('zoho') === 'connected' || searchParams.get('gmail') === 'connected')) {
-                toast.success('Email provider connected successfully.', {
+            if (connectedGmail && searchParams.get('gmail') === 'connected') {
+                toast.success('Gmail connected successfully.', {
                     duration: 5000,
                 });
             }
@@ -62,19 +50,12 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
 
     useEffect(() => {
         checkStatus();
-    }, [user?.id, searchParams.get('zoho'), searchParams.get('gmail')]);
-
-    const handleConnectZoho = () => {
-        setIsConnecting(true);
-        window.location.href = `/api/auth/zoho/connect`;
-    };
+    }, [user?.id, searchParams.get('gmail')]);
 
     const handleConnectGmail = () => {
         setIsConnecting(true);
-        // Assuming a similar oauth route exists or will exist for Gmail. 
-        // We'll set it here to be robust or show a coming soon toast.
-        toast.error("Gmail OAuth is being configured. Please connect Zoho for now.");
-        setIsConnecting(false);
+        // Gmail connection logic - redirecting to auth endpoint
+        window.location.href = `/api/auth/gmail/connect?userId=${user.id}`;
     };
 
     return (
@@ -89,23 +70,15 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
                         className="flex flex-col items-center justify-center p-12 gap-4 bg-slate-900/40 backdrop-blur-3xl rounded-[2rem] border border-white/5 shadow-2xl"
                     >
                         <div className="relative">
-                            <div className="w-12 h-12 border-4 border-teal-500/20 border-t-[#f5d400] rounded-full animate-spin" />
+                            <div className="w-12 h-12 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin" />
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <Zap className="w-5 h-5 text-[#f5d400] animate-pulse" />
+                                <Zap className="w-5 h-5 text-teal-400 animate-pulse" />
                             </div>
                         </div>
                         <div className="text-center">
                             <p className="text-white font-black uppercase tracking-[0.2em] text-[10px] mb-1">Synchronizing</p>
                             <p className="text-slate-500 text-[9px] uppercase font-mono tracking-widest animate-pulse">Establishing secure link...</p>
                         </div>
-                    </motion.div>
-                ) : isZohoIntegrated ? (
-                    <motion.div
-                        key="integrated-zoho"
-                        initial={{ opacity: 0, scale: 0.98 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                    >
-                        <ZohoIntegration user={user} />
                     </motion.div>
                 ) : isGmailIntegrated ? (
                     <motion.div
@@ -138,35 +111,22 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
 
                         <h2 className="text-3xl font-bold text-white mb-4 tracking-tight">Unified Communication Hub</h2>
                         <p className="text-slate-400 mb-10 max-w-lg mx-auto leading-relaxed text-sm">
-                            Connect your preferred email provider to seamlessly manage your communications and clients directly from your dashboard.
+                            Connect your Gmail account to seamlessly manage your communications and clients directly from your dashboard.
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
                             <Button
-                                onClick={handleConnectZoho}
-                                disabled={isConnecting}
-                                className="group bg-gradient-to-r from-[#f5d400] to-[#e6c700] hover:from-[#e6c700] hover:to-[#d6b700] text-slate-950 font-semibold px-8 py-4 rounded-xl shadow-xl shadow-yellow-500/10 transition-all border-0 h-auto"
-                            >
-                                <span className="flex items-center gap-3">
-                                    <Server className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" />
-                                    {isConnecting ? 'Initializing...' : 'Connect Zoho Mail'}
-                                </span>
-                            </Button>
-                            
-                            <Button
                                 onClick={handleConnectGmail}
                                 disabled={isConnecting}
-                                className="group bg-white hover:bg-slate-100 text-slate-950 font-semibold px-8 py-4 rounded-xl shadow-xl transition-all border-0 h-auto"
+                                className="group bg-white hover:bg-slate-100 text-slate-950 font-bold px-12 py-5 rounded-2xl shadow-2xl transition-all border-0 h-auto flex items-center gap-4 text-sm"
                             >
-                                <span className="flex items-center gap-3">
-                                    <svg className="w-5 h-5" viewBox="0 0 24 24">
-                                        <path fill="#EA4335" d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" />
-                                        <path fill="#C5221F" d="M16.909 21.002v-9.273L24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-5.455z" />
-                                        <path fill="#F2A60C" d="M24 5.457c0-2.023-2.309-3.178-3.927-1.964L16.909 6.82l-4.91 3.682-6.544-4.91L3.927 3.493C2.309 2.279 0 3.434 0 5.457v5.455L12 16.64l12-9.006V5.457z" />
-                                        <path fill="#188038" d="M0 5.457v13.909c0 .904.732 1.636 1.636 1.636h5.455v-9.273L0 5.457z" />
-                                    </svg>
-                                    Connect Gmail
-                                </span>
+                                <svg className="w-6 h-6 shrink-0" viewBox="0 0 24 24">
+                                    <path fill="#EA4335" d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" />
+                                    <path fill="#C5221F" d="M16.909 21.002v-9.273L24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-5.455z" />
+                                    <path fill="#F2A60C" d="M24 5.457c0-2.023-2.309-3.178-3.927-1.964L16.909 6.82l-4.91 3.682-6.544-4.91L3.927 3.493C2.309 2.279 0 3.434 0 5.457v5.455L12 16.64l12-9.006V5.457z" />
+                                    <path fill="#188038" d="M0 5.457v13.909c0 .904.732 1.636 1.636 1.636h5.455v-9.273L0 5.457z" />
+                                </svg>
+                                {isConnecting ? 'INTEGRATING...' : 'CONNECT GMAIL PROTOCOL'}
                             </Button>
                         </div>
                     </motion.div>
@@ -177,3 +137,4 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
 };
 
 export default MailTab;
+

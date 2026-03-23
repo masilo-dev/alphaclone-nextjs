@@ -26,7 +26,6 @@ import { useTenant } from '../../contexts/TenantContext';
 import { SubscriptionPlan, PLAN_PRICING } from '../../services/tenancy/types';
 import CalendlySettings from './business/CalendlySettings';
 // import GmailIntegration from './business/GmailIntegration';
-import ZohoSettings from './business/ZohoSettings';
 import HubspotIntegration from './business/HubspotIntegration';
 import StripeConnectSettings from './business/StripeConnectSettings';
 import BrandingSettings from './settings/BrandingSettings';
@@ -749,9 +748,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 
                     {activeSection === 'booking' && (
                         <div className="space-y-12">
-                            <div className="border-b border-slate-800 pb-12">
-                                <ZohoSettings />
-                            </div>
                             <div className="border-b border-slate-800 pb-12">
                                 <HubspotIntegration />
                             </div>

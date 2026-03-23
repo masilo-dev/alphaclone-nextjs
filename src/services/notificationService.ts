@@ -80,7 +80,7 @@ export const notificationService = {
                     event: 'INSERT',
                     schema: 'public',
                     table: 'notifications',
-                    filter: `user_id=eq.${userId}`
+                    filter: `user_id=eq.${userId.trim()}`
                 },
                 (payload: any) => {
                     callback(payload.new as Notification);

@@ -90,6 +90,55 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
         setSearchQuery('');
     };
 
+    const getSuggestedAccount = (vendorName: string) => {
+        const name = vendorName.toLowerCase();
+        
+        // Software & Subscriptions
+        if (name.includes('google') || name.includes('microsoft') || name.includes('github') || name.includes('vercel') || name.includes('aws') || name.includes('digitalocean') || name.includes('adobe') || name.includes('slack') || name.includes('zoom') || name.includes('software') || name.includes('subscription')) {
+            return expenseAccounts.find(a => a.accountName.toLowerCase().includes('software') || a.accountName.toLowerCase().includes('subscription'))?.id;
+        }
+        
+        // Rent & Utilities
+        if (name.includes('rent') || name.includes('lease') || name.includes('office') || name.includes('space')) {
+            return expenseAccounts.find(a => a.accountName.toLowerCase().includes('rent'))?.id;
+        }
+        if (name.includes('electric') || name.includes('water') || name.includes('gas') || name.includes('utility') || name.includes('utilities') || name.includes('internet') || name.includes('broadband') || name.includes('phone')) {
+            return expenseAccounts.find(a => a.accountName.toLowerCase().includes('utilit'))?.id;
+        }
+
+        // Travel & Meals
+        if (name.includes('uber') || name.includes('lyft') || name.includes('taxi') || name.includes('train') || name.includes('flight') || name.includes('airline') || name.includes('hotel') || name.includes('travel')) {
+            return expenseAccounts.find(a => a.accountName.toLowerCase().includes('travel'))?.id;
+        }
+        if (name.includes('restaurant') || name.includes('cafe') || name.includes('coffee') || name.includes('starbucks') || name.includes('lunch') || name.includes('dinner') || name.includes('meal') || name.includes('food')) {
+            return expenseAccounts.find(a => a.accountName.toLowerCase().includes('meal') || a.accountName.toLowerCase().includes('entertainment'))?.id;
+        }
+
+        // Professional Services
+        if (name.includes('legal') || name.includes('law') || name.includes('attorney') || name.includes('consult') || name.includes('accounting') || name.includes('audit')) {
+            return expenseAccounts.find(a => a.accountName.toLowerCase().includes('professional') || a.accountName.toLowerCase().includes('consult'))?.id;
+        }
+
+        // Marketing & Advertising
+        if (name.includes('facebook') || name.includes('adwords') || name.includes('instagram') || name.includes('marketing') || name.includes('ads') || name.includes('advertis')) {
+            return expenseAccounts.find(a => a.accountName.toLowerCase().includes('market') || a.accountName.toLowerCase().includes('advertis'))?.id;
+        }
+
+        return null;
+    };
+
+    const handleVendorSelect = (name: string) => {
+        setDescription(name);
+        setSearchQuery('');
+        setShowContactDropdown(false);
+        
+        const suggestedId = getSuggestedAccount(name);
+        if (suggestedId) {
+            setSelectedExpenseAccount(suggestedId);
+            toast.success(`Automatically selected account based on vendor`, { icon: '🤖', duration: 2000 });
+        }
+    };
+
     const handleClose = () => {
         resetForm();
         onClose();
@@ -234,6 +283,23 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                 />
                                             </div>
 
+                                            {/* Quick Select Vendors */}
+                                            {clients.length > 0 && !description && (
+                                                <div className="mt-4 flex flex-wrap gap-2">
+                                                    <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest w-full mb-1 ml-1 cursor-default">Quick Select</span>
+                                                    {clients.slice(0, 5).map(client => (
+                                                        <button
+                                                            key={client.id}
+                                                            type="button"
+                                                            onClick={() => handleVendorSelect(client.name)}
+                                                            className="px-3 py-1.5 rounded-full bg-slate-800/50 border border-white/5 text-[10px] font-bold text-slate-400 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 transition-all flex items-center gap-1.5"
+                                                        >
+                                                            <Plus className="w-3 h-3" /> {client.name}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+
                                             <AnimatePresence>
                                                 {showContactDropdown && (searchQuery.length > 0) && (
                                                     <motion.div
@@ -246,10 +312,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                             clients.filter(c => c.name?.toLowerCase().includes(searchQuery.toLowerCase())).map(client => (
                                                                 <button
                                                                     key={client.id}
-                                                                    onClick={() => {
-                                                                        setDescription(client.name);
-                                                                        setShowContactDropdown(false);
-                                                                    }}
+                                                                    onClick={() => handleVendorSelect(client.name)}
                                                                     className="w-full text-left p-3.5 rounded-2xl hover:bg-white/5 transition-all group flex items-center justify-between border border-transparent hover:border-white/5 mb-1"
                                                                 >
                                                                     <div className="flex items-center gap-4">

@@ -404,11 +404,12 @@ export const projectService = {
 
         // Only filter by tenant if tenant exists
         if (tenantId) {
-            subscriptionConfig.filter = `tenant_id=eq.${tenantId}`;
+            subscriptionConfig.filter = `tenant_id=eq.${tenantId.trim()}`;
         }
 
+        const channelName = `projects_${tenantId ? tenantId.replace(/[^a-zA-Z0-9-_]/g, '_') : 'global'}`;
         const channel = supabase
-            .channel('projects_channel')
+            .channel(channelName)
             .on(
                 'postgres_changes',
                 subscriptionConfig,

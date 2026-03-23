@@ -17,8 +17,10 @@ import {
   FileText,
   Settings,
   Save,
-  Upload
+  Upload,
+  Users
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { businessInvoiceService } from '@/services/businessInvoiceService';
@@ -99,24 +101,37 @@ export default function EnhancedInvoiceModal({
     paymentMethods: ['stripe']
   });
 
-  // Load invoice data if editing
+  const [clients, setClients] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showContactDropdown, setShowContactDropdown] = useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // Load clients
   useEffect(() => {
-    if (invoice && mode === 'edit') {
-      setFormData({
-        clientId: invoice.clientId || '',
-        clientName: invoice.clientName || '',
-        clientEmail: invoice.clientEmail || '',
-        items: invoice.items || [{ description: '', quantity: 1, rate: 0, amount: 0 }],
-        subtotal: invoice.subtotal || 0,
-        tax: invoice.tax || 0,
-        total: invoice.total || 0,
-        dueDate: invoice.dueDate || '',
-        notes: invoice.notes || '',
-        template: invoice.template || 'modern',
-        paymentMethods: invoice.paymentMethods || ['stripe']
-      });
+    const loadClients = async () => {
+      try {
+        const { businessClientService } = await import('@/services/businessClientService');
+        const { clients: fetchedClients } = await businessClientService.getClients(currentTenant?.id || '');
+        setClients(fetchedClients || []);
+      } catch (error) {
+        console.error('Failed to load clients:', error);
+      }
+    };
+    if (isOpen && currentTenant?.id) {
+      loadClients();
     }
-  }, [invoice, mode, user?.name]);
+  }, [isOpen, currentTenant?.id]);
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowContactDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Calculate totals
   useEffect(() => {
@@ -284,19 +299,74 @@ export default function EnhancedInvoiceModal({
 
   const renderDetailsTab = () => (
     <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-slate-300 mb-2">Client</label>
-        <div className="flex space-x-2">
+      <div className="relative" ref={dropdownRef}>
+        <label className="block text-sm font-medium text-slate-300 mb-2">Search Client</label>
+        <div className="relative">
           <input
             type="text"
-            placeholder="Search client..."
-            className="flex-1 px-3 py-2 bg-slate-800 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            onChange={(e) => handleClientSearch(e.target.value)}
+            placeholder="Search existing contacts..."
+            className="w-full px-3 py-2 pl-10 bg-slate-800 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowContactDropdown(true);
+            }}
+            onFocus={() => setShowContactDropdown(true)}
           />
-          <button className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
-            <Settings className="w-4 h-4" />
-          </button>
+          <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
         </div>
+
+        <AnimatePresence>
+          {showContactDropdown && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute w-full mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-[110] max-h-60 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-700"
+            >
+              {clients.filter(c => 
+                !searchQuery || 
+                c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                c.email?.toLowerCase().includes(searchQuery.toLowerCase())
+              ).length > 0 ? (
+                clients
+                  .filter(c => 
+                    !searchQuery || 
+                    c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    c.email?.toLowerCase().includes(searchQuery.toLowerCase())
+                  )
+                  .map(c => (
+                    <button
+                      key={c.id}
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          clientId: c.id,
+                          clientName: c.name || '',
+                          clientEmail: c.email || ''
+                        }));
+                        setSearchQuery('');
+                        setShowContactDropdown(false);
+                      }}
+                      className="w-full text-left p-3 rounded-lg hover:bg-white/5 flex items-center gap-3 transition-colors group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center border border-teal-500/20 group-hover:bg-teal-500/20 transition-all">
+                        <span className="text-teal-400 text-xs font-black">{c.name?.charAt(0).toUpperCase()}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-slate-200">{c.name}</span>
+                        <span className="text-[10px] text-slate-500 font-medium uppercase tracking-tight">{c.email}</span>
+                      </div>
+                    </button>
+                  ))
+              ) : (
+                <div className="p-4 text-center">
+                  <p className="text-xs text-slate-500 font-medium italic">No matches found.</p>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -551,8 +621,9 @@ export default function EnhancedInvoiceModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-safe pb-safe md:pl-64">
+      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col relative animate-fade-in overflow-hidden" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-800">
           <div>

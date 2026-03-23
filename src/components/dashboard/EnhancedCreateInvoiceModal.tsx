@@ -50,6 +50,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [showServiceDropdown, setShowServiceDropdown] = useState<{ index: number; open: boolean }>({ index: -1, open: false });
     const [enablePaymentLinks, setEnablePaymentLinks] = useState(false); // DISABLED by default
     const [clientEmail, setClientEmail] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showContactDropdown, setShowContactDropdown] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Set default bank and mobile money details from tenant
     const tenantSettings = currentTenant?.settings as {
@@ -81,9 +84,19 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             }
         };
         loadClients();
-    }, []);
+    }, [currentTenant?.id]);
 
     // Load user services and sectors
+    React.useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowContactDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     React.useEffect(() => {
         const loadUserServices = async () => {
             try {
@@ -342,20 +355,88 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
                             {/* Client and Project Selection */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
+                                <div className="relative" ref={dropdownRef}>
                                     <label className="block text-sm font-medium text-slate-300 mb-2">Client *</label>
-                                    <select
-                                        value={selectedClientId}
-                                        onChange={(e) => setSelectedClientId(e.target.value)}
-                                        className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                                    >
-                                        <option value="">Select a client</option>
-                                        {clients.map((client) => (
-                                            <option key={client.id} value={client.id}>
-                                                {client.name} - {client.email}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="relative">
+                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                                            <Users size={16} />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={selectedClientId ? clients.find(c => c.id === selectedClientId)?.name || '' : searchQuery}
+                                            onChange={(e) => {
+                                                setSearchQuery(e.target.value);
+                                                setShowContactDropdown(true);
+                                                if (selectedClientId) setSelectedClientId('');
+                                            }}
+                                            onFocus={() => setShowContactDropdown(true)}
+                                            placeholder="Search existing contacts..."
+                                            className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg pl-10 pr-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm outline-none"
+                                        />
+                                        {selectedClientId && (
+                                            <button 
+                                                onClick={() => {
+                                                    setSelectedClientId('');
+                                                    setSearchQuery('');
+                                                }}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <AnimatePresence>
+                                        {showContactDropdown && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: -10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -10 }}
+                                                className="absolute w-full mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-[100] max-h-60 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-700"
+                                            >
+                                                {clients.filter(c => 
+                                                    !searchQuery || 
+                                                    c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                                    c.email?.toLowerCase().includes(searchQuery.toLowerCase())
+                                                ).length > 0 ? (
+                                                    clients
+                                                        .filter(c => 
+                                                            !searchQuery || 
+                                                            c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                                            c.email?.toLowerCase().includes(searchQuery.toLowerCase())
+                                                        )
+                                                        .map(c => (
+                                                            <button
+                                                                key={c.id}
+                                                                onClick={() => {
+                                                                    setSelectedClientId(c.id);
+                                                                    setShowContactDropdown(false);
+                                                                    setSearchQuery('');
+                                                                }}
+                                                                className="w-full text-left p-3 rounded-lg hover:bg-white/5 flex items-center gap-3 transition-colors group"
+                                                            >
+                                                                <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center border border-teal-500/20 group-hover:bg-teal-500/20 transition-all">
+                                                                    <span className="text-teal-400 text-xs font-black">{c.name?.charAt(0).toUpperCase()}</span>
+                                                                </div>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-sm font-bold text-slate-200">{c.name}</span>
+                                                                    <span className="text-[10px] text-slate-500 font-medium uppercase tracking-tight">{c.email}</span>
+                                                                </div>
+                                                            </button>
+                                                        ))
+                                                ) : (
+                                                    <div className="p-4 text-center">
+                                                        <p className="text-xs text-slate-500 font-medium italic">No matches found.</p>
+                                                        <button 
+                                                            onClick={onClose} // Redirect to clients tab or just keep it simple
+                                                            className="mt-2 text-[10px] font-black uppercase tracking-widest text-teal-400 hover:text-teal-300 transition-all border border-teal-500/30 px-3 py-1.5 rounded-md hover:bg-teal-500/10"
+                                                        >
+                                                            Add New Client
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
 
                                 <div>

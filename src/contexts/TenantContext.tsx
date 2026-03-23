@@ -233,14 +233,13 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     if (user?.id) {
       // Timeout safeguard: Force loading to false after 15 seconds to allow Vercel cold starts
       const timeoutId = setTimeout(() => {
-        console.warn('TenantContext: Loading timeout reached, forcing isLoading to false');
-        // If we have a cached tenant, we're probably fine to proceed anyway
-        if (currentTenant) {
-          setIsLoading(false);
-          return;
-        }
-        setError('Loading timeout - please check your connection and refresh');
-        setIsLoading(false);
+        setIsLoading((current) => {
+          if (current) {
+            console.warn('TenantContext: Loading timeout reached, forcing isLoading to false');
+            return false;
+          }
+          return current;
+        });
       }, 10000);
 
       loadUserTenants(timeoutId);

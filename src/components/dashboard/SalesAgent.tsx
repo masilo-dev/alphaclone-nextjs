@@ -19,7 +19,7 @@ import { LeadAuditReport } from './leads/LeadAuditReport';
 const SalesAgent: React.FC = () => {
     const aiConfigured = isAnyAIConfigured();
     const { startTask } = useBackgroundTasks();
-    const [activeTab, setActiveTab] = useState<'leads' | 'agent'>('agent'); // Default to agent chat for "Manus" experience
+    const [activeTab, setActiveTab] = useState<'leads' | 'agent'>('agent'); // Default to agent chat for premium experience
     const [searchParams, setSearchParams] = useState({ industry: '', location: '' });
     const [leads, setLeads] = useState<Lead[]>([]);
     const [isSearching, setIsSearching] = useState(false);
@@ -713,7 +713,7 @@ const SalesAgent: React.FC = () => {
                 text: text
             }]);
 
-            // --- Command Handling (Manus AI Style) ---
+            // --- Command Handling (AlphaClone AI Style) ---
             if (commands.search) {
                 const { industry, location, filters } = commands.search;
                 if (industry && location) {
@@ -944,8 +944,8 @@ const SalesAgent: React.FC = () => {
                 <span className="font-semibold text-white">Current status:</span> search, draft generation, CRM handoff, and quote creation work today.
                 Long-running autonomous missions and persistent mission history still need hardening before this should be treated as a fully autonomous agent.
             </div>
-
-            {/* Aerial View - Mini Widget during search or navigation */}
+            {/* Aerial View - Mini Widget during search or navigation - Hidden as per user request to eliminate map visuals */}
+            {/* 
             {activeTab === 'leads' && (isVisualSearchActive || leads.length > 0) && (
                 <div className="fixed bottom-6 right-6 w-72 sm:w-80 h-48 sm:h-64 z-40 rounded-2xl overflow-hidden shadow-2xl border border-teal-500/30 bg-slate-950 pointer-events-none sm:pointer-events-auto">
                     <AerialLeadNavigator
@@ -956,6 +956,9 @@ const SalesAgent: React.FC = () => {
                     />
                 </div>
             )}
+            */}
+
+
 
             {activeTab === 'leads' ? (
                 <div className="space-y-6">

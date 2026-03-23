@@ -341,7 +341,7 @@ export const messageService = {
                     event: '*',
                     schema: 'public',
                     table: 'messages',
-                    filter: `tenant_id=eq.${tenantId}`
+                    filter: `tenant_id=eq.${tenantId.trim()}`
                 },
                 (payload: any) => {
                     if (payload.eventType !== 'INSERT' && payload.eventType !== 'UPDATE') return;
@@ -379,6 +379,7 @@ export const messageService = {
                     console.log('✅ Subscribed to real-time messages (INSERT + UPDATE)');
                 } else if (status === 'CHANNEL_ERROR') {
                     console.error('❌ Failed to subscribe to messages:', err?.message || 'Unknown channel error');
+                    console.error('Subscription details:', { tenantId, channelName });
                     // Retry after 5s on error
                     setTimeout(() => messageService.subscribeToMessages(userId, isAdmin, callback), 5000);
                 } else if (status === 'CLOSED') {

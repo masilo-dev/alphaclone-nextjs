@@ -18,7 +18,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client: 
     const [subject, setSubject] = useState('');
     const [body, setBody] = useState('');
     const [isSending, setIsSending] = useState(false);
-    const [provider, setProvider] = useState<'zoho' | 'gmail' | null>(null);
+    const [provider, setProvider] = useState<'gmail' | null>(null);
     const [loadingProvider, setLoadingProvider] = useState(true);
 
     // Contact picker state
@@ -71,11 +71,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client: 
         const checkConnections = async () => {
             setLoadingProvider(true);
             try {
-                const zohoRes = await fetch(`/api/zoho?action=get_account_info`);
-                if (zohoRes.ok) {
-                    const zData = await zohoRes.json();
-                    if (zData.success) { setProvider('zoho'); setLoadingProvider(false); return; }
-                }
+
                 const { data: integrations } = await supabase
                     .from('integrations')
                     .select('type')
@@ -101,29 +97,13 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client: 
             return;
         }
         if (!provider) {
-            toast.error("No email provider connected. Please connect Zoho or Gmail in settings.");
+            toast.error("No email provider connected. Please connect Gmail in settings.");
             return;
         }
 
         setIsSending(true);
         try {
-            if (provider === 'zoho') {
-                const resp = await fetch('/api/zoho', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'send_email',
-                        data: { to: selectedClient.email, subject, content: body }
-                    })
-                });
-                const data = await resp.json();
-                if (resp.ok && data.success) {
-                    toast.success("Email sent successfully via Zoho!");
-                    onSent();
-                } else {
-                    toast.error(data.error || "Failed to send email");
-                }
-            } else if (provider === 'gmail') {
+            if (provider === 'gmail') {
                 toast.success("Message drafting enabled. Active Gmail sending arriving in next sync.");
                 onSent();
             }
@@ -242,7 +222,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client: 
                         {loadingProvider ? (
                             <><Loader2 className="w-3 h-3 animate-spin" /> Detecting provider...</>
                         ) : provider ? (
-                            <><CheckCircle2 className="w-3 h-3 text-teal-500" /> Using {provider === 'zoho' ? 'Zoho Mail' : 'Gmail'} to send securely</>
+                            <><CheckCircle2 className="w-3 h-3 text-teal-500" /> Using Gmail to send securely</>
                         ) : (
                             <><span className="text-amber-500">⚠ No provider connected. Emails cannot be sent.</span></>
                         )}

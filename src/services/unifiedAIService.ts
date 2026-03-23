@@ -1,26 +1,23 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { googlePlacesService } from './googlePlacesService';
-import { ENV } from '@/config/env';
+import { ENV } from '../config/env';
 
 // API Keys from validated ENV
 const GEMINI_API_KEY = ENV.VITE_GEMINI_API_KEY || '';
 const ANTHROPIC_API_KEY = ENV.ANTHROPIC_API_KEY || '';
 const OPENAI_API_KEY = ENV.OPENAI_API_KEY || '';
-const MANUS_API_KEY = process.env.NEXT_PUBLIC_MANUS_API_KEY || process.env.MANUS_API_KEY || ''; // Not in ENV schema yet
 
 // Check which providers are available
 export const getAvailableProviders = () => {
     return {
         claude: !!ANTHROPIC_API_KEY,
         openai: !!OPENAI_API_KEY,
-        gemini: !!GEMINI_API_KEY,
-        manus: !!MANUS_API_KEY
+        gemini: !!GEMINI_API_KEY
     };
 };
 
 export const isAnyAIConfigured = () => {
     const providers = getAvailableProviders();
-    return providers.claude || providers.openai || providers.gemini || providers.manus;
+    return providers.claude || providers.openai || providers.gemini;
 };
 
 /**
@@ -209,6 +206,24 @@ export const generateOutreachMessage = async (lead: any) => {
 };
 
 /**
+ * Generate an AI reply to an email
+ */
+export const generateEmailReply = async (emailContent: string, context?: string) => {
+    const prompt = `You are a professional assistant. Draft a concise, high-conversion reply to the following email:
+    
+    EMAIL CONTENT:
+    "${emailContent}"
+    
+    CONTEXT/INSTRUCTIONS:
+    "${context || 'Be professional and helpful.'}"
+    
+    Provide ONLY the body of the reply. Do not include subject lines or signatures unless requested.`;
+
+    const { text } = await generateText(prompt, 1000);
+    return text || "AI reply generation failed.";
+};
+
+/**
  * Perform deep business research/enrichment using AI
  */
 export const enrichLeadData = async (lead: any): Promise<string> => {
@@ -230,60 +245,6 @@ export const enrichLeadData = async (lead: any): Promise<string> => {
     return text || "Intelligence gathering failed. Please try again later.";
 };
 
-/**
- * Generate leads using Manus AI (premium lead enrichment)
- */
-export const generateLeadsWithManus = async (industry: string, location: string) => {
-    if (!MANUS_API_KEY) {
-        throw new Error('Manus AI API key is not configured');
-    }
-
-    console.log('🟡 Using Manus AI for lead generation...');
-
-    try {
-        // Manus AI API call for lead enrichment
-        const response = await fetch('https://api.manus.ai/v1/leads/search', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${MANUS_API_KEY}`
-            },
-            body: JSON.stringify({
-                industry: industry,
-                location: location,
-                limit: 10,
-                enrichment: true // Request full business data enrichment
-            })
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Manus AI API error:', response.status, errorText);
-            throw new Error(`Manus AI API error: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        // Transform Manus response to our lead format
-        const leads = (data.leads || data.results || []).map((lead: any) => ({
-            id: lead.id || crypto.randomUUID(),
-            businessName: lead.business_name || lead.name || lead.company,
-            industry: lead.industry || industry,
-            location: lead.location || lead.city || location,
-            phone: lead.phone || lead.phone_number || '',
-            email: lead.email || lead.contact_email || '',
-            fb: lead.facebook || lead.social?.facebook || '',
-            status: 'New',
-            source: 'Manus AI'
-        }));
-
-        console.log(`✅ Manus AI returned ${leads.length} leads`);
-        return leads;
-    } catch (error: any) {
-        console.error('❌ Manus AI failed:', error);
-        throw error;
-    }
-};
 
 /**
  * Generate leads using AI or Google Places (proxied through server-side route)

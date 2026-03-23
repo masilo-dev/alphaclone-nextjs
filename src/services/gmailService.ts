@@ -18,7 +18,11 @@ export const gmailService = {
      * Proxy call to our internal Gmail API with retry on rate-limit / server errors
      */
     async apiCall(endpoint: string, userId: string, options: RequestInit = {}, retries = 2): Promise<any> {
-        const url = new URL(`${window.location.origin}/api/gmail/${endpoint}`);
+        const baseUrl = typeof window !== 'undefined' 
+            ? window.location.origin 
+            : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
+            
+        const url = new URL(`${baseUrl}/api/gmail/${endpoint}`);
         url.searchParams.set('userId', userId);
 
         for (let attempt = 0; attempt <= retries; attempt++) {
@@ -56,7 +60,11 @@ export const gmailService = {
      * to avoid hitting Google's per-user rate limit
      */
     async listThreads(userId: string, maxResults = 20, pageToken?: string, labelIds: string[] = ['INBOX']): Promise<{ threads: GmailMessage[], nextPageToken?: string }> {
-        const url = new URL(`${window.location.origin}/api/gmail/threads`);
+        const baseUrl = typeof window !== 'undefined' 
+            ? window.location.origin 
+            : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
+
+        const url = new URL(`${baseUrl}/api/gmail/threads`);
         url.searchParams.set('userId', userId);
         url.searchParams.set('maxResults', maxResults.toString());
         if (pageToken) url.searchParams.set('pageToken', pageToken);

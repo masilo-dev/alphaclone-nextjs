@@ -32,7 +32,7 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
 
     const handleSync = async () => {
         setSyncing(true);
-        const toastId = toast.loading('Syncing with external CRM (Zoho/HubSpot)...');
+        const toastId = toast.loading('Syncing with external CRM (HubSpot)...');
         try {
             const res = await UnifiedCRMService.pullDeals();
             if (res?.success) {

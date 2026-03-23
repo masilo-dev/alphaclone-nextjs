@@ -61,7 +61,9 @@ const MailTab = React.lazy(() => import('../MailTab'));
 const CustomVideoRoom = React.lazy(() => import('../video/CustomVideoRoom'));
 // New Components
 const TaskScheduler = React.lazy(() => import('./TaskScheduler'));
-const ZohoIntegration = React.lazy(() => import('./ZohoIntegration'));
+const ZohoMailView = React.lazy(() => import('../zoho/ZohoMailView'));
+const ZohoCRMIntegration = React.lazy(() => import('../zoho/ZohoCRMIntegration'));
+
 
 const QuotaManager = React.lazy(() => import('./QuotaManager'));
 const DailySummarySystem = React.lazy(() => import('./DailySummarySystem'));
@@ -344,12 +346,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <TaskScheduler />
                     </React.Suspense>
                 );
-            case '/dashboard/business/zoho':
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
-                        <ZohoIntegration user={user} />
-                    </React.Suspense>
-                );
 
             case '/dashboard/business/quotas':
                 return (
@@ -375,6 +371,20 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={4} columns={1} />}>
                         <MailTab user={user} />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/zoho/mail':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} />}>
+                        <ZohoMailView />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/zoho/crm':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={3} />}>
+                        <ZohoCRMIntegration />
                     </React.Suspense>
                 );
 
@@ -431,6 +441,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/accounting': return 'Accounting Dashboard';
             case '/dashboard/mail':
             case '/dashboard/gmail': return 'Mail';
+            case '/dashboard/zoho/mail': return 'Zoho Mail';
+            case '/dashboard/zoho/crm': return 'Zoho CRM Sync';
             default: return 'AlphaClone';
         }
     };
@@ -607,7 +619,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     '/dashboard/sales-agent',
                     '/dashboard/crm',
                     '/dashboard/contacts',
-                    '/dashboard/business/clients'
+                    '/dashboard/business/clients',
+                    '/dashboard/zoho/mail',
+                    '/dashboard/zoho/crm'
                 ].includes(activeTab) ? 'overflow-hidden p-0' : 'overflow-y-auto p-4 md:p-8 dashboard-content-padding'}`}>
                     <WidgetErrorBoundary title="Business Dashboard Error">
                         <AnimatePresence mode="wait">

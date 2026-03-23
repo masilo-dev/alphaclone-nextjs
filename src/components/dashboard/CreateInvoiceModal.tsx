@@ -345,12 +345,13 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const selectedClient = clients.find(c => c.id === selectedClientId);
 
     return (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 backdrop-blur-sm overflow-y-auto">
-            <div className="w-full max-w-4xl bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl my-8">
-                <div className="flex items-center justify-between p-6 border-b border-slate-800">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-safe pb-safe md:pl-64">
+            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={handleClose} />
+            <div className="relative w-full max-w-2xl bg-slate-900 rounded-3xl border border-slate-800 shadow-2xl animate-fade-in overflow-hidden max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between p-4 border-b border-slate-800">
                     <div>
-                        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                            <DollarSign className="w-6 h-6 text-teal-400" />
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            <DollarSign className="w-5 h-5 text-teal-400" />
                             {currentTenant?.name || 'Business'} Invoice
                         </h2>
                         <p className="text-sm text-slate-400 mt-1">
@@ -359,38 +360,38 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             {step === 'success' && 'Invoice created successfully'}
                         </p>
                     </div>
-                    <button onClick={handleClose} className="text-slate-400 hover:text-white">
-                        <X className="w-6 h-6" />
+                    <button onClick={handleClose} className="text-slate-400 hover:text-white p-2">
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                <div className="p-6 max-h-[70vh] overflow-y-auto">
+                <div className="p-4 sm:p-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
                     {step === 'edit' && (
-                        <div className="space-y-6">
-                            <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl p-4 flex items-start gap-3">
-                                <Edit3 className="w-5 h-5 text-teal-400 mt-0.5" />
+                        <div className="space-y-5">
+                            <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl p-3 flex items-start gap-3">
+                                <Edit3 className="w-4 h-4 text-teal-400 mt-0.5" />
                                 <div>
-                                    <h3 className="text-teal-400 font-bold text-sm">Invoice Details</h3>
-                                    <p className="text-slate-400 text-xs mt-1">Fill in the invoice information.</p>
+                                    <h3 className="text-teal-400 font-bold text-xs">Invoice Details</h3>
+                                    <p className="text-slate-400 text-[10px] mt-0.5">Fill in the invoice information.</p>
                                 </div>
                             </div>
 
-                            <div className="border-b border-slate-800 pb-6">
-                                <h3 className="text-white font-bold mb-3 flex items-center gap-2">
-                                    <Sparkles className="w-5 h-5 text-teal-400" />
+                            <div className="border-b border-slate-800 pb-5">
+                                <h3 className="text-white font-bold mb-3 text-sm flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 text-teal-400" />
                                     Choose Style
                                 </h3>
-                                <div className="grid grid-cols-5 gap-2">
+                                <div className="grid grid-cols-5 gap-3">
                                     {[1, 2, 3, 4, 5].map((id) => (
                                         <button
                                             key={id}
                                             onClick={() => setSelectedTemplate(id as any)}
-                                            className={`relative aspect-[3/4] rounded-lg border-2 transition-all ${selectedTemplate === id ? 'border-teal-500 ring-2 ring-teal-500/20' : 'border-slate-700 hover:border-slate-500'}`}
+                                            className={`relative aspect-[3/4] rounded-lg border-2 transition-all overflow-hidden ${selectedTemplate === id ? 'border-teal-500 ring-2 ring-teal-500/20' : 'border-slate-800 hover:border-slate-600'}`}
                                         >
-                                            <div className="absolute inset-x-2 top-2 h-2 bg-current opacity-20" />
+                                            <div className={`absolute inset-0 bg-slate-950/40 ${selectedTemplate === id ? 'opacity-0' : 'opacity-100'}`} />
                                             {selectedTemplate === id && (
-                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                                                    <CheckCircle2 className="w-6 h-6 text-teal-400" />
+                                                <div className="absolute inset-0 flex items-center justify-center bg-teal-500/10">
+                                                    <CheckCircle2 className="w-5 h-5 text-teal-400" />
                                                 </div>
                                             )}
                                         </button>
@@ -459,15 +460,17 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 </div>
                             </div>
 
-                            <div className="border-t border-slate-800 pt-4">
-                                <h3 className="text-white font-bold mb-3">Line Items</h3>
-                                <div className="space-y-4">
+                            <div className="border-t border-slate-800 pt-5">
+                                <h3 className="text-white font-bold mb-3 text-sm">Line Items</h3>
+                                <div className="space-y-3">
                                     {lineItems.map((item, index) => (
-                                        <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                                        <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-end">
                                             <div className="md:col-span-6">
                                                 <Input
                                                     label={index === 0 ? "Description" : ""}
+                                                    placeholder="Description"
                                                     value={item.description}
+                                                    className="h-10 text-sm"
                                                     onChange={(e) => {
                                                         const newItems = [...lineItems];
                                                         newItems[index].description = e.target.value;
@@ -480,6 +483,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                     label={index === 0 ? "Qty" : ""}
                                                     type="number"
                                                     value={item.quantity.toString()}
+                                                    className="h-10 text-sm"
                                                     onChange={(e) => {
                                                         const newItems = [...lineItems];
                                                         newItems[index].quantity = parseInt(e.target.value) || 0;
@@ -489,9 +493,10 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                             </div>
                                             <div className="md:col-span-3">
                                                 <Input
-                                                    label={index === 0 ? "Rate ($)" : ""}
+                                                    label={index === 0 ? "Rate" : ""}
                                                     type="number"
                                                     value={item.rate.toString()}
+                                                    className="h-10 text-sm"
                                                     onChange={(e) => {
                                                         const newItems = [...lineItems];
                                                         newItems[index].rate = parseFloat(e.target.value) || 0;
@@ -499,21 +504,21 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                     }}
                                                 />
                                             </div>
-                                            <div className="md:col-span-1 pb-2 flex justify-end">
-                                                <button onClick={() => setLineItems(lineItems.filter((_, i) => i !== index))} className="text-slate-500 hover:text-red-400">
+                                            <div className="md:col-span-1 pb-1.5 flex justify-end">
+                                                <button onClick={() => setLineItems(lineItems.filter((_, i) => i !== index))} className="text-slate-500 hover:text-red-400 p-1">
                                                     <X className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         </div>
                                     ))}
-                                    <Button size="sm" variant="outline" onClick={() => setLineItems([...lineItems, { description: '', quantity: 1, rate: 0 }])}>
-                                        + Add Item
+                                    <Button size="sm" variant="ghost" onClick={() => setLineItems([...lineItems, { description: '', quantity: 1, rate: 0 }])} className="text-teal-400 hover:text-teal-300">
+                                        + Add Line Item
                                     </Button>
-                                    <div className="flex gap-4 justify-between items-end border-t border-slate-800 pt-4">
-                                        <div className="w-1/2"><Input label="Due Date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
+                                    <div className="flex gap-6 justify-between items-end border-t border-slate-800 pt-5">
+                                        <div className="w-1/2"><Input label="Due Date" type="date" value={dueDate} className="h-10 text-sm" onChange={(e) => setDueDate(e.target.value)} /></div>
                                         <div className="text-right">
-                                            <p className="text-slate-400 text-sm">Total</p>
-                                            <p className="text-xl font-bold text-white">${getTotal().toFixed(2)}</p>
+                                            <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Total</p>
+                                            <p className="text-2xl font-bold text-white tracking-tight">${getTotal().toFixed(2)}</p>
                                         </div>
                                     </div>
                                 </div>

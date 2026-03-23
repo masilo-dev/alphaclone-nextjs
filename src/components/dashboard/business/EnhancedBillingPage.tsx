@@ -20,7 +20,9 @@ import {
     User,
     Calendar,
     Search,
-    X
+    X,
+    ChevronDown,
+    FileCheck2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -54,6 +56,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         sentCount: 0,
         paidCount: 0
     });
+    const [statusMenuId, setStatusMenuId] = useState<string | null>(null);
 
     useEffect(() => {
         if (currentTenant?.id) {
@@ -61,6 +64,15 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             loadRevenueData();
         }
     }, [currentTenant?.id, dateRange]);
+
+    // Cleanup Blob URLs to prevent memory leaks
+    useEffect(() => {
+        return () => {
+            if (showPDFPreview && showPDFPreview.startsWith('blob:')) {
+                URL.revokeObjectURL(showPDFPreview);
+            }
+        };
+    }, [showPDFPreview]);
 
     const loadInvoices = async () => {
         if (!currentTenant?.id) return;
@@ -163,12 +175,16 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                 return;
             }
 
-            // We need the client object if possible
-            const client = invoice.clientId ? { name: invoice.clientId, email: '' } : undefined;
+            // Identify if it's a receipt and pass correct client info
+            const metadata = businessInvoiceService.parseMetadata(invoice.notes);
+            const client = invoice.clientId 
+                ? { name: invoice.clientId, email: '' } 
+                : (metadata?.clientName ? { name: metadata.clientName, email: metadata.clientEmail || '' } : undefined);
             
             const doc = businessInvoiceService.generatePDF(invoice, currentTenant, client);
-            const pdfDataUri = doc.output('datauristring');
-            setShowPDFPreview(pdfDataUri);
+            const pdfBlob = doc.output('blob');
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            setShowPDFPreview(pdfUrl);
         } catch (error) {
             console.error('Error generating PDF preview:', error);
             toast.error('Failed to generate PDF preview');
@@ -182,9 +198,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                 return;
             }
 
-            const client = invoice.clientId ? { name: invoice.clientId, email: '' } : undefined;
+            const metadata = businessInvoiceService.parseMetadata(invoice.notes);
+            const client = invoice.clientId 
+                ? { name: invoice.clientId, email: '' } 
+                : (metadata?.clientName ? { name: metadata.clientName, email: metadata.clientEmail || '' } : undefined);
+
             const doc = businessInvoiceService.generatePDF(invoice, currentTenant, client);
-            doc.save(`Invoice-${invoice.invoiceNumber || invoice.id}.pdf`);
+            doc.save(`${(invoice.invoiceNumber || '').startsWith('REC-') ? 'Receipt' : 'Invoice'}-${invoice.invoiceNumber || invoice.id}.pdf`);
             toast.success('PDF downloaded successfully');
         } catch (error) {
             console.error('Error downloading PDF:', error);
@@ -503,19 +523,42 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                         </thead>
                         <tbody className="divide-y divide-slate-800">
                             {filteredInvoices.map((invoice) => (
-                                <tr key={invoice.id} className="hover:bg-slate-800/30 transition-colors">
+                                <tr 
+                                    key={invoice.id} 
+                                    className="hover:bg-slate-800/30 transition-colors cursor-pointer"
+                                    onClick={() => handleViewPDF(invoice)}
+                                >
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div>
-                                            <div className="text-white font-medium">{invoice.invoiceNumber}</div>
-                                            <div className="text-slate-400 text-sm">{formatDate(invoice.createdAt)}</div>
+                                        <div className="flex items-center gap-3">
+                                            {(invoice.invoiceNumber || '').startsWith('REC-') ? (
+                                                <div className="p-2 bg-amber-500/10 rounded-lg">
+                                                    <FileCheck2 className="w-4 h-4 text-amber-400" />
+                                                </div>
+                                            ) : (
+                                                <div className="p-2 bg-blue-500/10 rounded-lg">
+                                                    <FileText className="w-4 h-4 text-blue-400" />
+                                                </div>
+                                            )}
+                                            <div>
+                                                <div className="text-white font-medium">{invoice.invoiceNumber}</div>
+                                                <div className="text-slate-400 text-xs">{formatDate(invoice.createdAt)}</div>
+                                            </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
                                             <User className="w-4 h-4 text-slate-400" />
                                             <div>
-                                                <div className="text-white">{invoice.clientId || 'Unknown Client'}</div>
-                                                <div className="text-slate-400 text-sm">{invoice.clientId || 'No client assigned'}</div>
+                                                <div className="text-white">
+                                                    {(() => {
+                                                        if (invoice.clientId) return invoice.clientId;
+                                                        const metadata = businessInvoiceService.parseMetadata(invoice.notes);
+                                                        return metadata?.clientName || 'Walk-in Client';
+                                                    })()}
+                                                </div>
+                                                <div className="text-slate-400 text-sm">
+                                                    {invoice.clientId ? 'System Client' : 'Manual Receipt'}
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -531,16 +574,67 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             <div className="text-slate-300">{formatDate(invoice.dueDate)}</div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(invoice.status)}`}>
+                                    <td className="px-6 py-4 whitespace-nowrap relative">
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setStatusMenuId(statusMenuId === invoice.id ? null : invoice.id);
+                                            }}
+                                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold transition-all hover:scale-105 active:scale-95 ${getStatusColor(invoice.status)} border border-white/10`}
+                                        >
                                             {getStatusIcon(invoice.status)}
-                                            {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                                        </span>
+                                            {invoice.status.toUpperCase()}
+                                            <ChevronDown className={`w-3 h-3 transition-transform ${statusMenuId === invoice.id ? 'rotate-180' : ''}`} />
+                                        </button>
+
+                                        <AnimatePresence>
+                                            {statusMenuId === invoice.id && (
+                                                <>
+                                                    <div 
+                                                        className="fixed inset-0 z-[110]" 
+                                                        onClick={() => setStatusMenuId(null)} 
+                                                    />
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                        className="absolute left-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-[120] overflow-hidden p-1"
+                                                    >
+                                                        {(['draft', 'sent', 'paid', 'overdue'] as const).map((s) => (
+                                                            <button
+                                                                key={s}
+                                                                onClick={async () => {
+                                                                    if (s === 'paid') handleMarkAsPaid(invoice.id);
+                                                                    else if (s === 'sent') handleMarkAsSent(invoice);
+                                                                    else if (s === 'draft') handleMarkAsDraft(invoice);
+                                                                    else {
+                                                                        await businessInvoiceService.updateInvoice(invoice.id, { status: s });
+                                                                        loadInvoices();
+                                                                    }
+                                                                    setStatusMenuId(null);
+                                                                }}
+                                                                className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors ${
+                                                                    invoice.status === s 
+                                                                        ? 'bg-teal-500/20 text-teal-400' 
+                                                                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                                                                }`}
+                                                            >
+                                                                {getStatusIcon(s)}
+                                                                {s.toUpperCase()}
+                                                            </button>
+                                                        ))}
+                                                    </motion.div>
+                                                </>
+                                            )}
+                                        </AnimatePresence>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
                                             <button
-                                                onClick={() => handleViewPDF(invoice)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleViewPDF(invoice);
+                                                }}
                                                 className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
                                                 title="View PDF"
                                             >
@@ -548,7 +642,10 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             </button>
                                             
                                             <button
-                                                onClick={() => handleDownloadPDF(invoice)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDownloadPDF(invoice);
+                                                }}
                                                 className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
                                                 title="Download PDF"
                                             >
@@ -557,7 +654,8 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             
                                             {invoice.status === 'draft' && (
                                                 <button
-                                                    onClick={() => {
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
                                                         setSelectedInvoice(invoice);
                                                         setShowCreateModal(true);
                                                     }}
@@ -570,7 +668,10 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             
                                             {invoice.status === 'draft' && (
                                                 <button
-                                                    onClick={() => handleMarkAsSent(invoice)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleMarkAsSent(invoice);
+                                                    }}
                                                     className="p-2 text-slate-400 hover:text-teal-400 hover:bg-slate-700 rounded-lg transition-colors"
                                                     title="Mark as Sent"
                                                 >
@@ -580,7 +681,10 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             
                                             {invoice.status === 'sent' && (
                                                 <button
-                                                    onClick={() => handleMarkAsDraft(invoice)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleMarkAsDraft(invoice);
+                                                    }}
                                                     className="p-2 text-slate-400 hover:text-yellow-400 hover:bg-slate-700 rounded-lg transition-colors"
                                                     title="Mark as Not Sent (Draft)"
                                                 >
@@ -590,7 +694,10 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             
                                             {invoice.status === 'sent' && (
                                                 <button
-                                                    onClick={() => handleSendReminder(invoice)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleSendReminder(invoice);
+                                                    }}
                                                     className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
                                                     title="Send Reminder"
                                                 >
@@ -600,7 +707,10 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             
                                             {invoice.status === 'sent' && (
                                                 <button
-                                                    onClick={() => handleMarkAsPaid(invoice.id)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleMarkAsPaid(invoice.id);
+                                                    }}
                                                     className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
                                                     title="Mark as Paid"
                                                 >
@@ -610,7 +720,10 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             
                                             {invoice.status === 'draft' && (
                                                 <button
-                                                    onClick={() => handleDeleteInvoice(invoice.id)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteInvoice(invoice.id);
+                                                    }}
                                                     className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
                                                     title="Delete Invoice"
                                                 >
@@ -638,12 +751,46 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
             {/* PDF Preview Modal */}
             {showPDFPreview && (
-                <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-lg w-full max-w-4xl h-full max-h-[90vh] flex flex-col">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-safe pb-safe md:pl-64">
+                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowPDFPreview(null)} />
+                    <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-3xl w-full max-w-4xl h-full max-h-[90vh] flex flex-col relative animate-fade-in overflow-hidden" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-between p-4 border-b border-slate-800">
-                            <h3 className="text-lg font-semibold text-white">Invoice Preview</h3>
+                            <div className="flex items-center gap-4">
+                                <h3 className="text-lg font-semibold text-white">Document Preview</h3>
+                                <div className="flex items-center gap-2">
+                                    <Button 
+                                        size="sm" 
+                                        variant="outline" 
+                                        className="h-8 text-xs gap-1"
+                                        onClick={() => {
+                                            const inv = invoices.find(i => showPDFPreview.includes(i.id));
+                                            if (inv) handleMarkAsPaid(inv.id);
+                                        }}
+                                    >
+                                        <CheckCircle className="w-3 h-3" />
+                                        Mark as Paid
+                                    </Button>
+                                    <Button 
+                                        size="sm" 
+                                        variant="outline" 
+                                        className="h-8 text-xs gap-1"
+                                        onClick={() => {
+                                            const inv = invoices.find(i => showPDFPreview.includes(i.id));
+                                            if (inv) handleMarkAsSent(inv);
+                                        }}
+                                    >
+                                        <Send className="w-3 h-3" />
+                                        Mark as Sent
+                                    </Button>
+                                </div>
+                            </div>
                             <button
-                                onClick={() => setShowPDFPreview(null)}
+                                onClick={() => {
+                                    if (showPDFPreview && showPDFPreview.startsWith('blob:')) {
+                                        URL.revokeObjectURL(showPDFPreview);
+                                    }
+                                    setShowPDFPreview(null);
+                                }}
                                 className="text-slate-400 hover:text-white transition-colors"
                             >
                                 <X className="w-6 h-6" />

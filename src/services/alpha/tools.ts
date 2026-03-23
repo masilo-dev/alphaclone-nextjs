@@ -1,7 +1,9 @@
 import { aiService } from '../ai/aiService';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
-import { zohoServerService } from '@/services/server/zohoServerService';
 import { hubspotService } from '@/services/hubspotService';
+import { ZohoMailService } from '@/services/zoho/ZohoMailService';
+import { gmailService } from '@/services/gmailService';
+import { contractService } from '@/services/contractService';
 
 export interface AlphaTool {
     name: string;
@@ -54,7 +56,7 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
                     
                     if (error) throw error;
 
-                    // REAL-TIME SYNC: Push to External CRM (Zoho/HubSpot)
+                    // REAL-TIME SYNC: Push to External CRM (HubSpot)
                     try {
                         const { data: integrations } = await supabase
                             .from('integrations')
@@ -90,32 +92,50 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
 
     outreach_executive: {
         name: 'outreach_executive',
-        description: 'Instant execution of outreach campaigns via Resend/Zoho/HubSpot.',
+        description: 'Instant execution of outreach campaigns via Resend/HubSpot.',
         parameters: {
             type: 'object',
             properties: {
                 to: { type: 'string' },
                 subject: { type: 'string' },
                 body: { type: 'string' },
-                provider: { type: 'string', enum: ['resend', 'zoho', 'hubspot'] }
-            }
+                provider: { type: 'string', enum: ['resend', 'hubspot', 'zoho', 'gmail'] }
+            },
+            required: ['to', 'subject', 'body']
         },
         execute: async ({ to, subject, body, provider, userId, tenantId }) => {
             if (!userId) return { status: 'failed', error: 'User ID required for outreach' };
 
-            // REAL IMPLEMENTATION: Send via Zoho
+            // REAL IMPLEMENTATION: Send via Outreach Provider
             try {
-                if (provider === 'zoho' || !provider) {
-                    const result = await zohoServerService.sendMessage(userId, {
+                if (provider === 'zoho') {
+                    const zoho = new ZohoMailService(userId);
+                    const res = await zoho.sendEmail({
+                        fromAddress: '', // Let Zoho use default account
                         toAddress: to,
                         subject: subject,
                         content: body
                     });
-                    return { status: 'sent', provider: 'zoho', result };
+                    return { status: 'sent', provider: 'zoho', messageId: res.data?.messageId };
+                }
+
+                if (provider === 'gmail') {
+                    const res = await gmailService.sendMessage(userId, to, subject, body);
+                    return { status: 'sent', provider: 'gmail', threadId: res.threadId };
+                }
+
+                if (provider === 'hubspot') {
+                    const res = await hubspotService.syncLeadToHubSpot(userId, {
+                        firstname: 'AI Outreach',
+                        lastname: subject,
+                        company: 'AI Outreach',
+                        email: to
+                    });
+                    return { status: 'synced_to_crm', provider: 'hubspot', res };
                 }
                 
-                // Fallback for other providers (simulated for now)
-                return { status: 'simulated', provider, timestamp: new Date().toISOString() };
+                // Fallback (simulated)
+                return { status: 'simulated', provider: provider || 'resend', timestamp: new Date().toISOString() };
             } catch (error: any) {
                 console.error('Outreach failed:', error);
                 return { status: 'failed', error: error.message };
@@ -210,10 +230,30 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
             });
 
             if (tenantId) {
-                // Save to DB (mocking 'contracts' table insertion)
-                // const supabase = createSupabaseAdminClient();
-                // await supabase.from('contracts').insert({...});
-                return { status: 'drafted', content_preview: res.content.substring(0, 100) + '...', note: 'Saved to Contracts' };
+                try {
+                    const { text, error } = await contractService.generateDraft(contract_type, client_name, key_terms);
+                    if (error) throw new Error(error.message);
+
+                    const { contract, error: saveError } = await contractService.createContract({
+                        title: `${contract_type}: ${client_name}`,
+                        content: text || '',
+                        status: 'draft',
+                        type: contract_type,
+                        client_id: userId // Assuming link for now, in reality might search for client
+                    });
+
+                    if (saveError) throw saveError;
+
+                    return { 
+                        status: 'drafted', 
+                        contract_id: contract.id, 
+                        preview: text?.substring(0, 200) + '...',
+                        note: 'Contract saved to database' 
+                    };
+                } catch (err: any) {
+                    console.error('Contract drafting failed:', err);
+                    return { status: 'failed', error: err.message };
+                }
             }
             return { status: 'simulated_draft', content: res.content };
         }
@@ -261,6 +301,42 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
         },
         execute: async (args) => {
             return { status: 'pinged', ...args };
+        }
+    },
+
+    lead_to_deal: {
+        name: 'lead_to_deal',
+        description: 'Convert a qualified lead into a CRM deal with value estimation.',
+        parameters: {
+            type: 'object',
+            properties: {
+                lead_id: { type: 'string' },
+                deal_name: { type: 'string' },
+                estimated_value: { type: 'number' }
+            },
+            required: ['lead_id', 'deal_name']
+        },
+        execute: async ({ lead_id, deal_name, estimated_value, tenantId, userId }) => {
+            if (!tenantId) return { status: 'failed', error: 'Tenant ID missing' };
+
+            try {
+                const supabase = createSupabaseAdminClient();
+                const { data, error } = await supabase.from('deals').insert({
+                    tenant_id: tenantId,
+                    name: deal_name,
+                    value: estimated_value || 0,
+                    stage: 'qualified',
+                    owner_id: userId,
+                    source: 'ai_agent'
+                    // In a real system, we might update the lead record simultaneously
+                }).select().single();
+
+                if (error) throw error;
+                return { status: 'success', deal_id: data.id, note: 'Lead converted to deal' };
+            } catch (err: any) {
+                console.error('Lead conversion failed:', err);
+                return { status: 'failed', error: err.message };
+            }
         }
     }
 };

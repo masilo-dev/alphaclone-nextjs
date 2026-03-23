@@ -1,7 +1,7 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { zohoServerService } from '@/services/server/zohoServerService';
+
 import { hubspotService } from '@/services/hubspotService';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
 
@@ -73,11 +73,6 @@ export async function POST(req: Request) {
             }
         }
 
-        // Sync from Zoho (TODO: Implement getLeads in zohoServerService)
-        const zoho = integrations.find((i: any) => i.type === 'zoho');
-        if (zoho) {
-            results.push({ provider: 'zoho', status: 'skipped', note: 'Pull not implemented for Zoho yet' });
-        }
 
         return NextResponse.json({ success: true, results, syncedCount });
     } catch (err: any) {

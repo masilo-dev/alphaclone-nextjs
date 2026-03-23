@@ -34,7 +34,7 @@ import { useTenant } from '../../../contexts/TenantContext';
 import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 import CalendlySettings from './CalendlySettings';
-import ZohoSettings from './ZohoSettings';
+
 import { fileUploadService } from '../../../services/fileUploadService';
 import GmailIntegration from './GmailIntegration';
 import HubspotIntegration from './HubspotIntegration';
@@ -192,14 +192,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
             setActiveTab('booking');
         }
 
-        const zoho = searchParams.get('zoho');
-        if (zoho === 'connected') {
-            toast.success('Zoho Mail connected successfully!');
-            setActiveTab('integrations');
-        } else if (zoho === 'error') {
-            const reason = searchParams.get('reason') || 'unknown';
-            toast.error(`Zoho connection failed: ${reason}`);
-        }
+
     }, [searchParams]);
 
     useEffect(() => {
@@ -913,7 +906,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                         <div className="space-y-4">
                             <GmailIntegration user={user} />
 
-                            <ZohoSettings user={user} />
+
 
                             <HubspotIntegration />
                         </div>

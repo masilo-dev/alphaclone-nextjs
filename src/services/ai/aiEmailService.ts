@@ -1,6 +1,6 @@
 import { aiService } from './aiService';
 import { gmailService } from '../gmailService';
-import { zohoService } from '../zohoService';
+
 
 export interface EmailMessage {
     id: string;
@@ -8,7 +8,7 @@ export interface EmailMessage {
     from: string;
     subject: string;
     body: string;
-    provider: 'gmail' | 'zoho';
+    provider: 'gmail';
     date: string;
 }
 
@@ -23,7 +23,7 @@ export const aiEmailService = {
         // 1. Filter out known automated senders
         const automatedSenders = [
             'no-reply', 'noreply', 'notifications', 'alert', 'system',
-            'support@github.com', 'google.com', 'microsoft.com', 'zoho.com',
+            'support@github.com', 'google.com', 'microsoft.com',
             'linkedin.com', 'twitter.com', 'facebook.com', 'newsletter'
         ];
 
@@ -88,10 +88,7 @@ Return the response in JSON format with "subject" and "body" keys.`;
         }
     },
 
-    /**
-     * Process inbox for a user and provider
-     */
-    async processInbox(userId: string, provider: 'gmail' | 'zoho'): Promise<{ processed: number; responded: number; error: string | null }> {
+    async processInbox(userId: string, provider: 'gmail'): Promise<{ processed: number; responded: number; error: string | null }> {
         let processed = 0;
         let responded = 0;
 
@@ -101,9 +98,6 @@ Return the response in JSON format with "subject" and "body" keys.`;
             if (provider === 'gmail') {
                 const { threads } = await gmailService.listThreads(userId, 10);
                 messages = threads.map(t => ({ ...t, provider: 'gmail' }));
-            } else {
-                const { messages: zohoMsgs } = await zohoService.listMessages(userId);
-                messages = zohoMsgs.map(m => ({ ...m, provider: 'zoho' }));
             }
 
             for (const msg of messages) {
@@ -123,12 +117,6 @@ Return the response in JSON format with "subject" and "body" keys.`;
                     // Send the response
                     if (provider === 'gmail') {
                         await gmailService.sendMessage(userId, emailMsg.from, response.subject, response.body, emailMsg.threadId);
-                    } else {
-                        await zohoService.sendMessage({ 
-                            to: emailMsg.from, 
-                            subject: response.subject, 
-                            content: response.body 
-                        });
                     }
                     responded++;
                 }
@@ -136,6 +124,7 @@ Return the response in JSON format with "subject" and "body" keys.`;
 
             return { processed, responded, error: null };
         } catch (err: any) {
+            console.error('Inbox Processing Error:', err);
             return { processed, responded, error: err.message };
         }
     }

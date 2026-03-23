@@ -13,6 +13,8 @@ import { EmptyState } from '../ui/EmptyState';
 import toast from 'react-hot-toast';
 import { useCurrency } from '../../hooks/useCurrency';
 import { exportToCSV } from '../../utils/exportUtils';
+import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '../../services/universalServiceCatalog';
+import { Sparkles, ChevronDown } from 'lucide-react';
 
 interface QuotesTabProps {
     userId: string;
@@ -65,6 +67,24 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
     const [lineItems, setLineItems] = useState<Partial<QuoteItem>[]>([
         { productName: '', description: '', quantity: 1, unitPrice: 0 }
     ]);
+
+    const [showServiceDropdown, setShowServiceDropdown] = useState<{ index: number; open: boolean }>({ index: -1, open: false });
+    const [showContactDropdown, setShowContactDropdown] = useState(false);
+    const [contactSearch, setContactSearch] = useState('');
+    const serviceDropdownRef = useRef<HTMLDivElement>(null);
+    const contactDropdownRef = useRef<HTMLDivElement>(null);
+
+    const handleServiceSelect = (index: number, service: ServiceItem) => {
+        const newItems = [...lineItems];
+        newItems[index] = {
+            ...newItems[index],
+            productName: service.name,
+            unitPrice: service.defaultPrice,
+            description: service.description || service.name
+        };
+        setLineItems(newItems);
+        setShowServiceDropdown({ index: -1, open: false });
+    };
 
     useEffect(() => {
         loadQuotes();
@@ -360,6 +380,16 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
             contactId: quote.contactId || '',
             dealId: quote.dealId || ''
         });
+        
+        // Find contact name to pre-fill search input
+        if (quote.contactId) {
+            const contact = availableContacts.find(c => c.id === quote.contactId);
+            if (contact) {
+                setContactSearch(contact.businessName || contact.name || '');
+            }
+        } else {
+            setContactSearch('');
+        }
 
         // Fetch items for editing
         try {
@@ -797,16 +827,74 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <label className="block text-sm font-medium text-slate-300">Link to Lead/Contact (Optional)</label>
-                            <select
-                                value={quoteForm.contactId}
-                                onChange={(e) => setQuoteForm({ ...quoteForm, contactId: e.target.value })}
-                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
-                            >
-                                <option value="">No Contact Linked</option>
-                                {availableContacts.map(contact => (
-                                    <option key={contact.id} value={contact.id}>{contact.businessName || contact.name || 'Unnamed Contact'}</option>
-                                ))}
-                            </select>
+                            <div className="relative" ref={contactDropdownRef}>
+                                <div className="flex gap-1">
+                                    <div className="relative flex-1">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                                        <input
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:border-teal-500/50 outline-none transition-all"
+                                            placeholder="Search and select contact/lead *"
+                                            value={contactSearch || (availableContacts.find(c => c.id === quoteForm.contactId)?.name || availableContacts.find(c => c.id === quoteForm.contactId)?.businessName || '')}
+                                            onFocus={() => setShowContactDropdown(true)}
+                                            onChange={(e) => {
+                                                setContactSearch(e.target.value);
+                                                setShowContactDropdown(true);
+                                            }}
+                                        />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="px-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-teal-400 transition-colors"
+                                        onClick={() => setShowContactDropdown(!showContactDropdown)}
+                                    >
+                                        <ChevronDown className={`w-4 h-4 transition-transform ${showContactDropdown ? 'rotate-180' : ''}`} />
+                                    </button>
+                                </div>
+
+                                {showContactDropdown && (
+                                    <div className="absolute z-[110] left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto anime-in slide-in-from-top-2">
+                                        <div className="p-1 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-white/5 bg-slate-950/50">
+                                            Contacts & Leads
+                                        </div>
+                                        {availableContacts
+                                            .filter(c => 
+                                                !contactSearch || 
+                                                (c.name && c.name.toLowerCase().includes(contactSearch.toLowerCase())) || 
+                                                (c.businessName && c.businessName.toLowerCase().includes(contactSearch.toLowerCase())) ||
+                                                (c.email && c.email.toLowerCase().includes(contactSearch.toLowerCase()))
+                                            )
+                                            .map((contact) => (
+                                                <button
+                                                    key={contact.id}
+                                                    className="w-full text-left px-4 py-2.5 hover:bg-teal-500/10 text-sm text-slate-300 hover:text-teal-400 border-b border-white/5 last:border-0 transition-colors flex items-center justify-between group"
+                                                    onClick={() => {
+                                                        setQuoteForm({ ...quoteForm, contactId: contact.id });
+                                                        setContactSearch(contact.businessName || contact.name);
+                                                        setShowContactDropdown(false);
+                                                    }}
+                                                    type="button"
+                                                >
+                                                    <div className="flex flex-col">
+                                                        <span className="font-medium text-slate-200 group-hover:text-teal-400">{contact.businessName || contact.name || 'Unnamed'}</span>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[10px] text-slate-500 uppercase font-bold px-1.5 py-0.5 bg-slate-800 rounded">{contact.type}</span>
+                                                            <span className="text-[10px] text-slate-500 truncate max-w-[150px]">{contact.email}</span>
+                                                        </div>
+                                                    </div>
+                                                    {quoteForm.contactId === contact.id && <div className="w-2 h-2 rounded-full bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]" />}
+                                                </button>
+                                            ))}
+                                        {availableContacts.filter(c => 
+                                            !contactSearch || 
+                                            (c.name && c.name.toLowerCase().includes(contactSearch.toLowerCase())) || 
+                                            (c.businessName && c.businessName.toLowerCase().includes(contactSearch.toLowerCase())) ||
+                                            (c.email && c.email.toLowerCase().includes(contactSearch.toLowerCase()))
+                                        ).length === 0 && (
+                                            <div className="px-4 py-3 text-sm text-slate-500 italic">No contacts found...</div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <div className="space-y-1.5">
                             <label className="block text-sm font-medium text-slate-300">Link to Deal (Optional)</label>
@@ -826,22 +914,73 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                     {/* Line Items Editor */}
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-bold text-teal-400 uppercase tracking-wider">Services & Pricing</h4>
-                            <Button variant="outline" className="h-8 py-0 text-xs border-teal-500/30 text-teal-400" onClick={addLineItem}>
-                                <Plus className="w-3.5 h-3.5 mr-1" /> Add Item
-                            </Button>
+                            <h4 className="text-sm font-bold text-teal-400 uppercase tracking-wider flex items-center gap-2">
+                                <Sparkles className="w-4 h-4" /> Services & Pricing
+                            </h4>
+                            <div className="flex gap-2">
+                                <Button variant="outline" className="h-8 py-0 text-xs border-teal-500/30 text-teal-400" onClick={addLineItem}>
+                                    <Plus className="w-3.5 h-3.5 mr-1" /> Add Item
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Quick Select Services */}
+                        <div className="flex flex-wrap gap-2 py-2">
+                            {UNIVERSAL_SERVICE_CATALOG.flatMap(cat => cat.services).slice(0, 5).map((service) => (
+                                <button
+                                    key={service.id}
+                                    onClick={() => {
+                                        const emptyIndex = lineItems.findIndex(item => !item.productName);
+                                        const targetIndex = emptyIndex !== -1 ? emptyIndex : lineItems.length;
+                                        if (targetIndex === lineItems.length) {
+                                            const newItems = [...lineItems, { productName: service.name, unitPrice: service.defaultPrice, quantity: 1, description: service.description }];
+                                            setLineItems(newItems);
+                                        } else {
+                                            handleServiceSelect(targetIndex, service);
+                                        }
+                                    }}
+                                    className="px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs text-slate-300 hover:bg-teal-500/20 hover:border-teal-500/50 hover:text-teal-400 transition-all flex items-center gap-1.5"
+                                >
+                                    <Plus className="w-3 h-3" /> {service.name}
+                                </button>
+                            ))}
                         </div>
 
                         <div className="space-y-3 border border-white/5 rounded-xl p-4 bg-slate-950/30">
                             {lineItems.map((item: Partial<QuoteItem>, index: number) => (
                                 <div key={index} className="grid grid-cols-12 gap-3 items-start pb-3 border-b border-white/5 last:border-0 last:pb-0">
-                                    <div className="col-span-12 md:col-span-5">
-                                        <input
-                                            className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-teal-500/50 outline-none transition-all"
-                                            placeholder="Service name *"
-                                            value={item.productName}
-                                            onChange={(e) => updateLineItem(index, 'productName', e.target.value)}
-                                        />
+                                    <div className="col-span-12 md:col-span-5 relative">
+                                        <div className="flex gap-1">
+                                            <input
+                                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-teal-500/50 outline-none transition-all"
+                                                placeholder="Service name *"
+                                                value={item.productName}
+                                                onChange={(e) => updateLineItem(index, 'productName', e.target.value)}
+                                            />
+                                            <button
+                                                className="px-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-teal-400 transition-colors"
+                                                onClick={() => setShowServiceDropdown({ index, open: !showServiceDropdown.open || showServiceDropdown.index !== index })}
+                                                type="button"
+                                            >
+                                                <ChevronDown className={`w-4 h-4 transition-transform ${showServiceDropdown.index === index && showServiceDropdown.open ? 'rotate-180' : ''}`} />
+                                            </button>
+                                        </div>
+
+                                        {showServiceDropdown.index === index && showServiceDropdown.open && (
+                                            <div className="absolute z-[100] left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto anime-in slide-in-from-top-2">
+                                                {UNIVERSAL_SERVICE_CATALOG.flatMap(cat => cat.services).map((service) => (
+                                                    <button
+                                                        key={service.id}
+                                                        className="w-full text-left px-4 py-2.5 hover:bg-teal-500/10 text-sm text-slate-300 hover:text-teal-400 border-b border-white/5 last:border-0 transition-colors flex items-center justify-between group"
+                                                        onClick={() => handleServiceSelect(index, service)}
+                                                        type="button"
+                                                    >
+                                                        <span>{service.name}</span>
+                                                        <span className="text-teal-500/50 text-xs group-hover:text-teal-500">${service.defaultPrice}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="col-span-4 md:col-span-2">
                                         <input
@@ -947,16 +1086,74 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <label className="block text-sm font-medium text-slate-300">Link to Lead/Contact</label>
-                            <select
-                                value={editForm.contactId}
-                                onChange={(e) => setEditForm({ ...editForm, contactId: e.target.value })}
-                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
-                            >
-                                <option value="">No Contact Linked</option>
-                                {availableContacts.map(contact => (
-                                    <option key={contact.id} value={contact.id}>{contact.businessName || contact.name || 'Unnamed Contact'}</option>
-                                ))}
-                            </select>
+                            <div className="relative" ref={contactDropdownRef}>
+                                <div className="flex gap-1">
+                                    <div className="relative flex-1">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                                        <input
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:border-teal-500/50 outline-none transition-all"
+                                            placeholder="Search and select contact/lead *"
+                                            value={contactSearch || (availableContacts.find(c => c.id === editForm.contactId)?.name || availableContacts.find(c => c.id === editForm.contactId)?.businessName || '')}
+                                            onFocus={() => setShowContactDropdown(true)}
+                                            onChange={(e) => {
+                                                setContactSearch(e.target.value);
+                                                setShowContactDropdown(true);
+                                            }}
+                                        />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="px-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-teal-400 transition-colors"
+                                        onClick={() => setShowContactDropdown(!showContactDropdown)}
+                                    >
+                                        <ChevronDown className={`w-4 h-4 transition-transform ${showContactDropdown ? 'rotate-180' : ''}`} />
+                                    </button>
+                                </div>
+
+                                {showContactDropdown && (
+                                    <div className="absolute z-[110] left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto anime-in slide-in-from-top-2">
+                                        <div className="p-1 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-white/5 bg-slate-950/50">
+                                            Contacts & Leads
+                                        </div>
+                                        {availableContacts
+                                            .filter(c => 
+                                                !contactSearch || 
+                                                (c.name && c.name.toLowerCase().includes(contactSearch.toLowerCase())) || 
+                                                (c.businessName && c.businessName.toLowerCase().includes(contactSearch.toLowerCase())) ||
+                                                (c.email && c.email.toLowerCase().includes(contactSearch.toLowerCase()))
+                                            )
+                                            .map((contact) => (
+                                                <button
+                                                    key={contact.id}
+                                                    className="w-full text-left px-4 py-2.5 hover:bg-teal-500/10 text-sm text-slate-300 hover:text-teal-400 border-b border-white/5 last:border-0 transition-colors flex items-center justify-between group"
+                                                    onClick={() => {
+                                                        setEditForm({ ...editForm, contactId: contact.id });
+                                                        setContactSearch(contact.businessName || contact.name);
+                                                        setShowContactDropdown(false);
+                                                    }}
+                                                    type="button"
+                                                >
+                                                    <div className="flex flex-col">
+                                                        <span className="font-medium text-slate-200 group-hover:text-teal-400">{contact.businessName || contact.name || 'Unnamed'}</span>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[10px] text-slate-500 uppercase font-bold px-1.5 py-0.5 bg-slate-800 rounded">{contact.type}</span>
+                                                            <span className="text-[10px] text-slate-500 truncate max-w-[150px]">{contact.email}</span>
+                                                        </div>
+                                                    </div>
+                                                    {editForm.contactId === contact.id && <div className="w-2 h-2 rounded-full bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]" />}
+                                                </button>
+                                            ))}
+                                        {availableContacts.filter(c => 
+                                            !contactSearch || 
+                                            (c.name && c.name.toLowerCase().includes(contactSearch.toLowerCase())) || 
+                                            (c.businessName && c.businessName.toLowerCase().includes(contactSearch.toLowerCase())) ||
+                                            (c.email && c.email.toLowerCase().includes(contactSearch.toLowerCase()))
+                                        ).length === 0 && (
+                                            <div className="px-4 py-3 text-sm text-slate-500 italic">No contacts found...</div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <div className="space-y-1.5">
                             <label className="block text-sm font-medium text-slate-300">Link to Deal</label>
@@ -975,22 +1172,72 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                     {/* Line Items Editor */}
                     <div className="space-y-3 pt-4 border-t border-white/5">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-bold text-teal-400 uppercase tracking-wider">Services & Pricing</h4>
+                            <h4 className="text-sm font-bold text-teal-400 uppercase tracking-wider flex items-center gap-2">
+                                <Sparkles className="w-4 h-4" /> Services & Pricing
+                            </h4>
                             <Button type="button" variant="outline" className="h-8 py-0 text-xs border-teal-500/30 text-teal-400" onClick={addLineItem}>
                                 <Plus className="w-3.5 h-3.5 mr-1" /> Add Item
                             </Button>
                         </div>
 
+                        {/* Quick Select Services */}
+                        <div className="flex flex-wrap gap-2 py-2">
+                            {UNIVERSAL_SERVICE_CATALOG.flatMap(cat => cat.services).slice(0, 5).map((service) => (
+                                <button
+                                    key={service.id}
+                                    type="button"
+                                    onClick={() => {
+                                        const emptyIndex = lineItems.findIndex(item => !item.productName);
+                                        const targetIndex = emptyIndex !== -1 ? emptyIndex : lineItems.length;
+                                        if (targetIndex === lineItems.length) {
+                                            const newItems = [...lineItems, { productName: service.name, unitPrice: service.defaultPrice, quantity: 1, description: service.description }];
+                                            setLineItems(newItems);
+                                        } else {
+                                            handleServiceSelect(targetIndex, service);
+                                        }
+                                    }}
+                                    className="px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs text-slate-300 hover:bg-teal-500/20 hover:border-teal-500/50 hover:text-teal-400 transition-all flex items-center gap-1.5"
+                                >
+                                    <Plus className="w-3 h-3" /> {service.name}
+                                </button>
+                            ))}
+                        </div>
+
                         <div className="space-y-3 border border-white/5 rounded-xl p-4 bg-slate-950/30 max-h-[300px] overflow-y-auto">
                             {lineItems.map((item: any, index: number) => (
                                 <div key={index} className="grid grid-cols-12 gap-3 items-start pb-3 border-b border-white/5 last:border-0 last:pb-0">
-                                    <div className="col-span-12 md:col-span-5">
-                                        <input
-                                            className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-teal-500/50 outline-none transition-all"
-                                            placeholder="Service name *"
-                                            value={item.productName}
-                                            onChange={(e) => updateLineItem(index, 'productName', e.target.value)}
-                                        />
+                                    <div className="col-span-12 md:col-span-5 relative">
+                                        <div className="flex gap-1">
+                                            <input
+                                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-teal-500/50 outline-none transition-all"
+                                                placeholder="Service name *"
+                                                value={item.productName}
+                                                onChange={(e) => updateLineItem(index, 'productName', e.target.value)}
+                                            />
+                                            <button
+                                                className="px-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-teal-400 transition-colors"
+                                                onClick={() => setShowServiceDropdown({ index, open: !showServiceDropdown.open || showServiceDropdown.index !== index })}
+                                                type="button"
+                                            >
+                                                <ChevronDown className={`w-4 h-4 transition-transform ${showServiceDropdown.index === index && showServiceDropdown.open ? 'rotate-180' : ''}`} />
+                                            </button>
+                                        </div>
+
+                                        {showServiceDropdown.index === index && showServiceDropdown.open && (
+                                            <div className="absolute z-[100] left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto anime-in slide-in-from-top-2">
+                                                {UNIVERSAL_SERVICE_CATALOG.flatMap(cat => cat.services).map((service) => (
+                                                    <button
+                                                        key={service.id}
+                                                        className="w-full text-left px-4 py-2.5 hover:bg-teal-500/10 text-sm text-slate-300 hover:text-teal-400 border-b border-white/5 last:border-0 transition-colors flex items-center justify-between group"
+                                                        onClick={() => handleServiceSelect(index, service)}
+                                                        type="button"
+                                                    >
+                                                        <span>{service.name}</span>
+                                                        <span className="text-teal-500/50 text-xs group-hover:text-teal-500">${service.defaultPrice}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="col-span-4 md:col-span-2">
                                         <input

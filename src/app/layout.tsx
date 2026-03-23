@@ -7,7 +7,7 @@ import ShellSwitcher from "@/components/shells/ShellSwitcher";
 import { Analytics } from "@vercel/analytics/next";
 import CookieConsent from "@/components/common/CookieConsent";
 import NativeInteractions from "@/components/common/NativeInteractions";
-import GlobalAlpha from "@/components/alpha/GlobalAlpha";
+// import GlobalAlpha from "@/components/alpha/GlobalAlpha";
 import { WebVitals } from "@/components/common/WebVitals";
 import PrismBackground from "@/components/common/PrismBackground";
 
@@ -177,7 +177,7 @@ export default function RootLayout({
             <ShellSwitcher>
               {children}
             </ShellSwitcher>
-            <GlobalAlpha />
+            {/* <GlobalAlpha /> */}
           </PWAProvider>
           <CookieConsent />
         </Providers>

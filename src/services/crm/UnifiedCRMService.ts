@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 
 export const UnifiedCRMService = {
     /**
-     * Pushes a deal to all active external CRMs (Zoho, HubSpot)
+     * Pushes a deal to all active external CRMs
      */
     async syncDeal(deal: any) {
         try {
@@ -18,7 +18,7 @@ export const UnifiedCRMService = {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session.access_token}`
                 },
-                body: JSON.stringify({ deal })
+                body: JSON.stringify({ deal, entityType: 'deal' })
             });
 
             if (!response.ok) {
@@ -28,6 +28,36 @@ export const UnifiedCRMService = {
             }
         } catch (error) {
             console.error('CRM Sync Error:', error);
+        }
+    },
+
+    /**
+     * Pushes a lead to all active external CRMs
+     */
+    async syncLead(lead: any) {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                console.warn('No active session for CRM lead sync');
+                return;
+            }
+
+            const response = await fetch('/api/crm/sync/push', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ lead, entityType: 'lead' })
+            });
+
+            if (!response.ok) {
+                console.error('Failed to sync lead to external CRM:', await response.text());
+            } else {
+                console.log('Lead synced successfully to external CRM');
+            }
+        } catch (error) {
+            console.error('CRM Lead Sync Error:', error);
         }
     },
 

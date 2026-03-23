@@ -47,7 +47,7 @@ const Sidebar = React.memo<SidebarProps>(({
     };
 
     const handleSubNavigation = (href: string) => {
-        setActiveTab(href);
+        router.push(href);
         if (onNavigate) onNavigate();
 
         // Auto-close sidebar on mobile after navigation
@@ -105,20 +105,6 @@ const Sidebar = React.memo<SidebarProps>(({
                                         return;
                                     } else {
                                         handleNavigation(item.href);
-                                    }
-                                }}
-                                onMouseEnter={() => {
-                                    // Proactively pre-fetch components for hover
-                                    if (!item.comingSoon && item.href !== '#' && item.href.startsWith('/dashboard/')) {
-                                        const tabName = item.href.split('/').pop();
-                                        // Dynamically trigger the import that React.lazy uses in Dashboard.tsx
-                                        // This fills the browser cache before the click
-                                        if (tabName === 'tasks') import('./TasksTab');
-                                        if (tabName === 'deals') import('./DealsTab');
-                                        if (tabName === 'crm') import('./CRMTab');
-                                        if (tabName === 'messages') import('./MessagesTab');
-                                        if (tabName === 'finance') import('./FinanceTab');
-                                        if (tabName === 'calendar') import('./CalendarComponent');
                                     }
                                 }}
                                 title={!sidebarOpen ? item.label : undefined}

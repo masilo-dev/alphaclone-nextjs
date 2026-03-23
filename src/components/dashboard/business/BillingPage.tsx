@@ -21,6 +21,7 @@ import { DocumentViewer } from '../../contracts/DocumentViewer';
 import jsPDF from 'jspdf';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import toast from 'react-hot-toast';
+import CreateInvoiceModal from '../EnhancedCreateInvoiceModal';
 
 interface BillingPageProps {
     user: User;
@@ -60,21 +61,10 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
         }
     }, [currentTenant, loadData]);
 
-    const handleCreateInvoice = useCallback(async (invoiceData: Partial<BusinessInvoice>) => {
-        if (!currentTenant) return;
-
-        const { invoice, error } = await businessInvoiceService.createInvoice(currentTenant.id, invoiceData);
-        if (error) {
-            toast.error(`Failed to create invoice: ${error}`);
-            return;
-        }
-
-        if (invoice) {
-            setInvoices(prev => [invoice, ...prev]);
-            setShowCreateModal(false);
-            toast.success('Invoice created successfully');
-        }
-    }, [currentTenant]);
+    const handleInvoiceCreated = useCallback(() => {
+        loadData();
+        setShowCreateModal(false);
+    }, [loadData]);
 
     const handleDownloadPDF = useCallback((invoice: BusinessInvoice) => {
         const client = clients.find(c => c.id === invoice.clientId) || {};
@@ -306,11 +296,9 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
             {showCreateModal && (
                 <CreateInvoiceModal
                     isOpen={showCreateModal}
-                    clients={clients}
                     projects={projects}
-                    contracts={contracts}
                     onClose={() => setShowCreateModal(false)}
-                    onInvoiceCreated={handleCreateInvoice}
+                    onInvoiceCreated={handleInvoiceCreated}
                 />
             )}
         </div>
@@ -415,250 +403,6 @@ const InvoiceCard = ({ invoice, clients, onDownload, onView, onDelete, onStatusU
                 </div>
             </div>
         </div>
-    );
-};
-
-const CreateInvoiceModal = ({ clients, projects, contracts, isOpen, onClose, onInvoiceCreated }: any) => {
-    const { currentTenant } = useTenant();
-    const props = { contracts }; // Capture for logic usage
-    const [formData, setFormData] = useState({
-        clientId: '',
-        projectId: '',
-        issueDate: '',
-        dueDate: '', // Will be set in useEffect
-        senderName: currentTenant?.name || '',
-        lineItems: [{ description: '', quantity: 1, rate: 0, amount: 0 }],
-        taxRate: 0,
-        discountAmount: 0,
-        notes: '',
-        isPublic: true
-    });
-
-    useEffect(() => {
-        if (isOpen) {
-            const today = new Date();
-            const future = new Date();
-            future.setDate(today.getDate() + 14);
-
-            setFormData(prev => ({
-                ...prev,
-                issueDate: today.toISOString().split('T')[0],
-                dueDate: future.toISOString().split('T')[0],
-                senderName: currentTenant?.name || prev.senderName
-            }));
-        }
-    }, [isOpen, currentTenant]);
-
-    const addLineItem = () => {
-        setFormData({
-            ...formData,
-            lineItems: [...formData.lineItems, { description: '', quantity: 1, rate: 0, amount: 0 }]
-        });
-    };
-
-    const updateLineItem = (index: number, field: string, value: any) => {
-        const newItems = [...formData.lineItems];
-        newItems[index] = { ...newItems[index], [field]: value };
-
-        if (field === 'quantity' || field === 'rate') {
-            newItems[index].amount = Math.round(newItems[index].quantity * newItems[index].rate * 100) / 100;
-        }
-
-        setFormData({ ...formData, lineItems: newItems });
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        // Contract enforcement removed per user request
-        const totals = businessInvoiceService.calculateTotals(
-            formData.lineItems,
-            formData.taxRate,
-            formData.discountAmount
-        );
-
-        onInvoiceCreated({
-            ...formData,
-            ...totals,
-            status: 'draft'
-        });
-    };
-
-    return (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div className="bg-slate-900 border border-white/10 rounded-3xl p-4 md:p-6 max-w-2xl w-full my-auto max-h-[calc(100vh-2rem)] overflow-y-auto shadow-2xl">
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold">Create Invoice</h3>
-                    <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded">
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium mb-1 text-slate-400">Organization Name (Sender)</label>
-                        <input
-                            type="text"
-                            value={formData.senderName}
-                            onChange={(e) => setFormData({ ...formData, senderName: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                            placeholder="Your Business Name"
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Client *</label>
-                            <select
-                                required
-                                value={formData.clientId}
-                                onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                            >
-                                <option value="">Select client</option>
-                                {clients.map((client: any) => (
-                                    <option key={client.id} value={client.id}>{client.name}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Due Date *</label>
-                            <input
-                                type="date"
-                                required
-                                value={formData.dueDate}
-                                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                            />
-                        </div>
-                    </div>
-
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Project (Optional)</label>
-                        <select
-                            value={formData.projectId}
-                            onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        >
-                            <option value="">Select project</option>
-                            {projects.map((project: any) => (
-                                <option key={project.id} value={project.id}>{project.name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
-                        <div className="flex items-center justify-between mb-2">
-                            <label className="block text-sm font-medium">Line Items</label>
-                            <button
-                                type="button"
-                                onClick={addLineItem}
-                                className="text-sm text-teal-400 hover:text-teal-300"
-                            >
-                                + Add Item
-                            </button>
-                        </div>
-
-                        {formData.lineItems.map((item, index) => (
-                            <div key={index} className="grid grid-cols-12 gap-2 mb-2">
-                                <input
-                                    type="text"
-                                    placeholder="Description"
-                                    value={item.description}
-                                    onChange={(e) => updateLineItem(index, 'description', e.target.value)}
-                                    className="col-span-6 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500 text-sm"
-                                />
-                                <input
-                                    type="number"
-                                    placeholder="Qty"
-                                    value={item.quantity}
-                                    onChange={(e) => updateLineItem(index, 'quantity', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                    className="col-span-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500 text-sm"
-                                />
-                                <input
-                                    type="number"
-                                    placeholder="Rate"
-                                    value={item.rate}
-                                    onChange={(e) => updateLineItem(index, 'rate', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                                    className="col-span-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500 text-sm"
-                                />
-                                <div className="col-span-2 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm flex items-center">
-                                    ${item.amount.toFixed(2)}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Discount Amount ($)</label>
-                            <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={formData.discountAmount}
-                                onChange={(e) => setFormData({ ...formData, discountAmount: parseFloat(e.target.value) || 0 })}
-                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Tax Rate (%)</label>
-                            <input
-                                type="number"
-                                min="0"
-                                max="100"
-                                step="0.1"
-                                value={formData.taxRate}
-                                onChange={(e) => setFormData({ ...formData, taxRate: parseFloat(e.target.value) || 0 })}
-                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Notes</label>
-                        <textarea
-                            value={formData.notes}
-                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                            rows={3}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
-                        />
-                    </div>
-
-                    <div className="flex items-center gap-3 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
-                        <input
-                            type="checkbox"
-                            id="isPublicInv"
-                            checked={formData.isPublic}
-                            onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
-                            className="w-4 h-4 text-teal-500 bg-slate-950 border-slate-700 rounded focus:ring-teal-500"
-                        />
-                        <label htmlFor="isPublicInv" className="text-sm font-medium cursor-pointer">
-                            Enable Online Payment Link
-                            <p className="text-xs text-slate-500 font-normal">Clients can view and pay via this link without logging in</p>
-                        </label>
-                    </div>
-
-                    <div className="flex gap-3 pt-4">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="flex-1 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors"
-                        >
-                            Create Invoice
-                        </button>
-                    </div>
-                </form>
-            </div >
-        </div >
     );
 };
 

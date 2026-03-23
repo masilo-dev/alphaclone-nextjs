@@ -283,9 +283,9 @@ function GrowthTab() {
                   <div key={idx} className="bg-slate-900/50 border border-slate-700 p-4 rounded-lg hover:border-teal-500/30 transition-all">
                     <div className="flex justify-between items-start mb-3">
                       <h4 className="text-white font-bold truncate pr-2">{lead.businessName}</h4>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${lead.leadSource === 'Manus AI' ? 'bg-teal-500/20 text-teal-400' : 'bg-blue-500/20 text-blue-400'
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${lead.leadSource === 'AlphaClone Premium' ? 'bg-teal-500/20 text-teal-400' : 'bg-blue-500/20 text-blue-400'
                         }`}>
-                        {lead.leadSource === 'Manus AI' ? 'AlphaClone Premium' : lead.leadSource}
+                        {lead.leadSource === 'AlphaClone Premium' ? 'AlphaClone Premium' : lead.leadSource}
                       </span>
                     </div>
                     <div className="space-y-1 text-sm">

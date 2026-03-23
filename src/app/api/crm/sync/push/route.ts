@@ -1,8 +1,9 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { zohoServerService } from '@/services/server/zohoServerService';
+
 import { hubspotService } from '@/services/hubspotService';
+import { ZohoCRMService } from '@/services/zoho/ZohoCRMService';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
 
 export async function POST(req: Request) {
@@ -14,7 +15,7 @@ export async function POST(req: Request) {
     }
 
     try {
-        const { deal } = await req.json();
+        const { deal, lead, entityType } = await req.json();
         const userId = user.id;
 
         // Use Admin client to fetch integrations securely
@@ -31,15 +32,36 @@ export async function POST(req: Request) {
 
         const results = [];
 
-        // Sync to HubSpot
+        // Sync to HubSpot (only supports deals/leads as generic objects for now)
         const hubspot = integrations.find((i: any) => i.type === 'hubspot');
         if (hubspot) {
             try {
-                const res = await hubspotService.syncLeadToHubSpot(userId, deal);
+                const res = await hubspotService.syncLeadToHubSpot(userId, deal || lead);
                 results.push({ provider: 'hubspot', status: 'success', data: res });
             } catch (e: any) {
                 console.error('HubSpot Sync Error:', e);
                 results.push({ provider: 'hubspot', status: 'failed', error: e.message });
+            }
+        }
+
+        // Sync to Zoho
+        const zoho = integrations.find((i: any) => i.type === 'zoho');
+        if (zoho) {
+            try {
+                const zohoCRM = new ZohoCRMService(userId);
+                let res;
+                const entityType = (await req.clone().json()).entityType;
+
+                if (entityType === 'lead' || lead) {
+                    res = await zohoCRM.upsertLead(lead || deal);
+                } else {
+                    res = await zohoCRM.upsertDeal(deal);
+                }
+                
+                results.push({ provider: 'zoho', status: 'success', data: res });
+            } catch (e: any) {
+                console.error('Zoho CRM Sync Error:', e);
+                results.push({ provider: 'zoho', status: 'failed', error: e.message });
             }
         }
 

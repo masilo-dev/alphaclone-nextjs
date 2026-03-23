@@ -255,11 +255,14 @@ export default function PresentationTemplates() {
                 </html>
             `;
 
-            const printWindow = window.open('', '_blank');
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const printWindow = window.open(url, '_blank');
+            
             if (printWindow) {
-                printWindow.document.write(htmlContent);
-                printWindow.document.close();
-                printWindow.print();
+                printWindow.onload = () => {
+                    printWindow.print();
+                };
             }
 
             toast.success('Presentation exported successfully!');

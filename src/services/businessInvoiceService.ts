@@ -39,6 +39,22 @@ export interface InvoiceLineItem {
 
 export const businessInvoiceService = {
     /**
+     * Parse receipt metadata from notes field
+     */
+    parseMetadata(notes: string | undefined): any {
+        if (!notes) return null;
+        try {
+            const match = notes.match(/---METADATA---([\s\S]*?)---METADATA---/);
+            if (match && match[1]) {
+                return JSON.parse(match[1]);
+            }
+        } catch (e) {
+            console.error('Error parsing metadata:', e);
+        }
+        return null;
+    },
+
+    /**
      * Get all invoices for a tenant
      */
     async getInvoices(tenantId: string): Promise<{ invoices: BusinessInvoice[]; error: string | null }> {
@@ -489,6 +505,9 @@ export const businessInvoiceService = {
      * Generate a professional PDF for a business invoice
      */
     generatePDF(invoice: any, tenant: any, client: any, signature?: { type: 'draw' | 'type', data: string }) {
+        const metadata = this.parseMetadata(invoice.notes);
+        const isReceipt = metadata?.type === 'receipt' || (invoice.invoice_number || invoice.invoiceNumber || '').startsWith('REC-');
+        
         const doc = new jsPDF({
             orientation: 'p',
             unit: 'mm',
@@ -498,7 +517,7 @@ export const businessInvoiceService = {
         // Design Tokens - Refined for "Premium" look
         const colors = {
             primary: '#1e293b',    // Slate-800
-            accent: '#0ea5e9',     // Sky-500
+            accent: metadata?.accentColor || '#0ea5e9',     // Sky-500
             success: '#10b981',    // Emerald-500
             danger: '#ef4444',     // Red-500
             dark: '#0f172a',       // Slate-900
@@ -555,7 +574,7 @@ export const businessInvoiceService = {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(10);
         doc.setTextColor(colors.muted);
-        doc.text('INVOICE NO.', pageWidth - margin, 18, { align: 'right' });
+        doc.text(isReceipt ? 'RECEIPT NO.' : 'INVOICE NO.', pageWidth - margin, 18, { align: 'right' });
 
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
@@ -732,8 +751,16 @@ export const businessInvoiceService = {
             }
 
             if (invoice.notes) {
-                const nText = doc.splitTextToSize(`Notes: ${invoice.notes}`, 150);
-                doc.text(nText, margin, currentY);
+                // If it's a receipt with metadata, strip the metadata from the displayed notes
+                let displayNotes = invoice.notes;
+                if (isReceipt && metadata) {
+                    displayNotes = displayNotes.replace(/---METADATA---[\s\S]*?---METADATA---\s*/, '');
+                }
+                
+                if (displayNotes.trim()) {
+                    const nText = doc.splitTextToSize(`Notes: ${displayNotes}`, 150);
+                    doc.text(nText, margin, currentY);
+                }
             }
         }
 

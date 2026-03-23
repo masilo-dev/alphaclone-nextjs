@@ -93,6 +93,11 @@ const ClientsPage = React.lazy(() => import('./dashboard/business/ClientsPage'))
 
 const CustomVideoRoom = React.lazy(() => import('./dashboard/video/CustomVideoRoom'));
 
+// Zoho Components
+const ZohoMailView = React.lazy(() => import('./dashboard/zoho/ZohoMailView'));
+const ZohoCRMIntegration = React.lazy(() => import('./dashboard/zoho/ZohoCRMIntegration'));
+
+
 // Import UI components
 import { TableSkeleton } from './ui/Skeleton';
 import { TabSkeleton } from './ui/TabSkeleton';
@@ -1084,6 +1089,20 @@ const Dashboard: React.FC<DashboardProps> = ({
       case '/dashboard/sales-agent':
         return <SalesAgent />;
 
+      case '/dashboard/zoho/mail':
+        return (
+          <React.Suspense fallback={<TabSkeleton rows={6} showStats={false} />}>
+            <ZohoMailView />
+          </React.Suspense>
+        );
+
+      case '/dashboard/zoho/crm':
+        return (
+          <React.Suspense fallback={<TabSkeleton rows={3} />}>
+            <ZohoCRMIntegration />
+          </React.Suspense>
+        );
+
       case '/dashboard/onboarding':
         return <OnboardingPipelines user={user} />;
 
@@ -1828,17 +1847,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         onCreateProject={() => setCreateProjectOpen(true)}
       />
 
-      {createInvoiceOpen && (
-        <CreateInvoiceModal
-          isOpen={createInvoiceOpen}
-          onClose={() => setCreateInvoiceOpen(false)}
-          projects={projects}
-          onInvoiceCreated={() => {
-            setCreateInvoiceOpen(false);
-            if (typeof refreshInvoices === 'function') refreshInvoices();
-          }}
-        />
-      )}
 
       {createTaskOpen && (
         <Modal isOpen={createTaskOpen} onClose={() => setCreateTaskOpen(false)} title="Create Task">

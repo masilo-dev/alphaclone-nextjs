@@ -22,17 +22,17 @@ export const AGENT_FLEET: Record<AgentRole, AgentConfig> = {
         id: 'researcher',
         model: 'claude-sonnet-4-5-20250929',
         role: 'Intelligence Gatherer',
-        description: 'Performs deep platform audits and gathers real-time data for execution.',
-        tools: ['lead_prospector', 'semantic_assistant']
+        description: 'Performs deep platform audits and gathers real-time data (Leads, Enrichment).',
+        tools: ['lead_prospector', 'semantic_assistant', 'data_enricher']
     },
     executor: {
         id: 'executor',
         model: 'claude-haiku-4-5-20251015', // Haiku 4.5 for speed
         role: 'Action Specialist',
-        description: 'Executes specific tasks at high speed with parallel capabilities.',
+        description: 'Executes real-world actions (Emails, Contracts, Deal Conversion) at high speed.',
         parallel: true,
         instances: 5,
-        tools: ['outreach_executive', 'productivity_scheduler', 'notifier']
+        tools: ['outreach_executive', 'productivity_scheduler', 'notifier', 'contract_drafter', 'lead_to_deal']
     },
     qa: {
         id: 'qa',
