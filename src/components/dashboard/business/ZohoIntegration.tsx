@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { Database, CheckCircle2, AlertCircle, RefreshCw, XCircle, Globe, ExternalLink } from 'lucide-react';
-import { ZohoService } from '../../../services/zoho/ZohoService';
 import toast from 'react-hot-toast';
 
 interface ZohoIntegrationProps {
@@ -36,9 +35,9 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
         if (!user) return;
         setLoading(true);
         try {
-            const zohoService = new ZohoService(user.id);
-            const connected = await zohoService.checkIntegration();
-            setIsConnected(connected);
+            const res = await fetch(`/api/auth/zoho/status?userId=${user.id}`);
+            const data = await res.json();
+            setIsConnected(!!data.isConnected);
         } catch (err) {
             console.error('Check Zoho connection error:', err);
         } finally {
@@ -59,10 +58,13 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
         if (!user || !window.confirm('Are you sure you want to disconnect Zoho? This will remove access to Zoho Mail and CRM features.')) return;
 
         try {
-            const zohoService = new ZohoService(user.id);
-            await zohoService.disconnect();
-            setIsConnected(false);
-            toast.success('Zoho disconnected successfully.');
+            const res = await fetch(`/api/auth/zoho/disconnect?userId=${user.id}`, { method: 'POST' });
+            if (res.ok) {
+                setIsConnected(false);
+                toast.success('Zoho disconnected successfully.');
+            } else {
+                throw new Error('Failed to disconnect');
+            }
         } catch (err: any) {
             console.error('Disconnect error:', err);
             toast.error('Failed to disconnect Zoho');

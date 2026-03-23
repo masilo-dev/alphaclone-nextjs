@@ -2,16 +2,22 @@
 
 import React, { useState } from 'react';
 import { RefreshCw, CheckCircle, AlertCircle, Database, Layout, ExternalLink } from 'lucide-react';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export default function ZohoCRMIntegration() {
+    const { user } = useAuth();
     const [syncing, setSyncing] = useState(false);
     const [status, setStatus] = useState<{ type: 'idle' | 'success' | 'error', message?: string }>({ type: 'idle' });
 
     const handleSync = async (module?: string) => {
+        if (!user) {
+            setStatus({ type: 'error', message: 'User not authenticated' });
+            return;
+        }
         setSyncing(true);
         setStatus({ type: 'idle' });
         try {
-            const res = await fetch('/api/zoho/crm/sync', {
+            const res = await fetch(`/api/zoho/crm/sync?userId=${user.id}`, {
                 method: 'POST',
                 body: JSON.stringify({ module })
             });
