@@ -1,20 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZohoService } from '../../../../../services/zoho/ZohoService';
 
+function getAppUrl(req: NextRequest) {
+    if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
+    const proto = req.headers.get('x-forwarded-proto') || req.nextUrl.protocol.replace(':', '');
+    const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
+    return host ? `${proto}://${host}` : 'https://alphaclone.tech';
+}
+
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const region = searchParams.get('region') || 'US';
-    const state = searchParams.get('state') || ''; // e.g. user ID or nonce
+    const state = searchParams.get('state') || ''; // user ID or secure nonce
 
     const hosts = ZohoService.getHostsByRegion(region);
     const clientId = process.env.ZOHO_CLIENT_ID;
+    const clientSecret = process.env.ZOHO_CLIENT_SECRET;
     
-    // Robust redirect URI fallback
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${req.nextUrl.protocol}//${req.headers.get('host')}`;
+    const appUrl = getAppUrl(req);
     const redirectUri = process.env.ZOHO_REDIRECT_URI || `${appUrl}/api/auth/zoho/callback`;
 
-    if (!clientId) {
-        return NextResponse.json({ error: 'Zoho Client ID not configured' }, { status: 500 });
+    if (!clientId || !clientSecret) {
+        return NextResponse.json({ error: 'Zoho OAuth is not fully configured' }, { status: 500 });
+    }
+
+    if (!state) {
+        return NextResponse.json({ error: 'Missing user identity state' }, { status: 400 });
     }
 
     const scopes = [

@@ -43,10 +43,8 @@
 .marketing-bg-grid {
   background-color: #020D1A;
   background-image:
-    url('/grid-pattern.svg'),
     radial-gradient(circle at center, rgba(2, 6, 23, 1) 0%, rgba(0, 0, 0, 1) 100%);
-  background-size: 200px 200px, cover;
-  background-blend-mode: overlay;
+  background-size: cover;
 }
 
 .marketing-glow-hero {
@@ -205,11 +203,7 @@ html {
 }
 
 .bg-grid-pattern {
-  background-image:
-    linear-gradient(to right, #1e293b 1px, transparent 1px),
-    linear-gradient(to bottom, #1e293b 1px, transparent 1px);
-  background-size: 40px 40px;
-  mask-image: linear-gradient(to bottom, transparent, 10% black, 90% black, transparent);
+  background-image: none;
 }
 
 .glass-panel {

@@ -97,10 +97,11 @@ export default function ScreenShareManager({
           }
         };
         
-        screenTrack.onended = () => {
+        const handleEnded = () => {
           console.log('Screen share track onended fired');
           handleScreenShareStop();
         };
+        screenTrack.addEventListener('ended', handleEnded);
         
         // Set up periodic checks
         const interval = setInterval(checkTrackState, 1000);
@@ -108,9 +109,7 @@ export default function ScreenShareManager({
         // Clean up function
         return () => {
           clearInterval(interval);
-          if (screenTrack.onended) {
-            screenTrack.onended = null;
-          }
+          screenTrack.removeEventListener('ended', handleEnded);
         };
       }
     } catch (error) {

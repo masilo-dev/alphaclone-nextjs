@@ -3,7 +3,7 @@ import ServicesPage from '@/components/pages/ServicesPage';
 
 export const metadata: Metadata = {
     title: 'Solutions | The Unified AI Business OS — Kill SaaS Bloat',
-    description: 'AlphaClone Systems is the AI-powered Business OS that eliminates operational friction. One platform replaces your CRM, invoicing, AI sales agent, contracts, video meetings, and accounting. Built for high-performance teams.',
+    description: 'AlphaClone Systems is the AI-powered Business OS for service teams. One platform unifies CRM, invoicing, AI sales workflows, contracts, video meetings, and accounting.',
     keywords: [
         'AI business operating system',
         'eliminate SaaS bloat',
@@ -14,8 +14,8 @@ export const metadata: Metadata = {
         'Revenue automation',
         'AI-powered business platform',
         'operational excellence software',
-        'replace HubSpot QuickBooks Zoom',
-        'all-in-one business software',
+        'unified business operations platform',
+        'business operating system software',
         'Data Sovereignty',
     ],
     alternates: { canonical: 'https://alphaclone.tech/services' },

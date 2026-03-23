@@ -6,7 +6,7 @@ import {
     Zap, Database, Shield, BarChart3, Settings, Globe,
     ArrowRight, Star, Clock, Users, DollarSign,
     Mail, Video, FileText, Calendar, TrendingUp, Layers,
-    Award, Lock, RefreshCw, Phone, Check, ChevronRight
+    Award, Lock, RefreshCw, Phone, ChevronRight
 } from 'lucide-react';
 import { Button } from '../ui/UIComponents';
 import PublicNavigation from '../PublicNavigation';
@@ -16,7 +16,7 @@ import MarketingFooter from '../landing/MarketingFooter';
 const ServicesPage: React.FC = () => {
     const [, setIsLoginOpen] = React.useState(false);
 
-    const blufSummary = `AlphaClone Systems is a single AI-powered Business Operating System that replaces your CRM, invoicing software, contract tools, video meetings platform, email client, and sales automation — all in one subscription starting at $15/month. If your business currently uses 5 or more separate SaaS tools to manage clients, finances, and communications, AlphaClone eliminates the overhead, the context-switching, and the combined monthly cost.`;
+    const blufSummary = `AlphaClone Systems is a unified AI-powered Business Operating Platform for service companies. It centralizes CRM, finance, contracts, meetings, messaging, scheduling, and execution workflows in one operational system designed for daily use by founders and teams.`;
 
     const services = [
         {
@@ -183,19 +183,6 @@ const ServicesPage: React.FC = () => {
         },
     ];
 
-    const comparisonTools = [
-        { name: 'HubSpot CRM', cost: '$90/mo', replaced: 'CRM & Pipeline' },
-        { name: 'QuickBooks', cost: '$35/mo', replaced: 'Accounting & Invoicing' },
-        { name: 'DocuSign', cost: '$25/mo', replaced: 'Contracts & E-Signatures' },
-        { name: 'Zoom', cost: '$20/mo', replaced: 'Video Meetings' },
-        { name: 'Calendly', cost: '$15/mo', replaced: 'Scheduling' },
-        { name: 'Asana/Monday', cost: '$25/mo', replaced: 'Task Management' },
-        { name: 'LinkedIn Sales Nav', cost: '$100/mo', replaced: 'Lead Generation' },
-        { name: 'Notion', cost: '$20/mo', replaced: 'Docs & Knowledge Base' },
-    ];
-
-    const totalOld = comparisonTools.reduce((sum, t) => sum + parseInt(t.cost), 0);
-
     return (
         <div className="min-h-screen bg-transparent text-white">
             <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
@@ -212,9 +199,9 @@ const ServicesPage: React.FC = () => {
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.1}>
                             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                                One Platform.{' '}
+                                Business Operating{' '}
                                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-400">
-                                    Ten Tools. Replaced.
+                                    Platform.
                                 </span>
                             </h1>
                         </AnimateIn>
@@ -238,47 +225,6 @@ const ServicesPage: React.FC = () => {
                     </div>
                 </section>
 
-                {/* Cost Comparison Banner */}
-                <section className="py-16 bg-transparent">
-                    <div className="max-w-6xl mx-auto px-4">
-                        <AnimateIn type="fadeUp">
-                            <div className="text-center mb-12">
-                                <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                                    Stop Paying for 8 Subscriptions
-                                </h2>
-                                <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                                    The average small business spends ${totalOld}/month on the tools AlphaClone replaces. We charge $45/month for all of them.
-                                </p>
-                            </div>
-                        </AnimateIn>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-                            {comparisonTools.map((tool, idx) => (
-                                <AnimateIn key={idx} type="stagger" index={idx}>
-                                    <div className="bg-white/[0.04] backdrop-blur-sm border border-slate-700/60 rounded-xl p-4 relative group h-full">
-                                        <div className="absolute inset-0 bg-red-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                                        <div className="text-slate-500 line-through text-sm">{tool.cost}/mo</div>
-                                        <div className="font-semibold text-slate-300 text-sm mt-1">{tool.name}</div>
-                                        <div className="text-xs text-teal-500 mt-1">{tool.replaced}</div>
-                                    </div>
-                                </AnimateIn>
-                            ))}
-                        </div>
-                        <AnimateIn type="scaleIn" delay={0.2}>
-                            <div className="flex items-center justify-center gap-6 text-center p-6 bg-gradient-to-r from-teal-900/30 to-blue-900/30 rounded-2xl border border-teal-500/20">
-                                <div>
-                                    <div className="text-4xl font-bold text-slate-500 line-through">${totalOld}/mo</div>
-                                    <div className="text-sm text-slate-500">8 separate tools</div>
-                                </div>
-                                <ArrowRight className="w-8 h-8 text-teal-400 flex-shrink-0" />
-                                <div>
-                                    <div className="text-4xl font-bold text-teal-400">$45/mo</div>
-                                    <div className="text-sm text-teal-300">everything unified</div>
-                                </div>
-                            </div>
-                        </AnimateIn>
-                    </div>
-                </section>
-
                 {/* Services — Full Detail */}
                 <section className="py-16 bg-transparent">
                     <div className="max-w-6xl mx-auto px-4">
@@ -295,7 +241,7 @@ const ServicesPage: React.FC = () => {
                             {services.map((service, idx) => (
                                 <AnimateIn key={idx} type={idx % 2 === 0 ? 'fadeLeft' : 'fadeRight'} delay={0.05}>
                                     <div
-                                        className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start p-8 rounded-2xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60 hover:border-teal-500/30 transition-all"
+                                        className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start py-8 border-b border-slate-800/70"
                                     >
                                         {/* Left: Header + Description */}
                                         <div>
@@ -322,17 +268,14 @@ const ServicesPage: React.FC = () => {
                                         </div>
                                         {/* Right: Features */}
                                         <div>
-                                            <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">What's Included</h4>
-                                            <ul className="space-y-4">
+                                            <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Capabilities</h4>
+                                            <div className="space-y-3">
                                                 {service.features.map((f, fi) => (
-                                                    <li key={fi} className="flex items-start gap-3 group/item">
-                                                        <div className="flex-shrink-0 w-5 h-5 rounded-md bg-teal-500/10 border border-teal-500/20 flex items-center justify-center mt-0.5 group-hover/item:bg-teal-500/20 transition-colors">
-                                                            <Check className="w-3.5 h-3.5 text-teal-400" />
-                                                        </div>
-                                                        <span className="text-slate-300 text-sm leading-relaxed">{f}</span>
-                                                    </li>
+                                                    <p key={fi} className="text-slate-300 text-sm leading-relaxed border-l-2 border-slate-700 pl-3">
+                                                        {f}
+                                                    </p>
                                                 ))}
-                                            </ul>
+                                            </div>
                                             <div className="mt-8 flex flex-col gap-3">
                                                 <Link href="/register">
                                                     <Button className="w-full bg-teal-600 hover:bg-teal-500 font-semibold">
@@ -421,7 +364,7 @@ const ServicesPage: React.FC = () => {
                                 {[...Array(5)].map((_, i) => <Star key={i} className="w-5 h-5 text-amber-400 fill-amber-400" />)}
                             </div>
                             <blockquote className="text-xl text-slate-200 italic leading-relaxed mb-6">
-                                "Before AlphaClone, I was paying over $300/month across six different tools, and I still felt disorganized. Now everything is in one place, my AI agent books discovery calls while I sleep, and I actually know the financial health of my business for the first time."
+                                "Before AlphaClone, operations were fragmented across disconnected workflows and manual follow-up. Now our client operations, finance visibility, and outreach execution run from one platform."
                             </blockquote>
                             <cite className="text-teal-400 font-semibold">— Agency Owner, Professional Services</cite>
                         </div>

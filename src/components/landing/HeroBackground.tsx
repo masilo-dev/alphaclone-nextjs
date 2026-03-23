@@ -88,10 +88,10 @@ export default function HeroBackground() {
         if (ctx) ctx.scale(dpr, dpr);
     }, []);
 
-    const draw = useCallback(() => {
+    const draw = useCallback(function drawFrame() {
         const canvas = canvasRef.current;
         if (!canvas || !visibleRef.current) {
-            rafRef.current = requestAnimationFrame(() => draw());
+            rafRef.current = requestAnimationFrame(() => drawFrame());
             return;
         }
         const ctx = canvas.getContext('2d');
@@ -170,7 +170,7 @@ export default function HeroBackground() {
             }
         }
 
-        rafRef.current = requestAnimationFrame(() => draw());
+        rafRef.current = requestAnimationFrame(() => drawFrame());
     }, []);
 
     useEffect(() => {

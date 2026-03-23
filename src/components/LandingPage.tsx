@@ -138,8 +138,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
 
    return (
       <div className="min-h-screen text-slate-200 selection:bg-teal-500/30 relative">
-
-
          <LoginModal
             isOpen={isLoginOpen}
             onClose={() => setIsLoginOpen(false)}
@@ -239,7 +237,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                                        className="overflow-hidden w-full"
                                     >
                                        <div className="pb-4 pr-10 space-y-5 flex flex-col items-end">
-                                          {['Custom Web Apps', 'Mobile Ecosystems', 'AI Automation', 'Enterprise Dashboards'].map((service, i) => (
+                                          {['CRM & Pipeline', 'Finance & Billing', 'AI Growth Agent', 'Operations Dashboard'].map((service, i) => (
                                              <Link
                                                 key={i}
                                                 href="/services"
@@ -366,10 +364,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                                     className="absolute top-full left-0 w-64 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 mt-2"
                                  >
                                     {[
-                                       { title: 'Custom Web Apps', desc: 'High-performance Next.js builds' },
-                                       { title: 'Mobile Ecosystems', desc: 'iOS & Android native solutions' },
-                                       { title: 'AI Automation', desc: 'Custom LLMs & Sales Agents', isComingSoon: true },
-                                       { title: 'Enterprise Dashboards', desc: 'Unified business control' }
+                                       { title: 'CRM & Pipeline', desc: 'Unified client operations' },
+                                       { title: 'Finance & Billing', desc: 'Invoices and financial control' },
+                                       { title: 'AI Growth Agent', desc: 'Automated outreach and qualification', isComingSoon: true },
+                                       { title: 'Operations Dashboard', desc: 'Mission control for delivery' }
                                     ].map((s, i) => (
                                        <Link key={i} href="/services" className="block w-full text-left p-3 rounded-xl hover:bg-slate-800 transition-colors group mb-1 tracking-normal normal-case">
                                           <div className="text-sm font-bold text-white group-hover:text-teal-400">{s.title}</div>
@@ -727,7 +725,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                                     <div className="w-4 h-4 rounded bg-orange-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-orange-500/20 transition-colors">
                                        <Check className="w-3 h-3 text-orange-400" />
                                     </div>
-                                    <span>Affordable all-in-one pricing</span>
+                                    <span>Affordable platform pricing</span>
                                  </li>
                                  <li className="flex items-start gap-2 group/list">
                                     <div className="w-4 h-4 rounded bg-orange-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-orange-500/20 transition-colors">
@@ -992,7 +990,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {[
                            { label: "Delivery Guarantee*", value: "18-Day", desc: "*18% discount if we delay" },
-                           { label: "Custom Built", value: "100%", desc: "No templates used" },
+                           { label: "Platform Reliability", value: "99.9%", desc: "Production-ready uptime target" },
                            { label: "Support Available", value: "24/7", desc: "Dedicated team" },
                            { label: "PageSpeed Score", value: "90+", desc: "Performance optimized" }
                         ].map((stat, i) => (
@@ -1068,10 +1066,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         </div>
                         <ul className="space-y-4 mb-10 flex-grow">
                            {['5 Multi-tenant Users', 'Core CRM Pipeline', '5GB Secure Storage', 'Standard Project MGMT', '2 Video Meetings/Mo'].map((feat) => (
-                              <li key={feat} className="flex items-center gap-3 text-sm text-slate-300 group/feat">
-                                 <div className="w-4 h-4 rounded-full bg-teal-500/10 flex items-center justify-center flex-shrink-0 group-hover/feat:bg-teal-500/20 transition-colors">
-                                    <Check className="w-2.5 h-2.5 text-teal-400" />
-                                 </div>
+                              <li key={feat} className="text-sm text-slate-300 border-l-2 border-slate-700 pl-3">
                                  {feat}
                               </li>
                            ))}
@@ -1102,10 +1097,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         </div>
                         <ul className="space-y-4 mb-10 flex-grow">
                            {['25 Multi-tenant Users', 'Infinite CRM Pipelines', 'AI Sales Automation', '25GB Secure Storage', 'Priority Meeting Support', 'Custom Branding'].map((feat) => (
-                              <li key={feat} className="flex items-center gap-3 text-sm text-slate-200 group/feat">
-                                 <div className="w-5 h-5 rounded-full bg-teal-500/10 flex items-center justify-center flex-shrink-0 group-hover/feat:bg-teal-500/20 transition-colors">
-                                    <Check className="w-3 h-3 text-teal-400" />
-                                 </div>
+                              <li key={feat} className="text-sm text-slate-200 border-l-2 border-teal-600/40 pl-3">
                                  {feat}
                               </li>
                            ))}
@@ -1126,7 +1118,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                         <div className="relative mb-8">
                            <h3 className="text-xl font-bold text-white mb-2">Enterprise</h3>
-                           <p className="text-slate-400 text-sm">Total scale and custom infrastructure.</p>
+                           <p className="text-slate-400 text-sm">Total scale and enterprise governance.</p>
                         </div>
                         <div className="relative mb-8 flex items-baseline gap-1">
                            <span className="text-4xl font-bold text-white">$80</span>
@@ -1134,10 +1126,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         </div>
                         <ul className="space-y-4 mb-10 flex-grow">
                            {['Unlimited Users', 'Dedicated DB Instance', 'White-labeled Ecosystem', 'API Access', '24/7 Priority Engineer', 'On-premise Options'].map((feat) => (
-                              <li key={feat} className="flex items-center gap-3 text-sm text-slate-300 group/feat">
-                                 <div className="w-4 h-4 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0 group-hover/feat:bg-blue-500/20 transition-colors">
-                                    <Check className="w-2.5 h-2.5 text-blue-400" />
-                                 </div>
+                              <li key={feat} className="text-sm text-slate-300 border-l-2 border-blue-600/40 pl-3">
                                  {feat}
                               </li>
                            ))}
@@ -1159,9 +1148,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
                      <div>
-                        <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading text-white mb-6">Start Your Custom Project</h2>
+                        <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading text-white mb-6">Plan Your Platform Rollout</h2>
                         <p className="text-slate-400 text-lg mb-12">
-                           Ready to build something extraordinary? Whether you need a complete digital transformation or a specific custom tool, our team is ready to architect your solution.
+                           Tell us your current workflow and team structure. We will map your rollout path for CRM, finance, contracts, meetings, and AI-driven growth on AlphaClone.
                         </p>
 
                         <div className="space-y-8">

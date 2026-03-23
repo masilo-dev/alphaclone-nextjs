@@ -41,20 +41,20 @@ const sora = Sora({
 export const metadata: Metadata = {
   metadataBase: new URL("https://alphaclone.tech"),
   title: {
-    default: "AlphaClone Systems | CRM, Billing, Scheduling, and Operations in One Platform",
+    default: "AlphaClone Systems | Unified Business Operating Platform",
     template: "%s | AlphaClone Systems",
   },
   description:
-    "AlphaClone is all-in-one business software for service businesses. Manage CRM, invoicing, contracts, scheduling, messaging, documents, meetings, and operations in one connected platform.",
+    "AlphaClone is a unified business operating platform for service businesses. Run CRM, billing, contracts, scheduling, messaging, documents, meetings, and operations in one connected system.",
   keywords: [
-    "all in one business software",
-    "service business software",
-    "CRM invoicing scheduling platform",
-    "business operations platform",
-    "client management software",
-    "billing and contracts software",
-    "workflow automation platform",
-    "small business operating system",
+    "unified business operating platform",
+    "service business operations platform",
+    "crm billing scheduling platform",
+    "business operations software",
+    "client operations platform",
+    "billing contracts automation platform",
+    "workflow operating platform",
+    "small business operating platform",
     "AlphaClone Systems",
     "business automation",
     "CRM and billing software",
@@ -66,9 +66,9 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
   alternates: { canonical: "https://alphaclone.tech" },
   openGraph: {
-    title: "AlphaClone Systems | CRM, Billing, Scheduling, and Operations in One Platform",
+    title: "AlphaClone Systems | Unified Business Operating Platform",
     description:
-      "AlphaClone combines CRM, invoicing, contracts, scheduling, messaging, documents, meetings, and operations in one connected platform for service businesses.",
+      "AlphaClone unifies CRM, billing, contracts, scheduling, messaging, documents, meetings, and operations in one platform for service businesses.",
     type: "website",
     url: "https://alphaclone.tech",
     siteName: "AlphaClone Systems",
@@ -76,9 +76,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "AlphaClone Systems | CRM, Billing, Scheduling, and Operations in One Platform",
+    title: "AlphaClone Systems | Unified Business Operating Platform",
     description:
-      "CRM, invoicing, contracts, scheduling, messaging, documents, meetings, and operations in one connected platform.",
+      "CRM, billing, contracts, scheduling, messaging, documents, meetings, and operations in one platform.",
     creator: "@AlphaCloneSys",
   },
 };
@@ -99,7 +99,7 @@ const organizationSchema = {
   url: "https://alphaclone.tech",
   logo: "https://alphaclone.tech/favicon.ico",
   description:
-    "All-in-one business software for service businesses that combines CRM, invoicing, contracts, scheduling, messaging, documents, meetings, and operations in one platform.",
+    "Unified business operating platform for service businesses with CRM, billing, contracts, scheduling, messaging, documents, meetings, and operations.",
   offers: {
     "@type": "AggregateOffer",
     priceCurrency: "USD",
@@ -125,7 +125,7 @@ const websiteSchema = {
   "@type": "WebSite",
   name: "AlphaClone Systems",
   url: "https://alphaclone.tech",
-  description: "All-in-one business software for service businesses.",
+  description: "Unified business operating platform for service businesses.",
   potentialAction: {
     "@type": "SearchAction",
     target: "https://alphaclone.tech/docs?query={search_term_string}",

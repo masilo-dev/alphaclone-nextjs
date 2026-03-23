@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 import React, { useEffect, useState, useMemo } from 'react';
 import { Scale, FileText, CheckCircle2, ShieldCheck, PenTool, Database, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';

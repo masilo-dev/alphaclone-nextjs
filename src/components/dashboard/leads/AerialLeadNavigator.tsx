@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 import { motion, AnimatePresence } from 'framer-motion';

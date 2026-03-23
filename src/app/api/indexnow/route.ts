@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const INDEXNOW_KEY = process.env.INDEXNOW_KEY || 'alphaclone-indexnow-key-placeholder';
+const INDEXNOW_KEY = process.env.INDEXNOW_KEY;
 const BASE_URL = 'https://alphaclone.tech';
 
 // IndexNow protocol — real-time notification to Bing and AI search partners
@@ -8,6 +8,10 @@ const BASE_URL = 'https://alphaclone.tech';
 // Notifies search engines of new or updated content immediately
 export async function POST(request: NextRequest) {
     try {
+        if (!INDEXNOW_KEY) {
+            return NextResponse.json({ error: 'INDEXNOW_KEY is not configured' }, { status: 500 });
+        }
+
         const body = await request.json();
         const { urls } = body as { urls: string[] };
 
@@ -52,6 +56,10 @@ export async function POST(request: NextRequest) {
 
 // GET handler — ping all core marketing pages
 export async function GET() {
+    if (!INDEXNOW_KEY) {
+        return NextResponse.json({ error: 'INDEXNOW_KEY is not configured' }, { status: 500 });
+    }
+
     const coreUrls = [
         `${BASE_URL}/`,
         `${BASE_URL}/services`,
@@ -61,7 +69,6 @@ export async function GET() {
         `${BASE_URL}/pricing`,
         `${BASE_URL}/ecosystem`,
         `${BASE_URL}/who-we-serve`,
-        `${BASE_URL}/compare`,
         `${BASE_URL}/blog`,
         `${BASE_URL}/contact`,
     ];

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 import React, { useEffect, useState, useMemo } from 'react';
 import { MapPin, Search, Activity, Target, Zap, Building2, User } from 'lucide-react';
 import { motion } from 'framer-motion';

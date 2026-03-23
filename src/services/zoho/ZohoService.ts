@@ -20,6 +20,17 @@ export class ZohoService {
         this.encryptionSecret = process.env.ZOHO_ENCRYPTION_SECRET || 'default-32-char-secret-for-zoho-'; // Must be 32 chars
     }
 
+    static normalizeHost(value?: string): string | undefined {
+        if (!value) return undefined;
+        return value.trim().replace(/^https?:\/\//i, '').replace(/\/+$/g, '');
+    }
+
+    static normalizeAccountsServer(value?: string): string | undefined {
+        if (!value) return undefined;
+        const trimmed = value.trim().replace(/\/+$/g, '');
+        return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    }
+
     /**
      * Get the stored Zoho configuration for the user
      */
@@ -47,6 +58,10 @@ export class ZohoService {
             console.error('Failed to decrypt Zoho tokens:', e);
         }
 
+        config.mailApiHost = ZohoService.normalizeHost(config.mailApiHost);
+        config.crmApiHost = ZohoService.normalizeHost(config.crmApiHost);
+        config.accountsServer = ZohoService.normalizeAccountsServer(config.accountsServer) || 'https://accounts.zoho.com';
+
         return config as ZohoConfig;
     }
 
@@ -56,6 +71,11 @@ export class ZohoService {
     async saveConfig(config: Partial<ZohoConfig>): Promise<void> {
         const currentConfig = await this.getConfig() || {};
         const newConfig = { ...currentConfig, ...config };
+
+        // Normalize host values for legacy configurations.
+        newConfig.mailApiHost = ZohoService.normalizeHost(newConfig.mailApiHost);
+        newConfig.crmApiHost = ZohoService.normalizeHost(newConfig.crmApiHost);
+        newConfig.accountsServer = ZohoService.normalizeAccountsServer(newConfig.accountsServer);
 
         // Encrypt tokens before saving
         if (newConfig.refreshToken && !newConfig.refreshToken.includes(':')) {
@@ -86,13 +106,18 @@ export class ZohoService {
         const config = await this.getConfig();
         if (!config || !config.refreshToken) return null;
 
-        const response = await fetch(`${config.accountsServer}/oauth/v2/token`, {
+        const accountsServer = ZohoService.normalizeAccountsServer(config.accountsServer) || 'https://accounts.zoho.com';
+        const clientId = process.env.ZOHO_CLIENT_ID || '';
+        const clientSecret = process.env.ZOHO_CLIENT_SECRET || '';
+        if (!clientId || !clientSecret) return null;
+
+        const response = await fetch(`${accountsServer}/oauth/v2/token`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
                 refresh_token: config.refreshToken,
-                client_id: process.env.ZOHO_CLIENT_ID || '',
-                client_secret: process.env.ZOHO_CLIENT_SECRET || '',
+                client_id: clientId,
+                client_secret: clientSecret,
                 grant_type: 'refresh_token',
             }),
         });
