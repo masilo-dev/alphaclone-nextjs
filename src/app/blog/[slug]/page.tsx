@@ -6,11 +6,11 @@ import { getPublishedSeoArticleBySlug } from '@/services/seoServerService';
 import { MarkdownRenderer } from '@/components/blog/MarkdownRenderer';
 
 type PageProps = {
-    params: { slug: string };
+    params: Promise<{ slug: string }>;
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-    const { slug } = params;
+    const { slug } = await params;
     const article = await getPublishedSeoArticleBySlug(slug);
 
     if (!article) {
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function BlogPost({ params }: PageProps) {
-    const { slug } = params;
+    const { slug } = await params;
     const article = await getPublishedSeoArticleBySlug(slug);
 
     if (!article) notFound();
