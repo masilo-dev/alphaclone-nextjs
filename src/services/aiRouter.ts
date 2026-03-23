@@ -149,7 +149,7 @@ async function completeWithAnthropic(options: AIRequestOptions): Promise<AIRespo
     throw new Error('Anthropic API key not configured');
   }
 
-  const model = options.model || 'claude-3-5-sonnet-20241022';
+  const model = options.model || 'claude-sonnet-4-5-20250929';
 
   const message = await anthropic.messages.create({
     model: model,
@@ -310,7 +310,7 @@ export async function routeAIChat(
       return {
         content: result.text || '',
         provider: 'gemini',
-        model: 'gemini-1.5-pro',
+        model: 'gemini-1.5-pro-latest',
         success: true,
       };
     } catch (error: any) {
@@ -340,7 +340,7 @@ async function chatWithAnthropic(
     throw new Error('Anthropic API key not configured');
   }
 
-  const selectedModel = model || 'claude-3-5-sonnet-20241022';
+  const selectedModel = model || 'claude-sonnet-4-5-20250929';
 
   // Ensure history alternates and starts with 'user'
   const messages: Anthropic.MessageParam[] = [];
@@ -585,6 +585,6 @@ export function estimateCost(prompt: string, model: string): number {
   const promptTokens = Math.ceil(prompt.length / 4);
   const completionTokens = 500; // Assume 500 token response
 
-  const pricing = (MODEL_PRICING as any)[model] || MODEL_PRICING['claude-3-5-sonnet-20241022'];
+  const pricing = (MODEL_PRICING as any)[model] || MODEL_PRICING['claude-sonnet-4-5-20250929'];
   return (promptTokens * pricing.input + completionTokens * pricing.output) / 1_000_000;
 }
