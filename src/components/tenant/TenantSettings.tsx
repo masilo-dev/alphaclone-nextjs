@@ -261,15 +261,25 @@ function TeamSettings({ tenant, isAdmin }: any) {
 
     try {
       setIsInviting(true);
-
-      // TODO: Implement invitation sending
-      // await tenantService.createInvitation(tenant.id, inviteEmail, inviteRole, userId);
-
+      const { data: { user } } = await (await import('../../lib/supabase')).supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      await tenantService.createInvitation(tenant.id, inviteEmail.trim(), inviteRole, user.id);
       setInviteEmail('');
-      alert('Invitation sent!');
-    } catch (error) {
+      // Show success via toast if available, otherwise alert
+      try {
+        const { default: toast } = await import('react-hot-toast');
+        toast.success(`Invitation sent to ${inviteEmail}`);
+      } catch {
+        alert(`Invitation sent to ${inviteEmail}`);
+      }
+    } catch (error: any) {
       console.error('Failed to send invitation:', error);
-      alert('Failed to send invitation');
+      try {
+        const { default: toast } = await import('react-hot-toast');
+        toast.error(error.message || 'Failed to send invitation');
+      } catch {
+        alert('Failed to send invitation');
+      }
     } finally {
       setIsInviting(false);
     }

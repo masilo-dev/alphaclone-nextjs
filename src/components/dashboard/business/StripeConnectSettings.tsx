@@ -69,9 +69,6 @@ const StripeConnectSettings: React.FC = () => {
             <div>
                 <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
                     Payment Processing (Stripe Connect)
-                    <span className="px-2 py-0.5 bg-indigo-500/20 text-indigo-400 text-[10px] font-bold rounded uppercase tracking-wider border border-indigo-500/30">
-                        Coming Soon
-                    </span>
                 </h3>
                 <p className="text-slate-400 mb-6">
                     Connect your Stripe account to receive payments directly from your clients. AlphaClone does not take any percentage of your transactions.
@@ -109,11 +106,12 @@ const StripeConnectSettings: React.FC = () => {
 
                     <div className="flex flex-wrap gap-3">
                         <button
-                            disabled={true}
-                            className="flex items-center gap-2 px-6 py-2.5 bg-slate-800 text-slate-500 font-black text-sm uppercase tracking-widest rounded-xl border border-slate-700 cursor-not-allowed transition-all"
+                            onClick={handleConnect}
+                            disabled={loading}
+                            className="flex items-center gap-2 px-6 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-black text-sm uppercase tracking-widest rounded-xl transition-all active:scale-95"
                         >
                             <CreditCard className="w-4 h-4" />
-                            COMING SOON
+                            {loading ? 'Connecting...' : 'Connect Stripe Account'}
                         </button>
                     </div>
                 </div>

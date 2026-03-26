@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { leadService, Lead } from '@/services/leadService';
-import { generateEmailReply } from '@/services/unifiedAIService';
+import { generateEmailReply, generateText } from '@/services/unifiedAIService';
 
 interface LeadOutreachModalProps {
     isOpen: boolean;
@@ -26,41 +26,31 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
         e.preventDefault();
         if (!query) return;
         setSearching(true);
-        
-        // Simulating AI Lead Discovery (In a real app, this would call a specialized scraping/search API)
-        setTimeout(() => {
-            const mockLeads: Partial<Lead>[] = [
-                {
-                    id: 'ext_1',
-                    businessName: 'NextGen Solutions',
-                    industry: 'SaaS / AI',
-                    location: 'San Francisco, CA',
-                    email: 'contact@nextgen.ai',
-                    website: 'nextgen.ai',
-                    notes: 'High growth startup recently raised Series A, looking for automation tools.'
-                },
-                {
-                    id: 'ext_2',
-                    businessName: 'Global Logistics Hub',
-                    industry: 'Supply Chain',
-                    location: 'Chicago, IL',
-                    email: 'operations@globallogistics.com',
-                    website: 'globallogistics.com',
-                    notes: 'Legacy company undergoing digital transformation.'
-                },
-                {
-                    id: 'ext_3',
-                    businessName: 'CloudScale Infrastructure',
-                    industry: 'DevOps',
-                    location: 'Austin, TX',
-                    email: 'partners@cloudscale.io',
-                    website: 'cloudscale.io',
-                    notes: 'Expanding rapidly in the EMEA region.'
-                }
-            ];
-            setResults(mockLeads);
+        try {
+            const prompt = `You are a B2B lead generation assistant. Generate 4 realistic potential business leads matching this search criteria: "${query}".
+
+Return ONLY a valid JSON array with no markdown, no explanation, no code blocks. Each object must have:
+- id: unique string like "ai_1", "ai_2", etc.
+- businessName: company name
+- industry: industry/sector
+- location: city, state/country
+- email: realistic contact email
+- website: domain only (no https://)
+- notes: 1-2 sentences about why they're a good fit
+
+Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"Austin, TX","email":"hello@acme.com","website":"acme.com","notes":"Rapidly growing SaaS startup."}]`;
+
+            const { text } = await generateText(prompt, 800);
+            if (text) {
+                const parsed: Partial<Lead>[] = JSON.parse(text);
+                setResults(parsed);
+            }
+        } catch (err) {
+            console.error('AI lead search failed:', err);
+            setResults([]);
+        } finally {
             setSearching(false);
-        }, 1500);
+        }
     };
 
     const handleSyncAndEngage = async (lead: Partial<Lead>) => {

@@ -61,7 +61,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     useEffect(() => {
         if (currentTenant?.id) {
             loadInvoices();
-            loadRevenueData();
         }
     }, [currentTenant?.id, dateRange]);
 
@@ -85,6 +84,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             }
             setInvoices(data || []);
             calculateStats(data || []);
+            loadRevenueData(data || []);
         } catch (error) {
             console.error('Error loading invoices:', error);
             toast.error('Failed to load invoices');
@@ -93,19 +93,21 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         }
     };
 
-    const loadRevenueData = async () => {
+    const loadRevenueData = async (invoiceData?: any[]) => {
         try {
-            // Generate mock revenue data based on existing invoices
-            const mockRevenueData = [
-                { date: '2024-01-01', revenue: 1200 },
-                { date: '2024-01-02', revenue: 1800 },
-                { date: '2024-01-03', revenue: 2400 },
-                { date: '2024-01-04', revenue: 1600 },
-                { date: '2024-01-05', revenue: 3200 },
-                { date: '2024-01-06', revenue: 2800 },
-                { date: '2024-01-07', revenue: 3600 }
-            ];
-            setRevenueData(mockRevenueData);
+            const source = invoiceData || invoices;
+            // Build revenue per day from real paid invoices
+            const revenueMap: Record<string, number> = {};
+            source.forEach((inv: any) => {
+                if (inv.status === 'paid' && inv.updated_at) {
+                    const day = inv.updated_at.slice(0, 10);
+                    revenueMap[day] = (revenueMap[day] || 0) + (inv.total || 0);
+                }
+            });
+            const sorted = Object.entries(revenueMap)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([date, revenue]) => ({ date, revenue }));
+            setRevenueData(sorted);
         } catch (error) {
             console.error('Error loading revenue data:', error);
         }

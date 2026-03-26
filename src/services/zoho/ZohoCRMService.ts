@@ -1,5 +1,4 @@
 import { ZohoService } from './ZohoService';
-import { supabase } from '../../lib/supabase';
 
 export interface ZohoModuleRecord {
     id: string;
@@ -7,162 +6,161 @@ export interface ZohoModuleRecord {
 }
 
 export class ZohoCRMService extends ZohoService {
-    /**
-     * Fetches records from a CRM module
-     */
-    async getRecords(moduleName: 'Contacts' | 'Leads' | 'Deals') {
-        const accessToken = await this.getValidAccessToken();
+
+    private async getCRMBase(): Promise<string> {
         const config = await this.getConfig();
-        if (!accessToken || !config?.crmApiHost) throw new Error('CRM Host missing');
+        if (!config?.crmApiHost) throw new Error('Zoho CRM not configured: missing crmApiHost');
+        return `https://${config.crmApiHost}/crm/v2`;
+    }
 
-        const response = await fetch(`https://${config.crmApiHost}/crm/v2/${moduleName}`, {
-            headers: { Authorization: `Zoho-oauthtoken ${accessToken}` }
-        });
-
-        const data = await response.json();
-        return data.data as ZohoModuleRecord[];
+    async getRecords(moduleName: 'Contacts' | 'Leads' | 'Deals'): Promise<ZohoModuleRecord[]> {
+        const base = await this.getCRMBase();
+        const data = await this.callZohoAPI(`${base}/${moduleName}`);
+        return (data?.data ?? []) as ZohoModuleRecord[];
     }
 
     /**
-     * Syncs Zoho CRM Contacts to the local 'clients' table
+     * Syncs Zoho CRM Contacts to the local 'clients' table.
+     * Uses user_id (not business_id) to link records.
      */
-    async syncContacts() {
+    async syncContacts(): Promise<number> {
         const contacts = await this.getRecords('Contacts');
-        if (!contacts) return 0;
+        if (!contacts.length) return 0;
 
+        const supabase = this.getSupabaseClient();
         let syncedCount = 0;
+
         for (const contact of contacts) {
+            const email = contact.Email;
+            if (!email) continue; // skip contacts without email — can't upsert without unique key
+
             const { error } = await supabase
                 .from('clients')
                 .upsert({
-                    business_id: this.userId, // Assuming user ID is business ID for now
-                    full_name: contact.Full_Name || `${contact.First_Name} ${contact.Last_Name}`,
-                    email: contact.Email,
-                    phone: contact.Phone || contact.Mobile,
-                    company_name: contact.Account_Name?.name || contact.Company,
+                    user_id: this.userId,
+                    full_name: contact.Full_Name || `${contact.First_Name ?? ''} ${contact.Last_Name ?? ''}`.trim(),
+                    email,
+                    phone: contact.Phone || contact.Mobile || null,
+                    company_name: contact.Account_Name?.name || contact.Company || null,
                     tags: ['zoho-crm'],
-                    metadata: {
-                        zoho_contact_id: contact.id
-                    },
-                    updated_at: new Date().toISOString()
+                    metadata: { zoho_contact_id: contact.id },
+                    updated_at: new Date().toISOString(),
                 }, {
-                    onConflict: 'email' // Or a unique zoho_contact_id if added to schema
+                    onConflict: 'email',
                 });
 
-            if (!error) syncedCount++;
+            if (error) {
+                console.error('Zoho CRM syncContacts upsert error:', error.message);
+            } else {
+                syncedCount++;
+            }
         }
 
         return syncedCount;
     }
 
     /**
-     * Syncs Zoho CRM Deals to the local 'deals' table
+     * Syncs Zoho CRM Deals to the local 'deals' table.
      */
-    async syncDeals() {
+    async syncDeals(): Promise<number> {
         const deals = await this.getRecords('Deals');
-        if (!deals) return 0;
+        if (!deals.length) return 0;
 
+        const supabase = this.getSupabaseClient();
         let syncedCount = 0;
+
         for (const deal of deals) {
             const { error } = await supabase
                 .from('deals')
                 .upsert({
                     user_id: this.userId,
                     title: deal.Deal_Name,
-                    value: deal.Amount,
-                    status: deal.Stage,
-                    close_date: deal.Closing_Date,
-                    metadata: {
-                        zoho_deal_id: deal.id
-                    },
-                    updated_at: new Date().toISOString()
+                    value: deal.Amount ?? 0,
+                    status: deal.Stage ?? 'unknown',
+                    close_date: deal.Closing_Date ?? null,
+                    metadata: { zoho_deal_id: deal.id },
+                    updated_at: new Date().toISOString(),
+                }, {
+                    onConflict: 'user_id,title', // best available key; adjust if schema has zoho_deal_id column
                 });
 
-            if (!error) syncedCount++;
+            if (error) {
+                console.error('Zoho CRM syncDeals upsert error:', error.message);
+            } else {
+                syncedCount++;
+            }
         }
 
         return syncedCount;
     }
 
     /**
-     * Upserts a lead to Zoho CRM
+     * Upserts a lead to Zoho CRM (AlphaClone → Zoho direction).
      */
     async upsertLead(lead: any) {
-        const accessToken = await this.getValidAccessToken();
-        const config = await this.getConfig();
-        if (!accessToken || !config?.crmApiHost) throw new Error('CRM Host missing');
+        const base = await this.getCRMBase();
 
-        // First, check if lead exists by email
-        const searchRes = await fetch(`https://${config.crmApiHost}/crm/v2/Leads/search?email=${encodeURIComponent(lead.email)}`, {
-            headers: { Authorization: `Zoho-oauthtoken ${accessToken}` }
-        });
-        const searchData = await searchRes.json();
-        const existingId = searchData.data?.[0]?.id;
+        // Search for existing lead by email
+        const searchData = await this.callZohoAPI(
+            `${base}/Leads/search?email=${encodeURIComponent(lead.email)}`
+        );
+        const existingId = searchData?.data?.[0]?.id ?? null;
 
         const payload = {
             data: [{
                 First_Name: lead.businessName?.split(' ')[0] || '',
-                Last_Name: lead.businessName?.split(' ').slice(1).join(' ') || 'Company',
+                Last_Name: lead.businessName?.split(' ').slice(1).join(' ') || 'Unknown',
                 Email: lead.email,
-                Phone: lead.phone,
-                Company: lead.businessName,
-                Lead_Source: lead.source,
-                Description: lead.notes,
-                Lead_Status: lead.stage === 'lead' ? 'New Lead' : lead.stage
-            }]
+                Phone: lead.phone ?? null,
+                Company: lead.businessName ?? null,
+                Lead_Source: lead.source ?? null,
+                Description: lead.notes ?? null,
+                Lead_Status: lead.stage === 'lead' ? 'New Lead' : (lead.stage ?? 'New Lead'),
+            }],
         };
 
         const method = existingId ? 'PUT' : 'POST';
-        const url = existingId ? `https://${config.crmApiHost}/crm/v2/Leads/${existingId}` : `https://${config.crmApiHost}/crm/v2/Leads`;
+        const url = existingId ? `${base}/Leads/${existingId}` : `${base}/Leads`;
 
-        const response = await fetch(url, {
+        const result = await this.callZohoAPI(url, {
             method,
-            headers: {
-                Authorization: `Zoho-oauthtoken ${accessToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
         });
 
-        return await response.json();
+        return result;
     }
 
     /**
-     * Upserts a deal to Zoho CRM
+     * Upserts a deal to Zoho CRM (AlphaClone → Zoho direction).
      */
     async upsertDeal(deal: any) {
-        const accessToken = await this.getValidAccessToken();
-        const config = await this.getConfig();
-        if (!accessToken || !config?.crmApiHost) throw new Error('CRM Host missing');
+        const base = await this.getCRMBase();
+
+        const stageMap: Record<string, string> = {
+            closed_won: 'Closed Won',
+            closed_lost: 'Closed Lost',
+        };
 
         const payload = {
             data: [{
                 Deal_Name: deal.name,
-                Amount: deal.value,
-                Stage: deal.stage === 'closed_won' ? 'Closed Won' : deal.stage === 'closed_lost' ? 'Closed Lost' : deal.stage,
-                Closing_Date: deal.expectedCloseDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                Pipeline: 'Standard'
-            }]
+                Amount: deal.value ?? 0,
+                Stage: stageMap[deal.stage] ?? deal.stage ?? 'Qualification',
+                Closing_Date: deal.expectedCloseDate
+                    || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                Pipeline: 'Standard',
+            }],
         };
 
-        // If we have a zoho_deal_id in metadata, update it
-        const zohoId = deal.metadata?.zoho_deal_id;
+        const zohoId = deal.metadata?.zoho_deal_id ?? null;
         const method = zohoId ? 'PUT' : 'POST';
-        const url = zohoId ? `https://${config.crmApiHost}/crm/v2/Deals/${zohoId}` : `https://${config.crmApiHost}/crm/v2/Deals`;
+        const url = zohoId ? `${base}/Deals/${zohoId}` : `${base}/Deals`;
 
-        const response = await fetch(url, {
+        const result = await this.callZohoAPI(url, {
             method,
-            headers: {
-                Authorization: `Zoho-oauthtoken ${accessToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
         });
 
-        const result = await response.json();
-        
-        // If it was a new deal, we should save the ID back to our DB if possible
-        // But for background sync, we just return the result
         return result;
     }
 }

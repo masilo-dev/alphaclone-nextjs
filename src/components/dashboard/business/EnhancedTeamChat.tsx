@@ -8,7 +8,6 @@ import { teamService } from '@/services/teamService';
 import { ChatMessage } from '@/types';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
-import ComingSoonOverlay from '../ComingSoonOverlay';
 
 interface TeamMember {
   id: string;
@@ -87,10 +86,6 @@ export default function EnhancedTeamChat() {
   };
 
   return (
-    <ComingSoonOverlay
-      title="Team Communication Hub"
-      description="Our real-time collaboration suite is currently being optimized for high-performance studio environments. This interface represents the upcoming communication experience for your entire team."
-    >
       <div className="flex flex-col h-[600px] bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center">
@@ -192,6 +187,5 @@ export default function EnhancedTeamChat() {
           </div>
         </div>
       </div>
-    </ComingSoonOverlay>
   );
 }

@@ -1027,11 +1027,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             <div className="pt-4 border-t border-slate-700">
                                 <button
                                     onClick={handleStripeConnect}
-                                    disabled={true}
-                                    className="px-5 py-2 bg-slate-800 text-slate-500 cursor-not-allowed rounded-xl font-bold flex items-center gap-2 transition-all text-sm border border-slate-700"
+                                    className="px-5 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-bold flex items-center gap-2 transition-all text-sm active:scale-95"
                                 >
                                     <CreditCard className="w-4 h-4" />
-                                    COMING SOON
+                                    Connect Stripe Account
                                 </button>
                             </div>
                         </div>

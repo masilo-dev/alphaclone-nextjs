@@ -64,6 +64,21 @@ export async function GET(req: NextRequest) {
         const mailAccountData = await mailAccountRes.json();
         const accountId = mailAccountData?.data?.[0]?.accountId ? String(mailAccountData.data[0].accountId) : undefined;
 
+        // Fetch Zoho Books org ID while we have the fresh token
+        let booksOrgId: string | undefined;
+        try {
+            const booksHost = hosts.mail.replace('mail.', 'books.');
+            const booksOrgsRes = await fetch(`https://${booksHost}/api/v3/organizations`, {
+                headers: { Authorization: `Zoho-oauthtoken ${data.access_token}` }
+            });
+            if (booksOrgsRes.ok) {
+                const booksOrgsData = await booksOrgsRes.json();
+                booksOrgId = booksOrgsData.organizations?.[0]?.organization_id;
+            }
+        } catch {
+            // Books scope may not be granted — continue without it
+        }
+
         await zohoService.saveConfig({
             accessToken: data.access_token,
             refreshToken: data.refresh_token,
@@ -71,7 +86,8 @@ export async function GET(req: NextRequest) {
             mailApiHost: mailHost,
             crmApiHost: ZohoService.normalizeHost(hosts.crm),
             accountsServer: hosts.accounts,
-            accountId: accountId
+            accountId: accountId,
+            ...(booksOrgId ? { booksOrgId } : {}),
         });
 
         return NextResponse.redirect(`${appUrl}/dashboard/settings?section=booking&success=zoho_connected`);

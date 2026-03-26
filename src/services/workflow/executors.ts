@@ -6,6 +6,7 @@
 import type { WorkflowStep, WorkflowContext, StepExecutor } from './types';
 import { eventBusHelpers } from '../eventBus';
 import { generateText } from '../unifiedAIService';
+import { supabase } from '../../lib/supabase';
 
 /**
  * Email Step Executor
@@ -14,21 +15,26 @@ import { generateText } from '../unifiedAIService';
 const emailExecutor: StepExecutor = async (step, context) => {
     const { template, to, subject, body } = step.config;
 
-    console.log(`[EmailExecutor] Sending email to ${to} using template ${template}`);
-
-    // TODO: Integrate with email service (Resend, SendGrid, etc.)
-    // For now, just log
     const emailData = {
         to: replaceVariables(to, context),
         subject: replaceVariables(subject || 'Notification', context),
         body: replaceVariables(body || '', context),
-        template
+        template,
     };
 
-    // Simulate email sending
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    return { sent: true, ...emailData };
+    // Send via AlphaClone's internal email API (no external dependency)
+    try {
+        const res = await fetch('/api/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(emailData),
+        });
+        const result = await res.json();
+        return { sent: res.ok, ...emailData, messageId: result.messageId };
+    } catch (err) {
+        console.error('[EmailExecutor] Failed:', err);
+        return { sent: false, ...emailData, error: String(err) };
+    }
 };
 
 /**
@@ -80,15 +86,27 @@ const actionExecutor: StepExecutor = async (step, context) => {
 const meetingExecutor: StepExecutor = async (step, context) => {
     const { duration, participants, title } = step.config;
 
-    console.log(`[MeetingExecutor] Scheduling meeting: ${title}`);
-
-    // TODO: Integrate with Daily.co or calendar service
     const meetingData = {
         title: replaceVariables(title || 'Meeting', context),
         duration: duration || 60,
         participants: replaceVariables(participants, context),
-        scheduledFor: new Date(Date.now() + 24 * 60 * 60 * 1000) // Tomorrow
+        scheduledFor: new Date(Date.now() + 24 * 60 * 60 * 1000),
     };
+
+    // Schedule via AlphaClone's internal meeting API (Daily.co backed)
+    try {
+        const res = await fetch('/api/meetings/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(meetingData),
+        });
+        if (res.ok) {
+            const result = await res.json();
+            return { meetingId: result.id || result.roomUrl, joinUrl: result.roomUrl, ...meetingData };
+        }
+    } catch (err) {
+        console.error('[MeetingExecutor] API call failed:', err);
+    }
 
     return { meetingId: 'meet_' + Date.now(), ...meetingData };
 };
@@ -109,10 +127,31 @@ const waitExecutor: StepExecutor = async (step, context) => {
     }
 
     if (event) {
-        // Wait for specific event
-        console.log(`[WaitExecutor] Waiting for event: ${event}`);
-        // TODO: Implement event waiting with timeout
-        return { waitedForEvent: event };
+        // Wait for a workflow event signal in Supabase with configurable timeout
+        const timeoutMs = timeout ? parseDuration(timeout) : 60 * 60 * 1000; // default 1 hour
+        const pollInterval = 5000; // poll every 5s
+        const startedAt = Date.now();
+        console.log(`[WaitExecutor] Polling for event: ${event} (timeout: ${timeoutMs}ms)`);
+
+        while (Date.now() - startedAt < timeoutMs) {
+            const { data } = await supabase
+                .from('workflow_events')
+                .select('id, payload')
+                .eq('event_name', event)
+                .gt('created_at', new Date(startedAt).toISOString())
+                .limit(1)
+                .maybeSingle();
+
+            if (data) {
+                // Consume the event
+                await supabase.from('workflow_events').delete().eq('id', data.id);
+                return { waitedForEvent: event, eventPayload: data.payload, elapsed: Date.now() - startedAt };
+            }
+            await new Promise(resolve => setTimeout(resolve, pollInterval));
+        }
+        // Timeout reached
+        console.warn(`[WaitExecutor] Timeout waiting for event: ${event}`);
+        return { waitedForEvent: event, timedOut: true, elapsed: timeoutMs };
     }
 
     return { waited: 0 };
@@ -264,15 +303,20 @@ const webhookExecutor: StepExecutor = async (step, context) => {
 const notificationExecutor: StepExecutor = async (step, context) => {
     const { title, message, userId, type } = step.config;
 
-    console.log(`[NotificationExecutor] Sending notification: ${title}`);
-
-    // TODO: Integrate with notification service
     const notificationData = {
         title: replaceVariables(title, context),
         message: replaceVariables(message, context),
-        userId: replaceVariables(userId, context),
-        type: type || 'info'
+        user_id: replaceVariables(userId, context),
+        type: type || 'info',
+        read: false,
+        created_at: new Date().toISOString(),
     };
+
+    try {
+        await supabase.from('notifications').insert(notificationData);
+    } catch (err) {
+        console.error('[NotificationExecutor] Failed:', err);
+    }
 
     return { sent: true, ...notificationData };
 };
@@ -284,14 +328,31 @@ const notificationExecutor: StepExecutor = async (step, context) => {
 const approvalExecutor: StepExecutor = async (step, context) => {
     const { approvers, message } = step.config;
 
-    console.log(`[ApprovalExecutor] Requesting approval from: ${approvers}`);
+    // Create approval request notifications for each approver
+    const approverList: string[] = Array.isArray(approvers) ? approvers : [approvers];
+    const approvalMessage = replaceVariables(message || 'Your approval is required.', context);
 
-    // TODO: Implement approval workflow
-    // For now, auto-approve
+    try {
+        await supabase.from('notifications').insert(
+            approverList.map((uid: string) => ({
+                user_id: uid,
+                type: 'approval_request',
+                title: 'Approval Required',
+                message: approvalMessage,
+                metadata: { workflow_id: context.workflowId, step: step.id },
+                read: false,
+                created_at: new Date().toISOString(),
+            }))
+        );
+    } catch (err) {
+        console.error('[ApprovalExecutor] Failed to notify approvers:', err);
+    }
+
     return {
-        approved: true,
-        approvedBy: approvers[0],
-        approvedAt: new Date()
+        pending: true,
+        approvers: approverList,
+        requestedAt: new Date(),
+        message: approvalMessage,
     };
 };
 

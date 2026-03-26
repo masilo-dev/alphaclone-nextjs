@@ -43,78 +43,55 @@ export class ZohoMailService extends ZohoService {
         return { accessToken, config };
     }
 
-    /**
-     * List email accounts for the user
-     */
-    async getAccounts() {
-        const accessToken = await this.getValidAccessToken();
-        if (!accessToken) throw new Error('Unauthorized');
-
+    private async getMailBase(): Promise<{ base: string; accountId: string }> {
         const config = await this.getConfig();
-        const host = ZohoService.normalizeHost(config?.mailApiHost);
-        if (!host) throw new Error('Mail host missing');
+        if (!config?.mailApiHost) throw new Error('Zoho Mail not configured: missing mailApiHost');
+        
+        let accountId = config?.accountId;
+        if (!accountId) {
+            const { config: updatedConfig } = await this.ensureAccountId();
+            accountId = updatedConfig?.accountId;
+            if (!accountId) throw new Error('Zoho Mail not configured: missing accountId');
+        }
 
-        const response = await fetch(`https://${host}/api/accounts`, {
-            headers: { Authorization: `Zoho-oauthtoken ${accessToken}` }
-        });
-
-        return await response.json();
+        return {
+            base: `https://${config.mailApiHost}/api/accounts/${accountId}`,
+            accountId: accountId,
+        };
+    }
+    async getAccounts() {
+        const config = await this.getConfig();
+        if (!config?.mailApiHost) throw new Error('Zoho Mail not configured: missing mailApiHost');
+        const data = await this.callZohoAPI(`https://${config.mailApiHost}/api/accounts`);
+        return data;
     }
 
     /**
      * List folders for a specific account
      */
-    async getFolders() {
-        const { accessToken, config } = await this.ensureAccountId();
-        if (!accessToken || !config?.accountId) throw new Error('Account ID missing');
-
-        const response = await fetch(`https://${config.mailApiHost}/api/accounts/${config.accountId}/folders`, {
-            headers: { Authorization: `Zoho-oauthtoken ${accessToken}` }
-        });
-
-        const data = await response.json();
-        return data.data as ZohoFolder[];
+    async getFolders(): Promise<ZohoFolder[]> {
+        const { base } = await this.getMailBase();
+        const data = await this.callZohoAPI(`${base}/folders`);
+        return (data?.data ?? []) as ZohoFolder[];
     }
 
     /**
      * List messages in a folder
      */
-    async getMessages(folderId: string, limit: number = 20, start: number = 1) {
-        const { accessToken, config } = await this.ensureAccountId();
-        if (!accessToken || !config?.accountId) throw new Error('Account ID missing');
-
-        const response = await fetch(
-            `https://${config.mailApiHost}/api/accounts/${config.accountId}/messages/view?folderId=${folderId}&limit=${limit}&start=${start}`,
-            {
-                headers: { Authorization: `Zoho-oauthtoken ${accessToken}` }
-            }
+    async getMessages(folderId: string, limit = 20, start = 1): Promise<ZohoMessage[]> {
+        const { base } = await this.getMailBase();
+        const data = await this.callZohoAPI(
+            `${base}/messages/view?folderId=${encodeURIComponent(folderId)}&limit=${limit}&start=${start}`
         );
-
-        const data = await response.json();
-        return data.data as ZohoMessage[];
+        return (data?.data ?? []) as ZohoMessage[];
     }
 
-    /**
-     * Get a single message content
-     */
     async getMessageContent(messageId: string) {
-        const { accessToken, config } = await this.ensureAccountId();
-        if (!accessToken || !config?.accountId) throw new Error('Account ID missing');
-
-        const response = await fetch(
-            `https://${config.mailApiHost}/api/accounts/${config.accountId}/messages/${messageId}/content`,
-            {
-                headers: { Authorization: `Zoho-oauthtoken ${accessToken}` }
-            }
-        );
-
-        const data = await response.json();
-        return data.data; // Includes content, sender, subject, etc.
+        const { base } = await this.getMailBase();
+        const data = await this.callZohoAPI(`${base}/messages/${encodeURIComponent(messageId)}/content`);
+        return data?.data ?? data;
     }
 
-    /**
-     * Send an email
-     */
     async sendEmail(params: {
         fromAddress: string;
         toAddress: string;
@@ -123,108 +100,60 @@ export class ZohoMailService extends ZohoService {
         ccAddress?: string;
         bccAddress?: string;
     }) {
-        const { accessToken, config } = await this.ensureAccountId();
-        if (!accessToken || !config?.accountId) throw new Error('Account ID missing');
-
-        const response = await fetch(
-            `https://${config.mailApiHost}/api/accounts/${config.accountId}/messages`,
-            {
-                method: 'POST',
-                headers: {
-                    Authorization: `Zoho-oauthtoken ${accessToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(params)
-            }
-        );
-
-        return await response.json();
+        const { base } = await this.getMailBase();
+        const data = await this.callZohoAPI(`${base}/messages`, {
+            method: 'POST',
+            body: JSON.stringify(params),
+        });
+        return data;
     }
 
     /**
      * Search messages
      */
-    async searchMessages(query: string) {
-        const { accessToken, config } = await this.ensureAccountId();
-        if (!accessToken || !config?.accountId) throw new Error('Account ID missing');
-
-        const response = await fetch(
-            `https://${config.mailApiHost}/api/accounts/${config.accountId}/messages/search?searchFilter=${encodeURIComponent(query)}`,
-            {
-                headers: { Authorization: `Zoho-oauthtoken ${accessToken}` }
-            }
+    async searchMessages(query: string): Promise<ZohoMessage[]> {
+        const { base } = await this.getMailBase();
+        const data = await this.callZohoAPI(
+            `${base}/messages/search?searchFilter=${encodeURIComponent(query)}`
         );
-
-        const data = await response.json();
-        return data.data as ZohoMessage[];
+        return (data?.data ?? []) as ZohoMessage[];
     }
 
-    /**
-     * Delete a message
-     */
     async deleteMessage(messageId: string) {
-        const { accessToken, config } = await this.ensureAccountId();
-        if (!accessToken || !config?.accountId) throw new Error('Account ID missing');
-
-        const response = await fetch(
-            `https://${config.mailApiHost}/api/accounts/${config.accountId}/messages/${messageId}`,
-            {
-                method: 'DELETE',
-                headers: { Authorization: `Zoho-oauthtoken ${accessToken}` }
-            }
+        const { base } = await this.getMailBase();
+        const data = await this.callZohoAPI(
+            `${base}/messages/${encodeURIComponent(messageId)}`,
+            { method: 'DELETE' }
         );
-
-        return await response.json();
+        return data;
     }
 
-    /**
-     * Archive a message (move to Archive folder)
-     * Note: Usually involves a PUT to update folderId or a specific archive endpoint
-     */
     async archiveMessage(messageId: string) {
-        const { accessToken, config } = await this.ensureAccountId();
-        if (!accessToken || !config?.accountId) throw new Error('Account ID missing');
 
-        // Step 1: Find the Archive folder ID
         const folders = await this.getFolders();
         const archiveFolder = folders.find(f => f.folderName.toLowerCase().includes('archive'));
-        if (!archiveFolder) throw new Error('Archive folder not found');
+        if (!archiveFolder) throw new Error('Archive folder not found in your Zoho Mail account');
 
-        const response = await fetch(
-            `https://${config.mailApiHost}/api/accounts/${config.accountId}/messages/${messageId}`,
+        const { base } = await this.getMailBase();
+        const data = await this.callZohoAPI(
+            `${base}/messages/${encodeURIComponent(messageId)}`,
             {
                 method: 'PUT',
-                headers: {
-                    Authorization: `Zoho-oauthtoken ${accessToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ folderId: archiveFolder.folderId })
+                body: JSON.stringify({ folderId: archiveFolder.folderId }),
             }
         );
-
-        return await response.json();
+        return data;
     }
 
-    /**
-     * Mark a message as read/unread
-     */
-    async markAsRead(messageId: string, status: boolean = true) {
-        const accessToken = await this.getValidAccessToken();
-        const config = await this.getConfig();
-        if (!accessToken || !config?.accountId) throw new Error('Account ID missing');
-
-        const response = await fetch(
-            `https://${config.mailApiHost}/api/accounts/${config.accountId}/messages/${messageId}`,
+    async markAsRead(messageId: string, isRead = true) {
+        const { base } = await this.getMailBase();
+        const data = await this.callZohoAPI(
+            `${base}/messages/${encodeURIComponent(messageId)}`,
             {
                 method: 'PUT',
-                headers: {
-                    Authorization: `Zoho-oauthtoken ${accessToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ status: status ? 'read' : 'unread' })
+                body: JSON.stringify({ status: isRead ? 'read' : 'unread' }),
             }
         );
-
-        return await response.json();
+        return data;
     }
 }

@@ -421,9 +421,27 @@ export const esignatureComplianceService = {
         doc.text('AlphaClone Business OS - Electronic Signature Platform', 105, y + 5, { align: 'center' });
         doc.text('This is a computer-generated certificate and does not require a physical signature.', 105, y + 10, { align: 'center' });
 
-        // TODO: Save PDF to storage and update database with URL
-        // const pdfBlob = doc.output('blob');
-        // await uploadCertificate(certificateId, pdfBlob);
+        // Save PDF to Supabase storage and update certificate record
+        try {
+            const pdfBlob = doc.output('blob');
+            const storageKey = `certificates/${certificateId}.pdf`;
+            const { error: uploadError } = await supabase.storage
+                .from('documents')
+                .upload(storageKey, pdfBlob, { contentType: 'application/pdf', upsert: true });
+
+            if (!uploadError) {
+                const { data: { publicUrl } } = supabase.storage
+                    .from('documents')
+                    .getPublicUrl(storageKey);
+
+                await supabase
+                    .from('signature_certificates')
+                    .update({ certificate_pdf_url: publicUrl })
+                    .eq('id', certificateId);
+            }
+        } catch (pdfErr) {
+            console.error('[esignature] Failed to upload certificate PDF:', pdfErr);
+        }
     },
 
     /**

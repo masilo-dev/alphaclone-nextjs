@@ -81,7 +81,26 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
     };
 
     const handleSendReply = async () => {
-        toast.success("Reply drafting UI enabled. Sending is coming in the next update.");
+        if (!replyBody.trim() || !selectedThreadId) return;
+        setIsSending(true);
+        try {
+            const lastMessage = threadMessages[threadMessages.length - 1];
+            const to = lastMessage?.from || '';
+            const subject = lastMessage?.subject
+                ? (lastMessage.subject.startsWith('Re:') ? lastMessage.subject : `Re: ${lastMessage.subject}`)
+                : 'Re: (no subject)';
+            await gmailService.sendMessage(userId, to, subject, replyBody, selectedThreadId);
+            setReplyBody('');
+            toast.success('Reply sent!');
+            // Refresh thread
+            const messages = await gmailService.getThread(userId, selectedThreadId);
+            setThreadMessages(messages);
+        } catch (err: any) {
+            console.error('Failed to send reply:', err);
+            toast.error(err.message || 'Failed to send reply');
+        } finally {
+            setIsSending(false);
+        }
     };
 
     const handleBackToList = () => {

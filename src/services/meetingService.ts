@@ -123,13 +123,21 @@ export const meetingService = {
             // 6. Generate calendar invite
             const calendarInvite = emailTemplates.generateCalendarInvite(emailData);
 
-            // TODO: Integrate with email service (Resend, SendGrid, etc.)
-            console.log('📧 Meeting confirmation email ready:', {
-                to: data.attendeeEmail,
-                subject: `Meeting Confirmed: ${data.title}`,
-                html: emailHtml.substring(0, 100) + '...',
-                calendar: calendarInvite.substring(0, 100) + '...'
-            });
+            // Send via AlphaClone's internal email API
+            try {
+                await fetch('/api/email/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: data.attendeeEmail,
+                        subject: `Meeting Confirmed: ${data.title}`,
+                        html: emailHtml,
+                        attachments: [{ filename: 'invite.ics', content: calendarInvite }],
+                    }),
+                });
+            } catch (emailErr) {
+                console.error('Meeting confirmation email failed (non-blocking):', emailErr);
+            }
 
             return { success: true, call, joinLink, emailData };
 

@@ -20,6 +20,7 @@ import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
+import { generateText } from '../../services/unifiedAIService';
 import { format } from 'date-fns';
 import DOMPurify from 'dompurify';
 import { notificationService } from '../../services/dashboardService';
@@ -107,6 +108,8 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     const [isSavingToDrive, setIsSavingToDrive] = useState<string | null>(null);
     const [slides, setSlides] = useState<Slide[]>([{ id: '1', title: 'New Presentation', content: 'Subtitle or description' }]);
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+    const [presentationPrompt, setPresentationPrompt] = useState('');
+    const [isGeneratingSlides, setIsGeneratingSlides] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const scanInputRef = useRef<HTMLInputElement>(null);
 
@@ -200,6 +203,35 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
             deleted_at: null
         });
         setViewMode('editor');
+    };
+
+    const handleGenerateSlides = async () => {
+        if (!presentationPrompt.trim()) return;
+        setIsGeneratingSlides(true);
+        try {
+            const prompt = `Create a professional presentation about: "${presentationPrompt}"
+
+Generate exactly 6 slides. Return ONLY a valid JSON array, no markdown, no explanation.
+Each slide object must have:
+- id: "1" through "6" as strings
+- title: slide title (concise, max 8 words)
+- content: slide body content (2-4 bullet points or a short paragraph, max 100 words)
+
+Example: [{"id":"1","title":"Introduction","content":"• Key point one\\n• Key point two\\n• Key point three"}]`;
+
+            const { text } = await generateText(prompt, 1200);
+            if (text) {
+                const parsed: Slide[] = JSON.parse(text);
+                setSlides(parsed);
+                setCurrentSlideIndex(0);
+                toast.success('Presentation generated!');
+            }
+        } catch (err) {
+            console.error('Failed to generate slides:', err);
+            toast.error('Failed to generate slides. Please try again.');
+        } finally {
+            setIsGeneratingSlides(false);
+        }
     };
 
     const handleCreatePresentation = () => {
@@ -683,22 +715,53 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                             </div>
                         </div>
                     ) : viewMode === 'presentation' ? (
-                        <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-slate-950 relative overflow-hidden group">
-                            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-transparent to-teal-500/10 opacity-50 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-                            <div className="w-24 h-24 mb-6 relative z-10">
-                                <div className="absolute inset-0 bg-orange-500/20 blur-2xl rounded-full animate-pulse" />
-                                <div className="relative bg-slate-900 border border-white/10 p-6 rounded-3xl shadow-2xl flex items-center justify-center">
-                                    <Presentation className="w-12 h-12 text-orange-400" />
+                        <div className="h-full flex flex-col bg-slate-950 p-6 gap-6">
+                            {/* Prompt bar */}
+                            <div className="flex gap-3 shrink-0">
+                                <input
+                                    type="text"
+                                    value={presentationPrompt}
+                                    onChange={e => setPresentationPrompt(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && handleGenerateSlides()}
+                                    placeholder="Describe your presentation (e.g. Q3 Sales Review for SaaS company)..."
+                                    className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-orange-500/50"
+                                />
+                                <button
+                                    onClick={handleGenerateSlides}
+                                    disabled={isGeneratingSlides || !presentationPrompt.trim()}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm rounded-xl transition-all"
+                                >
+                                    {isGeneratingSlides ? <Loader2 className="w-4 h-4 animate-spin" /> : <Presentation className="w-4 h-4" />}
+                                    {isGeneratingSlides ? 'Generating...' : 'Generate'}
+                                </button>
+                            </div>
+                            {/* Slide viewer */}
+                            <div className="flex-1 flex gap-4 min-h-0">
+                                {/* Thumbnail strip */}
+                                <div className="w-28 shrink-0 flex flex-col gap-2 overflow-y-auto pr-1">
+                                    {slides.map((slide, i) => (
+                                        <button
+                                            key={slide.id}
+                                            onClick={() => setCurrentSlideIndex(i)}
+                                            className={`w-full aspect-video rounded-lg border text-[8px] text-left p-1.5 transition-all ${currentSlideIndex === i ? 'border-orange-500 bg-orange-500/10' : 'border-slate-700 bg-slate-900 hover:border-slate-500'}`}
+                                        >
+                                            <div className="font-bold text-white truncate">{slide.title}</div>
+                                            <div className="text-slate-500 line-clamp-2">{slide.content}</div>
+                                        </button>
+                                    ))}
+                                </div>
+                                {/* Main slide */}
+                                <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-900 to-orange-950/20 border border-slate-800 rounded-2xl p-12 relative">
+                                    <div className="absolute top-4 right-4 text-xs text-slate-600 font-mono">{currentSlideIndex + 1} / {slides.length}</div>
+                                    <h2 className="text-4xl font-black text-white mb-8 text-center leading-tight">{slides[currentSlideIndex]?.title}</h2>
+                                    <div className="text-slate-300 text-lg leading-relaxed text-center max-w-2xl whitespace-pre-line">{slides[currentSlideIndex]?.content}</div>
+                                    {/* Nav arrows */}
+                                    <div className="absolute bottom-4 flex gap-3">
+                                        <button onClick={() => setCurrentSlideIndex(Math.max(0, currentSlideIndex - 1))} disabled={currentSlideIndex === 0} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 rounded-lg text-white text-sm transition-all">← Prev</button>
+                                        <button onClick={() => setCurrentSlideIndex(Math.min(slides.length - 1, currentSlideIndex + 1))} disabled={currentSlideIndex === slides.length - 1} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 rounded-lg text-white text-sm transition-all">Next →</button>
+                                    </div>
                                 </div>
                             </div>
-                            <h3 className="text-3xl font-bold text-white mb-4 tracking-tight relative z-10">AI Presentations</h3>
-                            <div className="flex items-center gap-3 mb-8 bg-orange-500/10 px-4 py-2 rounded-full border border-orange-500/20 relative z-10">
-                                <div className="w-2 h-2 rounded-full bg-orange-500 animate-[ping_2s_ease-in-out_infinite]" />
-                                <span className="text-sm font-black text-orange-400 uppercase tracking-widest">Coming Soon</span>
-                            </div>
-                            <p className="text-slate-400 max-w-md text-lg leading-relaxed relative z-10">
-                                Generate entire pitch decks and slide presentations in seconds through a simple prompt. Automatically styled to your brand guidelines.
-                            </p>
                         </div>
                     ) : fileUrl ? (
                         <div className="flex items-center justify-center h-full">

@@ -41,6 +41,23 @@ export default function ZohoMailView() {
     const [aiGenerating, setAiGenerating] = useState(false);
     const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [needsReconnect, setNeedsReconnect] = useState(false);
+
+    // Central fetch helper — detects AUTH_EXPIRED (reconnect: true) from API
+    const zohoFetch = async (url: string, options?: RequestInit): Promise<any> => {
+        const res = await fetch(url, options);
+        const data = await res.json();
+        if (res.status === 401 && data?.reconnect) {
+            setNeedsReconnect(true);
+            setError('Your Zoho session has expired. Please reconnect your account.');
+            return null;
+        }
+        if (!res.ok) {
+            setError(data?.error || `Request failed (${res.status})`);
+            return null;
+        }
+        return data;
+    };
 
     useEffect(() => {
         fetchFolders();
@@ -51,24 +68,15 @@ export default function ZohoMailView() {
     }, [selectedFolder, searchTerm]);
 
     const fetchFolders = async () => {
-        try {
-            const res = await fetch('/api/zoho/mail?action=folders');
-            const data = await res.json();
-            if (Array.isArray(data)) setFolders(data);
-        } catch (err) {
-            console.error('Failed to fetch folders', err);
-            setError('Failed to load folders. Please check your connection.');
-        }
+        const data = await zohoFetch('/api/zoho/mail?action=folders');
+        if (Array.isArray(data)) setFolders(data);
     };
 
     const fetchMessages = async (folderId: string) => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/zoho/mail?action=messages&folderId=${folderId}`);
-            const data = await res.json();
+            const data = await zohoFetch(`/api/zoho/mail?action=messages&folderId=${folderId}`);
             if (Array.isArray(data)) setMessages(data);
-        } catch (err) {
-            console.error('Failed to fetch messages', err);
         } finally {
             setLoading(false);
         }
@@ -77,14 +85,13 @@ export default function ZohoMailView() {
     const fetchMessageContent = async (id: string) => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/zoho/mail?action=content&messageId=${id}`);
-            const data = await res.json();
-            setMessageContent(data);
-            setSelectedMessage(id);
-            // Auto mark as read in background
-            fetch(`/api/zoho/mail?action=markRead&messageId=${id}`, { method: 'GET' });
-        } catch (err) {
-            console.error('Failed to fetch content', err);
+            const data = await zohoFetch(`/api/zoho/mail?action=content&messageId=${id}`);
+            if (data) {
+                setMessageContent(data);
+                setSelectedMessage(id);
+                // Auto mark as read in background (fire-and-forget)
+                fetch(`/api/zoho/mail?action=markRead&messageId=${id}`).catch(() => {});
+            }
         } finally {
             setLoading(false);
         }
@@ -95,11 +102,8 @@ export default function ZohoMailView() {
         if (!searchTerm) return;
         setLoading(true);
         try {
-            const res = await fetch(`/api/zoho/mail?action=search&q=${encodeURIComponent(searchTerm)}`);
-            const data = await res.json();
+            const data = await zohoFetch(`/api/zoho/mail?action=search&q=${encodeURIComponent(searchTerm)}`);
             if (Array.isArray(data)) setMessages(data);
-        } catch (err) {
-            console.error('Search failed', err);
         } finally {
             setLoading(false);
         }
@@ -107,26 +111,18 @@ export default function ZohoMailView() {
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this message?')) return;
-        try {
-            const res = await fetch(`/api/zoho/mail?messageId=${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                setSelectedMessage(null);
-                fetchMessages(selectedFolder);
-            }
-        } catch (err) {
-            console.error('Delete failed', err);
+        const data = await zohoFetch(`/api/zoho/mail?messageId=${id}`, { method: 'DELETE' });
+        if (data !== null) {
+            setSelectedMessage(null);
+            fetchMessages(selectedFolder);
         }
     };
 
     const handleArchive = async (id: string) => {
-        try {
-            const res = await fetch(`/api/zoho/mail?action=archive&messageId=${id}`);
-            if (res.ok) {
-                setSelectedMessage(null);
-                fetchMessages(selectedFolder);
-            }
-        } catch (err) {
-            console.error('Archive failed', err);
+        const data = await zohoFetch(`/api/zoho/mail?action=archive&messageId=${id}`);
+        if (data !== null) {
+            setSelectedMessage(null);
+            fetchMessages(selectedFolder);
         }
     };
 
@@ -134,20 +130,19 @@ export default function ZohoMailView() {
         e.preventDefault();
         setSending(true);
         try {
-            const res = await fetch('/api/zoho/mail', {
+            const data = await zohoFetch('/api/zoho/mail', {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     toAddress: emailData.to,
                     subject: emailData.subject,
-                    content: emailData.body
-                })
+                    content: emailData.body,
+                }),
             });
-            if (res.ok) {
+            if (data !== null) {
                 setComposing(false);
                 setEmailData({ to: '', subject: '', body: '' });
             }
-        } catch (err) {
-            console.error('Failed to send mail', err);
         } finally {
             setSending(false);
         }
@@ -504,6 +499,32 @@ export default function ZohoMailView() {
 
     return (
         <div className="flex flex-col bg-gray-950 text-gray-100 rounded-2xl border border-white/5 overflow-hidden shadow-2xl h-[calc(100vh-140px)] min-h-[600px] relative">
+            {needsReconnect && (
+                <div className="flex items-center justify-between gap-3 px-5 py-3 bg-red-900/40 border-b border-red-500/30 text-sm">
+                    <div className="flex items-center gap-2 text-red-300">
+                        <AlertCircle size={16} />
+                        <span className="font-semibold">Zoho session expired.</span>
+                        <span className="text-red-400">{error}</span>
+                    </div>
+                    <a
+                        href="/api/auth/zoho/connect"
+                        className="shrink-0 bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-4 py-1.5 rounded-lg transition-colors"
+                    >
+                        Reconnect Zoho
+                    </a>
+                </div>
+            )}
+            {error && !needsReconnect && (
+                <div className="flex items-center justify-between gap-3 px-5 py-2 bg-yellow-900/30 border-b border-yellow-500/20 text-xs text-yellow-300">
+                    <div className="flex items-center gap-2">
+                        <AlertCircle size={14} />
+                        <span>{error}</span>
+                    </div>
+                    <button onClick={() => setError(null)} className="text-yellow-500 hover:text-yellow-300">
+                        <X size={14} />
+                    </button>
+                </div>
+            )}
             <div className="flex flex-1 overflow-hidden">
                 <FolderSidebar />
                 <MessageListView />

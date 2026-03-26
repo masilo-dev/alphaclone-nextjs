@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Calendar, DollarSign, TrendingUp, Plus, Edit3, Trash2, Clock, CheckCircle, FileText } from 'lucide-react';
 import { Button } from '../../ui/UIComponents';
-import ComingSoonOverlay from '../ComingSoonOverlay';
 
 interface TeamMember {
   id: string;
@@ -495,11 +494,7 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
   };
 
   return (
-    <ComingSoonOverlay
-      title="Strategic Asset Management"
-      description="AlphaClone's enterprise resource and equipment allocation suite is entering final deployment. The visual structure below demonstrates the core allocation algorithms and data visualization."
-    >
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -611,7 +606,6 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
         {/* Add/Edit Modals would go here */}
         {/* Implementation of modals for adding/editing team members and resources */}
       </div>
-    </ComingSoonOverlay>
   );
 };
 

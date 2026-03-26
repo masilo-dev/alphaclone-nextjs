@@ -7,7 +7,6 @@ import { TableSkeleton } from '../ui/Skeleton';
 import { User, Project } from '../../types';
 import { Plus, Edit, Briefcase, Users, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import ComingSoonOverlay from './ComingSoonOverlay';
 
 interface TeamMember {
     id: string;
@@ -231,10 +230,6 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
     const avgCapacity = totalMembers > 0 ? Math.round(totalCapacity / totalMembers) : 0;
 
     return (
-        <ComingSoonOverlay 
-            title="Resource Allocation System"
-            description="Our advanced team and resource allocation system is in final testing. This prototype shows how you'll soon be able to manage your studio talent with precision."
-        >
             <div className="space-y-6 animate-fade-in">
                 {/* Header */}
                 <div className="flex justify-between items-start">
@@ -491,7 +486,6 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                     </Modal>
                 )}
             </div>
-        </ComingSoonOverlay>
     );
 };
 

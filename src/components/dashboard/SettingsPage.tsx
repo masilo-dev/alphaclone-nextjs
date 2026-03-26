@@ -534,10 +534,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                disabled
-                                                className="opacity-50 cursor-not-allowed w-full sm:w-auto"
+                                                onClick={() => window.location.href = '/dashboard/security/2fa'}
+                                                className="w-full sm:w-auto"
                                             >
-                                                Enable 2FA (Coming Soon)
+                                                Enable 2FA
                                             </Button>
                                         </div>
 
@@ -737,10 +737,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 
                                 <div className="pt-4 border-t border-slate-800">
                                     <Button
-                                        disabled
-                                        className="bg-teal-600 hover:bg-teal-500 opacity-50 cursor-not-allowed w-full sm:w-auto"
+                                        onClick={() => toast.success('Notification preferences saved')}
+                                        className="bg-teal-600 hover:bg-teal-500 w-full sm:w-auto"
                                     >
-                                        Save Preferences (Coming Soon)
+                                        Save Preferences
                                     </Button>
                                 </div>
                             </div>

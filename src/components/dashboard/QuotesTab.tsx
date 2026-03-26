@@ -488,9 +488,17 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
         }
     };
 
-    const handleShareQuote = async (_quote: Quote) => {
-        // Link sharing is temporarily disabled.
-        toast('Link sharing is coming soon. Use the status dropdown or Edit to change quote status.', { icon: '🔗' });
+    const handleShareQuote = async (quote: Quote) => {
+        // Build a shareable link using the quote ID — no extra token needed
+        // The public quote page at /quotes/[id] handles access
+        const shareUrl = `${window.location.origin}/quotes/${quote.id}`;
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            toast.success('Quote link copied to clipboard!');
+        } catch {
+            // Fallback for browsers that block clipboard
+            prompt('Copy this link:', shareUrl);
+        }
     };
 
     const handleQuickStatusUpdate = async (quote: Quote, newStatus: string) => {

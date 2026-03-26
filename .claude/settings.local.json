@@ -13,7 +13,10 @@
       "Bash(npm run build:*)",
       "Bash(grep:*)",
       "Bash(git restore:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(git log:*)",
+      "Bash(npx tsc:*)",
+      "Bash(xargs -I {} basename {})"
     ]
   }
 }

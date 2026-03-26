@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZohoCRMService } from '../../../../../services/zoho/ZohoCRMService';
+import { ZohoAuthExpiredError } from '../../../../../services/zoho/ZohoService';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function POST(req: NextRequest) {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId') || req.headers.get('x-user-id'); 
-    
-    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    const zohoCRM = new ZohoCRMService(userId);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const zohoCRM = new ZohoCRMService(user.id);
 
     try {
         const { module } = await req.json();
-        
+
         let syncedCount = 0;
         if (module === 'Contacts' || !module) {
             syncedCount += await zohoCRM.syncContacts();
@@ -20,13 +22,19 @@ export async function POST(req: NextRequest) {
             syncedCount += await zohoCRM.syncDeals();
         }
 
-        return NextResponse.json({ 
-            success: true, 
+        return NextResponse.json({
+            success: true,
             syncedCount,
-            message: `Successfully synced ${syncedCount} records from Zoho CRM`
+            message: `Successfully synced ${syncedCount} records from Zoho CRM`,
         });
     } catch (err: any) {
-        console.error('Zoho CRM Sync Error:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        if (err instanceof ZohoAuthExpiredError) {
+            return NextResponse.json(
+                { error: err.message, reconnect: true },
+                { status: 401 }
+            );
+        }
+        console.error('[Zoho CRM Sync]', err?.message ?? err);
+        return NextResponse.json({ error: err?.message ?? 'Sync failed' }, { status: 500 });
     }
 }

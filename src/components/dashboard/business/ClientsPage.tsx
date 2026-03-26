@@ -580,12 +580,12 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
         {
             label: 'Schedule Meeting',
             icon: <Calendar className="w-4 h-4" />,
-            onClick: () => toast('Calendar integration coming soon!', { icon: '📅' })
+            onClick: () => window.location.href = '/dashboard/calendar'
         },
         {
             label: 'View History',
             icon: <History className="w-4 h-4" />,
-            onClick: () => toast('Activity history coming soon!', { icon: '📋' })
+            onClick: () => window.location.href = '/dashboard/reports'
         },
         {
             label: 'Edit Client',

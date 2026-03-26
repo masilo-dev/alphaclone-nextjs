@@ -1,4 +1,6 @@
-import { supabase } from '../../lib/supabase';
+import { supabase as defaultSupabase } from '../../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+import { ENV } from '@/config/env';
 import { encrypt, decrypt } from '../../lib/encryption';
 
 export interface ZohoConfig {
@@ -9,6 +11,21 @@ export interface ZohoConfig {
     crmApiHost?: string;
     accountsServer: string;
     accountId?: string;
+    booksOrgId?: string;  // Zoho Books organization ID
+}
+
+export class ZohoAuthExpiredError extends Error {
+    constructor(message = 'Zoho authentication expired. Please reconnect your Zoho account.') {
+        super(message);
+        this.name = 'ZohoAuthExpiredError';
+    }
+}
+
+export class ZohoAPIError extends Error {
+    constructor(public status: number, message: string) {
+        super(message);
+        this.name = 'ZohoAPIError';
+    }
 }
 
 export class ZohoService {
@@ -17,7 +34,21 @@ export class ZohoService {
 
     constructor(userId: string) {
         this.userId = userId;
-        this.encryptionSecret = process.env.ZOHO_ENCRYPTION_SECRET || 'default-32-char-secret-for-zoho-'; // Must be 32 chars
+        const secret = process.env.ZOHO_ENCRYPTION_SECRET;
+        if (!secret) {
+            throw new Error(
+                'ZOHO_ENCRYPTION_SECRET environment variable is not set. ' +
+                'Generate one with: openssl rand -base64 24'
+            );
+        }
+        this.encryptionSecret = secret;
+    }
+
+    protected getSupabaseClient() {
+        if (typeof window === 'undefined' && ENV.SUPABASE_SERVICE_ROLE_KEY && ENV.VITE_SUPABASE_URL) {
+            return createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+        }
+        return defaultSupabase;
     }
 
     static normalizeHost(value?: string): string | undefined {
@@ -35,6 +66,7 @@ export class ZohoService {
      * Get the stored Zoho configuration for the user
      */
     async getConfig(): Promise<ZohoConfig | null> {
+        const supabase = this.getSupabaseClient();
         const { data, error } = await supabase
             .from('integrations')
             .select('config')
@@ -43,10 +75,9 @@ export class ZohoService {
             .maybeSingle();
 
         if (error || !data) return null;
-        
+
         const config = data.config as any;
-        
-        // Decrypt tokens if encrypted
+
         try {
             if (config.refreshToken && config.refreshToken.includes(':')) {
                 config.refreshToken = decrypt(config.refreshToken, this.encryptionSecret);
@@ -65,9 +96,6 @@ export class ZohoService {
         return config as ZohoConfig;
     }
 
-    /**
-     * Save/Update Zoho configuration
-     */
     async saveConfig(config: Partial<ZohoConfig>): Promise<void> {
         const currentConfig = await this.getConfig() || {};
         const newConfig = { ...currentConfig, ...config };
@@ -85,6 +113,7 @@ export class ZohoService {
             newConfig.accessToken = encrypt(newConfig.accessToken, this.encryptionSecret);
         }
 
+        const supabase = this.getSupabaseClient();
         await supabase
             .from('integrations')
             .upsert({
@@ -99,51 +128,57 @@ export class ZohoService {
             });
     }
 
-    /**
-     * Refresh the access token using the refresh token
-     */
     async refreshAccessToken(): Promise<string | null> {
         const config = await this.getConfig();
-        if (!config || !config.refreshToken) return null;
+        if (!config?.refreshToken) return null;
 
         const accountsServer = ZohoService.normalizeAccountsServer(config.accountsServer) || 'https://accounts.zoho.com';
         const clientId = process.env.ZOHO_CLIENT_ID || '';
         const clientSecret = process.env.ZOHO_CLIENT_SECRET || '';
         if (!clientId || !clientSecret) return null;
 
-        const response = await fetch(`${accountsServer}/oauth/v2/token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
-                refresh_token: config.refreshToken,
-                client_id: clientId,
-                client_secret: clientSecret,
-                grant_type: 'refresh_token',
-            }),
-        });
+        let response: Response;
+        try {
+            response = await fetch(`${accountsServer}/oauth/v2/token`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    refresh_token: config.refreshToken,
+                    client_id: clientId,
+                    client_secret: clientSecret,
+                    grant_type: 'refresh_token',
+                }),
+            });
+        } catch (networkErr) {
+            console.error('Zoho token refresh network error:', networkErr);
+            return null;
+        }
 
         const data = await response.json();
+
+        if (data.error) {
+            console.error('Zoho token refresh failed:', data.error);
+            // If refresh token is invalid/expired, clear integration
+            if (data.error === 'invalid_code' || data.error === 'access_denied') {
+                await this.disconnect();
+            }
+            return null;
+        }
+
         if (data.access_token) {
             const expiryDate = new Date(Date.now() + (data.expires_in || 3600) * 1000).toISOString();
-            await this.saveConfig({
-                accessToken: data.access_token,
-                expiryDate
-            });
+            await this.saveConfig({ accessToken: data.access_token, expiryDate });
             return data.access_token;
         }
 
         return null;
     }
 
-    /**
-     * Get a valid access token (refreshes if needed)
-     */
     async getValidAccessToken(): Promise<string | null> {
         const config = await this.getConfig();
         if (!config) return null;
 
         const expiry = new Date(config.expiryDate).getTime();
-        // Refresh if expiring in less than 5 minutes
         if (Date.now() > expiry - 300000) {
             return await this.refreshAccessToken();
         }
@@ -152,32 +187,76 @@ export class ZohoService {
     }
 
     /**
-     * Helper to resolve Zoho API hosts based on the region
+     * Make an authenticated Zoho API call.
+     * Automatically retries with a fresh token on 401.
+     * Throws ZohoAuthExpiredError if auth cannot be recovered.
+     * Throws ZohoAPIError for 4xx/5xx responses.
      */
+    protected async callZohoAPI(url: string, options: RequestInit = {}): Promise<any> {
+        const makeRequest = async (token: string): Promise<Response> => {
+            return fetch(url, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                    Authorization: `Zoho-oauthtoken ${token}`,
+                },
+            });
+        };
+
+        let token = await this.getValidAccessToken();
+        if (!token) {
+            throw new ZohoAuthExpiredError();
+        }
+
+        let response = await makeRequest(token);
+
+        // On 401: force a fresh token refresh and retry once
+        if (response.status === 401) {
+            const newToken = await this.refreshAccessToken();
+            if (!newToken) {
+                await this.disconnect();
+                throw new ZohoAuthExpiredError();
+            }
+            response = await makeRequest(newToken);
+            if (response.status === 401) {
+                await this.disconnect();
+                throw new ZohoAuthExpiredError();
+            }
+        }
+
+        if (response.status === 404) {
+            throw new ZohoAPIError(404, `Zoho resource not found: ${url}`);
+        }
+
+        if (!response.ok) {
+            let errBody = '';
+            try { errBody = await response.text(); } catch {}
+            throw new ZohoAPIError(response.status, `Zoho API error ${response.status}: ${errBody}`);
+        }
+
+        return response.json();
+    }
+
     static getHostsByRegion(region: string) {
         const hosts: Record<string, { accounts: string; mail: string; crm: string }> = {
-            US: { accounts: 'https://accounts.zoho.com', mail: 'mail.zoho.com', crm: 'www.zohoapis.com' },
-            EU: { accounts: 'https://accounts.zoho.eu', mail: 'mail.zoho.eu', crm: 'www.zohoapis.eu' },
-            IN: { accounts: 'https://accounts.zoho.in', mail: 'mail.zoho.in', crm: 'www.zohoapis.in' },
+            US: { accounts: 'https://accounts.zoho.com',    mail: 'mail.zoho.com',    crm: 'www.zohoapis.com' },
+            EU: { accounts: 'https://accounts.zoho.eu',     mail: 'mail.zoho.eu',     crm: 'www.zohoapis.eu' },
+            IN: { accounts: 'https://accounts.zoho.in',     mail: 'mail.zoho.in',     crm: 'www.zohoapis.in' },
             AU: { accounts: 'https://accounts.zoho.com.au', mail: 'mail.zoho.com.au', crm: 'www.zohoapis.com.au' },
-            JP: { accounts: 'https://accounts.zoho.jp', mail: 'mail.zoho.jp', crm: 'www.zohoapis.jp' },
-            CA: { accounts: 'https://accounts.zoho.ca', mail: 'mail.zoho.ca', crm: 'www.zohoapis.ca' },
+            JP: { accounts: 'https://accounts.zoho.jp',     mail: 'mail.zoho.jp',     crm: 'www.zohoapis.jp' },
+            CA: { accounts: 'https://accounts.zoho.ca',     mail: 'mail.zoho.ca',     crm: 'www.zohoapis.ca' },
         };
         return hosts[region] || hosts.US;
     }
 
-    /**
-     * Check if Zoho is integrated and valid
-     */
     async checkIntegration(): Promise<boolean> {
         const config = await this.getConfig();
-        return !!(config && config.refreshToken);
+        return !!(config?.refreshToken);
     }
 
-    /**
-     * Disconnect Zoho integration
-     */
     async disconnect(): Promise<void> {
+        const supabase = this.getSupabaseClient();
         await supabase
             .from('integrations')
             .delete()

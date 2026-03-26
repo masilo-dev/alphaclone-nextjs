@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 
 import { hubspotService } from '@/services/hubspotService';
 import { ZohoCRMService } from '@/services/zoho/ZohoCRMService';
+import { ZohoAuthExpiredError } from '@/services/zoho/ZohoService';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
 
 export async function POST(req: Request) {
@@ -50,18 +51,22 @@ export async function POST(req: Request) {
             try {
                 const zohoCRM = new ZohoCRMService(userId);
                 let res;
-                const entityType = (await req.clone().json()).entityType;
-
+                // entityType was already destructured from req.json() above
                 if (entityType === 'lead' || lead) {
                     res = await zohoCRM.upsertLead(lead || deal);
                 } else {
                     res = await zohoCRM.upsertDeal(deal);
                 }
-                
                 results.push({ provider: 'zoho', status: 'success', data: res });
             } catch (e: any) {
                 console.error('Zoho CRM Sync Error:', e);
-                results.push({ provider: 'zoho', status: 'failed', error: e.message });
+                const isAuthExpired = e instanceof ZohoAuthExpiredError;
+                results.push({
+                    provider: 'zoho',
+                    status: 'failed',
+                    error: e.message,
+                    reconnect: isAuthExpired,
+                });
             }
         }
 

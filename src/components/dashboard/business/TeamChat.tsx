@@ -4,7 +4,6 @@ import { User } from '../../../types';
 import { format } from 'date-fns';
 import { taskService } from '../../../services/taskService';
 import toast from 'react-hot-toast';
-import ComingSoonOverlay from '../ComingSoonOverlay';
 
 interface TeamMember {
     user_id: string;
@@ -132,10 +131,6 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers }) => {
     };
 
     return (
-        <ComingSoonOverlay
-            title="Internal Communication Network"
-            description="Our advanced team messaging and tasking integration is being finalized. This prototype displays the layout of our upcoming real-time stream."
-        >
             <div className="flex flex-col h-[600px] bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
                 {/* Chat Header */}
                 <div className="p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm flex justify-between items-center">
@@ -233,6 +228,5 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers }) => {
                     </div>
                 </div>
             </div>
-        </ComingSoonOverlay>
     );
 };

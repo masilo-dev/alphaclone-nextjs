@@ -309,8 +309,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     }, [currentTenant, loadAllEvents]);
 
     const handleGoogleConnect = () => {
-        // window.location.href = `/api/auth/google/calendar/connect?userId=${user.id}`;
-        // Google Calendar marked as coming soon per user request
+        window.location.href = `/api/auth/google/calendar/connect?userId=${user.id}`;
     };
 
     const toggleFilter = (source: CalendarEvent['source']) => {
@@ -390,13 +389,14 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                     </div>
                 </div>
                 <div className="flex w-full sm:w-auto gap-2">
-                    <div
-                        title="Google Calendar Integration - Coming Soon"
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-500 cursor-not-allowed transition-colors"
+                    <button
+                        onClick={() => window.location.href = `/api/auth/google/calendar/connect?userId=${user.id}`}
+                        title="Connect Google Calendar"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-slate-300 hover:text-white transition-colors"
                     >
-                        <Mail className="w-4 h-4 opacity-50" />
-                        <span className="text-sm font-medium">Coming Soon</span>
-                    </div>
+                        <Mail className="w-4 h-4" />
+                        <span className="text-sm font-medium">Google Calendar</span>
+                    </button>
                     <button
                         onClick={() => setShowAddModal(true)}
                         className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors font-semibold text-slate-950"

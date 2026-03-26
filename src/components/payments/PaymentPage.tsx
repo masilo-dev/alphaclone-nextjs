@@ -68,20 +68,8 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
     }, [selectedInvoice, loadData]);
 
     const startCreateInvoice = useCallback(() => {
-        const dummyInvoice = {
-            user_id: user.id,
-            amount: 499.00,
-            currency: 'usd',
-            due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            description: 'Web Development Services - Milestone 1',
-            items: [
-                { description: 'Frontend Development', quantity: 1, unit_price: 299.00, amount: 299.00 },
-                { description: 'UI Design', quantity: 1, unit_price: 200.00, amount: 200.00 }
-            ]
-        };
-
-        paymentService.createInvoice(dummyInvoice).then(() => loadData());
-    }, [user.id, loadData]);
+        window.location.href = '/dashboard/invoices';
+    }, []);
 
     if (loading) {
         return <div className="p-8 text-center text-slate-400">Loading payments...</div>;

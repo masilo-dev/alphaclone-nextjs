@@ -29,11 +29,15 @@ export async function GET(req: NextRequest) {
     }
 
     const scopes = [
+        // Mail
         'ZohoMail.accounts.READ',
         'ZohoMail.messages.ALL',
         'ZohoMail.folders.READ',
+        // CRM
         'ZohoCRM.modules.ALL',
-        'ZohoCRM.users.READ'
+        'ZohoCRM.users.READ',
+        // Books (finance)
+        'ZohoBooks.fullaccess.all',
     ];
 
     const authUrl = new URL(`${hosts.accounts}/oauth/v2/auth`);
