@@ -30,14 +30,19 @@ export class ZohoMailService extends ZohoService {
             return { accessToken, config };
         }
 
+        console.log(`[ZohoMailService] Fetching accounts from Zoho: https://${config.mailApiHost}/api/accounts`);
         const accountsResponse = await fetch(`https://${config.mailApiHost}/api/accounts`, {
             headers: { Authorization: `Zoho-oauthtoken ${accessToken}` }
         });
         const accountsData = await accountsResponse.json();
+        console.log('[ZohoMailService] Accounts response:', JSON.stringify(accountsData));
         const accountId = accountsData?.data?.[0]?.accountId;
         if (accountId) {
+            console.log(`[ZohoMailService] Found accountId: ${accountId}. Saving to config.`);
             await this.saveConfig({ accountId: String(accountId) });
             config.accountId = String(accountId);
+        } else {
+            console.error('[ZohoMailService] No accountId found in Zoho response!');
         }
 
         return { accessToken, config };
@@ -71,7 +76,9 @@ export class ZohoMailService extends ZohoService {
      */
     async getFolders(): Promise<ZohoFolder[]> {
         const { base } = await this.getMailBase();
+        console.log(`[ZohoMailService] Calling Zoho API: ${base}/folders`);
         const data = await this.callZohoAPI(`${base}/folders`);
+        console.log(`[ZohoMailService] getFolders response data count: ${data?.data?.length || 0}`);
         return (data?.data ?? []) as ZohoFolder[];
     }
 
@@ -80,15 +87,19 @@ export class ZohoMailService extends ZohoService {
      */
     async getMessages(folderId: string, limit = 20, start = 1): Promise<ZohoMessage[]> {
         const { base } = await this.getMailBase();
-        const data = await this.callZohoAPI(
-            `${base}/messages/view?folderId=${encodeURIComponent(folderId)}&limit=${limit}&start=${start}`
-        );
+        const url = `${base}/messages/view?folderId=${encodeURIComponent(folderId)}&limit=${limit}&start=${start}`;
+        console.log(`[ZohoMailService] Calling Zoho API: ${url}`);
+        const data = await this.callZohoAPI(url);
+        console.log(`[ZohoMailService] getMessages response data count: ${data?.data?.length || 0}`);
         return (data?.data ?? []) as ZohoMessage[];
     }
 
     async getMessageContent(messageId: string) {
         const { base } = await this.getMailBase();
-        const data = await this.callZohoAPI(`${base}/messages/${encodeURIComponent(messageId)}/content`);
+        const url = `${base}/messages/${encodeURIComponent(messageId)}/content`;
+        console.log(`[ZohoMailService] Calling Zoho API: ${url}`);
+        const data = await this.callZohoAPI(url);
+        console.log(`[ZohoMailService] getMessageContent response success: ${!!data?.data}`);
         return data?.data ?? data;
     }
 
