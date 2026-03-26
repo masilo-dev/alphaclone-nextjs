@@ -13,9 +13,14 @@ async function getUserId(req: NextRequest): Promise<string | null> {
 }
 
 function handleZohoError(err: unknown): NextResponse {
-    if (err instanceof ZohoAuthExpiredError) {
+    const isMissingConfig = err instanceof Error && (
+        err.message.includes('missing mailApiHost') || 
+        err.message.includes('missing accountId')
+    );
+
+    if (err instanceof ZohoAuthExpiredError || isMissingConfig) {
         return NextResponse.json(
-            { error: err.message, reconnect: true },
+            { error: err instanceof Error ? err.message : 'Authentication required', reconnect: true },
             { status: 401 }
         );
     }

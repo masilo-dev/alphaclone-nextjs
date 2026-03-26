@@ -50,7 +50,9 @@ export class ZohoMailService extends ZohoService {
 
     private async getMailBase(): Promise<{ base: string; accountId: string }> {
         const config = await this.getConfig();
-        if (!config?.mailApiHost) throw new Error('Zoho Mail not configured: missing mailApiHost');
+        if (!config?.mailApiHost) {
+            throw new Error('Zoho Mail is not fully configured. Please reconnect your account to fix this.');
+        }
         
         let accountId = config?.accountId;
         if (!accountId) {
