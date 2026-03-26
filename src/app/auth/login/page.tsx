@@ -29,13 +29,14 @@ function LoginContent() {
     const isRegisterMode = searchParams.get('register') === 'true';
     const typeParam = searchParams.get('type');
     const planParam = searchParams.get('plan') as SubscriptionPlan | null;
+    const businessNameParam = searchParams.get('businessName');
 
     const [isRegistering, setIsRegistering] = useState(isRegisterMode);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
-    const [businessName, setBusinessName] = useState('');
-    const [isBusiness, setIsBusiness] = useState(typeParam === 'business');
+    const [businessName, setBusinessName] = useState(businessNameParam || '');
+    const [isBusiness, setIsBusiness] = useState(typeParam === 'business' || typeParam === 'agency' || typeParam === 'freelancer' || !!businessNameParam);
     const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>(
         planParam && ['starter', 'pro', 'enterprise'].includes(planParam) ? planParam : 'starter'
     );

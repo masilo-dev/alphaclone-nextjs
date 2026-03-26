@@ -29,7 +29,8 @@ import {
    Phone,
    MapPin,
    Video,
-   FileCheck
+   FileCheck,
+   ArrowRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from './ui/UIComponents';
@@ -458,16 +459,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      className="flex flex-col items-center gap-2"
                   >
                      <h1
-                        className="text-5xl sm:text-6xl md:text-8xl lg:text-[90px] font-black tracking-tighter leading-none font-marketing-heading hero-metallic-text"
+                        className="text-4xl sm:text-6xl md:text-8xl lg:text-[80px] font-black tracking-tighter leading-none font-marketing-heading hero-metallic-text mb-2"
                         style={{ textShadow: '0 0 80px rgba(0,119,255,0.3)' }}
                      >
-                        ALPHACLONE
+                        ELITE UNIFIED OS
                      </h1>
                      <span
-                        className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-[0.3em] uppercase text-slate-300 font-marketing-brand"
+                        className="text-xl sm:text-2xl md:text-3xl font-bold tracking-[0.3em] uppercase text-teal-400 font-marketing-brand"
                         style={{ letterSpacing: '0.35em' }}
                      >
-                        SYSTEMS
+                        FOR AGENCIES & FREELANCERS
                      </span>
                   </motion.div>
 
@@ -478,7 +479,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                      transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
                      className="text-lg sm:text-xl md:text-2xl text-slate-400 mb-4 max-w-3xl leading-relaxed"
                   >
-                     Replace your fragmented tech stack with AlphaClone. The high-performance Business OS that unifies your CRM, projects, and finances.
+                     Stop the tool-hopping. Manage your CRM, Projects, and Billing in one high-performance platform built for high-performance individuals and teams.
                   </motion.p>
 
                   {/* Divider */}
@@ -506,14 +507,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         Start Free Trial
                      </Button>
 
-                     {/* Ghost secondary CTA */}
+                     {/* Tool CTA - Reverse Signup logic */}
                      <Button
                         size="lg"
                         variant="outline"
-                        onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
-                        className="border-slate-700 bg-slate-900/80 md:bg-slate-900/50 md:backdrop-blur hover:bg-slate-800 text-white px-10 h-14 w-full sm:w-auto text-lg hover:border-slate-500 tracking-tight"
+                        onClick={() => window.location.href = '/tools/ai-architect'}
+                        className="border-teal-500/30 bg-teal-500/5 hover:bg-teal-500/10 text-teal-400 px-10 h-14 w-full sm:w-auto text-lg hover:border-teal-500 tracking-tight flex items-center gap-2"
                      >
-                        Book a Demo
+                        <Zap className="w-5 h-5" />
+                        Try AI Architect
+                     </Button>
+
+                     {/* Ghost secondary CTA */}
+                     <Button
+                        size="lg"
+                        variant="ghost"
+                        onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
+                        className="text-slate-400 hover:text-white hover:bg-white/5 px-6 h-14 w-full sm:w-auto text-base tracking-tight"
+                     >
+                        Book Demo
                      </Button>
                   </motion.div>
 
@@ -592,7 +604,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <div className="w-12 h-12 bg-teal-500/10 rounded-xl flex items-center justify-center">
                               <Target className="w-6 h-6 text-teal-400" />
                            </div>
-                           <h3 className="text-xl font-bold text-white">Growing Agencies</h3>
+                           <h3 className="text-xl font-bold text-white">Scaling & Agile Agencies</h3>
                         </div>
                         <div className="space-y-4">
                            <div>
@@ -621,6 +633,46 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                                     <span>White-label client portals</span>
                                  </li>
                               </ul>
+                                 <Link 
+                                    href="/auth/login?register=true&type=agency&plan=pro"
+                                    className="mt-6 w-full py-3 bg-teal-500/10 hover:bg-teal-500 text-teal-400 hover:text-slate-950 border border-teal-500/20 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 group/btn"
+                                 >
+                                    Deploy Agency OS <ArrowRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
+                                 </Link>
+                           </div>
+                        </div>
+                     </div>
+
+                     {/* Elite Freelancers */}
+                     <div className="bg-slate-900/40 border border-slate-800/50 rounded-3xl p-8 hover:border-blue-500/50 transition-all group backdrop-blur-xl relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="flex items-center gap-3 mb-6">
+                           <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center">
+                              <UserIcon className="w-6 h-6 text-blue-400" />
+                           </div>
+                           <h3 className="text-xl font-bold text-white">Elite Freelancers</h3>
+                        </div>
+                        <div className="space-y-4">
+                           <div>
+                              <p className="text-sm font-semibold text-slate-300 mb-2">The Mission:</p>
+                              <p className="text-sm text-slate-400">Professionalize your client portal, invoicing, and CRM in one cinematic interface built for solo power.</p>
+                           </div>
+                           <div>
+                              <p className="text-sm font-semibold text-blue-400 mb-2">How We Help:</p>
+                              <ul className="text-sm text-slate-400 space-y-1">
+                                 <li className="flex items-start gap-2 group/list">
+                                    <div className="w-4 h-4 rounded bg-blue-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-blue-500/20 transition-colors">
+                                       <Check className="w-3 h-3 text-blue-400" />
+                                    </div>
+                                    <span>High-impact tools for individual productivity</span>
+                                 </li>
+                              </ul>
+                                 <Link 
+                                    href="/auth/login?register=true&type=freelancer&plan=starter"
+                                    className="mt-6 w-full py-3 bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white border border-blue-500/20 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 group/btn"
+                                 >
+                                    Launch Freelancer OS <ArrowRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
+                                 </Link>
                            </div>
                         </div>
                      </div>
@@ -952,6 +1004,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         {
                            id: 'tasks',
                            icon: FileCheck,
+   ArrowRight,
                            color: 'cyan',
                            title: 'Contract Logic',
                            summary: 'Technical contract management simplified. Deploy, track, and manage complex agreements with built-in validation and team signatures.',
