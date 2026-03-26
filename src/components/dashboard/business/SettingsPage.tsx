@@ -38,6 +38,7 @@ import CalendlySettings from './CalendlySettings';
 import { fileUploadService } from '../../../services/fileUploadService';
 import GmailIntegration from './GmailIntegration';
 import HubspotIntegration from './HubspotIntegration';
+import ZohoIntegration from './ZohoIntegration';
 import MFAEnrollment from './MFAEnrollment';
 import { authService } from '../../../services/authService';
 import { Button, Modal, Input } from '../../ui/UIComponents';
@@ -906,7 +907,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                         <div className="space-y-4">
                             <GmailIntegration user={user} />
 
-
+                            <ZohoIntegration user={user} />
 
                             <HubspotIntegration />
                         </div>
