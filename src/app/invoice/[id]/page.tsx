@@ -260,7 +260,7 @@ export default function PublicInvoicePage() {
                     <span className="w-1 h-1 bg-slate-800 rounded-full"></span>
                     <span>GDPR Compliant</span>
                 </div>
-                <p className="text-xs">&copy; {new Date().getFullYear()} AlphaClone. Dynamic Systems for Elite Operations.</p>
+                <p className="text-xs">&copy; {new Date().getFullYear()} AlphaClone. Dynamic Systems for Professional Operations.</p>
             </div>
         </div>
     );

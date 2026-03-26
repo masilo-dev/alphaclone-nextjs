@@ -14,14 +14,14 @@ import MarketingFooter from '@/components/landing/MarketingFooter';
 
 const plans = [
     {
-        name: 'Elite Freelancer',
+        name: 'Solo Professional',
         price: '15',
         users: '1',
-        desc: 'The complete Unified OS for solo operators and elite freelancers.',
+        desc: 'The complete Unified OS for solo operators and independent professionals.',
         highlight: false,
         color: 'slate',
         features: [
-            '1 Elite Seat',
+            '1 Professional Seat',
             'Unified CRM Pipeline',
             'Automated Invoicing & P&L',
             'Contract Engine (3 high-perf templates)',
@@ -45,7 +45,7 @@ const plans = [
         name: 'Scaling Agency',
         price: '45',
         users: '25',
-        desc: 'Everything to scale your agency and elite team to the next level.',
+        desc: 'Everything to scale your agency and growing team to the next level.',
         highlight: true,
         color: 'teal',
         features: [

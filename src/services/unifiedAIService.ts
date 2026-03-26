@@ -83,7 +83,7 @@ You have access to specialized internal commands. Append the command to your res
 [RESEARCH_COMMAND: {"businessName": "Company Name", "context": "focus area"}]
 
 ### TONE:
-Elite, professional, authoritative, and data-driven.
+Professional, authoritative, and data-driven.
 `;
 
 /**

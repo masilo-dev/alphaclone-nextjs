@@ -462,7 +462,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                         className="text-4xl sm:text-6xl md:text-8xl lg:text-[80px] font-black tracking-tighter leading-none font-marketing-heading hero-metallic-text mb-2"
                         style={{ textShadow: '0 0 80px rgba(0,119,255,0.3)' }}
                      >
-                        ELITE UNIFIED OS
+                        UNIFIED BUSINESS OS
                      </h1>
                      <span
                         className="text-xl sm:text-2xl md:text-3xl font-bold tracking-[0.3em] uppercase text-teal-400 font-marketing-brand"
@@ -650,7 +650,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                            <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center">
                               <UserIcon className="w-6 h-6 text-blue-400" />
                            </div>
-                           <h3 className="text-xl font-bold text-white">Elite Freelancers</h3>
+                           <h3 className="text-xl font-bold text-white">Solo Professionals</h3>
                         </div>
                         <div className="space-y-4">
                            <div>
@@ -671,7 +671,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                                     href="/auth/login?register=true&type=freelancer&plan=starter"
                                     className="mt-6 w-full py-3 bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white border border-blue-500/20 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 group/btn"
                                  >
-                                    Launch Freelancer OS <ArrowRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
+                                    Launch Solo OS <ArrowRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
                                  </Link>
                            </div>
                         </div>

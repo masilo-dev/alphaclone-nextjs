@@ -145,7 +145,7 @@ export const contractService = {
      * Generate Draft with AI
      */
     async generateDraft(type: string, clientName: string, projectDetails: string) {
-        const prompt = `Act as an elite corporate legal counsel. Write a comprehensive, high-stakes professional ${type} for "${clientName}".
+        const prompt = `Act as an expert corporate legal counsel. Write a comprehensive, high-stakes professional ${type} for "${clientName}".
 
         Project Scope: ${projectDetails}
 

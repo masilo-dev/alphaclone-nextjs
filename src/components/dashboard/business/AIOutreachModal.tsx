@@ -28,7 +28,7 @@ interface AIOutreachModalProps {
 }
 
 const TONES = [
-    { id: 'professional', label: 'Professional', description: 'Elite & Business-focused' },
+    { id: 'professional', label: 'Professional', description: 'Expert & Business-focused' },
     { id: 'friendly', label: 'Friendly', description: 'Warm & Approachable' },
     { id: 'direct', label: 'Direct', description: 'Concise & Short' },
     { id: 'marketing', label: 'Creative', description: 'Persuasive & Bold' },
