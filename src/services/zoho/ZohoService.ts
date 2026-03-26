@@ -34,7 +34,7 @@ export class ZohoService {
 
     constructor(userId: string) {
         this.userId = userId;
-        const secret = process.env.ZOHO_ENCRYPTION_SECRET;
+        const secret = ENV.ZOHO_ENCRYPTION_SECRET;
         if (!secret) {
             throw new Error(
                 'ZOHO_ENCRYPTION_SECRET environment variable is not set. ' +
@@ -133,8 +133,8 @@ export class ZohoService {
         if (!config?.refreshToken) return null;
 
         const accountsServer = ZohoService.normalizeAccountsServer(config.accountsServer) || 'https://accounts.zoho.com';
-        const clientId = process.env.ZOHO_CLIENT_ID || '';
-        const clientSecret = process.env.ZOHO_CLIENT_SECRET || '';
+        const clientId = ENV.ZOHO_CLIENT_ID || '';
+        const clientSecret = ENV.ZOHO_CLIENT_SECRET || '';
         if (!clientId || !clientSecret) return null;
 
         let response: Response;

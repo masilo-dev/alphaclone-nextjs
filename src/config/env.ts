@@ -68,6 +68,12 @@ const envSchema = z.object({
 
     // Encryption
     ENCRYPTION_SECRET: z.string().length(32, 'Encryption secret must be exactly 32 characters').optional(),
+
+    // Zoho OAuth
+    ZOHO_CLIENT_ID: z.string().optional(),
+    ZOHO_CLIENT_SECRET: z.string().optional(),
+    ZOHO_REDIRECT_URI: z.string().url().optional(),
+    ZOHO_ENCRYPTION_SECRET: z.string().length(32, 'Zoho encryption secret must be exactly 32 characters').optional(),
 });
 
 /**
@@ -122,6 +128,12 @@ function validateEnv() {
 
         // Encryption
         ENCRYPTION_SECRET: process.env.ENCRYPTION_SECRET,
+
+        // Zoho OAuth
+        ZOHO_CLIENT_ID: process.env.ZOHO_CLIENT_ID || process.env.NEXT_PUBLIC_ZOHO_CLIENT_ID,
+        ZOHO_CLIENT_SECRET: process.env.ZOHO_CLIENT_SECRET || process.env.NEXT_PUBLIC_ZOHO_CLIENT_SECRET,
+        ZOHO_REDIRECT_URI: process.env.ZOHO_REDIRECT_URI || process.env.NEXT_PUBLIC_ZOHO_REDIRECT_URI,
+        ZOHO_ENCRYPTION_SECRET: process.env.ZOHO_ENCRYPTION_SECRET || process.env.ENCRYPTION_SECRET,
     };
 
     // Helper to treat empty strings or whitespace-only as undefined, and trim all strings

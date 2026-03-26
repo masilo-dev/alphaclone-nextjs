@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZohoService } from '../../../../../services/zoho/ZohoService';
+import { ENV } from '@/config/env';
 
 function getAppUrl(req: NextRequest) {
     if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
@@ -14,11 +15,11 @@ export async function GET(req: NextRequest) {
     const state = searchParams.get('state') || ''; // user ID or secure nonce
 
     const hosts = ZohoService.getHostsByRegion(region);
-    const clientId = process.env.ZOHO_CLIENT_ID;
-    const clientSecret = process.env.ZOHO_CLIENT_SECRET;
+    const clientId = ENV.ZOHO_CLIENT_ID;
+    const clientSecret = ENV.ZOHO_CLIENT_SECRET;
     
     const appUrl = getAppUrl(req);
-    const redirectUri = process.env.ZOHO_REDIRECT_URI || `${appUrl}/api/auth/zoho/callback`;
+    const redirectUri = ENV.ZOHO_REDIRECT_URI || `${appUrl}/api/auth/zoho/callback`;
 
     if (!clientId || !clientSecret) {
         return NextResponse.json({ error: 'Zoho OAuth is not fully configured' }, { status: 500 });

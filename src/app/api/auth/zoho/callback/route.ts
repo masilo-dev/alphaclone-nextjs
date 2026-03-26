@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZohoService } from '../../../../../services/zoho/ZohoService';
+import { ENV } from '@/config/env';
 
 function getAppUrl(req: NextRequest) {
     if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
         }
 
         const hosts = ZohoService.getHostsByRegion(region);
-        const redirectUri = process.env.ZOHO_REDIRECT_URI || `${appUrl}/api/auth/zoho/callback`;
+        const redirectUri = ENV.ZOHO_REDIRECT_URI || `${appUrl}/api/auth/zoho/callback`;
 
         // Exchange code for tokens
         const response = await fetch(`${hosts.accounts}/oauth/v2/token`, {
@@ -40,8 +41,8 @@ export async function GET(req: NextRequest) {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
                 code,
-                client_id: process.env.ZOHO_CLIENT_ID || '',
-                client_secret: process.env.ZOHO_CLIENT_SECRET || '',
+                client_id: ENV.ZOHO_CLIENT_ID || '',
+                client_secret: ENV.ZOHO_CLIENT_SECRET || '',
                 grant_type: 'authorization_code',
                 redirect_uri: redirectUri,
             }),
