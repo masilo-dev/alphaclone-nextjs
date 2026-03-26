@@ -15,7 +15,8 @@ async function getUserId(req: NextRequest): Promise<string | null> {
 function handleZohoError(err: unknown): NextResponse {
     const isMissingConfig = err instanceof Error && (
         err.message.includes('missing mailApiHost') || 
-        err.message.includes('missing accountId')
+        err.message.includes('missing accountId') ||
+        err.message.includes('is not fully configured')
     );
 
     if (err instanceof ZohoAuthExpiredError || isMissingConfig) {

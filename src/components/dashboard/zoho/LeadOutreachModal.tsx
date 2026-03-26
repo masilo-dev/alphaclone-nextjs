@@ -42,8 +42,26 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
 
             const { text } = await generateText(prompt, 800);
             if (text) {
-                const parsed: Partial<Lead>[] = JSON.parse(text);
-                setResults(parsed);
+                // Robust parsing: extract JSON from markdown code blocks if present
+                let jsonStr = text.trim();
+                const match = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                if (match) {
+                    jsonStr = match[1];
+                }
+                
+                try {
+                    const parsed: Partial<Lead>[] = JSON.parse(jsonStr);
+                    setResults(parsed);
+                } catch (parseErr) {
+                    console.error('Failed to parse AI leads JSON:', parseErr, 'Raw text:', text);
+                    // Fallback: try to find anything that looks like an array
+                    const arrayMatch = jsonStr.match(/\[\s*\{[\s\S]*\}\s*\]/);
+                    if (arrayMatch) {
+                        setResults(JSON.parse(arrayMatch[0]));
+                    } else {
+                        throw parseErr;
+                    }
+                }
             }
         } catch (err) {
             console.error('AI lead search failed:', err);
