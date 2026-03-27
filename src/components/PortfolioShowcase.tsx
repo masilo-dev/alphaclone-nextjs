@@ -95,79 +95,88 @@ const PortfolioShowcase: React.FC<{ projects?: any[] }> = ({ projects }) => {
 
                 {/* Portfolio Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {displayProjects.map((project, index) => (
-                        <motion.div
-                            key={project.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: index * 0.1 }}
-                            className="group relative bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-teal-500/50 transition-all duration-300"
-                        >
-                            {/* Featured Badge */}
-                            {project.featured && (
-                                <div className="absolute top-4 right-4 z-10 bg-teal-500 text-slate-950 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
-                                    Featured
-                                </div>
-                            )}
+                    {displayProjects.map((project, index) => {
+                        const title = project.title || project.name || 'Untitled Project';
+                        const description = project.description || 'No description available';
+                        const technologies = Array.isArray(project.technologies) ? project.technologies : [];
+                        const url = project.url || project.externalUrl || '#';
+                        const image = project.image || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800';
+                        const category = project.category || 'Portfolio';
 
-                            {/* Image Container */}
-                            <div className="relative h-56 overflow-hidden">
-                                <a
-                                    href={project.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="block w-full h-full relative"
-                                >
-                                    <Image
-                                        src={project.image}
-                                        alt={project.title}
-                                        fill
-                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                        className="object-cover group-hover:scale-105 transition-transform duration-700"
-                                        loading="lazy"
-                                    />
-                                    <div className="absolute inset-0 bg-slate-950/20 group-hover:bg-transparent transition-colors duration-300" />
-                                </a>
-                            </div>
+                        return (
+                            <motion.div
+                                key={project.id || index}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: index * 0.1 }}
+                                className="group relative bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-teal-500/50 transition-all duration-300"
+                            >
+                                {/* Featured Badge */}
+                                {project.featured && (
+                                    <div className="absolute top-4 right-4 z-10 bg-teal-500 text-slate-950 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
+                                        Featured
+                                    </div>
+                                )}
 
-                            {/* Content */}
-                            <div className="p-8">
-                                <span className="inline-block px-3 py-1 bg-teal-500/10 text-teal-400 text-[10px] font-bold rounded-full mb-4 uppercase tracking-widest">
-                                    {project.category}
-                                </span>
-
-                                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-teal-400 transition-colors">
-                                    {project.title}
-                                </h3>
-
-                                <p className="text-slate-400 text-sm mb-6 line-clamp-2 leading-relaxed">
-                                    {project.description}
-                                </p>
-
-                                <div className="flex flex-wrap gap-2 mb-8">
-                                    {project.technologies.slice(0, 3).map((tech: string, i: number) => (
-                                        <span
-                                            key={i}
-                                            className="px-2 py-1 bg-slate-800/50 text-slate-400 text-[10px] font-bold rounded border border-slate-700"
-                                        >
-                                            {tech}
-                                        </span>
-                                    ))}
+                                {/* Image Container */}
+                                <div className="relative h-56 overflow-hidden">
+                                    <a
+                                        href={url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="block w-full h-full relative"
+                                    >
+                                        <Image
+                                            src={image}
+                                            alt={title}
+                                            fill
+                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                            className="object-cover group-hover:scale-105 transition-transform duration-700"
+                                            loading="lazy"
+                                        />
+                                        <div className="absolute inset-0 bg-slate-950/20 group-hover:bg-transparent transition-colors duration-300" />
+                                    </a>
                                 </div>
 
-                                <a
-                                    href={project.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 text-white font-bold text-sm group-hover:text-teal-400 transition-all uppercase tracking-widest"
-                                >
-                                    Visit Project
-                                    <ExternalLink className="w-4 h-4" />
-                                </a>
-                            </div>
-                        </motion.div>
-                    ))}
+                                {/* Content */}
+                                <div className="p-8">
+                                    <span className="inline-block px-3 py-1 bg-teal-500/10 text-teal-400 text-[10px] font-bold rounded-full mb-4 uppercase tracking-widest">
+                                        {category}
+                                    </span>
+
+                                    <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-teal-400 transition-colors">
+                                        {title}
+                                    </h3>
+
+                                    <p className="text-slate-400 text-sm mb-6 line-clamp-2 leading-relaxed">
+                                        {description}
+                                    </p>
+
+                                    <div className="flex flex-wrap gap-2 mb-8">
+                                        {technologies.slice(0, 3).map((tech: string, i: number) => (
+                                            <span
+                                                key={i}
+                                                className="px-2 py-1 bg-slate-800/50 text-slate-400 text-[10px] font-bold rounded border border-slate-700"
+                                            >
+                                                {tech}
+                                            </span>
+                                        ))}
+                                    </div>
+
+                                    <a
+                                        href={url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 text-white font-bold text-sm group-hover:text-teal-400 transition-all uppercase tracking-widest"
+                                    >
+                                        Visit Project
+                                        <ExternalLink className="w-4 h-4" />
+                                    </a>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
                 </div>
 
                 {/* CTA */}
