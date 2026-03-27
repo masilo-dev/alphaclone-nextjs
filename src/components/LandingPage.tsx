@@ -1,1305 +1,572 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { ServiceCard } from './landing/ServiceCard';
-import {
-   Check,
-   Target,
-   Zap,
-   Award,
-   Database,
-   Smartphone,
-   BarChart,
-   Settings,
-   MessageSquare,
-   TrendingUp,
-   ChevronRight,
-   ChevronLeft,
-   Home,
-   Globe,
-   Layers,
-   Briefcase,
-   Info,
-   PhoneCall,
-   User as UserIcon,
-   ShieldCheck,
-   Menu,
-   X,
-   Mail,
-   Phone,
-   MapPin,
-   Video,
-   FileCheck,
-   ArrowRight
-} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button, Input } from './ui/UIComponents';
-import LoginModal from './auth/LoginModal';
-import { Project, User } from '../types';
 import Link from 'next/link';
-import { contactService } from '../services/contactFormService';
-import { projectService } from '../services/projectService';
+import Image from 'next/image';
+import { 
+   Check, 
+   Target, 
+   Zap, 
+   Award, 
+   Database, 
+   Smartphone, 
+   BarChart, 
+   Settings, 
+   MessageSquare, 
+   TrendingUp, 
+   ChevronRight, 
+   ChevronLeft, 
+   Home, 
+   Globe, 
+   Layers, 
+   Briefcase, 
+   Info, 
+   PhoneCall, 
+   User as UserIcon, 
+   ShieldCheck, 
+   Menu, 
+   X, 
+   Mail, 
+   Phone, 
+   MapPin, 
+   Video, 
+   FileCheck,
+   ArrowRight,
+   Play
+} from 'lucide-react';
+
+import { Button, Input } from './ui/UIComponents';
+import LoomVideo from './ui/LoomVideo';
+import { ServiceCard } from './landing/ServiceCard';
+import HeroBackground from './landing/HeroBackground';
+import AITerminal from './dashboard/AITerminal';
+import PortfolioShowcase from './PortfolioShowcase';
+import InteractiveMap from './dashboard/InteractiveMap';
 import InfiniteTicker from './InfiniteTicker';
 import MarketingFooter from './landing/MarketingFooter';
-const PortfolioShowcase = React.lazy(() => import('./dashboard/PortfolioShowcase'));
-const InteractiveHeroPreview = React.lazy(() => import('./dashboard/InteractiveHeroPreview'));
-const AITerminal = React.lazy(() => import('./dashboard/AITerminal'));
-const InteractiveMap = React.lazy(() => import('./dashboard/InteractiveMap'));
-const VideoExplainer = React.lazy(() => import('./dashboard/VideoExplainer'));
-const HeroBackground = React.lazy(() => import('./landing/HeroBackground'));
-import { MovingBorderButton } from './landing/MovingBorderButton';
-import PrismBackground from './common/PrismBackground';
 
-interface LandingPageProps {
-   onLogin: (user: User) => void;
-   projects: Project[];
-}
-
-
-
-// Animated Hamburger Icon Component (internal)
 const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
-   <div className="relative w-6 h-5 flex flex-col justify-between items-center transition-all duration-300">
-      <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 transform origin-left ${isOpen ? 'rotate-[42deg] translate-x-1' : ''}`} />
-      <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 ${isOpen ? 'opacity-0 -translate-x-2' : ''}`} />
-      <span className={`w-full h-0.5 bg-current rounded-full transition-all duration-300 transform origin-left ${isOpen ? '-rotate-[42deg] translate-x-1' : ''}`} />
+   <div className="relative w-6 h-6 flex flex-col justify-center items-center">
+      <span className={`block w-5 h-0.5 bg-current rounded-full transition-all duration-300 ease-out ${isOpen ? 'rotate-45 translate-y-0.5' : '-translate-y-1'}`} />
+      <span className={`block w-5 h-0.5 bg-current rounded-full transition-all duration-300 ease-out my-0.5 ${isOpen ? 'opacity-0' : 'opacity-100'}`} />
+      <span className={`block w-5 h-0.5 bg-current rounded-full transition-all duration-300 ease-out ${isOpen ? '-rotate-45 -translate-y-0.5' : 'translate-y-1'}`} />
    </div>
 );
 
-const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
-
+const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: () => void }) => {
    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-   const [isLoginOpen, setIsLoginOpen] = useState(false);
+   const [scrolled, setScrolled] = useState(false);
+   const [activeService, setActiveService] = useState('crm');
    const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
+   const [isLoginOpen, setIsLoginOpen] = useState(false);
+   const [publicProjects, setPublicProjects] = useState<any[]>([]);
 
-   // Scroll Lock & State Management Effect
-   React.useEffect(() => {
-      if (mobileMenuOpen) {
-         document.body.classList.add('menu-open');
-         // Auto-close login modal if menu opens
-         setIsLoginOpen(false);
-      } else {
-         document.body.classList.remove('menu-open');
-      }
-      return () => document.body.classList.remove('menu-open');
-   }, [mobileMenuOpen]);
-
-   // Contact Form State
-   const [contactForm, setContactForm] = useState({ name: '', email: '', subject: '', message: '' });
+   const [contactForm, setContactForm] = useState({
+      name: '',
+      email: '',
+      subject: '',
+      message: ''
+   });
    const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
 
-   // Public Portfolio State
-   const [publicProjects, setPublicProjects] = useState<Project[]>([]);
-
-   // Defer non-critical data loading - load after initial render
-   React.useEffect(() => {
-      // Use requestIdleCallback for non-critical data
-      const loadData = () => {
-         projectService.getPublicProjects().then(({ projects }) => {
-            setPublicProjects(projects);
-         });
+   useEffect(() => {
+      const handleScroll = () => {
+         setScrolled(window.scrollY > 50);
       };
-
-      if ('requestIdleCallback' in window) {
-         requestIdleCallback(loadData, { timeout: 2000 });
-      } else {
-         setTimeout(loadData, 100);
-      }
+      window.addEventListener('scroll', handleScroll);
+      return () => window.removeEventListener('scroll', handleScroll);
    }, []);
 
-   const scrollToSection = useCallback((id: string) => {
+   const scrollToSection = (id: string) => {
       const element = document.getElementById(id);
       if (element) {
          element.scrollIntoView({ behavior: 'smooth' });
+         setMobileMenuOpen(false);
       }
-      setMobileMenuOpen(false);
-   }, []);
+   };
 
-   const handleContactSubmit = useCallback(async (e: React.FormEvent) => {
+   const handleContactSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       setFormStatus('sending');
-
-      const { error } = await contactService.submitContact(
-         contactForm.name,
-         contactForm.email,
-         `${contactForm.subject}\n\n${contactForm.message}`
-      );
-
-      if (!error) {
+      
+      try {
+         // Mock API call
+         await new Promise(resolve => setTimeout(resolve, 1500));
          setFormStatus('success');
          setContactForm({ name: '', email: '', subject: '', message: '' });
          setTimeout(() => setFormStatus('idle'), 5000);
-      } else {
+      } catch (error) {
          setFormStatus('error');
          setTimeout(() => setFormStatus('idle'), 3000);
       }
-   }, [contactForm]);
-
-
+   };
 
    return (
-      <div className="min-h-screen text-slate-200 selection:bg-teal-500/30 relative">
-         <LoginModal
-            isOpen={isLoginOpen}
-            onClose={() => setIsLoginOpen(false)}
-            onLogin={onLogin}
-         />
+      <div className="min-h-screen bg-[#020D1A] text-slate-200 selection:bg-teal-500/30">
+         {/* Navigation */}
+         <nav
+            className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 border-b ${scrolled ? 'bg-slate-950/80 backdrop-blur-xl border-slate-800' : 'bg-transparent border-transparent'
+               }`}
+         >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+               <div className="flex justify-between items-center h-20">
+                  {/* Logo */}
+                  <div 
+                     className="flex items-center gap-3 cursor-pointer group"
+                     onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  >
+                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:scale-110 transition-transform">
+                        <span className="text-slate-950 font-black text-xl">AS</span>
+                     </div>
+                     <span className="text-xl font-bold tracking-tight text-white font-marketing-heading">AlphaClone</span>
+                  </div>
 
-         {/* Mobile Nav Drawer at Root Level for Stacking Context */}
-         <AnimatePresence mode="wait">
+                  {/* Desktop Nav */}
+                  <div className="hidden lg:flex items-center gap-8">
+                     <button onClick={() => scrollToSection('home')} className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Home</button>
+                     <button onClick={() => scrollToSection('services')} className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Platform</button>
+                     <button onClick={() => scrollToSection('pricing')} className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Pricing</button>
+                     <Link href="/docs" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Docs</Link>
+                     <button onClick={() => scrollToSection('about')} className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">About</button>
+                     <button onClick={() => scrollToSection('contact')} className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Contact</button>
+
+                     <div className="flex items-center gap-4 ml-6 pl-6 border-l border-white/10">
+                        <button 
+                           onClick={() => window.location.href = '/login'}
+                           className="text-sm font-semibold text-slate-400 hover:text-white transition-colors"
+                        >
+                           Login
+                        </button>
+                        <Button
+                           onClick={() => window.location.href = '/register'}
+                           className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-6"
+                        >
+                           Start Now
+                        </Button>
+                     </div>
+                  </div>
+
+                  {/* Mobile Menu Trigger */}
+                  <div className="lg:hidden">
+                     <button
+                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        className={`w-12 h-12 flex items-center justify-center rounded-xl border transition-all duration-300 ${mobileMenuOpen
+                           ? 'text-teal-400 bg-slate-900 border-teal-500/50'
+                           : 'text-white bg-white/5 border-white/10 hover:border-white/20'
+                           }`}
+                     >
+                        <HamburgerIcon isOpen={mobileMenuOpen} />
+                     </button>
+                  </div>
+               </div>
+            </div>
+         </nav>
+
+         {/* Mobile Menu Backdrop */}
+         <AnimatePresence>
             {mobileMenuOpen && (
-               <>
-                  {/* Backdrop - Focused darkening effect */}
-                  <motion.div
-                     key="mobile-backdrop"
-                     initial={{ opacity: 0 }}
-                     animate={{ opacity: 1 }}
-                     exit={{ opacity: 0 }}
-                     transition={{ duration: 0.3, ease: "easeInOut" }}
-                     onClick={() => setMobileMenuOpen(false)}
-                     className="fixed inset-0 bg-slate-950/80 md:bg-slate-950/70 md:backdrop-blur-md z-[9999] touch-none"
-                  />
-
-                  {/* Right Drawer - Smooth 0.3s transition */}
-                  <motion.div
-                     key="mobile-drawer"
-                     initial={{ x: '100%' }}
-                     animate={{ x: 0 }}
-                     exit={{ x: '100%' }}
-                     transition={{ duration: 0.3, ease: "easeInOut" }}
-                     className="fixed top-0 right-0 bottom-0 w-[300px] bg-slate-950 z-[10000] shadow-2xl border-l border-white/5 p-8 flex flex-col items-end pt-safe overflow-y-auto"
-                     onClick={(e) => e.stopPropagation()}
-                  >
-                     {/* Drawer Header */}
-                     <div className="flex justify-between items-center w-full mb-12 relative z-[110] px-2">
-                        <button
-                           onClick={() => setMobileMenuOpen(false)}
-                           className="flex items-center gap-2 text-slate-500 hover:text-white transition-colors group"
-                        >
-                           <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                           <span className="text-sm font-medium">Back</span>
-                        </button>
-                        <span className="text-lg font-bold text-white tracking-widest uppercase">AlphaClone</span>
-                     </div>
-
-                     {/* Main Navigation Group */}
-                     <div className="w-full space-y-10 flex-1 px-2">
-                        {/* Section: MAIN */}
-                        <div className="space-y-4 flex flex-col items-end">
-                           <span className="text-[10px] uppercase tracking-[0.2em] text-slate-600 font-bold mb-2">Explore</span>
-
-                           <Link
-                              href="/"
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="flex items-center justify-end gap-3 w-full text-right text-lg font-bold text-white hover:text-teal-400 transition-colors py-1"
-                           >
-                              Home
-                           </Link>
-
-                           <Link
-                              href="/ecosystem"
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="flex items-center justify-end gap-3 w-full text-right text-lg font-bold text-white hover:text-teal-400 transition-colors py-1"
-                           >
-                              Platform
-                           </Link>
-
-                           <Link
-                              href="/pricing"
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="flex items-center justify-end gap-3 w-full text-right text-lg font-bold text-white hover:text-teal-400 transition-colors py-1"
-                           >
-                              Pricing
-                           </Link>
-
-                           <Link
-                              href="/docs"
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="flex items-center justify-end gap-3 w-full text-right text-lg font-bold text-white hover:text-teal-400 transition-colors py-1"
-                           >
-                              Docs
-                           </Link>
-
-                           {/* Services Group */}
-                           <div className="w-full flex flex-col items-end space-y-4">
-                              <button
-                                 onClick={() => setServicesDropdownOpen(!servicesDropdownOpen)}
-                                 className="flex items-center justify-end gap-3 w-full text-right text-lg font-bold text-white hover:text-teal-400 transition-colors py-1"
-                              >
-                                 Services
-                              </button>
-
-                              <AnimatePresence>
-                                 {servicesDropdownOpen && (
-                                    <motion.div
-                                       initial={{ height: 0, opacity: 0 }}
-                                       animate={{ height: 'auto', opacity: 1 }}
-                                       exit={{ height: 0, opacity: 0 }}
-                                       className="overflow-hidden w-full"
-                                    >
-                                       <div className="pb-4 pr-10 space-y-5 flex flex-col items-end">
-                                          {['CRM & Pipeline', 'Finance & Billing', 'AI Growth Agent', 'Operations Dashboard'].map((service, i) => (
-                                             <Link
-                                                key={i}
-                                                href="/services"
-                                                onClick={() => setMobileMenuOpen(false)}
-                                                className="block w-full text-right text-[15px] font-medium text-slate-400 hover:text-white transition-colors"
-                                             >
-                                                {service}
-                                             </Link>
-                                          ))}
-                                       </div>
-                                    </motion.div>
-                                 )}
-                              </AnimatePresence>
-                           </div>
-                        </div>
-
-                        {/* Section: COMPANY */}
-                        <div className="space-y-4 flex flex-col items-end">
-                           <span className="text-[10px] uppercase tracking-[0.2em] text-slate-600 font-bold mb-2">Company</span>
-
-                           <Link
-                              href="https://alphaclone.tech/about"
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="flex items-center justify-end gap-3 w-full text-right text-base font-semibold text-slate-300 hover:text-white transition-colors py-1"
-                           >
-                              About
-                           </Link>
-
-                           <Link
-                              href="https://alphaclone.tech/contact"
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="flex items-center justify-end gap-3 w-full text-right text-base font-semibold text-slate-300 hover:text-white transition-colors py-1"
-                           >
-                              Contact
-                           </Link>
-                        </div>
-                     </div>
-
-                     {/* Auth Buttons Group */}
-                     <div className="w-full pt-10 mt-auto flex flex-col gap-4 border-t border-white/5 px-2">
-                        <button
-                           onClick={() => {
-                              setIsLoginOpen(true);
-                              setMobileMenuOpen(false);
-                           }}
-                           className="flex items-center justify-center gap-2 w-full py-3.5 text-center font-bold text-slate-300 border border-slate-800/50 rounded-xl hover:bg-slate-900 transition-colors text-sm"
-                        >
-                           Log In
-                        </button>
-                        <Link
-                           href="/register"
-                           onClick={() => setMobileMenuOpen(false)}
-                           className="w-full py-3.5 bg-teal-500 hover:bg-teal-400 text-slate-950 text-center font-bold rounded-xl shadow-lg shadow-teal-500/20 text-sm"
-                        >
-                           Start Today
-                        </Link>
-                     </div>
-                  </motion.div>
-               </>
-            )}
-         </AnimatePresence>
-
-         {/* Main Content Wrapper */}
-         <div className="relative z-10">
-            {/* ═══ GLASSMORPHISM NAVBAR ═══ */}
-            <nav className="fixed w-full z-50 glass-nav pt-safe">
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="flex items-center justify-between h-20">
-
-                     {/* Logo */}
-                     <div
-                        className="flex items-center gap-3 cursor-pointer group"
-                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                     >
-                        {/* Logo image provided by user */}
-                        <div className="relative w-9 h-9 flex-shrink-0 flex items-center justify-center">
-                           <img
-                              src="/logo.png"
-                              alt="AlphaClone Systems Logo"
-                              width={36}
-                              height={36}
-                              className="object-contain max-h-full max-w-full"
-                              onError={(e) => {
-                                 // Fallback to styled initials if image not found
-                                 e.currentTarget.style.display = 'none';
-                              }}
-                           />
-                           {/* Fallback gradient badge */}
-                           <span
-                              className="absolute inset-0 flex items-center justify-center rounded-lg text-white font-black text-sm"
-                              style={{ background: 'linear-gradient(135deg, #0077FF, #00D2A0)', display: 'none' }}
-                              aria-hidden
-                           >
-                              AS
-                           </span>
-                        </div>
-                        <span className="text-xl font-bold tracking-tight font-marketing-heading text-white">
-                           AlphaClone
-                        </span>
-                     </div>
-
-                     {/* Desktop Nav */}
-                     <div className="hidden lg:flex items-center gap-8">
-                        <Link href="/" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase flex items-center">Home</Link>
-                        <Link href="/ecosystem" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase flex items-center">Platform</Link>
-                        <Link href="/pricing" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase flex items-center">Pricing</Link>
-                        <Link href="/docs" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase flex items-center">Docs</Link>
-
-                        {/* Services Dropdown */}
-                        <div className="relative" onMouseEnter={() => setServicesDropdownOpen(true)} onMouseLeave={() => setServicesDropdownOpen(false)}>
-                           <Link href="/services" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase flex items-center gap-1 group">
-                              Services
-                              <motion.span animate={{ rotate: servicesDropdownOpen ? 180 : 0 }}>
-                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                              </motion.span>
-                           </Link>
-
-                           <AnimatePresence>
-                              {servicesDropdownOpen && (
-                                 <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: 10 }}
-                                    className="absolute top-full left-0 w-64 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 mt-2"
-                                 >
-                                    {[
-                                       { title: 'CRM & Pipeline', desc: 'Unified client operations' },
-                                       { title: 'Finance & Billing', desc: 'Invoices and financial control' },
-                                       { title: 'AI Growth Agent', desc: 'Automated outreach and qualification', isComingSoon: true },
-                                       { title: 'Operations Dashboard', desc: 'Mission control for delivery' }
-                                    ].map((s, i) => (
-                                       <Link key={i} href="/services" className="block w-full text-left p-3 rounded-xl hover:bg-slate-800 transition-colors group mb-1 tracking-normal normal-case">
-                                          <div className="text-sm font-bold text-white group-hover:text-teal-400">{s.title}</div>
-                                          <div className="text-[10px] text-slate-500">{s.desc}</div>
-                                       </Link>
-                                    ))}
-                                 </motion.div>
-                              )}
-                           </AnimatePresence>
-                        </div>
-
-                        <Link href="https://alphaclone.tech/about" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase flex items-center">About</Link>
-                        <Link href="https://alphaclone.tech/contact" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase flex items-center">Contact</Link>
-
-                        <div className="flex items-center gap-4 ml-6 pl-6 border-l border-white/10">
-                           <button
-                              onClick={() => setIsLoginOpen(true)}
-                              data-login-trigger="true"
-                              className="text-sm font-semibold text-slate-400 hover:text-white transition-colors flex items-center"
-                           >
-                              Login
-                           </button>
-                           <button
-                              onClick={() => window.location.href = '/register'}
-                              className="relative px-5 py-2 text-sm font-bold uppercase tracking-wider text-white rounded-lg overflow-hidden group"
-                              style={{ background: 'linear-gradient(135deg, #0077FF, #00D2A0)' }}
-                           >
-                              <span className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-white transition-opacity" />
-                              Start Now
-                           </button>
-                        </div>
-                     </div>
-
-                     {/* Mobile Menu Button */}
-                     <div className="lg:hidden relative z-[10000]">
-                        <button
-                           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                           className={`w-12 h-12 flex items-center justify-center rounded-xl border transition-all duration-300 ${mobileMenuOpen
-                              ? 'text-teal-400 bg-slate-900 border-teal-500/50'
-                              : 'text-white bg-white/5 border-white/10 hover:border-white/20'
-                              }`}
-                           aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-                        >
-                           <HamburgerIcon isOpen={mobileMenuOpen} />
-                        </button>
-                     </div>
-                  </div>
-               </div>
-               {/* Scroll glow line */}
-               <div className="nav-glow-line w-full" />
-            </nav>
-
-            {/* ═══ FULL-SCREEN CINEMATIC HERO ═══ */}
-            <section
-               id="home"
-               className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
-               style={{ background: '#020D1A' }}
-            >
-               {/* Canvas Beam Background - lazy loaded, off critical path */}
-               <React.Suspense fallback={null}>
-                  <HeroBackground />
-               </React.Suspense>
-
-               {/* Dark overlay to preserve text contrast */}
-               <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{
-                     background:
-                        'linear-gradient(to bottom, rgba(2,13,26,0.55) 0%, rgba(2,13,26,0.1) 50%, rgba(2,13,26,0.85) 100%)',
-                  }}
-               />
-
-               {/* Hero Content */}
-               <div className="relative z-10 max-w-5xl mx-auto px-4 text-center flex flex-col items-center gap-8 pt-28 pb-24">
-
-                  {/* Status badge */}
-                  {/* Invisible spacer — preserves hero spacing without the badge text */}
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-2 opacity-0 pointer-events-none select-none" aria-hidden="true">
-                     <span className="w-2 h-2 rounded-full" />
-                     &nbsp;
-                  </div>
-
-                  {/* Main headline — ALPHACLONE SYSTEMS */}
-                  <motion.div
-                     initial={{ opacity: 0, y: 50 }}
-                     animate={{ opacity: 1, y: 0 }}
-                     transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-                     className="flex flex-col items-center gap-2"
-                  >
-                     <h1
-                        className="text-4xl sm:text-6xl md:text-8xl lg:text-[80px] font-black tracking-tighter leading-none font-marketing-heading hero-metallic-text mb-2"
-                        style={{ textShadow: '0 0 80px rgba(0,119,255,0.3)' }}
-                     >
-                        UNIFIED BUSINESS OS
-                     </h1>
-                     <span
-                        className="text-xl sm:text-2xl md:text-3xl font-bold tracking-[0.3em] uppercase text-teal-400 font-marketing-brand"
-                        style={{ letterSpacing: '0.35em' }}
-                     >
-                        FOR AGENCIES & FREELANCERS
-                     </span>
-                  </motion.div>
-
-                  {/* Tagline — staggered word reveal */}
-                  <motion.p
-                     initial={{ opacity: 0, y: 24 }}
-                     animate={{ opacity: 1, y: 0 }}
-                     transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
-                     className="text-lg sm:text-xl md:text-2xl text-slate-400 mb-4 max-w-3xl leading-relaxed"
-                  >
-                     Stop the tool-hopping. Manage your CRM, Projects, and Billing in one high-performance platform built for high-performance individuals and teams.
-                  </motion.p>
-
-                  {/* Divider */}
-                  <motion.div
-                     initial={{ scaleX: 0 }}
-                     animate={{ scaleX: 1 }}
-                     transition={{ duration: 0.8, delay: 0.4 }}
-                     className="w-24 h-px"
-                     style={{ background: 'linear-gradient(90deg, #0077FF, #00D2A0)' }}
-                  />
-
-                  {/* CTA Buttons */}
-                  <motion.div
-                     initial={{ opacity: 0, y: 24 }}
-                     animate={{ opacity: 1, y: 0 }}
-                     transition={{ duration: 0.6, delay: 0.5, ease: 'easeOut' }}
-                     className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full mb-12"
-                  >
-                     {/* Standard Primary CTA */}
-                     <Button
-                        onClick={() => window.location.href = '/register'}
-                        size="lg"
-                        className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-10 h-14 w-full sm:w-auto text-lg shadow-xl shadow-teal-500/20 hover:scale-105 transition-transform tracking-tight"
-                     >
-                        Start Free Trial
-                     </Button>
-
-                     {/* Tool CTA - Reverse Signup logic */}
-                     <Button
-                        size="lg"
-                        variant="outline"
-                        onClick={() => window.location.href = '/tools/ai-architect'}
-                        className="border-teal-500/30 bg-teal-500/5 hover:bg-teal-500/10 text-teal-400 px-10 h-14 w-full sm:w-auto text-lg hover:border-teal-500 tracking-tight flex items-center gap-2"
-                     >
-                        <Zap className="w-5 h-5" />
-                        Try AI Architect
-                     </Button>
-
-                     {/* Ghost secondary CTA */}
-                     <Button
-                        size="lg"
-                        variant="ghost"
-                        onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
-                        className="text-slate-400 hover:text-white hover:bg-white/5 px-6 h-14 w-full sm:w-auto text-base tracking-tight"
-                     >
-                        Book Demo
-                     </Button>
-                  </motion.div>
-
-                  {/* Trust micro-line */}
-                  <motion.div
-                     initial={{ opacity: 0 }}
-                     animate={{ opacity: 1 }}
-                     transition={{ delay: 0.9 }}
-                     className="text-sm font-medium text-slate-300 tracking-wide mb-16"
-                  >
-                     <span className="flex items-center justify-center gap-4 flex-wrap">
-                        <span className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-full bg-teal-500/20 flex items-center justify-center flex-shrink-0"><Check className="w-2.5 h-2.5 text-teal-500" /></div> No credit card required</span>
-                        <span className="hidden sm:inline text-slate-600">•</span>
-                        <span className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-full bg-teal-500/20 flex items-center justify-center flex-shrink-0"><Check className="w-2.5 h-2.5 text-teal-500" /></div> 14-day free trial</span>
-                        <span className="hidden sm:inline text-slate-600">•</span>
-                        <span className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-full bg-teal-500/20 flex items-center justify-center flex-shrink-0"><Check className="w-2.5 h-2.5 text-teal-500" /></div> Cancel anytime</span>
-                     </span>
-                  </motion.div>
-
-                  {/* Interactive Dashboard Preview */}
-                  <motion.div
-                     initial={{ opacity: 0, scale: 0.95 }}
-                     animate={{ opacity: 1, scale: 1 }}
-                     transition={{ delay: 0.4, duration: 0.8 }}
-                     className="relative z-20 w-full"
-                  >
-                     <React.Suspense fallback={<div className="h-[500px] w-full bg-slate-900/50 rounded-3xl animate-pulse" />}>
-                        <InteractiveHeroPreview />
-                     </React.Suspense>
-                  </motion.div>
-               </div>
-
-               {/* Scroll indicator */}
                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 1.2 }}
-                  className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-10"
+                  exit={{ opacity: 0 }}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[90] lg:hidden"
+               />
+            )}
+         </AnimatePresence>
+
+         {/* Mobile Menu Panel */}
+         <AnimatePresence>
+            {mobileMenuOpen && (
+               <motion.div
+                  initial={{ x: '100%' }}
+                  animate={{ x: 0 }}
+                  exit={{ x: '100%' }}
+                  className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-slate-900 border-l border-slate-800 z-[100] lg:hidden p-8 shadow-2xl"
                >
-                  <span className="text-[10px] tracking-[0.3em] text-slate-600 uppercase">Scroll</span>
-                  <motion.div
-                     animate={{ y: [0, 8, 0] }}
-                     transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
-                     className="w-px h-8"
-                     style={{ background: 'linear-gradient(to bottom, #0077FF, transparent)' }}
-                  />
+                  <div className="flex flex-col gap-6 pt-12">
+                     {['home', 'services', 'pricing', 'about', 'contact'].map((item) => (
+                        <button
+                           key={item}
+                           onClick={() => scrollToSection(item)}
+                           className="text-2xl font-bold text-white capitalize text-left hover:text-teal-400 transition-colors"
+                        >
+                           {item}
+                        </button>
+                     ))}
+                     <Link href="/docs" className="text-2xl font-bold text-white uppercase text-left hover:text-teal-400 transition-colors">Docs</Link>
+                     <div className="h-px bg-slate-800 my-4" />
+                     <Button 
+                        onClick={() => window.location.href = '/register'}
+                        className="w-full h-14 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xl"
+                     >
+                        Get Started
+                     </Button>
+                     <button 
+                        onClick={() => window.location.href = '/login'}
+                        className="w-full h-14 border border-slate-700 rounded-xl font-bold text-white"
+                     >
+                        Login
+                     </button>
+                  </div>
                </motion.div>
+            )}
+         </AnimatePresence>
+
+         <main>
+            {/* Hero Section */}
+            <section id="home" className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden pt-20">
+               <div className="absolute inset-0 z-0">
+                  <HeroBackground />
+               </div>
+               
+               <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
+                  <motion.div
+                     initial={{ opacity: 0, y: 30 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-sm font-bold mb-8 mx-auto">
+                        <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+                        Next-Gen Business OS
+                     </div>
+                     <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-[100px] font-black tracking-tighter leading-[0.9] text-white mb-8 font-marketing-heading">
+                        UNIFIED <br />
+                        <span className="bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">BUSINESS OS</span>
+                     </h1>
+                     <p className="text-xl md:text-2xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
+                        The ultimate high-performance operating system for agencies and freelancers. 
+                        CRM, Projects, and Billing—unified in one cinematic interface.
+                     </p>
+                     
+                     <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                        <Button
+                           onClick={() => window.location.href = '/register'}
+                           className="h-16 px-10 text-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-black shadow-2xl shadow-teal-500/20 hover:scale-105 transition-transform"
+                        >
+                           Start Free Trial
+                        </Button>
+                        <Button
+                           variant="outline"
+                           onClick={() => scrollToSection('walkthrough')}
+                           className="h-16 px-10 text-xl border-slate-700 bg-slate-900/50 hover:bg-slate-800 text-white font-bold flex items-center gap-3"
+                        >
+                           <Play className="w-5 h-5 fill-current" />
+                           Watch Demo
+                        </Button>
+                     </div>
+                  </motion.div>
+               </div>
+
+               {/* Hero Decorative Elements */}
+               <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-[#020D1A] to-transparent z-10" />
             </section>
 
-            {/* Who We Serve Section */}
-            <section id="who-we-serve" className="py-24 bg-slate-950/80 backdrop-blur-sm border-y border-slate-800/50">
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* PLATFORM WALKTHROUGH SECTION - HIGH PERFORMANCE VIDEO */}
+            <section id="walkthrough" className="py-32 bg-slate-950 px-4">
+               <div className="max-w-6xl mx-auto">
                   <div className="text-center mb-16">
-                     <motion.h2
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }}
-                        className="text-4xl md:text-5xl font-bold font-marketing-heading text-white mb-6"
-                     >
-                        Who We Serve
-                     </motion.h2>
-                     <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }}
-                        transition={{ delay: 0.1 }}
-                        className="text-slate-400 max-w-2xl mx-auto text-xl"
-                     >
-                        AlphaClone is the operating system for high-growth teams who demand unified control and premium performance.
-                     </motion.p>
+                     <h2 className="text-4xl md:text-5xl font-black text-white mb-6 uppercase tracking-tight">The Platform in Action</h2>
+                     <p className="text-slate-400 text-xl max-w-2xl mx-auto">
+                        Experience the AlphaClone architecture. See how we process leads, manage projects, and automate billing in real-time.
+                     </p>
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                     {/* Growing Agencies */}
-                     <div className="bg-slate-900/40 border border-slate-800/50 rounded-3xl p-8 hover:border-teal-500/50 transition-all group backdrop-blur-xl relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="flex items-center gap-3 mb-6">
-                           <div className="w-12 h-12 bg-teal-500/10 rounded-xl flex items-center justify-center">
-                              <Target className="w-6 h-6 text-teal-400" />
-                           </div>
-                           <h3 className="text-xl font-bold text-white">Scaling & Agile Agencies</h3>
-                        </div>
-                        <div className="space-y-4">
-                           <div>
-                              <p className="text-sm font-semibold text-slate-300 mb-2">Your Challenge:</p>
-                              <p className="text-sm text-slate-400">Managing multiple clients across different tools, losing time switching contexts, and struggling with expensive per-seat pricing.</p>
-                           </div>
-                           <div>
-                              <p className="text-sm font-semibold text-teal-400 mb-2">How We Help:</p>
-                              <ul className="text-sm text-slate-400 space-y-1">
-                                 <li className="flex items-start gap-2 group/list">
-                                    <div className="w-4 h-4 rounded bg-teal-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-teal-500/20 transition-colors">
-                                       <Check className="w-3 h-3 text-teal-400" />
-                                    </div>
-                                    <span>Multi-tenant architecture for unlimited clients</span>
-                                 </li>
-                                 <li className="flex items-start gap-2 group/list">
-                                    <div className="w-4 h-4 rounded bg-teal-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-teal-500/20 transition-colors">
-                                       <Check className="w-3 h-3 text-teal-400" />
-                                    </div>
-                                    <span>Unified dashboard for all client projects</span>
-                                 </li>
-                                 <li className="flex items-start gap-2 group/list">
-                                    <div className="w-4 h-4 rounded bg-teal-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-teal-500/20 transition-colors">
-                                       <Check className="w-3 h-3 text-teal-400" />
-                                    </div>
-                                    <span>White-label client portals</span>
-                                 </li>
-                              </ul>
-                                 <Link 
-                                    href="/auth/login?register=true&type=agency&plan=pro"
-                                    className="mt-6 w-full py-3 bg-teal-500/10 hover:bg-teal-500 text-teal-400 hover:text-slate-950 border border-teal-500/20 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 group/btn"
-                                 >
-                                    Deploy Agency OS <ArrowRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
-                                 </Link>
-                           </div>
+                  
+                  <div className="relative group">
+                     {/* Decorative glow behind video */}
+                     <div className="absolute -inset-1 bg-gradient-to-r from-teal-500 to-blue-600 rounded-[2.5rem] blur-2xl opacity-20 group-hover:opacity-40 transition duration-1000" />
+                     
+                     <div className="relative bg-slate-900 border border-slate-800 rounded-[2.5rem] overflow-hidden shadow-2xl">
+                        <div className="aspect-video w-full">
+                           <LoomVideo 
+                              videoId="3a7000c925c145b7882089688b0ceb5d" 
+                              className="w-full h-full"
+                           />
                         </div>
                      </div>
-
-                     {/* Elite Freelancers */}
-                     <div className="bg-slate-900/40 border border-slate-800/50 rounded-3xl p-8 hover:border-blue-500/50 transition-all group backdrop-blur-xl relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="flex items-center gap-3 mb-6">
-                           <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center">
-                              <UserIcon className="w-6 h-6 text-blue-400" />
-                           </div>
-                           <h3 className="text-xl font-bold text-white">Solo Professionals</h3>
-                        </div>
-                        <div className="space-y-4">
-                           <div>
-                              <p className="text-sm font-semibold text-slate-300 mb-2">The Mission:</p>
-                              <p className="text-sm text-slate-400">Professionalize your client portal, invoicing, and CRM in one cinematic interface built for solo power.</p>
-                           </div>
-                           <div>
-                              <p className="text-sm font-semibold text-blue-400 mb-2">How We Help:</p>
-                              <ul className="text-sm text-slate-400 space-y-1">
-                                 <li className="flex items-start gap-2 group/list">
-                                    <div className="w-4 h-4 rounded bg-blue-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-blue-500/20 transition-colors">
-                                       <Check className="w-3 h-3 text-blue-400" />
-                                    </div>
-                                    <span>High-impact tools for individual productivity</span>
-                                 </li>
-                              </ul>
-                                 <Link 
-                                    href="/auth/login?register=true&type=freelancer&plan=starter"
-                                    className="mt-6 w-full py-3 bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white border border-blue-500/20 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 group/btn"
-                                 >
-                                    Launch Solo OS <ArrowRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
-                                 </Link>
-                           </div>
-                        </div>
-                     </div>
-
-                     {/* SaaS Startups */}
-                     <div className="bg-slate-900/40 border border-slate-800/50 rounded-3xl p-8 hover:border-blue-500/50 transition-all group backdrop-blur-xl relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="flex items-center gap-3 mb-6">
-                           <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center">
-                              <Zap className="w-6 h-6 text-blue-400" />
-                           </div>
-                           <h3 className="text-xl font-bold text-white">SaaS Startups</h3>
-                        </div>
-                        <div className="space-y-4">
-                           <div>
-                              <p className="text-sm font-semibold text-slate-300 mb-2">Your Challenge:</p>
-                              <p className="text-sm text-slate-400">Burning cash on 10+ SaaS subscriptions while trying to reach profitability. Need enterprise features without enterprise costs.</p>
-                           </div>
-                           <div>
-                              <p className="text-sm font-semibold text-blue-400 mb-2">How We Help:</p>
-                              <ul className="text-sm text-slate-400 space-y-1">
-                                 <li className="flex items-start gap-2 group/list">
-                                    <div className="w-4 h-4 rounded bg-blue-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-blue-500/20 transition-colors">
-                                       <Check className="w-3 h-3 text-blue-400" />
-                                    </div>
-                                    <span>Replace $2,000+/mo in subscriptions</span>
-                                 </li>
-                                 <li className="flex items-start gap-2 group/list">
-                                    <div className="w-4 h-4 rounded bg-blue-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-blue-500/20 transition-colors">
-                                       <Check className="w-3 h-3 text-blue-400" />
-                                    </div>
-                                    <span>Built-in CRM, video calls, and AI agents</span>
-                                 </li>
-                                 <li className="flex items-start gap-2 group/list">
-                                    <div className="w-4 h-4 rounded bg-blue-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-blue-500/20 transition-colors">
-                                       <Check className="w-3 h-3 text-blue-400" />
-                                    </div>
-                                    <span>Self-hostable for data control</span>
-                                 </li>
-                              </ul>
-                           </div>
-                        </div>
-                     </div>
-
-                     {/* Consulting Firms */}
-                     <div className="bg-slate-900/40 border border-slate-800/50 rounded-3xl p-8 hover:border-purple-500/50 transition-all group backdrop-blur-xl relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="flex items-center gap-3 mb-6">
-                           <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center">
-                              <Award className="w-6 h-6 text-purple-400" />
-                           </div>
-                           <h3 className="text-xl font-bold text-white">Consulting Firms</h3>
-                        </div>
-                        <div className="space-y-4">
-                           <div>
-                              <p className="text-sm font-semibold text-slate-300 mb-2">Your Challenge:</p>
-                              <p className="text-sm text-slate-400">Need professional client management, secure video meetings, and project tracking without the complexity of enterprise software.</p>
-                           </div>
-                           <div>
-                              <p className="text-sm font-semibold text-purple-400 mb-2">How We Help:</p>
-                              <ul className="text-sm text-slate-400 space-y-1">
-                                 <li className="flex items-start gap-2 group/list">
-                                    <div className="w-4 h-4 rounded bg-purple-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-purple-500/20 transition-colors">
-                                       <Check className="w-3 h-3 text-purple-400" />
-                                    </div>
-                                    <span>Automated contract drafting & scoping</span>
-                                 </li>
-                                 <li className="flex items-start gap-2 group/list">
-                                    <div className="w-4 h-4 rounded bg-purple-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-purple-500/20 transition-colors">
-                                       <Check className="w-3 h-3 text-purple-400" />
-                                    </div>
-                                    <span>Real-time billing & financial auditing</span>
-                                 </li>
-                                 <li className="flex items-start gap-2 group/list">
-                                    <div className="w-4 h-4 rounded bg-purple-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-purple-500/20 transition-colors">
-                                       <Check className="w-3 h-3 text-purple-400" />
-                                    </div>
-                                    <span>Unified workflow from lead to invoice</span>
-                                 </li>
-                              </ul>
-                           </div>
-                        </div>
-                     </div>
-
-                     {/* Emerging Market Founders */}
-                     <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 hover:border-orange-500/50 transition-all group backdrop-blur-md">
-                        <div className="flex items-center gap-3 mb-6">
-                           <div className="w-12 h-12 bg-orange-500/10 rounded-xl flex items-center justify-center">
-                              <TrendingUp className="w-6 h-6 text-orange-400" />
-                           </div>
-                           <h3 className="text-xl font-bold text-white">Emerging Market Founders</h3>
-                        </div>
-                        <div className="space-y-4">
-                           <div>
-                              <p className="text-sm font-semibold text-slate-300 mb-2">Your Challenge:</p>
-                              <p className="text-sm text-slate-400">Enterprise tools price you out. Need world-class features at prices that make sense for your market.</p>
-                           </div>
-                           <div>
-                              <p className="text-sm font-semibold text-orange-400 mb-2">How We Help:</p>
-                              <ul className="text-sm text-slate-400 space-y-1">
-                                 <li className="flex items-start gap-2 group/list">
-                                    <div className="w-4 h-4 rounded bg-orange-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-orange-500/20 transition-colors">
-                                       <Check className="w-3 h-3 text-orange-400" />
-                                    </div>
-                                    <span>Affordable platform pricing</span>
-                                 </li>
-                                 <li className="flex items-start gap-2 group/list">
-                                    <div className="w-4 h-4 rounded bg-orange-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-orange-500/20 transition-colors">
-                                       <Check className="w-3 h-3 text-orange-400" />
-                                    </div>
-                                    <span>No hidden fees or per-seat charges</span>
-                                 </li>
-                                 <li className="flex items-start gap-2 group/list">
-                                    <div className="w-4 h-4 rounded bg-orange-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-orange-500/20 transition-colors">
-                                       <Check className="w-3 h-3 text-orange-400" />
-                                    </div>
-                                    <span>Full feature access from day one</span>
-                                 </li>
-                              </ul>
-                           </div>
-                        </div>
-                     </div>
-
-                     {/* Privacy-First Teams */}
-                     <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 hover:border-green-500/50 transition-all group backdrop-blur-md">
-                        <div className="flex items-center gap-3 mb-6">
-                           <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center">
-                              <ShieldCheck className="w-6 h-6 text-green-400" />
-                           </div>
-                           <h3 className="text-xl font-bold text-white">Privacy-First Teams</h3>
-                        </div>
-                        <div className="space-y-4">
-                           <div>
-                              <p className="text-sm font-semibold text-slate-300 mb-2">Your Challenge:</p>
-                              <p className="text-sm text-slate-400">Can't trust third-party SaaS with sensitive data. Need full control over where your data lives.</p>
-                           </div>
-                           <div>
-                              <p className="text-sm font-semibold text-green-400 mb-2">How We Help:</p>
-                              <ul className="text-sm text-slate-400 space-y-1">
-                                 <li className="flex items-start gap-2 group/list">
-                                    <div className="w-4 h-4 rounded bg-green-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-green-500/20 transition-colors">
-                                       <Check className="w-3 h-3 text-green-400" />
-                                    </div>
-                                    <span>Self-hostable on your infrastructure</span>
-                                 </li>
-                                 <li className="flex items-start gap-2 group/list">
-                                    <div className="w-4 h-4 rounded bg-green-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-green-500/20 transition-colors">
-                                       <Check className="w-3 h-3 text-green-400" />
-                                    </div>
-                                    <span>Open-source transparency</span>
-                                 </li>
-                                 <li className="flex items-start gap-2 group/list">
-                                    <div className="w-4 h-4 rounded bg-green-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-green-500/20 transition-colors">
-                                       <Check className="w-3 h-3 text-green-400" />
-                                    </div>
-                                    <span>Complete data ownership</span>
-                                 </li>
-                              </ul>
-                           </div>
-                        </div>
-                     </div>
-
-                     {/* Remote Teams */}
-                     <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 hover:border-cyan-500/50 transition-all group backdrop-blur-md">
-                        <div className="flex items-center gap-3 mb-6">
-                           <div className="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center">
-                              <Video className="w-6 h-6 text-cyan-400" />
-                           </div>
-                           <h3 className="text-xl font-bold text-white">Remote Teams</h3>
-                        </div>
-                        <div className="space-y-4">
-                           <div>
-                              <p className="text-sm font-semibold text-slate-300 mb-2">Your Challenge:</p>
-                              <p className="text-sm text-slate-400">Scattered across Slack, Zoom, Trello, and email. Need everything in one place to stay aligned.</p>
-                           </div>
-                           <div>
-                              <p className="text-sm font-semibold text-cyan-400 mb-2">How We Help:</p>
-                              <ul className="text-sm text-slate-400 space-y-1">
-                                 <li className="flex items-start gap-2 group/list">
-                                    <div className="w-4 h-4 rounded bg-cyan-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-cyan-500/20 transition-colors">
-                                       <Check className="w-3 h-3 text-cyan-400" />
-                                    </div>
-                                    <span>Built-in video conferencing</span>
-                                 </li>
-                                 <li className="flex items-start gap-2 group/list">
-                                    <div className="w-4 h-4 rounded bg-cyan-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-cyan-500/20 transition-colors">
-                                       <Check className="w-3 h-3 text-cyan-400" />
-                                    </div>
-                                    <span>Real-time collaboration tools</span>
-                                 </li>
-                                 <li className="flex items-start gap-2 group/list">
-                                    <div className="w-4 h-4 rounded bg-cyan-500/10 flex items-center justify-center mt-0.5 flex-shrink-0 group-hover/list:bg-cyan-500/20 transition-colors">
-                                       <Check className="w-3 h-3 text-cyan-400" />
-                                    </div>
-                                    <span>Unified communication hub</span>
-                                 </li>
-                              </ul>
-                           </div>
-                        </div>
-                     </div>
-                  </div>
-
-                  <div className="mt-16 text-center">
-                     <p className="text-slate-400 mb-6">Don't see yourself here? We work with all types of businesses.</p>
-                     <Button
-                        onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
-                        className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-8"
-                     >
-                        Book a Free Consultation
-                     </Button>
                   </div>
                </div>
             </section>
 
-            {/* About Section */}
-            <section id="about" className="py-24 bg-slate-950/50 backdrop-blur-sm">
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="text-center mb-16">
-                     <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading text-white mb-6">About AlphaClone Systems</h2>
-                     <p className="text-slate-400 max-w-2xl mx-auto text-lg">
-                        AlphaClone brings CRM, billing, scheduling, messaging, and delivery workflows into one platform so service businesses can run from a single operating system instead of a stack of disconnected tools.
-                     </p>
+            {/* Features / Services Section */}
+            <section id="services" className="py-32 relative overflow-hidden">
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                  <div className="text-center mb-24">
+                     <h2 className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tighter uppercase">Powering Your Growth</h2>
+                     <div className="w-24 h-1.5 bg-gradient-to-r from-teal-400 to-blue-500 mx-auto rounded-full" />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                      {[
-                        { label: "Operations", title: "One connected workspace", desc: "Keep clients, projects, invoices, meetings, and documents in the same system so teams are not constantly switching tools." },
-                        { label: "Growth", title: "Built to support revenue work", desc: "Lead management, follow-up, proposals, contracts, and delivery all live in the same workflow instead of separate apps." },
-                        { label: "Control", title: "Clearer data and ownership", desc: "When work happens in one platform, reporting, permissions, and activity history become easier to trust and easier to manage." }
-                     ].map((card, i) => (
+                        {
+                           id: 'crm',
+                           icon: Database,
+                           title: 'Unified CRM',
+                           desc: 'Your client data, communication history, and sales pipeline in one place. No more switching tools.',
+                           features: ['Visual Pipelines', 'Real-time Analytics', 'Lead Automation']
+                        },
+                        {
+                           id: 'projects',
+                           icon: Layers,
+                           title: 'Project Engine',
+                           desc: 'High-performance task management and project tracking built for high-output individuals.',
+                           features: ['Milestone Tracking', 'Collaborative Boards', 'Asset Management']
+                        },
+                        {
+                           id: 'billing',
+                           icon: BarChart,
+                           title: 'Finance & Billing',
+                           desc: 'Automate invoices, track revenue, and manage subscriptions with enterprise-grade precision.',
+                           features: ['One-click Invoicing', 'Stripe Integration', 'Revenue Forecasting']
+                        },
+                        {
+                           id: 'ai-growth',
+                           icon: Zap,
+                           title: 'AI Sales Agent',
+                           desc: 'Autopilot for your outreach. Qualify leads and book meetings while you sleep.',
+                           features: ['GPT-4o Powered', 'Multi-channel Outreach', 'Automated Qualification']
+                        },
+                        {
+                           id: 'security',
+                           icon: ShieldCheck,
+                           title: 'Safe Ops',
+                           desc: 'End-to-end encryption for your communication and absolute data ownership.',
+                           features: ['RBAC Permissions', 'Encrypted Video', 'Audit Trails']
+                        },
+                        {
+                           id: 'mobile',
+                           icon: Smartphone,
+                           title: 'Business Mobile',
+                           desc: 'Manage your entire ecosystem from your pocket with native iOS and Android apps.',
+                           features: ['Real-time Alerts', 'Mobile Dashboard', 'Offline Mode']
+                        }
+                     ].map((item, i) => (
                         <motion.div
                            key={i}
-                           initial={{ opacity: 0, y: 20 }}
-                           whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }}
-                           transition={{ delay: i * 0.1 }}
-                           whileHover={{ y: -5 }}
-                           className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 hover:border-teal-500/30 transition-all group backdrop-blur-md"
+                           whileHover={{ y: -10 }}
+                           className="bg-slate-900/40 border border-slate-800 rounded-3xl p-8 backdrop-blur-xl hover:border-teal-500/30 transition-all flex flex-col h-full"
                         >
-                           <div className="text-xs font-semibold tracking-[0.22em] uppercase text-teal-400 mb-4">{card.label}</div>
-                           <h3 className="text-xl font-bold text-white mb-4">{card.title}</h3>
-                           <p className="text-slate-400 leading-relaxed">{card.desc}</p>
+                           <div className="w-14 h-14 bg-teal-500/10 rounded-2xl flex items-center justify-center mb-6">
+                              <item.icon className="w-8 h-8 text-teal-400" />
+                           </div>
+                           <h3 className="text-2xl font-bold text-white mb-4">{item.title}</h3>
+                           <p className="text-slate-400 mb-8 flex-grow">{item.desc}</p>
+                           <ul className="space-y-3">
+                              {item.features.map((feat, idx) => (
+                                 <li key={idx} className="flex items-center gap-2 text-sm text-teal-400/80">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+                                    {feat}
+                                 </li>
+                              ))}
+                           </ul>
                         </motion.div>
                      ))}
                   </div>
                </div>
             </section>
 
-
-
-
-            {/* Services Grid (Detailed) */}
-            <section id="services" className="py-24 bg-slate-900/50 backdrop-blur-sm">
+            {/* Who We Serve Section */}
+            <section className="py-32 bg-[#050B14]">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="text-center mb-16">
-                     <h2 className="text-4xl md:text-5xl font-bold font-marketing-heading text-white mb-4">Core Platform Capabilities</h2>
-                     <p className="text-slate-400 max-w-2xl mx-auto text-lg leading-relaxed">
-                        Every system you need to scale, unified into one high-performance architecture.
-                     </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
-                     {[
-                        {
-                           id: 'ai-agents',
-                           icon: Zap,
-                           color: 'teal',
-                           title: 'AI Sales Agents',
-                           isComingSoon: true,
-                           summary: 'Capture, qualify, and convert leads 24/7 on autopilot.',
-                           details: [
-                              'Automated Lead Qualification using GPT-4o',
-                              'Instant Response across WhatsApp, Email & Web',
-                              'Unified CRM Lead Tracking',
-                              'Advanced Knowledge Base Customization'
-                           ],
-                           showExtra: <AITerminal />
-                        },
-                        {
-                           id: 'crm',
-                           icon: Database,
-                           color: 'blue',
-                           title: 'Unified CRM',
-                           summary: 'Close Deals Faster. Your client data, communication history, and contracts in one place. No more hunting for info.',
-                           details: [
-                              'Visual Kanban Sales Pipelines',
-                              'Client Lifecycle Automation & Notifications',
-                              'Unified Communication History',
-                              'Real-time Revenue Forecasting'
-                           ]
-                        },
-                        {
-                           id: 'security',
-                           icon: ShieldCheck,
-                           color: 'violet',
-                           title: 'Security Command',
-                           summary: 'End-to-end encryption for all business operations.',
-                           details: [
-                              'SIEM-grade Security Monitoring',
-                              'Automatic SSL & Domain Reputation Checks',
-                              'End-to-End Encrypted Video Conferencing',
-                              'Role-Based Access Control (RBAC)'
-                           ]
-                        },
-                        {
-                           id: 'mobile',
-                           icon: Smartphone,
-                           color: 'indigo',
-                           title: 'Mobile Companion',
-                           summary: 'Manage your entire business from your pocket.',
-                           details: [
-                              'Native iOS & Android Applications',
-                              'Push Notifications for Critical Updates',
-                              'Offline Access to Client Data',
-                              'Instant Mobile Video Calls'
-                           ]
-                        },
-                        {
-                           id: 'finance',
-                           icon: BarChart,
-                           color: 'emerald',
-                           title: 'Unified Finance',
-                           summary: 'Complete financial oversight. Manage invoices, track subscriptions, and monitor your revenue streams in one secure, unified module.',
-                           details: [
-                              'Unified Billing Readiness',
-                              'Subscription management',
-                              'Revenue analytics',
-                              'Automated tax compliance'
-                           ]
-                        },
-                        {
-                           id: 'tasks',
-                           icon: FileCheck,
-   ArrowRight,
-                           color: 'cyan',
-                           title: 'Contract Logic',
-                           summary: 'Technical contract management simplified. Deploy, track, and manage complex agreements with built-in validation and team signatures.',
-                           details: [
-                              'Cryptographic validation',
-                              'Multi-party signing',
-                              'Version control history',
-                              'Automated milestone triggers'
-                           ]
-                        }
-                     ].map((service, i) => (
-                        <ServiceCard key={service.id} service={service} index={i} />
-                     ))}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+                     <div>
+                        <h2 className="text-4xl md:text-5xl font-black text-white mb-8 tracking-tighter uppercase leading-none">
+                           BUILT FOR THE <br />
+                           <span className="text-teal-400">AMBITIOUS</span>
+                        </h2>
+                        <p className="text-xl text-slate-400 mb-10 leading-relaxed">
+                           AlphaClone isn't for everyone. It's for the creators, the builders, and the agencies who demand enterprise control without the enterprise friction.
+                        </p>
+                        
+                        <div className="space-y-6">
+                           {[
+                              { title: 'Agencies', desc: 'Scale client delivery without adding more software.' },
+                              { title: 'Freelancers', desc: 'Run a 7-figure solo business with unified ops.' },
+                              { title: 'Startups', desc: 'Consolidate 10+ subscriptions into one Business OS.' }
+                           ].map((item, i) => (
+                              <div key={i} className="flex gap-4 p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-teal-500/30 transition-colors">
+                                 <div className="w-10 h-10 rounded-full bg-teal-500 flex items-center justify-center flex-shrink-0 text-slate-950 font-black">
+                                    {i + 1}
+                                 </div>
+                                 <div>
+                                    <h4 className="text-white font-bold text-lg mb-1">{item.title}</h4>
+                                    <p className="text-slate-400 text-sm">{item.desc}</p>
+                                 </div>
+                              </div>
+                           ))}
+                        </div>
+                     </div>
+                     
+                     <div className="relative">
+                        <div className="absolute -inset-4 bg-teal-500/20 blur-[100px] rounded-full" />
+                        <AITerminal />
+                     </div>
                   </div>
                </div>
             </section>
 
             {/* Portfolio Section */}
-            <section id="portfolio" className="py-24 bg-slate-950/50 backdrop-blur-sm">
+            <section id="portfolio" className="py-32">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  {/* PortfolioShowcase handles its own header and filtering */}
-                  <React.Suspense fallback={<div className="h-96 flex items-center justify-center"><div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div></div>}>
-                     <PortfolioShowcase projects={publicProjects.length > 0 ? publicProjects : projects} />
-                  </React.Suspense>
+                  <PortfolioShowcase projects={projects} />
                </div>
             </section>
 
-            {/* Stats Section */}
-            <section className="py-16 bg-slate-950/50 border-y border-slate-900/50 backdrop-blur-sm">
+            {/* Stats / Proof Section */}
+            <section className="py-20 border-y border-slate-800 bg-slate-950/50 backdrop-blur-xl">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="space-y-12">
-                     <React.Suspense fallback={<div className="h-[400px] bg-slate-900 animate-pulse rounded-3xl" />}>
-                        <InteractiveMap />
-                     </React.Suspense>
-
-                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {[
-                           { label: "Delivery Guarantee*", value: "18-Day", desc: "*18% discount if we delay" },
-                           { label: "Platform Reliability", value: "99.9%", desc: "Production-ready uptime target" },
-                           { label: "Support Available", value: "24/7", desc: "Dedicated team" },
-                           { label: "PageSpeed Score", value: "90+", desc: "Performance optimized" }
-                        ].map((stat, i) => (
-                           <motion.div
-                              key={i}
-                              initial={{ opacity: 0, y: 10 }}
-                              whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }}
-                              transition={{ delay: i * 0.1 }}
-                              className="bg-slate-900/40 p-8 rounded-2xl text-center border border-slate-800/50 backdrop-blur-xl group hover:border-teal-500/30 transition-all flex flex-col items-center justify-center shadow-xl"
-                           >
-                              <div className="text-3xl md:text-4xl font-bold text-teal-400 mb-2 group-hover:scale-110 transition-transform">{stat.value}</div>
-                              <div className="text-white font-medium mb-1">{stat.label}</div>
-                              <div className="text-xs text-slate-500">{stat.desc}</div>
-                           </motion.div>
-                        ))}
-                     </div>
-                  </div>
-               </div>
-            </section>
-
-            {/* Verified Team */}
-            <section className="py-20 bg-blue-900/20 backdrop-blur-sm">
-               <div className="max-w-4xl mx-auto px-4 text-center">
-                  <h2 className="text-2xl md:text-3xl font-bold font-marketing-heading text-white mb-6">Verified Professional Team</h2>
-                  <p className="text-slate-300 mb-10">
-                     Our developers are verified professionals on leading freelance platforms.
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-8 md:gap-16">
-                     <div className="flex items-center gap-3 bg-slate-900/50 px-6 py-4 rounded-xl border border-slate-700/50 backdrop-blur-md">
-                        <ShieldCheck className="w-8 h-8 text-teal-400" />
-                        <div className="text-left">
-                           <div className="font-bold text-white">Braintrust</div>
-                           <div className="text-xs text-slate-400">Verified Freelancers</div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
+                     {[
+                        { label: 'Uptime', value: '99.9%' },
+                        { label: 'Performance', value: '100/100' },
+                        { label: 'Support', value: '24/7' },
+                        { label: 'Security', value: 'AES-256' }
+                     ].map((stat, i) => (
+                        <div key={i} className="group">
+                           <div className="text-4xl sm:text-5xl font-black text-white mb-2 group-hover:text-teal-400 transition-colors">{stat.value}</div>
+                           <div className="text-sm font-bold uppercase tracking-widest text-slate-500">{stat.label}</div>
                         </div>
-                     </div>
-                     <div className="flex items-center gap-3 bg-slate-900/50 px-6 py-4 rounded-xl border border-slate-700/50 backdrop-blur-md">
-                        <ShieldCheck className="w-8 h-8 text-blue-400" />
-                        <div className="text-left">
-                           <div className="font-bold text-white">Arc.dev</div>
-                           <div className="text-xs text-slate-400">Top 3% Developers</div>
-                        </div>
-                     </div>
+                     ))}
                   </div>
                </div>
             </section>
 
             {/* Pricing Section */}
-            <section id="pricing" className="py-32 bg-slate-950/50 backdrop-blur-sm relative overflow-hidden">
-               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-teal-500/5 blur-[120px] -z-10 rounded-full" />
-
+            <section id="pricing" className="py-32 relative">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="text-center mb-20">
-                     <h2 className="text-4xl md:text-5xl font-bold font-marketing-heading text-white mb-6">Simple, Transparent Pricing</h2>
-                     <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                        Scale your business with an operating system that grows with you. No hidden fees, no per-seat charges.
+                  <div className="text-center mb-24">
+                     <h2 className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tighter uppercase">Transparent Scaling</h2>
+                     <p className="text-xl text-slate-400 max-w-2xl mx-auto">
+                        One simple price for total control. Choose the plan that fits your growth trajectory.
                      </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-                     {/* Starter Plan */}
-                     <motion.div
-                        whileHover={{ y: -10 }}
-                        className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 flex flex-col backdrop-blur-xl relative overflow-hidden group"
-                     >
-                        <div className="absolute inset-0 bg-gradient-to-b from-teal-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="relative mb-8">
-                           <h3 className="text-xl font-bold text-white mb-2">Starter</h3>
-                           <p className="text-slate-400 text-sm">Best for solo founders & small teams.</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                     {[
+                        { name: 'Starter', price: '$15', desc: 'Solo founders & freelancers', features: ['5 Users', 'Core CRM', '5GB Storage'] },
+                        { name: 'Professional', price: '$45', desc: 'High-growth teams', features: ['25 Users', 'Unlimited CRM', 'AI Sales Bot'], popular: true },
+                        { name: 'Enterprise', price: '$80', desc: 'Large scale operations', features: ['Unlimited Users', 'Dedicated DB', 'API Access'] }
+                     ].map((plan, i) => (
+                        <div key={i} className={`relative p-10 rounded-[2.5rem] border ${plan.popular ? 'bg-slate-900 border-teal-500 shadow-2xl shadow-teal-500/10 scale-105 z-10' : 'bg-slate-900/50 border-slate-800'} flex flex-col`}>
+                           {plan.popular && (
+                              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-teal-500 text-slate-950 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-tighter">
+                                 Recommended
+                              </div>
+                           )}
+                           <h3 className="text-2xl font-black text-white mb-2 uppercase">{plan.name}</h3>
+                           <p className="text-slate-400 text-sm mb-8">{plan.desc}</p>
+                           <div className="flex items-baseline gap-1 mb-8">
+                              <span className="text-5xl font-black text-white">{plan.price}</span>
+                              <span className="text-slate-500 font-bold">/mo</span>
+                           </div>
+                           <ul className="space-y-4 mb-10 flex-grow">
+                              {plan.features.map((feat, idx) => (
+                                 <li key={idx} className="flex items-center gap-2 text-sm text-slate-300">
+                                    <Check className="w-4 h-4 text-teal-400" />
+                                    {feat}
+                                 </li>
+                              ))}
+                           </ul>
+                           <Button
+                              onClick={() => window.location.href = '/register'}
+                              className={`h-14 w-full text-lg font-black uppercase ${plan.popular ? 'bg-teal-500 hover:bg-teal-400 text-slate-950' : 'bg-slate-800 hover:bg-slate-700 text-white'}`}
+                           >
+                              Get Started
+                           </Button>
                         </div>
-                        <div className="relative mb-8 flex items-baseline gap-1">
-                           <span className="text-4xl font-bold text-white">$15</span>
-                           <span className="text-slate-500">/mo</span>
-                        </div>
-                        <ul className="space-y-4 mb-10 flex-grow">
-                           {['5 Multi-tenant Users', 'Core CRM Pipeline', '5GB Secure Storage', 'Standard Project MGMT', '2 Video Meetings/Mo'].map((feat) => (
-                              <li key={feat} className="text-sm text-slate-300 border-l-2 border-slate-700 pl-3">
-                                 {feat}
-                              </li>
-                           ))}
-                        </ul>
-                        <Button
-                           onClick={() => window.location.href = '/register'}
-                           className="w-full h-12 bg-slate-800 hover:bg-slate-700 text-white font-bold border border-slate-700"
-                        >
-                           Start Free Trial
-                        </Button>
-                     </motion.div>
-
-                     {/* Professional Plan (Highlighted) */}
-                     <motion.div
-                        whileHover={{ y: -10 }}
-                        className="bg-slate-900/70 border-2 border-teal-500/50 rounded-3xl p-8 flex flex-col backdrop-blur-2xl relative overflow-hidden shadow-2xl shadow-teal-500/20"
-                     >
-                        <div className="absolute top-0 right-0 bg-teal-500 text-slate-950 text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">
-                           Most Popular
-                        </div>
-                        <div className="relative mb-8">
-                           <h3 className="text-2xl font-bold text-white mb-2 text-teal-400">Professional</h3>
-                           <p className="text-slate-400 text-sm">The power of AlphaClone Business OS.</p>
-                        </div>
-                        <div className="relative mb-8 flex items-baseline gap-1">
-                           <span className="text-5xl font-bold text-white">$45</span>
-                           <span className="text-slate-500">/mo</span>
-                        </div>
-                        <ul className="space-y-4 mb-10 flex-grow">
-                           {['25 Multi-tenant Users', 'Infinite CRM Pipelines', 'AI Sales Automation', '25GB Secure Storage', 'Priority Meeting Support', 'Custom Branding'].map((feat) => (
-                              <li key={feat} className="text-sm text-slate-200 border-l-2 border-teal-600/40 pl-3">
-                                 {feat}
-                              </li>
-                           ))}
-                        </ul>
-                        <Button
-                           onClick={() => window.location.href = '/register'}
-                           className="w-full h-14 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-lg shadow-lg shadow-teal-500/20"
-                        >
-                           Start Free Trial
-                        </Button>
-                     </motion.div>
-
-                     {/* Enterprise Plan */}
-                     <motion.div
-                        whileHover={{ y: -10 }}
-                        className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 flex flex-col backdrop-blur-xl relative overflow-hidden group"
-                     >
-                        <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="relative mb-8">
-                           <h3 className="text-xl font-bold text-white mb-2">Enterprise</h3>
-                           <p className="text-slate-400 text-sm">Total scale and enterprise governance.</p>
-                        </div>
-                        <div className="relative mb-8 flex items-baseline gap-1">
-                           <span className="text-4xl font-bold text-white">$80</span>
-                           <span className="text-slate-500">/mo</span>
-                        </div>
-                        <ul className="space-y-4 mb-10 flex-grow">
-                           {['Unlimited Users', 'Dedicated DB Instance', 'White-labeled Ecosystem', 'API Access', '24/7 Priority Engineer', 'On-premise Options'].map((feat) => (
-                              <li key={feat} className="text-sm text-slate-300 border-l-2 border-blue-600/40 pl-3">
-                                 {feat}
-                              </li>
-                           ))}
-                        </ul>
-                        <Button
-                           variant="outline"
-                           onClick={() => scrollToSection('contact')}
-                           className="w-full h-12 border-slate-700 bg-slate-900/50 hover:bg-slate-800 text-white font-bold"
-                        >
-                           Contact Sales
-                        </Button>
-                     </motion.div>
+                     ))}
                   </div>
                </div>
             </section>
 
             {/* Contact Section */}
-            <section id="contact" className="py-24 bg-slate-950/50 border-t border-slate-900/50 backdrop-blur-sm">
+            <section id="contact" className="py-32 bg-slate-900/30">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
                      <div>
-                        <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading text-white mb-6">Plan Your Platform Rollout</h2>
-                        <p className="text-slate-400 text-lg mb-12">
-                           Tell us your current workflow and team structure. We will map your rollout path for CRM, finance, contracts, meetings, and AI-driven growth on AlphaClone.
+                        <h2 className="text-4xl md:text-5xl font-black text-white mb-8 tracking-tighter uppercase leading-none">
+                           PLAN YOUR <br />
+                           <span className="text-teal-400">ROLLOUT</span>
+                        </h2>
+                        <p className="text-xl text-slate-400 mb-12 leading-relaxed">
+                           Ready to unify your business operations? Our engineers are standing by to help you map your transition to AlphaClone.
                         </p>
-
-                        <div className="space-y-8">
-                           <div className="flex items-start gap-4">
-                              <div className="w-12 h-12 bg-slate-900/80 rounded-xl flex items-center justify-center border border-slate-800">
-                                 <Mail className="w-6 h-6 text-teal-500" />
+                        
+                        <div className="space-y-10">
+                           <div className="flex items-center gap-6">
+                              <div className="w-14 h-14 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
+                                 <Mail className="w-7 h-7 text-teal-400" />
                               </div>
                               <div>
-                                 <h4 className="text-white font-bold mb-1">Email Us</h4>
-                                 <div className="flex flex-col gap-1">
-                                    <a href="mailto:info@alphaclone.tech" className="hover:text-white transition-colors">General: info@alphaclone.tech</a>
-                                    <a href="mailto:sales@alphaclone.tech" className="hover:text-white transition-colors">Sales: sales@alphaclone.tech</a>
-                                 </div>
+                                 <div className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-1">Email Us</div>
+                                 <a href="mailto:sales@alphaclone.tech" className="text-xl font-bold text-white hover:text-teal-400 transition-colors">sales@alphaclone.tech</a>
                               </div>
                            </div>
-                           <div className="flex items-start gap-4">
-                              <div className="w-12 h-12 bg-slate-900/80 rounded-xl flex items-center justify-center border border-slate-800">
-                                 <Phone className="w-6 h-6 text-teal-500" />
+                           <div className="flex items-center gap-6">
+                              <div className="w-14 h-14 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
+                                 <Phone className="w-7 h-7 text-teal-400" />
                               </div>
                               <div>
-                                 <h4 className="text-white font-bold mb-1">Phone</h4>
-                                 <a href="tel:+48517809674" className="text-teal-400 hover:text-teal-300 block">
-                                    +48 517 809 674
-                                 </a>
-                              </div>
-                           </div>
-                           <div className="flex items-start gap-4">
-                              <div className="w-12 h-12 bg-slate-900/80 rounded-xl flex items-center justify-center border border-slate-800">
-                                 <MapPin className="w-6 h-6 text-teal-500" />
-                              </div>
-                              <div>
-                                 <h4 className="text-white font-bold mb-1">Global Operations</h4>
-                                 <p className="text-slate-400">Worldwide Remote</p>
+                                 <div className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-1">Call Support</div>
+                                 <a href="tel:+48517809674" className="text-xl font-bold text-white hover:text-teal-400 transition-colors">+48 517 809 674</a>
                               </div>
                            </div>
                         </div>
                      </div>
-
-                     <div className="bg-slate-900/60 p-8 md:p-10 rounded-3xl border border-slate-800 shadow-2xl backdrop-blur-md">
+                     
+                     <div className="bg-slate-900 border border-slate-800 p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 blur-3xl rounded-full" />
+                        
                         {formStatus === 'success' ? (
-                           <div className="h-full flex flex-col items-center justify-center text-center py-12">
-                              <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mb-6">
-                                 <Check className="w-10 h-10 text-green-500" />
+                           <div className="text-center py-20">
+                              <div className="w-20 h-20 bg-teal-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                                 <Check className="w-10 h-10 text-teal-400" />
                               </div>
-                              <h3 className="text-2xl font-bold text-white mb-2">Message Sent</h3>
-                              <p className="text-slate-400">We'll be in touch with you shortly to discuss your project.</p>
+                              <h3 className="text-2xl font-black text-white mb-2 uppercase">Message Received</h3>
+                              <p className="text-slate-400">An engineer will reach out to you within 2 hours.</p>
                            </div>
                         ) : (
-                           <form onSubmit={(e) => {
-                              e.preventDefault();
-                              if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactForm.email)) {
-                                 import('react-hot-toast').then(({ toast }) => toast.error('Please enter a valid email address'));
-                                 return;
-                              }
-                              handleContactSubmit(e);
-                           }} className="space-y-6">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                 <Input
-                                    label="Name"
-                                    placeholder="John Doe"
-                                    required
-                                    value={contactForm.name}
-                                    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                           <form onSubmit={handleContactSubmit} className="space-y-6">
+                              <div className="grid grid-cols-2 gap-6">
+                                 <Input 
+                                    placeholder="Name" 
+                                    value={contactForm.name} 
+                                    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })} 
+                                    required 
                                  />
-                                 <Input
-                                    label="Email"
-                                    type="email"
-                                    placeholder="john@company.com"
-                                    required
-                                    value={contactForm.email}
-                                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                                 <Input 
+                                    placeholder="Email" 
+                                    type="email" 
+                                    value={contactForm.email} 
+                                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })} 
+                                    required 
                                  />
                               </div>
-                              <Input
-                                 label="Project Type"
-                                 placeholder="Web Dev, AI, Mobile App..."
-                                 required
-                                 value={contactForm.subject}
-                                 onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
+                              <Input 
+                                 placeholder="Subject" 
+                                 value={contactForm.subject} 
+                                 onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })} 
+                                 required 
                               />
-                              <div>
-                                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Message</label>
-                                 <textarea
-                                    className="w-full bg-slate-950/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50 min-h-[120px]"
-                                    placeholder="Tell us about your requirements..."
-                                    required
-                                    value={contactForm.message}
-                                    onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                                 />
-                              </div>
+                              <textarea
+                                 className="w-full h-40 bg-slate-950/50 border border-slate-800 rounded-2xl px-6 py-4 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
+                                 placeholder="Tell us about your requirements..."
+                                 value={contactForm.message}
+                                 onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                                 required
+                              />
                               <Button
                                  type="submit"
                                  disabled={formStatus === 'sending'}
-                                 className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold h-12 text-lg shadow-lg shadow-teal-500/20"
+                                 className="w-full h-16 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black text-xl flex items-center justify-center gap-3 transition-all"
                               >
-                                 {formStatus === 'sending' ? 'Sending...' : 'Send Message'}
+                                 {formStatus === 'sending' ? 'Transmitting...' : (
+                                    <>
+                                       Send Briefing
+                                       <ChevronRight className="w-6 h-6" />
+                                    </>
+                                 )}
                               </Button>
                            </form>
                         )}
@@ -1307,13 +574,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, projects }) => {
                   </div>
                </div>
             </section>
+         </main>
 
-            {/* Ticker */}
-            <InfiniteTicker />
-
-            <MarketingFooter />
-         </div >
-      </div >
+         <InfiniteTicker />
+         <MarketingFooter />
+      </div>
    );
 };
 

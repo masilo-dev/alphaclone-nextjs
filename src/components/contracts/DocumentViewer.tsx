@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import {
     X,
     MessageSquare,
@@ -508,10 +509,16 @@ const AnnotationItem: React.FC<AnnotationItemProps> = ({
                 <div className="relative group/sig">
                     {annotation.signatureType === 'draw' && annotation.signatureData ? (
                         <div
-                            className={`cursor-pointer transition-all duration-300 ${isActive ? 'scale-110' : 'hover:scale-110 active:scale-95'}`}
+                            className={`cursor-pointer transition-all duration-300 relative h-24 w-48 ${isActive ? 'scale-110' : 'hover:scale-110 active:scale-95'}`}
                             onClick={(e) => { e.stopPropagation(); onActivate(); }}
                         >
-                            <img src={annotation.signatureData} alt="Signature" className="max-h-24 filter drop-shadow-xl" />
+                            <Image
+                                src={annotation.signatureData}
+                                alt="Signature"
+                                fill
+                                className="object-contain filter drop-shadow-xl"
+                                unoptimized
+                            />
                         </div>
                     ) : (
                         <span
@@ -579,7 +586,7 @@ const SignatureCanvas: React.FC<{ onSave: (data: string) => void; initialData?: 
     useEffect(() => {
         if (initialData && canvasRef.current) {
             const ctx = canvasRef.current.getContext('2d');
-            const img = new Image();
+            const img = new window.Image();
             img.onload = () => ctx?.drawImage(img, 0, 0);
             img.src = initialData;
         }

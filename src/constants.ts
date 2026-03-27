@@ -43,6 +43,7 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
   { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
   { label: 'Creative Intel Lab', href: '/dashboard/ai-studio', icon: Palette },
   { label: 'Documents', href: '/dashboard/submit', icon: FileText },
+  { label: 'Documentation', href: '/docs', icon: FileText },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
@@ -77,6 +78,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
   { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
   { label: 'Global Settings', href: '/dashboard/admin/settings', icon: Settings },
+  { label: 'Documentation', href: '/docs', icon: FileText },
   { label: 'Security', href: '/dashboard/security', icon: ShieldCheck },
 ];
 
@@ -121,6 +123,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Daily Summary', href: '/dashboard/business/daily-summary', icon: BarChart3 },
 
   // 10. Administration
+  { label: 'Documentation', href: '/docs', icon: FileText },
   { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },
 ];
 

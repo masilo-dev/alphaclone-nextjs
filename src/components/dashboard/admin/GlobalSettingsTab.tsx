@@ -14,13 +14,15 @@ import {
     Palette,
     Bell,
     Save,
-    Loader2
+    Loader2,
+    FileText
 } from 'lucide-react';
 import { Button, Card, Input } from '../../ui/UIComponents';
 import toast from 'react-hot-toast';
+import LoomVideo from '../../ui/LoomVideo';
 
 const GlobalSettingsTab: React.FC = () => {
-    const [activeSection, setActiveSection] = useState<'branding' | 'integrations' | 'security' | 'ai'>('branding');
+    const [activeSection, setActiveSection] = useState<'branding' | 'integrations' | 'security' | 'ai' | 'support'>('branding');
     const [saving, setSaving] = useState(false);
 
     const handleSave = () => {
@@ -36,6 +38,7 @@ const GlobalSettingsTab: React.FC = () => {
         { id: 'integrations' as const, label: 'Global Integrations', icon: CreditCard },
         { id: 'security' as const, label: 'System Security', icon: Shield },
         { id: 'ai' as const, label: 'AI Configuration', icon: Cpu },
+        { id: 'support' as const, label: 'Support & Docs', icon: Layout },
     ];
 
     return (
@@ -166,6 +169,39 @@ const GlobalSettingsTab: React.FC = () => {
                                         <p className="text-xs text-slate-300 leading-relaxed">
                                             The system is currently using **Claude 3.5 Sonnet** as the primary engine with **GPT-4o** as the high-availability fallback. Gemini is used for low-priority categorization tasks.
                                         </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeSection === 'support' && (
+                            <div className="space-y-6">
+                                <SectionHeader title="Support & Platform Documentation" description="Resources for platform administrators and system owners" />
+                                <div className="grid grid-cols-1 gap-6">
+                                    <div className="bg-slate-900 rounded-2xl border border-white/5 overflow-hidden">
+                                        <div className="p-4 border-b border-white/5 flex items-center gap-3">
+                                            <Zap className="w-4 h-4 text-teal-400" />
+                                            <h4 className="text-sm font-bold text-white uppercase tracking-wider">Admin Video Guide</h4>
+                                        </div>
+                                        <div className="aspect-video w-full bg-black">
+                                            <LoomVideo 
+                                                videoId="3a7000c925c145b7882089688b0ceb5d" 
+                                                title="AlphaClone Admin Overview"
+                                            />
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <Card className="p-4 bg-slate-900 border-white/5 hover:border-teal-500/30 transition-all cursor-pointer group" onClick={() => window.open('/docs', '_blank')}>
+                                            <FileText className="w-6 h-6 text-slate-400 mb-3 group-hover:text-teal-400 transition-colors" />
+                                            <h5 className="text-sm font-bold text-white mb-1">Full Documentation</h5>
+                                            <p className="text-xs text-slate-500">Access the comprehensive platform wiki and API guides.</p>
+                                        </Card>
+                                        <Card className="p-4 bg-slate-900 border-white/5 hover:border-blue-500/30 transition-all">
+                                            <Bell className="w-6 h-6 text-slate-400 mb-3" />
+                                            <h5 className="text-sm font-bold text-white mb-1">System Updates</h5>
+                                            <p className="text-xs text-slate-500">View recent logs and upcoming feature releases.</p>
+                                        </Card>
                                     </div>
                                 </div>
                             </div>

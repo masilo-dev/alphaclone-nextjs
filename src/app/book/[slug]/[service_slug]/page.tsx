@@ -16,6 +16,7 @@ import { Tenant } from '@/services/tenancy/types';
 import { bookingService, BookingSlot } from '@/services/bookingService';
 import toast from 'react-hot-toast';
 import CalendlyEmbed from '@/components/booking/CalendlyEmbed';
+import Image from 'next/image';
 
 // Redundant local interface removed. Using imported BookingSlot from @/services/bookingService.
 
@@ -230,7 +231,15 @@ export default function BookingPage() {
                     <div className="lg:col-span-4 space-y-8">
                         <div className="flex items-start gap-4">
                             {tenant.settings.branding?.logo ? (
-                                <img src={tenant.settings.branding.logo} className="w-16 h-16 rounded-2xl object-cover shadow-sm" />
+                                <div className="relative w-16 h-16 shrink-0">
+                                    <Image
+                                        src={tenant.settings.branding.logo}
+                                        alt={tenant.name}
+                                        fill
+                                        className="rounded-2xl object-cover shadow-sm"
+                                        unoptimized={tenant.settings.branding.logo.startsWith('data:') || tenant.settings.branding.logo.startsWith('blob:')}
+                                    />
+                                </div>
                             ) : (
                                 <div className="w-16 h-16 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-xl font-bold text-slate-400">
                                     {tenant.name[0]}

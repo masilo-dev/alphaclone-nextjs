@@ -5,6 +5,7 @@ import { TableSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import { Project, User, DashboardStat } from '../../types';
 import { useRouter } from 'next/navigation';
+import LoomVideo from '../ui/LoomVideo';
 
 interface HomeTabProps {
     user: User;
@@ -112,6 +113,27 @@ const HomeTab: React.FC<HomeTabProps> = ({
                         <div className="text-sm text-slate-500">{stat.label}</div>
                     </div>
                 ))}
+            </div>
+
+            {/* Quick Tour Section */}
+            <div className="grid grid-cols-1 gap-6">
+                <div className="glass-card p-6 rounded-2xl border border-teal-500/20 overflow-hidden">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 bg-teal-500/10 rounded-lg">
+                            <Zap className="w-5 h-5 text-teal-400" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-white tracking-tight">Platform Quick Start</h3>
+                            <p className="text-xs text-slate-400">Watch early access documentation tour</p>
+                        </div>
+                    </div>
+                    <div className="aspect-video w-full rounded-xl overflow-hidden shadow-2xl border border-white/5">
+                        <LoomVideo 
+                            videoId="3a7000c925c145b7882089688b0ceb5d" 
+                            title="AlphaClone Dashboard Tour"
+                        />
+                    </div>
+                </div>
             </div>
 
             {/* Projects Table */}

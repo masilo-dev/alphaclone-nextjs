@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import Image from 'next/image';
 
 interface MarkdownRendererProps {
     content: string;
@@ -50,8 +51,16 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
                         <pre {...props} className="bg-slate-900 border border-white/10 rounded-lg p-4 overflow-x-auto mb-6 custom-scrollbar" />
                     ),
                     img: ({ node, ...props }) => (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img {...props} className="rounded-xl border border-white/10 shadow-2xl my-8 mx-auto max-h-[500px] object-cover" alt={updatedAlt(props.alt)} />
+                        <div className="relative w-full max-h-[500px] overflow-hidden rounded-xl border border-white/10 shadow-2xl my-8">
+                            <Image
+                                src={props.src || ''}
+                                alt={updatedAlt(props.alt)}
+                                width={800}
+                                height={500}
+                                className="w-full h-auto object-cover"
+                                unoptimized={props.src?.startsWith('data:') || props.src?.startsWith('blob:')}
+                            />
+                        </div>
                     ),
                     table: ({ node, ...props }) => (
                         <div className="overflow-x-auto mb-8 rounded-lg border border-white/10">
