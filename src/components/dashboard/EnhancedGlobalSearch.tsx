@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { Search, X, FileText, MessageSquare, DollarSign, User, Filter } from 'lucide-react';
 import { searchService, SearchResult, SearchFilters } from '../../services/searchService';
 import { User as UserType } from '../../types';
@@ -148,7 +149,14 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                 onClick={() => setIsOpen(true)}
                 className="flex items-center gap-2 px-3 py-2 bg-slate-800 text-slate-400 rounded-lg hover:bg-slate-700 transition-colors group w-full sm:w-auto"
             >
-                <img src="/logo.png" alt="AlphaClone" className="w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity" />
+                <div className="relative w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity">
+                    <Image
+                        src="/logo.png"
+                        alt="AlphaClone"
+                        fill
+                        className="object-contain"
+                    />
+                </div>
                 <span className="text-sm">Search...</span>
                 <kbd className="hidden sm:inline-block px-2 py-0.5 text-xs bg-slate-900 border border-slate-700 rounded ml-auto">
                     ⌘K

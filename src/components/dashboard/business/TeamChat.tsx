@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { Send, MessageCircle, CheckCircle, User as UserIcon, PlusCircle, Target } from 'lucide-react';
 import { User } from '../../../types';
 import { format } from 'date-fns';
@@ -176,9 +177,9 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers }) => {
 
                         return (
                             <div key={msg.id} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
-                                <div className="w-8 h-8 rounded-full bg-slate-700 flex-shrink-0 flex items-center justify-center font-bold text-xs">
+                                <div className="w-8 h-8 rounded-full bg-slate-700 flex-shrink-0 flex items-center justify-center font-bold text-xs relative overflow-hidden">
                                     {msg.userAvatar ? (
-                                        <img src={msg.userAvatar} className="w-full h-full rounded-full" alt="" />
+                                        <Image src={msg.userAvatar} fill className="object-cover" alt="" sizes="32px" />
                                     ) : (
                                         msg.userName.charAt(0)
                                     )}

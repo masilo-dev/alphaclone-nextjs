@@ -7,6 +7,7 @@ import { LOGO_URL } from '@/constants';
 import { AlertCircle, CheckCircle2, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authService } from '@/services/authService';
+import Image from 'next/image';
 
 export default function ResetPasswordPage() {
     const router = useRouter();
@@ -72,10 +73,13 @@ export default function ResetPasswordPage() {
 
             <div className="max-w-md w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl relative z-10">
                 <div className="mb-8 text-center">
-                    <img
+                    <Image
                         src={LOGO_URL}
                         alt="AlphaClone Logo"
-                        className="w-16 h-16 object-contain mx-auto mb-4"
+                        width={64}
+                        height={64}
+                        className="object-contain mx-auto mb-4"
+                        priority
                     />
                     <h1 className="text-2xl font-bold text-white mb-2">Set New Password</h1>
                     <p className="text-slate-400">Secure your account with a strong password</p>

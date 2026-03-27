@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 
 interface SplashScreenProps {
   isVisible?: boolean;
@@ -49,10 +50,13 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
               {/* Outer Glow */}
               <div className="absolute inset-0 bg-teal-500/30 blur-3xl rounded-full scale-150 animate-pulse" />
               
-              <img 
+              <Image 
                 src="/logo.png" 
                 alt="AlphaClone" 
-                className="w-24 h-24 sm:w-32 sm:h-32 object-contain relative z-10"
+                width={128}
+                height={128}
+                className="object-contain relative z-10"
+                priority
               />
             </motion.div>
 

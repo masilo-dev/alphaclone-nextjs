@@ -1,6 +1,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { LogOut, ChevronDown, Menu, ShieldAlert } from 'lucide-react';
+import Image from 'next/image';
 import { LOGO_URL } from '../../constants';
 import { User } from '../../types';
 
@@ -72,10 +73,12 @@ const Sidebar = React.memo<SidebarProps>(({
             `}>
                 <div className="h-20 flex items-center px-6 border-b border-slate-800 bg-slate-900">
                     <div className="flex items-center gap-3 overflow-hidden">
-                        <img
+                        <Image
                             src={LOGO_URL}
                             alt="AlphaClone Logo"
-                            className="w-9 h-9 rounded-xl object-contain flex-shrink-0"
+                            width={36}
+                            height={36}
+                            className="rounded-xl object-contain flex-shrink-0"
                         />
                         <span className={`font-bold text-white text-lg tracking-tight transition-opacity duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
                             AlphaClone

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Inter, Plus_Jakarta_Sans, Sora } from "next/font/google";
+import { Geist, Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { PWAProvider } from "@/contexts/PWAContext";
@@ -16,24 +16,8 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 const inter = Inter({
   variable: "--font-inter",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  variable: "--font-jakarta",
-  subsets: ["latin"],
-});
-
-const sora = Sora({
-  variable: "--font-sora",
   subsets: ["latin"],
   display: "swap",
 });
@@ -155,7 +139,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head />
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${plusJakartaSans.variable} ${sora.variable} antialiased text-base subpixel-antialiased`}
+        className={`${geistSans.variable} ${inter.variable} antialiased text-base subpixel-antialiased`}
       >
         <script
           type="application/ld+json"

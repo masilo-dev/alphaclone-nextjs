@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { Tenant } from '../../../services/tenancy/types';
 import { tenantService } from '../../../services/tenancy/TenantService';
 import { logoService } from '@/services/logoService';
+import Image from 'next/image';
 
 const BrandingSettings = () => {
     const { currentTenant, refreshTenants } = useTenant();
@@ -100,7 +101,13 @@ const BrandingSettings = () => {
                                 {isUploading ? (
                                     <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
                                 ) : branding.logo_url ? (
-                                    <img src={branding.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                                    <Image 
+                                      src={branding.logo_url} 
+                                      alt="Logo" 
+                                      fill
+                                      className="object-cover" 
+                                      sizes="96px"
+                                    />
                                 ) : (
                                     <Building className="w-8 h-8 text-slate-700" />
                                 )}
@@ -229,7 +236,15 @@ const BrandingSettings = () => {
                         <div className="flex justify-between items-start mb-8">
                             <div>
                                 {branding.logo_url ? (
-                                    <img src={branding.logo_url} alt="Logo" className="h-10 object-contain mb-2" />
+                                    <div className="relative h-10 w-32 mb-2">
+                                        <Image 
+                                            src={branding.logo_url} 
+                                            alt="Logo" 
+                                            fill
+                                            className="object-contain object-left" 
+                                            sizes="128px"
+                                        />
+                                    </div>
                                 ) : (
                                     <h1 className="text-xl font-bold mb-1" style={{ color: branding.brand_color_primary }}>
                                         {branding.legal_name || 'Organization Name'}

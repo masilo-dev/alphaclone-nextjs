@@ -1,9 +1,5 @@
-'use client';
-
-import React from 'react';
-import { motion } from 'framer-motion';
 import { Shield, Zap, Globe } from 'lucide-react';
-import DynamicVideoSimulation from './DynamicVideoSimulation';
+import LoomVideo from '@/components/ui/LoomVideo';
 
 const VideoExplainer = () => {
     return (
@@ -21,19 +17,10 @@ const VideoExplainer = () => {
                 </div>
 
                 <div className="relative max-w-5xl mx-auto">
-                    {/* Video Simulation Frame */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="relative aspect-video bg-slate-900 rounded-[2rem] overflow-hidden border border-slate-800 shadow-2xl shadow-blue-500/10"
-                    >
-                        <DynamicVideoSimulation />
-                    </motion.div>
-
-                    {/* Decorative Elements */}
-                    <div className="absolute -top-6 -right-6 w-32 h-32 bg-teal-500/10 blur-3xl rounded-full" />
-                    <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-blue-500/10 blur-3xl rounded-full" />
+                    <LoomVideo 
+                        videoId="3a7000c925c145b7882089688b0ceb5d" 
+                        title="AlphaClone Platform Tour"
+                    />
                 </div>
 
                 {/* Key Features / Highlights */}

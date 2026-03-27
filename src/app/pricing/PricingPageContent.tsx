@@ -195,22 +195,29 @@ export default function PricingPageContent() {
 
             <main className="max-w-7xl mx-auto px-4 pt-32 pb-24">
 
-                {/* BLUF Summary (SSR visible to crawlers) */}
-                <div className="text-center mb-20">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.04] backdrop-blur-sm border border-slate-700/60 mb-6">
-                        <Star className="w-4 h-4 text-teal-400 fill-teal-400" />
-                        <span className="text-xs font-bold text-white uppercase tracking-widest">14-Day Free Trial — No Card Required</span>
-                    </div>
-                    <h1 className="text-4xl md:text-7xl font-black text-white mb-6 tracking-tighter">
-                        Simple Pricing.<br />
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-500">Massive Value.</span>
+                <div className="text-center mb-24 relative overflow-hidden">
+                    {/* Cinematic Glows */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-500/5 blur-[120px] rounded-full -z-10" />
+                    
+                    <AnimateIn type="fadeIn" delay={0}>
+                        <div className="inline-flex items-center gap-2 mb-8 ai-badge">
+                            <Zap className="w-3.5 h-3.5 fill-teal-400" />
+                            <span>THE UNIFIED OPERATING ENGINE</span>
+                        </div>
+                    </AnimateIn>
+                    <h1 className="text-5xl md:text-7xl font-black text-white mb-8 tracking-tighter leading-[0.9]">
+                        Operational <br />
+                        <span className="hero-metallic-text">Authority.</span>
                     </h1>
-                    <p className="text-slate-400 text-xl max-w-2xl mx-auto mb-4">
-                        Replace <strong className="text-white">$330+/month</strong> of disconnected SaaS tools with one Business OS — starting at <strong className="text-teal-400">$15/month</strong>.
+                    <p className="text-slate-400 text-2xl max-w-3xl mx-auto mb-6 font-medium tracking-tight">
+                        Eliminate the "SaaS Tax". Replace $330+/mo of fragmented <br className="hidden md:block" />
+                        tools with one high-performance Business OS.
                     </p>
-                    <p className="text-slate-500 text-sm max-w-xl mx-auto">
-                        All plans include CRM, invoicing, contracts, video meetings, task management, document storage, and Gmail integration. No setup fees. No per-seat surprises. Cancel anytime.
-                    </p>
+                    <div className="flex items-center justify-center gap-6 text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">
+                        <span>• Zero Setup Fees</span>
+                        <span>• Unlimited Data</span>
+                        <span>• Cancel Anytime</span>
+                    </div>
                 </div>
 
                 {/* Plan Cards */}
@@ -264,12 +271,12 @@ export default function PricingPageContent() {
 
                                 <Link
                                     href={plan.ctaLink}
-                                    className={`block text-center py-4 rounded-2xl font-bold text-sm transition-all ${plan.highlight
-                                        ? 'bg-teal-500 hover:bg-teal-400 text-slate-950 shadow-xl shadow-teal-500/20'
-                                        : 'bg-slate-900 hover:bg-slate-800 text-white border border-slate-800'
+                                    className={`block text-center py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all ${plan.highlight
+                                        ? 'cta-primary'
+                                        : 'cta-secondary'
                                         }`}
                                 >
-                                    {plan.cta} <ArrowRight className="inline w-4 h-4 ml-1" />
+                                    {plan.cta}
                                 </Link>
                             </div>
                         </motion.div>
@@ -411,28 +418,29 @@ export default function PricingPageContent() {
                     </div>
                 </div>
 
-                {/* Final CTA */}
-                <div className="text-center p-12 bg-gradient-to-br from-teal-950/50 to-slate-950 border border-teal-500/20 rounded-3xl">
-                    <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Ready to Replace the Stack?</h2>
-                    <p className="text-slate-400 mb-8 max-w-lg mx-auto">
-                        Join 500+ businesses already running on AlphaClone. Start your 14-day free trial today — no credit card, no commitment.
+                <div className="text-center p-16 relative overflow-hidden rounded-3xl border border-white/[0.05] bg-slate-950">
+                    <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 via-transparent to-blue-500/5 -z-10" />
+                    <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tighter">Ready to Deploy Your <span className="hero-metallic-text">OS?</span></h2>
+                    <p className="text-slate-400 text-xl mb-12 max-w-xl mx-auto font-medium">
+                        Join 500+ high-performance businesses. Deploy your 14-day free trial in under 60 seconds.
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                         <Link
                             href="/auth/login?register=true&type=business&plan=pro"
-                            className="px-8 py-4 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-2xl transition-colors shadow-xl shadow-teal-500/20 inline-flex items-center gap-2"
+                            className="cta-primary px-12 py-5 rounded-2xl text-lg w-full sm:w-auto text-center"
                         >
-                            Start Free Trial <ArrowRight className="w-4 h-4" />
+                            Start Solo OS
                         </Link>
                         <Link
                             href="/contact"
-                            className="px-8 py-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold border border-slate-700 rounded-2xl transition-colors inline-flex items-center gap-2"
+                            className="cta-secondary px-12 py-5 rounded-2xl text-lg w-full sm:w-auto text-center"
                         >
-                            Talk to Sales
+                            Contact Sales
                         </Link>
                     </div>
-                    <p className="text-xs text-slate-600 mt-4">No credit card required · Cancel anytime · 14-day free trial</p>
+                    <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.2em] mt-8">Secure • ISO/IEC 27001 Compliant Architecture • GDPR Ready</p>
                 </div>
+                <p className="text-xs text-slate-600 mt-8 text-center">No credit card required · Cancel anytime · 14-day free trial</p>
             </main>
             <MarketingFooter />
         </div>

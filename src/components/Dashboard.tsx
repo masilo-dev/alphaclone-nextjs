@@ -22,6 +22,7 @@ import { toast } from 'react-hot-toast';
 import MilestoneManager from './dashboard/projects/MilestoneManager';
 import { Button, Card, Input, Modal } from './ui/UIComponents';
 import { CLIENT_NAV_ITEMS, ADMIN_NAV_ITEMS, TENANT_ADMIN_NAV_ITEMS, LOGO_URL } from '../constants';
+import Image from 'next/image';
 import { User, Project, ChatMessage, DashboardStat, GalleryItem, Invoice, ProjectStage, UserRole } from '../types';
 import BusinessDashboard from './dashboard/business/BusinessDashboard';
 import { useTenant } from '../contexts/TenantContext';
@@ -1256,7 +1257,13 @@ const Dashboard: React.FC<DashboardProps> = ({
                       >
                         <div className={`group relative bg-slate-900/60 backdrop-blur-xl rounded-2xl overflow-hidden border transition-all flex flex-col h-full ${p.status === 'Declined' ? 'border-red-900/20 opacity-60' : 'border-white/5 hover:border-teal-500/50 shadow-lg hover:shadow-teal-500/10'}`}>
                           <div className="aspect-video relative overflow-hidden">
-                            <img src={p.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                            <Image 
+                              src={p.image || '/placeholder.png'} 
+                              alt={p.name}
+                              fill
+                              className="object-cover transition-transform duration-500 group-hover:scale-105" 
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                            />
                             <div className={`absolute top-3 right-3 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] text-white font-black uppercase tracking-widest border ${p.status === 'Active' ? 'bg-green-500/20 border-green-500/50 text-green-400' : p.status === 'Declined' ? 'bg-red-500/20 border-red-500' : 'bg-black/60 border-white/10'}`}>
                               {p.status}
                             </div>
@@ -1419,7 +1426,13 @@ const Dashboard: React.FC<DashboardProps> = ({
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-4">
                                 <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-white/10 group-hover:border-teal-500/50 transition-colors">
-                                  <img src={p.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                  <Image 
+                                    src={p.image || '/placeholder.png'} 
+                                    alt={p.name}
+                                    fill
+                                    className="object-cover group-hover:scale-110 transition-transform duration-500" 
+                                    sizes="40px"
+                                  />
                                 </div>
                                 <div className="min-w-0">
                                   <span className="text-sm font-bold text-slate-200 block group-hover:text-white transition-colors truncate uppercase tracking-tight">{p.name}</span>
@@ -1474,8 +1487,14 @@ const Dashboard: React.FC<DashboardProps> = ({
                         onClick={() => openArchitectTool(p)}
                         className="bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-white/5 p-4 flex items-center gap-4 active:scale-[0.98] transition-all"
                       >
-                        <div className="w-14 h-14 rounded-xl overflow-hidden border border-white/10 shrink-0">
-                          <img src={p.image} className="w-full h-full object-cover" />
+                        <div className="w-14 h-14 rounded-xl overflow-hidden border border-white/10 shrink-0 relative">
+                          <Image 
+                            src={p.image || '/placeholder.png'} 
+                            alt={p.name}
+                            fill
+                            className="object-cover" 
+                            sizes="56px"
+                          />
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="font-bold text-white text-sm truncate uppercase tracking-tight">{p.name}</h4>
@@ -1799,7 +1818,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               {/* Mobile Menu Toggle removed - BottomNav handles it */}
 
               <div className="flex items-center gap-2 sm:gap-3 md:hidden">
-                <img src={LOGO_URL} alt="Logo" className="w-8 h-8 rounded-lg flex-shrink-0" />
+                <Image src={LOGO_URL} alt="Logo" width={32} height={32} className="rounded-lg flex-shrink-0" />
                 <h1 className="text-base sm:text-lg font-bold text-white whitespace-nowrap truncate max-w-[150px] sm:max-w-none">AlphaClone Systems</h1>
               </div>
             </div>

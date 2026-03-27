@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Download, Eye, Palette, Layout, Type, Image, Sliders, Copy, Share2, FileText, Presentation, Zap, Sparkles, Plus, X } from 'lucide-react';
+import Image from 'next/image';
+import { Download, Eye, Palette, Layout, Type, Image as ImageIcon, Sliders, Copy, Share2, FileText, Presentation, Zap, Sparkles, Plus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../../ui/UIComponents';
@@ -412,8 +413,8 @@ export default function PresentationTemplates() {
                                     onClick={() => handleTemplateSelect(template)}
                                 >
                                     <div className="text-center">
-                                        <div className="mb-4 h-32 w-full overflow-hidden rounded-lg">
-                                            <img src={template.thumbnail} alt={template.name} className="w-full h-full object-cover" />
+                                        <div className="mb-4 h-32 w-full overflow-hidden rounded-lg relative">
+                                            <Image src={template.thumbnail} alt={template.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" />
                                         </div>
                                         <h3 className="text-xl font-bold text-white mb-2">{template.name}</h3>
                                         <p className="text-gray-400 text-sm mb-4">{template.description}</p>
@@ -454,8 +455,8 @@ export default function PresentationTemplates() {
                             {/* Template Info */}
                             <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
                                 <div className="text-center mb-4">
-                                    <div className="mb-4 h-48 w-full overflow-hidden rounded-lg">
-                                        <img src={selectedTemplate.thumbnail} alt={selectedTemplate.name} className="w-full h-full object-cover" />
+                                    <div className="mb-4 h-48 w-full overflow-hidden rounded-lg relative">
+                                        <Image src={selectedTemplate.thumbnail} alt={selectedTemplate.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 300px" />
                                     </div>
                                     <h3 className="text-lg font-bold text-white">{selectedTemplate.name}</h3>
                                 </div>

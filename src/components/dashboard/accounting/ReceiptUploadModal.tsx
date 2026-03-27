@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { X, Upload, Loader2, Camera, Receipt } from 'lucide-react';
 import { Card, Button, Input, Modal } from '../../ui/UIComponents';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -119,7 +120,13 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess }: Recei
                         ) : (
                             <div className="space-y-4">
                                 <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-black/50 aspect-video flex items-center justify-center">
-                                    <img src={preview} alt="Receipt preview" className="max-h-full max-w-full object-contain" />
+                                    <Image
+                                        src={preview}
+                                        alt="Receipt preview"
+                                        fill
+                                        className="object-contain"
+                                        unoptimized
+                                    />
                                     <button
                                         onClick={() => { setFile(null); setPreview(null); }}
                                         className="absolute top-2 right-2 p-1 bg-black/50 hover:bg-black text-white rounded-full transition-colors"

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { ExternalLink, Globe, Search, ArrowRight, Check } from 'lucide-react';
 import { projectService } from '../../services/projectService';
 import PublicNavigation from '../PublicNavigation';
@@ -156,10 +157,12 @@ const PublicPortfolio: React.FC = () => {
                                 >
                                     {/* Project Image */}
                                     <div className="aspect-[16/10] relative overflow-hidden bg-slate-800">
-                                        <img
+                                        <Image
                                             src={project.image || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800'}
                                             alt={project.name}
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                            fill
+                                            className="object-cover group-hover:scale-110 transition-transform duration-700"
+                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent opacity-60" />
 

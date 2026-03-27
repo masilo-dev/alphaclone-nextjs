@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { businessClientService } from '../../../services/businessClientService';
@@ -186,13 +187,13 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
                         </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500/30 ring-2 ring-teal-500/10">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
+                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500/30 ring-2 ring-teal-500/10 relative">
+                            <Image
                                 src={user.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.email || user.name}`}
                                 alt={firstName}
-                                className="w-full h-full object-cover"
-                                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><rect width='48' height='48' fill='%230f766e'/><text x='50%' y='50%' font-size='20' fill='white' text-anchor='middle' dominant-baseline='central' font-family='sans-serif'>${firstName.charAt(0).toUpperCase()}</text></svg>`)}`; }}
+                                fill
+                                className="object-cover"
+                                sizes="48px"
                             />
                         </div>
                     </div>

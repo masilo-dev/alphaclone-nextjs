@@ -42,23 +42,40 @@ const ServicesSection: React.FC = () => {
     ];
 
     return (
-        <section id="services" className="py-20 px-4 bg-slate-950">
+        <section id="services" className="py-32 px-4 relative overflow-hidden bg-black">
+            {/* Ambient Background */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-teal-500/5 blur-[120px] rounded-full -z-10" />
+
             <div className="max-w-7xl mx-auto">
-                <div className="text-center mb-16">
-                    <h2 className="text-4xl md:text-5xl font-bold mb-4">Our Services</h2>
-                    <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-                        Comprehensive software solutions for modern businesses
+                <div className="text-center mb-24">
+                    <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tighter">
+                        Engineered <span className="hero-metallic-text">Capabilities.</span>
+                    </h2>
+                    <p className="text-xl text-slate-400 max-w-2xl mx-auto font-medium">
+                        The high-performance layer for your enterprise operations. Consolidated, secured, and AI-amplified.
                     </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {services.map((service, idx) => (
                         <div
                             key={idx}
-                            className="bg-slate-900 p-8 rounded-xl border border-slate-800 hover:border-teal-500/50 transition-all group"
+                            className="glass-card p-10 rounded-3xl border border-white/[0.03] hover:scale-[1.02] transition-all group relative overflow-hidden h-full flex flex-col"
                         >
-                            <service.icon className={`w-12 h-12 ${service.color} mb-4 group-hover:scale-110 transition-transform`} />
-                            <h3 className="text-xl font-bold mb-3">{service.title}</h3>
-                            <p className="text-slate-400">{service.description}</p>
+                            {/* Inner Glow */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+                            
+                            <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.05] flex items-center justify-center mb-8 group-hover:bg-teal-500 group-hover:text-slate-950 transition-all duration-500 shadow-2xl">
+                                <service.icon className="w-7 h-7" />
+                            </div>
+                            <h3 className="text-2xl font-black mb-4 text-white tracking-tight">{service.title}</h3>
+                            <p className="text-slate-400 leading-relaxed text-sm flex-grow font-medium">
+                                {service.description}
+                            </p>
+                            
+                            <div className="mt-8 flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-teal-400 transition-colors">
+                                <span>Learn Protocol</span>
+                                <div className="h-[1px] w-8 bg-slate-800 group-hover:bg-teal-500 transition-all" />
+                            </div>
                         </div>
                     ))}
                 </div>

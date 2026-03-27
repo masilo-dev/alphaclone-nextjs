@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Send, MessageSquare, Search, Smile, User as UserIcon, Menu, X, Paperclip, Loader2, Flag, Bot, ArrowLeft, Mail } from 'lucide-react';
+import { Send, MessageSquare, Search, Smile, User as UserIcon, Menu, X, Paperclip, Loader2, Flag, Bot, ArrowLeft, Mail, Users, UserPlus, Wand2 } from 'lucide-react';
 import { User, ChatMessage } from '../../types';
 import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
 import { userService } from '../../services/userService';
@@ -13,8 +13,8 @@ import OnlineStatusBadge from './OnlineStatusBadge';
 import CampaignBuilder from '../dashboard/business/CampaignBuilder';
 import { useClients } from '../../hooks/useClients';
 import { useTenant } from '../../contexts/TenantContext';
-import { Users, UserPlus, Wand2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import Image from 'next/image';
 
 interface MessagesTabProps {
     user: User;
@@ -565,7 +565,15 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                             className={`p-3 md:p-4 flex items-center gap-3 cursor-pointer transition-all border-b border-slate-700 hover:bg-slate-800/50 ${selectedClient?.id === client.id ? 'bg-teal-500/10 border-l-2 border-l-teal-500' : 'border-l-2 border-l-transparent'}`}
                                         >
                                             <div className="relative">
-                                                <img src={client.avatar} alt={client.name} className="w-10 h-10 rounded-full" />
+                                             <div className="relative w-10 h-10 shrink-0">
+                                                <Image 
+                                                  src={client.avatar} 
+                                                  alt={client.name} 
+                                                  fill
+                                                  className="rounded-full object-cover" 
+                                                  sizes="40px"
+                                                />
+                                             </div>
                                                 {typingUsers.has(client.id) ? (
                                                     <div className="absolute -bottom-1 -right-1 bg-slate-900 rounded-full p-[2px]">
                                                         <div className="flex gap-[2px] px-1">
@@ -658,7 +666,15 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                         {isAdmin ? (
                                             selectedClient ? (
                                                 <>
-                                                    <img src={selectedClient.avatar} alt={selectedClient.name} className="w-8 h-8 rounded-full flex-shrink-0" />
+                                                    <div className="relative w-8 h-8 shrink-0">
+                                                        <Image 
+                                                          src={selectedClient.avatar} 
+                                                          alt={selectedClient.name} 
+                                                          fill
+                                                          className="rounded-full object-cover" 
+                                                          sizes="32px"
+                                                        />
+                                                    </div>
                                                     <div className="flex flex-col min-w-0">
                                                         <span className="truncate">{selectedClient.name}</span>
                                                         {isRecipientTyping && (
@@ -763,9 +779,16 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                         <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
                                             {pendingAttachments.map((att, idx) => (
                                                 <div key={idx} className="relative group/preview">
-                                                    <div className="w-16 h-16 rounded-lg border border-slate-600 overflow-hidden bg-slate-800 flex items-center justify-center">
+                                                     <div className="w-16 h-16 rounded-lg border border-slate-600 overflow-hidden bg-slate-800 relative">
                                                         {att.type === 'image' ? (
-                                                            <img src={att.url} className="w-full h-full object-cover" />
+                                                            <Image 
+                                                              src={att.url} 
+                                                              alt={att.name}
+                                                              fill
+                                                              className="object-cover"
+                                                              sizes="64px"
+                                                              unoptimized
+                                                            />
                                                         ) : (
                                                             <Paperclip className="w-6 h-6 text-slate-400" />
                                                         )}

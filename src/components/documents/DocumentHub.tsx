@@ -25,6 +25,7 @@ import { format } from 'date-fns';
 import DOMPurify from 'dompurify';
 import { notificationService } from '../../services/dashboardService';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 import 'react-quill-new/dist/quill.snow.css';
@@ -684,11 +685,13 @@ Example: [{"id":"1","title":"Introduction","content":"• Key point one\\n• Ke
                         </div>
                     ) : viewMode === 'image' && fileUrl ? (
                         <div className="h-full flex items-center justify-center p-6 sm:p-12 hover:bg-slate-900/50 transition-colors">
-                            <img
-                                src={fileUrl}
-                                alt={selectedFile.original_filename}
-                                className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl ring-1 ring-white/10"
-                            />
+                                <Image
+                                    src={fileUrl}
+                                    alt={selectedFile.original_filename}
+                                    fill
+                                    unoptimized
+                                    className="object-contain rounded-2xl shadow-2xl ring-1 ring-white/10"
+                                />
                         </div>
                     ) : viewMode === 'editor' ? (
                         <div className="h-full overflow-auto flex flex-col items-center bg-slate-900/50 py-12 px-6">

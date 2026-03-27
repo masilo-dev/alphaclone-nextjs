@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Users, Plus, X, Hash, Lock, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -209,11 +210,15 @@ export default function GroupChatManager({ teamMembers, onClose, onGroupCreated 
                       />
                       <div className="flex items-center flex-1">
                         {member.avatar_url ? (
-                          <img
-                            src={member.avatar_url}
-                            alt={member.name}
-                            className="w-8 h-8 rounded-full mr-3"
-                          />
+                          <div className="w-8 h-8 rounded-full mr-3 relative overflow-hidden">
+                            <Image
+                              src={member.avatar_url}
+                              alt={member.name}
+                              fill
+                              className="object-cover"
+                              unoptimized
+                            />
+                          </div>
                         ) : (
                           <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-3">
                             <span className="text-white text-sm font-medium">

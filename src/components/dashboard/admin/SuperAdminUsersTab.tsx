@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import {
     Users,
     Search,
@@ -155,8 +156,14 @@ const SuperAdminUsersTab: React.FC = () => {
                                 <tr key={user.id} className="group hover:bg-slate-800/30 transition-colors">
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/5 ring-2 ring-transparent group-hover:ring-teal-500/30 transition-all">
-                                                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                                            <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/5 ring-2 ring-transparent group-hover:ring-teal-500/30 transition-all relative">
+                                                <Image
+                                                    src={user.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.email}`}
+                                                    alt={user.name}
+                                                    fill
+                                                    className="object-cover"
+                                                    sizes="40px"
+                                                />
                                             </div>
                                             <div>
                                                 <div className="font-bold text-white text-sm">{user.name}</div>

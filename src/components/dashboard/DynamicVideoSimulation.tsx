@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Play, Pause, RotateCcw, Volume2, Maximize2, Monitor, Shield, Zap, Cpu, Globe } from 'lucide-react';
 
@@ -129,10 +130,12 @@ const DynamicVideoSimulation = () => {
                     animate={isPlaying ? "animate" : "initial"}
                     className="absolute inset-0"
                 >
-                    <img
+                    <Image
                         src={currentScene.image}
                         alt={currentScene.title}
-                        className="w-full h-full object-cover opacity-60"
+                        fill
+                        className="object-cover opacity-60"
+                        unoptimized
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/40" />
                 </motion.div>

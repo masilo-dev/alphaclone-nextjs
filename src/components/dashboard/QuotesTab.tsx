@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { FileText, Plus, Eye, Check, X, DollarSign, Trash2, Download, Upload, Search, Edit, PenLine } from 'lucide-react';
 import { quoteService, Quote, QuoteItem } from '../../services/quoteService';
 import { businessInvoiceService } from '../../services/businessInvoiceService';
@@ -1443,8 +1444,14 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                                     )}
                                 </div>
                                 {signatureData ? (
-                                    <div className="bg-white rounded-lg p-2">
-                                        <img src={signatureData} alt="Signature" className="max-h-24 mx-auto" />
+                                    <div className="bg-white rounded-lg p-2 relative h-24">
+                                        <Image
+                                            src={signatureData}
+                                            alt="Signature"
+                                            fill
+                                            className="object-contain"
+                                            unoptimized
+                                        />
                                     </div>
                                 ) : (
                                     <div className="space-y-2">

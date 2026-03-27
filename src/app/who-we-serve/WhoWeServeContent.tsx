@@ -9,7 +9,10 @@ import {
     TrendingUp,
     ShieldCheck,
     Video,
-    ArrowRight
+    ArrowRight,
+    Sparkles,
+    Shield,
+    Workflow
 } from 'lucide-react';
 import { Button } from '@/components/ui/UIComponents';
 import LoginModal from '@/components/auth/LoginModal';
@@ -56,31 +59,42 @@ export default function WhoWeServePage() {
             </header>
 
             {/* Hero Section */}
-            <section className="pt-32 pb-16 px-4">
+            <section className="relative overflow-hidden pt-40 pb-20 px-4">
+                {/* Cinematic Background */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-blue-500/10 blur-[120px] rounded-full" />
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:3rem_3rem] opacity-[0.03]" />
+                </div>
+
                 <div className="max-w-4xl mx-auto text-center">
-                    <AnimateIn type="fadeUp">
-                        <h1 className="text-3xl md:text-6xl font-bold text-white mb-6">
-                            Who We Serve
-                        </h1>
+                    <AnimateIn type="fadeIn" delay={0}>
+                        <div className="inline-flex items-center gap-2 mb-8 ai-badge">
+                            <Workflow className="w-3.5 h-3.5 text-teal-400" />
+                            <span>TARGET ARCHITECTURES</span>
+                        </div>
                     </AnimateIn>
                     <AnimateIn type="fadeUp" delay={0.1}>
-                        <p className="text-xl text-slate-400 mb-8">
-                            AlphaClone is built for teams who are tired of juggling multiple tools and want a unified system that just works.
+                        <h1 className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tighter leading-[0.95]">
+                            Engineered for <br />
+                            <span className="hero-metallic-text">High-Performance Teams</span>
+                        </h1>
+                    </AnimateIn>
+                    <AnimateIn type="fadeUp" delay={0.2}>
+                        <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
+                            AlphaClone isn't just a tool—it's the operating layer for teams who have outgrown fragmented SaaS and need a unified, high-authority system.
                         </p>
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                             <Button
                                 onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
-                                size="lg"
-                                className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-8 h-12 w-full sm:w-auto"
+                                className="cta-primary px-10 py-5 h-auto text-lg rounded-2xl"
                             >
-                                Book Free Consultation
+                                Book Strategy Call
                             </Button>
                             <Button
-                                size="lg"
                                 onClick={() => setIsLoginOpen(true)}
-                                className="border-slate-700 bg-slate-900/50 backdrop-blur hover:bg-slate-800 text-white px-8 h-12 w-full sm:w-auto"
+                                className="cta-secondary px-10 py-5 h-auto text-lg rounded-2xl"
                             >
-                                Start for Free
+                                Start Free Trial
                             </Button>
                         </div>
                     </AnimateIn>
@@ -91,34 +105,30 @@ export default function WhoWeServePage() {
             <section className="py-16 px-4">
                 <div className="max-w-7xl mx-auto">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {/* Growing Agencies */}
                         <AnimateIn type="stagger" index={0}>
-                            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 hover:border-teal-500/50 transition-all group backdrop-blur-md">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-12 h-12 bg-teal-500/10 rounded-xl flex items-center justify-center">
-                                        <Target className="w-6 h-6 text-teal-400" />
+                            <div className="glass-card rounded-3xl p-8 border-white/[0.03] transition-all hover:scale-[1.02] flex flex-col h-full group">
+                                <div className="flex items-center gap-4 mb-8">
+                                    <div className="w-14 h-14 bg-teal-500/10 rounded-2xl flex items-center justify-center border border-teal-500/20 group-hover:bg-teal-500 group-hover:text-slate-950 transition-all">
+                                        <Target className="w-7 h-7" />
                                     </div>
-                                    <h3 className="text-xl font-bold text-white">Growing Agencies</h3>
+                                    <h3 className="text-2xl font-black text-white tracking-tight">Growth Agencies</h3>
                                 </div>
-                                <div className="space-y-4">
-                                    <div>
-                                        <p className="text-sm font-semibold text-slate-300 mb-2">Your Challenge:</p>
-                                        <p className="text-sm text-slate-400">Managing multiple clients across different tools, losing time switching contexts, and struggling with expensive per-seat pricing.</p>
+                                <div className="space-y-6 flex-grow">
+                                    <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+                                        <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Replaces</p>
+                                        <p className="text-sm font-bold text-white">HubSpot + ClickUp + DocuSign</p>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-semibold text-teal-400 mb-2">How We Help:</p>
-                                        <ul className="text-sm text-slate-400 space-y-1">
-                                            <li className="flex items-start gap-2">
-                                                <CheckCircle2 className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                                                <span>Multi-tenant architecture for unlimited clients</span>
+                                    <p className="text-slate-400 leading-relaxed text-sm">Managing clients across silos kills your margin. AlphaClone provides a single multi-tenant architecture for unlimited clients and high-velocity delivery.</p>
+                                    <div className="space-y-3">
+                                        <p className="text-xs font-black text-teal-400 uppercase tracking-widest">Core Impact:</p>
+                                        <ul className="text-sm text-slate-300 space-y-2">
+                                            <li className="flex items-start gap-3">
+                                                <CheckCircle2 className="w-4 h-4 text-teal-400 mt-1 flex-shrink-0" />
+                                                <span>Integrated white-label client portals</span>
                                             </li>
-                                            <li className="flex items-start gap-2">
-                                                <CheckCircle2 className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                                                <span>Unified dashboard for all client projects</span>
-                                            </li>
-                                            <li className="flex items-start gap-2">
-                                                <CheckCircle2 className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                                                <span>White-label client portals</span>
+                                            <li className="flex items-start gap-3">
+                                                <CheckCircle2 className="w-4 h-4 text-teal-400 mt-1 flex-shrink-0" />
+                                                <span>Unified project & revenue tracking</span>
                                             </li>
                                         </ul>
                                     </div>
@@ -126,34 +136,30 @@ export default function WhoWeServePage() {
                             </div>
                         </AnimateIn>
 
-                        {/* SaaS Startups */}
                         <AnimateIn type="stagger" index={1}>
-                            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 hover:border-blue-500/50 transition-all group backdrop-blur-md">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center">
-                                        <Zap className="w-6 h-6 text-blue-400" />
+                            <div className="glass-card rounded-3xl p-8 border-white/[0.03] transition-all hover:scale-[1.02] flex flex-col h-full group">
+                                <div className="flex items-center gap-4 mb-8">
+                                    <div className="w-14 h-14 bg-blue-500/10 rounded-2xl flex items-center justify-center border border-blue-500/20 group-hover:bg-blue-500 group-hover:text-slate-950 transition-all">
+                                        <Zap className="w-7 h-7" />
                                     </div>
-                                    <h3 className="text-xl font-bold text-white">SaaS Startups</h3>
+                                    <h3 className="text-2xl font-black text-white tracking-tight">SaaS Startups</h3>
                                 </div>
-                                <div className="space-y-4">
-                                    <div>
-                                        <p className="text-sm font-semibold text-slate-300 mb-2">Your Challenge:</p>
-                                        <p className="text-sm text-slate-400">Burning cash on 10+ SaaS subscriptions while trying to reach profitability. Need enterprise features without enterprise costs.</p>
+                                <div className="space-y-6 flex-grow">
+                                    <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+                                        <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Replaces</p>
+                                        <p className="text-sm font-bold text-white">Zoom + Slack + Pandadoc</p>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-semibold text-blue-400 mb-2">How We Help:</p>
-                                        <ul className="text-sm text-slate-400 space-y-1">
-                                            <li className="flex items-start gap-2">
-                                                <CheckCircle2 className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                                                <span>Replace $2,000+/mo in subscriptions</span>
+                                    <p className="text-slate-400 leading-relaxed text-sm">Stop burning cash on 10+ subscriptions. Build on a unified infrastructure with built-in CRM, HD video, and AI-powered outreach.</p>
+                                    <div className="space-y-3">
+                                        <p className="text-xs font-black text-blue-400 uppercase tracking-widest">Core Impact:</p>
+                                        <ul className="text-sm text-slate-300 space-y-2">
+                                            <li className="flex items-start gap-3">
+                                                <CheckCircle2 className="w-4 h-4 text-blue-400 mt-1 flex-shrink-0" />
+                                                <span>Autonomous AI Growth Agent</span>
                                             </li>
-                                            <li className="flex items-start gap-2">
-                                                <CheckCircle2 className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                                                <span>Built-in CRM, video calls, and AI agents</span>
-                                            </li>
-                                            <li className="flex items-start gap-2">
-                                                <CheckCircle2 className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                                                <span>Self-hostable for data control</span>
+                                            <li className="flex items-start gap-3">
+                                                <CheckCircle2 className="w-4 h-4 text-blue-400 mt-1 flex-shrink-0" />
+                                                <span>Integrated contract & legal suite</span>
                                             </li>
                                         </ul>
                                     </div>
@@ -304,32 +310,33 @@ export default function WhoWeServePage() {
                 </div>
             </section>
 
-            {/* CTA Section */}
-            <section className="py-24 px-4">
+            <section className="py-32 px-4 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-t from-teal-500/5 to-transparent -z-10" />
                 <AnimateIn type="scaleIn">
                     <div className="max-w-4xl mx-auto text-center">
-                        <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-                            Don&apos;t See Yourself Here?
+                        <h2 className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tighter">
+                            Ready for <span className="hero-metallic-text">Unified Control?</span>
                         </h2>
-                        <p className="text-xl text-slate-400 mb-8">
-                            We work with all types of businesses. Let's discuss how AlphaClone can help you consolidate your tools and reduce costs.
+                        <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
+                            Join 500+ high-performance teams running smarter on AlphaClone. Deploy your 14-day free trial in under 60 seconds.
                         </p>
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                             <Button
                                 onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
-                                size="lg"
-                                className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-8 h-12 w-full sm:w-auto"
+                                className="cta-primary px-12 py-5 h-auto text-xl rounded-2xl"
                             >
-                                Book Free Consultation
+                                Book Strategy Call
                             </Button>
                             <Button
-                                size="lg"
                                 onClick={() => setIsLoginOpen(true)}
-                                className="border-slate-700 bg-slate-900/50 backdrop-blur hover:bg-slate-800 text-white px-8 h-12 w-full sm:w-auto"
+                                className="cta-secondary px-12 py-5 h-auto text-xl rounded-2xl"
                             >
-                                Start for Free
+                                Start Free Trial
                             </Button>
                         </div>
+                        <p className="mt-8 text-xs font-black text-slate-500 uppercase tracking-[0.2em]">
+                            No Credit Card • No Lock-in • Universal Access
+                        </p>
                     </div>
                 </AnimateIn>
             </section>

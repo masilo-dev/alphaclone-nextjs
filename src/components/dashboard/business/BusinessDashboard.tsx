@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
@@ -554,16 +555,14 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         </button>
 
                         <div className="flex items-center gap-2 sm:gap-3 md:hidden">
-                            <div className="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center overflow-hidden">
+                            <div className="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center overflow-hidden relative">
                                 {currentTenant?.logo_url ? (
-                                    <img
+                                    <Image
                                         src={currentTenant.logo_url}
                                         alt="Logo"
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                            e.currentTarget.style.display = 'none';
-                                            e.currentTarget.parentElement!.innerHTML = `<span class="text-teal-400 font-bold text-lg">${currentTenant?.name?.charAt(0) || 'A'}</span>`;
-                                        }}
+                                        fill
+                                        className="object-cover"
+                                        sizes="32px"
                                     />
                                 ) : (
                                     <span className="text-teal-400 font-bold text-lg">{currentTenant?.name?.charAt(0) || 'A'}</span>
@@ -592,18 +591,13 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
                         <div className="flex items-center gap-3 sm:gap-4">
                             <NotificationCenter userId={user.id} tenantId={currentTenant.id} />
-                            <div className="w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-700/50 overflow-hidden shadow-lg shadow-teal-500/10 ring-2 ring-transparent hover:ring-teal-500/50 transition-all cursor-pointer group">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
+                            <div className="w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-700/50 overflow-hidden shadow-lg shadow-teal-500/10 ring-2 ring-transparent hover:ring-teal-500/50 transition-all cursor-pointer group relative">
+                                <Image
                                     src={user.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.email || user.name || 'user'}`}
                                     alt="Profile"
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                    onError={(e) => {
-                                        // Prevent infinite loop; fall back to inline initials SVG.
-                                        e.currentTarget.onerror = null;
-                                        const initials = (user.name || user.email || 'U').charAt(0).toUpperCase();
-                                        e.currentTarget.src = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><rect width='40' height='40' fill='%230f766e'/><text x='50%' y='50%' font-size='18' fill='white' text-anchor='middle' dominant-baseline='central' font-family='sans-serif'>${initials}</text></svg>`)}`;
-                                    }}
+                                    fill
+                                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                                    sizes="40px"
                                 />
                             </div>
                         </div>

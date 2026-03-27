@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import {
-    Globe, ArrowRight, Building2, Clock, CircuitBoard
+    Globe, ArrowRight, Building2, Clock, CircuitBoard, Sparkles, Zap, Shield
 } from 'lucide-react';
 import { Button } from '../ui/UIComponents';
 import PublicNavigation from '../PublicNavigation';
@@ -100,36 +100,43 @@ const AboutPage: React.FC = () => {
             <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
 
             <div className="pt-20">
-                <section className="bg-gradient-to-b from-slate-900/60 to-transparent border-b border-slate-800/50 py-20">
+                <section className="relative overflow-hidden pt-24 pb-20">
+                    {/* Cinematic Background Elements */}
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 bg-[#020D1A]">
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-teal-500/10 blur-[120px] rounded-full opacity-50" />
+                        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-[0.03]" />
+                    </div>
+
                     <div className="max-w-4xl mx-auto px-4 text-center">
                         <AnimateIn type="fadeIn" delay={0}>
-                            <div className="flex items-center justify-center gap-2 mb-4">
-                                <Building2 className="w-5 h-5 text-teal-400" />
-                                <span className="text-teal-400 text-sm font-semibold tracking-widest uppercase">About AlphaClone</span>
+                            <div className="inline-flex items-center gap-2 mb-6 ai-badge">
+                                <Sparkles className="w-3.5 h-3.5 fill-teal-400" />
+                                <span>THE UNIFIED OPERATING ENGINE</span>
                             </div>
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.1}>
-                            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                                We Built the Business Platform We Wanted to Use
+                            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black mb-8 leading-[1.05] tracking-tighter">
+                                Building the <span className="hero-metallic-text">Unified OS</span> <br />
+                                for Professional Teams
                             </h1>
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.2}>
-                            <p className="text-xl text-slate-300 leading-relaxed max-w-3xl mx-auto">
-                                AlphaClone exists to help service businesses run CRM, billing, scheduling, contracts, communication, and delivery from one connected system instead of a patchwork of separate apps.
+                            <p className="text-xl text-slate-400 leading-relaxed max-w-2xl mx-auto mb-10">
+                                AlphaClone exists to eliminate the "SaaS Tax"—the time, money, and focus lost to fragmented tools. We build the single operating layer for modern service businesses.
                             </p>
                         </AnimateIn>
                     </div>
                 </section>
 
-                <section className="py-16 bg-transparent">
+                <section className="py-16 bg-transparent relative z-10">
                     <div className="max-w-6xl mx-auto px-4">
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
                             {stats.map((stat, idx) => (
                                 <AnimateIn key={idx} type="stagger" index={idx}>
-                                    <div className="text-center p-6 bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-700/60 h-full">
-                                        <div className="text-3xl font-bold text-teal-400 mb-1">{stat.value}</div>
-                                        <div className="font-semibold text-white text-sm mb-1">{stat.label}</div>
-                                        <div className="text-slate-500 text-xs">{stat.sub}</div>
+                                    <div className="text-center p-8 glass-card rounded-2xl border-white/[0.03] transition-all hover:scale-[1.02]">
+                                        <div className="text-4xl font-black text-teal-400 mb-2 tracking-tighter">{stat.value}</div>
+                                        <div className="font-bold text-white text-sm mb-1 uppercase tracking-wider">{stat.label}</div>
+                                        <div className="text-slate-500 text-xs font-medium">{stat.sub}</div>
                                     </div>
                                 </AnimateIn>
                             ))}
@@ -162,17 +169,17 @@ const AboutPage: React.FC = () => {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 {[
-                                    { title: 'Built for service businesses', desc: 'CRM, invoicing, scheduling, contracts, and communication in one operating layer.' },
-                                    { title: 'Designed to reduce tool sprawl', desc: 'Less copying, less context switching, and fewer handoffs between disconnected apps.' },
-                                    { title: 'Practical automation', desc: 'AI and workflows should remove repetitive work without making the product harder to run.' },
-                                    { title: 'Clear ownership of data', desc: 'Permissions, activity history, and shared records stay tied to the same operating system.' }
+                                    { title: 'Built for service businesses', desc: 'CRM, invoicing, scheduling, contracts, and communication in one high-performance operating layer.' },
+                                    { title: 'Designed to reduce tool sprawl', desc: 'No more context switching. Every module shares the same core data architecture.' },
+                                    { title: 'Autonomous Intelligence', desc: 'Practical AI that handles lead qualification, outreach, and administrative coordination in the background.' },
+                                    { title: 'Enterprise-Grade Security', desc: 'Isolated databases, encrypted communications, and explicit access rules come as standard.' }
                                 ].map((item, i) => (
                                     <AnimateIn key={i} type="stagger" index={i}>
-                                        <div className="p-6 rounded-2xl bg-white/[0.04] border border-slate-700/50 backdrop-blur-sm">
-                                            <div className="text-xs font-semibold tracking-[0.22em] uppercase text-teal-400 mb-3">
-                                                0{i + 1}
+                                        <div className="p-8 rounded-3xl glass-card border-white/[0.04] relative group">
+                                            <div className="absolute -top-3 -left-3 w-10 h-10 bg-teal-500/20 rounded-xl flex items-center justify-center border border-teal-500/20 backdrop-blur-xl group-hover:bg-teal-500 group-hover:text-slate-950 transition-all">
+                                                <div className="text-xs font-black tracking-tighter">0{i + 1}</div>
                                             </div>
-                                            <h3 className="text-white font-bold mb-2">{item.title}</h3>
+                                            <h3 className="text-white font-black mb-3 tracking-tight mt-2">{item.title}</h3>
                                             <p className="text-slate-400 text-sm leading-relaxed">{item.desc}</p>
                                         </div>
                                     </AnimateIn>
@@ -189,13 +196,13 @@ const AboutPage: React.FC = () => {
                                 <h2 className="text-3xl font-bold">Why This Matters for Business Owners</h2>
                             </div>
                         </AnimateIn>
-                        <div className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             {whySection.map((point, i) => (
                                 <AnimateIn key={i} type="fadeUp" delay={i * 0.07}>
-                                    <div className="p-6 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60">
-                                        <div className="border-l-2 border-teal-500/50 pl-4">
-                                            <h3 className="text-lg font-bold text-white mb-3">{point.headline}</h3>
-                                            <p className="text-slate-400 leading-relaxed">{point.body}</p>
+                                    <div className="p-8 rounded-2xl glass-card border-white/[0.03] h-full">
+                                        <div className="border-l-4 border-teal-500/50 pl-6 h-full flex flex-col justify-center">
+                                            <h3 className="text-xl font-black text-white mb-4 tracking-tight">{point.headline}</h3>
+                                            <p className="text-slate-400 leading-relaxed font-normal">{point.body}</p>
                                         </div>
                                     </div>
                                 </AnimateIn>
@@ -276,26 +283,35 @@ const AboutPage: React.FC = () => {
                     </div>
                 </section>
 
-                <section className="py-24">
-                    <div className="max-w-3xl mx-auto px-4 text-center">
+                <section className="py-32 relative overflow-hidden">
+                    <div className="absolute inset-0 -z-10">
+                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-blue-500/10 blur-[100px] rounded-full" />
+                    </div>
+                    <div className="max-w-4xl mx-auto px-4 text-center">
                         <AnimateIn type="scaleIn">
-                            <h2 className="text-3xl font-bold mb-6">Join the Businesses Running Smarter</h2>
-                            <p className="text-slate-400 text-lg mb-10">
-                                Start your free trial and see how a connected operating platform can simplify client work, revenue workflows, and team operations.
+                            <h2 className="text-4xl md:text-6xl font-black mb-8 tracking-tighter text-white leading-tight">
+                                Ready to Upgrade Your <br />
+                                <span className="hero-metallic-text">Business Operations?</span>
+                            </h2>
+                            <p className="text-slate-400 text-xl mb-12 max-w-2xl mx-auto leading-relaxed">
+                                Join 500+ high-performance teams running smarter on AlphaClone. Deploy your Unified Business OS in under 60 seconds.
                             </p>
-                            <div className="flex flex-col sm:flex-row justify-center gap-4">
+                            <div className="flex flex-col sm:flex-row justify-center gap-6">
                                 <Link href="/register">
-                                    <Button className="text-lg px-10 py-4 h-auto bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold shadow-xl shadow-teal-500/20">
-                                        Start Free Trial
+                                    <Button className="cta-primary text-xl px-12 py-5 h-auto rounded-2xl">
+                                        Start Your OS
                                     </Button>
                                 </Link>
-                                <Link href="/services">
-                                    <Button variant="outline" className="text-lg px-10 py-4 h-auto border-slate-700 hover:bg-slate-800">
-                                        View All Services
-                                        <ArrowRight className="w-5 h-5 ml-2" />
+                                <Link href="/pricing">
+                                    <Button className="cta-secondary text-xl px-12 py-5 h-auto rounded-2xl">
+                                        View Plans
+                                        <ArrowRight className="w-5 h-5 ml-3" />
                                     </Button>
                                 </Link>
                             </div>
+                            <p className="mt-8 text-slate-500 text-sm font-semibold uppercase tracking-[0.2em]">
+                                14-Day Free Trial • No Credit Card • Zero Friction
+                            </p>
                         </AnimateIn>
                     </div>
                 </section>

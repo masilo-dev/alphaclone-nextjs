@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 interface UserPresenceProps {
@@ -54,11 +55,15 @@ export default function UserPresence({
   return (
     <div className={cn("relative inline-block", className)}>
       {user.avatar_url ? (
-        <img
-          src={user.avatar_url}
-          alt={user.name}
-          className={cn(getSizeClasses(), "rounded-full object-cover")}
-        />
+        <div className={cn(getSizeClasses(), "rounded-full overflow-hidden relative")}>
+          <Image
+            src={user.avatar_url}
+            alt={user.name}
+            fill
+            className="object-cover"
+            unoptimized
+          />
+        </div>
       ) : (
         <div
           className={cn(

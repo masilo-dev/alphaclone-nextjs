@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { Card, Button, Modal, Input } from '../ui/UIComponents';
 import { teamService } from '../../services/teamService';
 import { projectService } from '../../services/projectService';
@@ -288,11 +289,15 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                             <Card key={member.id} className="flex flex-col gap-4 p-4 hover:border-teal-500/50 transition-all">
                                 {/* Header */}
                                 <div className="flex items-center gap-4">
-                                    <img
-                                        src={member.avatar}
-                                        className="w-12 h-12 rounded-full border border-slate-700"
-                                        alt={member.name}
-                                    />
+                                    <div className="relative w-12 h-12 flex-shrink-0">
+                                        <Image
+                                            src={member.avatar}
+                                            fill
+                                            className="rounded-full border border-slate-700 object-cover"
+                                            alt={member.name}
+                                            unoptimized
+                                        />
+                                    </div>
                                     <div className="flex-1">
                                         <h3 className="font-bold text-white">{member.name}</h3>
                                         <p className="text-xs text-slate-400">{member.role}</p>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Card, Button, Input, Modal } from '../ui/UIComponents';
 import { User } from '../../types';
 import { aiGenerationService } from '../../services/aiGenerationService';
@@ -326,11 +327,15 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    <img
-                                        src={generatedResult}
-                                        alt="Generated"
-                                        className="w-full rounded-lg border border-slate-700"
-                                    />
+                                    <div className="aspect-square relative w-full overflow-hidden rounded-lg border border-slate-700">
+                                        <Image
+                                            src={generatedResult}
+                                            alt="Generated"
+                                            fill
+                                            className="object-cover"
+                                            unoptimized
+                                        />
+                                    </div>
                                     <Button
                                         onClick={() => window.open(generatedResult, '_blank')}
                                         variant="outline"
@@ -369,11 +374,15 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                             <FileText className="w-12 h-12 text-slate-600" />
                                         </div>
                                     ) : (
-                                        <img
-                                            src={asset.url}
-                                            alt={asset.prompt}
-                                            className="w-full h-40 object-cover rounded-lg border border-slate-700"
-                                        />
+                                        <div className="relative w-full h-40 overflow-hidden rounded-lg border border-slate-700">
+                                            <Image
+                                                src={asset.url || ''}
+                                                alt={asset.prompt}
+                                                fill
+                                                className="object-cover"
+                                                unoptimized
+                                            />
+                                        </div>
                                     )}
                                     {/* Overlay Actions */}
                                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
@@ -433,11 +442,15 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                     title="Preview"
                 >
                     {previewModal.url ? (
-                        <img
-                            src={previewModal.url}
-                            alt="Preview"
-                            className="w-full rounded-lg"
-                        />
+                        <div className="relative w-full aspect-square overflow-hidden rounded-lg">
+                            <Image
+                                src={previewModal.url}
+                                alt="Preview"
+                                fill
+                                className="object-cover"
+                                unoptimized
+                            />
+                        </div>
                     ) : (
                         <div className="prose prose-invert max-w-none">
                             <pre className="whitespace-pre-wrap text-slate-300 text-sm leading-relaxed bg-slate-900/50 p-4 rounded-lg max-h-[60vh] overflow-y-auto">

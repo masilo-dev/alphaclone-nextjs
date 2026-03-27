@@ -454,6 +454,49 @@ body {
   color: transparent;
 }
 
+/* High-Authority CTA Styles */
+.cta-primary {
+  background: linear-gradient(135deg, #00D2A0 0%, #0077FF 100%);
+  color: #020D1A;
+  font-weight: 800;
+  box-shadow: 0 0 20px rgba(0, 210, 160, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cta-primary:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 0 30px rgba(0, 210, 160, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.4);
+}
+
+.cta-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  color: #fff;
+  transition: all 0.3s ease;
+}
+
+.cta-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* AI Engine Badge */
+.ai-badge {
+  background: linear-gradient(90deg, rgba(0, 210, 160, 0.1), rgba(0, 119, 255, 0.1));
+  border: 1px solid rgba(0, 210, 160, 0.2);
+  color: #00D2A0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* Glassmorphism navbar */
 .glass-nav {
   background: rgba(2, 8, 20, 0.65);

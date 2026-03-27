@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/UIComponents';
 import PublicNavigation from '@/components/PublicNavigation';
+import LoomVideo from '@/components/ui/LoomVideo';
 
 const sections = [
     'onboarding', 'home', 'crm', 'growth-agent', 'integrations',
@@ -105,6 +106,13 @@ export default function DocsPageContent() {
                         <p className="text-slate-400 text-lg leading-relaxed max-w-2xl">
                             The complete technical and operational reference for the AlphaClone Business OS. This documentation covers every platform feature with step-by-step instructions, navigation paths, and best practices. For a guided walkthrough, visit the <Link href="/guide" className="text-teal-400 hover:underline">Platform Guide</Link>.
                         </p>
+
+                        <div className="mt-12 mb-10">
+                            <LoomVideo 
+                                videoId="3a7000c925c145b7882089688b0ceb5d" 
+                                title="AlphaClone Documentation Tour"
+                            />
+                        </div>
                         <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
                             {[
                                 { label: '10 Modules', sub: 'fully documented' },

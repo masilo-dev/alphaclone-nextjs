@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download, PenLine, Copy, List, Plus, Users, Search, CheckCircle2, Send, Mail, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from '../ui/UIComponents';
@@ -914,8 +915,14 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 {signatureData && (
                                     <div className="mt-6">
                                         <p className="text-slate-400 mb-2">Authorized Signature:</p>
-                                        <div className="bg-slate-200/10 inline-block p-2 rounded max-h-24">
-                                            <img src={signatureData} alt="Signature" className="h-16 invert" />
+                                        <div className="bg-slate-200/10 inline-block p-2 rounded relative h-16 w-32 overflow-hidden">
+                                            <Image
+                                                src={signatureData}
+                                                alt="Signature"
+                                                fill
+                                                className="object-contain invert"
+                                                unoptimized
+                                            />
                                         </div>
                                     </div>
                                 )}

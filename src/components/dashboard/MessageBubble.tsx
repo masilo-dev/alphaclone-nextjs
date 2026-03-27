@@ -2,6 +2,7 @@ import React from 'react';
 import { ChatMessage } from '../../types';
 import { format } from 'date-fns';
 import { Loader2, FileIcon, Download, CheckCheck, Flag } from 'lucide-react';
+import Image from 'next/image';
 
 interface MessageBubbleProps {
     message: ChatMessage;
@@ -60,10 +61,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                                     <div key={att.id}>
                                         {att.type === 'image' ? (
                                             <div className="relative group/image overflow-hidden rounded-lg border border-white/10">
-                                                <img
+                                                <Image
                                                     src={att.url}
                                                     alt={att.name}
-                                                    className="max-w-full h-auto max-h-48 object-cover"
+                                                    width={300}
+                                                    height={200}
+                                                    className="w-full h-auto max-h-48 object-cover"
+                                                    unoptimized
                                                 />
                                                 <a
                                                     href={att.url}

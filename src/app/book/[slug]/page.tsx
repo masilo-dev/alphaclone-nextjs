@@ -6,6 +6,7 @@ import { fetchTenantBookingPage, BookingType } from '@/actions/booking';
 import { Tenant } from '@/services/tenancy/types';
 import { Clock, ArrowRight, Video, Calendar, MapPin, Loader2 } from 'lucide-react';
 import CalendlyEmbed from '@/components/booking/CalendlyEmbed';
+import Image from 'next/image';
 
 export default function BookingLandingPage() {
     const params = useParams();
@@ -60,8 +61,15 @@ export default function BookingLandingPage() {
                 {/* Profile Header */}
                 <div className="text-center space-y-6 mb-12 md:mb-16 animate-in slide-in-from-bottom-4 duration-700 fade-in">
                     {tenant.settings.branding?.logo ? (
-                        <div className="w-24 h-24 mx-auto rounded-full p-1 border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl overflow-hidden">
-                            <img src={tenant.settings.branding.logo} alt={tenant.name} className="w-full h-full object-cover rounded-full" />
+                        <div className="w-24 h-24 mx-auto rounded-full p-1 border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl overflow-hidden relative">
+                            <Image 
+                                src={tenant.settings.branding.logo} 
+                                alt={tenant.name} 
+                                fill
+                                className="object-cover rounded-full" 
+                                sizes="96px"
+                                priority
+                            />
                         </div>
                     ) : (
                         <div className="w-24 h-24 mx-auto rounded-full bg-slate-200 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-800 flex items-center justify-center text-3xl font-bold text-slate-500 shadow-xl">

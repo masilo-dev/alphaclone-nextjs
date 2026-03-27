@@ -5,24 +5,30 @@ import { Button } from '../../ui/UIComponents';
 
 const CTASection: React.FC = () => {
     return (
-        <section className="py-20 px-4 bg-slate-950">
+        <section className="py-32 px-4 relative overflow-hidden">
+            <div className="absolute inset-x-0 bottom-0 h-96 bg-gradient-to-t from-teal-500/5 to-transparent -z-10" />
             <div className="max-w-4xl mx-auto text-center">
-                <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to Build Something Great?</h2>
-                <p className="text-xl text-slate-400 mb-8">
-                    Let's discuss your project and create a solution that drives your business forward
+                <h2 className="text-4xl md:text-6xl font-black mb-8 tracking-tighter text-white">
+                    Ready for <span className="hero-metallic-text">Unified Control?</span>
+                </h2>
+                <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
+                    Deploy your Business OS in under 60 seconds. Join 500+ teams who have eliminated the SaaS Tax.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Link href="/contact">
-                        <Button size="lg" className="text-lg px-8 py-4">
-                            Contact Us <ArrowRight className="w-5 h-5 ml-2 inline" />
-                        </Button>
+                <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+                    <Link href="/register" className="w-full sm:w-auto">
+                        <button className="cta-primary w-full px-12 py-5 text-xl rounded-2xl">
+                            Deploy Now
+                        </button>
                     </Link>
-                    <Link href="/about">
-                        <Button variant="outline" size="lg" className="text-lg px-8 py-4">
+                    <Link href="/about" className="w-full sm:w-auto">
+                        <button className="cta-secondary w-full px-12 py-5 text-xl rounded-2xl">
                             Learn More
-                        </Button>
+                        </button>
                     </Link>
                 </div>
+                <p className="mt-10 text-xs font-black text-slate-500 uppercase tracking-[0.3em]">
+                    No Credit Card Required • Instant Deployment • Global Scale
+                </p>
             </div>
         </section>
     );

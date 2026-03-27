@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { mediaOptimizationService } from '../../services/mediaOptimizationService';
 
 interface OptimizedImageProps {
@@ -89,30 +90,21 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
         <div className="absolute inset-0 bg-slate-800 animate-pulse rounded" aria-hidden="true" />
       )}
       
-      <img
+      <Image
         src={error ? fallback : optimizedSrc}
         alt={alt}
-        width={width}
-        height={height}
+        width={typeof width === 'number' ? width : 800}
+        height={typeof height === 'number' ? height : 600}
         loading={loading}
-        decoding="async"
         onError={handleError}
         onLoad={handleLoad}
-        srcSet={responsive && srcSet ? srcSet : undefined}
-        sizes={responsive && sizes ? sizes : undefined}
         className={`${className} transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-        style={{
-          maxWidth: '100%',
-          height: 'auto',
-        }}
-        role="img"
-        aria-label={alt}
+        unoptimized={error} // Use unoptimized for fallback placeholders if they aren't in public/next/image paths
       />
     </div>
   );
 };
 
-export default OptimizedImage;
 
 
 

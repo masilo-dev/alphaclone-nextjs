@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button, Input, Modal } from '../ui/UIComponents';
+import Image from 'next/image';
 import { User } from '../../types';
 import { UserPlus, LogIn, AlertCircle, ShieldCheck } from 'lucide-react';
 import { LOGO_URL } from '../../constants';
@@ -148,11 +149,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={isRegistering ? "Create Account" : "Secure Access Login"}>
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex justify-center">
-          <img
+        <div className="mx-auto mb-4 flex justify-center relative w-16 h-16">
+          <Image
             src={LOGO_URL}
             alt="AlphaClone Logo"
-            className="w-16 h-16 object-contain"
+            fill
+            className="object-contain"
           />
         </div>
         <h4 className="text-slate-200 font-medium text-lg">AlphaClone Systems</h4>

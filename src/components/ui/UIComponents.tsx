@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Loader2, X, ChevronDown, MoreVertical } from 'lucide-react';
+import Image from 'next/image';
 
 // --- Button ---
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -193,8 +194,16 @@ export const Avatar: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ classNa
   <div className={`relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full ${className}`} {...props} />
 );
 
-export const AvatarImage: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = ({ className = '', ...props }) => (
-  <img className={`aspect-square h-full w-full object-cover ${className}`} {...props} />
+export const AvatarImage: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = ({ className = '', src, alt, ...props }) => (
+  src ? (
+    <Image 
+      src={src} 
+      alt={alt || ''} 
+      fill 
+      className={`object-cover ${className}`} 
+      {...props as any} 
+    />
+  ) : null
 );
 
 export const AvatarFallback: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className = '', ...props }) => (

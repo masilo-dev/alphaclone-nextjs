@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { usePWA } from '@/contexts/PWAContext';
 import { SubscriptionPlan } from '@/services/tenancy/types';
 import TurnstileVerification from '@/components/ui/TurnstileVerification';
+import Image from 'next/image';
 
 export default function LoginPage() {
     return (
@@ -432,18 +433,24 @@ function LoginContent() {
                 <div className="mb-8 text-center">
                     {isPWA ? (
                         <div className="mx-auto mb-6 flex justify-center inline-block">
-                            <img
+                            <Image
                                 src={LOGO_URL}
                                 alt="AlphaClone Logo"
-                                className="w-20 h-20 object-contain"
+                                width={80}
+                                height={80}
+                                className="object-contain"
+                                priority
                             />
                         </div>
                     ) : (
                         <Link href="/" className="mx-auto mb-6 flex justify-center inline-block">
-                            <img
+                            <Image
                                 src={LOGO_URL}
                                 alt="AlphaClone Logo"
-                                className="w-20 h-20 object-contain hover:scale-105 transition-transform"
+                                width={80}
+                                height={80}
+                                className="object-contain hover:scale-105 transition-transform"
+                                priority
                             />
                         </Link>
                     )}

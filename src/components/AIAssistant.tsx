@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { Send, Bot, X, Sparkles, Loader2, BrainCircuit, Globe, MapPin, Image as ImageIcon, Zap } from 'lucide-react';
 import { chatWithAI } from '../services/unifiedAIService';
 import { ChatMessage } from '../types';
@@ -216,8 +217,14 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
       {/* Input */}
       <div className="p-4 bg-slate-800 border-t border-slate-700">
         {selectedImage && (
-          <div className="mb-2 relative inline-block">
-            <img src={selectedImage} alt="Preview" className="h-16 rounded-lg border border-slate-600" />
+          <div className="mb-2 relative inline-block h-16 w-16 overflow-hidden rounded-lg border border-slate-600">
+            <Image
+              src={selectedImage}
+              alt="Preview"
+              fill
+              className="object-cover"
+              unoptimized
+            />
             <button
               onClick={() => setSelectedImage(null)}
               className="absolute -top-2 -right-2 bg-slate-700 rounded-full p-0.5 border border-slate-500 hover:bg-slate-600"
