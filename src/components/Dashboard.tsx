@@ -1236,7 +1236,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   transition={{ duration: 0.2 }}
                   className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4"
                 >
-                  {filteredProjects.map((p, idx) => (
+                  {filteredProjects?.map((p, idx) => (
                     <motion.div
                       key={p.id}
                       initial={{ opacity: 0, scale: 0.95 }}
@@ -1404,7 +1404,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                      {filteredProjects.map((p, idx) => (
+                      {filteredProjects?.map((p, idx) => (
                         <CustomContextMenu
                           as="tr"
                           key={p.id}
@@ -1478,7 +1478,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
                   {/* Mobile Card-List View */}
                   <div className="md:hidden space-y-4">
-                    {filteredProjects.map((p, idx) => (
+                    {filteredProjects?.map((p, idx) => (
                       <motion.div
                         key={p.id}
                         initial={{ opacity: 0, y: 10 }}
