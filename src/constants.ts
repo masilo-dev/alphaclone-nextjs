@@ -121,7 +121,8 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   // 7. Integrations
   { label: 'Facebook', href: '/dashboard/business/facebook', icon: Facebook },
   { label: 'SMS Campaigns', href: '/dashboard/business/sms', icon: Smartphone },
-  { label: 'Zoho Email', href: '/dashboard/business/zoho', icon: Mail },
+  { label: 'Zoho Mail', href: '/dashboard/zoho/mail', icon: Mail },
+  { label: 'Zoho CRM', href: '/dashboard/zoho/crm', icon: Users },
 
   // 8. Usage & Limits
   { label: 'Quota Manager', href: '/dashboard/business/quotas', icon: BarChart3 },

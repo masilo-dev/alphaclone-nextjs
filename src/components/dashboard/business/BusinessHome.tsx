@@ -32,7 +32,8 @@ import {
     Loader2,
     Facebook,
     Smartphone,
-    MessageSquare
+    MessageSquare,
+    Mail
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
@@ -468,6 +469,12 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
                             label="Social Media"
                             icon={MessageSquare}
                             onClick={() => window.location.href = '/dashboard/business/social'}
+                            disabled={false}
+                        />
+                        <QuickActionButton
+                            label="Zoho Mail"
+                            icon={Mail}
+                            onClick={() => window.location.href = '/dashboard/zoho/mail'}
                             disabled={false}
                         />
                     </div>
