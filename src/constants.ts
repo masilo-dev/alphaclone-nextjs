@@ -90,49 +90,49 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
 
 // --- TENANT_ADMIN NAVIGATION (Business Dashboard) ---
 export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
-  // 1. Overview
+  // ── Overview ──
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
 
-  // 2. Acquisition & Sales Pipeline
+  // ── Sales & Acquisition ──
   { label: 'AI Growth', href: '/dashboard/sales-agent', icon: Zap },
   { label: 'Leads', href: '/dashboard/leads', icon: TrendingUp },
   { label: 'Contacts', href: '/dashboard/crm', icon: Users },
 
-  // 3. Communication & Scheduling
+  // ── Communication ──
   { label: 'Mail', href: '/dashboard/mail', icon: Mail },
   { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
   { label: 'Booking', href: '/dashboard/business/booking', icon: Clock },
   { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
 
-  // 4. Closing & Agreements
+  // ── Deals & Agreements ──
   { label: 'Quotes', href: '/dashboard/business/quotes', icon: FileText },
   { label: 'Contracts', href: '/dashboard/business/contracts', icon: FileText },
 
-  // 5. Execution & Fulfillment 
+  // ── Project Execution ──
   { label: 'Projects', href: '/dashboard/business/projects', icon: Briefcase },
   { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
   { label: 'Task Scheduler', href: '/dashboard/business/tasks', icon: Clock },
 
-  // 6. Finances & Records
+  // ── Finance & Records ──
   { label: 'Invoices', href: '/dashboard/business/billing', icon: DollarSign },
   { label: 'Finance', href: '/dashboard/accounting', icon: BarChart3 },
   { label: 'Documents', href: '/dashboard/business/documents', icon: FolderOpen },
 
-  // 7. Integrations
-  { label: 'Facebook', href: '/dashboard/business/facebook', icon: Facebook },
+  // ── Marketing & Outreach ──
   { label: 'SMS Campaigns', href: '/dashboard/business/sms', icon: Smartphone },
+  { label: 'Social Media', href: '/dashboard/business/social', icon: Presentation },
+  { label: 'Email Campaigns', href: '/dashboard/business/campaigns', icon: Mail },
+
+  // ── Integrations ──
+  { label: 'Facebook', href: '/dashboard/business/facebook', icon: Facebook },
   { label: 'Zoho Mail', href: '/dashboard/zoho/mail', icon: Mail },
   { label: 'Zoho CRM', href: '/dashboard/zoho/crm', icon: Users },
 
-  // 8. Usage & Limits
-  { label: 'Quota Manager', href: '/dashboard/business/quotas', icon: BarChart3 },
-  { label: 'Presentations', href: '/dashboard/business/presentations', icon: Presentation },
-  { label: 'Documents', href: '/dashboard/business/documents', icon: FileText },
-
-  // 9. Daily Summary
+  // ── Analytics & Operations ──
   { label: 'Daily Summary', href: '/dashboard/business/daily-summary', icon: BarChart3 },
+  { label: 'Quota Manager', href: '/dashboard/business/quotas', icon: BarChart3 },
 
-  // 10. Administration
+  // ── Administration ──
   { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },
 ];
 
