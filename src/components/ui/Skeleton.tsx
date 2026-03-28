@@ -32,9 +32,11 @@ export const TableSkeleton: React.FC<{ rows?: number; columns?: number }> = ({
 );
 
 // Card Skeleton
-export const CardSkeleton: React.FC<{ count?: number }> = ({ count = 1 }) => (
+export const CardSkeleton: React.FC<{ count?: number }> = ({ count = 1 }) => {
+    const safeCount = Math.max(1, Number(count) || 1);
+    return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[...Array(count)].map((_, i) => (
+        {Array.from({ length: safeCount }).map((_, i) => (
             <div key={i} className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
                 <div className="flex items-start justify-between">
                     <Skeleton className="h-6 w-32" />
@@ -50,11 +52,14 @@ export const CardSkeleton: React.FC<{ count?: number }> = ({ count = 1 }) => (
         ))}
     </div>
 );
+};
 
 // Stats Card Skeleton
-export const StatsCardSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => (
+export const StatsCardSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
+    const safeCount = Math.max(1, Number(count) || 4);
+    return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[...Array(count)].map((_, i) => (
+        {Array.from({ length: safeCount }).map((_, i) => (
             <div key={i} className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-3">
                 <div className="flex items-center justify-between">
                     <Skeleton className="h-4 w-24" />
@@ -66,6 +71,7 @@ export const StatsCardSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) =
         ))}
     </div>
 );
+};
 
 // Chart Skeleton
 export const ChartSkeleton: React.FC<{ height?: string }> = ({ height = 'h-64' }) => {
@@ -94,9 +100,11 @@ export const ChartSkeleton: React.FC<{ height?: string }> = ({ height = 'h-64' }
 };
 
 // List Item Skeleton
-export const ListItemSkeleton: React.FC<{ count?: number }> = ({ count = 5 }) => (
+export const ListItemSkeleton: React.FC<{ count?: number }> = ({ count = 5 }) => {
+    const safeCount = Math.max(1, Number(count) || 5);
+    return (
     <div className="space-y-3">
-        {[...Array(count)].map((_, i) => (
+        {Array.from({ length: safeCount }).map((_, i) => (
             <div key={i} className="flex items-center gap-4 p-4 bg-slate-900 border border-slate-800 rounded-xl">
                 <Skeleton className="w-12 h-12 rounded-full flex-shrink-0" />
                 <div className="flex-1 space-y-2">
@@ -108,11 +116,12 @@ export const ListItemSkeleton: React.FC<{ count?: number }> = ({ count = 5 }) =>
         ))}
     </div>
 );
+};
 
 // Form Skeleton
 export const FormSkeleton: React.FC = () => (
     <div className="space-y-6">
-        {[...Array(4)].map((_, i) => (
+        {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="space-y-2">
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-10 w-full rounded-lg" />
@@ -137,9 +146,11 @@ export const ProfileSkeleton: React.FC = () => (
 );
 
 // Message Skeleton
-export const MessageSkeleton: React.FC<{ count?: number }> = ({ count = 3 }) => (
+export const MessageSkeleton: React.FC<{ count?: number }> = ({ count = 3 }) => {
+    const safeCount = Math.max(1, Number(count) || 3);
+    return (
     <div className="space-y-4">
-        {[...Array(count)].map((_, i) => (
+        {Array.from({ length: safeCount }).map((_, i) => (
             <div key={i} className={`flex gap-3 ${i % 2 === 0 ? '' : 'flex-row-reverse'}`}>
                 <Skeleton className="w-10 h-10 rounded-full flex-shrink-0" />
                 <div className="flex-1 max-w-md space-y-2">
@@ -151,6 +162,7 @@ export const MessageSkeleton: React.FC<{ count?: number }> = ({ count = 3 }) => 
         ))}
     </div>
 );
+};
 
 // Page Skeleton (Full page loading)
 export const PageSkeleton: React.FC = () => (
