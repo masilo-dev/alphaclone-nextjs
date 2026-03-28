@@ -145,3 +145,9 @@ export const CLIENT_STATS: DashboardStat[] = [
   { label: 'Unread Messages', value: '3', icon: MessageSquare, color: 'bg-blue-600' },
   { label: 'Upcoming Meetings', value: '2', icon: Video, color: 'bg-purple-600' },
 ];
+
+export const DOCUMENTATION_VIDEOS = {
+  DASHBOARD_TOUR: "3a7000c925c145b7882089688b0ceb5d",
+  AI_INFRASTRUCTURE: "023023e9a7e84120894768393d9ce454",
+  CLIENT_ONBOARDING: "7e5e33d0e2e54e4e84b8e8a8b8b8b8b8", // Placeholder
+};

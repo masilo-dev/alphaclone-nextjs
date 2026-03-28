@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Button, Card, Input } from '../../ui/UIComponents';
 import toast from 'react-hot-toast';
+import LoomVideo from '../../ui/LoomVideo';
 
 const GlobalSettingsTab: React.FC = () => {
     const [activeSection, setActiveSection] = useState<'branding' | 'integrations' | 'security' | 'ai'>('branding');
@@ -163,9 +164,15 @@ const GlobalSettingsTab: React.FC = () => {
                                             <Zap className="w-4 h-4 text-indigo-400" />
                                             <span className="text-xs font-black uppercase tracking-widest text-indigo-400">Intelligent Routing</span>
                                         </div>
-                                        <p className="text-xs text-slate-300 leading-relaxed">
+                                        <p className="text-xs text-slate-300 leading-relaxed mb-4">
                                             The system is currently using **Claude 3.5 Sonnet** as the primary engine with **GPT-4o** as the high-availability fallback. Gemini is used for low-priority categorization tasks.
                                         </p>
+                                        <div className="aspect-video w-full rounded-xl overflow-hidden shadow-lg border border-white/5">
+                                            <LoomVideo 
+                                                videoId="023023e9a7e84120894768393d9ce454"
+                                                title="AI Infrastructure Documentation"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
