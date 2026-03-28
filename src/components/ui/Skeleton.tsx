@@ -29,7 +29,8 @@ export const TableSkeleton: React.FC<{ rows?: number; columns?: number }> = ({
             </div>
         ))}
     </div>
-);
+    );
+};
 
 // Card Skeleton
 export const CardSkeleton: React.FC<{ count?: number }> = ({ count = 1 }) => {

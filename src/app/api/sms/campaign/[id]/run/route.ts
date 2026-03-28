@@ -44,7 +44,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
             .not('phone', 'is', null)
             .neq('phone', '');
 
-        recipients = (leads || []).map(l => ({ phone: l.phone, name: l.contact_name, leadId: l.id }));
+        recipients = (leads || []).map((l: any) => ({ phone: l.phone, name: l.contact_name, leadId: l.id }));
 
     } else if (campaign.recipient_source === 'clients') {
         const { data: clients } = await supabase
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
             .not('phone', 'is', null)
             .neq('phone', '');
 
-        recipients = (clients || []).map(c => ({ phone: c.phone, name: c.name }));
+        recipients = (clients || []).map((c: any) => ({ phone: c.phone, name: c.name }));
 
     } else if (campaign.recipient_source === 'manual') {
         // Manual recipients stored in recipient_filter.numbers

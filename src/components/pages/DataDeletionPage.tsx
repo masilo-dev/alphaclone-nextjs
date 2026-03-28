@@ -15,7 +15,7 @@ function DataDeletionContent() {
     const [name, setName] = useState('');
     const [reason, setReason] = useState('');
     const [submitting, setSubmitting] = useState(false);
-    const [result, setResult] = useState<{ success: boolean; code?: string; message?: string; already_exists?: boolean } | null>(null);
+    const [result, setResult] = useState<{ success: boolean; confirmation_code?: string; message?: string; already_exists?: boolean } | null>(null);
     const [statusCheck, setStatusCheck] = useState<{ status: string; source?: string; created_at?: string; processed_at?: string } | null>(null);
     const [loadingStatus, setLoadingStatus] = useState(false);
 
