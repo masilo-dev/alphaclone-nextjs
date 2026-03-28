@@ -10,6 +10,7 @@ const withSerwist = withSerwistInit({
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  transpilePackages: ['@blocknote/core', '@blocknote/react', '@blocknote/mantine'],
   // Expose VITE_ variables to the client-side bundle
   env: {
     VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL,

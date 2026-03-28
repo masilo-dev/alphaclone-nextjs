@@ -6,11 +6,11 @@
 }
 
 @theme {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --font-mono: ui-monospace, monospace;
   --font-inter: var(--font-inter);
-  --font-jakarta: var(--font-jakarta);
-  --font-sora: var(--font-sora);
+  --font-heading: var(--font-inter);
+  --font-body: var(--font-inter);
 }
 
 /* Marketing Theme Definitions */
@@ -21,8 +21,9 @@
 }
 
 .font-marketing-heading {
-  font-family: var(--font-jakarta), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   letter-spacing: -0.02em;
+  font-weight: 700;
 }
 
 .font-marketing-body {
@@ -31,7 +32,8 @@
 }
 
 .font-marketing-brand {
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-inter), sans-serif;
+  font-weight: 800;
 }
 
 .font-marketing-data {
@@ -84,7 +86,7 @@ body {
 }
 
 .marketing-theme h1 {
-  font-family: var(--font-jakarta), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-weight: 800;
   font-size: 48px;
   line-height: 1.1;
@@ -92,7 +94,7 @@ body {
 }
 
 .marketing-theme h2 {
-  font-family: var(--font-jakarta), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-weight: 700;
   font-size: 36px;
   line-height: 1.2;
@@ -116,12 +118,11 @@ body {
 
 .marketing-theme button,
 .marketing-theme .cta {
-  font-family: var(--font-jakarta), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-weight: 600;
   font-size: 16px;
   line-height: 1;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
   transition: all 0.2s ease;
 }
 
@@ -440,14 +441,9 @@ body {
   animation: moving-border 3s linear infinite;
 }
 
-/* Hero Metallic Text Gradient */
+/* Hero Metallic Text Gradient - Simplified */
 .hero-metallic-text {
-  background: linear-gradient(135deg,
-      #0077FF 0%,
-      #60b8ff 30%,
-      #ffffff 50%,
-      #60e8d0 70%,
-      #00D2A0 100%);
+  background: linear-gradient(135deg, #0077FF 0%, #00D2A0 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;

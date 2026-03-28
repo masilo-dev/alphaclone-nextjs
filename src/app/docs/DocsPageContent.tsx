@@ -63,9 +63,9 @@ export default function DocsPageContent() {
                 </aside>
 
                 {/* Main Content */}
-                <main className="flex-1 max-w-4xl mx-auto px-4 py-8 lg:py-16 w-full overflow-hidden">
+                <main className="flex-1 min-w-0 max-w-4xl mx-auto px-4 py-8 lg:py-16 w-full overflow-x-hidden">
                     {/* Sticky Mobile Nav */}
-                    <div className="lg:hidden sticky top-20 z-40 bg-slate-950/90 backdrop-blur-md pb-4 pt-4 border-b border-slate-800/50 mb-8 mx-[-1rem] px-4 -mt-8">
+                    <div className="lg:hidden sticky top-20 z-40 bg-slate-950/95 backdrop-blur-xl pb-4 pt-4 border-b border-slate-800/50 mb-8 mx-[-1rem] px-4 -mt-8">
                         <div className="relative">
                             <select
                                 className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 appearance-none focus:outline-none focus:border-teal-500 shadow-lg"
@@ -73,7 +73,7 @@ export default function DocsPageContent() {
                                     if (!e.target.value) return;
                                     const element = document.getElementById(e.target.value);
                                     if (element) {
-                                        const y = element.getBoundingClientRect().top + window.scrollY - 140; // offset for sticky headers
+                                        const y = element.getBoundingClientRect().top + window.scrollY - 200; // increased offset for better visibility
                                         window.scrollTo({ top: y, behavior: 'smooth' });
                                     }
                                 }}
@@ -155,7 +155,7 @@ export default function DocsPageContent() {
                                             },
                                             {
                                                 n: 2, title: 'Plan Selection',
-                                                body: 'Choose between Starter ($15/month, 3 users), Pro ($45/month, 10 users, AI Growth Agent), or Enterprise ($80/month, unlimited users). All plans include a 14-day free trial with no credit card required to begin.'
+                                                body: 'All plans include every feature. You choose based on usage quotas: Starter ($15/mo — 5 users, 50 AI queries/mo), Pro ($45/mo — 25 users, 500 AI queries/mo), Enterprise ($80/mo — unlimited everything). 14-day free trial on all plans, no credit card required.'
                                             },
                                             {
                                                 n: 3, title: 'Business Workspace Setup',

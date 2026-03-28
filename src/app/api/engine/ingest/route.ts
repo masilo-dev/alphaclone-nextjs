@@ -1,0 +1,124 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { processContent } from '@/services/engine/ProcessingEngine';
+
+/**
+ * INGESTION ENGINE endpoint
+ * POST /api/engine/ingest
+ * Accepts raw content, runs processing, stores event, triggers workflows
+ */
+export async function POST(req: NextRequest) {
+    const supabase = createSupabaseAdminClient();
+
+    try {
+        const body = await req.json();
+        const { source, raw_content, author_name, author_contact, url, tenant_id, metadata } = body;
+
+        if (!tenant_id) return NextResponse.json({ error: 'tenant_id required' }, { status: 400 });
+        if (!source)    return NextResponse.json({ error: 'source required' }, { status: 400 });
+
+        // Run processing engine
+        const processed = processContent(raw_content || '');
+
+        // Merge extracted structured data with incoming metadata
+        const structured_data = { ...(metadata || {}), ...processed.structured_data };
+
+        // Store ingestion event
+        const { data: event, error } = await supabase
+            .from('ingestion_events')
+            .insert({
+                tenant_id,
+                source,
+                raw_content,
+                structured_data,
+                author_name,
+                author_contact: author_contact || structured_data.phone || structured_data.email,
+                url,
+                intent_score: processed.intent_score,
+                intent_label: processed.intent_label,
+                keywords_found: processed.keywords_found,
+                processed: true,
+            })
+            .select()
+            .single();
+
+        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+        // Auto-create a lead if intent is high/urgent
+        let lead_id: string | null = null;
+        if (['high', 'urgent'].includes(processed.intent_label)) {
+            const { data: lead } = await supabase
+                .from('leads')
+                .insert({
+                    tenant_id,
+                    business_name: author_name || 'Unknown',
+                    contact_name: author_name || '',
+                    email: String(structured_data.email || ''),
+                    phone: String(structured_data.phone || ''),
+                    source: `${source} (auto-ingested)`,
+                    source_details: raw_content?.slice(0, 300),
+                    status: 'new',
+                    stage: 'lead',
+                    notes: `Intent: ${processed.intent_label} (${processed.intent_score}/100)\nKeywords: ${processed.keywords_found.join(', ')}`,
+                    metadata: { ingestion_event_id: event?.id, intent_score: processed.intent_score },
+                })
+                .select('id')
+                .single();
+
+            if (lead) {
+                lead_id = lead.id;
+                await supabase
+                    .from('ingestion_events')
+                    .update({ lead_id, workflow_triggered: false })
+                    .eq('id', event.id);
+            }
+        }
+
+        // Trigger active workflows for this event
+        const { data: workflows } = await supabase
+            .from('workflow_definitions')
+            .select('*')
+            .eq('tenant_id', tenant_id)
+            .eq('is_active', true)
+            .in('trigger_type', ['ingestion_event', 'lead_created']);
+
+        let workflowsTriggered = 0;
+        if (workflows && workflows.length > 0) {
+            const contextData = {
+                ...event,
+                ...structured_data,
+                intent_score: processed.intent_score,
+                intent_label: processed.intent_label,
+                lead_id,
+                source,
+                author_name,
+            };
+
+            // Fire workflow execution in background via webhook
+            fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/engine/execute`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    trigger_type: lead_id ? 'lead_created' : 'ingestion_event',
+                    tenant_id,
+                    data: contextData,
+                }),
+            }).catch(console.error);
+
+            workflowsTriggered = workflows.length;
+        }
+
+        return NextResponse.json({
+            success: true,
+            event_id: event?.id,
+            lead_id,
+            intent: { score: processed.intent_score, label: processed.intent_label },
+            keywords: processed.keywords_found,
+            workflows_triggered: workflowsTriggered,
+        });
+
+    } catch (err) {
+        console.error('Ingestion error:', err);
+        return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    }
+}

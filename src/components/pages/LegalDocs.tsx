@@ -359,7 +359,7 @@ export function TermsOfService() {
 
          <Section id="subscription" title="4. Subscription Plans & Billing">
             <Sub title="4.1 Plans">
-               <p>AlphaClone offers the following subscription tiers: Starter ($15/month, up to 3 users), Pro ($45/month, up to 10 users + AI Growth Agent), and Enterprise ($80/month, unlimited users + priority support). All plans include a 14-day free trial; no credit card required to begin.</p>
+               <p>AlphaClone offers the following subscription tiers, all of which include every platform feature. Differences between tiers are usage quotas only: Starter ($15/month — 5 users, 5GB storage, 50 AI queries/month, 10 AI Agent runs/month, standard 48h support); Pro ($45/month — 25 users, 25GB storage, 500 AI queries/month, 200 AI Agent runs/month, priority 12h support); Enterprise ($80/month — unlimited users, 100GB storage, unlimited AI queries, unlimited AI Agent runs, dedicated 4h support). All plans include a 14-day free trial; no credit card required to begin.</p>
             </Sub>
             <Sub title="4.2 Billing Cycle">
                <p>Subscriptions are billed monthly in advance. Your billing date is set on the day you first provide payment details. Invoices are issued automatically and sent to your registered email address. You authorize AlphaClone to charge your payment method on each monthly billing date.</p>

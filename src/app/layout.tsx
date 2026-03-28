@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { PWAProvider } from "@/contexts/PWAContext";
@@ -7,19 +7,16 @@ import ShellSwitcher from "@/components/shells/ShellSwitcher";
 import { Analytics } from "@vercel/analytics/next";
 import CookieConsent from "@/components/common/CookieConsent";
 import NativeInteractions from "@/components/common/NativeInteractions";
+import PageTransition from "@/components/PageTransition";
 // import GlobalAlpha from "@/components/alpha/GlobalAlpha";
 import { WebVitals } from "@/components/common/WebVitals";
 import PrismBackground from "@/components/common/PrismBackground";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   display: "swap",
+  weight: ["400", "500", "600", "700", "800", "900"],
 });
 
 export const metadata: Metadata = {
@@ -29,20 +26,28 @@ export const metadata: Metadata = {
     template: "%s | AlphaClone Systems",
   },
   description:
-    "AlphaClone is the definitive Business OS for service providers. A unified platform for CRM, billing, contracts, scheduling, and AI-powered growth—all in one connected system.",
+    "AlphaClone: Enterprise-grade Business OS engineered for service providers. Unified platform combining CRM, billing, contracts, scheduling, and intelligent automation—built on proven operational frameworks and behavioral engineering principles.",
   keywords: [
-    "Business OS",
     "Business Operating System",
-    "Unified Business Platform",
-    "AlphaClone Business OS",
+    "Enterprise Business OS",
+    "Unified Operations Platform",
     "Service Business CRM",
-    "Unified Billing & Contracts",
-    "Business Management System",
-    "AI Business Platform",
-    "SaaS operations platform",
-    "enterprise business OS for small business",
+    "Technical Execution Platform",
+    "Engineering-Driven Business Software",
+    "Behavioral Engineering Tools",
+    "Neuroscience-Based Workflow Optimization",
+    "Cognitive Load Reduction Software",
+    "Decision Architecture Platform",
+    "Systems Engineering for Business",
+    "Operational Excellence Software",
+    "Business Process Engineering",
+    "Unified Business Intelligence",
+    "Technical Operations Management",
     "AlphaClone Systems",
-    "client operations system",
+    "Professional Services Automation",
+    "Client Operations Engineering",
+    "Business Workflow Architecture",
+    "Performance Engineering Platform",
   ],
   authors: [{ name: "AlphaClone Systems", url: "https://alphaclone.tech" }],
   creator: "AlphaClone Systems",
@@ -139,7 +144,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head />
       <body
-        className={`${geistSans.variable} ${inter.variable} antialiased text-base subpixel-antialiased`}
+        className={`${inter.variable} antialiased text-base subpixel-antialiased font-sans`}
       >
         <script
           type="application/ld+json"
@@ -159,7 +164,9 @@ export default function RootLayout({
           <PWAProvider>
             <NativeInteractions />
             <ShellSwitcher>
-              {children}
+              <PageTransition>
+                {children}
+              </PageTransition>
             </ShellSwitcher>
             {/* <GlobalAlpha /> */}
           </PWAProvider>

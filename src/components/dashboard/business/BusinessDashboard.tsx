@@ -68,6 +68,15 @@ const ZohoCRMIntegration = React.lazy(() => import('../zoho/ZohoCRMIntegration')
 
 const QuotaManager = React.lazy(() => import('./QuotaManager'));
 const DailySummarySystem = React.lazy(() => import('./DailySummarySystem'));
+const PagesTab = React.lazy(() => import('@/components/pages/PagesTab'));
+const ContactSubmissionsTab = React.lazy(() => import('../ContactSubmissionsTab'));
+const CampaignBuilder = React.lazy(() => import('./CampaignBuilder'));
+const FacebookIntegrationTab = React.lazy(() => import('../facebook/FacebookIntegrationTab'));
+const ExpenseTrackerTab = React.lazy(() => import('./ExpenseTrackerTab'));
+const WorkflowDashboard = React.lazy(() => import('../engine/WorkflowDashboard'));
+const SMSCampaignTab = React.lazy(() => import('../engine/SMSCampaignTab'));
+const SocialMediaComposer = React.lazy(() => import('../engine/SocialMediaComposer'));
+const IngestionPanel = React.lazy(() => import('../engine/IngestionPanel'));
 
 import Sidebar from '@/components/dashboard/Sidebar';
 import { TableSkeleton } from '@/components/ui/Skeleton';
@@ -221,18 +230,15 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         }
     }, [user, currentTenant, dashboardStats, getDashboardStats]);
 
-    // Trial Logic - DISABLED as per user request for full access
-    const isTrialExpired = React.useMemo(() => {
-        return false; // Force enable full access
-        /*
-        // Safe check: If trialEndsAt is null/undefined, return false (Existing Tenants are SAFE)
-        if (!currentTenant?.trialEndsAt) return false;
-
+    const trialInfo = React.useMemo(() => {
+        if (!currentTenant?.trial_ends_at || currentTenant.subscription_status !== 'trial') return null;
         const now = new Date();
-        const trialEnd = new Date(currentTenant.trialEndsAt);
-        return now > trialEnd && currentTenant.subscriptionStatus === 'trial';
-        */
+        const trialEnd = new Date(currentTenant.trial_ends_at);
+        const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        return { daysLeft, expired: daysLeft <= 0 };
     }, [currentTenant]);
+
+    const isTrialExpired = false; // SubscriptionGuard handles full block, here we just show banner
 
     // Map routes to display content
     const renderBusinessContent = () => {
@@ -360,6 +366,60 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <DocumentHub user={user} />
                     </React.Suspense>
                 );
+            case '/dashboard/business/pages':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <PagesTab />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/contact-submissions':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={3} />}>
+                        <ContactSubmissionsTab />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/campaigns':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <CampaignBuilder userId={user.id} />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/facebook':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={3} />}>
+                        <FacebookIntegrationTab />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/expenses':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
+                        <ExpenseTrackerTab />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/workflows':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <WorkflowDashboard />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/sms':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <SMSCampaignTab />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/social':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={4} columns={3} />}>
+                        <SocialMediaComposer />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/ingestion':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <IngestionPanel />
+                    </React.Suspense>
+                );
             case '/dashboard/business/daily-summary':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
@@ -433,6 +493,15 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/settings': return 'Settings';
             case '/dashboard/business/contracts': return 'Contracts';
             case '/dashboard/business/documents': return 'Document Hub';
+            case '/dashboard/business/pages': return 'Pages';
+            case '/dashboard/business/contact-submissions': return 'Contact Submissions';
+            case '/dashboard/business/campaigns': return 'Campaigns';
+            case '/dashboard/business/facebook': return 'Facebook';
+            case '/dashboard/business/expenses': return 'Expense Tracker';
+            case '/dashboard/business/workflows': return 'Flow Engine';
+            case '/dashboard/business/sms': return 'SMS Campaigns';
+            case '/dashboard/business/social': return 'Social Media';
+            case '/dashboard/business/ingestion': return 'Lead Ingestion';
             case '/dashboard/business/quotes': return 'Quotes & Proposals';
             case '/dashboard/business/booking': return 'Scheduling & Booking';
             case '/dashboard/tasks': return 'Tasks';
@@ -508,18 +577,46 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             {/* Removed radial gradient for strict mobile view cleanliness as requested to avoid 'motion' feel if any */}
             <main className="flex-1 flex flex-col min-w-0 bg-slate-950">
 
-                {/* Trial Expiration Banner */}
-                {isTrialExpired && (
+                {/* Trial Countdown Banner */}
+                {trialInfo && !trialInfo.expired && trialInfo.daysLeft <= 7 && (
+                    <div className={`border-b px-4 py-2 flex items-center justify-between backdrop-blur-sm sticky top-0 z-20 ${
+                        trialInfo.daysLeft <= 3
+                            ? 'bg-red-600/10 border-red-500/20'
+                            : 'bg-amber-600/10 border-amber-500/20'
+                    }`}>
+                        <div className={`flex items-center gap-2 text-sm font-medium ${
+                            trialInfo.daysLeft <= 3 ? 'text-red-100' : 'text-amber-100'
+                        }`}>
+                            <CreditCard className={`w-4 h-4 ${trialInfo.daysLeft <= 3 ? 'text-red-400' : 'text-amber-400'}`} />
+                            <span>
+                                {trialInfo.daysLeft === 1
+                                    ? 'Trial ends tomorrow — add a payment method to keep access'
+                                    : `Trial ends in ${trialInfo.daysLeft} days — no action needed yet`}
+                            </span>
+                        </div>
+                        <button
+                            className={`text-white text-xs px-3 py-1.5 rounded-lg transition-colors font-bold ${
+                                trialInfo.daysLeft <= 3
+                                    ? 'bg-red-500 hover:bg-red-600'
+                                    : 'bg-amber-500 hover:bg-amber-600'
+                            }`}
+                            onClick={() => setActiveTab('/dashboard/business/settings')}
+                        >
+                            Manage Billing
+                        </button>
+                    </div>
+                )}
+                {trialInfo && trialInfo.expired && (
                     <div className="bg-red-600/10 border-b border-red-500/20 px-4 py-2 flex items-center justify-between backdrop-blur-sm sticky top-0 z-20">
                         <div className="flex items-center gap-2 text-red-100 text-sm font-medium">
                             <CreditCard className="w-4 h-4 text-red-400" />
-                            <span>Trial Expired - View Only Mode</span>
+                            <span>Trial Expired — Add payment method to restore full access</span>
                         </div>
                         <button
-                            className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg transition-colors font-bold shadow-lg shadow-red-900/20"
+                            className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg transition-colors font-bold"
                             onClick={() => setActiveTab('/dashboard/business/settings')}
                         >
-                            Upgrade Now
+                            Add Payment
                         </button>
                     </div>
                 )}

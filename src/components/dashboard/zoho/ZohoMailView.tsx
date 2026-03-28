@@ -7,6 +7,7 @@ import {
     MoreHorizontal, CheckCircle2, RotateCcw, AlertCircle, FileText, ShieldCheck
 } from 'lucide-react';
 import { generateEmailReply } from '@/services/unifiedAIService';
+import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Message {
@@ -68,34 +69,35 @@ export default function ZohoMailView() {
     }, [selectedFolder, searchTerm]);
 
     const fetchFolders = async () => {
-        console.log('[ZohoMailView] Fetching folders...');
         const data = await zohoFetch('/api/zoho/mail?action=folders');
-        console.log('[ZohoMailView] Folders response:', data);
-        if (Array.isArray(data)) setFolders(data);
+        if (Array.isArray(data) && data.length > 0) {
+            setFolders(data);
+            // Auto-select inbox (or first folder) using real folder ID from Zoho
+            const inbox = data.find((f: any) =>
+                f.folderName?.toLowerCase().includes('inbox')
+            ) || data[0];
+            if (inbox?.folderId) setSelectedFolder(inbox.folderId);
+        }
     };
 
     const fetchMessages = async (folderId: string) => {
-        console.log(`[ZohoMailView] Fetching messages for folder: ${folderId}`);
         setLoading(true);
         try {
             const data = await zohoFetch(`/api/zoho/mail?action=messages&folderId=${folderId}`);
-            console.log('[ZohoMailView] Messages response:', data);
             if (Array.isArray(data)) setMessages(data);
+            else setMessages([]);
         } finally {
             setLoading(false);
         }
     };
 
     const fetchMessageContent = async (id: string) => {
-        console.log(`[ZohoMailView] Fetching content for message: ${id}`);
         setLoading(true);
         try {
             const data = await zohoFetch(`/api/zoho/mail?action=content&messageId=${id}`);
-            console.log('[ZohoMailView] Message content response:', data);
             if (data) {
                 setMessageContent(data);
                 setSelectedMessage(id);
-                // Auto mark as read in background (fire-and-forget)
                 fetch(`/api/zoho/mail?action=markRead&messageId=${id}`).catch(() => {});
             }
         } finally {
@@ -156,17 +158,25 @@ export default function ZohoMailView() {
 
     const handleAiReply = async () => {
         if (!messageContent) return;
+        const emailText = messageContent.content || messageContent.body || messageContent.text || '';
+        if (!emailText) {
+            toast.error('No email content found to generate a reply for.');
+            return;
+        }
         setAiGenerating(true);
         try {
-            const reply = await generateEmailReply(messageContent.content, "Be helpful, professional and try to move the discussion forward.");
+            const reply = await generateEmailReply(emailText, 'Be helpful, professional and try to move the discussion forward.');
+            if (!reply) throw new Error('AI returned an empty response.');
             setEmailData({
-                to: messageContent.sender,
-                subject: `Re: ${messageContent.subject}`,
-                body: reply || ""
+                to: messageContent.sender || messageContent.fromAddress || '',
+                subject: `Re: ${messageContent.subject || ''}`,
+                body: reply,
             });
             setComposing(true);
-        } catch (err) {
+            toast.success('AI reply drafted!');
+        } catch (err: any) {
             console.error('AI Reply failed', err);
+            toast.error(err?.message || 'AI reply failed. Check that an AI provider key is configured in Settings.');
         } finally {
             setAiGenerating(false);
         }
@@ -319,9 +329,10 @@ export default function ZohoMailView() {
                                 ))}
                             </div>
                         ) : messages.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-20 text-gray-600 opacity-40 italic text-sm">
-                                <Mail size={40} className="mb-4" />
-                                No synchronization found
+                            <div className="flex flex-col items-center justify-center py-20 text-gray-600 opacity-60 text-sm text-center px-6">
+                                <Mail size={40} className="mb-4 opacity-30" />
+                                <p className="font-semibold text-gray-400 mb-1">No messages</p>
+                                <p className="text-xs text-gray-600">This folder is empty or still loading.<br />Try refreshing or selecting another folder.</p>
                             </div>
                         ) : (
                             messages.map(msg => (

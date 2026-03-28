@@ -54,11 +54,27 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className={`flex items-center justify-between transition-all duration-300 ${isScrolled && !mobileMenuOpen ? 'h-16 lg:h-20' : 'h-20'}`}>
                     {/* Logo */}
-                    <Link href="/" className={`flex items-center gap-2 flex-shrink-0 transition-transform transition-opacity duration-300 pointer-events-auto ${isScrolled && !mobileMenuOpen
+                    <Link href="/" className={`flex items-center gap-3 flex-shrink-0 transition-transform transition-opacity duration-300 pointer-events-auto ${isScrolled && !mobileMenuOpen
                             ? 'max-lg:opacity-0 max-lg:-translate-y-4 max-lg:pointer-events-none'
                             : 'opacity-100 translate-y-0'
                         }`}>
-                        <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-500">
+                        <div className="relative w-9 h-9 flex-shrink-0 flex items-center justify-center">
+                            <img
+                                src="/logo.png"
+                                alt="AlphaClone Systems Logo"
+                                width={36}
+                                height={36}
+                                className="object-contain max-h-full max-w-full"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    const fallback = document.createElement('div');
+                                    fallback.className = 'w-9 h-9 rounded-xl bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center shadow-lg shadow-teal-500/20';
+                                    fallback.innerHTML = '<span class="text-slate-950 font-black text-lg">AS</span>';
+                                    e.currentTarget.parentElement?.appendChild(fallback);
+                                }}
+                            />
+                        </div>
+                        <span className="text-xl font-bold tracking-tight text-white">
                             AlphaClone
                         </span>
                     </Link>
@@ -69,7 +85,7 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                             <Link
                                 key={item.path}
                                 href={item.path}
-                                className={`text-sm font-medium transition-colors ${isActive(item.path)
+                                className={`inline-flex items-center h-10 text-sm font-semibold transition-colors ${isActive(item.path)
                                     ? 'text-teal-400'
                                     : 'text-slate-300 hover:text-white'
                                     }`}
@@ -80,12 +96,12 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                         <div className="flex items-center gap-4 ml-4 pl-4 border-l border-slate-800">
                             <Link
                                 href="/auth/login"
-                                className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
+                                className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
                             >
                                 Login
                             </Link>
-                            <Link href="/register">
-                                <Button size="sm" className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold shadow-lg shadow-teal-500/20">
+                            <Link href="/register" className="inline-flex items-center">
+                                <Button size="sm" className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold shadow-lg shadow-teal-500/20">
                                     Start Free Trial
                                 </Button>
                             </Link>

@@ -158,10 +158,9 @@ export class ZohoService {
 
         if (data.error) {
             console.error('Zoho token refresh failed:', data.error);
-            // If refresh token is invalid/expired, clear integration
-            if (data.error === 'invalid_code' || data.error === 'access_denied') {
-                await this.disconnect();
-            }
+            // Do NOT auto-disconnect here — transient errors (network, rate limit)
+            // would delete the DB record and force a full reconnect unnecessarily.
+            // Only the user can explicitly disconnect via the UI.
             return null;
         }
 
@@ -215,12 +214,13 @@ export class ZohoService {
         if (response.status === 401) {
             const newToken = await this.refreshAccessToken();
             if (!newToken) {
-                await this.disconnect();
+                // Do NOT auto-disconnect — token refresh may be transiently failing.
+                // Throw so the caller can show a reconnect prompt without deleting tokens.
                 throw new ZohoAuthExpiredError();
             }
             response = await makeRequest(newToken);
             if (response.status === 401) {
-                await this.disconnect();
+                // Still failing after refresh — throw but keep tokens in DB.
                 throw new ZohoAuthExpiredError();
             }
         }

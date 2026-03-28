@@ -1,0 +1,101 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { normalizePhoneNumber } from '@/services/engine/CommunicationEngine';
+
+/**
+ * POST /api/sms/send
+ * Send a single SMS via Twilio
+ */
+export async function POST(req: NextRequest) {
+    const supabase = createSupabaseAdminClient();
+
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken  = process.env.TWILIO_AUTH_TOKEN;
+    const defaultFrom = process.env.TWILIO_PHONE_NUMBER;
+
+    if (!accountSid || !authToken) {
+        return NextResponse.json({ error: 'Twilio credentials not configured' }, { status: 503 });
+    }
+
+    try {
+        const { to, message, from, tenantId, campaignId, leadId } = await req.json();
+
+        if (!to || !message) {
+            return NextResponse.json({ error: 'to and message are required' }, { status: 400 });
+        }
+
+        const toNormalized   = normalizePhoneNumber(to);
+        const fromNormalized = from || defaultFrom;
+
+        if (!fromNormalized) {
+            return NextResponse.json({ error: 'No from number configured (TWILIO_PHONE_NUMBER)' }, { status: 503 });
+        }
+
+        // Call Twilio REST API
+        const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
+        const params = new URLSearchParams({
+            To:   toNormalized,
+            From: fromNormalized,
+            Body: message,
+        });
+
+        const twilioRes = await fetch(twilioUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`,
+            },
+            body: params.toString(),
+        });
+
+        const twilioData = await twilioRes.json();
+
+        if (twilioData.status === 'failed' || twilioData.code) {
+            // Log failed message
+            if (tenantId) {
+                await supabase.from('sms_messages').insert({
+                    tenant_id: tenantId,
+                    campaign_id: campaignId || null,
+                    lead_id: leadId || null,
+                    from_number: fromNormalized,
+                    to_number: toNormalized,
+                    body: message,
+                    status: 'failed',
+                    twilio_sid: twilioData.sid || null,
+                    error_message: twilioData.message || 'Twilio error',
+                });
+            }
+            return NextResponse.json({
+                success: false,
+                error: twilioData.message || 'Twilio send failed',
+                code: twilioData.code,
+            }, { status: 400 });
+        }
+
+        // Log successful message
+        if (tenantId) {
+            await supabase.from('sms_messages').insert({
+                tenant_id: tenantId,
+                campaign_id: campaignId || null,
+                lead_id: leadId || null,
+                from_number: fromNormalized,
+                to_number: toNormalized,
+                body: message,
+                status: 'sent',
+                twilio_sid: twilioData.sid,
+                sent_at: new Date().toISOString(),
+            });
+        }
+
+        return NextResponse.json({
+            success: true,
+            sid: twilioData.sid,
+            status: twilioData.status,
+            to: twilioData.to,
+        });
+
+    } catch (err) {
+        console.error('SMS send error:', err);
+        return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    }
+}

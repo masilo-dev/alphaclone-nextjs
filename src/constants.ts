@@ -22,7 +22,13 @@ import {
   BarChart3,
   MapPin,
   FolderOpen,
-  Presentation
+  Presentation,
+  BookOpen,
+  Receipt,
+  Workflow,
+  MessageCircle,
+  Share2,
+  Database
 } from 'lucide-react';
 import { NavItem, DashboardStat } from './types';
 
@@ -89,13 +95,17 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
 
   // 2. Acquisition & Sales Pipeline
   { label: 'AI Growth', href: '/dashboard/sales-agent', icon: Zap },
+  { label: 'Facebook', href: '/dashboard/business/facebook', icon: Share2 },
   { label: 'Deals', href: '/dashboard/deals', icon: TrendingUp },
   { label: 'Contacts', href: '/dashboard/business/clients', icon: Users },
   { label: 'Zoho CRM', href: '/dashboard/zoho/crm', icon: Zap },
+  { label: 'Ingestion', href: '/dashboard/business/ingestion', icon: Database },
 
   // 3. Communication & Scheduling
+  { label: 'Messages', href: '/dashboard/business/messages', icon: MessageSquare },
   { label: 'Mail', href: '/dashboard/mail', icon: Mail },
   { label: 'Zoho Mail', href: '/dashboard/zoho/mail', icon: Mail },
+  { label: 'Contact Forms', href: '/dashboard/business/contact-submissions', icon: MessageSquare },
   { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
   { label: 'Booking', href: '/dashboard/business/booking', icon: Clock },
   { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
@@ -108,11 +118,19 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Projects', href: '/dashboard/business/projects', icon: Briefcase },
   { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
   { label: 'Recurring Tasks', href: '/dashboard/business/tasks', icon: Clock },
+  { label: 'Team', href: '/dashboard/business/team', icon: Users },
+  { label: 'Email Campaigns', href: '/dashboard/business/campaigns', icon: Mail },
+  { label: 'SMS Campaigns', href: '/dashboard/business/sms', icon: MessageCircle },
+  { label: 'Social Media', href: '/dashboard/business/social', icon: Share2 },
+  { label: 'Flow Engine', href: '/dashboard/business/workflows', icon: Zap },
 
   // 6. Finances & Records
   { label: 'Billing', href: '/dashboard/business/billing', icon: DollarSign },
+  { label: 'Expenses', href: '/dashboard/business/expenses', icon: Receipt },
   { label: 'Accounting', href: '/dashboard/accounting', icon: BarChart3 },
+  { label: 'Reports', href: '/dashboard/business/reports', icon: BarChart3 },
   { label: 'Documents', href: '/dashboard/business/documents', icon: FolderOpen },
+  { label: 'Pages', href: '/dashboard/business/pages', icon: BookOpen },
 
   // 7. Integrations
   // Move Zoho items to their respective functional sections

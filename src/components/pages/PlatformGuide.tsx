@@ -42,17 +42,19 @@ Your account is created with the Pro plan on a 14-day free trial. You won't be c
             subtitle: 'Pick the tier that fits your team and growth stage',
             detail: `After registration, you'll see a plan selection screen. Here's a plain-English breakdown of what each tier means for your business:
 
-**Starter ($15/month):** Best for solo freelancers or very small teams (1-3 people). You get the full CRM, invoicing, contract engine, task management, and document hub. The AI Growth Agent is not included at this tier, but everything else is fully functional.
+Every plan includes every feature — CRM, invoicing, contracts, AI assistant, AI Growth Agent, financial suite, task management, and more. The only difference between plans is your usage quotas.
 
-**Pro ($45/month):** This is the most popular plan and the one we recommend for most businesses. Up to 10 users, the full AI Growth Agent, Gmail integration, video meetings, financial accounting suite, and all standard features. This tier is where most businesses see the biggest ROI — the AI Growth Agent alone typically pays for the subscription many times over in new business generated.
+**Starter ($15/month):** 5 users · 5GB storage · 10 projects · 10 contract templates · 50 AI queries/month · 10 AI Growth Agent runs/month · Standard support (48h response).
 
-**Enterprise ($80/month):** Unlimited users, 100GB storage, priority support with under-4-hour response time, and access to custom integration assistance from the AlphaClone engineering team. Best for businesses with larger teams or specific compliance requirements.
+**Pro ($45/month):** 25 users · 25GB storage · 100 projects · 100 contract templates · 500 AI queries/month · 200 AI Growth Agent runs/month · Priority support (12h response). Best for most agencies and service businesses.
+
+**Enterprise ($80/month):** Unlimited everything — users, storage, projects, contracts, AI queries, and Agent runs. Dedicated support with 4-hour response time. Best for larger teams with scale or compliance requirements.
 
 You can upgrade or downgrade your plan at any time from the Settings page. There's no long-term contract and no penalty for changing tiers.`,
             tips: [
-                'Start on Pro if you want the AI Growth Agent — it\'s the most impactful feature',
-                'You can always start on Starter and upgrade later with no friction',
-                'Enterprise is worth it if you have 5+ users or need priority support',
+                'All plans include every feature — you only pay more for higher usage quotas',
+                'Start on Starter to try the platform, upgrade when you hit the limits',
+                'Pro is the sweet spot for most agencies — 500 AI queries is enough for heavy daily use',
                 'All plans include a 14-day free trial — you don\'t pay until day 15',
             ],
         },

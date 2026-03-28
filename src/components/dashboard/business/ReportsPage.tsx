@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { businessClientService } from '../../../services/businessClientService';
 import { projectService } from '../../../services/projectService';
 import { businessInvoiceService } from '../../../services/businessInvoiceService';
+import { supabase } from '../../../lib/supabase';
 import {
     TrendingUp,
     Download,
@@ -78,9 +79,24 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
 
         setLoading(true);
         try {
+            const days = parseInt(dateRange);
+            const cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - days);
+            const cutoffISO = cutoff.toISOString();
+
             const { clients } = await businessClientService.getClients(currentTenant.id);
             const { projects } = await projectService.getProjects(user.id, user.role);
-            const { invoices } = await businessInvoiceService.getInvoices(currentTenant.id);
+            const { invoices: allInvoices } = await businessInvoiceService.getInvoices(currentTenant.id);
+
+            // Filter invoices by date range
+            const invoices = allInvoices.filter(inv => new Date(inv.issueDate) >= cutoff);
+
+            // Fetch real expense data for date range
+            const { data: expenses } = await supabase
+                .from('expenses')
+                .select('amount, tax_amount, total, date, status')
+                .eq('tenant_id', currentTenant.id)
+                .gte('date', cutoff.toISOString().split('T')[0]);
 
             // Calculate stats
             const totalRevenue = Math.round(invoices
@@ -97,28 +113,37 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 completedProjects
             });
 
-            // Generate revenue data (last 6 months)
-            const last6Months = Array.from({ length: 6 }, (_, i) => {
+            // Dynamic chart: number of months based on date range
+            const numMonths = days <= 30 ? 1 : days <= 90 ? 3 : days <= 180 ? 6 : 12;
+            const chartMonths = Array.from({ length: numMonths }, (_, i) => {
                 const d = new Date();
-                d.setMonth(d.getMonth() - (5 - i));
+                d.setMonth(d.getMonth() - (numMonths - 1 - i));
                 return {
-                    month: d.toLocaleString('default', { month: 'short' }),
+                    month: d.toLocaleString('default', { month: 'short', year: numMonths > 6 ? '2-digit' : undefined }),
                     year: d.getFullYear(),
                     monthIndex: d.getMonth(),
                     revenue: 0,
-                    expenses: 0 // No expenses table yet, showing 0
+                    expenses: 0
                 };
             });
 
             invoices.filter(inv => inv.status === 'paid').forEach(inv => {
                 const invDate = new Date(inv.issueDate);
-                const monthEntry = last6Months.find(m => m.monthIndex === invDate.getMonth() && m.year === invDate.getFullYear());
+                const monthEntry = chartMonths.find(m => m.monthIndex === invDate.getMonth() && m.year === invDate.getFullYear());
                 if (monthEntry) {
                     monthEntry.revenue = Math.round((monthEntry.revenue + inv.total) * 100) / 100;
                 }
             });
 
-            setRevenueData(last6Months);
+            (expenses || []).forEach((exp: any) => {
+                const expDate = new Date(exp.date);
+                const monthEntry = chartMonths.find(m => m.monthIndex === expDate.getMonth() && m.year === expDate.getFullYear());
+                if (monthEntry) {
+                    monthEntry.expenses = Math.round((monthEntry.expenses + (exp.total ?? exp.amount)) * 100) / 100;
+                }
+            });
+
+            setRevenueData(chartMonths);
 
             // Client stage distribution
             const stages = ['lead', 'prospect', 'customer', 'lost'];

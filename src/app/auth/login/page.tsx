@@ -11,7 +11,8 @@ import { AlertCircle, LogIn, UserPlus, FileText, CheckCircle2, Shield } from 'lu
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { usePWA } from '@/contexts/PWAContext';
-import { SubscriptionPlan } from '@/services/tenancy/types';
+import { SubscriptionPlan, PLAN_PRICING } from '@/services/tenancy/types';
+import { PLAN_LIMITS } from '@/lib/planLimits';
 import TurnstileVerification from '@/components/ui/TurnstileVerification';
 import Image from 'next/image';
 
@@ -52,26 +53,31 @@ function LoginContent() {
     const [humanVerified, setHumanVerified] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
-    const plans: { id: SubscriptionPlan, name: string, price: string, features: string[] }[] = [
-        {
-            id: 'starter',
-            name: 'Starter',
-            price: '$15/mo',
-            features: ['5 Multi-tenant Users', 'Core CRM Pipeline', '5GB Secure Storage', 'Standard Project MGMT']
-        },
-        {
-            id: 'pro',
-            name: 'Pro',
-            price: '$45/mo',
-            features: ['25 Multi-tenant Users', 'AI Sales Automation', '25GB Secure Storage', 'Contract Logic']
-        },
-        {
-            id: 'enterprise',
-            name: 'Enterprise',
-            price: '$80/mo',
-            features: ['Unlimited Users', 'Perimeter Guard', 'Custom Branding', 'SIEM Monitoring']
-        }
-    ];
+    const PAID_PLANS: SubscriptionPlan[] = ['starter', 'pro', 'enterprise'];
+
+    const planDisplayNames: Record<string, string> = {
+        starter: 'Starter',
+        pro: 'Pro',
+        enterprise: 'Enterprise',
+    };
+
+    const plans = PAID_PLANS.map((id) => {
+        const pricing = PLAN_PRICING[id];
+        const limits = PLAN_LIMITS[id];
+        const fmt = (v: number) => v === -1 ? 'Unlimited' : String(v);
+        return {
+            id,
+            name: planDisplayNames[id],
+            price: `$${pricing.monthly}/mo`,
+            limits: [
+                `${fmt(limits.users)} Users · ${fmt(limits.storage)}GB Storage`,
+                `${fmt(limits.aiQueriesPerMonth)} AI queries/mo`,
+                `${fmt(limits.aiGrowthAgentRuns)} AI Agent runs/mo`,
+                `${fmt(limits.projects)} Projects · ${fmt(limits.contractTemplates)} Contracts`,
+                limits.supportSla,
+            ],
+        };
+    });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -107,17 +113,16 @@ function LoginContent() {
                     return;
                 }
 
-                if (isBusiness) {
-                    if (!businessName) {
-                        setError('Business Name is required.');
-                        setIsLoading(false);
-                        return;
-                    }
-                    if (!legalAccepted) {
-                        setError('You must accept the Legal Disclaimer to continue.');
-                        setIsLoading(false);
-                        return;
-                    }
+                if (!legalAccepted) {
+                    setError('Please agree to the Terms of Service and Privacy Policy to continue.');
+                    setIsLoading(false);
+                    return;
+                }
+
+                if (isBusiness && !businessName) {
+                    setError('Business Name is required.');
+                    setIsLoading(false);
+                    return;
                 }
 
                 const { authService } = await import('@/services/authService');
@@ -301,29 +306,29 @@ function LoginContent() {
                     <div className="absolute bottom-[20%] right-[20%] w-[30vw] h-[30vw] rounded-full bg-blue-600 blur-[100px]" />
                 </div>
 
-                <div className="max-w-md w-full bg-slate-900/80 backdrop-blur-2xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 text-center my-auto">
-                    <div className="w-20 h-20 bg-teal-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <CheckCircle2 className="w-10 h-10 text-teal-400" />
-                    </div>
-
-                    <h2 className="text-3xl font-bold text-white mb-2">Account Created!</h2>
-                    <p className="text-slate-400 mb-8">
-                        Welcome to {newTenantData.name}. To activate your Business OS, please complete your first payment for the <span className="text-teal-400 font-bold">{selectedPlan.toUpperCase()}</span> plan.
+                <div className="max-w-md w-full bg-slate-900/80 backdrop-blur-2xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 my-auto animate-slide-up">
+                    <h2 className="text-2xl font-bold text-white mb-2 text-center">Your 14-Day Trial is Active</h2>
+                    <p className="text-slate-400 text-sm text-center mb-8">
+                        No charge now. Add a payment method after your trial to continue.
                     </p>
 
-                    <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-6 mb-8 text-left">
-                        <div className="flex justify-between items-center mb-4">
-                            <span className="text-slate-400">Subscription Plan</span>
+                    <div className="bg-slate-800/50 rounded-2xl p-6 mb-6 space-y-4">
+                        <div className="flex justify-between items-center pb-4 border-b border-slate-700">
+                            <span className="text-slate-400">Plan Selected</span>
                             <span className="text-white font-semibold">{selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)}</span>
                         </div>
-                        <div className="flex justify-between items-center pb-4 border-b border-slate-800 mb-4">
+                        <div className="flex justify-between items-center pb-4 border-b border-slate-700">
                             <span className="text-slate-400">Billing Cycle</span>
                             <span className="text-white font-semibold">Monthly</span>
                         </div>
+                        <div className="flex justify-between items-center pb-4 border-b border-slate-700">
+                            <span className="text-slate-400">Trial Period</span>
+                            <span className="text-teal-400 font-semibold">14 days free</span>
+                        </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-white font-bold">Total Due</span>
+                            <span className="text-white font-bold">Due After Trial</span>
                             <span className="text-2xl font-black text-teal-400">
-                                {selectedPlan === 'starter' ? '$15' : selectedPlan === 'pro' ? '$45' : '$80'}
+                                ${PLAN_PRICING[selectedPlan]?.monthly ?? '—'}/mo
                             </span>
                         </div>
                     </div>
@@ -336,23 +341,15 @@ function LoginContent() {
                     )}
 
                     <Button
-                        onClick={handlePayment}
-                        disabled={paymentProcessing}
-                        className="w-full bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 py-4 text-lg font-bold rounded-2xl shadow-lg shadow-teal-500/20"
+                        onClick={() => { window.location.href = '/dashboard'; }}
+                        className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 py-4 text-lg font-bold rounded-2xl shadow-lg shadow-teal-500/20"
                     >
-                        {paymentProcessing ? (
-                            <span className="flex items-center justify-center gap-2">
-                                <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                                Processing Secure Payment...
-                            </span>
-                        ) : (
-                            'Pay and Launch Dashboard'
-                        )}
+                        Go to Dashboard
                     </Button>
 
-                    <p className="text-xs text-slate-500 mt-6 flex items-center justify-center gap-2">
-                        <FileText className="w-3 h-3" />
-                        Secure Payment via Stripe • Fully Encrypted
+                    <p className="text-xs text-slate-500 mt-4 flex items-center justify-center gap-2 text-center">
+                        <FileText className="w-3 h-3 flex-shrink-0" />
+                        You will be reminded before your trial ends to add a payment method.
                     </p>
                 </div>
             </div>
@@ -520,14 +517,17 @@ function LoginContent() {
                                                             <CheckCircle2 className="w-5 h-5 text-teal-400" />
                                                         </div>
                                                     )}
-                                                    <div className="font-bold text-lg text-white mb-1">{plan.name}</div>
-                                                    <div className="text-xl font-bold text-teal-400 mb-3">{plan.price}</div>
-
+                                                    <div className="font-bold text-lg text-white mb-0.5">{plan.name}</div>
+                                                    <div className="text-xl font-bold text-teal-400 mb-2">{plan.price}</div>
+                                                    <div className="text-[10px] text-teal-400/70 mb-3 flex items-center gap-1 font-medium">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-teal-400/60 inline-block" />
+                                                        All features included
+                                                    </div>
                                                     <ul className="space-y-2">
-                                                        {plan.features.map((feature, idx) => (
+                                                        {plan.limits.map((limit, idx) => (
                                                             <li key={idx} className="flex items-center gap-2 text-xs text-slate-300">
-                                                                <div className="w-1.5 h-1.5 rounded-full bg-teal-500/50" />
-                                                                {feature}
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-teal-500/50 flex-shrink-0" />
+                                                                {limit}
                                                             </li>
                                                         ))}
                                                     </ul>
@@ -541,27 +541,6 @@ function LoginContent() {
                                         </p>
                                     </div>
 
-                                    {/* Legal Disclaimer */}
-                                    <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-700 space-y-2 max-w-md mx-auto w-full">
-                                        <label className="flex items-start gap-3 cursor-pointer group">
-                                            <div className="relative flex items-center mt-0.5">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={legalAccepted}
-                                                    onChange={(e) => setLegalAccepted(e.target.checked)}
-                                                    className="peer sr-only"
-                                                />
-                                                <div className="w-5 h-5 border-2 border-slate-500 rounded peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all"></div>
-                                                <CheckCircle2 className="w-3.5 h-3.5 text-white absolute top-1 left-1 opacity-0 peer-checked:opacity-100 transition-opacity" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <span className="text-xs text-slate-300 font-medium">Legal Disclaimer Agreement</span>
-                                                <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
-                                                    I acknowledge that AlphaClone is a technology platform only. AlphaClone is <span className="text-red-400 font-bold">NOT responsible</span> for any financial, tax, or legal disputes between me and my clients. I assume full responsibility for all transactions.
-                                                </p>
-                                            </div>
-                                        </label>
-                                    </div>
                                 </div>
                             )}
                         </div>
@@ -636,6 +615,27 @@ function LoginContent() {
                                     </div>
                                 </div>
                             </div>
+                        )}
+
+                        {isRegistering && (
+                            <label className="flex items-start gap-3 cursor-pointer group">
+                                <div className="relative flex-shrink-0 mt-0.5">
+                                    <input
+                                        type="checkbox"
+                                        checked={legalAccepted}
+                                        onChange={(e) => setLegalAccepted(e.target.checked)}
+                                        className="peer sr-only"
+                                    />
+                                    <div className="w-4 h-4 border-2 border-slate-600 rounded peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all" />
+                                    <CheckCircle2 className="w-2.5 h-2.5 text-white absolute top-0.5 left-0.5 opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                </div>
+                                <span className="text-xs text-slate-400 leading-relaxed">
+                                    By creating an account, you agree to our{' '}
+                                    <Link href="/legal?tab=terms" target="_blank" className="text-teal-400 hover:text-teal-300 underline underline-offset-2">Terms of Service</Link>
+                                    {' '}and{' '}
+                                    <Link href="/legal?tab=privacy" target="_blank" className="text-teal-400 hover:text-teal-300 underline underline-offset-2">Privacy Policy</Link>.
+                                </span>
+                            </label>
                         )}
 
                         {error && (

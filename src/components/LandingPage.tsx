@@ -37,14 +37,14 @@ import {
 } from 'lucide-react';
 
 import { Button, Input } from './ui/UIComponents';
-import LoomVideo from './ui/LoomVideo';
 import { ServiceCard } from './landing/ServiceCard';
 import HeroBackground from './landing/HeroBackground';
-import AITerminal from './dashboard/AITerminal';
-import PortfolioShowcase from './PortfolioShowcase';
-import InteractiveMap from './dashboard/InteractiveMap';
-import InfiniteTicker from './InfiniteTicker';
 import MarketingFooter from './landing/MarketingFooter';
+import dynamic from 'next/dynamic';
+
+// Lazy load heavy components for better performance
+const AITerminal = dynamic(() => import('./dashboard/AITerminal'), { ssr: false });
+const PortfolioShowcase = dynamic(() => import('./PortfolioShowcase'), { ssr: false });
 
 const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
    <div className="relative w-6 h-6 flex flex-col justify-center items-center">
@@ -57,6 +57,8 @@ const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
 const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: () => void }) => {
    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
    const [scrolled, setScrolled] = useState(false);
+   const [visible, setVisible] = useState(true);
+   const [lastScrollY, setLastScrollY] = useState(0);
    const [activeService, setActiveService] = useState('crm');
    const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
    const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -72,9 +74,12 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
 
    useEffect(() => {
       const handleScroll = () => {
-         setScrolled(window.scrollY > 50);
+         const currentScrollY = window.scrollY;
+         setScrolled(currentScrollY > 50);
+         // Always keep nav visible on homepage - no auto-hide
+         setVisible(true);
       };
-      window.addEventListener('scroll', handleScroll);
+      window.addEventListener('scroll', handleScroll, { passive: true });
       return () => window.removeEventListener('scroll', handleScroll);
    }, []);
 
@@ -91,13 +96,27 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
       setFormStatus('sending');
       
       try {
-         // Mock API call
-         await new Promise(resolve => setTimeout(resolve, 1500));
+         const response = await fetch('/api/contact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(contactForm),
+         });
+
+         const data = await response.json();
+
+         if (!response.ok) {
+            throw new Error(data.error || 'Failed to send message');
+         }
+
          setFormStatus('success');
          setContactForm({ name: '', email: '', subject: '', message: '' });
          setTimeout(() => setFormStatus('idle'), 5000);
       } catch (error) {
+         console.error('Contact form error:', error);
          setFormStatus('error');
+         import('react-hot-toast').then(({ toast }) => 
+            toast.error('Failed to send message. Please try again or email us directly.')
+         );
          setTimeout(() => setFormStatus('idle'), 3000);
       }
    };
@@ -106,8 +125,11 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
       <div className="min-h-screen bg-[#020D1A] text-slate-200 selection:bg-teal-500/30">
          {/* Navigation */}
          <nav
-            className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 border-b ${scrolled ? 'bg-slate-950/80 backdrop-blur-xl border-slate-800' : 'bg-transparent border-transparent'
-               }`}
+            className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 border-b ${
+               scrolled ? 'bg-slate-950/80 backdrop-blur-xl border-slate-800' : 'bg-transparent border-transparent'
+            } ${
+               visible ? 'translate-y-0' : '-translate-y-full'
+            }`}
          >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                <div className="flex justify-between items-center h-20">
@@ -116,31 +138,44 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      className="flex items-center gap-3 cursor-pointer group"
                      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                   >
-                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:scale-110 transition-transform">
-                        <span className="text-slate-950 font-black text-xl">AS</span>
+                     <div className="relative w-9 h-9 flex-shrink-0 flex items-center justify-center">
+                        <img
+                           src="/logo.png"
+                           alt="AlphaClone Systems Logo"
+                           width={36}
+                           height={36}
+                           className="object-contain max-h-full max-w-full"
+                           onError={(e) => {
+                              // Fallback to styled initials if image not found
+                              e.currentTarget.style.display = 'none';
+                              const fallback = document.createElement('div');
+                              fallback.className = 'w-9 h-9 rounded-xl bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center shadow-lg shadow-teal-500/20';
+                              fallback.innerHTML = '<span class="text-slate-950 font-black text-lg">AS</span>';
+                              e.currentTarget.parentElement?.appendChild(fallback);
+                           }}
+                        />
                      </div>
                      <span className="text-xl font-bold tracking-tight text-white font-marketing-heading">AlphaClone</span>
                   </div>
 
                   {/* Desktop Nav */}
                   <div className="hidden lg:flex items-center gap-8">
-                     <button onClick={() => scrollToSection('home')} className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Home</button>
-                     <button onClick={() => scrollToSection('services')} className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Platform</button>
-                     <button onClick={() => scrollToSection('pricing')} className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Pricing</button>
-                     <Link href="/docs" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Docs</Link>
-                     <button onClick={() => scrollToSection('about')} className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">About</button>
-                     <button onClick={() => scrollToSection('contact')} className="text-sm font-semibold text-slate-300 hover:text-white transition-colors tracking-wide uppercase">Contact</button>
+                     <button onClick={() => scrollToSection('services')} className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Platform</button>
+                     <button onClick={() => scrollToSection('pricing')} className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Pricing</button>
+                     <Link href="/docs" className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Docs</Link>
+                     <Link href="/ecosystem" className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Ecosystem</Link>
+                     <button onClick={() => scrollToSection('contact')} className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Contact</button>
 
-                     <div className="flex items-center gap-4 ml-6 pl-6 border-l border-white/10">
+                     <div className="flex items-center gap-3 ml-6 pl-6 border-l border-white/10">
                         <button 
                            onClick={() => window.location.href = '/login'}
-                           className="text-sm font-semibold text-slate-400 hover:text-white transition-colors"
+                           className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
                         >
                            Login
                         </button>
                         <Button
                            onClick={() => window.location.href = '/register'}
-                           className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-6"
+                           className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-6 h-10"
                         >
                            Start Now
                         </Button>
@@ -163,52 +198,84 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
             </div>
          </nav>
 
-         {/* Mobile Menu Backdrop */}
+         {/* Mobile Menu - Full Screen Overlay */}
          <AnimatePresence>
             {mobileMenuOpen && (
                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[90] lg:hidden"
-               />
-            )}
-         </AnimatePresence>
-
-         {/* Mobile Menu Panel */}
-         <AnimatePresence>
-            {mobileMenuOpen && (
-               <motion.div
-                  initial={{ x: '100%' }}
-                  animate={{ x: 0 }}
-                  exit={{ x: '100%' }}
-                  className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-slate-900 border-l border-slate-800 z-[100] lg:hidden p-8 shadow-2xl"
+                  transition={{ duration: 0.2 }}
+                  className="fixed inset-0 bg-slate-950 z-[200] lg:hidden overflow-y-auto"
                >
-                  <div className="flex flex-col gap-6 pt-12">
-                     {['home', 'services', 'pricing', 'about', 'contact'].map((item) => (
+                  <div className="min-h-screen flex flex-col">
+                     {/* Mobile Menu Header */}
+                     <div className="flex items-center justify-between px-4 py-5 border-b border-slate-800">
+                        <Link href="/" className="flex items-center gap-3" onClick={() => setMobileMenuOpen(false)}>
+                           <div className="relative w-8 h-8 flex-shrink-0 flex items-center justify-center">
+                              <img
+                                 src="/logo.png"
+                                 alt="AlphaClone"
+                                 width={32}
+                                 height={32}
+                                 className="object-contain"
+                              />
+                           </div>
+                           <span className="text-lg font-bold text-white">AlphaClone</span>
+                        </Link>
                         <button
-                           key={item}
-                           onClick={() => scrollToSection(item)}
-                           className="text-2xl font-bold text-white capitalize text-left hover:text-teal-400 transition-colors"
+                           onClick={() => setMobileMenuOpen(false)}
+                           className="p-2 text-slate-400 hover:text-white transition-colors"
+                           aria-label="Close menu"
                         >
-                           {item}
+                           <X className="w-6 h-6" />
                         </button>
-                     ))}
-                     <Link href="/docs" className="text-2xl font-bold text-white uppercase text-left hover:text-teal-400 transition-colors">Docs</Link>
-                     <div className="h-px bg-slate-800 my-4" />
-                     <Button 
-                        onClick={() => window.location.href = '/register'}
-                        className="w-full h-14 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xl"
-                     >
-                        Get Started
-                     </Button>
-                     <button 
-                        onClick={() => window.location.href = '/login'}
-                        className="w-full h-14 border border-slate-700 rounded-xl font-bold text-white"
-                     >
-                        Login
-                     </button>
+                     </div>
+
+                     {/* Mobile Menu Content */}
+                     <div className="flex-1 px-4 py-8">
+                        <nav className="space-y-2">
+                           {['services', 'pricing', 'contact'].map((item) => (
+                              <button
+                                 key={item}
+                                 onClick={() => scrollToSection(item)}
+                                 className="w-full text-left px-4 py-4 text-lg font-semibold text-slate-300 hover:text-white hover:bg-slate-900 rounded-xl transition-colors capitalize"
+                              >
+                                 {item === 'services' ? 'Platform' : item}
+                              </button>
+                           ))}
+                           <Link 
+                              href="/docs" 
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="block w-full text-left px-4 py-4 text-lg font-semibold text-slate-300 hover:text-white hover:bg-slate-900 rounded-xl transition-colors"
+                           >
+                              Docs
+                           </Link>
+                           <Link 
+                              href="/ecosystem" 
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="block w-full text-left px-4 py-4 text-lg font-semibold text-slate-300 hover:text-white hover:bg-slate-900 rounded-xl transition-colors"
+                           >
+                              Ecosystem
+                           </Link>
+                        </nav>
+                     </div>
+
+                     {/* Mobile Menu Footer */}
+                     <div className="border-t border-slate-800 p-4 space-y-3">
+                        <button
+                           onClick={() => window.location.href = '/register'}
+                           className="w-full py-4 px-4 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-teal-500/20"
+                        >
+                           Start Free Trial
+                        </button>
+                        <button
+                           onClick={() => window.location.href = '/login'}
+                           className="w-full py-4 px-4 border border-slate-700 text-white hover:bg-slate-900 font-semibold rounded-xl transition-all"
+                        >
+                           Log in
+                        </button>
+                     </div>
                   </div>
                </motion.div>
             )}
@@ -220,72 +287,81 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                <div className="absolute inset-0 z-0">
                   <HeroBackground />
                </div>
-               
-               <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
+               <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-16 sm:py-20">
                   <motion.div
-                     initial={{ opacity: 0, y: 30 }}
+                     initial={{ opacity: 0, y: 20 }}
                      animate={{ opacity: 1, y: 0 }}
-                     transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                     transition={{ duration: 0.6 }}
                   >
-                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-sm font-bold mb-8 mx-auto">
-                        <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-                        Next-Gen Business OS
+                     {/* Problem pill */}
+                     <div className="inline-flex items-center gap-2 bg-slate-800/60 border border-slate-700/60 rounded-full px-4 py-1.5 mb-8 text-xs sm:text-sm text-slate-300 backdrop-blur-sm">
+                        <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+                        Agencies are losing 15+ hrs/week to disconnected tools
                      </div>
-                     <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-[100px] font-black tracking-tighter leading-[0.9] text-white mb-8 font-marketing-heading">
-                        UNIFIED <br />
-                        <span className="bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">BUSINESS OS</span>
+
+                     {/* Headline */}
+                     <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white mb-6 tracking-tight leading-[1.05]">
+                        Your business shouldn't
+                        <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">
+                           live in 12 browser tabs.
+                        </span>
                      </h1>
-                     <p className="text-xl md:text-2xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
-                        The ultimate high-performance operating system for agencies and freelancers. 
-                        CRM, Projects, and Billing—unified in one cinematic interface.
+
+                     {/* Solution subheadline */}
+                     <p className="text-base sm:text-lg md:text-xl text-slate-400 mb-4 max-w-3xl mx-auto leading-relaxed">
+                        AlphaClone gives agencies, freelancers, and service businesses a single platform for their <span className="text-white font-medium">CRM, invoicing, contracts, project management,</span> and <span className="text-teal-400 font-medium">AI-powered sales automation</span> — replacing a dozen tools with one login.
                      </p>
-                     
-                     <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+
+                     {/* Platform modules */}
+                     <div className="flex flex-wrap justify-center gap-2 mb-10 sm:mb-12 max-w-2xl mx-auto">
+                        {[
+                           { icon: '📋', label: 'CRM & Pipeline' },
+                           { icon: '💸', label: 'Invoicing' },
+                           { icon: '📄', label: 'Contracts' },
+                           { icon: '📁', label: 'Projects' },
+                           { icon: '📅', label: 'Bookings' },
+                           { icon: '🤖', label: 'AI Sales Agent' },
+                        ].map(({ icon, label }) => (
+                           <div key={label} className="flex items-center gap-1.5 bg-slate-800/50 border border-teal-500/20 rounded-full px-3 py-1 text-xs text-slate-300">
+                              <span>{icon}</span>
+                              <span>{label}</span>
+                           </div>
+                        ))}
+                     </div>
+
+                     {/* CTAs */}
+                     <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-10 sm:mb-12">
                         <Button
                            onClick={() => window.location.href = '/register'}
-                           className="h-16 px-10 text-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-black shadow-2xl shadow-teal-500/20 hover:scale-105 transition-transform"
+                           className="h-13 px-8 text-base font-bold bg-teal-500 hover:bg-teal-400 text-slate-950 shadow-lg shadow-teal-500/25 w-full sm:w-auto"
                         >
-                           Start Free Trial
+                           Start Free — No Card Required
+                           <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
-                        <Button
-                           variant="outline"
-                           onClick={() => scrollToSection('walkthrough')}
-                           className="h-16 px-10 text-xl border-slate-700 bg-slate-900/50 hover:bg-slate-800 text-white font-bold flex items-center gap-3"
+                        <button
+                           onClick={() => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' })}
+                           className="h-13 px-8 text-base font-medium text-slate-300 hover:text-white border border-slate-700 hover:border-slate-500 rounded-xl transition-all w-full sm:w-auto py-3"
                         >
-                           <Play className="w-5 h-5 fill-current" />
-                           Watch Demo
-                        </Button>
+                           See what's inside
+                        </button>
+                     </div>
+
+                     {/* Proof stats */}
+                     <div className="flex flex-wrap justify-center gap-6 sm:gap-10 text-center">
+                        {[
+                           { value: '12+', label: 'tools replaced' },
+                           { value: '14 days', label: 'free trial' },
+                           { value: '$15/mo', label: 'to start' },
+                           { value: '0', label: 'credit card to begin' },
+                        ].map(({ value, label }) => (
+                           <div key={label}>
+                              <div className="text-xl sm:text-2xl font-black text-white">{value}</div>
+                              <div className="text-xs text-slate-500 mt-0.5">{label}</div>
+                           </div>
+                        ))}
                      </div>
                   </motion.div>
-               </div>
-
-               {/* Hero Decorative Elements */}
-               <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-[#020D1A] to-transparent z-10" />
-            </section>
-
-            {/* PLATFORM WALKTHROUGH SECTION - HIGH PERFORMANCE VIDEO */}
-            <section id="walkthrough" className="py-32 bg-slate-950 px-4">
-               <div className="max-w-6xl mx-auto">
-                  <div className="text-center mb-16">
-                     <h2 className="text-4xl md:text-5xl font-black text-white mb-6 uppercase tracking-tight">The Platform in Action</h2>
-                     <p className="text-slate-400 text-xl max-w-2xl mx-auto">
-                        Experience the AlphaClone architecture. See how we process leads, manage projects, and automate billing in real-time.
-                     </p>
-                  </div>
-                  
-                  <div className="relative group">
-                     {/* Decorative glow behind video */}
-                     <div className="absolute -inset-1 bg-gradient-to-r from-teal-500 to-blue-600 rounded-[2.5rem] blur-2xl opacity-20 group-hover:opacity-40 transition duration-1000" />
-                     
-                     <div className="relative bg-slate-900 border border-slate-800 rounded-[2.5rem] overflow-hidden shadow-2xl">
-                        <div className="aspect-video w-full">
-                           <LoomVideo 
-                              videoId="3a7000c925c145b7882089688b0ceb5d" 
-                              className="w-full h-full"
-                           />
-                        </div>
-                     </div>
-                  </div>
                </div>
             </section>
 
@@ -293,8 +369,8 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
             <section id="services" className="py-32 relative overflow-hidden">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                   <div className="text-center mb-24">
-                     <h2 className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tighter uppercase">Powering Your Growth</h2>
-                     <div className="w-24 h-1.5 bg-gradient-to-r from-teal-400 to-blue-500 mx-auto rounded-full" />
+                     <h2 className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tight">Everything you need.<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">Nothing you don't.</span></h2>
+                     <p className="text-xl text-slate-400 max-w-3xl mx-auto">Each module is built to work together — so your CRM talks to your invoices, your contracts link to your clients, and your AI agent feeds your pipeline automatically.</p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -369,39 +445,57 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
             {/* Who We Serve Section */}
             <section className="py-32 bg-[#050B14]">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-                     <div>
-                        <h2 className="text-4xl md:text-5xl font-black text-white mb-8 tracking-tighter uppercase leading-none">
-                           BUILT FOR THE <br />
-                           <span className="text-teal-400">AMBITIOUS</span>
-                        </h2>
-                        <p className="text-xl text-slate-400 mb-10 leading-relaxed">
-                           AlphaClone isn't for everyone. It's for the creators, the builders, and the agencies who demand enterprise control without the enterprise friction.
-                        </p>
-                        
-                        <div className="space-y-6">
-                           {[
-                              { title: 'Agencies', desc: 'Scale client delivery without adding more software.' },
-                              { title: 'Freelancers', desc: 'Run a 7-figure solo business with unified ops.' },
-                              { title: 'Startups', desc: 'Consolidate 10+ subscriptions into one Business OS.' }
-                           ].map((item, i) => (
-                              <div key={i} className="flex gap-4 p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-teal-500/30 transition-colors">
-                                 <div className="w-10 h-10 rounded-full bg-teal-500 flex items-center justify-center flex-shrink-0 text-slate-950 font-black">
-                                    {i + 1}
-                                 </div>
-                                 <div>
-                                    <h4 className="text-white font-bold text-lg mb-1">{item.title}</h4>
-                                    <p className="text-slate-400 text-sm">{item.desc}</p>
-                                 </div>
+                  <div className="text-center mb-20">
+                     <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight">
+                        Built for the <span className="text-teal-400">Ambitious</span>
+                     </h2>
+                     <p className="text-xl text-slate-400 max-w-3xl mx-auto leading-relaxed">
+                        AlphaClone isn't for everyone. It's engineered for creators, builders, and agencies who demand enterprise control without enterprise friction.
+                     </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+                     {[
+                        { 
+                           num: '01',
+                           title: 'Agencies', 
+                           desc: 'Scale client delivery without adding more software.',
+                           icon: Briefcase
+                        },
+                        { 
+                           num: '02',
+                           title: 'Freelancers', 
+                           desc: 'Run a 7-figure solo business with unified ops.',
+                           icon: UserIcon
+                        },
+                        { 
+                           num: '03',
+                           title: 'Startups', 
+                           desc: 'Consolidate 10+ subscriptions into one Business OS.',
+                           icon: TrendingUp
+                        }
+                     ].map((item) => (
+                        <div 
+                           key={item.num} 
+                           className="group relative p-8 rounded-2xl bg-gradient-to-br from-slate-900/50 to-slate-900/30 border border-slate-800 hover:border-teal-500/50 transition-all duration-300 hover:scale-105"
+                        >
+                           <div className="absolute top-6 right-6 text-6xl font-black text-slate-800/30 group-hover:text-teal-500/20 transition-colors">
+                              {item.num}
+                           </div>
+                           <div className="relative z-10">
+                              <div className="w-14 h-14 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center mb-6 group-hover:bg-teal-500/20 transition-colors">
+                                 <item.icon className="w-7 h-7 text-teal-400" />
                               </div>
-                           ))}
+                              <h3 className="text-2xl font-bold text-white mb-3">{item.title}</h3>
+                              <p className="text-slate-400 leading-relaxed">{item.desc}</p>
+                           </div>
                         </div>
-                     </div>
-                     
-                     <div className="relative">
-                        <div className="absolute -inset-4 bg-teal-500/20 blur-[100px] rounded-full" />
-                        <AITerminal />
-                     </div>
+                     ))}
+                  </div>
+
+                  <div className="relative max-w-5xl mx-auto">
+                     <div className="absolute -inset-4 bg-teal-500/20 blur-[100px] rounded-full" />
+                     <AITerminal />
                   </div>
                </div>
             </section>
@@ -442,38 +536,76 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
                      {[
-                        { name: 'Starter', price: '$15', desc: 'Solo founders & freelancers', features: ['5 Users', 'Core CRM', '5GB Storage'] },
-                        { name: 'Professional', price: '$45', desc: 'High-growth teams', features: ['25 Users', 'Unlimited CRM', 'AI Sales Bot'], popular: true },
-                        { name: 'Enterprise', price: '$80', desc: 'Large scale operations', features: ['Unlimited Users', 'Dedicated DB', 'API Access'] }
+                        {
+                           name: 'Starter', price: '$15', desc: 'Solo founders & freelancers',
+                           features: [
+                              '5 Users · 5GB Storage',
+                              '10 Projects · 10 Contracts',
+                              '50 AI queries / mo',
+                              '10 AI Agent runs / mo',
+                              'Standard support (48h)',
+                           ],
+                           note: 'All features included',
+                           popular: false
+                        },
+                        {
+                           name: 'Pro', price: '$45', desc: 'High-growth teams & agencies',
+                           features: [
+                              '25 Users · 25GB Storage',
+                              '100 Projects · 100 Contracts',
+                              '500 AI queries / mo',
+                              '200 AI Agent runs / mo',
+                              'Priority support (12h)',
+                           ],
+                           note: 'All features included',
+                           popular: true
+                        },
+                        {
+                           name: 'Enterprise', price: '$80', desc: 'Large scale operations',
+                           features: [
+                              'Unlimited Users & Storage',
+                              'Unlimited Projects & Contracts',
+                              'Unlimited AI queries',
+                              'Unlimited AI Agent runs',
+                              'Dedicated support (4h)',
+                           ],
+                           note: 'All features included',
+                           popular: false
+                        }
                      ].map((plan, i) => (
-                        <div key={i} className={`relative p-10 rounded-[2.5rem] border ${plan.popular ? 'bg-slate-900 border-teal-500 shadow-2xl shadow-teal-500/10 scale-105 z-10' : 'bg-slate-900/50 border-slate-800'} flex flex-col`}>
+                        <div key={i} className={`relative p-8 sm:p-10 rounded-[2rem] border ${plan.popular ? 'bg-slate-900 border-teal-500 shadow-2xl shadow-teal-500/10 md:scale-105 z-10' : 'bg-slate-900/50 border-slate-800'} flex flex-col`}>
                            {plan.popular && (
                               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-teal-500 text-slate-950 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-tighter">
-                                 Recommended
+                                 Most Popular
                               </div>
                            )}
-                           <h3 className="text-2xl font-black text-white mb-2 uppercase">{plan.name}</h3>
-                           <p className="text-slate-400 text-sm mb-8">{plan.desc}</p>
-                           <div className="flex items-baseline gap-1 mb-8">
-                              <span className="text-5xl font-black text-white">{plan.price}</span>
+                           <h3 className="text-xl sm:text-2xl font-black text-white mb-1">{plan.name}</h3>
+                           <p className="text-slate-400 text-sm mb-6">{plan.desc}</p>
+                           <div className="flex items-baseline gap-1 mb-3">
+                              <span className="text-4xl sm:text-5xl font-black text-white">{plan.price}</span>
                               <span className="text-slate-500 font-bold">/mo</span>
                            </div>
-                           <ul className="space-y-4 mb-10 flex-grow">
+                           <div className="inline-flex items-center gap-1.5 mb-6 px-2.5 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 w-fit">
+                              <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
+                              <span className="text-xs text-teal-400 font-semibold">{plan.note}</span>
+                           </div>
+                           <ul className="space-y-3 mb-8 flex-grow">
                               {plan.features.map((feat, idx) => (
                                  <li key={idx} className="flex items-center gap-2 text-sm text-slate-300">
-                                    <Check className="w-4 h-4 text-teal-400" />
+                                    <Check className="w-4 h-4 text-teal-400 flex-shrink-0" />
                                     {feat}
                                  </li>
                               ))}
                            </ul>
                            <Button
                               onClick={() => window.location.href = '/register'}
-                              className={`h-14 w-full text-lg font-black uppercase ${plan.popular ? 'bg-teal-500 hover:bg-teal-400 text-slate-950' : 'bg-slate-800 hover:bg-slate-700 text-white'}`}
+                              className={`h-12 sm:h-14 w-full text-base sm:text-lg font-bold ${plan.popular ? 'bg-teal-500 hover:bg-teal-400 text-slate-950' : 'bg-slate-800 hover:bg-slate-700 text-white'}`}
                            >
-                              Get Started
+                              Start Free Trial
                            </Button>
+                           <p className="text-xs text-slate-600 text-center mt-3">14-day free trial · No card required</p>
                         </div>
                      ))}
                   </div>
@@ -481,102 +613,143 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
             </section>
 
             {/* Contact Section */}
-            <section id="contact" className="py-32 bg-slate-900/30">
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
-                     <div>
-                        <h2 className="text-4xl md:text-5xl font-black text-white mb-8 tracking-tighter uppercase leading-none">
-                           PLAN YOUR <br />
-                           <span className="text-teal-400">ROLLOUT</span>
-                        </h2>
-                        <p className="text-xl text-slate-400 mb-12 leading-relaxed">
-                           Ready to unify your business operations? Our engineers are standing by to help you map your transition to AlphaClone.
-                        </p>
-                        
-                        <div className="space-y-10">
-                           <div className="flex items-center gap-6">
-                              <div className="w-14 h-14 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
-                                 <Mail className="w-7 h-7 text-teal-400" />
-                              </div>
-                              <div>
-                                 <div className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-1">Email Us</div>
-                                 <a href="mailto:sales@alphaclone.tech" className="text-xl font-bold text-white hover:text-teal-400 transition-colors">sales@alphaclone.tech</a>
-                              </div>
-                           </div>
-                           <div className="flex items-center gap-6">
-                              <div className="w-14 h-14 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
-                                 <Phone className="w-7 h-7 text-teal-400" />
-                              </div>
-                              <div>
-                                 <div className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-1">Call Support</div>
-                                 <a href="tel:+48517809674" className="text-xl font-bold text-white hover:text-teal-400 transition-colors">+48 517 809 674</a>
-                              </div>
-                           </div>
-                        </div>
-                     </div>
+            <section id="contact" className="py-20 sm:py-32 bg-gradient-to-b from-slate-900/30 to-slate-950">
+               <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="text-center mb-12 sm:mb-16">
+                     <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 sm:mb-6 tracking-tight">
+                        Get in Touch
+                     </h2>
+                     <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 sm:mb-12">
+                        Have questions? Reach out to our team directly.
+                     </p>
                      
-                     <div className="bg-slate-900 border border-slate-800 p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 blur-3xl rounded-full" />
-                        
-                        {formStatus === 'success' ? (
-                           <div className="text-center py-20">
-                              <div className="w-20 h-20 bg-teal-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                                 <Check className="w-10 h-10 text-teal-400" />
-                              </div>
-                              <h3 className="text-2xl font-black text-white mb-2 uppercase">Message Received</h3>
-                              <p className="text-slate-400">An engineer will reach out to you within 2 hours.</p>
+                     <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16">
+                        <a href="mailto:sales@alphaclone.tech" className="group flex items-center gap-3 px-6 py-4 bg-slate-900/50 border border-slate-800 hover:border-teal-500/50 rounded-xl transition-all">
+                           <Mail className="w-5 h-5 text-teal-400" />
+                           <div className="text-left">
+                              <div className="text-xs text-slate-500 font-medium">Sales</div>
+                              <div className="text-white font-semibold group-hover:text-teal-400 transition-colors">sales@alphaclone.tech</div>
                            </div>
-                        ) : (
-                           <form onSubmit={handleContactSubmit} className="space-y-6">
-                              <div className="grid grid-cols-2 gap-6">
-                                 <Input 
-                                    placeholder="Name" 
-                                    value={contactForm.name} 
-                                    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })} 
-                                    required 
-                                 />
-                                 <Input 
-                                    placeholder="Email" 
-                                    type="email" 
-                                    value={contactForm.email} 
-                                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })} 
-                                    required 
-                                 />
-                              </div>
-                              <Input 
-                                 placeholder="Subject" 
-                                 value={contactForm.subject} 
-                                 onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })} 
-                                 required 
+                        </a>
+                        <a href="mailto:support@alphaclone.tech" className="group flex items-center gap-3 px-6 py-4 bg-slate-900/50 border border-slate-800 hover:border-teal-500/50 rounded-xl transition-all">
+                           <Mail className="w-5 h-5 text-teal-400" />
+                           <div className="text-left">
+                              <div className="text-xs text-slate-500 font-medium">Support</div>
+                              <div className="text-white font-semibold group-hover:text-teal-400 transition-colors">support@alphaclone.tech</div>
+                           </div>
+                        </a>
+                     </div>
+                  </div>
+
+                  <div className="max-w-xl mx-auto">
+                     {formStatus === 'success' ? (
+                        <motion.div 
+                           initial={{ opacity: 0, scale: 0.95 }}
+                           animate={{ opacity: 1, scale: 1 }}
+                           className="text-center py-20 bg-gradient-to-br from-slate-900/80 to-slate-900/40 backdrop-blur-xl border border-slate-800/50 rounded-3xl shadow-2xl"
+                        >
+                           <div className="w-20 h-20 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-green-500/10">
+                              <Check className="w-10 h-10 text-green-400" />
+                           </div>
+                           <h3 className="text-3xl font-black text-white mb-3">Message sent</h3>
+                           <p className="text-slate-400 text-lg">We'll get back to you within 24 hours.</p>
+                        </motion.div>
+                     ) : (
+                        <form onSubmit={(e) => {
+                           e.preventDefault();
+                           if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactForm.email)) {
+                              import('react-hot-toast').then(({ toast }) => toast.error('Please enter a valid email address'));
+                              return;
+                           }
+                           handleContactSubmit(e);
+                        }} className="space-y-6">
+                           <div className="relative group">
+                              <input
+                                 type="text"
+                                 id="name"
+                                 required
+                                 value={contactForm.name}
+                                 onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                                 className="peer w-full px-4 pt-6 pb-2 bg-slate-900/60 backdrop-blur-sm border border-slate-800/80 rounded-2xl text-white placeholder-transparent focus:outline-none focus:border-teal-500/50 focus:ring-2 focus:ring-teal-500/20 transition-all duration-200"
+                                 placeholder="Name"
                               />
+                              <label 
+                                 htmlFor="name"
+                                 className="absolute left-4 top-2 text-xs font-semibold text-slate-500 transition-all duration-200 peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-placeholder-shown:text-slate-500 peer-focus:top-2 peer-focus:text-xs peer-focus:text-teal-400"
+                              >
+                                 Name
+                              </label>
+                              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-teal-500/0 via-teal-500/5 to-teal-500/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                           </div>
+
+                           <div className="relative group">
+                              <input
+                                 type="email"
+                                 id="email"
+                                 required
+                                 value={contactForm.email}
+                                 onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                                 className="peer w-full px-4 pt-6 pb-2 bg-slate-900/60 backdrop-blur-sm border border-slate-800/80 rounded-2xl text-white placeholder-transparent focus:outline-none focus:border-teal-500/50 focus:ring-2 focus:ring-teal-500/20 transition-all duration-200"
+                                 placeholder="Email"
+                              />
+                              <label 
+                                 htmlFor="email"
+                                 className="absolute left-4 top-2 text-xs font-semibold text-slate-500 transition-all duration-200 peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-placeholder-shown:text-slate-500 peer-focus:top-2 peer-focus:text-xs peer-focus:text-teal-400"
+                              >
+                                 Email
+                              </label>
+                              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-teal-500/0 via-teal-500/5 to-teal-500/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                           </div>
+
+                           <div className="relative group">
                               <textarea
-                                 className="w-full h-40 bg-slate-950/50 border border-slate-800 rounded-2xl px-6 py-4 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
-                                 placeholder="Tell us about your requirements..."
+                                 id="message"
+                                 required
                                  value={contactForm.message}
                                  onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                                 required
+                                 className="peer w-full px-4 pt-6 pb-2 bg-slate-900/60 backdrop-blur-sm border border-slate-800/80 rounded-2xl text-white placeholder-transparent focus:outline-none focus:border-teal-500/50 focus:ring-2 focus:ring-teal-500/20 min-h-[140px] resize-none transition-all duration-200"
+                                 placeholder="Message"
                               />
-                              <Button
-                                 type="submit"
-                                 disabled={formStatus === 'sending'}
-                                 className="w-full h-16 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black text-xl flex items-center justify-center gap-3 transition-all"
+                              <label 
+                                 htmlFor="message"
+                                 className="absolute left-4 top-2 text-xs font-semibold text-slate-500 transition-all duration-200 peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-placeholder-shown:text-slate-500 peer-focus:top-2 peer-focus:text-xs peer-focus:text-teal-400"
                               >
-                                 {formStatus === 'sending' ? 'Transmitting...' : (
+                                 Message
+                              </label>
+                              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-teal-500/0 via-teal-500/5 to-teal-500/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                           </div>
+
+                           <button
+                              type="submit"
+                              disabled={formStatus === 'sending'}
+                              className="group relative w-full bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 disabled:from-slate-700 disabled:to-slate-800 disabled:text-slate-500 text-slate-950 font-bold py-5 px-6 rounded-2xl transition-all duration-200 shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/40 disabled:cursor-not-allowed disabled:shadow-none overflow-hidden"
+                           >
+                              <span className="relative z-10 flex items-center justify-center gap-2">
+                                 {formStatus === 'sending' ? (
                                     <>
-                                       Send Briefing
-                                       <ChevronRight className="w-6 h-6" />
+                                       <motion.div
+                                          animate={{ rotate: 360 }}
+                                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                          className="w-5 h-5 border-2 border-slate-950/20 border-t-slate-950 rounded-full"
+                                       />
+                                       Sending...
+                                    </>
+                                 ) : (
+                                    <>
+                                       Send message
+                                       <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                     </>
                                  )}
-                              </Button>
-                           </form>
-                        )}
-                     </div>
+                              </span>
+                              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                           </button>
+                        </form>
+                     )}
                   </div>
                </div>
             </section>
          </main>
 
-         <InfiniteTicker />
          <MarketingFooter />
       </div>
    );
