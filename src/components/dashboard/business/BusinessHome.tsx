@@ -29,7 +29,10 @@ import {
     Moon,
     Star,
     XCircle,
-    Loader2
+    Loader2,
+    Facebook,
+    Smartphone,
+    MessageSquare
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
@@ -447,6 +450,24 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
                             label="Send Invoice"
                             icon={DollarSign}
                             onClick={() => window.location.href = '/dashboard/business/billing'}
+                            disabled={false}
+                        />
+                        <QuickActionButton
+                            label="Facebook Integration"
+                            icon={Facebook}
+                            onClick={() => window.location.href = '/dashboard/business/facebook'}
+                            disabled={false}
+                        />
+                        <QuickActionButton
+                            label="SMS Campaigns"
+                            icon={Smartphone}
+                            onClick={() => window.location.href = '/dashboard/business/sms'}
+                            disabled={false}
+                        />
+                        <QuickActionButton
+                            label="Social Media"
+                            icon={MessageSquare}
+                            onClick={() => window.location.href = '/dashboard/business/social'}
                             disabled={false}
                         />
                     </div>
