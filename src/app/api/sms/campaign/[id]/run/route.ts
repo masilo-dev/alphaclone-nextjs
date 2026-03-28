@@ -6,9 +6,9 @@ import { normalizePhoneNumber } from '@/services/engine/CommunicationEngine';
  * POST /api/sms/campaign/[id]/run
  * Executes an SMS campaign — fetches recipients and sends messages via Twilio
  */
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const supabase = createSupabaseAdminClient();
-    const campaignId = params.id;
+    const campaignId = (await params).id;
 
     const accountSid  = process.env.TWILIO_ACCOUNT_SID;
     const authToken   = process.env.TWILIO_AUTH_TOKEN;
