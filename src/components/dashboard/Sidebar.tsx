@@ -98,7 +98,7 @@ const Sidebar = React.memo<SidebarProps>(({
                             </button>
                         </div>
                     )}
-                    {navItems.map((item, idx) => (
+                    {navItems?.map((item, idx) => (
                         <div key={idx}>
                             <button
                                 onClick={() => {

@@ -9,18 +9,21 @@ export const Skeleton: React.FC<{ className?: string; style?: React.CSSPropertie
 export const TableSkeleton: React.FC<{ rows?: number; columns?: number }> = ({
     rows = 5,
     columns = 4
-}) => (
+}) => {
+    const safeColumns = Math.max(1, Number(columns) || 4);
+    const safeRows = Math.max(1, Number(rows) || 5);
+    return (
     <div className="space-y-3">
         {/* Header */}
         <div className="flex gap-4 pb-3 border-b border-slate-800">
-            {[...Array(columns)].map((_, i) => (
+            {Array.from({ length: safeColumns }).map((_, i) => (
                 <Skeleton key={i} className="h-4 flex-1" />
             ))}
         </div>
         {/* Rows */}
-        {[...Array(rows)].map((_, rowIdx) => (
+        {Array.from({ length: safeRows }).map((_, rowIdx) => (
             <div key={rowIdx} className="flex gap-4 items-center">
-                {[...Array(columns)].map((_, colIdx) => (
+                {Array.from({ length: safeColumns }).map((_, colIdx) => (
                     <Skeleton key={colIdx} className="h-6 flex-1" />
                 ))}
             </div>
