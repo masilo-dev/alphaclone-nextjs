@@ -22,7 +22,9 @@ import {
   BarChart3,
   MapPin,
   FolderOpen,
-  Presentation
+  Presentation,
+  Facebook,
+  Smartphone
 } from 'lucide-react';
 import { NavItem, DashboardStat } from './types';
 
@@ -117,6 +119,8 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Documents', href: '/dashboard/business/documents', icon: FolderOpen },
 
   // 7. Integrations
+  { label: 'Facebook', href: '/dashboard/business/facebook', icon: Facebook },
+  { label: 'SMS Campaigns', href: '/dashboard/business/sms', icon: Smartphone },
   { label: 'Zoho Email', href: '/dashboard/business/zoho', icon: Mail },
 
   // 8. Usage & Limits
