@@ -9,7 +9,9 @@ import React from 'react';
 export const TabSkeleton: React.FC<{ rows?: number; showStats?: boolean }> = ({
     rows = 6,
     showStats = true,
-}) => (
+}) => {
+    const safeRows = Math.max(1, Number(rows) || 6);
+    return (
     <div className="space-y-6 animate-pulse p-1">
         {/* Header row */}
         <div className="flex items-center justify-between">
@@ -20,7 +22,7 @@ export const TabSkeleton: React.FC<{ rows?: number; showStats?: boolean }> = ({
         {/* Stat cards */}
         {showStats && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[...Array(4)].map((_, i) => (
+                {Array.from({ length: 4 }).map((_, i) => (
                     <div key={i} className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
                         <div className="h-4 w-20 bg-slate-800 rounded" />
                         <div className="h-7 w-16 bg-slate-700 rounded" />
@@ -33,12 +35,12 @@ export const TabSkeleton: React.FC<{ rows?: number; showStats?: boolean }> = ({
         <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
             {/* Table header */}
             <div className="flex gap-4 px-4 py-3 border-b border-slate-800">
-                {[...Array(4)].map((_, i) => (
+                {Array.from({ length: 4 }).map((_, i) => (
                     <div key={i} className="h-3 bg-slate-800 rounded flex-1" />
                 ))}
             </div>
             {/* Table rows */}
-            {[...Array(rows)].map((_, i) => (
+            {Array.from({ length: safeRows }).map((_, i) => (
                 <div
                     key={i}
                     className="flex gap-4 px-4 py-3 border-b border-slate-800/50 last:border-0"
@@ -53,6 +55,7 @@ export const TabSkeleton: React.FC<{ rows?: number; showStats?: boolean }> = ({
         </div>
     </div>
 );
+};
 
 /**
  * Full-page skeleton shell shown while auth is resolving.
