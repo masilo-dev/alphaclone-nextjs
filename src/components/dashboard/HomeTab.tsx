@@ -61,7 +61,7 @@ const TodayAgendaCard: React.FC<{ projects: Project[]; user: User }> = ({ projec
                     <span className="text-xs font-bold text-teal-400 uppercase tracking-widest">{greeting}</span>
                 </div>
                 <h2 className="text-lg font-black text-white">
-                    {user.name.split(' ')[0]}
+                    {user?.name?.split(' ')[0] || 'Member'}
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
                     {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}

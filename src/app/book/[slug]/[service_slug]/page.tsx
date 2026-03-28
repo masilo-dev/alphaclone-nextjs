@@ -231,13 +231,12 @@ export default function BookingPage() {
                     <div className="lg:col-span-4 space-y-8">
                         <div className="flex items-start gap-4">
                             {tenant.settings.branding?.logo ? (
-                                <div className="relative w-16 h-16 shrink-0">
-                                    <Image
-                                        src={tenant.settings.branding.logo}
+                                <div className="relative w-16 h-16 rounded-2xl overflow-hidden shadow-sm">
+                                    <Image 
+                                        src={tenant.settings.branding.logo} 
                                         alt={tenant.name}
                                         fill
-                                        className="rounded-2xl object-cover shadow-sm"
-                                        unoptimized={tenant.settings.branding.logo.startsWith('data:') || tenant.settings.branding.logo.startsWith('blob:')}
+                                        className="object-cover"
                                     />
                                 </div>
                             ) : (

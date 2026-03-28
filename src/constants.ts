@@ -22,13 +22,7 @@ import {
   BarChart3,
   MapPin,
   FolderOpen,
-  Presentation,
-  BookOpen,
-  Receipt,
-  Workflow,
-  MessageCircle,
-  Share2,
-  Database
+  Presentation
 } from 'lucide-react';
 import { NavItem, DashboardStat } from './types';
 
@@ -44,12 +38,10 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
   { label: 'Meetings', href: '/dashboard/conference', icon: Video },
   { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
   { label: 'Mail', href: '/dashboard/mail', icon: Mail },
-  { label: 'Zoho Mail', href: '/dashboard/zoho/mail', icon: Mail },
   { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
   { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
   { label: 'Creative Intel Lab', href: '/dashboard/ai-studio', icon: Palette },
   { label: 'Documents', href: '/dashboard/submit', icon: FileText },
-  { label: 'Documentation', href: '/docs', icon: FileText },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
@@ -66,8 +58,16 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Calendar', href: '/dashboard/calendar' },
       { label: 'Meetings', href: '/dashboard/meetings' },
       { label: 'Mail', href: '/dashboard/mail' },
-      { label: 'Zoho Mail', href: '/dashboard/zoho/mail' },
       { label: 'Messages', href: '/dashboard/messages' },
+    ]
+  },
+  {
+    label: 'Creative Intel',
+    href: '#',
+    icon: Layers,
+    subItems: [
+      { label: 'SEO', href: '/dashboard/articles' },
+      { label: 'Improvements', href: '/dashboard/admin/improvements' },
     ]
   },
   {
@@ -75,7 +75,6 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     href: '#',
     icon: TrendingUp,
     subItems: [
-      { label: 'Zoho Sync', href: '/dashboard/zoho/crm' },
       { label: 'Tasks', href: '/dashboard/tasks' },
       { label: 'Deals', href: '/dashboard/deals' },
       { label: 'Forecast', href: '/dashboard/forecast' },
@@ -84,7 +83,6 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
   { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
   { label: 'Global Settings', href: '/dashboard/admin/settings', icon: Settings },
-  { label: 'Documentation', href: '/docs', icon: FileText },
   { label: 'Security', href: '/dashboard/security', icon: ShieldCheck },
 ];
 
@@ -95,17 +93,11 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
 
   // 2. Acquisition & Sales Pipeline
   { label: 'AI Growth', href: '/dashboard/sales-agent', icon: Zap },
-  { label: 'Facebook', href: '/dashboard/business/facebook', icon: Share2 },
-  { label: 'Deals', href: '/dashboard/deals', icon: TrendingUp },
-  { label: 'Contacts', href: '/dashboard/business/clients', icon: Users },
-  { label: 'Zoho CRM', href: '/dashboard/zoho/crm', icon: Zap },
-  { label: 'Ingestion', href: '/dashboard/business/ingestion', icon: Database },
+  { label: 'Leads', href: '/dashboard/leads', icon: TrendingUp },
+  { label: 'Contacts', href: '/dashboard/crm', icon: Users },
 
   // 3. Communication & Scheduling
-  { label: 'Messages', href: '/dashboard/business/messages', icon: MessageSquare },
   { label: 'Mail', href: '/dashboard/mail', icon: Mail },
-  { label: 'Zoho Mail', href: '/dashboard/zoho/mail', icon: Mail },
-  { label: 'Contact Forms', href: '/dashboard/business/contact-submissions', icon: MessageSquare },
   { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
   { label: 'Booking', href: '/dashboard/business/booking', icon: Clock },
   { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
@@ -117,31 +109,25 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   // 5. Execution & Fulfillment 
   { label: 'Projects', href: '/dashboard/business/projects', icon: Briefcase },
   { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
-  { label: 'Recurring Tasks', href: '/dashboard/business/tasks', icon: Clock },
-  { label: 'Team', href: '/dashboard/business/team', icon: Users },
-  { label: 'Email Campaigns', href: '/dashboard/business/campaigns', icon: Mail },
-  { label: 'SMS Campaigns', href: '/dashboard/business/sms', icon: MessageCircle },
-  { label: 'Social Media', href: '/dashboard/business/social', icon: Share2 },
-  { label: 'Flow Engine', href: '/dashboard/business/workflows', icon: Zap },
+  { label: 'Task Scheduler', href: '/dashboard/business/tasks', icon: Clock },
 
   // 6. Finances & Records
-  { label: 'Billing', href: '/dashboard/business/billing', icon: DollarSign },
-  { label: 'Expenses', href: '/dashboard/business/expenses', icon: Receipt },
-  { label: 'Accounting', href: '/dashboard/accounting', icon: BarChart3 },
-  { label: 'Reports', href: '/dashboard/business/reports', icon: BarChart3 },
+  { label: 'Invoices', href: '/dashboard/business/billing', icon: DollarSign },
+  { label: 'Finance', href: '/dashboard/accounting', icon: BarChart3 },
   { label: 'Documents', href: '/dashboard/business/documents', icon: FolderOpen },
-  { label: 'Pages', href: '/dashboard/business/pages', icon: BookOpen },
 
   // 7. Integrations
-  // Move Zoho items to their respective functional sections
+  { label: 'Zoho Email', href: '/dashboard/business/zoho', icon: Mail },
+
   // 8. Usage & Limits
   { label: 'Quota Manager', href: '/dashboard/business/quotas', icon: BarChart3 },
+  { label: 'Presentations', href: '/dashboard/business/presentations', icon: Presentation },
+  { label: 'Documents', href: '/dashboard/business/documents', icon: FileText },
 
   // 9. Daily Summary
   { label: 'Daily Summary', href: '/dashboard/business/daily-summary', icon: BarChart3 },
 
   // 10. Administration
-  { label: 'Documentation', href: '/docs', icon: FileText },
   { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },
 ];
 
@@ -159,3 +145,9 @@ export const CLIENT_STATS: DashboardStat[] = [
   { label: 'Unread Messages', value: '3', icon: MessageSquare, color: 'bg-blue-600' },
   { label: 'Upcoming Meetings', value: '2', icon: Video, color: 'bg-purple-600' },
 ];
+
+export const DOCUMENTATION_VIDEOS = {
+  DASHBOARD_TOUR: "3a7000c925c145b7882089688b0ceb5d",
+  AI_INFRASTRUCTURE: "023023e9a7e84120894768393d9ce454",
+  CLIENT_ONBOARDING: "7e5e33d0e2e54e4e84b8e8a8b8b8b8b8", // Placeholder
+};
