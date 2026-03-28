@@ -1,0 +1,3 @@
+ALTER TABLE workflow_definitions
+  ADD COLUMN IF NOT EXISTS run_count INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS last_run_at TIMESTAMPTZ;

@@ -4,6 +4,16 @@
  * Replaces n8n/Zapier as the internal orchestration layer.
  */
 
+const getBaseUrl = () => {
+    if (process.env.NEXT_PUBLIC_APP_URL) {
+        return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '');
+    }
+    if (process.env.VERCEL_URL) {
+        return `https://${process.env.VERCEL_URL}`;
+    }
+    return 'http://localhost:3000';
+};
+
 export type TriggerType =
     | 'lead_created'
     | 'facebook_lead_received'
@@ -42,6 +52,8 @@ export interface WorkflowDefinition {
     conditions: WorkflowCondition[];
     actions: WorkflowAction[];
     is_active: boolean;
+    run_count?: number;
+    last_run_at?: string;
 }
 
 export interface ExecutionContext {
@@ -101,7 +113,7 @@ export async function executeAction(
     try {
         switch (type) {
             case 'send_sms': {
-                const res = await fetch('/api/sms/send', {
+                const res = await fetch(`${getBaseUrl()}/api/sms/send`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -115,7 +127,7 @@ export async function executeAction(
             }
 
             case 'send_email': {
-                const res = await fetch('/api/communications/email/send', {
+                const res = await fetch(`${getBaseUrl()}/api/communications/email/send`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -132,7 +144,7 @@ export async function executeAction(
             case 'update_lead_status': {
                 const leadId = String(context.data.lead_id || context.data.id || config.lead_id || '');
                 if (!leadId) return { type, status: 'failed', error: 'No lead_id in context' };
-                const res = await fetch(`/api/leads/${leadId}/status`, {
+                const res = await fetch(`${getBaseUrl()}/api/leads/${leadId}/status`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status: config.status }),
@@ -142,7 +154,7 @@ export async function executeAction(
 
             case 'notify_user': {
                 // Internal notification — stored in DB via API
-                const res = await fetch('/api/notifications', {
+                const res = await fetch(`${getBaseUrl()}/api/notifications`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
