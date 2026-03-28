@@ -68,7 +68,7 @@ export const DashboardShellSkeleton: React.FC = () => (
             {/* Logo */}
             <div className="h-10 w-36 bg-slate-800 rounded-lg mb-4" />
             {/* Nav items */}
-            {[...Array(8)].map((_, i) => (
+            {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 px-2 py-2">
                     <div className="h-5 w-5 bg-slate-800 rounded" />
                     <div className="h-4 flex-1 bg-slate-800 rounded" />
@@ -92,7 +92,7 @@ export const DashboardShellSkeleton: React.FC = () => (
                     <div className="h-9 w-28 bg-slate-800 rounded-lg" />
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {[...Array(4)].map((_, i) => (
+                    {Array.from({ length: 4 }).map((_, i) => (
                         <div key={i} className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
                             <div className="h-4 w-20 bg-slate-800 rounded" />
                             <div className="h-7 w-16 bg-slate-700 rounded" />
@@ -100,7 +100,7 @@ export const DashboardShellSkeleton: React.FC = () => (
                     ))}
                 </div>
                 <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
-                    {[...Array(6)].map((_, i) => (
+                    {Array.from({ length: 6 }).map((_, i) => (
                         <div key={i} className="h-4 bg-slate-800 rounded w-full" style={{ width: `${85 - i * 5}%` }} />
                     ))}
                 </div>
