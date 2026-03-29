@@ -291,16 +291,15 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      {/* Platform modules */}
                      <div className="flex flex-wrap justify-center gap-2 mb-10 sm:mb-12 max-w-2xl mx-auto">
                         {[
-                           { icon: '📋', label: 'CRM & Pipeline' },
-                           { icon: '💸', label: 'Invoicing' },
-                           { icon: '📄', label: 'Contracts' },
-                           { icon: '📁', label: 'Projects' },
-                           { icon: '📅', label: 'Bookings' },
-                           { icon: '🤖', label: 'AI Sales Agent' },
-                        ].map(({ icon, label }) => (
-                           <div key={label} className="flex items-center gap-1.5 bg-slate-800/50 border border-teal-500/20 rounded-full px-3 py-1 text-xs text-slate-300">
-                              <span>{icon}</span>
-                              <span>{label}</span>
+                           'CRM & Pipeline',
+                           'Invoicing',
+                           'Contracts',
+                           'Projects',
+                           'Bookings',
+                           'AI Sales Agent',
+                        ].map(label => (
+                           <div key={label} className="bg-slate-800/50 border border-teal-500/20 rounded-full px-3 py-1 text-xs text-slate-300">
+                              {label}
                            </div>
                         ))}
                      </div>
