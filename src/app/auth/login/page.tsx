@@ -12,7 +12,6 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { usePWA } from '@/contexts/PWAContext';
 import { SubscriptionPlan, PLAN_PRICING } from '@/services/tenancy/types';
-import { PLAN_LIMITS } from '@/lib/planLimits';
 import TurnstileVerification from '@/components/ui/TurnstileVerification';
 import Image from 'next/image';
 
@@ -63,19 +62,12 @@ function LoginContent() {
 
     const plans = PAID_PLANS.map((id) => {
         const pricing = PLAN_PRICING[id];
-        const limits = PLAN_LIMITS[id];
-        const fmt = (v: number) => v === -1 ? 'Unlimited' : String(v);
         return {
             id,
             name: planDisplayNames[id],
             price: `$${pricing.monthly}/mo`,
-            limits: [
-                `${fmt(limits.users)} Users · ${fmt(limits.storage)}GB Storage`,
-                `${fmt(limits.aiQueriesPerMonth)} AI queries/mo`,
-                `${fmt(limits.aiGrowthAgentRuns)} AI Agent runs/mo`,
-                `${fmt(limits.projects)} Projects · ${fmt(limits.contractTemplates)} Contracts`,
-                limits.supportSla,
-            ],
+            description: pricing.description || '',
+            features: (pricing.featureList || []).slice(0, 4),
         };
     });
 
@@ -517,17 +509,16 @@ function LoginContent() {
                                                             <CheckCircle2 className="w-5 h-5 text-teal-400" />
                                                         </div>
                                                     )}
-                                                    <div className="font-bold text-lg text-white mb-0.5">{plan.name}</div>
-                                                    <div className="text-xl font-bold text-teal-400 mb-2">{plan.price}</div>
-                                                    <div className="text-[10px] text-teal-400/70 mb-3 flex items-center gap-1 font-medium">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-teal-400/60 inline-block" />
-                                                        All features included
-                                                    </div>
-                                                    <ul className="space-y-2">
-                                                        {plan.limits.map((limit, idx) => (
-                                                            <li key={idx} className="flex items-center gap-2 text-xs text-slate-300">
-                                                                <div className="w-1.5 h-1.5 rounded-full bg-teal-500/50 flex-shrink-0" />
-                                                                {limit}
+                                                    <div className="font-bold text-base text-white mb-0.5">{plan.name}</div>
+                                                    <div className="text-xl font-bold text-teal-400 mb-1">{plan.price}</div>
+                                                    {plan.description && (
+                                                        <p className="text-[11px] text-slate-400 mb-3 leading-relaxed">{plan.description}</p>
+                                                    )}
+                                                    <ul className="space-y-1.5">
+                                                        {plan.features.map((feat, idx) => (
+                                                            <li key={idx} className="flex items-start gap-2 text-xs text-slate-300">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-teal-500/60 flex-shrink-0 mt-1" />
+                                                                {feat}
                                                             </li>
                                                         ))}
                                                     </ul>
