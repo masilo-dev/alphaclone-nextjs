@@ -229,7 +229,7 @@ export default function SMSCampaignTab() {
                 <div className="bg-slate-900/80 border border-slate-700 rounded-2xl p-6 space-y-4">
                     <div className="flex items-center justify-between">
                         <h3 className="font-bold text-white">New SMS Campaign</h3>
-                        <button onClick={() => setShowForm(false)} className="text-slate-500 hover:text-white"><X className="w-4 h-4" /></button>
+                        <button onClick={() => setShowForm(false)} aria-label="Close form" className="text-slate-500 hover:text-white"><X className="w-4 h-4" /></button>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>

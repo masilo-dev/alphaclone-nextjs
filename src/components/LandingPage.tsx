@@ -6,45 +6,23 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { 
    Check, 
-   Target, 
    Zap, 
-   Award, 
    Database, 
    Smartphone, 
    BarChart, 
-   Settings, 
-   MessageSquare, 
    TrendingUp, 
-   ChevronRight, 
-   ChevronLeft, 
-   Home, 
-   Globe, 
    Layers, 
    Briefcase, 
-   Info, 
-   PhoneCall, 
    User as UserIcon, 
    ShieldCheck, 
-   Menu, 
    X, 
    Mail, 
-   Phone, 
-   MapPin, 
-   Video, 
-   FileCheck,
    ArrowRight,
-   Play
 } from 'lucide-react';
 
-import { Button, Input } from './ui/UIComponents';
-import { ServiceCard } from './landing/ServiceCard';
+import { Button } from './ui/UIComponents';
 import HeroBackground from './landing/HeroBackground';
 import MarketingFooter from './landing/MarketingFooter';
-import dynamic from 'next/dynamic';
-
-// Lazy load heavy components for better performance
-const AITerminal = dynamic(() => import('./dashboard/AITerminal'), { ssr: false });
-const PortfolioShowcase = dynamic(() => import('./PortfolioShowcase'), { ssr: false });
 
 const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
    <div className="relative w-6 h-6 flex flex-col justify-center items-center">
@@ -139,20 +117,14 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                   >
                      <div className="relative w-9 h-9 flex-shrink-0 flex items-center justify-center">
-                        <img
+                        <Image
                            src="/logo.png"
                            alt="AlphaClone Systems Logo"
                            width={36}
                            height={36}
-                           className="object-contain max-h-full max-w-full"
-                           onError={(e) => {
-                              // Fallback to styled initials if image not found
-                              e.currentTarget.style.display = 'none';
-                              const fallback = document.createElement('div');
-                              fallback.className = 'w-9 h-9 rounded-xl bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center shadow-lg shadow-teal-500/20';
-                              fallback.innerHTML = '<span class="text-slate-950 font-black text-lg">AS</span>';
-                              e.currentTarget.parentElement?.appendChild(fallback);
-                           }}
+                           className="object-contain"
+                           priority
+                           onError={(e) => { e.currentTarget.style.display = 'none'; }}
                         />
                      </div>
                      <span className="text-xl font-bold tracking-tight text-white font-marketing-heading">AlphaClone</span>
@@ -186,6 +158,8 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                   <div className="lg:hidden">
                      <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+                        aria-expanded={mobileMenuOpen}
                         className={`w-12 h-12 flex items-center justify-center rounded-xl border transition-all duration-300 ${mobileMenuOpen
                            ? 'text-teal-400 bg-slate-900 border-teal-500/50'
                            : 'text-white bg-white/5 border-white/10 hover:border-white/20'
@@ -366,160 +340,127 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
             </section>
 
             {/* Features / Services Section */}
-            <section id="services" className="py-32 relative overflow-hidden">
+            <section id="services" className="py-16 sm:py-20 relative overflow-hidden">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                  <div className="text-center mb-24">
-                     <h2 className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tight">Everything you need.<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">Nothing you don't.</span></h2>
-                     <p className="text-xl text-slate-400 max-w-3xl mx-auto">Each module is built to work together — so your CRM talks to your invoices, your contracts link to your clients, and your AI agent feeds your pipeline automatically.</p>
+                  <div className="text-center mb-12">
+                     <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight">Everything you need.<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">Nothing you don't.</span></h2>
+                     <p className="text-lg text-slate-400 max-w-2xl mx-auto">Each module works together — CRM, invoices, contracts, projects, and AI sales automation in one login.</p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                      {[
                         {
                            id: 'crm',
                            icon: Database,
                            title: 'Unified CRM',
-                           desc: 'Your client data, communication history, and sales pipeline in one place. No more switching tools.',
-                           features: ['Visual Pipelines', 'Real-time Analytics', 'Lead Automation']
+                           desc: 'Client data, pipeline, and communication history in one place.',
+                           features: ['Visual Pipelines', 'Lead Automation', 'Real-time Analytics']
                         },
                         {
                            id: 'projects',
                            icon: Layers,
                            title: 'Project Engine',
-                           desc: 'High-performance task management and project tracking built for high-output individuals.',
+                           desc: 'Task management and project tracking for high-output teams.',
                            features: ['Milestone Tracking', 'Collaborative Boards', 'Asset Management']
                         },
                         {
                            id: 'billing',
                            icon: BarChart,
                            title: 'Finance & Billing',
-                           desc: 'Automate invoices, track revenue, and manage subscriptions with enterprise-grade precision.',
+                           desc: 'Automate invoices, track revenue, and manage payments.',
                            features: ['One-click Invoicing', 'Stripe Integration', 'Revenue Forecasting']
                         },
                         {
                            id: 'ai-growth',
                            icon: Zap,
                            title: 'AI Sales Agent',
-                           desc: 'Autopilot for your outreach. Qualify leads and book meetings while you sleep.',
-                           features: ['GPT-4o Powered', 'Multi-channel Outreach', 'Automated Qualification']
+                           desc: 'Autopilot outreach. Qualify leads and book meetings automatically.',
+                           features: ['GPT-4o Powered', 'Multi-channel Outreach', 'Auto Qualification']
                         },
                         {
                            id: 'security',
                            icon: ShieldCheck,
                            title: 'Safe Ops',
-                           desc: 'End-to-end encryption for your communication and absolute data ownership.',
+                           desc: 'End-to-end encryption and granular access controls.',
                            features: ['RBAC Permissions', 'Encrypted Video', 'Audit Trails']
                         },
                         {
                            id: 'mobile',
                            icon: Smartphone,
-                           title: 'Business Mobile',
-                           desc: 'Manage your entire ecosystem from your pocket with native iOS and Android apps.',
+                           title: 'Mobile Ready',
+                           desc: 'Manage your business from anywhere with full PWA support.',
                            features: ['Real-time Alerts', 'Mobile Dashboard', 'Offline Mode']
                         }
                      ].map((item, i) => (
-                        <motion.div
+                        <div
                            key={i}
-                           whileHover={{ y: -10 }}
-                           className="bg-slate-900/40 border border-slate-800 rounded-3xl p-8 backdrop-blur-xl hover:border-teal-500/30 transition-all flex flex-col h-full"
+                           className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 hover:border-teal-500/30 transition-all flex flex-col h-full"
                         >
-                           <div className="w-14 h-14 bg-teal-500/10 rounded-2xl flex items-center justify-center mb-6">
-                              <item.icon className="w-8 h-8 text-teal-400" />
+                           <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center mb-4">
+                              <item.icon className="w-5 h-5 text-teal-400" />
                            </div>
-                           <h3 className="text-2xl font-bold text-white mb-4">{item.title}</h3>
-                           <p className="text-slate-400 mb-8 flex-grow">{item.desc}</p>
-                           <ul className="space-y-3">
+                           <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
+                           <p className="text-slate-400 text-sm mb-4 flex-grow">{item.desc}</p>
+                           <ul className="space-y-1.5">
                               {item.features.map((feat, idx) => (
-                                 <li key={idx} className="flex items-center gap-2 text-sm text-teal-400/80">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+                                 <li key={idx} className="flex items-center gap-2 text-xs text-teal-400/80">
+                                    <div className="w-1 h-1 rounded-full bg-teal-500 flex-shrink-0" />
                                     {feat}
                                  </li>
                               ))}
                            </ul>
-                        </motion.div>
+                        </div>
                      ))}
                   </div>
                </div>
             </section>
 
             {/* Who We Serve Section */}
-            <section className="py-32 bg-[#050B14]">
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="text-center mb-20">
-                     <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight">
+            <section className="py-16 bg-[#050B14]">
+               <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="text-center mb-10">
+                     <h2 className="text-3xl md:text-4xl font-black text-white mb-3 tracking-tight">
                         Built for the <span className="text-teal-400">Ambitious</span>
                      </h2>
-                     <p className="text-xl text-slate-400 max-w-3xl mx-auto leading-relaxed">
-                        AlphaClone isn't for everyone. It's engineered for creators, builders, and agencies who demand enterprise control without enterprise friction.
+                     <p className="text-base text-slate-400 max-w-xl mx-auto">
+                        For agencies, freelancers, and startups that want enterprise control without enterprise overhead.
                      </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                      {[
-                        { 
-                           num: '01',
-                           title: 'Agencies', 
-                           desc: 'Scale client delivery without adding more software.',
-                           icon: Briefcase
-                        },
-                        { 
-                           num: '02',
-                           title: 'Freelancers', 
-                           desc: 'Run a 7-figure solo business with unified ops.',
-                           icon: UserIcon
-                        },
-                        { 
-                           num: '03',
-                           title: 'Startups', 
-                           desc: 'Consolidate 10+ subscriptions into one Business OS.',
-                           icon: TrendingUp
-                        }
+                        { title: 'Agencies', desc: 'Scale client delivery without adding more software.', icon: Briefcase },
+                        { title: 'Freelancers', desc: 'Run a professional solo business with unified ops.', icon: UserIcon },
+                        { title: 'Startups', desc: 'Consolidate 10+ subscriptions into one Business OS.', icon: TrendingUp }
                      ].map((item) => (
-                        <div 
-                           key={item.num} 
-                           className="group relative p-8 rounded-2xl bg-gradient-to-br from-slate-900/50 to-slate-900/30 border border-slate-800 hover:border-teal-500/50 transition-all duration-300 hover:scale-105"
+                        <div
+                           key={item.title}
+                           className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-teal-500/40 transition-all"
                         >
-                           <div className="absolute top-6 right-6 text-6xl font-black text-slate-800/30 group-hover:text-teal-500/20 transition-colors">
-                              {item.num}
+                           <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center mb-4">
+                              <item.icon className="w-5 h-5 text-teal-400" />
                            </div>
-                           <div className="relative z-10">
-                              <div className="w-14 h-14 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center mb-6 group-hover:bg-teal-500/20 transition-colors">
-                                 <item.icon className="w-7 h-7 text-teal-400" />
-                              </div>
-                              <h3 className="text-2xl font-bold text-white mb-3">{item.title}</h3>
-                              <p className="text-slate-400 leading-relaxed">{item.desc}</p>
-                           </div>
+                           <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
+                           <p className="text-slate-400 text-sm">{item.desc}</p>
                         </div>
                      ))}
                   </div>
-
-                  <div className="relative max-w-5xl mx-auto">
-                     <div className="absolute -inset-4 bg-teal-500/20 blur-[100px] rounded-full" />
-                     <AITerminal />
-                  </div>
-               </div>
-            </section>
-
-            {/* Portfolio Section */}
-            <section id="portfolio" className="py-32">
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <PortfolioShowcase projects={projects} />
                </div>
             </section>
 
             {/* Stats / Proof Section */}
-            <section className="py-20 border-y border-slate-800 bg-slate-950/50 backdrop-blur-xl">
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
+            <section className="py-12 border-y border-slate-800 bg-slate-950/50">
+               <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
                      {[
                         { label: 'Uptime', value: '99.9%' },
-                        { label: 'Performance', value: '100/100' },
+                        { label: 'Tools Replaced', value: '12+' },
                         { label: 'Support', value: '24/7' },
-                        { label: 'Security', value: 'AES-256' }
+                        { label: 'Encryption', value: 'AES-256' }
                      ].map((stat, i) => (
-                        <div key={i} className="group">
-                           <div className="text-4xl sm:text-5xl font-black text-white mb-2 group-hover:text-teal-400 transition-colors">{stat.value}</div>
-                           <div className="text-sm font-bold uppercase tracking-widest text-slate-500">{stat.label}</div>
+                        <div key={i}>
+                           <div className="text-3xl sm:text-4xl font-black text-white mb-1">{stat.value}</div>
+                           <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">{stat.label}</div>
                         </div>
                      ))}
                   </div>
@@ -527,12 +468,12 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
             </section>
 
             {/* Pricing Section */}
-            <section id="pricing" className="py-32 relative">
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="text-center mb-24">
-                     <h2 className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tighter uppercase">Transparent Scaling</h2>
-                     <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-                        One simple price for total control. Choose the plan that fits your growth trajectory.
+            <section id="pricing" className="py-16 sm:py-20 relative">
+               <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="text-center mb-12">
+                     <h2 className="text-3xl md:text-4xl font-black text-white mb-3 tracking-tight">Simple, Transparent Pricing</h2>
+                     <p className="text-base text-slate-400 max-w-xl mx-auto">
+                        One price for total control. No hidden fees. No surprises.
                      </p>
                   </div>
 
@@ -613,13 +554,13 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
             </section>
 
             {/* Contact Section */}
-            <section id="contact" className="py-20 sm:py-32 bg-gradient-to-b from-slate-900/30 to-slate-950">
+            <section id="contact" className="py-16 sm:py-20 bg-gradient-to-b from-slate-900/30 to-slate-950">
                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="text-center mb-12 sm:mb-16">
-                     <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 sm:mb-6 tracking-tight">
+                  <div className="text-center mb-10">
+                     <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-3 tracking-tight">
                         Get in Touch
                      </h2>
-                     <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 sm:mb-12">
+                     <p className="text-base text-slate-400 max-w-xl mx-auto mb-8">
                         Have questions? Reach out to our team directly.
                      </p>
                      

@@ -146,19 +146,19 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                         {isConnected ? (
                             <button
                                 onClick={handleDisconnect}
-                                className="flex items-center justify-center gap-2 px-8 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl border border-red-500/20 transition-all active:scale-95"
+                                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-semibold text-sm rounded-xl border border-red-500/20 transition-all active:scale-95"
                             >
                                 <XCircle className="w-4 h-4" />
-                                Terminate Session
+                                Disconnect Zoho
                             </button>
                         ) : (
                             <button
                                 onClick={handleConnect}
                                 disabled={connecting}
-                                className="flex items-center justify-center gap-2 px-8 py-3 bg-teal-600 hover:bg-teal-500 text-white font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-teal-600/20 transition-all active:scale-95 disabled:opacity-50"
+                                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-teal-600/20 transition-all active:scale-95 disabled:opacity-50"
                             >
                                 {connecting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
-                                {connecting ? 'IN_PROGRESS' : 'INITIALIZE LINK'}
+                                {connecting ? 'Connecting...' : 'Connect Zoho'}
                             </button>
                         )}
                     </div>
@@ -167,21 +167,21 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-5 bg-slate-900/40 border border-white/5 rounded-2xl">
-                    <h5 className="text-white font-black text-[10px] uppercase tracking-widest mb-2 flex items-center gap-2 text-teal-400">
-                        <div className="w-1.5 h-1.5 bg-teal-500 rounded-full animate-pulse" />
-                        CRM Intelligence
-                    </h5>
-                    <p className="text-[11px] text-slate-500 leading-relaxed uppercase tracking-tighter">
-                        Synchronize leads, contacts, and opportunities between AlphaClone and Zoho CRM automatically.
+                    <h4 className="text-sm font-semibold text-teal-400 mb-2 flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 bg-teal-500 rounded-full" />
+                        CRM Sync
+                    </h4>
+                    <p className="text-sm text-slate-400 leading-relaxed">
+                        Sync leads, contacts, and opportunities between AlphaClone and Zoho CRM automatically.
                     </p>
                 </div>
                 <div className="p-5 bg-slate-900/40 border border-white/5 rounded-2xl">
-                    <h5 className="text-white font-black text-[10px] uppercase tracking-widest mb-2 flex items-center gap-2 text-teal-400">
-                        <div className="w-1.5 h-1.5 bg-teal-500 rounded-full animate-pulse" />
-                        Communication Hub
-                    </h5>
-                    <p className="text-[11px] text-slate-500 leading-relaxed uppercase tracking-tighter">
-                        Access your Zoho Mail inbox, send emails, and track communications within the lead dashboard.
+                    <h4 className="text-sm font-semibold text-teal-400 mb-2 flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 bg-teal-500 rounded-full" />
+                        Zoho Mail
+                    </h4>
+                    <p className="text-sm text-slate-400 leading-relaxed">
+                        Access your Zoho Mail inbox, send emails, and track communications without leaving AlphaClone.
                     </p>
                 </div>
             </div>

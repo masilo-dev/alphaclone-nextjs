@@ -172,7 +172,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
         <div className="space-y-6">
 
             {/* ─── Personalized Greeting Banner ─── */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800/80 via-slate-900/60 to-teal-900/20 border border-slate-700/50 p-6 md:p-8">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800/80 via-slate-900/60 to-teal-900/20 border border-slate-700/50 p-5 md:p-6">
                 {/* Background glow */}
                 <div className="absolute inset-0 bg-gradient-to-r from-teal-500/5 via-transparent to-violet-500/5 pointer-events-none" />
                 <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -181,7 +181,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
                             <greeting.Icon className="w-5 h-5 text-amber-400" />
                             <span className="text-slate-400 text-sm font-medium">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</span>
                         </div>
-                        <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+                        <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">
                             {greeting.text}, <span className="text-teal-400">{firstName}</span>
                         </h2>
                         <p className="text-slate-400 text-sm mt-1">
@@ -256,7 +256,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
             </div>
 
             {/* Metrics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <MetricCard
                     label="Total Revenue"
                     value={`$${metrics.totalRevenue.toLocaleString()}`}
@@ -284,7 +284,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
             </div>
 
             {/* Charts & Upcoming Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <div className="bg-transparent border-t border-white/5 pt-6 lg:col-span-2">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                         <TrendingUp className="w-5 h-5 text-teal-400" />
@@ -383,7 +383,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
             </div>
 
             {/* Bottom Row: Recent Activity & Quick Actions */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {/* Recent Activity */}
                 <div className="bg-transparent border-t border-white/5 pt-6">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -485,10 +485,10 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
 };
 
 const MetricCard = ({ label, value, trend, icon: Icon, color }: any) => (
-    <div className="bg-slate-900/50 border border-slate-800 hover:border-slate-700 p-5 rounded-2xl transition-all duration-300 hover:shadow-lg hover:shadow-slate-900/50 group">
-        <div className="flex justify-between items-start mb-4">
-            <div className={`p-3 rounded-xl bg-slate-950 border border-slate-800 group-hover:border-slate-700 transition-colors ${color}`}>
-                <Icon className="w-5 h-5" />
+    <div className="bg-slate-900/50 border border-slate-800 hover:border-slate-700 p-4 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-slate-900/50 group">
+        <div className="flex justify-between items-start mb-3">
+            <div className={`p-2.5 rounded-xl bg-slate-950 border border-slate-800 group-hover:border-slate-700 transition-colors ${color}`}>
+                <Icon className="w-4 h-4" />
             </div>
             {trend && (
                 <span className={`text-xs font-semibold px-2 py-1 rounded-full ${trend.startsWith('+') ? 'bg-teal-500/10 text-teal-400' : 'bg-slate-700 text-slate-400'
@@ -497,9 +497,9 @@ const MetricCard = ({ label, value, trend, icon: Icon, color }: any) => (
                 </span>
             )}
         </div>
-        <div className="space-y-1">
-            <h3 className="text-slate-400 text-sm font-medium">{label}</h3>
-            <p className="text-2xl font-bold text-white tracking-tight">{value}</p>
+        <div className="space-y-0.5">
+            <p className="text-slate-400 text-xs font-medium">{label}</p>
+            <p className="text-xl font-bold text-white tracking-tight">{value}</p>
         </div>
     </div>
 );
