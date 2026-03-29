@@ -499,9 +499,61 @@ export default function SMSCampaignTab() {
                         </div>
                     </div>
                     <div>
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Message</label>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Message</label>
+                            <button
+                                onClick={() => setShowAiInput(v => !v)}
+                                className="flex items-center gap-1.5 px-2.5 py-1 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 text-violet-300 rounded-lg text-xs font-semibold transition-colors"
+                            >
+                                <Sparkles className="w-3 h-3" /> AI Write
+                            </button>
+                        </div>
+                        {showAiInput && (
+                            <div className="mb-2 p-3 bg-violet-500/10 border border-violet-500/20 rounded-xl space-y-2">
+                                <p className="text-xs font-semibold text-violet-300">AI SMS Generator</p>
+                                <input
+                                    value={aiContext}
+                                    onChange={e => setAiContext(e.target.value)}
+                                    placeholder="e.g. 'follow up with client about their project quote'"
+                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 text-sm"
+                                />
+                                <button
+                                    onClick={async () => {
+                                        if (!aiContext.trim()) return toast.error('Describe the SMS first');
+                                        setAiGenerating(true);
+                                        try {
+                                            const res = await fetch('/api/ai/generate', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                    prompt: `Write a short, personal SMS message about: "${aiContext}". Under 160 chars. Friendly tone. No hashtags. Return ONLY the SMS text.`,
+                                                    systemPrompt: 'Write brief, natural SMS messages. No preamble, no quotes, just the message.',
+                                                    maxTokens: 80,
+                                                    temperature: 0.75,
+                                                }),
+                                            });
+                                            const data = await res.json();
+                                            if (data.text) {
+                                                setQuickMsg(data.text.trim().replace(/^"|"$/g, '').slice(0, 160));
+                                                toast.success('AI generated message!');
+                                                setShowAiInput(false);
+                                                setAiContext('');
+                                            } else {
+                                                toast.error(data.error || 'Failed');
+                                            }
+                                        } catch { toast.error('AI generation failed'); }
+                                        setAiGenerating(false);
+                                    }}
+                                    disabled={aiGenerating || !aiContext.trim()}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-colors"
+                                >
+                                    {aiGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                                    {aiGenerating ? 'Generating...' : 'Generate'}
+                                </button>
+                            </div>
+                        )}
                         <textarea value={quickMsg} onChange={e => setQuickMsg(e.target.value)}
-                            rows={4} placeholder="Type your message..."
+                            rows={4} placeholder="Type your message, or use AI Write above..."
                             className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm resize-none" />
                         <p className="text-xs text-right text-slate-600 mt-1">{quickMsg.length} chars</p>
                     </div>

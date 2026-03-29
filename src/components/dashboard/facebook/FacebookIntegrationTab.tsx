@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
     Facebook, Users, Megaphone, RefreshCw, CheckCircle2, XCircle,
     ExternalLink, Plus, Send, Image, Link2, Loader2, Eye, Trash2,
-    TrendingUp, UserPlus, Mail, Phone, Building2, Filter, ChevronDown
+    TrendingUp, UserPlus, Mail, Phone, Building2, Filter, ChevronDown, Sparkles
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
@@ -57,6 +57,12 @@ export default function FacebookIntegrationTab() {
     const [postMessage, setPostMessage] = useState('');
     const [postLink, setPostLink] = useState('');
     const [posting, setPosting] = useState(false);
+
+    // AI generation state
+    const [showAiPanel, setShowAiPanel] = useState(false);
+    const [aiTopic, setAiTopic] = useState('');
+    const [aiTone, setAiTone] = useState<'engaging' | 'professional' | 'promotional' | 'casual'>('engaging');
+    const [aiGenerating, setAiGenerating] = useState(false);
 
     const isConnected = pages.length > 0;
 
@@ -134,6 +140,36 @@ export default function FacebookIntegrationTab() {
         if (!error) {
             setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status } : l));
             toast.success('Status updated');
+        }
+    };
+
+    const generatePostWithAI = async () => {
+        if (!aiTopic.trim()) return toast.error('Describe your post topic first');
+        setAiGenerating(true);
+        try {
+            const res = await fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt: `Write a ${aiTone} Facebook business post about: "${aiTopic}". 150-400 chars. Conversational, no hashtags (I will add those separately). End with a subtle call-to-action. Return ONLY the post text, nothing else.`,
+                    systemPrompt: 'You are an expert Facebook content strategist for businesses. Write natural, engaging posts that drive interaction. No preamble, no quotes, just the post.',
+                    maxTokens: 200,
+                    temperature: 0.8,
+                }),
+            });
+            const data = await res.json();
+            if (data.text) {
+                setPostMessage(data.text.trim().replace(/^"|"$/g, ''));
+                toast.success('AI generated post!');
+                setShowAiPanel(false);
+                setAiTopic('');
+            } else {
+                toast.error(data.error || 'AI generation failed');
+            }
+        } catch {
+            toast.error('AI generation failed');
+        } finally {
+            setAiGenerating(false);
         }
     };
 
@@ -343,6 +379,56 @@ export default function FacebookIntegrationTab() {
                     {/* POST TO PAGE TAB */}
                     {activeTab === 'post' && (
                         <div className="max-w-2xl space-y-4">
+                            {/* AI Post Generator */}
+                            <div className="p-4 bg-violet-500/10 border border-violet-500/20 rounded-2xl">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles className="w-4 h-4 text-violet-400" />
+                                        <span className="text-sm font-semibold text-violet-300">AI Post Generator</span>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowAiPanel(v => !v)}
+                                        className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                                    >
+                                        {showAiPanel ? 'Hide' : 'Show'}
+                                    </button>
+                                </div>
+                                {showAiPanel && (
+                                    <div className="space-y-3">
+                                        <input
+                                            value={aiTopic}
+                                            onChange={e => setAiTopic(e.target.value)}
+                                            placeholder="What is this post about? e.g. 'announcing our new service package'"
+                                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 text-sm"
+                                        />
+                                        <div className="flex gap-2 flex-wrap">
+                                            {(['engaging', 'professional', 'promotional', 'casual'] as const).map(t => (
+                                                <button
+                                                    key={t}
+                                                    onClick={() => setAiTone(t)}
+                                                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold capitalize transition-all ${
+                                                        aiTone === t ? 'bg-violet-500 text-white' : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
+                                                    }`}
+                                                >
+                                                    {t}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <button
+                                            onClick={generatePostWithAI}
+                                            disabled={aiGenerating || !aiTopic.trim()}
+                                            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-colors"
+                                        >
+                                            {aiGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                                            {aiGenerating ? 'Generating...' : 'Generate Post'}
+                                        </button>
+                                    </div>
+                                )}
+                                {!showAiPanel && (
+                                    <p className="text-xs text-violet-400/70">Click Show to generate a Facebook post with AI</p>
+                                )}
+                            </div>
+
                             <div>
                                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">
                                     Facebook Page
