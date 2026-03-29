@@ -268,18 +268,18 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      animate={{ opacity: 1, y: 0 }}
                      transition={{ duration: 0.6 }}
                   >
-                     {/* Problem pill */}
+                     {/* Brand pill */}
                      <div className="inline-flex items-center gap-2 bg-slate-800/60 border border-slate-700/60 rounded-full px-4 py-1.5 mb-8 text-xs sm:text-sm text-slate-300 backdrop-blur-sm">
                         <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-                        Agencies are losing 15+ hrs/week to disconnected tools
+                        The all-in-one Business OS for agencies &amp; teams
                      </div>
 
                      {/* Headline */}
                      <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white mb-6 tracking-tight leading-[1.05]">
-                        Your business shouldn't
+                        AlphaClone Systems
                         <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">
-                           live in 12 browser tabs.
+                           One platform. Every tool.
                         </span>
                      </h1>
 
