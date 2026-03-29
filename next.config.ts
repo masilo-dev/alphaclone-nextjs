@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 import withSerwistInit from "@serwist/next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const withSerwist = withSerwistInit({
   swSrc: "src/app/sw.ts",
@@ -36,6 +37,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     scrollRestoration: true,
+    instrumentationHook: true,
   },
   turbopack: {},
   webpack: (config) => {
@@ -107,4 +109,15 @@ const nextConfig: NextConfig = {
 
 };
 
-export default withSerwist(nextConfig);
+export default withSentryConfig(
+  withSerwist(nextConfig),
+  {
+    org: process.env.SENTRY_ORG,
+    project: process.env.SENTRY_PROJECT,
+    silent: !process.env.CI,
+    widenClientFileUpload: true,
+    hideSourceMaps: true,
+    disableLogger: true,
+    automaticVercelMonitors: true,
+  }
+);
