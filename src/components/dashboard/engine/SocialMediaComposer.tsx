@@ -81,6 +81,12 @@ export default function SocialMediaComposer() {
     const [submitting, setSubmitting] = useState(false);
     const [showMediaPicker, setShowMediaPicker] = useState(false);
 
+    // AI generation state
+    const [showAiPanel, setShowAiPanel] = useState(false);
+    const [aiTopic, setAiTopic] = useState('');
+    const [aiTone, setAiTone] = useState<'professional' | 'casual' | 'engaging' | 'promotional'>('engaging');
+    const [aiGenerating, setAiGenerating] = useState(false);
+
     // Upload state
     const [uploading, setUploading] = useState(false);
 
@@ -208,6 +214,45 @@ export default function SocialMediaComposer() {
         toast.success('Deleted');
     };
 
+    const generateWithAI = async () => {
+        if (!aiTopic.trim()) return toast.error('Describe your post topic first');
+        setAiGenerating(true);
+        try {
+            const businessName = (tenant as any)?.name || 'our business';
+            const res = await fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt: `Write a ${aiTone} social media post caption for ${businessName} about: "${aiTopic}". Also suggest 5-7 relevant hashtags. Format your response as JSON: {"caption": "...", "hashtags": ["tag1", "tag2", ...]}. Caption should be 150-300 chars. Do not include hashtags in the caption itself.`,
+                    systemPrompt: 'You are an expert social media manager. Write engaging, platform-native content. Return ONLY valid JSON with no markdown or code blocks.',
+                    maxTokens: 400,
+                    temperature: 0.8,
+                }),
+            });
+            const data = await res.json();
+            if (data.text) {
+                try {
+                    const parsed = JSON.parse(data.text.trim());
+                    if (parsed.caption) setCaption(parsed.caption);
+                    if (parsed.hashtags?.length) setHashtags(parsed.hashtags.map((h: string) => h.replace(/^#/, '')));
+                    toast.success('AI generated caption + hashtags!');
+                    setShowAiPanel(false);
+                    setAiTopic('');
+                } catch {
+                    setCaption(data.text);
+                    toast.success('AI generated caption!');
+                    setShowAiPanel(false);
+                }
+            } else {
+                toast.error(data.error || 'AI generation failed');
+            }
+        } catch {
+            toast.error('AI generation failed');
+        } finally {
+            setAiGenerating(false);
+        }
+    };
+
     const charCount = caption.length;
     const fbCharLimit = 63206;
     const charWarning = charCount > 2000;
@@ -248,12 +293,55 @@ export default function SocialMediaComposer() {
                     <div className="lg:col-span-2 space-y-4">
                         {/* Caption */}
                         <div>
-                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Caption *</label>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Caption *</label>
+                                <button
+                                    onClick={() => setShowAiPanel(v => !v)}
+                                    className="flex items-center gap-1.5 px-2.5 py-1 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 text-violet-300 rounded-lg text-xs font-semibold transition-colors"
+                                >
+                                    <Sparkles className="w-3 h-3" /> AI Write
+                                </button>
+                            </div>
+
+                            {/* AI Panel */}
+                            {showAiPanel && (
+                                <div className="mb-3 p-3 bg-violet-500/10 border border-violet-500/20 rounded-xl space-y-2">
+                                    <p className="text-xs font-semibold text-violet-300">AI Caption Generator</p>
+                                    <input
+                                        value={aiTopic}
+                                        onChange={e => setAiTopic(e.target.value)}
+                                        placeholder="What is this post about? e.g. 'summer sale, 30% off all services'"
+                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 text-sm"
+                                    />
+                                    <div className="flex gap-2 flex-wrap">
+                                        {(['engaging', 'professional', 'casual', 'promotional'] as const).map(t => (
+                                            <button
+                                                key={t}
+                                                onClick={() => setAiTone(t)}
+                                                className={`px-2.5 py-1 rounded-lg text-xs font-semibold capitalize transition-all ${
+                                                    aiTone === t ? 'bg-violet-500 text-white' : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
+                                                }`}
+                                            >
+                                                {t}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <button
+                                        onClick={generateWithAI}
+                                        disabled={aiGenerating || !aiTopic.trim()}
+                                        className="flex items-center gap-2 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-colors"
+                                    >
+                                        {aiGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                                        {aiGenerating ? 'Generating...' : 'Generate Caption + Hashtags'}
+                                    </button>
+                                </div>
+                            )}
+
                             <textarea
                                 value={caption}
                                 onChange={e => setCaption(e.target.value)}
                                 rows={6}
-                                placeholder="Write your post caption here... Use {{business_name}} or your own variables."
+                                placeholder="Write your post caption here, or use AI Write above..."
                                 className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-none text-sm"
                             />
                             <p className={`text-xs text-right mt-1 ${charWarning ? 'text-amber-400' : 'text-slate-600'}`}>

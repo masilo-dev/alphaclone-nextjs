@@ -116,9 +116,11 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                 })
             });
             const data = await response.json();
-            if (data.content) {
-                setForm(f => ({ ...f, bodyHtml: data.content }));
+            if (data.text) {
+                setForm(f => ({ ...f, bodyHtml: data.text }));
                 toast.success('AI generated campaign body!');
+            } else {
+                toast.error(data.error || 'AI generation failed');
             }
         } catch {
             toast.error('AI generation failed');

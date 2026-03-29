@@ -23,6 +23,7 @@ import {
 import { Button } from './ui/UIComponents';
 import HeroBackground from './landing/HeroBackground';
 import MarketingFooter from './landing/MarketingFooter';
+import VideoExplainer from './dashboard/VideoExplainer';
 
 const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
    <div className="relative w-6 h-6 flex flex-col justify-center items-center">
@@ -447,6 +448,9 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                   </div>
                </div>
             </section>
+
+            {/* Video Explainer Section */}
+            <VideoExplainer />
 
             {/* Stats / Proof Section */}
             <section className="py-12 border-y border-slate-800 bg-slate-950/50">
