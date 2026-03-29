@@ -37,7 +37,6 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     scrollRestoration: true,
-    instrumentationHook: true,
   },
   turbopack: {},
   webpack: (config) => {
