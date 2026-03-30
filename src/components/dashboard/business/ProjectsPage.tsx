@@ -189,7 +189,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
         return (
             <div className="flex flex-col items-center justify-center h-full gap-4">
                 <div className="w-12 h-12 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin"></div>
-                <div className="text-slate-500 font-black text-xs uppercase tracking-widest animate-pulse">Loading projects...</div>
+                <div className="text-slate-500 text-sm animate-pulse">Loading projects...</div>
             </div>
         );
     }
@@ -207,7 +207,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                             Projects <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400">Overview</span>
                         </h2>
                     </div>
-                    <p className="text-slate-500 font-mono text-[10px] uppercase tracking-[0.2em] ml-1 mt-2 flex items-center gap-2">
+                    <p className="text-slate-500 text-sm ml-1 mt-2 flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                         {projects.length} Active Projects
                     </p>
@@ -220,34 +220,34 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                             className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${viewMode === 'list' ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
                         >
                             <LayoutList className="w-4 h-4" />
-                            <span className="text-xs font-black uppercase tracking-wider">List</span>
+                            <span className="text-xs font-medium">List</span>
                         </button>
                         <button
                             onClick={() => setViewMode('timeline')}
                             className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${viewMode === 'timeline' ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
                         >
                             <BarChart3 className="w-4 h-4" />
-                            <span className="text-xs font-black uppercase tracking-wider">Timeline</span>
+                            <span className="text-xs font-medium">Timeline</span>
                         </button>
                         <button
                             onClick={() => setViewMode('health')}
                             className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${viewMode === 'health' ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
                         >
                             <Activity className="w-4 h-4" />
-                            <span className="text-xs font-black uppercase tracking-wider">Health</span>
+                            <span className="text-xs font-medium">Health</span>
                         </button>
                     </div>
 
                     <button
                         onClick={() => exportToCSV(projects, 'Projects')}
-                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white hover:bg-slate-800 rounded-2xl font-black text-xs uppercase tracking-widest transition-all border border-white/5"
+                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white hover:bg-slate-800 rounded-2xl font-semibold text-sm transition-all border border-white/5"
                     >
                         <Download className="w-4 h-4" />
                         Export CSV
                     </button>
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white text-slate-900 hover:bg-violet-50 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl hover:shadow-white/10 active:scale-95"
+                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white text-slate-900 hover:bg-violet-50 rounded-2xl font-semibold text-sm transition-all shadow-xl hover:shadow-white/10 active:scale-95"
                     >
                         <Plus className="w-4 h-4" />
                         New Project
@@ -260,7 +260,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 {viewMode === 'list' ? (
                     <div className="h-full flex flex-col space-y-4">
                         {/* List Header */}
-                        <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-3 bg-slate-900/40 border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 font-mono">
+                        <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-3 bg-slate-900/40 border border-white/5 rounded-xl text-xs font-medium text-slate-500">
                             <div className="col-span-5">Project</div>
                             <div className="col-span-2 text-center">Status</div>
                             <div className="col-span-2 text-center">Health & Risk</div>
@@ -272,7 +272,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                             {filteredProjects.length === 0 ? (
                                 <div className="py-20 flex flex-col items-center justify-center text-slate-500 bg-slate-900/20 rounded-3xl border border-dashed border-white/5">
                                     <Target className="w-16 h-16 mb-4 opacity-20" />
-                                    <p className="font-mono text-sm uppercase tracking-widest">No Projects Found</p>
+                                    <p className="text-sm text-slate-500">No projects found</p>
                                 </div>
                             ) : (
                                 filteredProjects.map((project) => (
@@ -340,11 +340,11 @@ const ProjectListRow = ({
                         {project.name}
                     </h4>
                     <div className="flex items-center gap-3 mt-1">
-                        <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider bg-white/5 px-1.5 py-0.5 rounded">
+                        <span className="text-xs text-slate-500 bg-white/5 px-1.5 py-0.5 rounded">
                             {project.category || 'General'}
                         </span>
                         {project.budget && (
-                            <span className="flex items-center gap-1 text-[10px] text-emerald-400/80 font-mono font-bold">
+                            <span className="flex items-center gap-1 text-xs text-emerald-400/80 font-medium">
                                 <DollarSign className="w-3 h-3" />
                                 {project.budget.toLocaleString()}
                             </span>
@@ -374,11 +374,11 @@ const ProjectListRow = ({
                                 );
                             })}
                         </div>
-                        <div className="flex justify-between items-center text-[9px] font-mono text-slate-500 uppercase tracking-wider">
+                        <div className="flex justify-between items-center text-xs text-slate-500">
                             <select
                                 value={getNormalizedStage(project.currentStage)}
                                 onChange={(e) => onStageChange(project.id, e.target.value as ProjectStage)}
-                                className={`bg-transparent ${project.currentStage ? 'text-teal-400' : ''} font-black hover:text-white cursor-pointer outline-none appearance-none`}
+                                className={`bg-transparent ${project.currentStage ? 'text-teal-400' : ''} font-medium hover:text-white cursor-pointer outline-none appearance-none`}
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 {PROJECT_STAGES_ORDER.map((stage, idx) => {
@@ -398,7 +398,7 @@ const ProjectListRow = ({
 
             {/* Status */}
             <div className="col-span-1 lg:col-span-2 flex justify-center">
-                <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border ${project.status === 'done' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                <span className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${project.status === 'done' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                     project.status === 'in_progress' ? 'bg-violet-500/10 text-violet-400 border-violet-500/20' :
                         'bg-slate-800 text-slate-400 border-white/5'
                     }`}>
@@ -413,7 +413,7 @@ const ProjectListRow = ({
                         'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
                     }`}>
                     <Activity className="w-3 h-3" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">{project.health || 'Unknown'}</span>
+                    <span className="text-xs font-medium">{project.health || 'Unknown'}</span>
                 </div>
             </div>
 
@@ -424,7 +424,7 @@ const ProjectListRow = ({
                         <TaskCountdown dueDate={project.dueDate} showAlarm={true} />
                     </div>
                 ) : (
-                    <span className="text-[10px] text-slate-700 font-mono italic">No Deadline</span>
+                    <span className="text-xs text-slate-600 italic">No deadline</span>
                 )}
             </div>
 
@@ -486,7 +486,7 @@ const ProjectHealthDashboard = ({ projects }: { projects: BusinessProject[] }) =
                     warning={stats.atRiskCount > 0}
                 />
                 <HealthStatCard
-                    label="Delayed Ops"
+                    label="Delayed"
                     value={stats.delayedCount}
                     icon={Clock}
                     color="text-amber-400"
@@ -498,8 +498,8 @@ const ProjectHealthDashboard = ({ projects }: { projects: BusinessProject[] }) =
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Health Distribution Panel could go here */}
                 <div className="p-6 bg-slate-900/40 border border-white/5 rounded-3xl">
-                    <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-                        <Activity className="w-4 h-4" /> System Health Status
+                    <h3 className="text-sm font-semibold text-slate-400 mb-6 flex items-center gap-2">
+                        <Activity className="w-4 h-4" /> Project Health
                     </h3>
                     <div className="space-y-4">
                         {['On Track', 'At Risk', 'Delayed'].map(status => {
@@ -511,7 +511,7 @@ const ProjectHealthDashboard = ({ projects }: { projects: BusinessProject[] }) =
                                     <div className="flex-1 h-2 bg-slate-950 rounded-full overflow-hidden">
                                         <div className={`h-full ${color} rounded-full transition-all duration-1000`} style={{ width: `${(count / projects.length) * 100}%` }} />
                                     </div>
-                                    <span className="text-xs font-mono text-slate-500">{count}</span>
+                                    <span className="text-xs text-slate-500">{count}</span>
                                 </div>
                             )
                         })}
@@ -531,8 +531,8 @@ const HealthStatCard = ({ label, value, icon: Icon, color, bg, warning }: any) =
             {warning && <span className="flex h-2 w-2 rounded-full bg-red-500" />}
         </div>
         <div>
-            <div className="text-2xl font-black text-white tracking-tight mb-1">{value}</div>
-            <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</div>
+            <div className="text-2xl font-bold text-white mb-1">{value}</div>
+            <div className="text-xs font-medium text-slate-500">{label}</div>
         </div>
     </div>
 );
@@ -675,11 +675,11 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
     return (
         <div className="glass-panel overflow-hidden rounded-3xl border border-white/5 flex flex-col h-full min-h-[500px] backdrop-blur-xl bg-slate-950/20">
             <div className="flex border-b border-white/10 bg-slate-900/40 sticky top-0 z-20">
-                <div className="w-64 min-w-[16rem] p-4 font-black text-slate-400 text-[10px] uppercase tracking-[0.2em] border-r border-white/5">Project Timeline</div>
+                <div className="w-64 min-w-[16rem] p-4 text-xs font-medium text-slate-400 border-r border-white/5">Project Timeline</div>
                 <div className="flex-1 relative h-12 flex">
                     {months.map((m, i) => (
                         <div key={i} className="flex-1 border-r border-white/5 last:border-0 p-3 text-center flex flex-col justify-center">
-                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{m.toLocaleDateString('default', { month: 'short' })}</span>
+                            <span className="text-xs text-slate-400">{m.toLocaleDateString('default', { month: 'short' })}</span>
                         </div>
                     ))}
                 </div>
@@ -688,7 +688,7 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
                 {sorted.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-64 opacity-30">
                         <BarChart3 className="w-12 h-12 mb-4" />
-                        <p className="text-sm font-black uppercase tracking-widest">No Active Timelines</p>
+                        <p className="text-sm text-slate-500">No active timelines</p>
                     </div>
                 ) : sorted.map(proj => {
                     const startPos = getPosition(proj.startDate || proj.createdAt, new Date());
@@ -709,7 +709,7 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
                                     style={{ left: `${startPos}%`, width: `${width}%` }}
                                 >
                                     <div className="absolute top-0 bottom-0 left-0 bg-violet-500/20" style={{ width: `${proj.progress}%` }}></div>
-                                    <span className="relative px-3 text-[9px] font-black text-white uppercase tracking-wider truncate drop-shadow-md">{proj.name}</span>
+                                    <span className="relative px-3 text-[10px] text-white truncate drop-shadow-md">{proj.name}</span>
                                 </div>
                             </div>
                         </div>

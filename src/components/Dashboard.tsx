@@ -97,6 +97,7 @@ const CustomVideoRoom = React.lazy(() => import('./dashboard/video/CustomVideoRo
 // Zoho Components
 const ZohoMailView = React.lazy(() => import('./dashboard/zoho/ZohoMailView'));
 const ZohoCRMIntegration = React.lazy(() => import('./dashboard/zoho/ZohoCRMIntegration'));
+const TaskScheduler = React.lazy(() => import('./dashboard/business/TaskScheduler'));
 
 
 // Import UI components
@@ -187,6 +188,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [taskSchedulerOpen, setTaskSchedulerOpen] = useState(false);
 
   // Global Command Palette Hotkey (/)
   useEffect(() => {
@@ -1856,6 +1858,69 @@ const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
 
+
+      {/* Global Task Scheduler FAB */}
+      <button
+        onClick={() => setTaskSchedulerOpen(prev => !prev)}
+        title="Task Scheduler"
+        className={`fixed bottom-24 md:bottom-8 right-5 z-[45] flex items-center gap-2 px-4 py-3 rounded-2xl shadow-2xl transition-all active:scale-95 font-medium text-sm ${
+          taskSchedulerOpen
+            ? 'bg-violet-700 text-white shadow-violet-600/40'
+            : 'bg-violet-600 hover:bg-violet-500 text-white shadow-violet-600/30'
+        }`}
+      >
+        <Clock className="w-4 h-4" />
+        <span className="hidden sm:inline">Scheduler</span>
+      </button>
+
+      {/* Task Scheduler Slide-in Panel */}
+      <AnimatePresence>
+        {taskSchedulerOpen && (
+          <>
+            <motion.div
+              key="scheduler-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[54]"
+              onClick={() => setTaskSchedulerOpen(false)}
+            />
+            <motion.div
+              key="scheduler-panel"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed right-0 top-0 bottom-0 w-full sm:w-[500px] bg-slate-950 border-l border-white/10 z-[55] flex flex-col shadow-2xl"
+            >
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-slate-900/80 backdrop-blur-sm shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-violet-500/10 rounded-xl">
+                    <Clock className="w-4 h-4 text-violet-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-semibold text-white">Task Scheduler</h2>
+                    <p className="text-xs text-slate-500">Runs automatically on your schedule</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setTaskSchedulerOpen(false)}
+                  className="p-2 hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
+                <React.Suspense fallback={
+                  <div className="flex items-center justify-center h-32 text-slate-500 text-sm">Loading...</div>
+                }>
+                  <TaskScheduler />
+                </React.Suspense>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Dashboard Global Elements */}
       <CommandPalette

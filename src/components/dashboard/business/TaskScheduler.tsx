@@ -5,8 +5,9 @@ import {
   Clock, Plus, Trash2, Play, Pause, X, Sparkles,
   ChevronDown, ChevronUp, RotateCcw, CheckCircle2,
   AlertCircle, Loader2, Bot, Zap, Mail, Target,
-  FileText, DollarSign, RefreshCw, Settings2
+  FileText, DollarSign, RefreshCw, Settings2, Share2
 } from 'lucide-react';
+import { useTenant } from '../../../contexts/TenantContext';
 import { generateText } from '../../../services/unifiedAIService';
 import toast from 'react-hot-toast';
 
@@ -26,7 +27,7 @@ interface Task {
   id: string;
   title: string;
   description: string;
-  type: 'email' | 'lead_generation' | 'contract_creation' | 'invoice' | 'follow_up' | 'custom';
+  type: 'email' | 'lead_generation' | 'contract_creation' | 'invoice' | 'follow_up' | 'social_post' | 'custom';
   schedule: {
     type: 'daily' | 'weekly' | 'monthly' | 'once';
     time: string;
@@ -57,8 +58,9 @@ interface TaskSchedulerProps {
 const TASK_TYPES = [
   { value: 'email',             label: 'Email Outreach',    icon: <Mail size={14} />,       color: 'text-blue-400 bg-blue-400/10 border-blue-400/20' },
   { value: 'lead_generation',   label: 'Lead Generation',   icon: <Target size={14} />,     color: 'text-teal-400 bg-teal-400/10 border-teal-400/20' },
+  { value: 'social_post',       label: 'Social Post',       icon: <Share2 size={14} />,     color: 'text-pink-400 bg-pink-400/10 border-pink-400/20' },
   { value: 'contract_creation', label: 'Contract Creation', icon: <FileText size={14} />,   color: 'text-purple-400 bg-purple-400/10 border-purple-400/20' },
-  { value: 'invoice',           label: 'Invoice Gen',       icon: <DollarSign size={14} />, color: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20' },
+  { value: 'invoice',           label: 'Invoice',           icon: <DollarSign size={14} />, color: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20' },
   { value: 'follow_up',         label: 'Follow Up',         icon: <RefreshCw size={14} />,  color: 'text-orange-400 bg-orange-400/10 border-orange-400/20' },
   { value: 'custom',            label: 'Custom',            icon: <Settings2 size={14} />,  color: 'text-slate-400 bg-slate-400/10 border-slate-400/20' },
 ] as const;
@@ -74,11 +76,12 @@ const DAYS_OF_WEEK = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday
 
 // Default AI prompts per task type
 const DEFAULT_AI_PROMPTS: Record<string, string> = {
-  email: 'Draft a professional, personalized outreach email to potential clients. Focus on value proposition and a clear call-to-action. Keep it under 150 words.',
+  email: 'Draft a professional, personalized outreach email to potential clients. Focus on value proposition and a clear call-to-action. Keep it under 150 words. Write in plain text only — no asterisks, hashtags, or markdown.',
   lead_generation: 'Analyze our current leads and identify the top 5 highest-intent prospects based on engagement signals. For each, suggest a next action.',
+  social_post: 'Write an engaging social media post for our business page. Keep it concise (under 200 characters), professional, and end with a relevant call-to-action. No hashtag spam — maximum 3 relevant hashtags.',
   contract_creation: 'Generate a professional service agreement outline covering scope of work, payment terms, deliverables, and standard legal clauses.',
   invoice: 'Summarize this billing cycle\'s completed work items and generate invoice line items with accurate descriptions and pricing.',
-  follow_up: 'Write a warm follow-up message for clients who haven\'t responded in 7 days. Reference previous conversation context and offer a specific next step.',
+  follow_up: 'Write a warm follow-up message for clients who haven\'t responded in 7 days. Reference previous conversation context and offer a specific next step. Write in plain text only — no asterisks or markdown.',
   custom: 'Execute the task described above and provide a detailed summary of actions taken and results.',
 };
 
@@ -113,17 +116,71 @@ Execute this task thoroughly and return a structured result.`;
 }
 
 async function runEmailTask(task: Task): Promise<TaskResults> {
-  if (task.aiEnabled) return runWithAI(task);
-  try {
-    const res = await fetch('/api/email/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ subject: task.title, body: task.description, to: '' }),
-    });
-    return { total: 1, successful: res.ok ? 1 : 0, failed: res.ok ? 0 : 1, executedAt: new Date().toISOString() };
-  } catch {
-    return { total: 1, successful: 0, failed: 1, executedAt: new Date().toISOString() };
+  // Step 1: Generate email content with AI
+  const aiResult = await runWithAI(task);
+  const content = aiResult.output || '';
+
+  // Step 2: Attempt to send via Zoho Mail
+  const toAddress = (task.target?.criteria || '').trim();
+  if (toAddress) {
+    try {
+      const res = await fetch('/api/zoho/mail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ toAddress, subject: task.title, content }),
+      });
+      const sent = res.ok;
+      return {
+        ...aiResult,
+        successful: sent ? 1 : 0,
+        failed: sent ? 0 : 1,
+        output: sent
+          ? `Sent via Zoho Mail to ${toAddress}.\n\n---\n\n${content}`
+          : `Zoho send failed — content ready to use:\n\n${content}`,
+      };
+    } catch {
+      return { ...aiResult, output: `Email content (Zoho unavailable):\n\n${content}` };
+    }
   }
+
+  // No recipient configured — return the generated content
+  return { ...aiResult, output: `Email drafted (no recipient set):\n\n${content}` };
+}
+
+async function runSocialTask(task: Task, tenantId?: string): Promise<TaskResults> {
+  // Step 1: Generate caption with AI
+  const aiResult = await runWithAI(task);
+  const caption = aiResult.output || '';
+
+  // Step 2: Schedule via social API
+  if (tenantId) {
+    try {
+      const res = await fetch('/api/social/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId,
+          title: task.title,
+          caption,
+          platforms: (task.target?.criteria || 'facebook').split(',').map((s: string) => s.trim()),
+          status: 'scheduled',
+        }),
+      });
+      const ok = res.ok;
+      return {
+        ...aiResult,
+        successful: ok ? 1 : 0,
+        failed: ok ? 0 : 1,
+        output: ok
+          ? `Scheduled to ${task.target?.criteria || 'facebook'}.\n\n---\n\n${caption}`
+          : `Social post created (scheduling failed):\n\n${caption}`,
+      };
+    } catch {
+      return { ...aiResult, output: `Post content (social integration unavailable):\n\n${caption}` };
+    }
+  }
+
+  return { ...aiResult, output: `Post content (no tenant configured):\n\n${caption}` };
 }
 
 async function runLeadTask(task: Task): Promise<TaskResults> {
@@ -156,6 +213,7 @@ async function runCustomTask(task: Task): Promise<TaskResults> {
 // ─────────────────────────────────────────────
 
 const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
+  const { currentTenant } = useTenant();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
@@ -236,6 +294,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
       switch (task.type) {
         case 'email':             results = await runEmailTask(task); break;
         case 'lead_generation':   results = await runLeadTask(task); break;
+        case 'social_post':       results = await runSocialTask(task, currentTenant?.id); break;
         case 'contract_creation': results = await runContractTask(task); break;
         case 'invoice':           results = await runInvoiceTask(task); break;
         case 'follow_up':         results = await runFollowUpTask(task); break;
@@ -319,9 +378,9 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-black text-white tracking-tight">AI Task Scheduler</h2>
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-[10px] font-black uppercase tracking-widest">
-              <Bot size={11} /> AI Powered
+            <h2 className="text-2xl font-semibold text-white">Task Scheduler</h2>
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs">
+              <Bot size={11} /> AI
             </span>
           </div>
           <p className="text-slate-400 text-sm mt-1">Automate business tasks with Claude AI — runs on your schedule</p>
@@ -343,8 +402,8 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
           { label: 'Completed', count: tasks.filter(t => t.status === 'completed').length, color: 'text-slate-400',  bg: 'bg-slate-400/10' },
         ].map(s => (
           <div key={s.label} className={`${s.bg} border border-white/5 rounded-2xl p-4 text-center`}>
-            <div className={`text-3xl font-black ${s.color}`}>{s.count}</div>
-            <div className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">{s.label}</div>
+            <div className={`text-2xl font-bold ${s.color}`}>{s.count}</div>
+            <div className="text-xs text-slate-500 mt-1">{s.label}</div>
           </div>
         ))}
       </div>
@@ -375,7 +434,14 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
           const isExpanded = expandedTask === task.id;
 
           return (
-            <div key={task.id} className="bg-slate-900/60 border border-white/5 rounded-2xl overflow-hidden transition-all">
+            <div key={task.id} className={`relative bg-slate-900/60 border border-white/5 rounded-2xl overflow-hidden transition-all pl-1`}>
+              {/* Status strip */}
+              <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl ${
+                task.running       ? 'bg-violet-500 animate-pulse' :
+                task.status === 'completed' ? 'bg-teal-500' :
+                task.status === 'paused'    ? 'bg-yellow-500' :
+                                              'bg-green-500'
+              }`} />
               {/* Task Row */}
               <div className="flex items-center gap-3 p-4">
                 {/* Type badge */}
@@ -389,13 +455,13 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-white truncate">{task.title}</span>
                     {task.aiEnabled && (
-                      <span className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded bg-violet-500/15 border border-violet-500/20 text-violet-400 text-[9px] font-black uppercase">
+                      <span className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded bg-violet-500/15 border border-violet-500/20 text-violet-400 text-[10px]">
                         <Sparkles size={8} /> AI
                       </span>
                     )}
                     {task.running && (
-                      <span className="shrink-0 flex items-center gap-1 text-teal-400 text-[10px] font-bold">
-                        <Loader2 size={10} className="animate-spin" /> Running…
+                      <span className="shrink-0 flex items-center gap-1 text-teal-400 text-xs">
+                        <Loader2 size={10} className="animate-spin" /> Running
                       </span>
                     )}
                     {task.status === 'completed' && <CheckCircle2 size={14} className="text-teal-400 shrink-0" />}
@@ -460,7 +526,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                 <div className="border-t border-white/5 bg-slate-950/50 px-4 py-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Bot size={14} className="text-violet-400" />
-                    <span className="text-[10px] font-black text-violet-400 uppercase tracking-widest">AI Output</span>
+                    <span className="text-xs font-medium text-violet-400">AI Output</span>
                     {task.results.executedAt && (
                       <span className="ml-auto text-[10px] text-slate-600">
                         {new Date(task.results.executedAt).toLocaleString()}
@@ -490,7 +556,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
             {/* Modal header */}
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-xl font-black text-white">New AI Task</h3>
+                <h3 className="text-xl font-semibold text-white">New Task</h3>
                 <p className="text-slate-500 text-xs mt-0.5">Scheduled automation powered by Claude AI</p>
               </div>
               <button onClick={() => { setShowAddModal(false); resetNewTask(); }} className="p-2 hover:bg-white/5 rounded-xl text-slate-400">
@@ -501,7 +567,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
             <div className="space-y-5">
               {/* Title */}
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Task Name</label>
+                <label className="text-xs font-medium text-slate-400 mb-1.5 block">Task Name</label>
                 <input
                   type="text"
                   placeholder="e.g. Daily lead follow-up campaign"
@@ -513,7 +579,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
 
               {/* Description */}
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Description</label>
+                <label className="text-xs font-medium text-slate-400 mb-1.5 block">Description</label>
                 <input
                   type="text"
                   placeholder="What should this task accomplish?"
@@ -523,10 +589,42 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                 />
               </div>
 
+              {/* Recipient — shown for email tasks */}
+              {newTask.type === 'email' && (
+                <div>
+                  <label className="text-xs font-medium text-slate-400 mb-1.5 block">Recipient Email</label>
+                  <input
+                    type="email"
+                    placeholder="client@example.com (leave blank to draft only)"
+                    value={newTask.target?.criteria || ''}
+                    onChange={e => setNewTask(p => ({ ...p, target: { ...p.target, criteria: e.target.value } }))}
+                    className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 transition-colors"
+                  />
+                  <p className="text-[11px] text-slate-600 mt-1">When set, email will be sent automatically via Zoho Mail on each run.</p>
+                </div>
+              )}
+
+              {/* Platform — shown for social tasks */}
+              {newTask.type === 'social_post' && (
+                <div>
+                  <label className="text-xs font-medium text-slate-400 mb-1.5 block">Platforms</label>
+                  <select
+                    value={newTask.target?.criteria || 'facebook'}
+                    onChange={e => setNewTask(p => ({ ...p, target: { ...p.target, criteria: e.target.value } }))}
+                    className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-pink-500/50 transition-colors"
+                  >
+                    <option value="facebook">Facebook</option>
+                    <option value="facebook,instagram">Facebook + Instagram</option>
+                    <option value="instagram">Instagram</option>
+                  </select>
+                  <p className="text-[11px] text-slate-600 mt-1">AI writes the caption and schedules the post automatically.</p>
+                </div>
+              )}
+
               {/* Type + Schedule row */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Task Type</label>
+                  <label className="text-xs font-medium text-slate-400 mb-1.5 block">Task Type</label>
                   <select
                     value={newTask.type || 'email'}
                     onChange={e => setNewTask(p => ({
@@ -542,7 +640,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Frequency</label>
+                  <label className="text-xs font-medium text-slate-400 mb-1.5 block">Frequency</label>
                   <select
                     value={newTask.schedule?.type || 'daily'}
                     onChange={e => setNewTask(p => ({ ...p, schedule: { ...p.schedule!, type: e.target.value as Task['schedule']['type'] } }))}
@@ -556,7 +654,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
               {/* Time + Day row */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Run Time</label>
+                  <label className="text-xs font-medium text-slate-400 mb-1.5 block">Run Time</label>
                   <input
                     type="time"
                     value={newTask.schedule?.time || '09:00'}
@@ -566,7 +664,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                 </div>
                 {newTask.schedule?.type === 'weekly' && (
                   <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Day of Week</label>
+                    <label className="text-xs font-medium text-slate-400 mb-1.5 block">Day of Week</label>
                     <select
                       value={newTask.schedule?.day ?? 1}
                       onChange={e => setNewTask(p => ({ ...p, schedule: { ...p.schedule!, day: parseInt(e.target.value) } }))}
@@ -578,7 +676,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                 )}
                 {newTask.schedule?.type === 'monthly' && (
                   <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Day of Month</label>
+                    <label className="text-xs font-medium text-slate-400 mb-1.5 block">Day of Month</label>
                     <input
                       type="number" min={1} max={28}
                       value={newTask.schedule?.day ?? 1}
@@ -613,7 +711,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
               {newTask.aiEnabled && (
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">AI Instructions</label>
+                    <label className="text-xs font-medium text-slate-400">AI Instructions</label>
                     <button
                       type="button"
                       onClick={() => setNewTask(p => ({ ...p, aiPrompt: DEFAULT_AI_PROMPTS[p.type || 'custom'] }))}
@@ -646,9 +744,9 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
               </button>
               <button
                 onClick={addTask}
-                className="flex-1 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold transition-all active:scale-95 flex items-center justify-center gap-2"
+                className="flex-1 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold transition-all active:scale-95 flex items-center justify-center gap-2"
               >
-                <Sparkles size={15} /> Schedule Task
+                <Sparkles size={15} /> Schedule
               </button>
             </div>
           </div>

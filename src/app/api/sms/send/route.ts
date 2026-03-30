@@ -12,6 +12,30 @@ export async function POST(req: NextRequest) {
     try {
         const { to, message, from, tenantId, userId, campaignId, leadId } = await req.json();
 
+        // Resolve credentials: tenant DB record takes priority over env vars
+        let accountSid  = process.env.TWILIO_ACCOUNT_SID;
+        let authToken   = process.env.TWILIO_AUTH_TOKEN;
+        let defaultFrom = process.env.TWILIO_PHONE_NUMBER;
+
+        if (tenantId) {
+            const { data: creds } = await supabase
+                .from('twilio_integrations')
+                .select('account_sid, auth_token, phone_number')
+                .eq('tenant_id', tenantId)
+                .eq('is_active', true)
+                .maybeSingle();
+
+            if (creds) {
+                accountSid  = creds.account_sid;
+                authToken   = creds.auth_token;
+                defaultFrom = creds.phone_number;
+            }
+        }
+
+        if (!accountSid || !authToken) {
+            return NextResponse.json({ error: 'Twilio credentials not configured. Add your credentials in Settings > Integrations.' }, { status: 503 });
+        }
+
         if (!to || !message) {
             return NextResponse.json({ error: 'to and message are required' }, { status: 400 });
         }

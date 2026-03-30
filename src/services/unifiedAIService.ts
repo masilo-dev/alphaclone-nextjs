@@ -224,7 +224,12 @@ GOALS:
 FORMAT:
 Subject: [Compelling, short subject line]
 
-[Body]`;
+[Body]
+
+STRICT FORMATTING RULES:
+- Write the email body in plain text only. No markdown.
+- Do NOT use asterisks (**), hashtags (#), underscores (_), or any special formatting symbols.
+- No bullet point dashes. Write in natural paragraphs.`;
 
     const { text } = await generateText(prompt, 600, 'claude-sonnet-4-5-20250929');
     return text || "Personalized draft generation failed.";
@@ -234,7 +239,7 @@ Subject: [Compelling, short subject line]
  * Generate an AI reply to an email
  */
 export const generateEmailReply = async (emailContent: string, context?: string) => {
-    const prompt = `You are a professional assistant. Draft a concise, high-conversion reply to the following email:
+    const prompt = `You are a professional assistant. Draft a concise, professional reply to the following email.
     
     EMAIL CONTENT:
     "${emailContent}"
@@ -242,7 +247,11 @@ export const generateEmailReply = async (emailContent: string, context?: string)
     CONTEXT/INSTRUCTIONS:
     "${context || 'Be professional and helpful.'}"
     
-    Provide ONLY the body of the reply. Do not include subject lines or signatures unless requested.`;
+    STRICT FORMATTING RULES:
+    - Write in plain text only. No markdown whatsoever.
+    - Do NOT use asterisks (**), hashtags (#), underscores (_), dashes as bullet points, or any special formatting characters.
+    - Use simple paragraphs separated by line breaks.
+    - Do not include subject lines or signatures.`;
 
     const { text } = await generateText(prompt, 1000);
     return text || "AI reply generation failed.";

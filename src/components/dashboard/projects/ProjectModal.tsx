@@ -92,7 +92,7 @@ export default function ProjectModal({ isOpen, onClose, clientId, ownerId, owner
                         required
                     />
                     <div>
-                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Category</label>
+                        <label className="block text-xs font-semibold text-slate-400 mb-1">Category</label>
                         <select
                             value={formData.category}
                             onChange={(e: any) => setFormData({ ...formData, category: e.target.value })}

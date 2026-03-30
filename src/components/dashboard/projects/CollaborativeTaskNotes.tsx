@@ -155,11 +155,11 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
                         <Users className="w-5 h-5 text-teal-400" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-black text-white uppercase tracking-widest">Collaborative Intel</h3>
+                        <h3 className="text-sm font-semibold text-white">Shared Notes</h3>
                         <div className="flex items-center gap-2">
                             <span className="flex h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">
-                                {cursors.length > 0 ? `${cursors.length + 1} Strategists Online` : 'Solo Operation'}
+                            <span className="text-xs text-slate-500">
+                                {cursors.length > 0 ? `${cursors.length + 1} people viewing` : 'Only you'}
                             </span>
                         </div>
                     </div>
@@ -191,7 +191,7 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
                     defaultValue={document?.content}
                     onChange={handleContentChange}
                     className="w-full h-full p-8 bg-transparent text-slate-300 font-mono text-sm leading-relaxed focus:outline-none resize-none placeholder:text-slate-800"
-                    placeholder="Enter strategic notes here... Real-time sync enabled."
+                    placeholder="Start typing your notes..."
                 />
 
                 {/* Users Online List */}
@@ -216,9 +216,9 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
             </div>
 
             {/* Status Footer */}
-            <div className="px-6 py-2 bg-slate-900/20 border-t border-white/5 text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] flex justify-between items-center">
-                <span>AlphaClone Collaboration Protocol v2.0</span>
-                <span>Latency: 24ms</span>
+            <div className="px-6 py-2 bg-slate-900/20 border-t border-white/5 text-xs text-slate-600 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                <span>Auto-saving</span>
             </div>
         </div>
     );

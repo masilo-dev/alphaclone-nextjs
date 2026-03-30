@@ -40,7 +40,10 @@ import GmailIntegration from './GmailIntegration';
 import HubspotIntegration from './HubspotIntegration';
 import ZohoIntegration from './ZohoIntegration';
 import TwilioIntegration from './TwilioIntegration';
+<<<<<<< HEAD
 import SendGridIntegration from './SendGridIntegration';
+=======
+>>>>>>> e17f5cc (feat: task scheduler global panel, Twilio integration, social post type, AI email to Zoho, typography audit)
 import MFAEnrollment from './MFAEnrollment';
 import { authService } from '../../../services/authService';
 import { Button, Modal, Input } from '../../ui/UIComponents';
@@ -914,8 +917,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             <HubspotIntegration />
 
                             <TwilioIntegration />
+<<<<<<< HEAD
 
                             <SendGridIntegration />
+=======
+>>>>>>> e17f5cc (feat: task scheduler global panel, Twilio integration, social post type, AI email to Zoho, typography audit)
                         </div>
 
                         {/* AI Autonomous Response Card */}

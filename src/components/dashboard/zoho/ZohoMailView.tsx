@@ -221,7 +221,7 @@ export default function ZohoMailView() {
                             <div className="p-1.5 bg-blue-600/20 rounded-lg text-blue-400">
                                 <Mail size={18} />
                             </div>
-                            <span className="font-bold text-gray-200 tracking-tight">Zoho Cloud</span>
+                            <span className="font-bold text-gray-200 tracking-tight">Zoho Mail</span>
                         </div>
                         <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden p-1.5 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
                             <X size={18} />
@@ -239,7 +239,7 @@ export default function ZohoMailView() {
                     </div>
 
                     <nav className="flex-1 overflow-y-auto px-4 pb-4 space-y-1.5 custom-scrollbar">
-                        <div className="mt-2 mb-4 px-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-600">Folders {folders.length === 0 && loading && <Loader2 size={10} className="inline ml-2 animate-spin" />}</div>
+                        <div className="mt-2 mb-3 px-2 text-xs font-semibold text-gray-500">Folders {folders.length === 0 && loading && <Loader2 size={10} className="inline ml-2 animate-spin" />}</div>
                         {folders.map(folder => (
                             <button
                                 key={folder.folderId}
@@ -273,20 +273,13 @@ export default function ZohoMailView() {
                     </nav>
 
                     <div className="p-4 mt-auto border-t border-white/5">
-                        <div className="bg-gradient-to-br from-indigo-900/30 to-purple-900/30 rounded-2xl p-4 border border-indigo-500/20 shadow-xl overflow-hidden relative group">
-                            <div className="absolute -top-4 -right-4 w-16 h-16 bg-blue-500/10 blur-2xl group-hover:bg-blue-500/30 transition-all duration-700" />
-                            <div className="flex items-center gap-2 mb-2">
-                                <Sparkles size={16} className="text-indigo-400 animate-pulse" />
-                                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300">AI Growth Agent</span>
-                            </div>
-                            <p className="text-[10px] text-gray-400 mb-3 leading-relaxed">Let AI identify high-intent leads and draft personalized outreach.</p>
-                            <button 
-                                onClick={() => setIsLeadModalOpen(true)}
-                                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold py-2 rounded-lg transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
-                            >
-                                Find Leads
-                            </button>
-                        </div>
+                        <button 
+                            onClick={() => setIsLeadModalOpen(true)}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-gray-200 transition-all"
+                        >
+                            <Sparkles size={16} className="text-indigo-400 shrink-0" />
+                            <span className="text-sm font-medium">AI Lead Outreach</span>
+                        </button>
                     </div>
                 </div>
 
@@ -313,12 +306,12 @@ export default function ZohoMailView() {
 
                     <div className="px-6 py-5 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">
+                            <h3 className="text-sm font-semibold text-gray-300">
                                 {folders.find(f => f.folderId === selectedFolder)?.folderName || 'Inbox'}
                             </h3>
                             <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
                         </div>
-                        <div className="text-[10px] font-black text-gray-600 uppercase tracking-widest">{messages.length} Items</div>
+                        <div className="text-xs text-gray-500">{messages.length} messages</div>
                     </div>
 
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-2 pt-0 divide-y divide-white/5">
@@ -345,7 +338,7 @@ export default function ZohoMailView() {
                                         <span className={`font-bold text-xs truncate max-w-[150px] transition-colors ${msg.status === 'unread' ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
                                             {msg.sender.split('<')[0].trim()}
                                         </span>
-                                        <span className="text-[9px] font-black text-gray-600 group-hover:text-gray-500 uppercase">{new Date(msg.receivedTime).toLocaleDateString()}</span>
+                                        <span className="text-[11px] text-gray-600 group-hover:text-gray-500">{new Date(msg.receivedTime).toLocaleDateString()}</span>
                                     </div>
                                     <p className={`text-xs font-semibold truncate ${msg.status === 'unread' ? 'text-blue-200' : 'text-gray-500 group-hover:text-gray-400'}`}>{msg.subject}</p>
                                     <p className="text-[10px] text-gray-600 truncate line-clamp-1 opacity-60 group-hover:opacity-100">{msg.snippet}</p>
@@ -377,7 +370,6 @@ export default function ZohoMailView() {
                                         </div>
                                         <div>
                                             <h2 className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-500 tracking-tight">New Message</h2>
-                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1">Smart outreach enabled</p>
                                         </div>
                                     </div>
                                     <button onClick={() => setComposing(false)} className="p-3 text-gray-500 hover:text-white rounded-xl hover:bg-white/5 transition-all">
@@ -388,7 +380,7 @@ export default function ZohoMailView() {
                                 <form onSubmit={handleSend} className="space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 ml-2">To</label>
+                                            <label className="text-xs font-medium text-gray-400 ml-1">To</label>
                                             <input 
                                                 type="email" 
                                                 placeholder="recipient@example.com" 
@@ -399,7 +391,7 @@ export default function ZohoMailView() {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 ml-2">Subject</label>
+                                            <label className="text-xs font-medium text-gray-400 ml-1">Subject</label>
                                             <input 
                                                 type="text" 
                                                 placeholder="Briefly describe your topic" 
@@ -412,9 +404,9 @@ export default function ZohoMailView() {
                                     </div>
 
                                     <div className="space-y-2 relative">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 ml-2">Body</label>
+                                        <label className="text-xs font-medium text-gray-400 ml-1">Message</label>
                                         <textarea 
-                                            placeholder="Craft your message with AlphaClone intelligence..." 
+                                            placeholder="Write your message here..." 
                                             rows={14}
                                             required
                                             value={emailData.body}
@@ -429,13 +421,13 @@ export default function ZohoMailView() {
                                                 onClick={() => {
                                                     setEmailData({
                                                         ...emailData,
-                                                        body: emailData.body + "\n\nRegards,\nSent with AlphaClone Growth Agent"
+                                                        body: emailData.body + "\n\nBest regards,"
                                                     });
                                                 }}
                                                 className="bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white px-4 py-2 rounded-xl transition-all border border-indigo-600/30 flex items-center gap-2 shadow-lg"
                                             >
                                                 <Sparkles size={14} />
-                                                <span className="text-[10px] font-black uppercase tracking-widest">Enrich</span>
+                                                <span className="text-xs font-semibold">AI Assist</span>
                                             </motion.button>
                                         </div>
                                     </div>
@@ -447,7 +439,7 @@ export default function ZohoMailView() {
                                             className="group flex items-center gap-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 text-white font-black px-12 py-4 rounded-2xl transition-all shadow-2xl shadow-blue-600/40 active:scale-95 text-lg"
                                         >
                                             {sending ? <Loader2 className="animate-spin" size={24} /> : <Send size={24} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />} 
-                                            <span>{sending ? 'Sending...' : 'Transmit Mail'}</span>
+                                            <span>{sending ? 'Sending...' : 'Send Email'}</span>
                                         </button>
                                     </div>
                                 </form>
@@ -468,7 +460,7 @@ export default function ZohoMailView() {
                                         </button>
                                         <div className="min-w-0">
                                             <h2 className="text-sm font-black truncate pr-4 text-gray-200 tracking-tight">{messageContent?.subject}</h2>
-                                            <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest truncate">{messageContent?.sender}</p>
+                                            <p className="text-xs text-blue-400 truncate">{messageContent?.sender}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-1.5">
@@ -478,7 +470,7 @@ export default function ZohoMailView() {
                                             className="flex items-center gap-2 bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white px-3 py-1.5 rounded-xl transition-all border border-blue-600/20 active:scale-95 disabled:opacity-50"
                                         >
                                             {aiGenerating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                                            <span className="text-[10px] font-black uppercase tracking-widest">AI Reply</span>
+                                            <span className="text-xs font-semibold">AI Reply</span>
                                         </button>
                                         <div className="w-[1px] h-6 bg-white/10 mx-1 hidden lg:block" />
                                         <button onClick={() => handleArchive(selectedMessage!)} className="p-2 hover:bg-white/5 text-gray-500 hover:text-amber-400 rounded-lg transition-colors" title="Archive">
@@ -493,7 +485,7 @@ export default function ZohoMailView() {
                                     {loading ? (
                                         <div className="flex flex-col items-center justify-center py-40 gap-4 opacity-30">
                                             <Loader2 className="animate-spin text-blue-500" size={40} />
-                                            <p className="text-[10px] font-black uppercase tracking-[0.3em]">Loading Content</p>
+                                            <p className="text-xs text-gray-400">Loading...</p>
                                         </div>
                                     ) : (
                                         <div className="max-w-4xl mx-auto space-y-10">
@@ -503,11 +495,11 @@ export default function ZohoMailView() {
                                                         {messageContent?.sender?.charAt(0).toUpperCase()}
                                                     </div>
                                                     <div>
-                                                        <p className="font-black text-xl text-white tracking-tight">{messageContent?.sender}</p>
+                                                        <p className="font-semibold text-lg text-white">{messageContent?.sender}</p>
                                                         <div className="flex items-center gap-2 mt-1">
-                                                            <span className="text-gray-500 text-[10px] font-black uppercase tracking-widest">To me</span>
+                                                            <span className="text-gray-500 text-xs">To me</span>
                                                             <div className="w-1 h-1 bg-gray-700 rounded-full" />
-                                                            <span className="text-gray-500 text-[10px] font-black uppercase tracking-widest">{new Date(messageContent?.receivedTime).toLocaleString()}</span>
+                                                            <span className="text-gray-500 text-xs">{new Date(messageContent?.receivedTime).toLocaleString()}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -527,12 +519,12 @@ export default function ZohoMailView() {
                                                         setComposing(true);
                                                         // No need to clear selectedMessage, ComposeView overlay handles it
                                                     }}
-                                                    className="flex items-center gap-2 bg-blue-600 text-white px-8 py-3 rounded-xl shadow-lg shadow-blue-600/20 transition-all active:scale-95 font-black uppercase tracking-widest text-[10px]"
+                                                    className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-xl shadow-lg shadow-blue-600/20 transition-all active:scale-95 text-sm font-semibold"
                                                 >
                                                     <Reply size={14} />
                                                     <span>Reply</span>
                                                 </button>
-                                                <button className="flex items-center gap-2 bg-gray-800 hover:bg-gray-750 text-white px-8 py-3 rounded-xl border border-white/5 transition-all active:scale-95 font-black uppercase tracking-widest text-[10px]">
+                                                <button className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-6 py-2.5 rounded-xl border border-white/5 transition-all active:scale-95 text-sm font-semibold">
                                                     <Forward size={14} />
                                                     <span>Forward</span>
                                                 </button>
@@ -552,13 +544,13 @@ export default function ZohoMailView() {
                                 <div className="w-24 h-24 bg-gray-800/20 rounded-3xl flex items-center justify-center mb-6 border border-white/5">
                                     <Mail size={40} className="text-gray-700" />
                                 </div>
-                                <h3 className="text-xl font-black text-gray-400 uppercase tracking-widest mb-2">Secure Inbox</h3>
-                                <p className="text-xs text-gray-600 max-w-xs leading-relaxed uppercase tracking-tighter">Select a communication thread from the list to begin processing.</p>
+                                <h3 className="text-lg font-semibold text-gray-400 mb-2">No message selected</h3>
+                                <p className="text-sm text-gray-600 max-w-xs leading-relaxed">Select a message from the list to read it here.</p>
                                 
                                 <div className="mt-12 p-6 bg-blue-600/5 rounded-2xl border border-blue-500/10 max-w-sm">
                                     <div className="flex items-center gap-2 mb-3 text-blue-400">
                                         <ShieldCheck size={16} />
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Secure Connection</span>
+                                        <span className="text-xs font-semibold">Secure Connection</span>
                                     </div>
                                     <p className="text-xs text-gray-500 text-left leading-relaxed">
                                         Your Zoho Mail is connected via <span className="text-gray-300 font-bold">OAuth 2.0</span> protocol. 
@@ -584,20 +576,14 @@ export default function ZohoMailView() {
             />
 
             {/* AI Floating Status Bar */}
-            <div className="h-10 bg-gray-950 border-t border-white/5 px-4 flex items-center justify-between text-[10px] font-bold text-gray-500 uppercase tracking-widest z-30">
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                        <span>Zoho Sync Active</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-blue-400">
-                        <Sparkles size={12} />
-                        <span>AI Co-Pilot Ready</span>
-                    </div>
+            <div className="h-10 bg-gray-950 border-t border-white/5 px-4 flex items-center gap-4 text-xs text-gray-500 z-30">
+                <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                    <span>Zoho connected</span>
                 </div>
-                <div className="hidden md:flex gap-4">
-                    <span>AlphaClone Node v6.2</span>
-                    <span>Last Synced: Just Now</span>
+                <div className="flex items-center gap-1.5 text-blue-400/70">
+                    <Sparkles size={11} />
+                    <span>AI ready</span>
                 </div>
             </div>
 
