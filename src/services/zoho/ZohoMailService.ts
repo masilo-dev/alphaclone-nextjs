@@ -78,9 +78,19 @@ export class ZohoMailService extends ZohoService {
     async getSenderAddresses(): Promise<string[]> {
         try {
             const data = await this.getAccounts();
-            const accounts = (data?.data || []) as ZohoAccount[];
-            // Currently, Zoho Mail API typically returns the email addresses associated with the accounts
-            return accounts.map(acc => acc.mailAddress).filter(Boolean);
+            const accounts = (data?.data || []) as any[];
+            const addresses: string[] = [];
+            
+            for (const acc of accounts) {
+                if (acc.primaryEmailAddress) addresses.push(acc.primaryEmailAddress);
+                if (acc.incomingUserName) addresses.push(acc.incomingUserName);
+                if (acc.mailAddress) addresses.push(acc.mailAddress); // fallback
+                if (Array.isArray(acc.sendAsAddress)) {
+                    addresses.push(...acc.sendAsAddress.map((s: any) => s.mailId || s.emailAddress || s).filter(Boolean));
+                }
+            }
+            
+            return [...new Set(addresses)].filter(Boolean);
         } catch (err) {
             console.error('[ZohoMailService] Failed to fetch sender addresses:', err);
             return [];
