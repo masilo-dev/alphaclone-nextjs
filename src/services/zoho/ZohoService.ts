@@ -226,12 +226,20 @@ export class ZohoService {
         }
 
         if (response.status === 404) {
+            console.error(`[Zoho API] 404 Not Found: ${url}`);
             throw new ZohoAPIError(404, `Zoho resource not found: ${url}`);
         }
 
         if (!response.ok) {
             let errBody = '';
             try { errBody = await response.text(); } catch {}
+            
+            console.error(`[Zoho API] Error ${response.status}: ${errBody} (URL: ${url})`);
+            
+            // Re-parse it as JSON if it looks like it for better structured error info
+            let parsedError = errBody;
+            try { parsedError = JSON.parse(errBody); } catch {}
+            
             throw new ZohoAPIError(response.status, `Zoho API error ${response.status}: ${errBody}`);
         }
 
