@@ -5,7 +5,7 @@ import { TableSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import { Project, User, DashboardStat } from '../../types';
 import { useRouter } from 'next/navigation';
-import LoomVideo from '../ui/LoomVideo';
+
 
 interface HomeTabProps {
     user: User;

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, Shield as ShieldIcon, BarChart2, Settings2, Megaphone } from 'lucide-react';
 import Link from 'next/link';
 
 // -------------------------------------------------------------------------------------
@@ -42,7 +42,7 @@ const categories = [
     {
         key: 'necessary' as const,
         label: 'Strictly Necessary',
-        icon: Shield,
+        icon: ShieldIcon,
         color: 'teal',
         required: true,
         desc: 'Required for authentication, session management, and security. Cannot be disabled.',

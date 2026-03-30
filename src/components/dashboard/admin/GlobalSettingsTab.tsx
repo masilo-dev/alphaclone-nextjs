@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { Button, Card, Input } from '../../ui/UIComponents';
 import toast from 'react-hot-toast';
-import LoomVideo from '../../ui/LoomVideo';
+
 
 const GlobalSettingsTab: React.FC = () => {
     const [activeSection, setActiveSection] = useState<'branding' | 'integrations' | 'security' | 'ai' | 'support'>('branding');
