@@ -27,8 +27,8 @@ interface Particle {
     maxLife: number;
 }
 
-const BEAM_COUNT = 12;
-const PARTICLE_COUNT = 60;
+const BEAM_COUNT = 7;
+const PARTICLE_COUNT = 30;
 
 function createBeam(w: number, h: number): Beam {
     const side = Math.floor(Math.random() * 4);
@@ -183,7 +183,6 @@ export default function HeroBackground() {
         const h = window.innerHeight;
 
         beamsRef.current = Array.from({ length: BEAM_COUNT }, () => createBeam(w, h));
-        // Spread beams across the canvas initially
         beamsRef.current.forEach(b => {
             b.x = Math.random() * w;
             b.y = Math.random() * h;
@@ -191,11 +190,10 @@ export default function HeroBackground() {
 
         particlesRef.current = Array.from({ length: PARTICLE_COUNT }, () => {
             const p = createParticle(w, h);
-            p.life = Math.floor(Math.random() * p.maxLife); // stagger start
+            p.life = Math.floor(Math.random() * p.maxLife);
             return p;
         });
 
-        // Intersection Observer — pause animation when off-screen
         const observer = new IntersectionObserver(
             ([entry]) => { visibleRef.current = entry.isIntersecting; },
             { threshold: 0.01 }
@@ -205,9 +203,13 @@ export default function HeroBackground() {
         const onResize = () => resize();
         window.addEventListener('resize', onResize, { passive: true });
 
-        rafRef.current = requestAnimationFrame(draw);
+        // Delay animation start to let FCP/LCP complete first
+        const startTimer = setTimeout(() => {
+            rafRef.current = requestAnimationFrame(draw);
+        }, 2000);
 
         return () => {
+            clearTimeout(startTimer);
             cancelAnimationFrame(rafRef.current);
             observer.disconnect();
             window.removeEventListener('resize', onResize);

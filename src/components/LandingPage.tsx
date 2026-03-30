@@ -20,10 +20,18 @@ import {
    ArrowRight,
 } from 'lucide-react';
 
+import dynamic from 'next/dynamic';
 import { Button } from './ui/UIComponents';
-import HeroBackground from './landing/HeroBackground';
 import MarketingFooter from './landing/MarketingFooter';
-import VideoExplainer from './dashboard/VideoExplainer';
+
+const HeroBackground = dynamic(() => import('./landing/HeroBackground'), {
+   ssr: false,
+   loading: () => <div className="absolute inset-0 bg-slate-950" />,
+});
+
+const VideoExplainer = dynamic(() => import('./dashboard/VideoExplainer'), {
+   ssr: false,
+});
 
 const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
    <div className="relative w-6 h-6 flex flex-col justify-center items-center">
