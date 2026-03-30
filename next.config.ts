@@ -119,7 +119,12 @@ export default withSentryConfig(
     sourcemaps: {
       deleteSourcemapsAfterUpload: true,
     },
-    disableLogger: true,
-    automaticVercelMonitors: true,
+    tunnelRoute: "/monitoring",
+    webpack: {
+      treeshake: {
+        removeDebugLogging: true,
+      },
+      automaticVercelMonitors: true,
+    },
   }
 );
