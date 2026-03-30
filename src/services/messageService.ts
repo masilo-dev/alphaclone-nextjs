@@ -383,7 +383,7 @@ export const messageService = {
                     // Retry after 5s on error
                     setTimeout(() => messageService.subscribeToMessages(userId, isAdmin, callback), 5000);
                 } else if (status === 'CLOSED') {
-                    console.warn('⚠️ Message subscription closed, reconnecting...');
+                    console.log('Message subscription closed temporarily gracefully. Reconnecting...');
                     // Reconnect after 3s
                     setTimeout(() => messageService.subscribeToMessages(userId, isAdmin, callback), 3000);
                 } else if (status === 'TIMED_OUT') {

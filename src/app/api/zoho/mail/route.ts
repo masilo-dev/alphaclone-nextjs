@@ -54,8 +54,9 @@ export async function GET(req: NextRequest) {
             }
             case 'content': {
                 const messageId = searchParams.get('messageId');
-                if (!messageId) return NextResponse.json({ error: 'Message ID missing' }, { status: 400 });
-                const content = await zohoMail.getMessageContent(messageId);
+                const folderId = searchParams.get('folderId');
+                if (!messageId || !folderId) return NextResponse.json({ error: 'Message ID or Folder ID missing' }, { status: 400 });
+                const content = await zohoMail.getMessageContent(messageId, folderId);
                 return NextResponse.json(content);
             }
             case 'search': {
@@ -66,15 +67,17 @@ export async function GET(req: NextRequest) {
             }
             case 'archive': {
                 const archiveMsgId = searchParams.get('messageId');
-                if (!archiveMsgId) return NextResponse.json({ error: 'Message ID missing' }, { status: 400 });
-                const archiveRes = await zohoMail.archiveMessage(archiveMsgId);
+                const archiveFolderId = searchParams.get('folderId');
+                if (!archiveMsgId || !archiveFolderId) return NextResponse.json({ error: 'Message ID or Folder ID missing' }, { status: 400 });
+                const archiveRes = await zohoMail.archiveMessage(archiveMsgId, archiveFolderId);
                 return NextResponse.json(archiveRes);
             }
             case 'markRead': {
                 const readMsgId = searchParams.get('messageId');
+                const readFolderId = searchParams.get('folderId');
                 const isRead = searchParams.get('status') !== 'false';
-                if (!readMsgId) return NextResponse.json({ error: 'Message ID missing' }, { status: 400 });
-                const markRes = await zohoMail.markAsRead(readMsgId, isRead);
+                if (!readMsgId || !readFolderId) return NextResponse.json({ error: 'Message ID or Folder ID missing' }, { status: 400 });
+                const markRes = await zohoMail.markAsRead(readMsgId, readFolderId, isRead);
                 return NextResponse.json(markRes);
             }
             default:
@@ -103,15 +106,16 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const messageId = searchParams.get('messageId');
+    const folderId = searchParams.get('folderId');
     const userId = await getUserId(req);
 
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    if (!messageId) return NextResponse.json({ error: 'Message ID missing' }, { status: 400 });
+    if (!messageId || !folderId) return NextResponse.json({ error: 'Message ID or Folder ID missing' }, { status: 400 });
 
     const zohoMail = new ZohoMailService(userId);
 
     try {
-        const result = await zohoMail.deleteMessage(messageId);
+        const result = await zohoMail.deleteMessage(messageId, folderId);
         return NextResponse.json(result);
     } catch (err) {
         return handleZohoError(err);

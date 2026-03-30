@@ -94,11 +94,11 @@ export default function ZohoMailView() {
     const fetchMessageContent = async (id: string) => {
         setLoading(true);
         try {
-            const data = await zohoFetch(`/api/zoho/mail?action=content&messageId=${id}`);
+            const data = await zohoFetch(`/api/zoho/mail?action=content&messageId=${id}&folderId=${selectedFolder}`);
             if (data) {
                 setMessageContent(data);
                 setSelectedMessage(id);
-                fetch(`/api/zoho/mail?action=markRead&messageId=${id}`).catch(() => {});
+                fetch(`/api/zoho/mail?action=markRead&messageId=${id}&folderId=${selectedFolder}`).catch(() => {});
             }
         } finally {
             setLoading(false);
@@ -119,7 +119,7 @@ export default function ZohoMailView() {
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this message?')) return;
-        const data = await zohoFetch(`/api/zoho/mail?messageId=${id}`, { method: 'DELETE' });
+        const data = await zohoFetch(`/api/zoho/mail?messageId=${id}&folderId=${selectedFolder}`, { method: 'DELETE' });
         if (data !== null) {
             setSelectedMessage(null);
             fetchMessages(selectedFolder);
@@ -127,7 +127,7 @@ export default function ZohoMailView() {
     };
 
     const handleArchive = async (id: string) => {
-        const data = await zohoFetch(`/api/zoho/mail?action=archive&messageId=${id}`);
+        const data = await zohoFetch(`/api/zoho/mail?action=archive&messageId=${id}&folderId=${selectedFolder}`);
         if (data !== null) {
             setSelectedMessage(null);
             fetchMessages(selectedFolder);

@@ -96,9 +96,9 @@ export class ZohoMailService extends ZohoService {
         return (data?.data ?? []) as ZohoMessage[];
     }
 
-    async getMessageContent(messageId: string) {
+    async getMessageContent(messageId: string, folderId: string) {
         const { base } = await this.getMailBase();
-        const url = `${base}/messages/${encodeURIComponent(messageId)}/content`;
+        const url = `${base}/folders/${encodeURIComponent(folderId)}/messages/${encodeURIComponent(messageId)}/content`;
         console.log(`[ZohoMailService] Calling Zoho API: ${url}`);
         const data = await this.callZohoAPI(url);
         console.log(`[ZohoMailService] getMessageContent response success: ${!!data?.data}`);
@@ -132,16 +132,16 @@ export class ZohoMailService extends ZohoService {
         return (data?.data ?? []) as ZohoMessage[];
     }
 
-    async deleteMessage(messageId: string) {
+    async deleteMessage(messageId: string, folderId: string) {
         const { base } = await this.getMailBase();
         const data = await this.callZohoAPI(
-            `${base}/messages/${encodeURIComponent(messageId)}`,
+            `${base}/folders/${encodeURIComponent(folderId)}/messages/${encodeURIComponent(messageId)}`,
             { method: 'DELETE' }
         );
         return data;
     }
 
-    async archiveMessage(messageId: string) {
+    async archiveMessage(messageId: string, currentFolderId: string) {
 
         const folders = await this.getFolders();
         const archiveFolder = folders.find(f => f.folderName.toLowerCase().includes('archive'));
@@ -149,7 +149,7 @@ export class ZohoMailService extends ZohoService {
 
         const { base } = await this.getMailBase();
         const data = await this.callZohoAPI(
-            `${base}/messages/${encodeURIComponent(messageId)}`,
+            `${base}/folders/${encodeURIComponent(currentFolderId)}/messages/${encodeURIComponent(messageId)}`,
             {
                 method: 'PUT',
                 body: JSON.stringify({ folderId: archiveFolder.folderId }),
@@ -158,10 +158,10 @@ export class ZohoMailService extends ZohoService {
         return data;
     }
 
-    async markAsRead(messageId: string, isRead = true) {
+    async markAsRead(messageId: string, folderId: string, isRead = true) {
         const { base } = await this.getMailBase();
         const data = await this.callZohoAPI(
-            `${base}/messages/${encodeURIComponent(messageId)}`,
+            `${base}/folders/${encodeURIComponent(folderId)}/messages/${encodeURIComponent(messageId)}`,
             {
                 method: 'PUT',
                 body: JSON.stringify({ status: isRead ? 'read' : 'unread' }),
