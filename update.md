@@ -2,9 +2,11 @@
 ## Date: 2026-03-30
 
 ### Changed
-- `src/components/dashboard/HomeTab.tsx` (Removed platform quick start video tour)
-- `src/components/dashboard/admin/GlobalSettingsTab.tsx` (Removed AI infrastructure and admin video guides)
-- `public/sw.js` (Service worker update)
+- `src/components/dashboard/HomeTab.tsx` (Removed platform quick start video tour and cleaned up unused LoomVideo imports)
+- `src/components/dashboard/admin/GlobalSettingsTab.tsx` (Removed AI infrastructure and admin video guides and cleaned up unused LoomVideo imports)
+- `src/components/common/CookieConsent.tsx` (Fixed Shield icon naming conflict and resolved TypeScript build errors)
+- `next.config.ts` (Modernized Sentry configuration to use non-deprecated webpack and telemetry properties)
+- `public/sw.js` (Service worker updated during build)
 
 ### Added
 - `src/app/global-error.tsx` (Sentry global error handler)
