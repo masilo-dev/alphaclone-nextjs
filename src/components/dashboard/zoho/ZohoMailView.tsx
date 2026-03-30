@@ -6,7 +6,7 @@ import {
     ArrowLeft, Menu, X, MoreVertical, Sparkles, Reply, Forward,
     MoreHorizontal, CheckCircle2, RotateCcw, AlertCircle, FileText, ShieldCheck
 } from 'lucide-react';
-import { generateEmailReply } from '@/services/unifiedAIService';
+import { generateEmailReply, generateEmailDraft } from '@/services/unifiedAIService';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -43,6 +43,8 @@ export default function ZohoMailView() {
     const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [needsReconnect, setNeedsReconnect] = useState(false);
+    const [aiPrompt, setAiPrompt] = useState('');
+    const [showAiPrompt, setShowAiPrompt] = useState(false);
 
     // Central fetch helper — detects AUTH_EXPIRED (reconnect: true) from API
     const zohoFetch = async (url: string, options?: RequestInit): Promise<any> => {
@@ -156,7 +158,7 @@ export default function ZohoMailView() {
         }
     };
 
-    const handleAiReply = async () => {
+    const handleAiReply = async (customPrompt?: string) => {
         if (!messageContent) return;
         const emailText = messageContent.content || messageContent.body || messageContent.text || '';
         if (!emailText) {
@@ -165,7 +167,8 @@ export default function ZohoMailView() {
         }
         setAiGenerating(true);
         try {
-            const reply = await generateEmailReply(emailText, 'Be helpful, professional and try to move the discussion forward.');
+            const context = customPrompt || 'Be helpful, professional and try to move the discussion forward.';
+            const reply = await generateEmailReply(emailText, context);
             if (!reply) throw new Error('AI returned an empty response.');
             setEmailData({
                 to: messageContent.sender || messageContent.fromAddress || '',
@@ -173,10 +176,38 @@ export default function ZohoMailView() {
                 body: reply,
             });
             setComposing(true);
+            setAiPrompt('');
+            setShowAiPrompt(false);
             toast.success('AI reply drafted!');
         } catch (err: any) {
             console.error('AI Reply failed', err);
             toast.error(err?.message || 'AI reply failed. Check that an AI provider key is configured in Settings.');
+        } finally {
+            setAiGenerating(false);
+        }
+    };
+
+    const handleGenerateAiDraft = async () => {
+        if (!aiPrompt) {
+            toast.error('Please describe what you want in the email.');
+            return;
+        }
+        setAiGenerating(true);
+        try {
+            const draft = await generateEmailDraft(aiPrompt, emailData.to, emailData.subject);
+            if (!draft) throw new Error('AI failed to generate a draft.');
+            
+            setEmailData(prev => ({
+                ...prev,
+                body: draft
+            }));
+            
+            toast.success('Professional draft generated!');
+            setShowAiPrompt(false);
+            setAiPrompt('');
+        } catch (err: any) {
+            console.error('Draft generation failed:', err);
+            toast.error('Failed to generate draft. Ensure AI is configured.');
         } finally {
             setAiGenerating(false);
         }
@@ -403,33 +434,62 @@ export default function ZohoMailView() {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-2 relative">
-                                        <label className="text-xs font-medium text-gray-400 ml-1">Message</label>
+                                    <div className="space-y-4 relative">
+                                        <div className="flex items-center justify-between ml-1">
+                                            <label className="text-xs font-medium text-gray-400">Message</label>
+                                            <button 
+                                                type="button"
+                                                onClick={() => setShowAiPrompt(!showAiPrompt)}
+                                                className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 px-3 py-1 rounded-full transition-all ${showAiPrompt ? 'bg-teal-500 text-white' : 'bg-teal-500/10 text-teal-400 hover:bg-teal-500/20'}`}
+                                            >
+                                                <Sparkles size={10} />
+                                                {showAiPrompt ? 'Hide AI Tool' : 'Draft with AI'}
+                                            </button>
+                                        </div>
+
+                                        <AnimatePresence>
+                                            {showAiPrompt && (
+                                                <motion.div 
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: 'auto', opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    className="overflow-hidden mb-2"
+                                                >
+                                                    <div className="bg-teal-500/5 border border-teal-500/20 rounded-2xl p-4 space-y-3 shadow-xl shadow-teal-500/5">
+                                                        <div className="flex items-center gap-2 text-teal-400 mb-1">
+                                                            <Sparkles size={14} />
+                                                            <span className="text-[10px] font-black uppercase tracking-widest leading-none">AI Generation Prompt</span>
+                                                        </div>
+                                                        <textarea 
+                                                            placeholder="Tell the AI what you want in this email (e.g., 'Write a professional follow-up to Sarah about our pricing update')..." 
+                                                            value={aiPrompt}
+                                                            onChange={e => setAiPrompt(e.target.value)}
+                                                            className="w-full bg-slate-950/50 border border-teal-500/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-teal-500/40 transition-all resize-none h-20 placeholder:text-slate-600"
+                                                        />
+                                                        <div className="flex justify-end pr-1">
+                                                            <button 
+                                                                type="button"
+                                                                disabled={aiGenerating || !aiPrompt}
+                                                                onClick={handleGenerateAiDraft}
+                                                                className="bg-teal-600 hover:bg-teal-500 text-white text-[10px] font-black uppercase tracking-widest px-6 py-2 rounded-lg transition-all shadow-lg shadow-teal-600/20 disabled:opacity-50 active:scale-95 flex items-center gap-2"
+                                                            >
+                                                                {aiGenerating ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                                                Generate Personalized Draft
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+
                                         <textarea 
                                             placeholder="Write your message here..." 
-                                            rows={14}
+                                            rows={showAiPrompt ? 10 : 14}
                                             required
                                             value={emailData.body}
                                             onChange={e => setEmailData({...emailData, body: e.target.value})}
                                             className="w-full bg-gray-900/40 border border-white/5 rounded-2xl px-6 py-6 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 focus:outline-none resize-none transition-all scrollbar-hide text-lg leading-relaxed placeholder:text-gray-700"
                                         />
-                                        <div className="absolute top-12 right-6">
-                                            <motion.button 
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
-                                                type="button"
-                                                onClick={() => {
-                                                    setEmailData({
-                                                        ...emailData,
-                                                        body: emailData.body + "\n\nBest regards,"
-                                                    });
-                                                }}
-                                                className="bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white px-4 py-2 rounded-xl transition-all border border-indigo-600/30 flex items-center gap-2 shadow-lg"
-                                            >
-                                                <Sparkles size={14} />
-                                                <span className="text-xs font-semibold">AI Assist</span>
-                                            </motion.button>
-                                        </div>
                                     </div>
 
                                     <div className="flex justify-end pt-6">
@@ -465,7 +525,7 @@ export default function ZohoMailView() {
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <button 
-                                            onClick={handleAiReply}
+                                            onClick={() => handleAiReply()}
                                             disabled={aiGenerating}
                                             className="flex items-center gap-2 bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white px-3 py-1.5 rounded-xl transition-all border border-blue-600/20 active:scale-95 disabled:opacity-50"
                                         >

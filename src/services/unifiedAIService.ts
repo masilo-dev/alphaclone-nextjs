@@ -258,6 +258,35 @@ export const generateEmailReply = async (emailContent: string, context?: string)
 };
 
 /**
+ * Generate a personalized email draft from user instructions
+ */
+export const generateEmailDraft = async (instructions: string, recipientInfo?: string, subject?: string) => {
+    const prompt = `You are a professional executive assistant and communications expert. 
+    Your task is to draft a high-quality, personalized email based on the following USER INSTRUCTIONS.
+    
+    USER INSTRUCTIONS:
+    "${instructions}"
+    
+    CONTEXTUAL INFORMATION (Use if provided):
+    - Recipient: ${recipientInfo || 'Unknown'}
+    - Subject Line: ${subject || 'N/A'}
+    
+    GOAL:
+    Draft a complete, professionally worded email body that follows the instructions precisely. 
+    The tone should be professional yet human and engaging.
+    
+    STRICT FORMATTING RULES:
+    - Write in plain text only. No markdown.
+    - Do NOT use asterisks (**), hashtags (#), underscores (_), or any special formatting symbols.
+    - No dashed bullet points. Use standard sentences and paragraphs.
+    - Do NOT include the subject line in the body.
+    - Do NOT include any placeholders like [Your Name]. Leave space for a signature but don't add the bracketed placeholders.`;
+
+    const { text } = await generateText(prompt, 1200);
+    return text || "AI draft generation failed.";
+};
+
+/**
  * Generate an AI reply to a Messenger message
  */
 export const generateMessengerReply = async (messageContent: string, context?: string) => {
