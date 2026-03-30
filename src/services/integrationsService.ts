@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export interface IntegrationConfig {
     id: string;
-    type: 'slack' | 'github' | 'google_calendar' | 'discord' | 'jira' | 'linear' | 'zapier';
+    type: 'slack' | 'github' | 'google_calendar' | 'discord' | 'jira' | 'linear' | 'zapier' | 'twilio' | 'sendgrid';
     name: string;
     enabled: boolean;
     config: Record<string, any>;
@@ -323,6 +323,8 @@ export const integrationsService = {
             jira: 'Jira',
             linear: 'Linear',
             zapier: 'Zapier',
+            twilio: 'Twilio',
+            sendgrid: 'SendGrid',
         };
         return names[type] || type;
     },

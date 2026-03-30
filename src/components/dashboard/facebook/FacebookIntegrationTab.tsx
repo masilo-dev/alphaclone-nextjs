@@ -9,6 +9,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
+import MessengerInbox from '../messenger/MessengerInbox';
 import toast from 'react-hot-toast';
 
 interface FacebookPage {
@@ -46,9 +47,10 @@ const STATUS_COLORS: Record<string, string> = {
 export default function FacebookIntegrationTab() {
     const { user } = useAuth();
     const { currentTenant: tenant } = useTenant();
-    const [activeTab, setActiveTab] = useState<'leads' | 'post' | 'pages'>('leads');
+    const [activeTab, setActiveTab] = useState<'leads' | 'messenger' | 'post' | 'pages'>('leads');
     const [pages, setPages] = useState<FacebookPage[]>([]);
     const [leads, setLeads] = useState<FacebookLead[]>([]);
+    const [conversations, setConversations] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState<string>('all');
 
@@ -69,7 +71,7 @@ export default function FacebookIntegrationTab() {
     const loadData = useCallback(async () => {
         if (!user) return;
         setLoading(true);
-        const [pagesRes, leadsRes] = await Promise.all([
+        const [pagesRes, leadsRes, convRes] = await Promise.all([
             supabase
                 .from('facebook_integrations')
                 .select('id,page_id,page_name,is_active,connected_at')
@@ -81,9 +83,14 @@ export default function FacebookIntegrationTab() {
                 .eq('tenant_id', tenant?.id)
                 .order('received_at', { ascending: false })
                 .limit(100),
+            supabase
+                .from('messenger_conversations')
+                .select('id, is_read')
+                .eq('tenant_id', tenant?.id)
         ]);
         if (!pagesRes.error) setPages(pagesRes.data || []);
         if (!leadsRes.error) setLeads(leadsRes.data || []);
+        if (!convRes.error) setConversations(convRes.data || []);
         if (pagesRes.data?.[0]) setSelectedPageId(pagesRes.data[0].page_id);
         setLoading(false);
     }, [user, tenant?.id]);
@@ -246,19 +253,24 @@ export default function FacebookIntegrationTab() {
                 <>
                     {/* Tabs */}
                     <div className="flex gap-1 p-1 bg-slate-800/60 border border-slate-700 rounded-xl w-fit">
-                        {(['leads', 'post', 'pages'] as const).map(tab => (
+                        {(['leads', 'messenger', 'post', 'pages'] as const).map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`px-4 py-2 rounded-lg text-sm font-semibold capitalize transition-all ${
+                                className={`px-4 py-2 rounded-lg text-sm font-semibold capitalize transition-all relative ${
                                     activeTab === tab
                                         ? 'bg-teal-500 text-white'
                                         : 'text-slate-400 hover:text-white'
                                 }`}
                             >
                                 {tab === 'leads' && `Leads (${leads.length})`}
+                                {tab === 'messenger' && 'Messenger'}
                                 {tab === 'post' && 'Post to Page'}
                                 {tab === 'pages' && 'Pages'}
+                                
+                                {tab === 'messenger' && conversations.some(c => !c.is_read) && (
+                                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full border-2 border-slate-800" />
+                                )}
                             </button>
                         ))}
                     </div>
@@ -521,6 +533,13 @@ export default function FacebookIntegrationTab() {
                                 <Plus className="w-4 h-4" />
                                 Connect another page
                             </button>
+                        </div>
+                    )}
+
+                    {/* MESSENGER TAB */}
+                    {activeTab === 'messenger' && (
+                        <div className="h-[760px]">
+                            <MessengerInbox />
                         </div>
                     )}
                 </>

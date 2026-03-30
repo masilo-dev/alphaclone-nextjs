@@ -10,15 +10,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const supabase = createSupabaseAdminClient();
     const campaignId = (await params).id;
 
-    const accountSid  = process.env.TWILIO_ACCOUNT_SID;
-    const authToken   = process.env.TWILIO_AUTH_TOKEN;
-    const defaultFrom = process.env.TWILIO_PHONE_NUMBER;
-
-    if (!accountSid || !authToken || !defaultFrom) {
-        return NextResponse.json({ error: 'Twilio not configured' }, { status: 503 });
-    }
-
-    // Load campaign
+    // 1. Load campaign
     const { data: campaign, error: campErr } = await supabase
         .from('sms_campaigns')
         .select('*')
@@ -30,7 +22,40 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         return NextResponse.json({ error: `Campaign is already ${campaign.status}` }, { status: 400 });
     }
 
-    // Mark running
+    // 2. Resolve Twilio Credentials for this specific Campaign/Tenant
+    let accountSid = process.env.TWILIO_ACCOUNT_SID;
+    let authToken  = process.env.TWILIO_AUTH_TOKEN;
+    let fromNumber = campaign.from_number || process.env.TWILIO_PHONE_NUMBER;
+
+    // Check for tenant-specific integration
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('created_by')
+        .eq('id', campaign.tenant_id)
+        .single();
+    
+    if (tenant?.created_by) {
+        const { data: integration } = await supabase
+            .from('integrations')
+            .select('config, enabled')
+            .eq('user_id', tenant.created_by)
+            .eq('type', 'twilio')
+            .eq('enabled', true)
+            .maybeSingle();
+
+        if (integration?.config) {
+            accountSid = integration.config.accountSid || accountSid;
+            authToken  = integration.config.authToken  || authToken;
+            fromNumber = campaign.from_number || integration.config.fromNumber || fromNumber;
+        }
+    }
+
+    if (!accountSid || !authToken || !fromNumber) {
+        await supabase.from('sms_campaigns').update({ status: 'failed', error_message: 'Twilio not configured for this account' }).eq('id', campaignId);
+        return NextResponse.json({ error: 'Twilio not configured' }, { status: 503 });
+    }
+
+    // 3. Mark running
     await supabase.from('sms_campaigns').update({ status: 'running', started_at: new Date().toISOString() }).eq('id', campaignId);
 
     // Fetch recipients based on source
@@ -75,7 +100,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     // Send messages with a small delay between each to avoid Twilio rate limits
     let sent = 0, failed = 0;
-    const fromNumber = campaign.from_number || defaultFrom;
 
     for (const recipient of recipients) {
         try {

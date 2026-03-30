@@ -249,6 +249,24 @@ export const generateEmailReply = async (emailContent: string, context?: string)
 };
 
 /**
+ * Generate an AI reply to a Messenger message
+ */
+export const generateMessengerReply = async (messageContent: string, context?: string) => {
+    const prompt = `You are a helpful business assistant. Draft a concise, conversational reply to the following Messenger message:
+    
+    MESSAGE:
+    "${messageContent}"
+    
+    CONTEXT/BRAND VOICE:
+    "${context || 'Helpful, professional, and friendly.'}"
+    
+    Provide ONLY the body of the reply. Keep it short and suitable for a chat interface (no email signatures).`;
+
+    const { text } = await generateText(prompt, 600);
+    return text || "AI reply generation failed.";
+};
+
+/**
  * Perform deep business research/enrichment using AI
  */
 export const enrichLeadData = async (lead: any): Promise<string> => {

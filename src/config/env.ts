@@ -74,6 +74,9 @@ const envSchema = z.object({
     ZOHO_CLIENT_SECRET: z.string().optional(),
     ZOHO_REDIRECT_URI: z.string().url().optional(),
     ZOHO_ENCRYPTION_SECRET: z.string().length(32, 'Zoho encryption secret must be exactly 32 characters').optional(),
+
+    // App URL for OAuth redirects
+    NEXT_PUBLIC_APP_URL: z.string().url().optional().default('https://alphaclone.tech'),
 });
 
 /**
@@ -134,6 +137,9 @@ function validateEnv() {
         ZOHO_CLIENT_SECRET: process.env.ZOHO_CLIENT_SECRET || process.env.NEXT_PUBLIC_ZOHO_CLIENT_SECRET,
         ZOHO_REDIRECT_URI: process.env.ZOHO_REDIRECT_URI || process.env.NEXT_PUBLIC_ZOHO_REDIRECT_URI,
         ZOHO_ENCRYPTION_SECRET: process.env.ZOHO_ENCRYPTION_SECRET || process.env.ENCRYPTION_SECRET,
+
+        // App URL
+        NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || process.env.URL || 'https://alphaclone.tech',
     };
 
     // Helper to treat empty strings or whitespace-only as undefined, and trim all strings

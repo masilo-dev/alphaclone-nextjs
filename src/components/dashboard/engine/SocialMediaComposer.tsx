@@ -3,12 +3,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Image as ImageIcon, Video, Send, Calendar, Clock, X, Plus, Hash,
-    Upload, Loader2, CheckCircle2, Facebook, Globe, Trash2, Eye,
+    Upload, Loader2, CheckCircle2, Facebook, Globe, Trash2, Eye, Scissors,
     RefreshCw, Link2, Sparkles, Play, Film, AlertTriangle, ExternalLink
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
+import VideoEditor from '../../video/VideoEditor';
 import toast from 'react-hot-toast';
 
 interface MediaAsset {
@@ -89,6 +90,9 @@ export default function SocialMediaComposer() {
 
     // Upload state
     const [uploading, setUploading] = useState(false);
+
+    // Video Editing state
+    const [editingAsset, setEditingAsset] = useState<MediaAsset | null>(null);
 
     const loadData = useCallback(async () => {
         if (!tenant?.id || !user) return;
@@ -212,6 +216,34 @@ export default function SocialMediaComposer() {
         await supabase.from('media_assets').delete().eq('id', asset.id);
         setMediaAssets(prev => prev.filter(a => a.id !== asset.id));
         toast.success('Deleted');
+    };
+
+    const handleSaveEditedVideo = async (blob: Blob) => {
+        if (!editingAsset || !tenant?.id) return;
+        
+        const file = new File([blob], `edited_${editingAsset.file_name}`, { type: 'video/mp4' });
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('tenantId', tenant.id);
+
+        const toastId = toast.loading('Saving edited video...');
+        try {
+            const res = await fetch('/api/social/media/upload', { method: 'POST', body: fd });
+            const data = await res.json();
+            
+            if (data.success) {
+                toast.success('Edited video saved to library!', { id: toastId });
+                setMediaAssets(prev => [data.asset, ...prev]);
+                
+                // If the original was selected, maybe swap it? 
+                // For now just add to library and close editor
+                setEditingAsset(null);
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to save edited video', { id: toastId });
+        }
     };
 
     const generateWithAI = async () => {
@@ -451,11 +483,11 @@ export default function SocialMediaComposer() {
                         </div>
 
                         {/* Video editing note */}
-                        <div className="flex gap-3 p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl">
-                            <Film className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" />
-                            <div className="text-xs text-purple-300">
-                                <p className="font-semibold mb-0.5">Video editing</p>
-                                <p className="text-purple-400">Upload your video via the Upload button above. For trimming/editing, use your device editor before uploading, or integrate a cloud editor like Cloudinary or Mux (roadmap item).</p>
+                        <div className="flex gap-3 p-3 bg-teal-500/10 border border-teal-500/20 rounded-xl">
+                            <Film className="w-4 h-4 text-teal-400 flex-shrink-0 mt-0.5" />
+                            <div className="text-xs text-teal-300">
+                                <p className="font-semibold mb-0.5">Cloud Video Editor Active</p>
+                                <p className="text-teal-400">You can now trim and edit your videos directly in AlphaClone using our open-source processing engine. Click "Edit" on any video in your library.</p>
                             </div>
                         </div>
                     </div>
@@ -642,6 +674,10 @@ export default function SocialMediaComposer() {
                                             className="p-1.5 bg-slate-700 rounded-lg hover:bg-slate-600 transition-colors">
                                             <Eye className="w-3.5 h-3.5 text-white" />
                                         </a>
+                                        <button onClick={() => setEditingAsset(asset)}
+                                            className="p-1.5 bg-teal-500/20 rounded-lg hover:bg-teal-500/40 transition-colors">
+                                            <Scissors className="w-3.5 h-3.5 text-teal-400" />
+                                        </button>
                                         <button onClick={() => handleDeleteMedia(asset)}
                                             className="p-1.5 bg-red-500/20 rounded-lg hover:bg-red-500/40 transition-colors">
                                             <Trash2 className="w-3.5 h-3.5 text-red-400" />
@@ -655,6 +691,19 @@ export default function SocialMediaComposer() {
                             ))}
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Video Editor Modal */}
+            {editingAsset && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
+                    <div className="w-full max-w-4xl max-h-[90vh]">
+                        <VideoEditor 
+                            source={editingAsset.public_url}
+                            onSave={handleSaveEditedVideo}
+                            onCancel={() => setEditingAsset(null)}
+                        />
+                    </div>
                 </div>
             )}
         </div>

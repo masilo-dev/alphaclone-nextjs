@@ -4,34 +4,67 @@ import { normalizePhoneNumber } from '@/services/engine/CommunicationEngine';
 
 /**
  * POST /api/sms/send
- * Send a single SMS via Twilio
+ * Send a single SMS via Twilio using per-account credentials
  */
 export async function POST(req: NextRequest) {
     const supabase = createSupabaseAdminClient();
 
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const authToken  = process.env.TWILIO_AUTH_TOKEN;
-    const defaultFrom = process.env.TWILIO_PHONE_NUMBER;
-
-    if (!accountSid || !authToken) {
-        return NextResponse.json({ error: 'Twilio credentials not configured' }, { status: 503 });
-    }
-
     try {
-        const { to, message, from, tenantId, campaignId, leadId } = await req.json();
+        const { to, message, from, tenantId, userId, campaignId, leadId } = await req.json();
 
         if (!to || !message) {
             return NextResponse.json({ error: 'to and message are required' }, { status: 400 });
         }
 
-        const toNormalized   = normalizePhoneNumber(to);
-        const fromNormalized = from || defaultFrom;
+        // 1. Resolve Twilio Credentials (Per-Account / Per-Tenant)
+        // We prioritize the 'integrations' table for "tailored" accounts
+        let accountSid = process.env.TWILIO_ACCOUNT_SID;
+        let authToken  = process.env.TWILIO_AUTH_TOKEN;
+        let fromNumber = from || process.env.TWILIO_PHONE_NUMBER;
 
-        if (!fromNormalized) {
-            return NextResponse.json({ error: 'No from number configured (TWILIO_PHONE_NUMBER)' }, { status: 503 });
+        if (tenantId || userId) {
+            // Find the integration for the specific user or tenant owner
+            let lookupId = userId;
+            
+            if (!lookupId && tenantId) {
+                // If only tenantId is provided, get the owner
+                const { data: tenant } = await supabase
+                    .from('tenants')
+                    .select('created_by')
+                    .eq('id', tenantId)
+                    .single();
+                lookupId = tenant?.created_by;
+            }
+
+            if (lookupId) {
+                const { data: integration } = await supabase
+                    .from('integrations')
+                    .select('config, enabled')
+                    .eq('user_id', lookupId)
+                    .eq('type', 'twilio')
+                    .eq('enabled', true)
+                    .maybeSingle();
+
+                if (integration?.config) {
+                    accountSid = integration.config.accountSid || accountSid;
+                    authToken  = integration.config.authToken  || authToken;
+                    fromNumber = from || integration.config.fromNumber || fromNumber;
+                }
+            }
         }
 
-        // Call Twilio REST API
+        if (!accountSid || !authToken) {
+            return NextResponse.json({ error: 'Twilio credentials not found for this account' }, { status: 503 });
+        }
+
+        const toNormalized   = normalizePhoneNumber(to);
+        const fromNormalized = fromNumber;
+
+        if (!fromNormalized) {
+            return NextResponse.json({ error: 'No from number configured for this account' }, { status: 503 });
+        }
+
+        // 2. Call Twilio REST API
         const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
         const params = new URLSearchParams({
             To:   toNormalized,
@@ -72,7 +105,7 @@ export async function POST(req: NextRequest) {
             }, { status: 400 });
         }
 
-        // Log successful message
+        // 3. Log successful message
         if (tenantId) {
             await supabase.from('sms_messages').insert({
                 tenant_id: tenantId,

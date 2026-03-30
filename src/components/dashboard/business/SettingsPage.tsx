@@ -39,6 +39,8 @@ import { fileUploadService } from '../../../services/fileUploadService';
 import GmailIntegration from './GmailIntegration';
 import HubspotIntegration from './HubspotIntegration';
 import ZohoIntegration from './ZohoIntegration';
+import TwilioIntegration from './TwilioIntegration';
+import SendGridIntegration from './SendGridIntegration';
 import MFAEnrollment from './MFAEnrollment';
 import { authService } from '../../../services/authService';
 import { Button, Modal, Input } from '../../ui/UIComponents';
@@ -910,6 +912,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             <ZohoIntegration user={user} />
 
                             <HubspotIntegration />
+
+                            <TwilioIntegration />
+
+                            <SendGridIntegration />
                         </div>
 
                         {/* AI Autonomous Response Card */}

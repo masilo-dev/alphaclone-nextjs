@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     const state = searchParams.get('state');
     const error = searchParams.get('error');
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || req.headers.get('origin') || '').replace(/\/$/, '');
 
     if (error) {
         return NextResponse.redirect(`${appUrl}/dashboard/business/settings?tab=integrations&fb_error=${error}`);
