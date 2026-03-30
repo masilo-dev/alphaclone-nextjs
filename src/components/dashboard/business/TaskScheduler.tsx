@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useTenant } from '../../../contexts/TenantContext';
 import { generateText } from '../../../services/unifiedAIService';
+import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 
 // ─────────────────────────────────────────────
@@ -77,12 +78,12 @@ const DAYS_OF_WEEK = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday
 // Default AI prompts per task type
 const DEFAULT_AI_PROMPTS: Record<string, string> = {
   email: 'Draft a professional, personalized outreach email to potential clients. Focus on value proposition and a clear call-to-action. Keep it under 150 words. Write in plain text only — no asterisks, hashtags, or markdown.',
-  lead_generation: 'Analyze our current leads and identify the top 5 highest-intent prospects based on engagement signals. For each, suggest a next action.',
-  social_post: 'Write an engaging social media post for our business page. Keep it concise (under 200 characters), professional, and end with a relevant call-to-action. No hashtag spam — maximum 3 relevant hashtags.',
-  contract_creation: 'Generate a professional service agreement outline covering scope of work, payment terms, deliverables, and standard legal clauses.',
-  invoice: 'Summarize this billing cycle\'s completed work items and generate invoice line items with accurate descriptions and pricing.',
+  lead_generation: 'Analyze our current leads and identify the top 5 highest-intent prospects based on engagement signals. For each, suggest a next action. Write in plain professional text only — no markdown or special symbols.',
+  social_post: 'Write an engaging social media post for our business page. Keep it concise (under 200 characters), professional, and end with a relevant call-to-action. No hashtag spam — maximum 3 relevant hashtags. Write in plain text only — no asterisks or markdown.',
+  contract_creation: 'Generate a professional service agreement outline. Write in plain professional text only — no markdown, bolding (**), or hashtags (#). Use standard numbering for structure.',
+  invoice: 'Summarize this billing cycle\'s completed work items and generate invoice line items. Write in plain professional text only — no markdown symbols.',
   follow_up: 'Write a warm follow-up message for clients who haven\'t responded in 7 days. Reference previous conversation context and offer a specific next step. Write in plain text only — no asterisks or markdown.',
-  custom: 'Execute the task described above and provide a detailed summary of actions taken and results.',
+  custom: 'Execute the task described above and provide a detailed summary of actions taken and results. Write in plain professional text only — no markdown.',
 };
 
 // ─────────────────────────────────────────────
@@ -96,7 +97,14 @@ Task title: "${task.title}"
 Task description: "${task.description}"
 Today's date: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
 
-Execute this task thoroughly and return a structured result.`;
+STRICT FORMATTING RULES:
+1. Write in PLAIN PROFESSIONAL TEXT only.
+2. DO NOT use markdown symbols: no asterisks (**), no hashtags (#), no underscores (_), no backticks (\`).
+3. DO NOT use bold or italic formatting.
+4. Use standard sentence structure and clear paragraph breaks for structure.
+5. If listing items, use standard numbers (1., 2., 3.) NOT dashes or asterisks.
+
+Execute this task thoroughly and return the result following these rules.`;
 
   const userPrompt = task.aiPrompt || DEFAULT_AI_PROMPTS[task.type] || task.description;
 
@@ -228,18 +236,62 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
 
   // ── Persistence ──────────────────────────────
 
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('alphaclone-scheduled-tasks');
-      if (saved) setTasks(JSON.parse(saved));
-    } catch {}
-  }, []);
+  const fetchTasks = async () => {
+    if (!currentTenant?.id) return;
+    
+    const { data, error } = await supabase
+      .from('automation_tasks')
+      .select('*')
+      .eq('tenant_id', currentTenant.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching tasks:', error);
+      return;
+    }
+
+    if (data) {
+      // Map database snake_case to component camelCase
+      const mappedTasks: Task[] = data.map(t => ({
+        id: t.id,
+        title: t.title,
+        description: t.description || '',
+        type: t.type as Task['type'],
+        schedule: t.schedule,
+        target: t.target || {},
+        aiEnabled: t.ai_enabled,
+        aiPrompt: t.ai_prompt || '',
+        status: t.status as Task['status'],
+        lastRun: t.last_run,
+        nextRun: t.next_run,
+        results: t.results,
+      }));
+      setTasks(mappedTasks);
+    }
+  };
 
   useEffect(() => {
-    try {
-      localStorage.setItem('alphaclone-scheduled-tasks', JSON.stringify(tasks));
-    } catch {}
-  }, [tasks]);
+    fetchTasks();
+    
+    // Set up Realtime subscription
+    if (!currentTenant?.id) return;
+    
+    const channel = supabase
+      .channel('automation_tasks_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'automation_tasks',
+        filter: `tenant_id=eq.${currentTenant.id}`
+      }, () => {
+        fetchTasks();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentTenant?.id]);
 
   // ── Scheduler loop (every 60s) ───────────────
 
@@ -310,6 +362,19 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
         results,
       };
 
+      const { error: updateError } = await supabase
+        .from('automation_tasks')
+        .update({
+          last_run: updated.lastRun,
+          next_run: updated.nextRun,
+          status: updated.status,
+          results: updated.results,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', taskId);
+
+      if (updateError) throw updateError;
+
       setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
       setExpandedTask(taskId); // auto-expand to show output
       toast.success(`"${task.title}" completed`);
@@ -324,27 +389,60 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
 
   // ── CRUD ─────────────────────────────────────
 
-  const addTask = () => {
-    if (!newTask.title?.trim() || !newTask.description?.trim()) {
-      toast.error('Title and description are required');
+  const addTask = async () => {
+    if (!newTask.title?.trim() || !newTask.description?.trim() || !currentTenant?.id) {
+      toast.error('Title, description and tenant context are required');
       return;
     }
-    const task: Task = {
-      id: crypto.randomUUID(),
+
+    const nextRun = nextRunDate(newTask.schedule || { type: 'daily', time: '09:00' });
+    
+    // Database payload (snake_case)
+    const dbTask = {
+      tenant_id: currentTenant.id,
       title: newTask.title!,
       description: newTask.description!,
-      type: newTask.type as Task['type'] || 'custom',
+      type: newTask.type || 'custom',
       schedule: newTask.schedule || { type: 'daily', time: '09:00' },
       target: newTask.target || {},
-      aiEnabled: newTask.aiEnabled ?? true,
-      aiPrompt: newTask.aiPrompt || DEFAULT_AI_PROMPTS[newTask.type || 'custom'],
+      ai_enabled: newTask.aiEnabled ?? true,
+      ai_prompt: newTask.aiPrompt || DEFAULT_AI_PROMPTS[newTask.type || 'custom'],
       status: 'active',
-      nextRun: nextRunDate(newTask.schedule || { type: 'daily', time: '09:00' }),
+      next_run: nextRun
     };
-    setTasks(prev => [...prev, task]);
-    setShowAddModal(false);
-    resetNewTask();
-    toast.success('Task scheduled!');
+
+    const { data, error } = await supabase
+      .from('automation_tasks')
+      .insert([dbTask])
+      .select()
+      .single();
+
+    if (error) {
+      toast.error('Failed to schedule task');
+      console.error(error);
+      return;
+    }
+
+    if (data) {
+      // Map back to camelCase for local state
+      const task: Task = {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        type: data.type as Task['type'],
+        schedule: data.schedule,
+        target: data.target,
+        aiEnabled: data.ai_enabled,
+        aiPrompt: data.ai_prompt,
+        status: data.status as Task['status'],
+        nextRun: data.next_run
+      };
+      
+      setTasks(prev => [...prev, task]);
+      setShowAddModal(false);
+      resetNewTask();
+      toast.success('Task scheduled!');
+    }
   };
 
   const resetNewTask = () => setNewTask({
@@ -355,12 +453,38 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
     status: 'active',
   });
 
-  const toggleStatus = (id: string) =>
-    setTasks(prev => prev.map(t =>
-      t.id === id ? { ...t, status: t.status === 'active' ? 'paused' : 'active' } : t
-    ));
+  const toggleStatus = async (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
 
-  const deleteTask = (id: string) => {
+    const newStatus = task.status === 'active' ? 'paused' : 'active';
+
+    const { error } = await supabase
+      .from('automation_tasks')
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Failed to update status');
+      return;
+    }
+
+    setTasks(prev => prev.map(t =>
+      t.id === id ? { ...t, status: newStatus } : t
+    ));
+  };
+
+  const deleteTask = async (id: string) => {
+    const { error } = await supabase
+      .from('automation_tasks')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Failed to delete task');
+      return;
+    }
+
     setTasks(prev => prev.filter(t => t.id !== id));
     toast.success('Task deleted');
   };

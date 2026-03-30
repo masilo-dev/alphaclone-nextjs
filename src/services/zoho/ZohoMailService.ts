@@ -116,7 +116,7 @@ export class ZohoMailService extends ZohoService {
     }
 
     async sendEmail(params: {
-        fromAddress: string;
+        fromAddress?: string;
         toAddress: string;
         subject: string;
         content: string;
@@ -125,12 +125,18 @@ export class ZohoMailService extends ZohoService {
     }) {
         const { base } = await this.getMailBase();
         
-        // 1. Validate fromAddress to prevent 500 "Given FromAddress not exists!"
+        // 1. Fetch authorized addresses to validate or fill fromAddress
         const validAddresses = await this.getSenderAddresses();
-        if (validAddresses.length > 0 && !validAddresses.includes(params.fromAddress)) {
-            const primary = validAddresses[0];
-            console.warn(`[ZohoMailService] Invalid fromAddress "${params.fromAddress}". Falling back to primary: "${primary}"`);
-            params.fromAddress = primary;
+        
+        if (!params.fromAddress || (validAddresses.length > 0 && !validAddresses.includes(params.fromAddress))) {
+            const primary = validAddresses.length > 0 ? validAddresses[0] : null;
+            if (!primary && !params.fromAddress) {
+                throw new Error('No authorized fromAddress found for this Zoho account.');
+            }
+            if (primary && params.fromAddress !== primary) {
+                console.warn(`[ZohoMailService] Using primary address "${primary}" instead of provided "${params.fromAddress}"`);
+                params.fromAddress = primary;
+            }
         }
 
         return await this.callZohoAPI(`${base}/messages`, {

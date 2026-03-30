@@ -70,8 +70,9 @@ Your objective is to identify expansion opportunities, find high-intent leads, a
 
 ### FORMATTING RULES:
 - **Professionalism:** Use sophisticated business terminology.
-- **Structure:** Use Markdown for clarity. Use **bold** for emphasis, bullet points for lists, and clear headers.
-- **No Raw Symbols:** Avoid unnecessary special characters that aren't part of standard Markdown.
+- **Structure:** Write in plain professional text only. No markdown.
+- **No Symbols:** Do NOT use asterisks (**), hashtags (#), underscores (_), or any special formatting symbols for emphasis.
+- **Paragraphs:** Use standard sentence structure and clear paragraph breaks for readability.
 
 ### INTENT DETECTION & COMMANDS:
 You have access to specialized internal commands. Append the command to your response if intent is detected.
@@ -298,7 +299,12 @@ export const generateMessengerReply = async (messageContent: string, context?: s
     CONTEXT/BRAND VOICE:
     "${context || 'Helpful, professional, and friendly.'}"
     
-    Provide ONLY the body of the reply. Keep it short and suitable for a chat interface (no email signatures).`;
+    Provide ONLY the body of the reply. Keep it short and suitable for a chat interface (no email signatures).
+    
+    STRICT FORMATTING RULES:
+    - Write in plain text only. No markdown.
+    - Do NOT use asterisks (**), hashtags (#), underscores (_), or any special formatting symbols.
+    - No bolding or italicizing.`;
 
     const { text } = await generateText(prompt, 600);
     return text || "AI reply generation failed.";
@@ -320,7 +326,13 @@ export const enrichLeadData = async (lead: any): Promise<string> => {
     3. Growth Opportunities through Automation or AI
     4. Estimated Business Maturity/Size category
 
-    Format the output as a clean, professional intelligence report for a sales agent. Use bullet points where appropriate.`;
+    Format the output as a clean, professional intelligence report for a sales agent. 
+    
+    STRICT FORMATTING RULES:
+    - Write in plain professional text only. No markdown.
+    - Do NOT use asterisks (**), hashtags (#), underscores (_), or any special formatting symbols.
+    - Use standard numbering (1., 2., 3.) for lists, not dashes or asterisks.
+    - Use clear paragraph breaks for structure.`;
 
     const { text } = await generateText(prompt, 800);
     return text || "Intelligence gathering failed. Please try again later.";

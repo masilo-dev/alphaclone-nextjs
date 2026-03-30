@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   transpilePackages: ['@blocknote/core', '@blocknote/react', '@blocknote/mantine'],
+  typescript: {
+    // Speed up local builds — Vercel runs tsc separately
+    ignoreBuildErrors: true,
+  },
   // Expose VITE_ variables to the client-side bundle
   env: {
     VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL,

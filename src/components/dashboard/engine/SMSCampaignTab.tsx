@@ -64,29 +64,54 @@ export default function SMSCampaignTab() {
     const [runningId, setRunningId] = useState<string | null>(null);
     const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'campaigns' | 'messages' | 'quick'>('campaigns');
+    
+    // AI Content Generation State
+    const [showAiInput, setShowAiInput] = useState(false);
+    const [aiContext, setAiContext]    = useState('');
+    const [aiGenerating, setAiGenerating] = useState(false);
 
     // Quick SMS state
     const [quickTo, setQuickTo] = useState('');
     const [quickMsg, setQuickMsg] = useState('');
     const [sending, setSending] = useState(false);
 
-    // AI generation state
-    const [aiGenerating, setAiGenerating] = useState(false);
-    const [aiContext, setAiContext] = useState('');
-    const [showAiInput, setShowAiInput] = useState(false);
+    // Twilio status state
+    const [twilioIntegration, setTwilioIntegration] = useState<{ active: boolean, phone?: string } | null>(null);
+    const [fetchingTwilio, setFetchingTwilio] = useState(true);
+
+    const showAiInputState = showAiInput; // Local alias
 
     const twilioConfigured = !!process.env.NEXT_PUBLIC_TWILIO_CONFIGURED;
 
     const loadData = useCallback(async () => {
         if (!tenant?.id) return;
         setLoading(true);
-        const [campRes, msgRes] = await Promise.all([
+        setFetchingTwilio(true);
+        
+        const [campRes, msgRes, twilioRes] = await Promise.all([
             supabase.from('sms_campaigns').select('*').eq('tenant_id', tenant.id).order('created_at', { ascending: false }),
             supabase.from('sms_messages').select('*').eq('tenant_id', tenant.id).order('created_at', { ascending: false }).limit(100),
+            supabase.from('twilio_integrations').select('is_active, phone_number').eq('tenant_id', tenant.id).maybeSingle(),
         ]);
+        
         if (!campRes.error) setCampaigns(campRes.data || []);
         if (!msgRes.error) setMessages(msgRes.data || []);
+        
+        if (twilioRes.data) {
+            setTwilioIntegration({ 
+                active: !!twilioRes.data.is_active, 
+                phone: twilioRes.data.phone_number 
+            });
+            // Auto-fill form from_number if empty
+            if (twilioRes.data.phone_number) {
+                setForm(f => ({ ...f, from_number: f.from_number || twilioRes.data.phone_number }));
+            }
+        } else {
+            setTwilioIntegration(null);
+        }
+
         setLoading(false);
+        setFetchingTwilio(false);
     }, [tenant?.id]);
 
     useEffect(() => { loadData(); }, [loadData]);
@@ -175,8 +200,8 @@ export default function SMSCampaignTab() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    prompt: `Write a concise SMS marketing message about: "${aiContext}". MUST be under 160 characters. Include a clear call to action. No hashtags. No URLs unless specified. Return ONLY the SMS text, nothing else.`,
-                    systemPrompt: 'You are an SMS marketing expert. Write punchy, clear SMS messages under 160 characters. No preamble, no quotes, just the SMS text.',
+                    prompt: `Write a concise SMS marketing message about: "${aiContext}". MUST be under 160 characters. Include a clear call to action. No hashtags. No URLs unless specified. Write in PLAIN TEXT ONLY — no bolding (**), no asterisks (*), and no markdown.`,
+                    systemPrompt: 'You are an SMS marketing expert. Write punchy, clear SMS messages under 160 characters. STRICT RULE: Return ONLY plain text. DO NOT use markdown symbols like asterisks, bolding, or hashtags.',
                     maxTokens: 100,
                     temperature: 0.75,
                 }),
@@ -225,15 +250,29 @@ export default function SMSCampaignTab() {
                 </button>
             </div>
 
-            {/* Twilio setup notice */}
-            <div className="flex gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-                <div className="text-xs text-amber-300 space-y-1">
-                    <p className="font-semibold">Required env vars to enable SMS:</p>
-                    <code className="text-amber-400">TWILIO_ACCOUNT_SID · TWILIO_AUTH_TOKEN · TWILIO_PHONE_NUMBER</code>
-                    <p className="text-amber-500">Get these from <a href="https://console.twilio.com" target="_blank" rel="noopener noreferrer" className="underline">console.twilio.com</a></p>
-                </div>
-            </div>
+            {/* Twilio Status Notice */}
+            {!fetchingTwilio && (
+                twilioIntegration?.active ? (
+                    <div className="flex items-center gap-3 p-4 bg-teal-500/10 border border-teal-500/20 rounded-xl">
+                        <CheckCircle2 className="w-4 h-4 text-teal-400 flex-shrink-0" />
+                        <div className="flex-1 flex items-center justify-between">
+                            <p className="text-xs text-teal-300">
+                                <span className="font-semibold">Twilio Connected:</span> {twilioIntegration.phone || 'Ready to send'}
+                            </p>
+                            <span className="text-[10px] px-1.5 py-0.5 bg-teal-500/20 text-teal-400 rounded-md font-mono uppercase tracking-tight">Active</span>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                        <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                        <div className="text-xs text-amber-300 flex-1">
+                            <p className="font-semibold">Twilio Integration Missing or Inactive</p>
+                            <p className="mt-1 opacity-80">You need to connect your Twilio credentials in the <span className="underline">Settings → Twilio</span> tab before you can send SMS campaigns.</p>
+                            <p className="mt-2 text-amber-500 text-[10px]">Required: SID · Auth Token · Phone Number</p>
+                        </div>
+                    </div>
+                )
+            )}
 
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

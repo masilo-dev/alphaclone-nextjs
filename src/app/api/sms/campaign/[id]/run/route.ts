@@ -27,26 +27,40 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     let authToken  = process.env.TWILIO_AUTH_TOKEN;
     let fromNumber = campaign.from_number || process.env.TWILIO_PHONE_NUMBER;
 
-    // Check for tenant-specific integration
-    const { data: tenant } = await supabase
-        .from('tenants')
-        .select('created_by')
-        .eq('id', campaign.tenant_id)
-        .single();
-    
-    if (tenant?.created_by) {
-        const { data: integration } = await supabase
-            .from('integrations')
-            .select('config, enabled')
-            .eq('user_id', tenant.created_by)
-            .eq('type', 'twilio')
-            .eq('enabled', true)
-            .maybeSingle();
+    // Check for tenant-specific integration (New Table)
+    const { data: twilioInteg } = await supabase
+        .from('twilio_integrations')
+        .select('account_sid, auth_token, phone_number, is_active')
+        .eq('tenant_id', campaign.tenant_id)
+        .maybeSingle();
 
-        if (integration?.config) {
-            accountSid = integration.config.accountSid || accountSid;
-            authToken  = integration.config.authToken  || authToken;
-            fromNumber = campaign.from_number || integration.config.fromNumber || fromNumber;
+    if (twilioInteg && twilioInteg.is_active) {
+        accountSid = twilioInteg.account_sid;
+        authToken  = twilioInteg.auth_token;
+        fromNumber = campaign.from_number || twilioInteg.phone_number || fromNumber;
+    } 
+    // Fallback to legacy user-specific integration
+    else {
+        const { data: tenant } = await supabase
+            .from('tenants')
+            .select('created_by')
+            .eq('id', campaign.tenant_id)
+            .single();
+        
+        if (tenant?.created_by) {
+            const { data: integration } = await supabase
+                .from('integrations')
+                .select('config, enabled')
+                .eq('user_id', tenant.created_by)
+                .eq('type', 'twilio')
+                .eq('enabled', true)
+                .maybeSingle();
+
+            if (integration?.config) {
+                accountSid = integration.config.accountSid || accountSid;
+                authToken  = integration.config.authToken  || authToken;
+                fromNumber = campaign.from_number || integration.config.fromNumber || fromNumber;
+            }
         }
     }
 
