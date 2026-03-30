@@ -1,4 +1,15 @@
 # Update Log
+## Date: 2026-03-30
+
+### Changed
+- `src/components/dashboard/HomeTab.tsx` (Removed platform quick start video tour)
+- `src/components/dashboard/admin/GlobalSettingsTab.tsx` (Removed AI infrastructure and admin video guides)
+- `public/sw.js` (Service worker update)
+
+### Added
+- `src/app/global-error.tsx` (Sentry global error handler)
+- `public/sw.js.map` (Service worker source map)
+
 ## Date: 2026-03-28
 
 ### Changed

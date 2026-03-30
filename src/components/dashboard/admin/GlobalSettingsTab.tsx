@@ -161,21 +161,6 @@ const GlobalSettingsTab: React.FC = () => {
                                         <Input label="OpenAI API Key" type="password" value="************************" readOnly />
                                         <Input label="Google Gemini Key" type="password" value="************************" readOnly />
                                     </div>
-                                    <div className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <Zap className="w-4 h-4 text-indigo-400" />
-                                            <span className="text-xs font-black uppercase tracking-widest text-indigo-400">Intelligent Routing</span>
-                                        </div>
-                                        <p className="text-xs text-slate-300 leading-relaxed mb-4">
-                                            The system is currently using **Claude 3.5 Sonnet** as the primary engine with **GPT-4o** as the high-availability fallback. Gemini is used for low-priority categorization tasks.
-                                        </p>
-                                        <div className="aspect-video w-full rounded-xl overflow-hidden shadow-lg border border-white/5">
-                                            <LoomVideo 
-                                                videoId="023023e9a7e84120894768393d9ce454"
-                                                title="AI Infrastructure Documentation"
-                                            />
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         )}
@@ -184,19 +169,6 @@ const GlobalSettingsTab: React.FC = () => {
                             <div className="space-y-6">
                                 <SectionHeader title="Support & Platform Documentation" description="Resources for platform administrators and system owners" />
                                 <div className="grid grid-cols-1 gap-6">
-                                    <div className="bg-slate-900 rounded-2xl border border-white/5 overflow-hidden">
-                                        <div className="p-4 border-b border-white/5 flex items-center gap-3">
-                                            <Zap className="w-4 h-4 text-teal-400" />
-                                            <h4 className="text-sm font-bold text-white uppercase tracking-wider">Admin Video Guide</h4>
-                                        </div>
-                                        <div className="aspect-video w-full bg-black">
-                                            <LoomVideo 
-                                                videoId="3a7000c925c145b7882089688b0ceb5d" 
-                                                title="AlphaClone Admin Overview"
-                                            />
-                                        </div>
-                                    </div>
-                                    
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <Card className="p-4 bg-slate-900 border-white/5 hover:border-teal-500/30 transition-all cursor-pointer group" onClick={() => window.open('/docs', '_blank')}>
                                             <FileText className="w-6 h-6 text-slate-400 mb-3 group-hover:text-teal-400 transition-colors" />
