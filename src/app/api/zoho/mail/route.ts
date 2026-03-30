@@ -80,6 +80,16 @@ export async function GET(req: NextRequest) {
                 const markRes = await zohoMail.markAsRead(readMsgId, readFolderId, isRead);
                 return NextResponse.json(markRes);
             }
+            case 'proxy-image': {
+                const imgPath = searchParams.get('path');
+                if (!imgPath) return NextResponse.json({ error: 'Path missing' }, { status: 400 });
+                const res = await zohoMail.proxyImage(imgPath);
+                const contentType = res.headers.get('content-type') || 'image/jpeg';
+                // Return streaming response so Next.js handles proxying the buffer efficiently
+                return new NextResponse(res.body, {
+                    headers: { 'Content-Type': contentType },
+                });
+            }
             default:
                 return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
         }

@@ -115,14 +115,47 @@ export class ZohoMailService extends ZohoService {
         const url = `${base}/folders/${encodeURIComponent(folderId)}/messages/${encodeURIComponent(messageId)}/content`;
         try {
             const data = await this.callZohoAPI(url);
-            return data?.data ?? data;
+            let contentStr = '';
+            if (typeof data === 'string') contentStr = data;
+            else if (data?.data) contentStr = typeof data.data === 'string' ? data.data : data.data.content || '';
+            else if (data?.content) contentStr = data.content;
+
+            // Rewrite secure Zoho inline image URLs so our frontend can proxy them
+            if (contentStr) {
+                contentStr = contentStr.replace(
+                    /src=["'](?:https?:\/\/[^\/]+)?(\/api\/accounts\/[^"']+\/messages\/[^"']+\/attachments\/[^"']+)["']/gi,
+                    (match, path) => {
+                        return `src="/api/zoho/mail?action=proxy-image&path=${encodeURIComponent(path)}"`;
+                    }
+                );
+            }
+            return { content: contentStr };
         } catch (err: any) {
             if (err?.status === 404) {
                 console.warn('[ZohoMailService] Message not found (likely deleted or moved):', messageId);
-                return { error: 'The email content could not be retrieved. It may have been moved or deleted.', status: 404 };
+                return { content: '', error: 'The email content could not be retrieved. It may have been moved or deleted.', status: 404 };
             }
             throw err;
         }
+    }
+
+    async proxyImage(path: string) {
+        const config = await this.getConfig();
+        const accessToken = await this.getValidAccessToken();
+        if (!accessToken || !config?.mailApiHost) throw new Error('Unauthorized');
+
+        // Ensure we only proxy valid attachment URLs
+        if (!path.startsWith('/api/accounts')) throw new Error('Invalid proxy path');
+
+        const url = `https://${config.mailApiHost}${path}`;
+        const res = await fetch(url, {
+            headers: {
+                Authorization: `Zoho-oauthtoken ${accessToken}`
+            }
+        });
+        
+        if (!res.ok) throw new Error(`Failed to proxy image: ${res.status}`);
+        return res;
     }
 
     async sendEmail(params: {
