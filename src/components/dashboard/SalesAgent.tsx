@@ -15,11 +15,12 @@ import { useBackgroundTasks } from '../../contexts/BackgroundTaskContext';
 import { AerialLeadNavigator } from './leads/AerialLeadNavigator';
 import { auditService, AuditResult } from '../../services/auditService';
 import { LeadAuditReport } from './leads/LeadAuditReport';
+import OmniLeadFinder from '../leads/OmniLeadFinder';
 
 const SalesAgent: React.FC = () => {
     const aiConfigured = isAnyAIConfigured();
     const { startTask } = useBackgroundTasks();
-    const [activeTab, setActiveTab] = useState<'leads' | 'agent'>('agent'); // Default to agent chat for premium experience
+    const [activeTab, setActiveTab] = useState<'leads' | 'agent' | 'omni'>('omni'); // Set default to omni
     const [searchParams, setSearchParams] = useState({ industry: '', location: '' });
     const [leads, setLeads] = useState<Lead[]>([]);
     const [isSearching, setIsSearching] = useState(false);
@@ -932,6 +933,12 @@ const SalesAgent: React.FC = () => {
                         Lead Finder
                     </button>
                     <button
+                        onClick={() => setActiveTab('omni')}
+                        className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'omni' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        Omni Crawler
+                    </button>
+                    <button
                         onClick={() => setActiveTab('agent')}
                         className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'agent' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
                     >
@@ -1296,6 +1303,10 @@ const SalesAgent: React.FC = () => {
                         </div>
                     )}
                     */}
+                </div>
+            ) : activeTab === 'omni' ? (
+                <div className="flex-1 bg-transparent w-full">
+                    <OmniLeadFinder />
                 </div>
             ) : (
                 <div className="flex-1 bg-transparent flex flex-col">
