@@ -101,7 +101,7 @@ const HomeTab: React.FC<HomeTabProps> = ({
             <TodayAgendaCard projects={filteredProjects} user={user} />
 
             {/* Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" data-tour="dashboard-overview">
                 {currentStats.map((stat, idx) => (
                     <div key={idx} className="bg-slate-900/60 backdrop-blur border border-slate-700 p-4 md:p-5 rounded-2xl hover:border-teal-500/30 transition-colors group">
                         <div className="flex justify-between items-start mb-4">

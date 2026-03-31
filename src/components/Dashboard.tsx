@@ -98,6 +98,7 @@ const CustomVideoRoom = React.lazy(() => import('./dashboard/video/CustomVideoRo
 const ZohoMailView = React.lazy(() => import('./dashboard/zoho/ZohoMailView'));
 const ZohoCRMIntegration = React.lazy(() => import('./dashboard/zoho/ZohoCRMIntegration'));
 const TaskScheduler = React.lazy(() => import('./dashboard/business/TaskScheduler'));
+const VoiceCaptureFAB = React.lazy(() => import('./dashboard/VoiceCaptureFAB'));
 
 
 // Import UI components
@@ -216,6 +217,8 @@ const Dashboard: React.FC<DashboardProps> = ({
     }
   }, [user.id]);
 
+  const [showProductTour, setShowProductTour] = useState(false);
+
   // Admin Tool States
   const [contractModalOpen, setContractModalOpen] = useState(false);
   const [generatedContract, setGeneratedContract] = useState('');
@@ -232,6 +235,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const { tasks: bgTasks } = useBackgroundTasks();
   const activeBgTasksCount = bgTasks.filter(t => t.status === 'running').length;
+
+  const [isVoiceActive, setIsVoiceActive] = useState(false);
 
   // -- ISOLATION LOGIC --
   // Super Admin: sees ALL data across ALL tenants
@@ -1331,7 +1336,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                               </div>
 
                               {user.role === 'admin' && (
-                                <div className="space-y-2">
+                                <>
                                   <div className="flex gap-2">
                                     <button
                                       onClick={() => {
@@ -1360,7 +1365,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                       {p.contractStatus === 'Sent' || p.contractStatus === 'Signed' ? 'Review Contract' : 'Send Contract'}
                                     </button>
                                   )}
-                                </div>
+                                </>
                               )}
 
                               {user.role === 'admin' ? (
@@ -1798,6 +1803,11 @@ const Dashboard: React.FC<DashboardProps> = ({
         setActiveTab={setActiveTab}
         unreadMessageCount={unreadMessageCount}
         onLogout={onLogout}
+        activeBgTasksCount={activeBgTasksCount}
+        onStartTour={() => setShowProductTour(true)}
+        isVoiceActive={isVoiceActive}
+        onToggleVoice={() => setIsVoiceActive(!isVoiceActive)}
+        data-tour="navigation"
       />
 
       {/* Removed "Back to Navigation" button as per user request */}
@@ -1943,6 +1953,16 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </Modal>
       )}
+      <VoiceCaptureFAB 
+        isActive={isVoiceActive} 
+        onClose={() => setIsVoiceActive(false)} 
+      />
+
+      <ProductTour
+        isOpen={showProductTour}
+        onComplete={() => setShowProductTour(false)}
+        userRole={user.role}
+      />
     </div>
   );
 };

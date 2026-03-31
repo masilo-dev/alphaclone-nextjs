@@ -266,11 +266,11 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
 
          <main>
             {/* Hero Section */}
-            <section id="home" className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden pt-20">
+            <section id="home" className="relative min-h-[90vh] flex flex-col items-center justify-center overflow-hidden pt-12 sm:pt-20">
                <div className="absolute inset-0 z-0">
                   <HeroBackground />
                </div>
-               <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-16 sm:py-20">
+               <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-10 sm:py-20 lg:py-32">
                   <motion.div
                      initial={{ opacity: 0, y: 20 }}
                      animate={{ opacity: 1, y: 0 }}
@@ -283,7 +283,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      </div>
 
                      {/* Headline */}
-                     <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white mb-6 tracking-tight leading-[1.05]">
+                     <h1 className="font-black text-white mb-6 tracking-tight">
                         AlphaClone Systems
                         <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">
@@ -348,11 +348,11 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
             </section>
 
             {/* Features / Services Section */}
-            <section id="services" className="py-16 sm:py-20 relative overflow-hidden">
+            <section id="services" className="py-12 sm:py-20 relative overflow-hidden">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                   <div className="text-center mb-12">
-                     <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight">Everything you need.<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">Nothing you don't.</span></h2>
-                     <p className="text-lg text-slate-400 max-w-2xl mx-auto">Each module works together — CRM, invoices, contracts, projects, and AI sales automation in one login.</p>
+                     <h2 className="font-black text-white mb-4 tracking-tight">Everything you need.<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">Nothing you don't.</span></h2>
+                     <p className="text-slate-400 max-w-2xl mx-auto">Each module works together — CRM, invoices, contracts, projects, and AI sales automation in one login.</p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

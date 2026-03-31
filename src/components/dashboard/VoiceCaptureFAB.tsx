@@ -9,12 +9,23 @@ import { useAuth } from '../../contexts/AuthContext';
 
 interface VoiceCaptureFABProps {
     onCapture?: (text: string) => void;
+    isActive?: boolean;
+    onClose?: () => void;
 }
 
-const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture }) => {
+const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture, isActive: controlledActive, onClose }) => {
     const { user } = useAuth();
     const router = useRouter();
-    const [isActive, setIsActive] = useState(false);
+    const [internalActive, setInternalActive] = useState(false);
+    const isActive = controlledActive !== undefined ? controlledActive : internalActive;
+
+    const setIsActive = (val: boolean) => {
+        if (controlledActive !== undefined) {
+            if (!val && onClose) onClose();
+        } else {
+            setInternalActive(val);
+        }
+    };
     const [isListening, setIsListening] = useState(false);
     const [transcript, setTranscript] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);

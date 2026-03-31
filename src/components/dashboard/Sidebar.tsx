@@ -1,6 +1,6 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, ChevronDown, Menu, ShieldAlert } from 'lucide-react';
+import { LogOut, ChevronDown, Menu, ShieldAlert, Mic, HelpCircle, Activity, Sparkles, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { LOGO_URL } from '../../constants';
 import { User } from '../../types';
@@ -16,6 +16,10 @@ interface SidebarProps {
     onLogout: () => void;
     forceHidden?: boolean;
     onNavigate?: () => void;
+    activeBgTasksCount?: number;
+    onStartTour?: () => void;
+    isVoiceActive?: boolean;
+    onToggleVoice?: () => void;
 }
 
 const Sidebar = React.memo<SidebarProps>(({
@@ -28,7 +32,11 @@ const Sidebar = React.memo<SidebarProps>(({
     unreadMessageCount,
     onLogout,
     forceHidden = false,
-    onNavigate
+    onNavigate,
+    activeBgTasksCount = 0,
+    onStartTour,
+    isVoiceActive = false,
+    onToggleVoice
 }) => {
     const router = useRouter();
 
@@ -156,7 +164,76 @@ const Sidebar = React.memo<SidebarProps>(({
                     ))}
                 </nav>
 
-                <div className="p-4 border-t border-slate-800 bg-slate-900 mt-auto">
+                <div className="p-4 border-t border-slate-800 bg-slate-900 mt-auto space-y-2">
+                    {/* Quick Activity & Help Icons (Small Layout) */}
+                    {!sidebarOpen && (
+                        <div className="flex flex-col items-center gap-4 mb-4 py-2">
+                            {activeBgTasksCount > 0 && (
+                                <div className="text-teal-400 animate-spin" title={`${activeBgTasksCount} Active Tasks`}>
+                                    <Activity className="w-5 h-5" />
+                                </div>
+                            )}
+                            <button 
+                                onClick={onToggleVoice}
+                                className={`p-2 rounded-xl transition-all ${isVoiceActive ? 'bg-red-500/20 text-red-400 animate-pulse' : 'text-slate-500 hover:text-white hover:bg-slate-800'}`}
+                                title="Voice Assistant"
+                            >
+                                <Mic className="w-5 h-5" />
+                            </button>
+                            <button 
+                                onClick={onStartTour}
+                                className="text-slate-500 hover:text-white"
+                                title="Need Help?"
+                            >
+                                <HelpCircle className="w-5 h-5" />
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Full Status/Actions (Open Layout) */}
+                    {sidebarOpen && (
+                        <div className="space-y-2 mb-4">
+                            <button
+                                onClick={onToggleVoice}
+                                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all ${
+                                    isVoiceActive 
+                                        ? 'bg-red-500/10 text-red-400 border border-red-500/30' 
+                                        : 'text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent'
+                                }`}
+                            >
+                                <div className={`p-1.5 rounded-lg ${isVoiceActive ? 'bg-red-500/20' : 'bg-slate-800'}`}>
+                                    <Mic className="w-4 h-4" />
+                                </div>
+                                <span className="font-medium">{isVoiceActive ? 'Assistant Active' : 'Voice Assistant'}</span>
+                                {isVoiceActive && <span className="ml-auto w-2 h-2 bg-red-500 rounded-full animate-ping" />}
+                            </button>
+
+                            <button
+                                onClick={onStartTour}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+                            >
+                                <div className="p-1.5 rounded-lg bg-slate-800">
+                                    <HelpCircle className="w-4 h-4" />
+                                </div>
+                                <span className="font-medium">Need Help?</span>
+                            </button>
+
+                            {activeBgTasksCount > 0 && (
+                                <div className="px-4 py-2.5 bg-teal-500/5 border border-teal-500/20 rounded-xl flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center">
+                                        <Loader2 className="w-4 h-4 text-teal-400 animate-spin" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[10px] font-black uppercase text-teal-400 tracking-widest leading-none">Status</p>
+                                        <p className="text-xs text-slate-300 font-medium truncate mt-1">
+                                            {activeBgTasksCount} Task{activeBgTasksCount > 1 ? 's' : ''} in progress
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     <button
                         onClick={onLogout}
                         className="flex items-center gap-3 text-slate-400 hover:text-red-400 w-full px-4 py-3 rounded-xl hover:bg-red-500/10 transition-colors group active:scale-95 touch-manipulation"

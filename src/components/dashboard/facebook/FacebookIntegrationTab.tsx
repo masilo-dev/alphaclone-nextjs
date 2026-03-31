@@ -4,7 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
     Facebook, Users, Megaphone, RefreshCw, CheckCircle2, XCircle,
     ExternalLink, Plus, Send, Image, Link2, Loader2, Eye, Trash2,
-    TrendingUp, UserPlus, Mail, Phone, Building2, Filter, ChevronDown, Sparkles
+    TrendingUp, UserPlus, Mail, Phone, Building2, Filter, ChevronDown, Sparkles,
+    Activity, HelpCircle, Code2, Globe, Shield, Zap, AlertCircle
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
@@ -47,11 +48,13 @@ const STATUS_COLORS: Record<string, string> = {
 export default function FacebookIntegrationTab() {
     const { user } = useAuth();
     const { currentTenant: tenant } = useTenant();
-    const [activeTab, setActiveTab] = useState<'leads' | 'messenger' | 'post' | 'pages'>('leads');
+    const [activeTab, setActiveTab] = useState<'leads' | 'messenger' | 'activity' | 'post' | 'pages' | 'setup'>('leads');
     const [pages, setPages] = useState<FacebookPage[]>([]);
     const [leads, setLeads] = useState<FacebookLead[]>([]);
+    const [activities, setActivities] = useState<any[]>([]);
     const [conversations, setConversations] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [activityLoading, setActivityLoading] = useState(false);
     const [statusFilter, setStatusFilter] = useState<string>('all');
 
     // Post form
@@ -95,7 +98,27 @@ export default function FacebookIntegrationTab() {
         setLoading(false);
     }, [user, tenant?.id]);
 
+    const fetchActivity = useCallback(async (pageId: string) => {
+        if (!pageId) return;
+        setActivityLoading(true);
+        try {
+            const res = await fetch(`/api/facebook/activity?pageId=${pageId}`);
+            const data = await res.json();
+            if (data.activity) setActivities(data.activity);
+        } catch (err) {
+            console.error('Failed to fetch activity:', err);
+        } finally {
+            setActivityLoading(false);
+        }
+    }, []);
+
     useEffect(() => { loadData(); }, [loadData]);
+
+    useEffect(() => {
+        if (activeTab === 'activity' && selectedPageId) {
+            fetchActivity(selectedPageId);
+        }
+    }, [activeTab, selectedPageId, fetchActivity]);
 
     const handleConnect = () => {
         window.location.href = '/api/auth/facebook/connect';
@@ -252,21 +275,23 @@ export default function FacebookIntegrationTab() {
             ) : (
                 <>
                     {/* Tabs */}
-                    <div className="flex gap-1 p-1 bg-slate-800/60 border border-slate-700 rounded-xl w-fit">
-                        {(['leads', 'messenger', 'post', 'pages'] as const).map(tab => (
+                    <div className="flex gap-1 p-1 bg-slate-800/60 border border-slate-700 rounded-xl overflow-x-auto no-scrollbar max-w-full">
+                        {(['leads', 'messenger', 'activity', 'post', 'pages', 'setup'] as const).map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`px-4 py-2 rounded-lg text-sm font-semibold capitalize transition-all relative ${
+                                className={`px-4 py-2 rounded-lg text-sm font-semibold capitalize transition-all relative whitespace-nowrap ${
                                     activeTab === tab
                                         ? 'bg-teal-500 text-white'
                                         : 'text-slate-400 hover:text-white'
                                 }`}
                             >
                                 {tab === 'leads' && `Leads (${leads.length})`}
-                                {tab === 'messenger' && 'Messenger'}
-                                {tab === 'post' && 'Post to Page'}
+                                {tab === 'messenger' && 'Inbox'}
+                                {tab === 'activity' && 'Activity Feed'}
+                                {tab === 'post' && 'Publish'}
                                 {tab === 'pages' && 'Pages'}
+                                {tab === 'setup' && 'Setup Guide'}
                                 
                                 {tab === 'messenger' && conversations.some(c => !c.is_read) && (
                                     <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full border-2 border-slate-800" />
@@ -540,6 +565,213 @@ export default function FacebookIntegrationTab() {
                     {activeTab === 'messenger' && (
                         <div className="h-[760px]">
                             <MessengerInbox />
+                        </div>
+                    )}
+
+                    {/* ACTIVITY TAB */}
+                    {activeTab === 'activity' && (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                    <Activity className="w-5 h-5 text-teal-400" />
+                                    Recent Page Activity
+                                </h3>
+                                <button
+                                    onClick={() => fetchActivity(selectedPageId)}
+                                    disabled={activityLoading}
+                                    className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors"
+                                >
+                                    <RefreshCw className={`w-4 h-4 ${activityLoading ? 'animate-spin' : ''}`} />
+                                </button>
+                            </div>
+
+                            {activityLoading ? (
+                                <div className="flex items-center justify-center py-20">
+                                    <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
+                                </div>
+                            ) : activities.length === 0 ? (
+                                <div className="text-center py-20 border border-dashed border-slate-700 rounded-2xl">
+                                    <Activity className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+                                    <p className="text-slate-400">No recent activity detected on this page.</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 gap-4">
+                                    {activities.map((act) => (
+                                        <div key={act.id} className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-teal-500/30 transition-all group">
+                                            <div className="p-4 flex gap-4">
+                                                {act.full_picture && (
+                                                    <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 border border-slate-800">
+                                                        <img src={act.full_picture} alt="Post" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                    </div>
+                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">
+                                                            {act.story ? 'Story / Share' : 'Wall Post'}
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-500 font-mono">
+                                                            {new Date(act.created_time).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm text-slate-200 line-clamp-3 mb-3 leading-relaxed">
+                                                        {act.message || act.story || 'Shared a link or photo'}
+                                                    </p>
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                                                            <Sparkles className="w-3.5 h-3.5" />
+                                                            {act.reactions?.summary?.total_count || 0} Reactions
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                                                            <Mail className="w-3.5 h-3.5" />
+                                                            {act.comments?.summary?.total_count || 0} Comments
+                                                        </div>
+                                                        <a 
+                                                            href={act.permalink_url} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer"
+                                                            className="ml-auto text-xs text-teal-400 hover:text-teal-300 font-bold flex items-center gap-1"
+                                                        >
+                                                            View Post <ExternalLink className="w-3 h-3" />
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* SETUP TAB */}
+                    {activeTab === 'setup' && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20">
+                            {/* Pro Instructions */}
+                            <div className="space-y-6">
+                                <div className="p-6 bg-blue-600/5 border border-blue-500/20 rounded-3xl">
+                                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                        <Code2 className="w-6 h-6 text-blue-400" />
+                                        Developer Setup Guide
+                                    </h3>
+                                    <div className="space-y-4">
+                                        <div className="flex gap-4">
+                                            <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center shrink-0 text-blue-400 font-bold text-sm">1</div>
+                                            <div>
+                                                <h4 className="text-white font-bold text-sm">App Domains & Redirects</h4>
+                                                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                                                    In FB Meta Dashboard, ensure <code className="text-teal-400">alphaclone.io</code> is added to <b>App Domains</b> and <b>Valid OAuth Redirect URIs</b>.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-4">
+                                            <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center shrink-0 text-blue-400 font-bold text-sm">2</div>
+                                            <div>
+                                                <h4 className="text-white font-bold text-sm">Webhook Configuration</h4>
+                                                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                                                    Add <b>Webhooks</b> product. Callback URL: <code className="text-teal-400">https://alphaclone.io/api/webhooks/facebook/leads</code>. 
+                                                    Verify Token: <code className="text-teal-400">alphaclone_fb_verify</code>.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-4">
+                                            <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center shrink-0 text-blue-400 font-bold text-sm">3</div>
+                                            <div>
+                                                <h4 className="text-white font-bold text-sm">Lead Ads Subscription</h4>
+                                                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                                                    Under Webhooks, select <b>Page</b> as object and subscribe to <code className="text-blue-400">leadgen</code> fields. This triggers the auto-capture.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-6 bg-teal-600/5 border border-teal-500/20 rounded-3xl">
+                                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                        <Zap className="w-6 h-6 text-teal-400" />
+                                        Testing Tools
+                                    </h3>
+                                    <div className="space-y-3">
+                                        <a 
+                                            href="https://developers.facebook.com/tools/lead-ads-testing" 
+                                            target="_blank"
+                                            className="flex items-center justify-between p-4 bg-slate-900 border border-slate-800 rounded-2xl hover:border-teal-500 transition-all group"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <Link2 className="w-5 h-5 text-slate-500 group-hover:text-teal-400" />
+                                                <div>
+                                                    <p className="text-sm font-bold text-white">Lead Ads Testing Tool</p>
+                                                    <p className="text-xs text-slate-500">Create test leads to verify your CRM sync.</p>
+                                                </div>
+                                            </div>
+                                            <ExternalLink className="w-4 h-4 text-slate-600" />
+                                        </a>
+                                        <a 
+                                            href="https://developers.facebook.com/tools/debug/sharing" 
+                                            target="_blank"
+                                            className="flex items-center justify-between p-4 bg-slate-900 border border-slate-800 rounded-2xl hover:border-teal-500 transition-all group"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <Globe className="w-5 h-5 text-slate-500 group-hover:text-teal-400" />
+                                                <div>
+                                                    <p className="text-sm font-bold text-white">Sharing Debugger</p>
+                                                    <p className="text-xs text-slate-500">Fix how your links appear on Facebook.</p>
+                                                </div>
+                                            </div>
+                                            <ExternalLink className="w-4 h-4 text-slate-600" />
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Safety & Status */}
+                            <div className="space-y-6">
+                                <div className="p-6 bg-slate-900 border border-slate-800 rounded-3xl">
+                                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                        <Shield className="w-5 h-5 text-slate-400" />
+                                        Integration Status
+                                    </h3>
+                                    <div className="space-y-4">
+                                        {[
+                                            { label: 'Messenger API', status: 'Active', icon: Mail },
+                                            { label: 'Lead Ads Webhook', status: 'Configured', icon: UserPlus },
+                                            { label: 'Feed Permissions', status: 'Granted', icon: Activity },
+                                        ].map((item) => (
+                                            <div key={item.label} className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-slate-800">
+                                                <div className="flex items-center gap-3">
+                                                    <item.icon className="w-4 h-4 text-slate-500" />
+                                                    <span className="text-sm text-slate-300">{item.label}</span>
+                                                </div>
+                                                <span className="text-[10px] font-black uppercase text-teal-400 px-2 py-0.5 bg-teal-500/10 rounded-md">
+                                                    {item.status}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="mt-6 pt-6 border-t border-slate-800">
+                                        <p className="text-xs text-slate-500 leading-relaxed italic">
+                                            "I don't need to even search what can, how where" - AlphaClone's philosophy is total visibility. 
+                                            Everything linked to Facebook flows through the Activity Feed and Lead Manager automatically.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="p-6 bg-amber-500/5 border border-amber-500/20 rounded-3xl">
+                                    <h3 className="text-lg font-bold text-amber-200 mb-2 flex items-center gap-2">
+                                        <AlertCircle className="w-5 h-5" />
+                                        Need to verify Leads?
+                                    </h3>
+                                    <p className="text-xs text-slate-400 mb-4">
+                                        If leads aren't appearing, check your Page Settings {'->'} Advanced Messaging {'->'} Receiver Handlers. 
+                                        Ensure AlphaClone is the <b>Primary Receiver</b>.
+                                    </p>
+                                    <button 
+                                        onClick={() => setActiveTab('leads')}
+                                        className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black uppercase tracking-widest transition-colors"
+                                    >
+                                        Check Inbound Leads
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </>

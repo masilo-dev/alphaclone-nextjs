@@ -5,7 +5,7 @@ import { contractService } from './contractService';
 import { analyticsService } from './analyticsService';
 
 export interface VoiceIntent {
-    action: 'create_task' | 'create_invoice' | 'create_contract' | 'get_summary' | 'navigate' | 'unknown';
+    action: 'create_task' | 'create_invoice' | 'create_contract' | 'get_summary' | 'navigate' | 'search_leads' | 'create_event' | 'check_facebook' | 'send_email' | 'unknown';
     entities: {
         title?: string;
         description?: string;
@@ -14,6 +14,9 @@ export interface VoiceIntent {
         clientName?: string;
         priority?: 'low' | 'medium' | 'high' | 'urgent';
         target?: string; // For navigation (e.g., 'leads', 'invoices')
+        searchTerm?: string; // For searching leads/data
+        recipientEmail?: string; // For emails
+        startTime?: string; // For calendar events
     };
 }
 
@@ -31,6 +34,10 @@ export const voiceCommandService = {
             - create_contract: Drafting an agreement or contract.
             - get_summary: Asking for a summary, status report, or dashboard analysis.
             - navigate: Requesting to open, go to, or find a specific page/section (e.g., "open leads", "find invoices").
+            - search_leads: Searching for a specific person, company, or lead by name or industry.
+            - create_event: Adding a meeting, appointment, or event to the calendar.
+            - check_facebook: Requesting status on Facebook ads, leads, or page activity.
+            - send_email: Drafting or sending an email to a recipient.
             
             Return a JSON object with the following structure:
             {
@@ -42,7 +49,10 @@ export const voiceCommandService = {
                     "dueDate": "YYYY-MM-DD",
                     "clientName": "string",
                     "priority": "low" | "medium" | "high" | "urgent",
-                    "target": "string"
+                    "target": "string",
+                    "searchTerm": "string",
+                    "recipientEmail": "string",
+                    "startTime": "YYYY-MM-DD HH:mm"
                 }
             }
             
@@ -149,27 +159,36 @@ export const voiceCommandService = {
                     return { success: false, message: "Failed to generate summary analysis." };
                 }
 
-            case 'navigate':
-                const targetMap: Record<string, string> = {
-                    'dashboard': '/dashboard',
-                    'leads': '/dashboard/leads',
-                    'invoices': '/dashboard/accounting',
-                    'projects': '/dashboard/projects',
-                    'calendar': '/dashboard/calendar',
-                    'documents': '/dashboard/documents',
-                    'settings': '/dashboard/settings',
-                    'mail': '/dashboard/mail'
-                };
-                
-                const path = targetMap[entities.target?.toLowerCase() || ''] || '/dashboard';
+            case 'search_leads':
                 return {
                     success: true,
-                    message: `Navigating to ${entities.target || 'dashboard'}...`,
-                    redirect: path
+                    message: `Searching for "${entities.searchTerm || entities.clientName || 'leads'}"...`,
+                    redirect: `/dashboard/leads?search=${encodeURIComponent(entities.searchTerm || entities.clientName || '')}`
+                };
+
+            case 'create_event':
+                return {
+                    success: true,
+                    message: "Opening calendar to schedule your event...",
+                    redirect: `/dashboard/calendar?action=create&title=${encodeURIComponent(entities.title || '')}&date=${entities.dueDate || ''}`
+                };
+
+            case 'check_facebook':
+                return {
+                    success: true,
+                    message: "Analyzing Facebook integration status and recent activity...",
+                    redirect: '/dashboard/facebook?tab=activity'
+                };
+
+            case 'send_email':
+                return {
+                    success: true,
+                    message: `Preparing email draft for ${entities.recipientEmail || entities.clientName || 'recipient'}...`,
+                    redirect: `/dashboard/mail?action=compose&to=${encodeURIComponent(entities.recipientEmail || '')}&subject=${encodeURIComponent(entities.title || '')}`
                 };
 
             default:
-                return { success: false, message: "Intent could not be mapped to an operation." };
+                return { success: false, message: "Intent could not be mapped to an operational command." };
         }
     }
 };
