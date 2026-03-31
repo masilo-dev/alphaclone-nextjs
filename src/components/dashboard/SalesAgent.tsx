@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Bot, Search, Play, Pause, Settings, RefreshCw, Plus, Filter, Database, MessageSquare, ArrowRight, CheckCircle2, AlertCircle, UserPlus, Phone, Send, Trash2, Upload, FileSpreadsheet, X, Mail, ExternalLink, FileText, Zap, Layout, CheckSquare, Clock, ShieldCheck } from 'lucide-react';
+import { Bot, Search, Play, Pause, Settings, RefreshCw, Plus, Filter, Database, MessageSquare, ArrowRight, CheckCircle2, AlertCircle, UserPlus, Phone, Send, Trash2, Upload, FileSpreadsheet, X, Mail, ExternalLink, FileText, Zap, Layout, CheckSquare, Clock, ShieldCheck, Globe } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { generateLeads, chatWithGrowthAgent, isAnyAIConfigured } from '../../services/unifiedAIService';
