@@ -16,11 +16,13 @@ import { AerialLeadNavigator } from './leads/AerialLeadNavigator';
 import { auditService, AuditResult } from '../../services/auditService';
 import { LeadAuditReport } from './leads/LeadAuditReport';
 import OmniLeadFinder from '../leads/OmniLeadFinder';
+import KanbanBoard from './crm/KanbanBoard';
+import AutomationBuilder from './workflows/AutomationBuilder';
 
 const SalesAgent: React.FC = () => {
     const aiConfigured = isAnyAIConfigured();
     const { startTask } = useBackgroundTasks();
-    const [activeTab, setActiveTab] = useState<'leads' | 'agent' | 'omni'>('omni'); // Set default to omni
+    const [activeTab, setActiveTab] = useState<'leads' | 'agent' | 'omni' | 'kanban' | 'automation'>('omni'); // Set default to omni
     const [searchParams, setSearchParams] = useState({ industry: '', location: '' });
     const [leads, setLeads] = useState<Lead[]>([]);
     const [isSearching, setIsSearching] = useState(false);
@@ -925,7 +927,7 @@ const SalesAgent: React.FC = () => {
                         </span>
                     </div>
                 </div>
-                <div className="flex bg-slate-800 p-1 rounded-lg self-start sm:self-auto">
+                <div className="flex flex-wrap bg-slate-800 p-1 rounded-lg self-start sm:self-auto max-w-full overflow-x-auto custom-scrollbar">
                     <button
                         onClick={() => setActiveTab('leads')}
                         className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'leads' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
@@ -934,9 +936,22 @@ const SalesAgent: React.FC = () => {
                     </button>
                     <button
                         onClick={() => setActiveTab('omni')}
-                        className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'omni' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                        className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'omni' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
                     >
-                        Omni Crawler
+                        <Globe className="w-3.5 h-3.5" />
+                        AlphaClone System Lead
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('kanban')}
+                        className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'kanban' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        CRM Kanban
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('automation')}
+                        className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'automation' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        Automations
                     </button>
                     <button
                         onClick={() => setActiveTab('agent')}
@@ -1307,6 +1322,14 @@ const SalesAgent: React.FC = () => {
             ) : activeTab === 'omni' ? (
                 <div className="flex-1 bg-transparent w-full">
                     <OmniLeadFinder />
+                </div>
+            ) : activeTab === 'kanban' ? (
+                <div className="flex-1 bg-transparent w-full border-t border-slate-200 dark:border-slate-800 pt-4">
+                    <KanbanBoard />
+                </div>
+            ) : activeTab === 'automation' ? (
+                <div className="flex-1 bg-transparent w-full pt-4">
+                    <AutomationBuilder />
                 </div>
             ) : (
                 <div className="flex-1 bg-transparent flex flex-col">

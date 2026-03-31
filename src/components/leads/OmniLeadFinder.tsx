@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, MapPin, Database, Zap, Globe, Mail, Phone, ExternalLink, Plus, RefreshCw, XCircle } from 'lucide-react';
+import { Search, MapPin, Database, Zap, Globe, Mail, Phone, ExternalLink, Plus, RefreshCw, Briefcase, Tag } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import toast from 'react-hot-toast';
 
@@ -19,6 +19,8 @@ interface ScrapedLead {
 export default function OmniLeadFinder() {
   const [niche, setNiche] = useState('');
   const [location, setLocation] = useState('');
+  const [size, setSize] = useState('');
+  const [keywords, setKeywords] = useState('');
   const [scanning, setScanning] = useState(false);
   const [progress, setProgress] = useState({ step: 1, percent: 0, message: '' });
   const [results, setResults] = useState<ScrapedLead[]>([]);
@@ -42,7 +44,9 @@ export default function OmniLeadFinder() {
       const searchRes = await fetch('/api/scraper/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: `${niche} in ${location}` })
+        body: JSON.stringify({ 
+          query: `${niche} in ${location} ${size ? size + ' employees' : ''} ${keywords ? keywords : ''}`.trim()
+        })
       });
       
       const searchData = await searchRes.json();
@@ -131,56 +135,88 @@ export default function OmniLeadFinder() {
     }
   };
 
+  const getHostname = (url: string) => {
+    try {
+      return new URL(url).hostname.replace('www.', '');
+    } catch {
+      return '';
+    }
+  };
+
   return (
-    <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="w-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
       {/* Header Area */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-8 bg-gradient-to-r from-indigo-900/40 via-purple-900/40 to-slate-900/80 rounded-3xl border border-indigo-500/20 shadow-2xl backdrop-blur-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-fuchsia-500/10 rounded-full blur-3xl -z-10" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl -z-10" />
+      <div className="flex flex-col justify-between items-start lg:flex-row lg:items-center p-6 bg-gradient-to-r from-teal-900/40 via-slate-900/40 to-slate-900/80 rounded-2xl border border-teal-500/20 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl -z-10" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -z-10" />
         
-        <div className="space-y-2 z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-semibold tracking-wider uppercase mb-2">
+        <div className="space-y-2 z-10 lg:pr-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/20 border border-teal-500/30 text-teal-300 text-xs font-semibold tracking-wider uppercase mb-1">
             <Zap className="w-3 h-3 fill-current" /> Enterprise Engine
           </div>
-          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-indigo-200 to-purple-300 tracking-tight">
-            OmniLead Intelligence
+          <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-teal-200 to-emerald-300 tracking-tight">
+            AlphaClone System Lead
           </h1>
-          <p className="text-slate-400 max-w-xl text-lg font-light leading-relaxed">
+          <p className="text-slate-400 max-w-lg text-sm font-light leading-relaxed">
             Deploy the deep-web acquisition engine to harvest premium B2B contacts, extract social infrastructure, and fuel your pipeline automatically.
           </p>
         </div>
 
-        <form onSubmit={handleSearch} className="mt-6 md:mt-0 w-full md:w-auto flex flex-col sm:flex-row gap-3 z-10">
-          <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-400 transition-colors" />
-            <input 
-              type="text" 
-              placeholder="Niche (e.g. Lawyers)" 
-              value={niche}
-              onChange={(e) => setNiche(e.target.value)}
-              className="w-full sm:w-48 pl-10 pr-4 py-3 bg-slate-900/80 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none text-white placeholder:text-slate-500 transition-all shadow-inner"
-              disabled={scanning}
-            />
-          </div>
-          <div className="relative group">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-400 transition-colors" />
-            <input 
-              type="text" 
-              placeholder="City (e.g. Seattle)" 
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="w-full sm:w-48 pl-10 pr-4 py-3 bg-slate-900/80 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none text-white placeholder:text-slate-500 transition-all shadow-inner"
-              disabled={scanning}
-            />
+        <form onSubmit={handleSearch} className="mt-6 lg:mt-0 w-full lg:w-auto z-10 flex flex-col gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-teal-400 transition-colors" />
+              <input 
+                type="text" 
+                placeholder="Industry (e.g. Lawyers)" 
+                value={niche}
+                onChange={(e) => setNiche(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-sm bg-slate-900/80 border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 outline-none text-white placeholder:text-slate-500 transition-all shadow-inner"
+                disabled={scanning}
+              />
+            </div>
+            <div className="relative group">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-teal-400 transition-colors" />
+              <input 
+                type="text" 
+                placeholder="City (e.g. Seattle)" 
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-sm bg-slate-900/80 border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 outline-none text-white placeholder:text-slate-500 transition-all shadow-inner"
+                disabled={scanning}
+              />
+            </div>
+            <div className="relative group">
+              <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-teal-400 transition-colors" />
+              <input 
+                type="text" 
+                placeholder="Size (e.g. 50-200)" 
+                value={size}
+                onChange={(e) => setSize(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-sm bg-slate-900/80 border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 outline-none text-white placeholder:text-slate-500 transition-all shadow-inner"
+                disabled={scanning}
+              />
+            </div>
+            <div className="relative group">
+              <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-teal-400 transition-colors" />
+              <input 
+                type="text" 
+                placeholder="Keywords (e.g. SaaS)" 
+                value={keywords}
+                onChange={(e) => setKeywords(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-sm bg-slate-900/80 border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 outline-none text-white placeholder:text-slate-500 transition-all shadow-inner"
+                disabled={scanning}
+              />
+            </div>
           </div>
           <button 
             type="submit" 
             disabled={scanning || !niche || !location}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-semibold rounded-xl transition-all shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:shadow-[0_0_30px_rgba(168,85,247,0.6)] disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 mt-1 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-medium text-sm rounded-lg transition-all shadow-[0_0_15px_rgba(20,184,166,0.3)] hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-[1px]"
           >
-            {scanning ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Database className="w-5 h-5" />}
-            {scanning ? 'Extracting...' : 'Deploy Engine'}
+            {scanning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
+            {scanning ? 'Extracting...' : 'Deploy Smart Engine'}
           </button>
         </form>
       </div>
@@ -192,18 +228,18 @@ export default function OmniLeadFinder() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="p-6 bg-slate-900/50 rounded-2xl border border-slate-800 backdrop-blur-sm overflow-hidden"
+            className="p-5 bg-slate-900/50 rounded-xl border border-slate-800 backdrop-blur-sm overflow-hidden"
           >
-            <div className="flex justify-between text-sm mb-3">
-              <span className="text-indigo-300 font-mono flex items-center gap-2">
-                <RefreshCw className="w-4 h-4 animate-spin text-fuchsia-400" /> 
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-teal-300 font-mono flex items-center gap-2 text-xs">
+                <RefreshCw className="w-3 h-3 animate-spin text-emerald-400" /> 
                 {progress.message}
               </span>
-              <span className="text-white font-mono font-bold">{progress.percent}%</span>
+              <span className="text-white font-mono font-bold text-xs">{progress.percent}%</span>
             </div>
-            <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden shadow-inner flex">
+            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden shadow-inner flex">
               <motion.div 
-                className="bg-gradient-to-r from-blue-500 via-indigo-500 to-fuchsia-500 h-full rounded-full relative"
+                className="bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 h-full rounded-full relative"
                 initial={{ width: 0 }}
                 animate={{ width: `${progress.percent}%` }}
                 transition={{ duration: 0.5 }}
@@ -217,46 +253,49 @@ export default function OmniLeadFinder() {
 
       {/* Results Grid */}
       {results.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {results.map((lead, idx) => (
-            <motion.div 
-              key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              className="group bg-slate-900/60 border border-slate-800 rounded-2xl p-6 hover:border-indigo-500/50 hover:bg-slate-800/80 transition-all duration-300 shadow-lg hover:shadow-indigo-500/10 flex flex-col"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-start gap-4">
-                  {/* Clean Domain logic for Clearbit logo */}
-                  <img 
-                    src={`https://logo.clearbit.com/${new URL(lead.website).hostname.replace('www.', '')}?s=64`}
-                    onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(lead.business_name)}&background=1e1b4b&color=818cf8&bold=true` }}
-                    alt={lead.business_name}
-                    className="w-12 h-12 rounded-xl object-contain bg-slate-800 border border-slate-700 p-1 group-hover:border-indigo-400 transition-colors"
-                  />
-                  <div>
-                    <h3 className="text-white font-bold text-lg leading-tight line-clamp-1 group-hover:text-indigo-300 transition-colors">{lead.business_name}</h3>
-                    <a href={lead.website} target="_blank" rel="noreferrer" className="text-slate-400 text-sm hover:text-white flex items-center gap-1 mt-1 transition-colors">
-                      <Globe className="w-3 h-3" /> {new URL(lead.website).hostname.replace('www.', '')} <ExternalLink className="w-3 h-3 opacity-50" />
-                    </a>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {results.map((lead, idx) => {
+            const domain = getHostname(lead.website);
+            return (
+              <motion.div 
+                key={idx}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="group bg-slate-900/60 border border-slate-800 rounded-xl p-5 hover:border-teal-500/50 hover:bg-slate-800/80 transition-all duration-300 shadow-md hover:shadow-teal-500/10 flex flex-col"
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-start gap-3">
+                    <img 
+                      src={domain ? `https://logo.clearbit.com/${domain}?s=64` : `https://ui-avatars.com/api/?name=${encodeURIComponent(lead.business_name)}&background=0f766e&color=ccfbf1&bold=true`}
+                      onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(lead.business_name)}&background=0f766e&color=ccfbf1&bold=true` }}
+                      alt={lead.business_name}
+                      className="w-10 h-10 rounded-lg object-contain bg-slate-800 border border-slate-700 p-0.5 group-hover:border-teal-400 transition-colors"
+                    />
+                    <div>
+                      <h3 className="text-white font-semibold text-base leading-tight line-clamp-1 group-hover:text-teal-300 transition-colors">{lead.business_name}</h3>
+                      {domain && (
+                        <a href={lead.website} target="_blank" rel="noreferrer" className="text-slate-400 text-xs hover:text-white flex items-center gap-1 mt-1 transition-colors">
+                          <Globe className="w-3 h-3" /> {domain} <ExternalLink className="w-3 h-3 opacity-50" />
+                        </a>
+                      )}
+                    </div>
                   </div>
+                  {/* Status Indicator */}
+                  {lead.status === 'crawling' && <RefreshCw className="w-4 h-4 text-teal-400 animate-spin" />}
+                  {lead.status === 'success' && <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />}
                 </div>
-                {/* Status Indicator */}
-                {lead.status === 'crawling' && <RefreshCw className="w-5 h-5 text-indigo-400 animate-spin" />}
-                {lead.status === 'success' && <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]" />}
-              </div>
 
-              <div className="flex-grow space-y-3 mt-4 py-4 border-t border-slate-800/50 relative">
-                
-                {/* Simulated Crawl Overlay text if crawling */}
-                {lead.status === 'crawling' && (
-                  <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px] flex items-center justify-center rounded-lg z-10">
-                     <span className="text-xs text-indigo-300 font-mono animate-pulse bg-slate-800/80 px-3 py-1 rounded-full border border-indigo-500/30">Extracting DOM node...</span>
-                  </div>
-                )}
+                <div className="flex-grow space-y-2.5 mt-2 py-3 border-t border-slate-800/50 relative">
+                  
+                  {/* Simulated Crawl Overlay text if crawling */}
+                  {lead.status === 'crawling' && (
+                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px] flex items-center justify-center rounded-md z-10">
+                       <span className="text-xs text-teal-300 font-mono animate-pulse bg-slate-800/80 px-2 py-1 rounded-full border border-teal-500/30">Extracting DOM node...</span>
+                    </div>
+                  )}
 
-                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-slate-500" />
                   <div className="flex-1">
                     {lead.emails && lead.emails.length > 0 ? (
@@ -267,23 +306,24 @@ export default function OmniLeadFinder() {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3">
-                  <Phone className="w-4 h-4 text-slate-500" />
-                  <div className="flex-1 text-sm text-slate-300">
-                    {lead.phone ? lead.phone : <span className="text-slate-600">Not detected in HTML header</span>}
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-3.5 h-3.5 text-slate-500" />
+                    <div className="flex-1 text-xs text-slate-300">
+                      {lead.phone ? lead.phone : <span className="text-slate-600">Not detected in HTML header</span>}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <button 
-                onClick={() => handleSaveToCRM(lead)}
-                disabled={lead.status !== 'success'}
-                className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 bg-slate-800 hover:bg-indigo-600 text-white font-medium rounded-xl border border-slate-700 hover:border-indigo-500 transition-all group/btn disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Plus className="w-4 h-4 group-hover/btn:scale-125 transition-transform" /> Save to CRM
-              </button>
-            </motion.div>
-          ))}
+                <button 
+                  onClick={() => handleSaveToCRM(lead)}
+                  disabled={lead.status !== 'success'}
+                  className="w-full mt-3 flex items-center justify-center gap-1.5 py-2 hover:bg-teal-600/30 text-teal-400 hover:text-teal-300 font-medium text-sm rounded-lg border border-teal-500/20 hover:border-teal-500/50 transition-all group/btn disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Plus className="w-4 h-4 group-hover/btn:scale-125 transition-transform" /> Save to Pipeline
+                </button>
+              </motion.div>
+            );
+          })}
         </div>
       )}
     </div>
