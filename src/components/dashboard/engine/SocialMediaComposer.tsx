@@ -4,7 +4,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Image as ImageIcon, Video, Send, Calendar, Clock, X, Plus, Hash,
     Upload, Loader2, CheckCircle2, Facebook, Globe, Trash2, Eye, Scissors,
-    RefreshCw, Link2, Sparkles, Play, Film, AlertTriangle, ExternalLink
+    RefreshCw, Link2, Sparkles, Play, Film, AlertTriangle, ExternalLink,
+    Mic, MicOff, Wand2
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
@@ -90,6 +91,18 @@ export default function SocialMediaComposer() {
 
     // Upload state
     const [uploading, setUploading] = useState(false);
+
+    // Voice input state
+    const [isListening, setIsListening] = useState(false);
+    const recognitionRef = useRef<any>(null);
+
+    // AI Image generation state
+    const [showAiImagePanel, setShowAiImagePanel] = useState(false);
+    const [aiImagePrompt, setAiImagePrompt] = useState('');
+    const [aiImageSize, setAiImageSize] = useState<'1024x1024' | '1792x1024' | '1024x1792'>('1024x1024');
+    const [aiImageGenerating, setAiImageGenerating] = useState(false);
+    const [aiGeneratedImageUrl, setAiGeneratedImageUrl] = useState<string | null>(null);
+    const [attachingImage, setAttachingImage] = useState(false);
 
     // Video Editing state
     const [editingAsset, setEditingAsset] = useState<MediaAsset | null>(null);
@@ -246,6 +259,123 @@ export default function SocialMediaComposer() {
         }
     };
 
+    /**
+     * Voice-to-text using the Web Speech API.
+     * Supported in Chrome and Edge. Appends speech to the existing caption.
+     */
+    const startVoiceInput = () => {
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            toast.error('Voice input is not supported in this browser. Please use Chrome or Edge.');
+            return;
+        }
+
+        // If already listening, stop
+        if (isListening && recognitionRef.current) {
+            recognitionRef.current.stop();
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        let committedText = caption;
+
+        recognition.onstart = () => setIsListening(true);
+        recognition.onend = () => {
+            setIsListening(false);
+            recognitionRef.current = null;
+        };
+        recognition.onerror = (e: any) => {
+            console.error('Speech recognition error:', e.error);
+            if (e.error !== 'aborted') toast.error('Voice input error: ' + e.error);
+            setIsListening(false);
+            recognitionRef.current = null;
+        };
+        recognition.onresult = (e: any) => {
+            let interim = '';
+            for (let i = e.resultIndex; i < e.results.length; i++) {
+                const transcript = e.results[i][0].transcript;
+                if (e.results[i].isFinal) {
+                    committedText += (committedText ? ' ' : '') + transcript.trim();
+                } else {
+                    interim = transcript;
+                }
+            }
+            setCaption(committedText + (interim ? ' ' + interim : ''));
+        };
+
+        recognitionRef.current = recognition;
+        recognition.start();
+        toast('🎙 Listening... speak your caption', { duration: 2000 });
+    };
+
+    /**
+     * Generate an image via DALL-E 3.
+     * Returns a temporary URL — NOT persisted until the user clicks "Attach to Post".
+     */
+    const generateAIImage = async () => {
+        if (!aiImagePrompt.trim()) return toast.error('Describe the image you want to generate');
+        setAiImageGenerating(true);
+        setAiGeneratedImageUrl(null);
+        try {
+            const res = await fetch('/api/ai/image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: aiImagePrompt, size: aiImageSize }),
+            });
+            const data = await res.json();
+            if (data.url) {
+                setAiGeneratedImageUrl(data.url);
+                toast.success('AI image generated!');
+            } else {
+                toast.error(data.error || 'Image generation failed');
+            }
+        } catch {
+            toast.error('Failed to generate image');
+        } finally {
+            setAiImageGenerating(false);
+        }
+    };
+
+    /**
+     * Fetch the temporary DALL-E URL and upload it permanently to Supabase storage,
+     * then attach it to the current post.
+     */
+    const attachAIGeneratedImage = async () => {
+        if (!aiGeneratedImageUrl || !tenant?.id) return;
+        setAttachingImage(true);
+        const toastId = toast.loading('Saving image to your library...');
+        try {
+            const imgRes = await fetch(aiGeneratedImageUrl);
+            const blob = await imgRes.blob();
+            const fileName = `ai-generated-${Date.now()}.png`;
+            const file = new File([blob], fileName, { type: 'image/png' });
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('tenantId', tenant.id);
+            const res = await fetch('/api/social/media/upload', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.success) {
+                toast.success('Image attached to post!', { id: toastId });
+                setSelectedMedia(prev => [...prev, data.asset.public_url]);
+                setSelectedMediaTypes(prev => [...prev, 'image']);
+                setMediaAssets(prev => [data.asset, ...prev]);
+                setAiGeneratedImageUrl(null);
+                setShowAiImagePanel(false);
+                setAiImagePrompt('');
+            } else {
+                toast.error(data.error || 'Failed to save image', { id: toastId });
+            }
+        } catch {
+            toast.error('Failed to attach image', { id: toastId });
+        } finally {
+            setAttachingImage(false);
+        }
+    };
+
     const generateWithAI = async () => {
         if (!aiTopic.trim()) return toast.error('Describe your post topic first');
         setAiGenerating(true);
@@ -327,12 +457,26 @@ export default function SocialMediaComposer() {
                         <div>
                             <div className="flex items-center justify-between mb-1.5">
                                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Caption *</label>
-                                <button
-                                    onClick={() => setShowAiPanel(v => !v)}
-                                    className="flex items-center gap-1.5 px-2.5 py-1 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 text-violet-300 rounded-lg text-xs font-semibold transition-colors"
-                                >
-                                    <Sparkles className="w-3 h-3" /> AI Write
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={startVoiceInput}
+                                        title={isListening ? 'Stop recording' : 'Voice-type your caption (Chrome/Edge)'}
+                                        className={`flex items-center gap-1.5 px-2.5 py-1 border rounded-lg text-xs font-semibold transition-all ${
+                                            isListening
+                                                ? 'bg-red-500/20 border-red-500/40 text-red-400 animate-pulse'
+                                                : 'bg-slate-700/50 hover:bg-slate-700 border-slate-600 text-slate-400 hover:text-white'
+                                        }`}
+                                    >
+                                        {isListening ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
+                                        {isListening ? 'Stop' : 'Voice'}
+                                    </button>
+                                    <button
+                                        onClick={() => setShowAiPanel(v => !v)}
+                                        className="flex items-center gap-1.5 px-2.5 py-1 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 text-violet-300 rounded-lg text-xs font-semibold transition-colors"
+                                    >
+                                        <Sparkles className="w-3 h-3" /> AI Write
+                                    </button>
+                                </div>
                             </div>
 
                             {/* AI Panel */}
@@ -385,7 +529,7 @@ export default function SocialMediaComposer() {
                         <div>
                             <div className="flex items-center justify-between mb-2">
                                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Media (images / video)</label>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 flex-wrap">
                                     <button onClick={() => fileInputRef.current?.click()}
                                         disabled={uploading}
                                         className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-slate-700 hover:bg-slate-600 border border-slate-600 text-slate-300 rounded-lg transition-colors">
@@ -396,9 +540,101 @@ export default function SocialMediaComposer() {
                                         className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-slate-700 hover:bg-slate-600 border border-slate-600 text-slate-300 rounded-lg transition-colors">
                                         <ImageIcon className="w-3 h-3" /> Library
                                     </button>
+                                    <button
+                                        onClick={() => {
+                                            setShowAiImagePanel(v => !v);
+                                            if (showAiImagePanel) { setAiGeneratedImageUrl(null); setAiImagePrompt(''); }
+                                        }}
+                                        className={`flex items-center gap-1.5 text-xs px-3 py-1.5 border rounded-lg transition-all ${
+                                            showAiImagePanel
+                                                ? 'bg-pink-500/20 border-pink-500/40 text-pink-300'
+                                                : 'bg-slate-700 hover:bg-slate-600 border-slate-600 text-slate-300 hover:text-white'
+                                        }`}
+                                    >
+                                        <Wand2 className="w-3 h-3" /> AI Image
+                                    </button>
                                 </div>
                             </div>
                             <input ref={fileInputRef} type="file" multiple accept="image/*,video/*" onChange={handleFileUpload} className="hidden" />
+
+                            {/* AI Image Generator Panel */}
+                            {showAiImagePanel && (
+                                <div className="mt-3 p-4 bg-pink-500/5 border border-pink-500/20 rounded-xl space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <Wand2 className="w-4 h-4 text-pink-400" />
+                                        <p className="text-xs font-semibold text-pink-300">AI Image Generator (DALL-E 3)</p>
+                                        <span className="ml-auto text-[10px] text-slate-500 italic">Images are temporary unless attached</span>
+                                    </div>
+
+                                    <textarea
+                                        value={aiImagePrompt}
+                                        onChange={e => setAiImagePrompt(e.target.value)}
+                                        placeholder="Describe the image, e.g. 'A professional team meeting in a modern office, warm lighting, photorealistic'"
+                                        rows={2}
+                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-pink-500 text-sm resize-none"
+                                    />
+
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="text-xs text-slate-500">Size:</span>
+                                        {([['1024x1024', 'Square'], ['1792x1024', 'Landscape'], ['1024x1792', 'Portrait']] as const).map(([val, label]) => (
+                                            <button
+                                                key={val}
+                                                onClick={() => setAiImageSize(val)}
+                                                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                                                    aiImageSize === val
+                                                        ? 'bg-pink-500 text-white'
+                                                        : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
+                                                }`}
+                                            >
+                                                {label}
+                                            </button>
+                                        ))}
+                                        <button
+                                            onClick={generateAIImage}
+                                            disabled={aiImageGenerating || !aiImagePrompt.trim()}
+                                            className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-pink-600 hover:bg-pink-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-colors"
+                                        >
+                                            {aiImageGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
+                                            {aiImageGenerating ? 'Generating...' : 'Generate'}
+                                        </button>
+                                    </div>
+
+                                    {/* Generated Image Preview */}
+                                    {aiGeneratedImageUrl && (
+                                        <div className="relative rounded-xl overflow-hidden border border-pink-500/30 bg-slate-900">
+                                            <img
+                                                src={aiGeneratedImageUrl}
+                                                alt="AI Generated"
+                                                className="w-full max-h-64 object-contain"
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-3 gap-2">
+                                                <button
+                                                    onClick={attachAIGeneratedImage}
+                                                    disabled={attachingImage}
+                                                    className="flex items-center gap-2 px-3 py-2 bg-teal-500 hover:bg-teal-400 disabled:opacity-60 text-white rounded-lg text-xs font-bold transition-colors"
+                                                >
+                                                    {attachingImage ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+                                                    {attachingImage ? 'Attaching...' : 'Attach to Post'}
+                                                </button>
+                                                <button
+                                                    onClick={() => { setAiGeneratedImageUrl(null); setAiImagePrompt(''); }}
+                                                    className="flex items-center gap-1.5 px-3 py-2 bg-slate-700/80 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition-colors"
+                                                >
+                                                    <X className="w-3 h-3" /> Discard
+                                                </button>
+                                                <a
+                                                    href={aiGeneratedImageUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="ml-auto flex items-center gap-1.5 px-3 py-2 bg-slate-700/80 hover:bg-slate-700 text-slate-300 rounded-lg text-xs transition-colors"
+                                                >
+                                                    <Eye className="w-3 h-3" /> Full Size
+                                                </a>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {selectedMedia.length > 0 && (
                                 <div className="flex gap-2 flex-wrap mb-3">
