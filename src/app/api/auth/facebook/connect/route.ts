@@ -17,7 +17,6 @@ export async function GET(req: NextRequest) {
     const scopes = [
         'pages_show_list',
         'pages_read_engagement',
-        'pages_manage_posts',
         'leads_retrieval',
         'ads_management',
     ].join(',');
