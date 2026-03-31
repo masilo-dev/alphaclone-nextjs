@@ -80,7 +80,7 @@ body {
 .marketing-theme {
   font-family: var(--font-inter), sans-serif;
   font-weight: 400;
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1.6;
   letter-spacing: normal;
 }
@@ -88,7 +88,7 @@ body {
 .marketing-theme h1 {
   font-family: var(--font-inter), sans-serif;
   font-weight: 800;
-  font-size: clamp(2.25rem, 7vw, 4.5rem);
+  font-size: clamp(1.85rem, 6vw, 4rem);
   line-height: 1.05;
   letter-spacing: -0.03em;
 }
@@ -96,7 +96,7 @@ body {
 .marketing-theme h2 {
   font-family: var(--font-inter), sans-serif;
   font-weight: 700;
-  font-size: clamp(1.75rem, 5vw, 3.5rem);
+  font-size: clamp(1.5rem, 4vw, 3rem);
   line-height: 1.1;
   letter-spacing: -0.02em;
 }

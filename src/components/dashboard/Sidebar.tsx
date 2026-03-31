@@ -173,6 +173,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                     <Activity className="w-5 h-5" />
                                 </div>
                             )}
+                            {/* Voice & Help Removed Temporarily
                             <button 
                                 onClick={onToggleVoice}
                                 className={`p-2 rounded-xl transition-all ${isVoiceActive ? 'bg-red-500/20 text-red-400 animate-pulse' : 'text-slate-500 hover:text-white hover:bg-slate-800'}`}
@@ -187,12 +188,14 @@ const Sidebar = React.memo<SidebarProps>(({
                             >
                                 <HelpCircle className="w-5 h-5" />
                             </button>
+                            */}
                         </div>
                     )}
 
                     {/* Full Status/Actions (Open Layout) */}
                     {sidebarOpen && (
                         <div className="space-y-2 mb-4">
+                            {/* Voice & Help Removed Temporarily
                             <button
                                 onClick={onToggleVoice}
                                 className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all ${
@@ -217,6 +220,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                 </div>
                                 <span className="font-medium">Need Help?</span>
                             </button>
+                            */}
 
                             {activeBgTasksCount > 0 && (
                                 <div className="px-4 py-2.5 bg-teal-500/5 border border-teal-500/20 rounded-xl flex items-center gap-3">

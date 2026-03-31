@@ -108,11 +108,22 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                         </div>
                     </div>
 
-                    {/* Mobile Menu Button */}
-                    <div className="lg:hidden relative z-[10000] pointer-events-auto flex items-center h-full">
+                    {/* Mobile Menu Button and Early CTAs */}
+                    <div className="lg:hidden relative z-[10000] pointer-events-auto flex items-center gap-3 h-full">
+                        <Link
+                            href="/auth/login"
+                            className="text-sm font-semibold text-slate-300 hover:text-white transition-colors"
+                        >
+                            Login
+                        </Link>
+                        <Link href="/register">
+                            <Button size="sm" className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-3 py-1.5 h-auto text-xs shadow-lg shadow-teal-500/20">
+                                Start Free
+                            </Button>
+                        </Link>
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className={`p-2 rounded-lg border transition-all duration-300 ${isScrolled && !mobileMenuOpen
+                            className={`p-1.5 rounded-lg border transition-all duration-300 ml-1 ${isScrolled && !mobileMenuOpen
                                     ? 'bg-slate-950/80 backdrop-blur-md border-slate-700 text-white shadow-lg shadow-black/50'
                                     : 'bg-slate-900/50 border-slate-800 text-white hover:text-teal-400'
                                 }`}

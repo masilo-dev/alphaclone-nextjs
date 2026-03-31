@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import crypto from 'crypto';
 
 const VERIFY_TOKEN = process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN || 'alphaclone_fb_verify';
+const APP_SECRET = process.env.FACEBOOK_APP_SECRET || '';
 
 // Facebook webhook verification (GET)
 export async function GET(req: NextRequest) {
@@ -19,7 +21,36 @@ export async function GET(req: NextRequest) {
 // Facebook webhook events (POST)
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json();
+        const bodyText = await req.text();
+        const signatureHeader = req.headers.get('x-hub-signature-256');
+
+        if (APP_SECRET && signatureHeader) {
+            const signature = signatureHeader.replace('sha256=', '');
+            const expectedSignature = crypto
+                .createHmac('sha256', APP_SECRET)
+                .update(bodyText)
+                .digest('hex');
+
+            let isValid = false;
+            try {
+                isValid = crypto.timingSafeEqual(
+                    Buffer.from(signature.padEnd(64, '0'), 'hex'),
+                    Buffer.from(expectedSignature, 'hex')
+                );
+            } catch {
+                isValid = false;
+            }
+
+            if (!isValid) {
+                console.warn('[Facebook Leads Webhook] Rejected: invalid HMAC signature');
+                return new NextResponse('Unauthorized', { status: 401 });
+            }
+        } else if (APP_SECRET && !signatureHeader) {
+            console.warn('[Facebook Leads Webhook] Rejected: missing signature header');
+            return new NextResponse('Unauthorized', { status: 401 });
+        }
+
+        const body = JSON.parse(bodyText);
 
         if (body.object !== 'page') {
             return NextResponse.json({ status: 'ignored' });
