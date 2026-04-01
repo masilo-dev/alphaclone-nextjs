@@ -123,7 +123,7 @@ export default function WorkflowDashboard() {
         if (!wfRes.error) setWorkflows(wfRes.data || []);
         if (!execRes.error) setExecutions(execRes.data || []);
         setLoading(false);
-    }, [tenant?.id]);
+    }, [tenant]);
 
     useEffect(() => { loadData(); }, [loadData]);
 

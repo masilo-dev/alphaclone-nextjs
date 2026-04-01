@@ -32,28 +32,31 @@ export default function OmniLeadFinder() {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!niche || !location) return toast.error('Please enter a niche and location');
+    if (!niche) return toast.error('Please enter an industry or niche');
 
     setScanning(true);
     setResults([]);
-    setProgress({ step: 1, percent: 10, message: 'Initiating global directory scan...' });
+    setProgress({ step: 1, percent: 10, message: 'Initiating global acquisition engine...' });
 
     try {
-      // Step 1: Search directories
-      setProgress({ step: 1, percent: 30, message: `Accessing local indexes for ${niche} in ${location}...` });
+      // Step 1: Search directories & index
+      const locationPart = location ? ` in ${location}` : '';
+      const sizePart = size ? ` ${size} employees` : '';
+      const keywordPart = keywords ? ` ${keywords}` : '';
+      const query = `${niche}${locationPart}${sizePart}${keywordPart}`.trim();
+
+      setProgress({ step: 1, percent: 30, message: `Deploying scanners for ${niche}${locationPart}...` });
       
       const searchRes = await fetch('/api/scraper/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          query: `${niche} in ${location} ${size ? size + ' employees' : ''} ${keywords ? keywords : ''}`.trim()
-        })
+        body: JSON.stringify({ query })
       });
       
       const searchData = await searchRes.json();
       
-      if (!searchData.success || !searchData.results.length) {
-        throw new Error('No businesses found. Try a broader search area.');
+      if (!searchData.success || !searchData.results?.length) {
+        throw new Error(searchData.error || 'Search engine returned zero matches for this specific configuration. Try removing location or keyword constraints.');
       }
 
       const initialLeads: ScrapedLead[] = searchData.results.map((r: any) => ({
@@ -213,7 +216,7 @@ export default function OmniLeadFinder() {
           </div>
           <button 
             type="submit" 
-            disabled={scanning || !niche || !location}
+            disabled={scanning || !niche}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 mt-1 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-medium text-sm rounded-lg transition-all shadow-[0_0_15px_rgba(20,184,166,0.3)] hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-[1px]"
           >
             {scanning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}

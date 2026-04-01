@@ -1,4 +1,16 @@
 # Update Log
+
+## Date: 2026-04-01
+
+### Changed
+- `src/services/workflowService.ts` (Refactored to support normalized Header-Detail schema with `getWorkflowById` implementation)
+- `src/components/dashboard/workflows/AutomationBuilder.tsx` (Implemented workflow loading/restoration from `trigger_conditions` and added sequence management controls)
+- `src/app/api/scraper/search/route.ts` (Relaxed search filters to broaden lead generation capabilities for technical niches)
+- `src/components/leads/OmniLeadFinder.tsx` (Optimized search query construction and enhanced UI flexibility for niche-based extraction)
+
+### Database
+- Updated `workflow_action_type` enum to support 14 new automation action types including AI and Zoho CRM integrations.
+
 ## Date: 2026-03-30
 
 ### Changed

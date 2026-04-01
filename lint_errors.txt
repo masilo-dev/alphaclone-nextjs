@@ -1,0 +1,4 @@
+﻿
+> alphaclone-nextjs@0.1.0 lint
+> eslint --quiet --max-warnings=0
+

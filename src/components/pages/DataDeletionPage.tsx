@@ -19,12 +19,6 @@ function DataDeletionContent() {
     const [statusCheck, setStatusCheck] = useState<{ status: string; source?: string; created_at?: string; processed_at?: string } | null>(null);
     const [loadingStatus, setLoadingStatus] = useState(false);
 
-    useEffect(() => {
-        if (codeFromUrl) {
-            checkStatus(codeFromUrl);
-        }
-    }, [codeFromUrl]);
-
     const checkStatus = async (code: string) => {
         setLoadingStatus(true);
         const res = await fetch(`/api/data-deletion?code=${code}`);
@@ -32,6 +26,12 @@ function DataDeletionContent() {
         if (data.request) setStatusCheck(data.request);
         setLoadingStatus(false);
     };
+
+    useEffect(() => {
+        if (codeFromUrl) {
+            checkStatus(codeFromUrl);
+        }
+    }, [codeFromUrl]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

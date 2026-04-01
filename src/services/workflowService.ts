@@ -2,73 +2,159 @@ import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
 
 export interface WorkflowStep {
-    id: string;
-    type: 'trigger' | 'condition' | 'action' | 'delay';
-    name: string;
-    config: Record<string, any>;
+    id?: string;
+    workflow_id?: string;
+    action_type: string;
+    action_order: number;
+    action_config: any;
+    delay_minutes?: number;
+    is_active?: boolean;
+    tenant_id?: string;
+    // UI temporary fields
+    name?: string;
+    type?: 'trigger' | 'condition' | 'action' | 'delay';
+    config?: any;
     nextStepId?: string;
-    condition?: {
-        field: string;
-        operator: 'equals' | 'contains' | 'greater_than' | 'less_than';
-        value: any;
-    };
 }
 
 export interface Workflow {
     id: string;
     name: string;
     description?: string;
-    enabled: boolean;
-    trigger: {
-        type: 'project_created' | 'message_received' | 'invoice_paid' | 'status_changed' | 'manual';
-        config: Record<string, any>;
-    };
-    steps: WorkflowStep[];
-    createdBy: string;
-    createdAt: string;
-    updatedAt: string;
+    trigger_type: string;
+    trigger_conditions?: any;
+    is_active: boolean;
+    created_by: string;
+    tenant_id: string;
+    metadata?: any;
+    created_at?: string;
+    updated_at?: string;
+    version?: number;
+    is_template?: boolean;
+    steps?: WorkflowStep[];
 }
 
 export const workflowService = {
     /**
      * Create a new workflow
      */
-    async createWorkflow(workflow: Omit<Workflow, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ workflow: Workflow | null; error: string | null }> {
+    async createWorkflow(workflow: Partial<Workflow>): Promise<{ workflow: Workflow | null; error: string | null }> {
         try {
-            const { data, error } = await supabase
+            const tid = tenantService.getCurrentTenantId();
+            if (!tid) throw new Error('No active tenant found');
+
+            // 1. Insert Workflow Header
+            const { data: workflowData, error: workflowError } = await supabase
                 .from('workflows')
                 .insert({
                     name: workflow.name,
                     description: workflow.description,
-                    enabled: workflow.enabled,
-                    trigger: workflow.trigger,
-                    steps: workflow.steps,
-                    created_by: workflow.createdBy,
-                    tenant_id: tenantService.getCurrentTenantId(),
+                    trigger_type: workflow.trigger_type || 'manual_trigger',
+                    trigger_conditions: workflow.trigger_conditions || {},
+                    is_active: workflow.is_active ?? true,
+                    created_by: workflow.created_by,
+                    tenant_id: tid,
+                    metadata: workflow.metadata || {},
                 })
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (workflowError) throw workflowError;
+
+            // 2. Insert Workflow Actions (Steps)
+            if (workflow.steps && workflow.steps.length > 0) {
+                const actionsToInsert = workflow.steps.map((step, index) => ({
+                    workflow_id: workflowData.id,
+                    action_type: step.action_type || 'webhook',
+                    action_order: index,
+                    action_config: step.action_config || step.config || {},
+                    delay_minutes: step.delay_minutes || 0,
+                    is_active: true,
+                    tenant_id: tid,
+                }));
+
+                const { error: actionsError } = await supabase
+                    .from('workflow_actions')
+                    .insert(actionsToInsert);
+
+                if (actionsError) {
+                    console.error('Failed to insert workflow actions:', actionsError);
+                }
+            }
 
             return {
-                workflow: {
-                    id: data.id,
-                    name: data.name,
-                    description: data.description,
-                    enabled: data.enabled,
-                    trigger: data.trigger,
-                    steps: data.steps,
-                    createdBy: data.created_by,
-                    createdAt: data.created_at,
-                    updatedAt: data.updated_at,
-                },
+                workflow: workflowData as Workflow,
                 error: null,
             };
         } catch (error) {
+            console.error('Workflow creation error:', error);
             return {
                 workflow: null,
                 error: error instanceof Error ? error.message : 'Failed to create workflow',
+            };
+        }
+    },
+
+    /**
+     * Update an existing workflow
+     */
+    async updateWorkflow(id: string, workflow: Partial<Workflow>): Promise<{ success: boolean; error: string | null }> {
+        try {
+            const tid = tenantService.getCurrentTenantId();
+            if (!tid) throw new Error('No active tenant found');
+
+            // 1. Update Workflow Header
+            const { error: workflowError } = await supabase
+                .from('workflows')
+                .update({
+                    name: workflow.name,
+                    description: workflow.description,
+                    trigger_type: workflow.trigger_type,
+                    trigger_conditions: workflow.trigger_conditions,
+                    is_active: workflow.is_active,
+                    metadata: workflow.metadata,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', id)
+                .eq('tenant_id', tid);
+
+            if (workflowError) throw workflowError;
+
+            // 2. Update Actions (Delete and Re-insert is often easiest for complex builders)
+            if (workflow.steps) {
+                // Delete old actions
+                await supabase
+                    .from('workflow_actions')
+                    .delete()
+                    .eq('workflow_id', id)
+                    .eq('tenant_id', tid);
+
+                // Insert new actions
+                if (workflow.steps.length > 0) {
+                    const actionsToInsert = workflow.steps.map((step, index) => ({
+                        workflow_id: id,
+                        action_type: step.action_type || (step as any).type || 'webhook',
+                        action_order: index,
+                        action_config: step.action_config || (step as any).config || {},
+                        delay_minutes: step.delay_minutes || 0,
+                        is_active: true,
+                        tenant_id: tid,
+                    }));
+
+                    const { error: actionsError } = await supabase
+                        .from('workflow_actions')
+                        .insert(actionsToInsert);
+
+                    if (actionsError) throw actionsError;
+                }
+            }
+
+            return { success: true, error: null };
+        } catch (error) {
+            console.error('Workflow update error:', error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to update workflow',
             };
         }
     },
@@ -78,26 +164,22 @@ export const workflowService = {
      */
     async getWorkflows(userId: string): Promise<{ workflows: Workflow[]; error: string | null }> {
         try {
+            const tid = tenantService.getCurrentTenantId();
+            if (!tid) throw new Error('No active tenant found');
+
             const { data, error } = await supabase
                 .from('workflows')
-                .select('*')
+                .select('*, workflow_actions(*)')
                 .eq('created_by', userId)
-                .eq('tenant_id', tenantService.getCurrentTenantId())
+                .eq('tenant_id', tid)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
 
             return {
                 workflows: (data || []).map((w: any) => ({
-                    id: w.id,
-                    name: w.name,
-                    description: w.description,
-                    enabled: w.enabled,
-                    trigger: w.trigger,
-                    steps: w.steps,
-                    createdBy: w.created_by,
-                    createdAt: w.created_at,
-                    updatedAt: w.updated_at,
+                    ...w,
+                    steps: (w.workflow_actions || []).sort((a: any, b: any) => a.action_order - b.action_order)
                 })),
                 error: null,
             };
@@ -110,41 +192,66 @@ export const workflowService = {
     },
 
     /**
+     * Get a single workflow by ID
+     */
+    async getWorkflowById(id: string): Promise<{ workflow: Workflow | null; error: string | null }> {
+        try {
+            const tid = tenantService.getCurrentTenantId();
+            if (!tid) throw new Error('No active tenant found');
+
+            const { data, error } = await supabase
+                .from('workflows')
+                .select('*, workflow_actions(*)')
+                .eq('id', id)
+                .eq('tenant_id', tid)
+                .single();
+
+            if (error) throw error;
+            if (!data) throw new Error('Workflow not found');
+
+            return {
+                workflow: {
+                    ...data,
+                    steps: (data.workflow_actions || []).sort((a: any, b: any) => a.action_order - b.action_order)
+                } as Workflow,
+                error: null,
+            };
+        } catch (error) {
+            console.error('Fetch workflow error:', error);
+            return {
+                workflow: null,
+                error: error instanceof Error ? error.message : 'Failed to fetch workflow',
+            };
+        }
+    },
+
+    /**
      * Execute a workflow
      */
     async executeWorkflow(workflowId: string, context: Record<string, any>): Promise<{ success: boolean; error: string | null }> {
         try {
             const { data: workflow, error: fetchError } = await supabase
                 .from('workflows')
-                .select('*')
+                .select('*, workflow_actions(*)')
                 .eq('id', workflowId)
                 .eq('tenant_id', tenantService.getCurrentTenantId())
-                .eq('enabled', true)
+                .eq('is_active', true)
                 .single();
 
             if (fetchError || !workflow) {
                 return { success: false, error: 'Workflow not found or disabled' };
             }
 
-            // Execute steps in order
-            let currentStep = workflow.steps.find((s: WorkflowStep) => s.type === 'trigger');
-            if (!currentStep) {
-                return { success: false, error: 'Workflow has no trigger step' };
+            const steps = (workflow.workflow_actions || []).sort((a: any, b: any) => a.action_order - b.action_order);
+            if (steps.length === 0) {
+                return { success: false, error: 'Workflow has no steps' };
             }
 
-            while (currentStep) {
-                // Execute step
-                const stepResult = await this.executeStep(currentStep, context);
-
+            // Execute steps in order
+            for (const step of steps) {
+                const stepResult = await this.executeStep(step, context);
                 if (!stepResult.success) {
                     return { success: false, error: stepResult.error || 'Step execution failed' };
-                }
-
-                // Move to next step
-                if (currentStep.nextStepId) {
-                    currentStep = workflow.steps.find((s: WorkflowStep) => s.id === currentStep.nextStepId);
-                } else {
-                    break;
                 }
             }
 
@@ -171,16 +278,16 @@ export const workflowService = {
      */
     async executeStep(step: WorkflowStep, context: Record<string, any>): Promise<{ success: boolean; error: string | null }> {
         try {
-            switch (step.type) {
-                case 'action':
-                    return await this.executeAction(step, context);
-                case 'condition':
-                    return await this.executeCondition(step, context);
-                case 'delay':
-                    return await this.executeDelay(step, context);
-                default:
-                    return { success: true, error: null };
+            const type = step.action_type;
+            if (type === 'wait') {
+                return await this.executeDelay(step, context);
             }
+            if (type === 'condition') {
+                return await this.executeCondition(step, context);
+            }
+            
+            // For now, most things are actions
+            return await this.executeAction(step, context);
         } catch (error) {
             return {
                 success: false,
@@ -193,25 +300,26 @@ export const workflowService = {
      * Execute an action step
      */
     async executeAction(step: WorkflowStep, context: Record<string, any>): Promise<{ success: boolean; error: string | null }> {
-        const actionType = step.config.type;
+        const actionType = step.action_type;
+        const config = step.action_config || {};
 
         switch (actionType) {
             case 'send_message':
                 // Send message via messageService
                 const { messageService } = await import('./messageService');
                 await messageService.sendMessage(
-                    context.userId || step.config.senderId,
-                    step.config.recipientId,
-                    step.config.message,
-                    step.config.priority || 'normal'
+                    context.userId || config.senderId,
+                    config.recipientId,
+                    config.message,
+                    config.priority || 'normal'
                 );
                 return { success: true, error: null };
 
             case 'update_project':
                 // Update project status
                 const { projectService } = await import('./projectService');
-                await projectService.updateProject(step.config.projectId, {
-                    status: step.config.status,
+                await projectService.updateProject(config.projectId, {
+                    status: config.status,
                 });
                 return { success: true, error: null };
 
@@ -220,9 +328,9 @@ export const workflowService = {
                 const { paymentService } = await import('./paymentService');
                 await paymentService.createInvoice({
                     user_id: context.userId,
-                    project_id: step.config.projectId,
-                    amount: step.config.amount,
-                    description: step.config.description,
+                    project_id: config.projectId,
+                    amount: config.amount,
+                    description: config.description,
                     currency: 'USD',
                     due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
                     items: [],
@@ -235,35 +343,35 @@ export const workflowService = {
             // ── ZOHO CRM ──────────────────────────────────────
             case 'zoho_create_lead':
                 await supabase.from('leads').insert({
-                    name: step.config.lastName || context.leadName || 'Unknown',
-                    company: step.config.company || context.company || 'Unknown',
-                    email: step.config.email || context.email,
-                    phone: step.config.phone || context.phone,
-                    source: step.config.source || 'Workflow Automation',
-                    notes: step.config.description || `Created by workflow`,
+                    name: config.lastName || context.leadName || 'Unknown',
+                    company: config.company || context.company || 'Unknown',
+                    email: config.email || context.email,
+                    phone: config.phone || context.phone,
+                    source: config.source || 'Workflow Automation',
+                    notes: config.description || `Created by workflow`,
                     tenant_id: context.tenantId || tenantService.getCurrentTenantId(),
                     status: 'new',
                 });
                 return { success: true, error: null };
 
             case 'zoho_update_deal':
-                if (step.config.dealId || context.dealId) {
+                if (config.dealId || context.dealId) {
                     await supabase.from('deals').update({
-                        stage: step.config.stage || context.dealStage,
-                        amount: step.config.amount || context.dealAmount,
-                        closing_date: step.config.closingDate || context.closingDate,
-                    }).eq('id', step.config.dealId || context.dealId)
+                        stage: config.stage || context.dealStage,
+                        amount: config.amount || context.dealAmount,
+                        closing_date: config.closingDate || context.closingDate,
+                    }).eq('id', config.dealId || context.dealId)
                       .eq('tenant_id', context.tenantId || tenantService.getCurrentTenantId());
                 }
                 return { success: true, error: null };
 
             case 'zoho_create_contact':
                 await supabase.from('contacts').insert({
-                    first_name: step.config.firstName || context.firstName,
-                    last_name: step.config.lastName || context.lastName,
-                    email: step.config.email || context.email,
-                    phone: step.config.phone || context.phone,
-                    company: step.config.company || context.company,
+                    first_name: config.firstName || context.firstName,
+                    last_name: config.lastName || context.lastName,
+                    email: config.email || context.email,
+                    phone: config.phone || context.phone,
+                    company: config.company || context.company,
                     tenant_id: context.tenantId || tenantService.getCurrentTenantId(),
                 });
                 return { success: true, error: null };
@@ -284,11 +392,11 @@ export const workflowService = {
                 try {
                     const { generateText } = await import('./unifiedAIService');
                     const result = await generateText(
-                        `You are a professional business email writer. Draft a professional ${step.config.tone || 'friendly'} email to ${step.config.recipientName || context.contactName || 'the client'} about: ${step.config.topic || context.topic || 'follow-up'}. Keep it concise.`,
+                        `You are a professional business email writer. Draft a professional ${config.tone || 'friendly'} email to ${config.recipientName || context.contactName || 'the client'} about: ${config.topic || context.topic || 'follow-up'}. Keep it concise.`,
                         2048
                     );
                     context.emailDraft = result.text || '';
-                    context.emailSubject = step.config.subject || `Follow-up: ${step.config.topic || ''}`;
+                    context.emailSubject = config.subject || `Follow-up: ${config.topic || ''}`;
                     return { success: true, error: null };
                 } catch {
                     return { success: true, error: null };
@@ -299,7 +407,7 @@ export const workflowService = {
                 try {
                     const { generateText } = await import('./unifiedAIService');
                     const result = await generateText(
-                        `You are a legal document assistant. Generate a ${step.config.contractType || 'service'} contract for ${step.config.clientName || context.clientName || 'the client'}. Include: scope of work, payment terms ($${step.config.amount || context.amount || '0'}), timeline, and standard clauses.`,
+                        `You are a legal document assistant. Generate a ${config.contractType || 'service'} contract for ${config.clientName || context.clientName || 'the client'}. Include: scope of work, payment terms ($${config.amount || context.amount || '0'}), timeline, and standard clauses.`,
                         4096
                     );
                     context.contractContent = result.text || '';
@@ -313,13 +421,13 @@ export const workflowService = {
             case 'create_contract': {
                 const { contractService } = await import('./contractService');
                 const { contract, error: cErr } = await contractService.createContract({
-                    title: step.config.title || context.contractTitle || 'Auto-generated Contract',
-                    content: step.config.content || context.contractContent || '',
-                    project_id: step.config.projectId || context.projectId,
-                    client_id: step.config.clientId || context.clientId,
+                    title: config.title || context.contractTitle || 'Auto-generated Contract',
+                    content: config.content || context.contractContent || '',
+                    project_id: config.projectId || context.projectId,
+                    client_id: config.clientId || context.clientId,
                     status: 'draft',
-                    payment_amount: step.config.amount || context.amount,
-                    payment_due_date: step.config.dueDate || new Date(Date.now() + 30 * 86400000).toISOString(),
+                    payment_amount: config.amount || context.amount,
+                    payment_due_date: config.dueDate || new Date(Date.now() + 30 * 86400000).toISOString(),
                 });
                 if (cErr) return { success: false, error: String(cErr) };
                 context.contractId = contract?.id;
@@ -332,21 +440,21 @@ export const workflowService = {
                 const invoiceNum = `INV-${Date.now().toString(36).toUpperCase()}`;
                 const { error: invErr } = await supabase.from('business_invoices').insert({
                     tenant_id: tid,
-                    client_id: step.config.clientId || context.clientId,
-                    project_id: step.config.projectId || context.projectId,
+                    client_id: config.clientId || context.clientId,
+                    project_id: config.projectId || context.projectId,
                     invoice_number: invoiceNum,
                     issue_date: new Date().toISOString(),
-                    due_date: step.config.dueDate || new Date(Date.now() + 30 * 86400000).toISOString(),
+                    due_date: config.dueDate || new Date(Date.now() + 30 * 86400000).toISOString(),
                     status: 'draft',
-                    subtotal: step.config.amount || context.amount || 0,
-                    tax_rate: step.config.taxRate || 0,
-                    tax: (step.config.amount || 0) * ((step.config.taxRate || 0) / 100),
-                    discount_amount: step.config.discount || 0,
-                    total: step.config.amount || context.amount || 0,
-                    line_items: step.config.lineItems || context.lineItems || [
-                        { description: step.config.description || 'Service', quantity: 1, rate: step.config.amount || 0, amount: step.config.amount || 0 }
+                    subtotal: config.amount || context.amount || 0,
+                    tax_rate: config.taxRate || 0,
+                    tax: (config.amount || 0) * ((config.taxRate || 0) / 100),
+                    discount_amount: config.discount || 0,
+                    total: config.amount || context.amount || 0,
+                    line_items: config.lineItems || context.lineItems || [
+                        { description: config.description || 'Service', quantity: 1, rate: config.amount || 0, amount: config.amount || 0 }
                     ],
-                    notes: step.config.notes || '',
+                    notes: config.notes || '',
                     is_public: false,
                 });
                 if (invErr) return { success: false, error: invErr.message };
@@ -361,20 +469,20 @@ export const workflowService = {
                 const { error: qErr } = await supabase.from('quotes').insert({
                     tenant_id: tid,
                     quote_number: quoteNum,
-                    name: step.config.name || context.quoteName || 'Auto-generated Quote',
-                    contact_id: step.config.contactId || context.contactId,
-                    deal_id: step.config.dealId || context.dealId,
+                    name: config.name || context.quoteName || 'Auto-generated Quote',
+                    contact_id: config.contactId || context.contactId,
+                    deal_id: config.dealId || context.dealId,
                     status: 'draft',
-                    subtotal: step.config.amount || context.amount || 0,
-                    discount_amount: step.config.discount || 0,
-                    discount_percent: step.config.discountPercent || 0,
-                    tax_amount: (step.config.amount || 0) * ((step.config.taxPercent || 0) / 100),
-                    tax_percent: step.config.taxPercent || 0,
-                    total_amount: step.config.amount || context.amount || 0,
-                    currency: step.config.currency || 'USD',
-                    valid_until: step.config.validUntil || new Date(Date.now() + 30 * 86400000).toISOString(),
-                    notes: step.config.notes || '',
-                    terms_and_conditions: step.config.terms || 'Standard terms apply.',
+                    subtotal: config.amount || context.amount || 0,
+                    discount_amount: config.discount || 0,
+                    discount_percent: config.discountPercent || 0,
+                    tax_amount: (config.amount || 0) * ((config.taxPercent || 0) / 100),
+                    tax_percent: config.taxPercent || 0,
+                    total_amount: config.amount || context.amount || 0,
+                    currency: config.currency || 'USD',
+                    valid_until: config.validUntil || new Date(Date.now() + 30 * 86400000).toISOString(),
+                    notes: config.notes || '',
+                    terms_and_conditions: config.terms || 'Standard terms apply.',
                     created_by: context.userId,
                 });
                 if (qErr) return { success: false, error: qErr.message };
@@ -387,14 +495,14 @@ export const workflowService = {
                 const tid = context.tenantId || tenantService.getCurrentTenantId();
                 const { error: campErr } = await supabase.from('email_campaigns').insert({
                     tenant_id: tid,
-                    name: step.config.campaignName || context.campaignName || 'Automated Campaign',
-                    subject: step.config.subject || context.emailSubject || 'Important Update',
-                    template_id: step.config.templateId || context.templateId,
-                    from_name: step.config.fromName || 'AlphaClone',
-                    from_email: step.config.fromEmail || context.fromEmail || 'noreply@alphaclone.com',
-                    status: step.config.scheduleAt ? 'scheduled' : 'draft',
-                    scheduled_at: step.config.scheduleAt,
-                    segment_filter: step.config.segmentFilter || context.segmentFilter || {},
+                    name: config.campaignName || context.campaignName || 'Automated Campaign',
+                    subject: config.subject || context.emailSubject || 'Important Update',
+                    template_id: config.templateId || context.templateId,
+                    from_name: config.fromName || 'AlphaClone',
+                    from_email: config.fromEmail || context.fromEmail || 'noreply@alphaclone.com',
+                    status: config.scheduleAt ? 'scheduled' : 'draft',
+                    scheduled_at: config.scheduleAt,
+                    segment_filter: config.segmentFilter || context.segmentFilter || {},
                     total_recipients: 0,
                     total_sent: 0,
                     total_delivered: 0,
@@ -412,16 +520,16 @@ export const workflowService = {
             case 'create_task': {
                 const { taskService } = await import('./taskService');
                 const { error: tErr } = await taskService.createTask(context.userId, {
-                    title: step.config.title || context.taskTitle || 'Auto-created Task',
-                    description: step.config.description || context.taskDescription || '',
-                    assignedTo: step.config.assignedTo || context.userId,
-                    priority: step.config.priority || 'medium',
+                    title: config.title || context.taskTitle || 'Auto-created Task',
+                    description: config.description || context.taskDescription || '',
+                    assignedTo: config.assignedTo || context.userId,
+                    priority: config.priority || 'medium',
                     status: 'todo',
-                    dueDate: step.config.dueDate || new Date(Date.now() + 7 * 86400000).toISOString(),
-                    relatedToProject: step.config.projectId || context.projectId,
-                    relatedToDeal: step.config.dealId || context.dealId,
-                    relatedToLead: step.config.leadId || context.leadId,
-                    tags: step.config.tags || [],
+                    dueDate: config.dueDate || new Date(Date.now() + 7 * 86400000).toISOString(),
+                    relatedToProject: config.projectId || context.projectId,
+                    relatedToDeal: config.dealId || context.dealId,
+                    relatedToLead: config.leadId || context.leadId,
+                    tags: config.tags || [],
                 });
                 if (tErr) return { success: false, error: tErr };
                 return { success: true, error: null };
@@ -430,11 +538,11 @@ export const workflowService = {
             // ── NOTIFICATIONS ─────────────────────────────────
             case 'send_notification': {
                 await supabase.from('notifications').insert({
-                    user_id: step.config.recipientId || context.userId,
+                    user_id: config.recipientId || context.userId,
                     tenant_id: context.tenantId || tenantService.getCurrentTenantId(),
-                    title: step.config.title || 'Workflow Notification',
-                    message: step.config.message || context.notificationMessage || 'A workflow completed.',
-                    type: step.config.notificationType || 'info',
+                    title: config.title || 'Workflow Notification',
+                    message: config.message || context.notificationMessage || 'A workflow completed.',
+                    type: config.notificationType || 'info',
                     read: false,
                     created_at: new Date().toISOString(),
                 });
@@ -448,9 +556,9 @@ export const workflowService = {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            title: step.config.title || 'Automated Meeting',
-                            duration: step.config.duration || 30,
-                            participants: step.config.participants || [context.email],
+                            title: config.title || 'Automated Meeting',
+                            duration: config.duration || 30,
+                            participants: config.participants || [context.email],
                         }),
                     });
                 } catch { /* meeting API optional */ }
@@ -459,10 +567,10 @@ export const workflowService = {
 
             // ── UPDATE PROJECT STATUS ─────────────────────────
             case 'update_project_status': {
-                if (step.config.projectId || context.projectId) {
+                if (config.projectId || context.projectId) {
                     await supabase.from('projects').update({
-                        status: step.config.status || context.newStatus || 'in_progress',
-                    }).eq('id', step.config.projectId || context.projectId)
+                        status: config.status || context.newStatus || 'in_progress',
+                    }).eq('id', config.projectId || context.projectId)
                       .eq('tenant_id', context.tenantId || tenantService.getCurrentTenantId());
                 }
                 return { success: true, error: null };
@@ -477,14 +585,15 @@ export const workflowService = {
      * Send email via Gmail API
      */
     async executeSendEmail(step: WorkflowStep, context: Record<string, any>): Promise<{ success: boolean; error: string | null }> {
+        const config = step.action_config || {};
         try {
             const res = await fetch(`/api/gmail/messages/send?userId=${context.userId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    to: step.config.to || context.email,
-                    subject: step.config.subject || context.emailSubject || 'Notification',
-                    messageBody: step.config.body || context.emailDraft || context.emailBody || '',
+                    to: config.to || context.email,
+                    subject: config.subject || context.emailSubject || 'Notification',
+                    messageBody: config.body || context.emailDraft || context.emailBody || '',
                 }),
             });
             if (!res.ok) return { success: false, error: 'Email send failed' };
@@ -498,16 +607,17 @@ export const workflowService = {
      * Send email via Zoho Mail
      */
     async executeZohoMail(step: WorkflowStep, context: Record<string, any>): Promise<{ success: boolean; error: string | null }> {
+        const config = step.action_config || {};
         try {
             const res = await fetch('/api/zoho/mail?action=send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    toAddress: step.config.to || context.email,
-                    subject: step.config.subject || context.emailSubject || 'Notification',
-                    content: step.config.body || context.emailDraft || '',
-                    ccAddress: step.config.cc,
-                    bccAddress: step.config.bcc,
+                    toAddress: config.to || context.email,
+                    subject: config.subject || context.emailSubject || 'Notification',
+                    content: config.body || context.emailDraft || '',
+                    ccAddress: config.cc,
+                    bccAddress: config.bcc,
                 }),
             });
             if (!res.ok) return { success: false, error: 'Zoho Mail send failed' };
@@ -521,25 +631,26 @@ export const workflowService = {
      * Execute a condition step
      */
     async executeCondition(step: WorkflowStep, context: Record<string, any>): Promise<{ success: boolean; error: string | null }> {
-        if (!step.condition) {
+        const config = step.action_config || {};
+        if (!config.condition) {
             return { success: true, error: null };
         }
 
-        const fieldValue = context[step.condition.field];
+        const fieldValue = context[config.condition.field];
         let conditionMet = false;
 
-        switch (step.condition.operator) {
+        switch (config.condition.operator) {
             case 'equals':
-                conditionMet = fieldValue === step.condition.value;
+                conditionMet = fieldValue === config.condition.value;
                 break;
             case 'contains':
-                conditionMet = String(fieldValue).includes(String(step.condition.value));
+                conditionMet = String(fieldValue).includes(String(config.condition.value));
                 break;
             case 'greater_than':
-                conditionMet = Number(fieldValue) > Number(step.condition.value);
+                conditionMet = Number(fieldValue) > Number(config.condition.value);
                 break;
             case 'less_than':
-                conditionMet = Number(fieldValue) < Number(step.condition.value);
+                conditionMet = Number(fieldValue) < Number(config.condition.value);
                 break;
         }
 

@@ -8,7 +8,7 @@ const HEADERS = {
   'Accept-Language': 'en-US,en;q=0.9',
 };
 
-const EXCLUDED = ['duckduckgo', 'yelp.', 'yellowpages.', 'facebook.', 'instagram.', 'twitter.', 'linkedin.', 'wikipedia.', 'bing.com', 'google.com'];
+const EXCLUDED = ['duckduckgo', 'yelp.', 'yellowpages.', 'bing.com', 'google.com', 'search?'];
 const isValidUrl = (url: string) => url?.startsWith('http') && !EXCLUDED.some(ex => url.includes(ex));
 const cleanTitle = (t: string) => t.replace(/[|–-].*/, '').trim();
 

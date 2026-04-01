@@ -71,7 +71,7 @@ export default function IngestionPanel() {
             .limit(100);
         if (!error) setEvents(data || []);
         setLoading(false);
-    }, [tenant?.id]);
+    }, [tenant]);
 
     useEffect(() => { loadEvents(); }, [loadEvents]);
 

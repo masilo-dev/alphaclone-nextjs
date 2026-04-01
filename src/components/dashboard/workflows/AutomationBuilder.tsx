@@ -15,9 +15,9 @@ import {
   Panel
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Zap, Mail, Plus, Play, Save, Settings, Loader2 } from 'lucide-react';
+import { Zap, Mail, Plus, Play, Save, Settings, Loader2, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { workflowService } from '../../../services/workflowService';
+import { workflowService, Workflow } from '../../../services/workflowService';
 import { useTenant } from '../../../contexts/TenantContext';
 import { supabase } from '../../../lib/supabase';
 
@@ -97,12 +97,80 @@ export default function AutomationBuilder() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [saving, setSaving] = useState(false);
   const [executing, setExecuting] = useState(false);
+  const [savedWorkflows, setSavedWorkflows] = useState<Workflow[]>([]);
+  const [showLoadMenu, setShowLoadMenu] = useState(false);
+
+  const fetchWorkflows = useCallback(async (uid: string) => {
+    if (!uid) return;
+    const { workflows, error } = await workflowService.getWorkflows(uid);
+    if (!error) setSavedWorkflows(workflows);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then((res: any) => {
-      if (res.data.user) setUserId(res.data.user.id);
+      if (res.data.user) {
+        setUserId(res.data.user.id);
+        fetchWorkflows(res.data.user.id);
+      }
     });
-  }, []);
+  }, [fetchWorkflows]);
+
+  const handleNew = () => {
+    setWorkflowId(null);
+    setWorkflowName('New Sequence');
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+    toast.success('Started new workflow');
+  };
+
+  const loadWorkflow = (wf: Workflow) => {
+    setWorkflowId(wf.id);
+    setWorkflowName(wf.name);
+    
+    // Restore nodes and edges from trigger_conditions (UI state)
+    if (wf.trigger_conditions && wf.trigger_conditions.nodes) {
+      setNodes(wf.trigger_conditions.nodes);
+      setEdges(wf.trigger_conditions.edges || []);
+    } else if (wf.steps) {
+      // Fallback: Reconstruct simple vertical layout from steps
+      const reconstructedNodes: Node[] = [
+        { 
+          id: 'trigger-1', 
+          type: 'triggerNode', 
+          position: { x: 250, y: 50 }, 
+          data: { label: wf.trigger_type || 'Manual Trigger', description: 'Restored from data structure' } 
+        }
+      ];
+      const reconstructedEdges: Edge[] = [];
+      
+      wf.steps.forEach((step, idx) => {
+        const id = `action-${idx}`;
+        reconstructedNodes.push({
+          id,
+          type: 'actionNode',
+          position: { x: 250, y: 200 + (idx * 150) },
+          data: { 
+            label: step.action_type, 
+            description: `Order: ${step.action_order}`,
+            actionType: step.action_type,
+            type: (step.action_config as any)?.type || 'ops'
+          }
+        });
+        reconstructedEdges.push({
+          id: `e-${idx}`,
+          source: idx === 0 ? 'trigger-1' : `action-${idx - 1}`,
+          target: id,
+          animated: true,
+          style: { stroke: '#0d9488', strokeWidth: 2 }
+        });
+      });
+      setNodes(reconstructedNodes);
+      setEdges(reconstructedEdges);
+    }
+    
+    setShowLoadMenu(false);
+    toast.success(`Loaded ${wf.name}`);
+  };
 
   const onConnect = useCallback(
     (params: Connection | Edge) => setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: '#0d9488', strokeWidth: 2 } } as Edge, eds)),
@@ -117,47 +185,42 @@ export default function AutomationBuilder() {
 
     setSaving(true);
     try {
-      // Convert ReactFlow nodes/edges to workflow steps
-      const steps = nodes.map((node, index) => ({
-        id: node.id,
-        type: (node.type === 'triggerNode' ? 'trigger' : 'action') as "trigger" | "action",
-        name: node.data.label as string,
-        config: {
-          type: node.type === 'triggerNode' ? 'lead_captured' : (node.data.actionType as string || 'send_email'),
-          description: node.data.description as string,
+      // Find trigger node
+      const triggerNode = nodes.find(n => n.type === 'triggerNode');
+      
+      // Convert ReactFlow nodes to workflow actions 
+      // (We store the full graph in trigger_conditions/metadata for UI restoration)
+      const actionNodes = nodes.filter(n => n.type !== 'triggerNode');
+      const steps = actionNodes.map((node, index) => ({
+        action_type: (node.data as any).actionType || 'webhook',
+        action_order: index,
+        action_config: {
+          label: node.data.label,
+          description: node.data.description,
+          type: (node.data as any).type,
           position: node.position,
+          // Merge any node-specific config if it exists
+          ...((node.data as any).config || {})
         },
-        nextStepId: edges.find(e => e.source === node.id)?.target,
       }));
 
       const workflowData = {
         name: workflowName,
         description: 'Automated workflow for lead engagement',
-        enabled: true,
-        trigger: {
-          type: 'manual' as const,
-          config: { nodes, edges },
+        is_active: true,
+        trigger_type: (triggerNode?.data as any)?.triggerType || 'manual_trigger',
+        trigger_conditions: {
+          nodes, 
+          edges,
         },
         steps,
-        createdBy: userId,
+        created_by: userId,
       };
 
       if (workflowId) {
         // Update existing workflow
-        const { error } = await supabase
-          .from('workflows')
-          .update({
-            name: workflowData.name,
-            description: workflowData.description,
-            enabled: workflowData.enabled,
-            trigger: workflowData.trigger,
-            steps: workflowData.steps,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', workflowId)
-          .eq('tenant_id', currentTenant.id);
-
-        if (error) throw error;
+        const { success, error } = await workflowService.updateWorkflow(workflowId, workflowData);
+        if (error) throw new Error(error);
         toast.success('Workflow updated successfully!');
       } else {
         // Create new workflow
@@ -165,6 +228,7 @@ export default function AutomationBuilder() {
         if (error) throw new Error(error);
         if (workflow) {
           setWorkflowId(workflow.id);
+          fetchWorkflows(userId); // Refresh list
           toast.success('Workflow published successfully!');
         }
       }
@@ -274,10 +338,52 @@ export default function AutomationBuilder() {
             </div>
 
             <div className="pointer-events-auto flex gap-2">
+                <button 
+                  onClick={handleNew}
+                  className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 transition flex items-center gap-2 text-sm font-medium"
+                >
+                  <Plus className="w-4 h-4" /> New
+                </button>
+
+                <div className="relative">
+                    <button 
+                        onClick={() => {
+                          setShowLoadMenu(!showLoadMenu);
+                          if (!showLoadMenu) fetchWorkflows(userId);
+                        }}
+                        className="flex items-center gap-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 transition text-sm font-medium"
+                    >
+                        <RefreshCw className="w-4 h-4" /> Load
+                    </button>
+                    {showLoadMenu && (
+                        <div className="absolute top-full mt-2 right-0 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden z-50 w-[280px]">
+                            <div className="p-3 border-b border-slate-100 dark:border-slate-700 font-bold text-xs uppercase tracking-wider text-slate-500">
+                                Saved Automations
+                            </div>
+                            <div className="max-h-[300px] overflow-y-auto">
+                                {savedWorkflows.length === 0 ? (
+                                    <div className="p-4 text-center text-slate-400 text-xs italic">No saved workflows found</div>
+                                ) : (
+                                    savedWorkflows.map(wf => (
+                                        <button
+                                            key={wf.id}
+                                            onClick={() => loadWorkflow(wf)}
+                                            className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-50 dark:border-slate-700/50 last:border-0 transition"
+                                        >
+                                            <div className="text-sm font-bold text-slate-800 dark:text-white truncate">{wf.name}</div>
+                                            <div className="text-[10px] text-slate-500 mt-0.5">{wf.is_active ? 'Active' : 'Draft'} • {new Date(wf.created_at || '').toLocaleDateString()}</div>
+                                        </button>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
                 <div className="relative">
                     <button 
                         onClick={() => setShowActionMenu(!showActionMenu)}
-                        className="flex items-center gap-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 transition"
+                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl shadow-lg shadow-indigo-500/30 transition text-sm font-bold"
                     >
                         <Plus className="w-4 h-4" /> Add Action
                     </button>
