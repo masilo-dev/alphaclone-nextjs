@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -222,48 +222,55 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      </div>
 
                      {/* Mobile Menu Content */}
-                     <div className="flex-1 px-4 py-8">
-                        <nav className="space-y-2">
+                     <div className="flex-1 px-4 py-6">
+                        <nav className="space-y-1">
                            {['services', 'pricing', 'contact'].map((item) => (
                               <button
                                  key={item}
                                  onClick={() => scrollToSection(item)}
-                                 className="w-full text-left px-4 py-4 text-lg font-semibold text-slate-300 hover:text-white hover:bg-slate-900 rounded-xl transition-colors capitalize"
+                                 className="w-full text-left px-4 py-4 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors capitalize"
                               >
-                                 {item === 'services' ? 'Platform' : item}
+                                 {item === 'services' ? 'Platform' : item.charAt(0).toUpperCase() + item.slice(1)}
                               </button>
                            ))}
-                           <Link 
-                              href="/docs" 
+                           <Link
+                              href="/docs"
                               onClick={() => setMobileMenuOpen(false)}
-                              className="block w-full text-left px-4 py-4 text-lg font-semibold text-slate-300 hover:text-white hover:bg-slate-900 rounded-xl transition-colors"
+                              className="block w-full text-left px-4 py-4 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
                            >
                               Docs
                            </Link>
-                           <Link 
-                              href="/ecosystem" 
+                           <Link
+                              href="/ecosystem"
                               onClick={() => setMobileMenuOpen(false)}
-                              className="block w-full text-left px-4 py-4 text-lg font-semibold text-slate-300 hover:text-white hover:bg-slate-900 rounded-xl transition-colors"
+                              className="block w-full text-left px-4 py-4 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
                            >
                               Ecosystem
                            </Link>
+
+                           {/* ── Login — prominent in nav, not hidden at bottom ── */}
+                           <div className="pt-4 mt-4 border-t border-slate-800">
+                              <Link
+                                 href="/login"
+                                 onClick={() => setMobileMenuOpen(false)}
+                                 className="flex items-center justify-between w-full px-4 py-4 text-lg font-bold text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 rounded-xl transition-colors border border-teal-500/20"
+                              >
+                                 Log In
+                                 <ArrowRight className="w-5 h-5" />
+                              </Link>
+                           </div>
                         </nav>
                      </div>
 
-                     {/* Mobile Menu Footer */}
-                     <div className="border-t border-slate-800 p-4 space-y-3">
+                     {/* Mobile Menu Footer CTA */}
+                     <div className="border-t border-slate-800 p-4">
                         <button
-                           onClick={() => window.location.href = '/register'}
-                           className="w-full py-4 px-4 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-teal-500/20"
+                           onClick={() => { window.location.href = '/register'; }}
+                           className="w-full py-4 px-4 bg-teal-500 hover:bg-teal-400 active:scale-95 text-slate-950 font-black text-lg rounded-2xl transition-all shadow-xl shadow-teal-500/30"
                         >
-                           Start Free Trial
+                           Start Free Trial →
                         </button>
-                        <button
-                           onClick={() => window.location.href = '/login'}
-                           className="w-full py-4 px-4 border border-slate-700 text-white hover:bg-slate-900 font-semibold rounded-xl transition-all"
-                        >
-                           Log in
-                        </button>
+                        <p className="text-center text-xs text-slate-500 mt-2">14-day free trial · No card required</p>
                      </div>
                   </div>
                </motion.div>
