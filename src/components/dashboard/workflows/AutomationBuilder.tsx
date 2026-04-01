@@ -15,21 +15,21 @@ import {
   Panel
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Zap, Mail, Plus, Play, Save, Settings, Loader2, RefreshCw } from 'lucide-react';
+import { Zap, Mail, Plus, Play, Save, Settings, Loader2, RefreshCw, History, LayoutTemplate, Maximize, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { workflowService, Workflow } from '../../../services/workflowService';
+import { workflowService, Workflow, WorkflowExecution } from '../../../services/workflowService';
 import { useTenant } from '../../../contexts/TenantContext';
 import { supabase } from '../../../lib/supabase';
 
 // Define custom node types for a premium feel
 const TriggerNode = ({ data }: { data: { label: string; description: string } }) => (
   <div className="px-4 py-3 shadow-xl rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-white min-w-[200px] border border-indigo-400">
-    <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-indigo-200" />
     <div className="flex items-center gap-2 font-bold mb-1">
       <Zap className="w-4 h-4 text-indigo-100" />
       {data.label}
     </div>
     <div className="text-xs text-indigo-100 opacity-80">{data.description}</div>
+    <Handle type="source" position={Position.Bottom} className="w-4 h-4 -bottom-2 bg-indigo-400 border-2 border-white shadow-md cursor-crosshair" />
   </div>
 );
 
@@ -52,13 +52,13 @@ const ActionNode = ({ data }: { data: { label: string; description: string; type
 
   return (
     <div className={`px-4 py-3 shadow-xl rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white min-w-[200px] border-2 ${style.border}`}>
-      <Handle type="target" position={Position.Top} className="w-3 h-3 bg-slate-400" />
-      <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-slate-400" />
+      <Handle type="target" position={Position.Top} className="w-4 h-4 -top-2 bg-slate-400 border-2 border-white dark:border-slate-800 shadow-md cursor-crosshair" />
       <div className="flex items-center gap-2 font-bold text-sm mb-1">
         <span className="text-base">{style.icon}</span>
         {data.label}
       </div>
       <div className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">{data.description}</div>
+      <Handle type="source" position={Position.Bottom} className="w-4 h-4 -bottom-2 bg-slate-400 border-2 border-white dark:border-slate-800 shadow-md cursor-crosshair" />
     </div>
   );
 };
@@ -99,6 +99,13 @@ export default function AutomationBuilder() {
   const [executing, setExecuting] = useState(false);
   const [savedWorkflows, setSavedWorkflows] = useState<Workflow[]>([]);
   const [showLoadMenu, setShowLoadMenu] = useState(false);
+  const [activeTab, setActiveTab] = useState<'editor' | 'history' | 'templates'>('editor');
+  const [executions, setExecutions] = useState<WorkflowExecution[]>([]);
+  const [workflowTemplates, setWorkflowTemplates] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  
+  const rfInstance = useRef<any>(null);
 
   const fetchWorkflows = useCallback(async (uid: string) => {
     if (!uid) return;
@@ -114,6 +121,26 @@ export default function AutomationBuilder() {
       }
     });
   }, [fetchWorkflows]);
+
+  const fetchHistory = useCallback(async () => {
+    if (!workflowId) return;
+    setLoadingHistory(true);
+    const { executions, error } = await workflowService.getWorkflowExecutions(workflowId);
+    if (!error) setExecutions(executions);
+    setLoadingHistory(false);
+  }, [workflowId]);
+
+  const fetchTemplates = useCallback(async () => {
+    setLoadingTemplates(true);
+    const { templates, error } = await workflowService.getWorkflowTemplates();
+    if (!error) setWorkflowTemplates(templates);
+    setLoadingTemplates(false);
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'history') fetchHistory();
+    if (activeTab === 'templates') fetchTemplates();
+  }, [activeTab, fetchHistory, fetchTemplates]);
 
   const handleNew = () => {
     setWorkflowId(null);
@@ -326,15 +353,101 @@ export default function AutomationBuilder() {
     setActiveCategory('all');
   };
 
+  const centerView = () => {
+    if (rfInstance.current) {
+        rfInstance.current.fitView({ padding: 0.2, duration: 800 });
+    }
+  };
+
+  const loadFromTemplate = (template: any) => {
+    setWorkflowId(null);
+    setWorkflowName(template.name);
+    
+    // Convert template definition to Nodes/Edges
+    const definition = template.definition;
+    const reconstructedNodes: Node[] = [
+        { 
+          id: 'trigger-1', 
+          type: 'triggerNode', 
+          position: { x: 250, y: 50 }, 
+          data: { label: definition.trigger?.event || 'Event Trigger', description: definition.description } 
+        }
+    ];
+    const reconstructedEdges: Edge[] = [];
+    
+    definition.steps.forEach((step: any, idx: number) => {
+        const id = `action-${idx}`;
+        reconstructedNodes.push({
+          id,
+          type: 'actionNode',
+          position: { x: 250, y: 200 + (idx * 150) },
+          data: { label: step.type === 'email' ? 'Send Email' : step.id, description: step.config?.template || 'Auto-generated step', type: step.type === 'email' ? 'email' : 'ops' }
+        });
+        reconstructedEdges.push({
+          id: `e-${idx}`,
+          source: idx === 0 ? 'trigger-1' : `action-${idx - 1}`,
+          target: id,
+          animated: true,
+          style: { stroke: '#0d9488', strokeWidth: 2 }
+        });
+    });
+    setNodes(reconstructedNodes);
+    setEdges(reconstructedEdges);
+    setActiveTab('editor');
+    toast.success(`Loaded ${template.name} template`);
+  };
+
   return (
-    <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-slate-950 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 relative shadow-inner min-h-[600px]">
+    <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-slate-950 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 relative shadow-inner min-h-[700px]">
+        {/* Main Tab Controller */}
+        <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-2 flex items-center justify-between z-20">
+            <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                {[
+                    { id: 'editor', label: 'Builder', icon: Zap },
+                    { id: 'history', label: 'Audit Trail', icon: History },
+                    { id: 'templates', label: 'Templates', icon: LayoutTemplate },
+                ].map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as any)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                            activeTab === tab.id
+                                ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                        }`}
+                    >
+                        <tab.icon className="w-4 h-4" />
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+            
+            <div className="flex items-center gap-3">
+                <div className="hidden md:block text-right">
+                    <div className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[200px]">{workflowName}</div>
+                    <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+                        {workflowId ? 'Syncing Cloud' : 'New Draft'}
+                    </div>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-xs ring-2 ring-indigo-500/20 shadow-lg">
+                    {userId ? 'A' : '?'}
+                </div>
+            </div>
+        </div>
+
+        <div className="flex-1 relative overflow-hidden">
+            {activeTab === 'editor' && (
+                <>
         {/* Header toolbar */}
         <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-center pointer-events-none">
-            <div className="pointer-events-auto bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-4 py-2 rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 flex flex-col">
-                <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-amber-500" /> Lead Welcome Sequence
-                </h3>
-                <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold mt-0.5">Native Execution Engine</span>
+            <div className="pointer-events-auto flex items-center gap-2">
+                <button 
+                  onClick={centerView}
+                  className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-2 rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:text-indigo-500 transition"
+                  title="Center View"
+                >
+                  <Maximize className="w-5 h-5" />
+                </button>
             </div>
 
             <div className="pointer-events-auto flex gap-2">
@@ -450,7 +563,10 @@ export default function AutomationBuilder() {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             nodeTypes={nodeTypes}
-            fitView
+            onInit={(instance) => {
+                rfInstance.current = instance;
+                instance.fitView({ padding: 0.2 });
+            }}
             className="bg-slate-50 dark:bg-slate-950"
         >
             <Controls className="bg-white dark:bg-slate-800 border-none shadow-xl rounded-xl overflow-hidden" />
@@ -475,8 +591,124 @@ export default function AutomationBuilder() {
         <div className="absolute bottom-4 left-4 z-10 pointer-events-none">
             <Panel position="bottom-left" className="pointer-events-auto bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs px-3 py-2 rounded-lg border border-blue-200 dark:border-blue-800/30 flex items-center gap-2 shadow-lg">
                 <Settings className="w-3 h-3" />
-                No webhooks required. This workflow executes directly on your Supabase Edge Functions.
+                Drag handles to connect actions. No code required.
             </Panel>
+        </div>
+            </>
+        )}
+
+        {activeTab === 'history' && (
+            <div className="w-full h-full bg-slate-50 dark:bg-slate-950 p-8 flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-8">
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                        <History className="w-6 h-6 text-indigo-500" /> Audit Trail
+                    </h2>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">Detailed execution history for <b>{workflowName}</b></p>
+                </div>
+
+                {!workflowId ? (
+                    <div className="flex-1 flex items-center justify-center bg-white dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                        <div className="text-center">
+                            <Clock className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                            <p className="text-slate-500 font-medium">Save this workflow to start tracking history</p>
+                        </div>
+                    </div>
+                ) : loadingHistory ? (
+                    <div className="flex-1 flex items-center justify-center">
+                        <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
+                    </div>
+                ) : executions.length === 0 ? (
+                    <div className="flex-1 flex items-center justify-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
+                        <div className="text-center">
+                            <Clock className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                            <p className="text-slate-500 font-medium">No execution history found yet.</p>
+                            <button onClick={handleExecute} className="mt-4 text-indigo-500 font-bold hover:underline">Run a Test Now</button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xl">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-500">Execution Date</th>
+                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-500">Status</th>
+                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-500">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {executions.map(ex => (
+                                    <tr key={ex.id} className="border-b border-slate-50 dark:border-slate-800 last:border-0">
+                                        <td className="px-6 py-5 text-sm font-medium text-slate-900 dark:text-slate-200">
+                                            {new Date(ex.executed_at).toLocaleString()}
+                                        </td>
+                                        <td className="px-6 py-5">
+                                            {ex.status === 'completed' ? (
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] font-black uppercase tracking-wider">
+                                                    <CheckCircle2 className="w-3 h-3" /> Completed
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 text-[10px] font-black uppercase tracking-wider">
+                                                    <XCircle className="w-3 h-3" /> {ex.status}
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-5 text-sm text-slate-500 dark:text-slate-400">
+                                            {ex.error_message || 'Workflow executed successfully.'}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+        )}
+
+        {activeTab === 'templates' && (
+            <div className="w-full h-full bg-slate-50 dark:bg-slate-950 p-8 flex flex-col animate-in fade-in scale-in-95 duration-500">
+                <div className="mb-8">
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                        <LayoutTemplate className="w-6 h-6 text-indigo-500" /> Automation Templates
+                    </h2>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">Quick-start with industry-standard patterns</p>
+                </div>
+
+                {loadingTemplates ? (
+                    <div className="flex-1 flex items-center justify-center">
+                        <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {workflowTemplates.map(template => (
+                            <button
+                                key={template.id}
+                                onClick={() => loadFromTemplate(template)}
+                                className="group relative bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all text-left shadow-lg hover:shadow-indigo-500/10"
+                            >
+                                <span className="absolute top-6 right-6 text-4xl group-hover:scale-110 transition-transform duration-300">
+                                    {template.icon}
+                                </span>
+                                <div className="pr-12">
+                                    <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">{template.name}</h3>
+                                    <div className="inline-block px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-widest mb-4">
+                                        {template.category}
+                                    </div>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                                        {template.description}
+                                    </p>
+                                </div>
+                                <div className="mt-6 pt-4 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
+                                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
+                                        {template.definition.steps.length} Steps
+                                    </span>
+                                    <Plus className="w-5 h-5 text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+        )}
         </div>
     </div>
   );

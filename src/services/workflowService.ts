@@ -15,6 +15,28 @@ export interface WorkflowStep {
     type?: 'trigger' | 'condition' | 'action' | 'delay';
     config?: any;
     nextStepId?: string;
+    description?: string;
+}
+
+export interface WorkflowExecution {
+    id: string;
+    workflow_id: string;
+    status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+    executed_at: string;
+    context?: any;
+    error_message?: string;
+    tenant_id: string;
+}
+
+export interface WorkflowStepLog {
+    id: string;
+    execution_id: string;
+    step_id: string;
+    status: 'success' | 'failure';
+    input?: any;
+    output?: any;
+    error?: string;
+    executed_at: string;
 }
 
 export interface Workflow {
@@ -658,11 +680,52 @@ export const workflowService = {
     },
 
     /**
+     * Get all executions for a specific workflow
+     */
+    async getWorkflowExecutions(workflowId: string): Promise<{ executions: WorkflowExecution[]; error: string | null }> {
+        try {
+            const tid = tenantService.getCurrentTenantId();
+            if (!tid) throw new Error('No active tenant found');
+
+            const { data, error } = await supabase
+                .from('workflow_executions')
+                .select('*')
+                .eq('workflow_id', workflowId)
+                .eq('tenant_id', tid)
+                .order('executed_at', { ascending: false })
+                .limit(50);
+
+            if (error) throw error;
+            return { executions: data || [], error: null };
+        } catch (error) {
+            return { executions: [], error: error instanceof Error ? error.message : 'Failed to fetch executions' };
+        }
+    },
+
+    /**
+     * Get pre-built workflow templates
+     */
+    async getWorkflowTemplates(): Promise<{ templates: any[]; error: string | null }> {
+        try {
+            const { data, error } = await supabase
+                .from('workflow_templates')
+                .select('*')
+                .is('tenant_id', null) // Official templates
+                .order('name');
+
+            if (error) throw error;
+            return { templates: data || [], error: null };
+        } catch (error) {
+            return { templates: [], error: error instanceof Error ? error.message : 'Failed to fetch templates' };
+        }
+    },
+
+    /**
      * Execute a delay step
      */
     async executeDelay(step: WorkflowStep, _context: Record<string, any>): Promise<{ success: boolean; error: string | null }> {
-        const delayMs = step.config.delaySeconds * 1000;
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        const delaySeconds = step.action_config?.delaySeconds || 5;
+        await new Promise((resolve) => setTimeout(resolve, delaySeconds * 1000));
         return { success: true, error: null };
     },
 };

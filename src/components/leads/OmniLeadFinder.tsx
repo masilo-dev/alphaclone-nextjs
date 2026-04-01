@@ -6,6 +6,9 @@ import { Search, MapPin, Database, Zap, Globe, Mail, Phone, ExternalLink, Plus, 
 import { createBrowserClient } from '@supabase/ssr';
 import toast from 'react-hot-toast';
 import { Avatar } from '../ui/Avatar';
+import { useAuth } from '../../contexts/AuthContext';
+import { useTenant } from '../../contexts/TenantContext';
+import { businessClientService } from '../../services/businessClientService';
 
 interface ScrapedLead {
   business_name: string;
@@ -24,8 +27,43 @@ export default function OmniLeadFinder() {
   const [keywords, setKeywords] = useState('');
   const [usePlaywright, setUsePlaywright] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const { user } = useAuth();
+  const { currentTenant } = useTenant();
+  const [results, setResults] = useState<ScrapedLead[]>([]);
+  const [progress, setProgress] = useState({ step: 1, percent: 0, message: '' });
 
-  // ... rest of the component state ...
+  const getHostname = (url: string) => {
+    try {
+      const hostname = new URL(url).hostname;
+      return hostname.startsWith('www.') ? hostname.slice(4) : hostname;
+    } catch (e) {
+      return url;
+    }
+  };
+
+  const handleSaveToCRM = async (lead: ScrapedLead) => {
+    if (!currentTenant) return toast.error('No active business context found');
+    
+    const toastId = toast.loading(`Syncing ${lead.business_name} to CRM...`);
+    
+    try {
+      const { error } = await businessClientService.createClient(currentTenant.id, {
+        name: lead.business_name,
+        email: lead.emails?.[0] || '',
+        phone: lead.phone || '',
+        website: lead.website,
+        salesStage: 'lead',
+        industry: niche,
+        description: lead.snippet || 'Lead captured via Omni Search'
+      });
+
+      if (error) throw new Error(error);
+      
+      toast.success('Lead synchronized successfully!', { id: toastId });
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save lead', { id: toastId });
+    }
+  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,7 +137,6 @@ export default function OmniLeadFinder() {
     }
   };
 
-  // ... (handleSaveToCRM, getHostname) ...
 
   return (
     <div className="w-full space-y-6">
