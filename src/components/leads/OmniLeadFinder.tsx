@@ -56,6 +56,56 @@ const SOURCE_COLORS: Record<string, string> = {
   osm:  'text-emerald-400 border-emerald-500/30 bg-emerald-500/10',
 };
 
+// ─── Industry Groups ─────────────────────────────────────────────────────────
+const INDUSTRY_GROUPS: Record<string, string[]> = {
+  '🏠 Home Services': [
+    'HVAC', 'Plumbing', 'Electrician', 'Roofing', 'Landscaping',
+    'Cleaning Service', 'Pest Control', 'Pool Service', 'Painting',
+    'Flooring', 'Window Cleaning', 'Garage Door Repair', 'Handyman',
+    'Gutter Cleaning', 'Tree Service', 'Locksmith',
+  ],
+  '🏥 Healthcare': [
+    'Dentist', 'Chiropractor', 'Physical Therapist', 'Optometrist',
+    'Dermatologist', 'Pediatrician', 'Veterinarian', 'Pharmacy',
+    'Mental Health Counselor', 'Massage Therapist', 'Urgent Care',
+  ],
+  '🍽️ Food & Hospitality': [
+    'Restaurant', 'Cafe', 'Bakery', 'Bar', 'Catering',
+    'Food Truck', 'Hotel', 'Bed and Breakfast', 'Night Club',
+  ],
+  '⚖️ Professional Services': [
+    'Law Firm', 'Accountant', 'Financial Advisor', 'Insurance Agent',
+    'Real Estate Agent', 'Mortgage Broker', 'Business Consultant',
+    'Marketing Agency', 'Advertising Agency', 'PR Firm',
+  ],
+  '🔧 Auto & Transport': [
+    'Auto Repair', 'Car Dealership', 'Towing Service', 'Car Wash',
+    'Auto Body Shop', 'Tire Shop', 'Moving Company', 'Trucking',
+  ],
+  '💻 Tech & Digital': [
+    'IT Services', 'Web Design', 'Software Development',
+    'Cyber Security', 'Data Recovery', 'Phone Repair',
+  ],
+  '🏋️ Fitness & Wellness': [
+    'Gym', 'Yoga Studio', 'Pilates', 'Personal Trainer',
+    'Spa', 'Nail Salon', 'Hair Salon', 'Barber Shop',
+  ],
+  '🏗️ Construction': [
+    'General Contractor', 'Cabinet Maker', 'Concrete', 'Demolition',
+    'Fencing', 'Masonry', 'Insulation', 'Drywall',
+  ],
+  '📦 Retail & Commerce': [
+    'Grocery Store', 'Clothing Store', 'Furniture Store',
+    'Pet Store', 'Bookstore', 'Gift Shop', 'Hardware Store',
+  ],
+  '🎓 Education': [
+    'Tutoring', 'Driving School', 'Music School',
+    'Childcare', 'Preschool', 'Language School',
+  ],
+};
+
+const ALL_INDUSTRIES = Object.values(INDUSTRY_GROUPS).flat();
+
 function StarRating({ rating }: { rating?: number }) {
   if (!rating) return null;
   const full  = Math.floor(rating);
@@ -99,6 +149,8 @@ export default function OmniLeadFinder() {
   const [filterEmail,  setFilterEmail  ] = useState(false);        // 5. has email
   const [filtersOpen,  setFiltersOpen  ] = useState(false);
   const [viewMode,     setViewMode     ] = useState<'grid' | 'map'>('grid');
+  const [industrySearch,   setIndustrySearch  ] = useState('');
+  const [showIndustryDrop, setShowIndustryDrop] = useState(false);
 
   // Active filter count badge
   const activeFilterCount = [
@@ -224,12 +276,98 @@ export default function OmniLeadFinder() {
 
         <form onSubmit={handleSearch} className="mt-4 lg:mt-0 w-full lg:w-auto z-10 flex flex-col gap-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <input
-              type="text" placeholder="Industry (e.g. HVAC)"
-              value={niche} onChange={e => setNiche(e.target.value)}
-              disabled={scanning}
-              className="px-2.5 py-1.5 text-xs bg-slate-900/80 border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 outline-none text-white transition-all shadow-inner w-full md:w-48"
-            />
+
+            {/* ── Searchable Industry Dropdown ── */}
+            <div className="relative" style={{ zIndex: 50 }}>
+              <div
+                className={`flex items-center px-2.5 py-1.5 text-xs bg-slate-900/80 border rounded-lg cursor-pointer gap-1.5 transition-all ${
+                  showIndustryDrop ? 'border-teal-500 ring-2 ring-teal-500/30' : 'border-slate-700'
+                } ${scanning ? 'opacity-50 pointer-events-none' : ''}`}
+                onClick={() => setShowIndustryDrop(v => !v)}
+              >
+                <Search className="w-3 h-3 text-slate-500 flex-shrink-0" />
+                <span className={niche ? 'text-white' : 'text-slate-500'}>
+                  {niche || 'Select industry…'}
+                </span>
+                <ChevronDown className={`w-3 h-3 ml-auto text-slate-500 transition-transform ${showIndustryDrop ? 'rotate-180' : ''}`} />
+              </div>
+
+              {showIndustryDrop && (
+                <div className="absolute top-full mt-1 left-0 right-0 w-72 bg-slate-950 border border-slate-700 rounded-xl shadow-2xl overflow-hidden" style={{ zIndex: 9999 }}>
+                  {/* Search box inside dropdown */}
+                  <div className="p-2 border-b border-slate-800 sticky top-0 bg-slate-950">
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500" />
+                      <input
+                        autoFocus
+                        type="text"
+                        placeholder="Search all industries…"
+                        value={industrySearch}
+                        onChange={e => setIndustrySearch(e.target.value)}
+                        className="w-full pl-7 pr-2.5 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white outline-none focus:border-teal-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Grouped list */}
+                  <div className="max-h-64 overflow-y-auto">
+                    {/* Custom option */}
+                    {industrySearch && !ALL_INDUSTRIES.some(i => i.toLowerCase() === industrySearch.toLowerCase()) && (
+                      <div
+                        className="px-3 py-2 text-xs text-teal-400 hover:bg-teal-500/10 cursor-pointer border-b border-slate-800 flex items-center gap-2"
+                        onClick={() => { setNiche(industrySearch); setShowIndustryDrop(false); setIndustrySearch(''); }}
+                      >
+                        <Plus className="w-3 h-3" /> Use &quot;{industrySearch}&quot; as custom industry
+                      </div>
+                    )}
+
+                    {/* Filter entries by search, keep group structure */}
+                    {Object.entries(INDUSTRY_GROUPS).map(([group, items]) => {
+                      const filtered = items.filter(i =>
+                        i.toLowerCase().includes(industrySearch.toLowerCase())
+                      );
+                      if (filtered.length === 0) return null;
+                      return (
+                        <div key={group}>
+                          <p className="px-3 py-1.5 text-[9px] font-black text-slate-500 uppercase tracking-widest bg-slate-900/50 sticky">
+                            {group}
+                          </p>
+                          {filtered.map(industry => (
+                            <div
+                              key={industry}
+                              className={`px-4 py-1.5 text-xs cursor-pointer transition-colors ${
+                                niche === industry
+                                  ? 'bg-teal-500/20 text-teal-300 font-semibold'
+                                  : 'text-slate-300 hover:bg-slate-800'
+                              }`}
+                              onClick={() => {
+                                setNiche(industry);
+                                setShowIndustryDrop(false);
+                                setIndustrySearch('');
+                              }}
+                            >
+                              {industry}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Clear selection */}
+                  {niche && (
+                    <div
+                      className="px-3 py-2 text-[10px] text-rose-400 hover:bg-rose-500/10 cursor-pointer border-t border-slate-800 flex items-center gap-1.5"
+                      onClick={() => { setNiche(''); setShowIndustryDrop(false); setIndustrySearch(''); }}
+                    >
+                      <X className="w-3 h-3" /> Clear selection
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* City input */}
             <input
               type="text" placeholder="City (e.g. Miami)"
               value={location} onChange={e => setLocation(e.target.value)}
