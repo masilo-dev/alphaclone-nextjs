@@ -22,7 +22,7 @@ import { useTenant } from '../../../contexts/TenantContext';
 import { supabase } from '../../../lib/supabase';
 
 // Define custom node types for a premium feel
-const TriggerNode = ({ data }: { data: any }) => (
+const TriggerNode = ({ data }: { data: { label: string; description: string } }) => (
   <div className="px-4 py-3 shadow-xl rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-white min-w-[200px] border border-indigo-400">
     <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-indigo-200" />
     <div className="flex items-center gap-2 font-bold mb-1">
@@ -47,7 +47,7 @@ const NODE_STYLES: Record<string, { border: string; icon: string }> = {
   email: { border: 'border-teal-500', icon: '✉️' },
 };
 
-const ActionNode = ({ data }: { data: any }) => {
+const ActionNode = ({ data }: { data: { label: string; description: string; type: string } }) => {
   const style = NODE_STYLES[data.type] || { border: 'border-slate-200 dark:border-slate-700', icon: '⚡' };
 
   return (
@@ -99,13 +99,13 @@ export default function AutomationBuilder() {
   const [executing, setExecuting] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setUserId(data.user.id);
+    supabase.auth.getUser().then((res: any) => {
+      if (res.data.user) setUserId(res.data.user.id);
     });
   }, []);
 
   const onConnect = useCallback(
-    (params: Connection | Edge) => setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: '#0d9488', strokeWidth: 2 } }, eds)),
+    (params: Connection | Edge) => setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: '#0d9488', strokeWidth: 2 } } as Edge, eds)),
     [setEdges],
   );
 
@@ -120,11 +120,11 @@ export default function AutomationBuilder() {
       // Convert ReactFlow nodes/edges to workflow steps
       const steps = nodes.map((node, index) => ({
         id: node.id,
-        type: node.type === 'triggerNode' ? 'trigger' : 'action',
-        name: node.data.label,
+        type: (node.type === 'triggerNode' ? 'trigger' : 'action') as "trigger" | "action",
+        name: node.data.label as string,
         config: {
-          type: node.type === 'triggerNode' ? 'lead_captured' : (node.data.actionType || 'send_email'),
-          description: node.data.description,
+          type: node.type === 'triggerNode' ? 'lead_captured' : (node.data.actionType as string || 'send_email'),
+          description: node.data.description as string,
           position: node.position,
         },
         nextStepId: edges.find(e => e.source === node.id)?.target,

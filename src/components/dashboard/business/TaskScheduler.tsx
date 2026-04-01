@@ -252,7 +252,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
 
     if (data) {
       // Map database snake_case to component camelCase
-      const mappedTasks: Task[] = data.map(t => ({
+      const mappedTasks: Task[] = data.map((t: any) => ({
         id: t.id,
         title: t.title,
         description: t.description || '',

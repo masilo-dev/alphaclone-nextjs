@@ -167,6 +167,69 @@ export async function POST(req: Request) {
             videoCallId = vCall.id;
         }
 
+        // 4.5 NATIVE CRM INTEGRATION (Lead, Calendar Event, Task)
+        let leadId = null;
+        try {
+            // Check if Lead exists
+            const { data: lead } = await supabase
+                .from('leads')
+                .select('id')
+                .eq('tenant_id', tenant_id)
+                .eq('email', client_email)
+                .maybeSingle();
+
+            if (lead?.id) {
+                leadId = lead.id;
+            } else {
+                // Create new Lead
+                const { data: newLead } = await supabase
+                    .from('leads')
+                    .insert({
+                        tenant_id,
+                        business_name: client_name,
+                        email: client_email,
+                        phone: client_phone,
+                        stage: 'Discovered', // Native Kanban starting point
+                        source: 'Inbound Booking',
+                        notes: client_notes
+                    })
+                    .select('id')
+                    .single();
+                if (newLead) leadId = newLead.id;
+            }
+
+            // Create Native Calendar Event
+            await supabase.from('calendar_events').insert({
+                tenant_id,
+                user_id: host_id,
+                title: `Booking: ${booking_type_name || 'Meeting'} with ${client_name}`,
+                description: `Notes: ${client_notes || 'No notes provided.'}`,
+                start_time,
+                end_time,
+                type: 'meeting',
+                video_room_id: roomId,
+                related_to_lead: leadId,
+                is_all_day: false,
+                reminder_minutes: 15
+            });
+
+            // Create Native Task for the Sales Agent
+            await supabase.from('tasks').insert({
+                tenant_id,
+                assigned_to: host_id,
+                title: `Prepare for meeting with ${client_name}`,
+                description: `Review lead details before the booked session. Notes: ${client_notes || ''}`,
+                due_date: start_time, // Due at start time
+                status: 'pending',
+                priority: 'high',
+                related_to_lead: leadId
+            });
+
+        } catch (crmErr) {
+            console.error('Failed to create native CRM records:', crmErr);
+            // Non-fatal, continue with booking creation
+        }
+
         // 5. Insert Booking
         const { data: booking, error: bError } = await supabase
             .from('bookings')

@@ -67,6 +67,7 @@ import SalesAgent from './dashboard/SalesAgent';
 import WelcomeModal from './dashboard/WelcomeModal';
 import OnboardingFlow from './onboarding/OnboardingFlow';
 import CreateInvoiceModal from './dashboard/CreateInvoiceModal';
+import ProductTour from './onboarding/ProductTour';
 import { WidgetErrorBoundary } from './dashboard/WidgetErrorBoundary';
 import { useOverdueTaskNotifier } from '../hooks/useOverdueTaskNotifier';
 import { DeletionOverlay } from './dashboard/DeletionOverlay';

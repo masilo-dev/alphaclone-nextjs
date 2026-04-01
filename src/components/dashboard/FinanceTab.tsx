@@ -572,47 +572,41 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                 {isLoadingChart && (
                                     <div className="absolute inset-0 flex items-center justify-center bg-slate-900/50 z-10 rounded-2xl">
                                         <div className="flex flex-col items-center gap-2">
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                            <ChartContainer className="w-full h-full" minHeight={300}>
-                                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
-                                    <AreaChart data={chartData}>
-                                        <defs>
-                                            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3} />
-                                                <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
-                                            </linearGradient>
-                                            <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
-                                                <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                                        <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
-                                        <YAxis stroke="#64748b" fontSize={12} tickFormatter={(value) => formatCurrency(value)} />
-                                        <Tooltip
-                                            contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b' }}
-                                            formatter={(value: any) => formatCurrency(value)}
-                                        />
-                                        <Area type="monotone" dataKey="revenue" stroke="#14b8a6" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" name="Revenue" />
-                                        <Area type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorExpenses)" name="Expenses" />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </ChartContainer>
+                                )}
+                                <ChartContainer className="w-full h-full" minHeight={300}>
+                                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
+                                        <AreaChart data={chartData}>
+                                            <defs>
+                                                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
+                                                </linearGradient>
+                                                <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                                            <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
+                                            <YAxis stroke="#64748b" fontSize={12} tickFormatter={(value) => format(value)} />
+                                            <Tooltip
+                                                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b' }}
+                                                formatter={(value: any) => format(value)}
+                                            />
+                                            <Area type="monotone" dataKey="revenue" stroke="#14b8a6" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" name="Revenue" />
+                                            <Area type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorExpenses)" name="Expenses" />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </ChartContainer>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Payment Health (Dunning) Section */}
-                {isAdmin && (
-                    <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <ShieldCheck className="w-5 h-5 text-teal-400" /> Payment Health & Dunning
-                            </h3>
-                            <Badge variant="success">Active Recovery</Badge>
-                        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                    {/* Payment Health (Dunning) Section */}
+                    {isAdmin && (
+                        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl mb-6">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                     <ShieldCheck className="w-5 h-5 text-teal-400" /> Payment Health & Dunning
