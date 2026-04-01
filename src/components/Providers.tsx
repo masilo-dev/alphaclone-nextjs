@@ -8,7 +8,7 @@ import { BackgroundTaskProvider } from '@/contexts/BackgroundTaskContext';
 import { ToastProvider } from '@/components/Toast';
 import { GlobalErrorBoundary } from '@/components/GlobalErrorBoundary';
 import { ThemeProvider } from '@/contexts/ThemeContext';
-
+import { LanguageProvider } from '@/contexts/LanguageContext';
 
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -29,13 +29,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <QueryClientProvider client={queryClient}>
                 <ToastProvider>
                     <ThemeProvider>
-                        <AuthProvider>
-                            <TenantProvider>
-                                <BackgroundTaskProvider>
-                                    {children}
-                                </BackgroundTaskProvider>
-                            </TenantProvider>
-                        </AuthProvider>
+                        <LanguageProvider>
+                            <AuthProvider>
+                                <TenantProvider>
+                                    <BackgroundTaskProvider>
+                                        {children}
+                                    </BackgroundTaskProvider>
+                                </TenantProvider>
+                            </AuthProvider>
+                        </LanguageProvider>
                     </ThemeProvider>
                 </ToastProvider>
             </QueryClientProvider>

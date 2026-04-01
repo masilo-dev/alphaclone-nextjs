@@ -1,6 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ENV } from '../config/env';
 import { Lead } from './leadService';
+import { withLanguage, getLanguageInstruction } from '@/lib/languageUtils';
+
 
 // API Keys from validated ENV
 const GEMINI_API_KEY = ENV.VITE_GEMINI_API_KEY || '';
@@ -27,13 +29,15 @@ export const isAnyAIConfigured = () => {
 export const generateText = async (prompt: string, maxTokens: number = 2048, model?: string): Promise<{ text: string | null; error: any }> => {
     try {
         console.log('🔄 Calling Server-side AI Generate Proxy...');
+        // Append the user's chosen language instruction to every prompt
+        const localizedPrompt = withLanguage(prompt);
         const response = await fetch('/api/ai/generate', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                prompt,
+                prompt: localizedPrompt,
                 maxTokens,
                 model
             })
@@ -50,6 +54,7 @@ export const generateText = async (prompt: string, maxTokens: number = 2048, mod
         return { text: null, error: error.message };
     }
 };
+
 
 /**
  * Specialized chat for the Growth Agent (Sales Agent)
@@ -110,15 +115,15 @@ export const chatWithGrowthAgent = async (
     message: string
 ): Promise<{ text: string; commands: any; grounding: any }> => {
     try {
+        // Append language instruction to the system prompt
+        const localizedSystem = GROWTH_AGENT_SYSTEM_PROMPT + getLanguageInstruction();
         const response = await fetch('/api/ai/chat', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 history,
                 message,
-                systemPrompt: GROWTH_AGENT_SYSTEM_PROMPT
+                systemPrompt: localizedSystem
             })
         });
 
@@ -140,6 +145,7 @@ export const chatWithGrowthAgent = async (
         throw error;
     }
 };
+
 
 /**
  * Start a chat session (proxied through server-side route for security and reliability)

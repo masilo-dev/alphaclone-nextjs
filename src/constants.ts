@@ -134,10 +134,6 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
 
   // ── Analytics & Operations ──
   { label: 'Daily Summary', href: '/dashboard/business/daily-summary', icon: BarChart3 },
-
-
-  // ── Administration ──
-  { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },
 ];
 
 
