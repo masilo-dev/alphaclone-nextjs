@@ -23,6 +23,7 @@ import {
 import dynamic from 'next/dynamic';
 import { Button } from './ui/UIComponents';
 import MarketingFooter from './landing/MarketingFooter';
+import { ServiceCard } from './landing/ServiceCard';
 
 const HeroBackground = dynamic(() => import('./landing/HeroBackground'), {
    ssr: false,
@@ -270,7 +271,12 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                <div className="absolute inset-0 z-0">
                   <HeroBackground />
                </div>
-               <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-10 sm:py-20 lg:py-32">
+               <motion.div 
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-10 sm:py-20 lg:py-32"
+               >
                   <motion.div
                      initial={{ opacity: 0, y: 20 }}
                      animate={{ opacity: 1, y: 0 }}
@@ -344,7 +350,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                         ))}
                      </div>
                   </motion.div>
-               </div>
+               </motion.div>
             </section>
 
             {/* Features / Services Section */}
@@ -355,69 +361,58 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      <p className="text-slate-400 max-w-2xl mx-auto">Each module works together — CRM, invoices, contracts, projects, and AI sales automation in one login.</p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10">
                      {[
                         {
                            id: 'crm',
                            icon: Database,
                            title: 'Unified CRM',
-                           desc: 'Client data, pipeline, and communication history in one place.',
-                           features: ['Visual Pipelines', 'Lead Automation', 'Real-time Analytics']
+                           summary: 'Client data, pipeline, and communication history in one place.',
+                           details: ['Visual Pipelines', 'Lead Automation', 'Real-time Analytics'],
+                           image: 'https://images.unsplash.com/photo-1551288049-bbda38a5f97b?auto=format&fit=crop&q=80&w=800'
                         },
                         {
                            id: 'projects',
                            icon: Layers,
                            title: 'Project Engine',
-                           desc: 'Task management and project tracking for high-output teams.',
-                           features: ['Milestone Tracking', 'Collaborative Boards', 'Asset Management']
+                           summary: 'Task management and project tracking for high-output teams.',
+                           details: ['Milestone Tracking', 'Collaborative Boards', 'Asset Management'],
+                           image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800'
                         },
                         {
                            id: 'billing',
                            icon: BarChart,
                            title: 'Finance & Billing',
-                           desc: 'Automate invoices, track revenue, and manage payments.',
-                           features: ['One-click Invoicing', 'Stripe Integration', 'Revenue Forecasting']
+                           summary: 'Automate invoices, track revenue, and manage payments.',
+                           details: ['One-click Invoicing', 'Stripe Integration', 'Revenue Forecasting'],
+                           image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=800'
                         },
                         {
                            id: 'ai-growth',
                            icon: Zap,
                            title: 'AI Sales Agent',
-                           desc: 'Autopilot outreach. Qualify leads and book meetings automatically.',
-                           features: ['GPT-4o Powered', 'Multi-channel Outreach', 'Auto Qualification']
+                           summary: 'Autopilot outreach. Qualify leads and book meetings automatically.',
+                           details: ['GPT-4o Powered', 'Multi-channel Outreach', 'Auto Qualification'],
+                           image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=800'
                         },
                         {
                            id: 'security',
                            icon: ShieldCheck,
                            title: 'Safe Ops',
-                           desc: 'End-to-end encryption and granular access controls.',
-                           features: ['RBAC Permissions', 'Encrypted Video', 'Audit Trails']
+                           summary: 'End-to-end encryption and granular access controls.',
+                           details: ['RBAC Permissions', 'Encrypted Video', 'Audit Trails'],
+                           image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=800'
                         },
                         {
                            id: 'mobile',
                            icon: Smartphone,
                            title: 'Mobile Ready',
-                           desc: 'Manage your business from anywhere with full PWA support.',
-                           features: ['Real-time Alerts', 'Mobile Dashboard', 'Offline Mode']
+                           summary: 'Manage your business from anywhere with full PWA support.',
+                           details: ['Real-time Alerts', 'Mobile Dashboard', 'Offline Mode'],
+                           image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&q=80&w=800'
                         }
                      ].map((item, i) => (
-                        <div
-                           key={i}
-                           className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 hover:border-teal-500/30 transition-all flex flex-col h-full"
-                        >
-                           <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center mb-4">
-                              <item.icon className="w-5 h-5 text-teal-400" />
-                           </div>
-                           <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
-                           <p className="text-slate-400 text-sm mb-4 flex-grow">{item.desc}</p>
-                           <ul className="space-y-1.5">
-                              {item.features.map((feat, idx) => (
-                                 <li key={idx} className="flex items-center gap-2 text-xs text-teal-400/80">
-                                    <div className="w-1 h-1 rounded-full bg-teal-500 flex-shrink-0" />
-                                    {feat}
-                                 </li>
-                              ))}
-                           </ul>
-                        </div>
+                        <ServiceCard key={item.id} service={item} index={i} />
                      ))}
                   </div>
                </div>
@@ -457,11 +452,24 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
             </section>
 
             {/* Video Explainer Section */}
-            <VideoExplainer />
+            <motion.div
+               initial={{ opacity: 0, y: 30 }}
+               whileInView={{ opacity: 1, y: 0 }}
+               viewport={{ once: true }}
+               transition={{ duration: 0.8 }}
+            >
+               <VideoExplainer />
+            </motion.div>
 
             {/* Stats / Proof Section */}
             <section className="py-12 border-y border-slate-800 bg-slate-950/50">
-               <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+               <motion.div 
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1 }}
+                  className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
+               >
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
                      {[
                         { label: 'Uptime', value: '99.9%' },
@@ -475,7 +483,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                         </div>
                      ))}
                   </div>
-               </div>
+               </motion.div>
             </section>
 
             {/* Pricing Section */}
@@ -674,9 +682,9 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            <button
                               type="submit"
                               disabled={formStatus === 'sending'}
-                              className="group relative w-full bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 disabled:from-slate-700 disabled:to-slate-800 disabled:text-slate-500 text-slate-950 font-bold py-5 px-6 rounded-2xl transition-all duration-200 shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/40 disabled:cursor-not-allowed disabled:shadow-none overflow-hidden"
+                              className="group relative w-full bg-gradient-to-r from-teal-500 to-teal-600 font-bold py-5 px-6 rounded-2xl transition-all duration-200 shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/40 disabled:cursor-not-allowed disabled:shadow-none overflow-hidden button-fill-hover"
                            >
-                              <span className="relative z-10 flex items-center justify-center gap-2">
+                              <span className="relative z-10 flex items-center justify-center gap-2 text-slate-950">
                                  {formStatus === 'sending' ? (
                                     <>
                                        <motion.div
@@ -693,7 +701,6 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                                     </>
                                  )}
                               </span>
-                              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                            </button>
                         </form>
                      )}

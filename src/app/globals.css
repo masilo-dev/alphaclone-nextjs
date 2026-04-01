@@ -437,6 +437,46 @@ body {
   }
 }
 
+/* Custom Fill-on-Hover Button Animation */
+.button-fill-hover {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  transition: color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.button-fill-hover::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 100%;
+  background: linear-gradient(135deg, #00D2A0 0%, #0077FF 100%);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: -1;
+}
+
+.button-fill-hover:hover {
+  color: #020D1A !important;
+}
+
+.button-fill-hover:hover::before {
+  width: 100%;
+}
+
+/* Scroll Reveal Utilities */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.reveal-on-scroll.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .animate-moving-border {
   animation: moving-border 3s linear infinite;
 }

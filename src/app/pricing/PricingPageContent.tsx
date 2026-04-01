@@ -8,9 +8,15 @@ import {
     ChevronDown, ArrowRight, Users, Brain, FileText, DollarSign,
     Video, Calendar, Mail, BarChart3, Lock, X, Minus
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import PublicNavigation from '@/components/PublicNavigation';
 import AnimateIn from '@/components/common/AnimateIn';
 import MarketingFooter from '@/components/landing/MarketingFooter';
+
+const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
+    ssr: false,
+    loading: () => <div className="absolute inset-0 bg-slate-950" />,
+});
 
 const plans = [
     {
@@ -193,32 +199,37 @@ export default function PricingPageContent() {
 
             <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
 
-            <main className="max-w-7xl mx-auto px-4 pt-32 pb-24">
-
-                <div className="text-center mb-24 relative overflow-hidden">
-                    {/* Cinematic Glows */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-500/5 blur-[120px] rounded-full -z-10" />
-                    
-                    <AnimateIn type="fadeIn" delay={0}>
-                        <div className="inline-flex items-center gap-2 mb-8 ai-badge">
-                            <Zap className="w-3.5 h-3.5 fill-teal-400" />
-                            <span>THE UNIFIED OPERATING ENGINE</span>
-                        </div>
-                    </AnimateIn>
-                    <h1 className="text-5xl md:text-7xl font-black text-white mb-8 tracking-tighter leading-[0.9]">
-                        Operational <br />
-                        <span className="hero-metallic-text">Authority.</span>
-                    </h1>
-                    <p className="text-slate-400 text-2xl max-w-3xl mx-auto mb-6 font-medium tracking-tight">
-                        Eliminate the "SaaS Tax". Replace $330+/mo of fragmented <br className="hidden md:block" />
-                        tools with one high-performance Business OS.
-                    </p>
-                    <div className="flex items-center justify-center gap-6 text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">
-                        <span>• Zero Setup Fees</span>
-                        <span>• Unlimited Data</span>
-                        <span>• Cancel Anytime</span>
+            <main className="relative overflow-hidden">
+                {/* Pricing Hero Section with Video Background */}
+                <section className="relative min-h-[60vh] flex flex-col items-center justify-center pt-20">
+                    <div className="absolute inset-0 z-0">
+                        <HeroBackground />
                     </div>
-                </div>
+                    
+                    <div className="relative z-10 max-w-7xl mx-auto px-4 py-24 text-center">
+                        <AnimateIn type="fadeIn" delay={0}>
+                            <div className="inline-flex items-center gap-2 mb-8 ai-badge">
+                                <Zap className="w-3.5 h-3.5 fill-teal-400" />
+                                <span>THE UNIFIED OPERATING ENGINE</span>
+                            </div>
+                        </AnimateIn>
+                        <h1 className="text-5xl md:text-7xl font-black text-white mb-8 tracking-tighter leading-[0.9]">
+                            Operational <br />
+                            <span className="hero-metallic-text">Authority.</span>
+                        </h1>
+                        <p className="text-slate-400 text-2xl max-w-3xl mx-auto mb-6 font-medium tracking-tight">
+                            Eliminate the "SaaS Tax". Replace $330+/mo of fragmented <br className="hidden md:block" />
+                            tools with one high-performance Business OS.
+                        </p>
+                        <div className="flex items-center justify-center gap-6 text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">
+                            <span>• Zero Setup Fees</span>
+                            <span>• Unlimited Data</span>
+                            <span>• Cancel Anytime</span>
+                        </div>
+                    </div>
+                </section>
+
+                <div className="max-w-7xl mx-auto px-4 pb-24 relative z-20">
 
                 {/* Plan Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
@@ -440,7 +451,8 @@ export default function PricingPageContent() {
                     </div>
                     <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.2em] mt-8">Secure • ISO/IEC 27001 Compliant Architecture • GDPR Ready</p>
                 </div>
-                <p className="text-xs text-slate-600 mt-8 text-center">No credit card required · Cancel anytime · 14-day free trial</p>
+                <p className="text-xs text-slate-600 mt-8 text-center pb-8">No credit card required · Cancel anytime · 14-day free trial</p>
+                </div>
             </main>
             <MarketingFooter />
         </div>

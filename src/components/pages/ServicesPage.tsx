@@ -10,8 +10,14 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/UIComponents';
 import PublicNavigation from '../PublicNavigation';
+import dynamic from 'next/dynamic';
 import AnimateIn from '../common/AnimateIn';
 import MarketingFooter from '../landing/MarketingFooter';
+
+const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
+    ssr: false,
+    loading: () => <div className="absolute inset-0 bg-slate-950" />,
+});
 
 const ServicesPage: React.FC = () => {
     const [, setIsLoginOpen] = React.useState(false);
@@ -188,36 +194,40 @@ const ServicesPage: React.FC = () => {
             <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
 
             {/* BLUF Summary — SSR rendered above the fold */}
-            <div className="pt-20">
-                <section className="bg-gradient-to-b from-slate-900/60 to-transparent border-b border-slate-800/50 py-16">
-                    <div className="max-w-4xl mx-auto px-4">
+            <div className="pt-20 relative overflow-hidden">
+                <section className="relative min-h-[60vh] flex flex-col items-center justify-center py-16">
+                    <div className="absolute inset-0 z-0">
+                        <HeroBackground />
+                    </div>
+
+                    <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
                         <AnimateIn type="fadeIn">
-                            <div className="flex items-center gap-2 mb-4">
+                            <div className="flex items-center justify-center gap-2 mb-4">
                                 <div className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
                                 <span className="text-teal-400 text-sm font-semibold tracking-widest uppercase">The Bottom Line</span>
                             </div>
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.1}>
-                            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+                            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black mb-6 leading-tight text-white">
                                 Business Operating{' '}
-                                <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-400">
+                                <span className="hero-metallic-text">
                                     Platform.
                                 </span>
                             </h1>
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.2}>
-                            <p className="text-xl text-slate-300 leading-relaxed max-w-3xl">
+                            <p className="text-xl text-slate-300 leading-relaxed max-w-3xl mx-auto">
                                 {blufSummary}
                             </p>
-                            <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                            <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
                                 <Link href="/register">
-                                    <Button className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-8 py-4 h-auto text-lg">
-                                        Start Free Trial
+                                    <Button className="bg-teal-500 text-slate-950 font-bold px-10 py-5 h-auto text-lg rounded-2xl button-fill-hover">
+                                        <span className="relative z-10">Start Free Trial</span>
                                     </Button>
                                 </Link>
                                 <Link href="/guide">
-                                    <Button variant="outline" className="border-slate-700 hover:bg-slate-800 px-8 py-4 h-auto text-lg">
-                                        View Setup Guide
+                                    <Button variant="outline" className="px-10 py-5 h-auto text-lg rounded-2xl button-fill-hover">
+                                        <span className="relative z-10">View Setup Guide</span>
                                     </Button>
                                 </Link>
                             </div>
@@ -278,16 +288,16 @@ const ServicesPage: React.FC = () => {
                                             </div>
                                             <div className="mt-8 flex flex-col gap-3">
                                                 <Link href="/register">
-                                                    <Button className="w-full bg-teal-600 hover:bg-teal-500 font-semibold">
-                                                        Try This Free
+                                                    <Button className="w-full bg-teal-600 font-bold py-4 rounded-xl button-fill-hover">
+                                                        <span className="relative z-10 text-slate-950">Try This Free</span>
                                                     </Button>
                                                 </Link>
                                                 <Button
                                                     variant="outline"
-                                                    className="w-full border-slate-700 hover:bg-slate-800"
+                                                    className="w-full py-4 rounded-xl button-fill-hover"
                                                     onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
                                                 >
-                                                    Book a Demo Call
+                                                    <span className="relative z-10">Book a Demo Call</span>
                                                 </Button>
                                             </div>
                                         </div>
@@ -375,28 +385,31 @@ const ServicesPage: React.FC = () => {
                 <section className="py-20 bg-gradient-to-b from-transparent to-slate-900/40">
                     <div className="max-w-3xl mx-auto px-4 text-center">
                         <AnimateIn type="scaleIn">
-                            <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                                Ready to Run Your Entire Business from One Dashboard?
+                            <h2 className="text-3xl md:text-4xl font-black mb-6 text-white tracking-tight">
+                                Ready to Run Your Entire Business <br />
+                                from <span className="hero-metallic-text">One Dashboard?</span>
                             </h2>
-                            <p className="text-slate-400 text-lg mb-10 leading-relaxed">
+                            <p className="text-slate-400 text-lg mb-10 leading-relaxed max-w-2xl mx-auto">
                                 Start your free trial today. No credit card required for the first 14 days. Cancel anytime. Most businesses see a positive ROI within the first month.
                             </p>
                             <div className="flex flex-col sm:flex-row justify-center gap-4">
                                 <Link href="/register">
-                                    <Button className="text-lg px-10 py-4 h-auto bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold shadow-xl shadow-teal-500/20">
-                                        Start 14-Day Free Trial
+                                    <Button className="text-lg px-10 py-5 h-auto bg-teal-500 text-slate-950 font-black shadow-xl shadow-teal-500/20 rounded-2xl button-fill-hover">
+                                        <span className="relative z-10">Start 14-Day Free Trial</span>
                                     </Button>
                                 </Link>
                                 <Button
                                     variant="outline"
-                                    className="text-lg px-10 py-4 h-auto border-slate-700 hover:bg-slate-800"
+                                    className="text-lg px-10 py-5 h-auto rounded-2xl button-fill-hover"
                                     onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
                                 >
-                                    <Phone className="w-5 h-5 mr-2" />
-                                    Book a Live Demo
+                                    <span className="relative z-10 flex items-center">
+                                        <Phone className="w-5 h-5 mr-2" />
+                                        Book a Live Demo
+                                    </span>
                                 </Button>
                             </div>
-                            <p className="mt-6 text-slate-500 text-sm">
+                            <p className="mt-8 text-slate-500 text-sm font-semibold uppercase tracking-widest">
                                 Starter from $15/mo · Pro from $45/mo · Enterprise from $80/mo · Cancel anytime
                             </p>
                         </AnimateIn>

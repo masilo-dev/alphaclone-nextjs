@@ -7,8 +7,14 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/UIComponents';
 import PublicNavigation from '../PublicNavigation';
+import dynamic from 'next/dynamic';
 import AnimateIn from '../common/AnimateIn';
 import MarketingFooter from '../landing/MarketingFooter';
+
+const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
+    ssr: false,
+    loading: () => <div className="absolute inset-0 bg-slate-950" />,
+});
 
 const AboutPage: React.FC = () => {
     const [, setIsLoginOpen] = React.useState(false);
@@ -99,15 +105,13 @@ const AboutPage: React.FC = () => {
         <div className="min-h-screen bg-transparent text-white">
             <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
 
-            <div className="pt-20">
-                <section className="relative overflow-hidden pt-24 pb-20">
-                    {/* Cinematic Background Elements */}
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 bg-[#020D1A]">
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-teal-500/10 blur-[120px] rounded-full opacity-50" />
-                        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-[0.03]" />
+            <div className="pt-20 relative overflow-hidden">
+                <section className="relative min-h-[50vh] flex flex-col items-center justify-center pt-24 pb-20">
+                    <div className="absolute inset-0 z-0">
+                        <HeroBackground />
                     </div>
-
-                    <div className="max-w-4xl mx-auto px-4 text-center">
+                    
+                    <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
                         <AnimateIn type="fadeIn" delay={0}>
                             <div className="inline-flex items-center gap-2 mb-6 ai-badge">
                                 <Sparkles className="w-3.5 h-3.5 fill-teal-400" />
@@ -115,7 +119,7 @@ const AboutPage: React.FC = () => {
                             </div>
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.1}>
-                            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black mb-8 leading-[1.05] tracking-tighter">
+                            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black mb-8 leading-[1.05] tracking-tighter text-white">
                                 Building the <span className="hero-metallic-text">Unified OS</span> <br />
                                 for Professional Teams
                             </h1>
@@ -298,14 +302,16 @@ const AboutPage: React.FC = () => {
                             </p>
                             <div className="flex flex-col sm:flex-row justify-center gap-6">
                                 <Link href="/register">
-                                    <Button className="cta-primary text-xl px-12 py-5 h-auto rounded-2xl">
-                                        Start Your OS
+                                    <Button className="bg-teal-500 text-slate-950 text-xl px-12 py-5 h-auto rounded-2xl button-fill-hover">
+                                        <span className="relative z-10">Start Your OS</span>
                                     </Button>
                                 </Link>
                                 <Link href="/pricing">
-                                    <Button className="cta-secondary text-xl px-12 py-5 h-auto rounded-2xl">
-                                        View Plans
-                                        <ArrowRight className="w-5 h-5 ml-3" />
+                                    <Button variant="outline" className="text-xl px-12 py-5 h-auto rounded-2xl button-fill-hover">
+                                        <span className="relative z-10 flex items-center">
+                                            View Plans
+                                            <ArrowRight className="w-5 h-5 ml-3" />
+                                        </span>
                                     </Button>
                                 </Link>
                             </div>

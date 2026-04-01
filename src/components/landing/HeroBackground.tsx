@@ -101,11 +101,9 @@ export default function HeroBackground() {
         const h = window.innerHeight;
         frameRef.current++;
 
-        // Clear with fade trail
-        ctx.fillStyle = 'rgba(2, 8, 20, 0.18)';
-        ctx.fillRect(0, 0, w, h);
+        ctx.clearRect(0, 0, w, h);
 
-        // Draw beams
+        // Draw beams (Subtle)
         for (let i = 0; i < beamsRef.current.length; i++) {
             const b = beamsRef.current[i];
             b.x += b.vx;
@@ -113,14 +111,13 @@ export default function HeroBackground() {
             b.phase += 0.008;
 
             const pulse = 0.6 + Math.sin(b.phase) * 0.4;
-            const alpha = b.opacity * pulse;
+            const alpha = b.opacity * pulse * 0.5;
 
             const endX = b.x - Math.cos(Math.atan2(b.vy, b.vx)) * b.length;
             const endY = b.y - Math.sin(Math.atan2(b.vy, b.vx)) * b.length;
 
             const grad = ctx.createLinearGradient(endX, endY, b.x, b.y);
             grad.addColorStop(0, `hsla(${b.hue}, 90%, 60%, 0)`);
-            grad.addColorStop(0.6, `hsla(${b.hue}, 90%, 65%, ${alpha * 0.6})`);
             grad.addColorStop(1, `hsla(${b.hue}, 95%, 70%, ${alpha})`);
 
             ctx.beginPath();
@@ -131,22 +128,12 @@ export default function HeroBackground() {
             ctx.lineCap = 'round';
             ctx.stroke();
 
-            // Glow dot at tip
-            const tipGrad = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.width * 4);
-            tipGrad.addColorStop(0, `hsla(${b.hue}, 100%, 80%, ${alpha * 0.8})`);
-            tipGrad.addColorStop(1, `hsla(${b.hue}, 100%, 60%, 0)`);
-            ctx.beginPath();
-            ctx.arc(b.x, b.y, b.width * 4, 0, Math.PI * 2);
-            ctx.fillStyle = tipGrad;
-            ctx.fill();
-
-            // Reset if off-screen
             if (b.x < -300 || b.x > w + 300 || b.y < -300 || b.y > h + 300) {
                 beamsRef.current[i] = createBeam(w, h);
             }
         }
 
-        // Draw particles
+        // Draw particles (Subtle)
         for (let i = 0; i < particlesRef.current.length; i++) {
             const p = particlesRef.current[i];
             p.x += p.vx;
@@ -154,15 +141,11 @@ export default function HeroBackground() {
             p.life++;
 
             const lifeRatio = p.life / p.maxLife;
-            const fade = lifeRatio < 0.1
-                ? lifeRatio / 0.1
-                : lifeRatio > 0.8
-                    ? (1 - lifeRatio) / 0.2
-                    : 1;
+            const fade = lifeRatio < 0.1 ? lifeRatio / 0.1 : lifeRatio > 0.8 ? (1 - lifeRatio) / 0.2 : 1;
 
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-            ctx.fillStyle = `hsla(${p.hue}, 85%, 65%, ${p.opacity * fade})`;
+            ctx.fillStyle = `hsla(${p.hue}, 85%, 65%, ${p.opacity * fade * 0.4})`;
             ctx.fill();
 
             if (p.life >= p.maxLife || p.y < -10 || p.x < -10 || p.x > w + 10) {
@@ -176,57 +159,48 @@ export default function HeroBackground() {
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-
         resize();
-
         const w = window.innerWidth;
         const h = window.innerHeight;
+        beamsRef.current = Array.from({ length: 4 }, () => createBeam(w, h));
+        particlesRef.current = Array.from({ length: 15 }, () => createParticle(w, h));
 
-        beamsRef.current = Array.from({ length: BEAM_COUNT }, () => createBeam(w, h));
-        beamsRef.current.forEach(b => {
-            b.x = Math.random() * w;
-            b.y = Math.random() * h;
-        });
-
-        particlesRef.current = Array.from({ length: PARTICLE_COUNT }, () => {
-            const p = createParticle(w, h);
-            p.life = Math.floor(Math.random() * p.maxLife);
-            return p;
-        });
-
-        const observer = new IntersectionObserver(
-            ([entry]) => { visibleRef.current = entry.isIntersecting; },
-            { threshold: 0.01 }
-        );
+        const observer = new IntersectionObserver(([entry]) => { visibleRef.current = entry.isIntersecting; }, { threshold: 0.01 });
         observer.observe(canvas);
-
-        const onResize = () => resize();
-        window.addEventListener('resize', onResize, { passive: true });
-
-        // Delay animation start to let FCP/LCP complete first
-        const startTimer = setTimeout(() => {
-            rafRef.current = requestAnimationFrame(draw);
-        }, 2000);
+        window.addEventListener('resize', resize, { passive: true });
+        rafRef.current = requestAnimationFrame(draw);
 
         return () => {
-            clearTimeout(startTimer);
             cancelAnimationFrame(rafRef.current);
             observer.disconnect();
-            window.removeEventListener('resize', onResize);
+            window.removeEventListener('resize', resize);
         };
     }, [draw, resize]);
 
     return (
-        <canvas
-            ref={canvasRef}
-            className="absolute inset-0 w-full h-full"
-            aria-hidden="true"
-            style={{
-                pointerEvents: 'none',
-                willChange: 'transform',
-                transform: 'translateZ(0)',
-                contain: 'layout style paint',
-            }}
-        />
+        <div className="absolute inset-0 w-full h-full bg-[#020D1A] overflow-hidden">
+            {/* Background Video */}
+            <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover opacity-60"
+                poster="/hero-poster.jpg"
+            >
+                <source src="https://assets.mixkit.co/videos/preview/mixkit-digital-network-lines-and-dots-background-28498-large.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+            </video>
+
+            {/* Premium Overlays */}
+            <div className="absolute inset-0 bg-gradient-to-b from-[#020D1A] via-transparent to-[#020D1A] z-10" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#020D1A_80%)] z-10 opacity-70" />
+            
+            {/* Subtle Interactive Layer */}
+            <canvas
+                ref={canvasRef}
+                className="absolute inset-0 w-full h-full z-20 pointer-events-none"
+            />
+        </div>
     );
 }

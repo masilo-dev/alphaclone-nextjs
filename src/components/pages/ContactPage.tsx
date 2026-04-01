@@ -7,8 +7,14 @@ import { Button, Input } from '../ui/UIComponents';
 import PublicNavigation from '../PublicNavigation';
 import { contactService } from '../../services/contactFormService';
 import { contactSchema } from '../../schemas/validation';
+import dynamic from 'next/dynamic';
 import AnimateIn from '../common/AnimateIn';
 import TurnstileVerification from '../ui/TurnstileVerification';
+
+const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
+    ssr: false,
+    loading: () => <div className="absolute inset-0 bg-slate-950" />,
+});
 
 const ContactPage: React.FC = () => {
     const [, setIsLoginOpen] = React.useState(false);
@@ -75,9 +81,26 @@ const ContactPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-transparent text-white">
+        <div className="min-h-screen bg-transparent text-white relative overflow-hidden">
             <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
-            <div className="max-w-7xl mx-auto px-4 py-20 pt-32">
+            
+            {/* Contact Hero Area with Video Background */}
+            <section className="relative min-h-[40vh] flex flex-col items-center justify-center pt-32">
+                <div className="absolute inset-0 z-0">
+                    <HeroBackground />
+                </div>
+                
+                <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">
+                    <AnimateIn type="fadeUp">
+                        <h1 className="text-5xl md:text-7xl font-black text-white mb-6 tracking-tighter leading-[0.9]">
+                            Let's Build Your <br />
+                            <span className="hero-metallic-text">Growth Engine.</span>
+                        </h1>
+                    </AnimateIn>
+                </div>
+            </section>
+
+            <div className="max-w-7xl mx-auto px-4 py-20 relative z-10">
                 <AnimateIn type="fadeIn">
                     <Link href="/" className="inline-flex items-center text-teal-400 hover:text-teal-300 mb-8">
                         <ArrowLeft className="w-5 h-5 mr-2" />
@@ -93,16 +116,16 @@ const ContactPage: React.FC = () => {
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
                             <Button
                                 onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
-                                className="bg-teal-600 hover:bg-teal-500 text-white font-bold h-12 px-8 font-marketing-heading uppercase tracking-tight"
+                                className="bg-teal-600 text-white font-bold h-12 px-8 font-marketing-heading uppercase tracking-tight button-fill-hover"
                             >
-                                Book a Consultation
+                                <span className="relative z-10">Book a Consultation</span>
                             </Button>
                             <Button
                                 variant="outline"
                                 onClick={() => window.open('https://wa.me/48517809674', '_blank')}
-                                className="border-teal-500/50 hover:bg-teal-500/10 text-teal-400 font-bold h-12 px-8 font-marketing-heading uppercase tracking-tight"
+                                className="border-teal-500/50 text-teal-400 font-bold h-12 px-8 font-marketing-heading uppercase tracking-tight button-fill-hover"
                             >
-                                Chat on WhatsApp
+                                <span className="relative z-10">Chat on WhatsApp</span>
                             </Button>
                         </div>
                     </div>
@@ -151,14 +174,6 @@ const ContactPage: React.FC = () => {
                                         <div className="font-semibold mb-1">Location</div>
                                         <div className="text-slate-400">Global Remote Team</div>
                                     </div>
-                                </div>
-                            </div>
-                            <div className="bg-white/[0.04] backdrop-blur-sm p-6 rounded-xl border border-slate-700/60">
-                                <h3 className="font-bold font-marketing-heading mb-3">Business Hours</h3>
-                                <div className="space-y-2 text-slate-400">
-                                    <div>Monday - Friday: 9:00 AM - 6:00 PM</div>
-                                    <div>Saturday: 10:00 AM - 4:00 PM</div>
-                                    <div>Sunday: Closed</div>
                                 </div>
                             </div>
                         </div>
@@ -229,10 +244,12 @@ const ContactPage: React.FC = () => {
                                     disabled={status === 'sending' || !turnstileToken}
                                     isLoading={status === 'sending'}
                                     size="lg"
-                                    className="w-full font-marketing-heading uppercase tracking-tight"
+                                    className="w-full font-marketing-heading uppercase tracking-tight button-fill-hover bg-teal-500 text-slate-950"
                                 >
-                                    {status === 'sending' ? 'Sending...' : 'Send Message'}
-                                    {status !== 'sending' && <Send className="w-5 h-5 ml-2 inline" />}
+                                    <span className="relative z-10">
+                                        {status === 'sending' ? 'Sending...' : 'Send Message'}
+                                        {status !== 'sending' && <Send className="w-5 h-5 ml-2 inline" />}
+                                    </span>
                                 </Button>
                             </form>
                         </div>

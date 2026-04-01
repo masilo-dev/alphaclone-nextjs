@@ -14,12 +14,19 @@ import {
     Shield,
     Workflow
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { Button } from '@/components/ui/UIComponents';
 import LoginModal from '@/components/auth/LoginModal';
 import { User } from '@/types';
-import Link from 'next/link';
+import PublicNavigation from '@/components/PublicNavigation';
 import AnimateIn from '@/components/common/AnimateIn';
 import MarketingFooter from '@/components/landing/MarketingFooter';
+
+const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
+    ssr: false,
+    loading: () => <div className="absolute inset-0 bg-slate-950" />,
+});
 
 export default function WhoWeServePage() {
     const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -38,68 +45,50 @@ export default function WhoWeServePage() {
             />
 
             {/* Header */}
-            <header className="fixed w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-20">
-                        <Link href="/" className="flex items-center gap-2">
-                            <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-500">
-                                AlphaClone
-                            </span>
-                        </Link>
-                        <div className="flex items-center gap-4">
-                            <Link href="/" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
-                                Back to Home
-                            </Link>
-                            <Button onClick={() => setIsLoginOpen(true)} className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold px-6">
-                                Sign Up
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
 
             {/* Hero Section */}
-            <section className="relative overflow-hidden pt-40 pb-20 px-4">
-                {/* Cinematic Background */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10">
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-blue-500/10 blur-[120px] rounded-full" />
-                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:3rem_3rem] opacity-[0.03]" />
-                </div>
+            <div className="pt-20 relative overflow-hidden">
+                <section className="relative min-h-[60vh] flex flex-col items-center justify-center pt-24 pb-20 px-4">
+                    <div className="absolute inset-0 z-0">
+                        <HeroBackground />
+                    </div>
 
-                <div className="max-w-4xl mx-auto text-center">
-                    <AnimateIn type="fadeIn" delay={0}>
-                        <div className="inline-flex items-center gap-2 mb-8 ai-badge">
-                            <Workflow className="w-3.5 h-3.5 text-teal-400" />
-                            <span>TARGET ARCHITECTURES</span>
-                        </div>
-                    </AnimateIn>
-                    <AnimateIn type="fadeUp" delay={0.1}>
-                        <h1 className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tighter leading-[0.95]">
-                            Engineered for <br />
-                            <span className="hero-metallic-text">High-Performance Teams</span>
-                        </h1>
-                    </AnimateIn>
-                    <AnimateIn type="fadeUp" delay={0.2}>
-                        <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
-                            AlphaClone isn't just a tool—it's the operating layer for teams who have outgrown fragmented SaaS and need a unified, high-authority system.
-                        </p>
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                            <Button
-                                onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
-                                className="cta-primary px-10 py-5 h-auto text-lg rounded-2xl"
-                            >
-                                Book Strategy Call
-                            </Button>
-                            <Button
-                                onClick={() => setIsLoginOpen(true)}
-                                className="cta-secondary px-10 py-5 h-auto text-lg rounded-2xl"
-                            >
-                                Start Free Trial
-                            </Button>
-                        </div>
-                    </AnimateIn>
-                </div>
-            </section>
+                    <div className="relative z-10 max-w-4xl mx-auto text-center">
+                        <AnimateIn type="fadeIn" delay={0}>
+                            <div className="inline-flex items-center gap-2 mb-8 ai-badge">
+                                <Workflow className="w-3.5 h-3.5 text-teal-400" />
+                                <span>TARGET ARCHITECTURES</span>
+                            </div>
+                        </AnimateIn>
+                        <AnimateIn type="fadeUp" delay={0.1}>
+                            <h1 className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tighter leading-[0.95]">
+                                Engineered for <br />
+                                <span className="hero-metallic-text">High-Performance Teams</span>
+                            </h1>
+                        </AnimateIn>
+                        <AnimateIn type="fadeUp" delay={0.2}>
+                            <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
+                                AlphaClone isn't just a tool—it's the operating layer for teams who have outgrown fragmented SaaS and need a unified, high-authority system.
+                            </p>
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                                <Button
+                                    onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
+                                    className="bg-transparent text-white border-white/20 hover:border-teal-500 font-bold px-10 py-5 h-auto text-lg rounded-2xl button-fill-hover"
+                                >
+                                    <span className="relative z-10">Book Strategy Call</span>
+                                </Button>
+                                <Button
+                                    onClick={() => setIsLoginOpen(true)}
+                                    className="bg-teal-500 text-slate-950 font-bold px-10 py-5 h-auto text-lg rounded-2xl button-fill-hover"
+                                >
+                                    <span className="relative z-10">Start Free Trial</span>
+                                </Button>
+                            </div>
+                        </AnimateIn>
+                    </div>
+                </section>
+            </div>
 
             {/* Customer Segments */}
             <section className="py-16 px-4">
@@ -320,18 +309,18 @@ export default function WhoWeServePage() {
                         <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
                             Join 500+ high-performance teams running smarter on AlphaClone. Deploy your 14-day free trial in under 60 seconds.
                         </p>
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                             <Button
                                 onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
-                                className="cta-primary px-12 py-5 h-auto text-xl rounded-2xl"
+                                className="bg-transparent text-white border-white/20 hover:border-teal-500 font-bold px-12 py-5 h-auto text-xl rounded-2xl button-fill-hover"
                             >
-                                Book Strategy Call
+                                <span className="relative z-10">Book Strategy Call</span>
                             </Button>
                             <Button
                                 onClick={() => setIsLoginOpen(true)}
-                                className="cta-secondary px-12 py-5 h-auto text-xl rounded-2xl"
+                                className="bg-teal-500 text-slate-950 font-bold px-12 py-5 h-auto text-xl rounded-2xl button-fill-hover"
                             >
-                                Start Free Trial
+                                <span className="relative z-10">Start Free Trial</span>
                             </Button>
                         </div>
                         <p className="mt-8 text-xs font-black text-slate-500 uppercase tracking-[0.2em]">
