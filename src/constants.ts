@@ -95,46 +95,63 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   // ── Overview ──
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
 
-  // ── Sales & Acquisition ──
-  { label: 'AI Growth Agent', href: '/dashboard/sales-agent', icon: Zap },
-  { label: 'Lead Finder', href: '/dashboard/sales-agent', icon: Search },
-  { label: 'Agent Chat', href: '/dashboard/sales-agent', icon: Bot },
-  { label: 'Leads', href: '/dashboard/crm?stage=lead', icon: TrendingUp },
+  // ── AI & Sales (grouped dropdown) ──
+  {
+    label: 'AI Growth Agent', href: '/dashboard/sales-agent', icon: Zap,
+    subItems: [
+      { label: 'Lead Finder',  href: '/dashboard/sales-agent?tab=finder', icon: Search },
+      { label: 'Agent Chat',   href: '/dashboard/sales-agent?tab=chat',   icon: Bot   },
+      { label: 'Leads',        href: '/dashboard/crm?stage=lead',          icon: TrendingUp },
+    ]
+  },
   { label: 'Contacts', href: '/dashboard/crm?stage=customer', icon: Users },
 
   // ── Communication ──
-  { label: 'Mail (Gmail)', href: '/dashboard/mail', icon: Mail, comingSoon: true },
   { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
-  { label: 'Booking', href: '/dashboard/business/booking', icon: Clock },
-  { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
+  { label: 'Booking',  href: '/dashboard/business/booking',  icon: Clock   },
+  { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video   },
+
+  // ── Mail (grouped dropdown) ──
+  {
+    label: 'Mail', href: '#', icon: Mail,
+    subItems: [
+      { label: 'Zoho Mail', href: '/dashboard/zoho/mail',   icon: Mail },
+      { label: 'Gmail',     href: '/dashboard/mail',        icon: Mail, comingSoon: true },
+    ]
+  },
 
   // ── Deals & Agreements ──
-  { label: 'Quotes', href: '/dashboard/business/quotes', icon: FileText },
+  { label: 'Quotes',    href: '/dashboard/business/quotes',    icon: FileText },
   { label: 'Contracts', href: '/dashboard/business/contracts', icon: FileText },
 
   // ── Project Execution ──
-  { label: 'Projects', href: '/dashboard/business/projects', icon: Briefcase },
-  { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
-  { label: 'Task Scheduler', href: '/dashboard/business/tasks', icon: Clock },
+  { label: 'Projects',       href: '/dashboard/business/projects', icon: Briefcase  },
+  { label: 'Tasks',          href: '/dashboard/tasks',             icon: CheckSquare },
+  { label: 'Task Scheduler', href: '/dashboard/business/tasks',    icon: Clock       },
 
   // ── Finance & Records ──
-  { label: 'Invoices', href: '/dashboard/business/billing', icon: DollarSign },
-  { label: 'Finance', href: '/dashboard/accounting', icon: BarChart3 },
-  { label: 'Documents', href: '/dashboard/business/documents', icon: FolderOpen },
+  { label: 'Invoices',   href: '/dashboard/business/billing',    icon: DollarSign },
+  { label: 'Finance',    href: '/dashboard/accounting',          icon: BarChart3  },
+  { label: 'Documents',  href: '/dashboard/business/documents',  icon: FolderOpen },
 
-  // ── Marketing & Outreach ──
-  { label: 'SMS Campaigns', href: '/dashboard/business/sms', icon: Smartphone },
-  { label: 'Social Media', href: '/dashboard/business/social', icon: Presentation },
-  { label: 'Email Campaigns', href: '/dashboard/business/campaigns', icon: Mail },
+  // ── Campaigns (grouped dropdown) ──
+  {
+    label: 'Campaigns', href: '#', icon: Smartphone,
+    subItems: [
+      { label: 'SMS / Twilio',  href: '/dashboard/business/sms',       icon: Smartphone   },
+      { label: 'Email',         href: '/dashboard/business/campaigns',  icon: Mail         },
+      { label: 'Social Media',  href: '/dashboard/business/social',     icon: Presentation },
+    ]
+  },
 
   // ── Integrations ──
   { label: 'Facebook', href: '/dashboard/business/facebook', icon: Facebook },
-  { label: 'Mail', href: '/dashboard/zoho/mail', icon: Mail },
-  { label: 'Zoho CRM', href: '/dashboard/zoho/crm', icon: Users },
+  { label: 'Zoho CRM', href: '/dashboard/zoho/crm',         icon: Users    },
 
-  // ── Analytics & Operations ──
+  // ── Analytics ──
   { label: 'Daily Summary', href: '/dashboard/business/daily-summary', icon: BarChart3 },
 ];
+
 
 
 export const ADMIN_STATS: DashboardStat[] = [

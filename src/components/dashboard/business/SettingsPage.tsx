@@ -1,6 +1,12 @@
+'use client';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Building,
     Palette,
+    Sun,
+    Moon,
+    Monitor,
+    Globe,
     Bell,
     Shield,
     Upload,
@@ -27,7 +33,7 @@ import {
     Sparkles
 } from 'lucide-react';
 import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '../../../services/universalServiceCatalog';
-import { useState, useEffect } from 'react';
+
 import { useSearchParams } from 'next/navigation';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -46,6 +52,20 @@ import { authService } from '../../../services/authService';
 import { Button, Modal, Input } from '../../ui/UIComponents';
 import { BackgroundColorPicker } from '../settings/BackgroundColorPicker';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { useLanguage, LANGUAGES } from '../../../contexts/LanguageContext';
+
+type ThemeMode = 'light' | 'dark' | 'auto';
+function applyThemeClass(t: ThemeMode) {
+    const root = document.documentElement;
+    if (t === 'auto') {
+        const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        root.classList.toggle('dark', dark);
+        root.classList.toggle('light', !dark);
+    } else {
+        root.classList.toggle('dark', t === 'dark');
+        root.classList.toggle('light', t === 'light');
+    }
+}
 
 interface SettingsPageProps {
     user: User;
@@ -54,7 +74,25 @@ interface SettingsPageProps {
 const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const { currentTenant } = useTenant();
     const { backgroundColor, setBackgroundColor } = useTheme();
+    const { language, setLanguage } = useLanguage();
     const [activeTab, setActiveTab] = useState<'business' | 'notifications' | 'security' | 'booking' | 'integrations' | 'billing' | 'appearance'>('business');
+    const [uiTheme, setUiTheme] = useState<ThemeMode>('dark');
+
+    // Load + sync theme on mount
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem('ac-theme') as ThemeMode | null;
+            const t = (saved && ['light', 'dark', 'auto'].includes(saved)) ? saved : 'dark';
+            setUiTheme(t);
+            applyThemeClass(t);
+        } catch { applyThemeClass('dark'); }
+    }, []);
+
+    const handleTheme = useCallback((t: ThemeMode) => {
+        setUiTheme(t);
+        applyThemeClass(t);
+        try { localStorage.setItem('ac-theme', t); } catch { /* ignore */ }
+    }, []);
     const [settings, setSettings] = useState({
         businessName: '',
         logoUrl: '',
@@ -729,51 +767,106 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 
                 {/* Appearance Tab */}
                 {activeTab === 'appearance' && (
-                    <div className="space-y-6">
+                    <div className="space-y-8">
                         <div>
-                            <h3 className="text-xl font-bold mb-4">Dashboard Appearance</h3>
-                            <p className="text-slate-400 mb-6">Customize the look and feel of your workspace</p>
+                            <h3 className="text-xl font-bold mb-1">Appearance & Language</h3>
+                            <p className="text-slate-400">Customize the look and language of your workspace</p>
                         </div>
 
-                        <div className="space-y-6">
-                            {/* Background Color Section */}
-                            <div className="p-6 bg-slate-800 rounded-xl border border-slate-700">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div>
-                                        <h4 className="text-lg font-semibold text-white mb-2">Dashboard Background</h4>
-                                        <p className="text-sm text-slate-400">Choose a color that matches your brand or preference</p>
-                                    </div>
-                                    <button
-                                        onClick={() => setShowColorPicker(true)}
-                                        className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors"
-                                    >
-                                        <Palette className="w-4 h-4" />
-                                        Change Color
-                                    </button>
-                                </div>
-                                
-                                <div className="flex items-center gap-4">
-                                    <div 
-                                        className="w-12 h-12 rounded-lg border-2 border-slate-600"
-                                        style={{ backgroundColor: backgroundColor }}
-                                    />
-                                    <div>
-                                        <p className="text-sm font-medium text-white">Current Background</p>
-                                        <p className="text-xs text-slate-400">{backgroundColor}</p>
-                                    </div>
+                        {/* ── Language Section ── */}
+                        <div className="p-6 bg-slate-800 rounded-xl border border-slate-700 space-y-4">
+                            <div className="flex items-center gap-3 mb-2">
+                                <Globe className="w-5 h-5 text-teal-400" />
+                                <div>
+                                    <h4 className="text-base font-semibold text-white">Language</h4>
+                                    <p className="text-xs text-slate-400">Choose the language for AI-generated content</p>
                                 </div>
                             </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                {LANGUAGES.map(lang => (
+                                    <button
+                                        key={lang.code}
+                                        onClick={() => setLanguage(lang.code)}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all font-medium ${
+                                            language === lang.code
+                                                ? 'bg-teal-500/15 border-teal-500 text-teal-300'
+                                                : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'
+                                        }`}
+                                    >
+                                        <span className="text-2xl leading-none">{lang.flag}</span>
+                                        <div className="text-left">
+                                            <p className="text-sm font-semibold">{lang.label}</p>
+                                            <p className="text-xs opacity-60">{lang.nativeName}</p>
+                                        </div>
+                                        {language === lang.code && (
+                                            <span className="ml-auto w-2 h-2 rounded-full bg-teal-400" />
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
 
-                            {/* Preview Section */}
-                            <div className="p-6 bg-slate-800 rounded-xl border border-slate-700">
-                                <h4 className="text-lg font-semibold text-white mb-4">Preview</h4>
-                                <div 
-                                    className="p-8 rounded-xl border-2 border-dashed border-slate-600 text-center"
-                                    style={{ backgroundColor: backgroundColor }}
-                                >
-                                    <p className="text-slate-300 mb-2">Your dashboard will look like this</p>
-                                    <p className="text-xs text-slate-500">This is how your workspace background will appear</p>
+                        {/* ── Theme Section ── */}
+                        <div className="p-6 bg-slate-800 rounded-xl border border-slate-700 space-y-4">
+                            <div className="flex items-center gap-3 mb-2">
+                                <Moon className="w-5 h-5 text-teal-400" />
+                                <div>
+                                    <h4 className="text-base font-semibold text-white">Theme</h4>
+                                    <p className="text-xs text-slate-400">Select how the dashboard looks</p>
                                 </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                {([
+                                    { mode: 'light' as ThemeMode, label: 'Light', desc: 'Bright & clean', Icon: Sun },
+                                    { mode: 'dark'  as ThemeMode, label: 'Dark',  desc: 'Easy on eyes', Icon: Moon },
+                                    { mode: 'auto'  as ThemeMode, label: 'System', desc: 'Follows OS',   Icon: Monitor },
+                                ]).map(({ mode, label, desc, Icon }) => (
+                                    <button
+                                        key={mode}
+                                        onClick={() => handleTheme(mode)}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all font-medium ${
+                                            uiTheme === mode
+                                                ? 'bg-teal-500/15 border-teal-500 text-teal-300'
+                                                : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'
+                                        }`}
+                                    >
+                                        <Icon className="w-5 h-5 flex-shrink-0" />
+                                        <div className="text-left">
+                                            <p className="text-sm font-semibold">{label}</p>
+                                            <p className="text-xs opacity-60">{desc}</p>
+                                        </div>
+                                        {uiTheme === mode && (
+                                            <span className="ml-auto w-2 h-2 rounded-full bg-teal-400" />
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* ── Dashboard Background Color ── */}
+                        <div className="p-6 bg-slate-800 rounded-xl border border-slate-700">
+                            <div className="flex items-center justify-between mb-4">
+                                <div>
+                                    <h4 className="text-base font-semibold text-white">Dashboard Background Color</h4>
+                                    <p className="text-sm text-slate-400">Choose a color that matches your brand</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowColorPicker(true)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors text-sm"
+                                >
+                                    <Palette className="w-4 h-4" />
+                                    Change
+                                </button>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-lg border-2 border-slate-600" style={{ backgroundColor }} />
+                                <div>
+                                    <p className="text-sm font-medium text-white">Current</p>
+                                    <p className="text-xs text-slate-400 font-mono">{backgroundColor}</p>
+                                </div>
+                            </div>
+                            <div className="mt-4 p-6 rounded-xl border-2 border-dashed border-slate-600 text-center" style={{ backgroundColor }}>
+                                <p className="text-slate-300 text-sm">Preview of your background</p>
                             </div>
                         </div>
                     </div>
