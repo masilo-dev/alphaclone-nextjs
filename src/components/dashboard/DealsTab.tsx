@@ -29,6 +29,7 @@ import {
     PieChart,
     Pie
 } from 'recharts';
+import { ChartContainer } from '../ui/ChartContainer';
 
 interface DealsTabProps {
     userId: string;
@@ -413,8 +414,9 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                             <div className="text-[10px] text-slate-500">Weighted value by month</div>
                         </div>
                         <div className="h-64 w-full relative" style={{ minHeight: '256px' }}>
-                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
-                                <BarChart data={forecastData}>
+                            <ChartContainer className="h-64">
+                                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
+                                    <BarChart data={forecastData}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                                     <XAxis
                                         dataKey="month"
@@ -436,8 +438,9 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                         formatter={(value: any) => [formatCurrency(Number(value || 0)), 'Weighted Value']}
                                     />
                                     <Bar dataKey="value" fill="#14b8a6" radius={[4, 4, 0, 0]} barSize={30} />
-                                </BarChart>
-                            </ResponsiveContainer>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </ChartContainer>
                         </div>
                     </div>
 
@@ -449,8 +452,9 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                             <div className="text-[10px] text-slate-500">Historical performance</div>
                         </div>
                         <div className="h-64 w-full relative" style={{ minHeight: '256px' }}>
-                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
-                                <AreaChart data={trendData}>
+                            <ChartContainer className="h-64">
+                                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
+                                    <AreaChart data={trendData}>
                                     <defs>
                                         <linearGradient id="colorWon" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
@@ -480,8 +484,9 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                     />
                                     <Area type="monotone" dataKey="won" stroke="#10b981" fillOpacity={1} fill="url(#colorWon)" strokeWidth={2} />
                                     <Area type="monotone" dataKey="lost" stroke="#ef4444" fillOpacity={1} fill="url(#colorLost)" strokeWidth={2} />
-                                </AreaChart>
-                            </ResponsiveContainer>
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </ChartContainer>
                         </div>
                     </div>
                 </div>

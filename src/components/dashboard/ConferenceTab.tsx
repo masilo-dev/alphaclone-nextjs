@@ -26,10 +26,10 @@ const ConferenceTab: React.FC<Props> = ({ user, onCallStateChange, onToggleSideb
 
     // Main conference tab view
     return (
-        <div className="space-y-6 sm:space-y-8 animate-fade-in max-w-5xl mx-auto px-4 sm:px-0">
+        <div className="space-y-6 sm:space-y-8 animate-fade-in">
             <div className="mb-6">
-                <h2 className="text-2xl font-bold text-white mb-2">Video Meetings</h2>
-                <p className="text-slate-400">
+                <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">Video Meetings</h2>
+                <p className="text-slate-400 text-xs sm:text-sm">
                     Simple, secure video meetings - Create and join with one click
                 </p>
             </div>

@@ -22,6 +22,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Lead, leadService } from '@/services/leadService';
 import { Building2, Mail, Phone, MapPin, Target, Sparkles, AlertCircle, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Avatar } from '@/components/ui/Avatar';
 
 // Define the columns/stages based on the database
 const KANBAN_STAGES = [
@@ -64,9 +65,13 @@ function KanbanCard({ lead, isOverlay = false }: { lead: Lead, isOverlay?: boole
 
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2 max-w-[85%]">
-            <div className="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0">
-                <Building2 className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-            </div>
+            <Avatar 
+              name={lead.businessName}
+              email={lead.email}
+              size={32}
+              shape="rounded"
+              className="flex-shrink-0"
+            />
             <div className="min-w-0">
                 <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate">{lead.businessName}</h4>
                 {lead.industry && (

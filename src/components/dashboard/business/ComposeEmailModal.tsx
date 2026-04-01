@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
 import { businessClientService } from '../../../services/businessClientService';
 import { useTenant } from '../../../contexts/TenantContext';
+import { getMimeType } from '../../../utils/mimeTypes';
 
 interface ComposeEmailModalProps {
     isOpen: boolean;
@@ -33,7 +34,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     const [showCcBcc, setShowCcBcc] = useState(false);
     const [subject, setSubject] = useState(initialSubject);
     const [body, setBody] = useState(initialBody);
-    const [attachments, setAttachments] = useState<{ id: string, name: string, size: number }[]>([]);
+    const [attachments, setAttachments] = useState<{ id: string, name: string, size: number, data?: string }[]>([]);
     const [uploading, setUploading] = useState(false);
     const [sending, setSending] = useState(false);
     const [aiPrompt, setAiPrompt] = useState('');
@@ -91,8 +92,54 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     ];
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        toast.error('Attachments are currently being upgraded for Gmail integration');
-        // Attachments require a more complex Gmail upload flow which isn't fully proxied yet
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        setUploading(true);
+        try {
+            const newAttachments: { id: string, name: string, size: number, data: string }[] = [];
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // Check file size (max 25MB for Gmail)
+                if (file.size > 25 * 1024 * 1024) {
+                    toast.error(`${file.name} exceeds 25MB limit`);
+                    continue;
+                }
+
+                // Read file as base64
+                const base64Data = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const result = reader.result as string;
+                        // Remove data URL prefix to get pure base64
+                        const base64 = result.split(',')[1];
+                        resolve(base64);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+
+                newAttachments.push({
+                    id: `${Date.now()}-${i}`,
+                    name: file.name,
+                    size: file.size,
+                    data: base64Data,
+                });
+            }
+
+            setAttachments(prev => [...prev, ...newAttachments]);
+            toast.success(`${newAttachments.length} file(s) attached`);
+        } catch (error) {
+            console.error('File upload error:', error);
+            toast.error('Failed to attach files');
+        } finally {
+            setUploading(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        }
     };
 
     const removeAttachment = (id: string) => {
@@ -155,8 +202,15 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                 },
                 body: JSON.stringify({
                     to,
+                    cc: cc || undefined,
+                    bcc: bcc || undefined,
                     subject,
                     messageBody: body,
+                    attachments: attachments.length > 0 ? attachments.map(att => ({
+                        filename: att.name,
+                        data: att.data,
+                        mimeType: getMimeType(att.name),
+                    })) : undefined,
                 })
             });
 

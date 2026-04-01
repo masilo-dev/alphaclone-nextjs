@@ -5,6 +5,7 @@ import { Card } from '../ui/UIComponents';
 import { Activity, Users, DollarSign, Server, Cpu, TrendingUp, TrendingDown } from 'lucide-react';
 import { analyticsService, AnalyticsData } from '../../services/analyticsService';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { ChartContainer } from '../ui/ChartContainer';
 import { format } from 'date-fns';
 import { useTenant } from '@/contexts/TenantContext';
 import { Button } from '../ui/UIComponents';
@@ -234,8 +235,9 @@ const AnalyticsTab: React.FC = () => {
                         <TrendingUp className="w-5 h-5 text-teal-400" /> Revenue & Projects Trend
                     </h3>
                     <div className="h-[300px] w-full min-h-[300px]">
-                        <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={300} debounce={50}>
-                            <AreaChart data={revenueChartData}>
+                        <ChartContainer className="h-[300px]">
+                            <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={300} debounce={50}>
+                                <AreaChart data={revenueChartData}>
                                 <defs>
                                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#2dd4bf" stopOpacity={0.3} />
@@ -256,8 +258,9 @@ const AnalyticsTab: React.FC = () => {
                                 />
                                 <Area type="monotone" dataKey="revenue" stroke="#2dd4bf" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
                                 <Area type="monotone" dataKey="projects" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorProjects)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
                     </div>
                 </Card>
 
@@ -266,8 +269,9 @@ const AnalyticsTab: React.FC = () => {
                         <Activity className="w-5 h-5 text-violet-500" /> Project Status Distribution
                     </h3>
                     <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={250}>
-                            <PieChart>
+                        <ChartContainer className="h-[300px]">
+                            <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={250}>
+                                <PieChart>
                                 <Pie
                                     data={projectStatusData}
                                     cx="50%"
@@ -288,8 +292,9 @@ const AnalyticsTab: React.FC = () => {
                                     wrapperStyle={{ color: '#fff', fontSize: '12px' }}
                                     iconType="circle"
                                 />
-                            </PieChart>
-                        </ResponsiveContainer>
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
                     </div>
                 </Card>
             </div>

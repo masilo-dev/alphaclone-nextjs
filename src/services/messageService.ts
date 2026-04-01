@@ -336,13 +336,13 @@ export const messageService = {
         const channel = supabase
             .channel(channelName)
             .on(
-                'postgres_changes' as any,
+                'postgres_changes',
                 {
                     event: '*',
                     schema: 'public',
                     table: 'messages',
                     filter: `tenant_id=eq.${tenantId.trim()}`
-                },
+                } as any,
                 (payload: any) => {
                     if (payload.eventType !== 'INSERT' && payload.eventType !== 'UPDATE') return;
                     

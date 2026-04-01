@@ -52,15 +52,15 @@ const ContactSubmissionsTab: React.FC = () => {
         <div className="space-y-6 animate-fade-in">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-white">Contact Submissions</h2>
-                    <p className="text-slate-400 mt-1">Messages from your contact form</p>
+                    <h2 className="text-xl sm:text-2xl font-bold text-white">Contact Submissions</h2>
+                    <p className="text-slate-400 text-xs sm:text-sm mt-1">Messages from your contact form</p>
                 </div>
                 <div className="flex gap-2">
                     {['all', 'New', 'Read', 'Replied'].map((status) => (
                         <button
                             key={status}
                             onClick={() => setFilter(status as any)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === status
+                            className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all h-10 ${filter === status
                                     ? 'bg-teal-500 text-white'
                                     : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                                 }`}

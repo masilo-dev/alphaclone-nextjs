@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
 import { exportToCSV } from '../../utils/exportUtils';
+import { ChartContainer } from '../ui/ChartContainer';
 
 interface FinanceTabProps {
     user: User;
@@ -430,8 +431,8 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
     return (
         <div className="space-y-6 animate-fade-in">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <CreditCard className="w-6 h-6 text-teal-400" /> Financial Center
+                <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-teal-400" /> Financial Center
                 </h2>
                 {subTab !== 'subscription' && (
                     <div className="flex flex-wrap gap-2 w-full sm:w-auto">
@@ -571,11 +572,10 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                 {isLoadingChart && (
                                     <div className="absolute inset-0 flex items-center justify-center bg-slate-900/50 z-10 rounded-2xl">
                                         <div className="flex flex-col items-center gap-2">
-                                            <div className="w-8 h-8 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div>
-                                            <p className="text-xs text-slate-400 font-medium tracking-wide">Retrieving Financial Data...</p>
-                                        </div>
                                     </div>
-                                )}
+                                </div>
+                            )}
+                            <ChartContainer className="w-full h-full" minHeight={300}>
                                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
                                     <AreaChart data={chartData}>
                                         <defs>
@@ -588,23 +588,30 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                                 <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                                        <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                                        <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => format(value, { maximumSignificantDigits: 3 })} />
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                                        <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
+                                        <YAxis stroke="#64748b" fontSize={12} tickFormatter={(value) => formatCurrency(value)} />
                                         <Tooltip
-                                            contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '8px' }}
-                                            itemStyle={{ color: '#e2e8f0' }}
+                                            contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b' }}
+                                            formatter={(value: any) => formatCurrency(value)}
                                         />
                                         <Area type="monotone" dataKey="revenue" stroke="#14b8a6" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" name="Revenue" />
                                         <Area type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorExpenses)" name="Expenses" />
                                     </AreaChart>
                                 </ResponsiveContainer>
-                            </div>
+                            </ChartContainer>
                         </div>
                     </div>
+                </div>
 
-                    {/* Payment Health (Dunning) Section */}
-                    {isAdmin && (
+                {/* Payment Health (Dunning) Section */}
+                {isAdmin && (
+                    <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                <ShieldCheck className="w-5 h-5 text-teal-400" /> Payment Health & Dunning
+                            </h3>
+                            <Badge variant="success">Active Recovery</Badge>
                         <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-lg font-bold text-white flex items-center gap-2">

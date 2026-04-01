@@ -6,6 +6,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { DollarSign, TrendingUp, TrendingDown, Target } from 'lucide-react';
 import { forecastingService, ForecastSummary } from '../../services/forecastingService';
 import { dealService, PipelineStats } from '../../services/dealService';
+import { ChartContainer } from '../ui/ChartContainer';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrency } from '@/hooks/useCurrency';
 
@@ -73,16 +74,16 @@ const SalesForecastTab = () => {
     }));
 
     return (
-        <div className="space-y-6 animate-fade-in">
-            <div className="flex justify-between items-end">
+        <div className="space-y-6 animate-fade-in min-h-0">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-white">Sales Forecast & Pipeline</h2>
-                    <p className="text-slate-400">Projected revenue and deal flow analysis.</p>
+                    <h2 className="text-xl sm:text-2xl font-bold text-white">Sales Forecast & Pipeline</h2>
+                    <p className="text-slate-400 text-xs sm:text-sm mt-1">Projected revenue and deal flow analysis.</p>
                 </div>
             </div>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Card className="bg-slate-900 border-slate-800 p-4">
                     <div className="flex justify-between items-start mb-2">
                         <div className="p-2 bg-green-500/10 rounded-lg text-green-400"><DollarSign className="w-5 h-5" /></div>
@@ -124,41 +125,41 @@ const SalesForecastTab = () => {
                 {/* Revenue Forecast Chart */}
                 <Card className="bg-slate-900 border-slate-800 p-6">
                     <h3 className="text-lg font-bold text-white mb-6">Revenue Forecast vs Actual</h3>
-                    <div className="h-80 w-full min-h-[320px]">
-                        <ResponsiveContainer width="100%" height={320} minWidth={0} minHeight={320} debounce={50}>
+                    <ChartContainer className="h-80 w-full" minHeight={320}>
+                        <ResponsiveContainer width="100%" height={320} minWidth={0} minHeight={320}>
                             <LineChart data={chartData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                                 <XAxis dataKey="month" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
                                 <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => format(value, { notation: 'compact' } as any)} />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#f8fafc' }}
-                                    itemStyle={{ color: '#f8fafc' }}
+                                    formatter={(value: any) => format(value, { notation: 'compact' } as any)}
                                 />
                                 <Legend />
                                 <Line type="monotone" dataKey="actual" name="Actual Revenue" stroke="#14b8a6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                                 <Line type="monotone" dataKey="projected" name="Projected" stroke="#6366f1" strokeWidth={3} dot={{ r: 4 }} strokeDasharray="5 5" />
                             </LineChart>
                         </ResponsiveContainer>
-                    </div>
+                    </ChartContainer>
                 </Card>
 
                 {/* Pipeline Distribution Chart */}
                 <Card className="bg-slate-900 border-slate-800 p-6">
                     <h3 className="text-lg font-bold text-white mb-6">Deal Pipeline Value</h3>
-                    <div className="h-80 w-full min-h-[320px]">
-                        <ResponsiveContainer width="100%" height={320} minWidth={0} minHeight={320} debounce={50}>
+                    <ChartContainer className="h-80 w-full" minHeight={320}>
+                        <ResponsiveContainer width="100%" height={320} minWidth={0} minHeight={320}>
                             <BarChart data={pipelineChartData} layout="vertical" margin={{ left: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
                                 <XAxis type="number" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => format(value, { notation: 'compact' } as any)} />
                                 <YAxis dataKey="stage" type="category" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} width={80} />
                                 <Tooltip
-                                    cursor={{ fill: 'transparent' }}
+                                    formatter={(value: any) => format(value, { notation: 'compact' } as any)}
                                     contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#f8fafc' }}
                                 />
                                 <Bar dataKey="value" name="Pipeline Value" fill="#14b8a6" radius={[0, 4, 4, 0]} barSize={32} />
                             </BarChart>
                         </ResponsiveContainer>
-                    </div>
+                    </ChartContainer>
                 </Card>
             </div>
         </div>

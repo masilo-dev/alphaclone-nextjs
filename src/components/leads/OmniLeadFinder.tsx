@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, MapPin, Database, Zap, Globe, Mail, Phone, ExternalLink, Plus, RefreshCw, Briefcase, Tag } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import toast from 'react-hot-toast';
+import { Avatar } from '../ui/Avatar';
 
 interface ScrapedLead {
   business_name: string;
@@ -266,12 +267,14 @@ export default function OmniLeadFinder() {
               >
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-start gap-3">
-                    <img 
-                      src={domain ? `https://logo.clearbit.com/${domain}?s=64` : `https://ui-avatars.com/api/?name=${encodeURIComponent(lead.business_name)}&background=0f766e&color=ccfbf1&bold=true`}
-                      onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(lead.business_name)}&background=0f766e&color=ccfbf1&bold=true` }}
-                      alt={lead.business_name}
-                      className="w-10 h-10 rounded-lg object-contain bg-slate-800 border border-slate-700 p-0.5 group-hover:border-teal-400 transition-colors"
-                    />
+                    <div className="border border-slate-700 group-hover:border-teal-400 transition-colors rounded-lg p-0.5 bg-slate-800">
+                      <Avatar 
+                        name={lead.business_name}
+                        size={36}
+                        shape="rounded"
+                        className="rounded-md"
+                      />
+                    </div>
                     <div>
                       <h3 className="text-white font-semibold text-base leading-tight line-clamp-1 group-hover:text-teal-300 transition-colors">{lead.business_name}</h3>
                       {domain && (
