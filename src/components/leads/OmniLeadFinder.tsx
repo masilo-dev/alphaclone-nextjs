@@ -30,7 +30,15 @@ export default function OmniLeadFinder() {
   const { user } = useAuth();
   const { currentTenant } = useTenant();
   const [results, setResults] = useState<ScrapedLead[]>([]);
+  const [filterQuery, setFilterQuery] = useState('');
   const [progress, setProgress] = useState({ step: 1, percent: 0, message: '' });
+
+  // Filtered results
+  const filteredResults = results.filter(lead => 
+    lead.business_name.toLowerCase().includes(filterQuery.toLowerCase()) ||
+    lead.website.toLowerCase().includes(filterQuery.toLowerCase()) ||
+    (lead.emails?.[0] || '').toLowerCase().includes(filterQuery.toLowerCase())
+  );
 
   const getHostname = (url: string) => {
     try {
@@ -82,7 +90,7 @@ export default function OmniLeadFinder() {
       const searchRes = await fetch('/api/scraper/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query })
+        body: JSON.stringify({ query, usePlaywright })
       });
       
       const searchData = await searchRes.json();
@@ -225,10 +233,36 @@ export default function OmniLeadFinder() {
         )}
       </AnimatePresence>
 
-      {/* Results Grid */}
+      {/* Filtering and Status Row */}
       {results.length > 0 && (
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-slate-900/40 rounded-xl border border-slate-800">
+           <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <input 
+                type="text"
+                placeholder="Filter results by name, website or email..."
+                value={filterQuery}
+                onChange={(e) => setFilterQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-950/50 border border-slate-800 rounded-lg text-sm text-slate-200 focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
+              />
+           </div>
+           <div className="flex items-center gap-4 text-xs font-medium text-slate-400">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-teal-500" />
+                Total Found: {results.length}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                Filtered: {filteredResults.length}
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* Results Grid */}
+      {filteredResults.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {results.map((lead, idx) => {
+          {filteredResults.map((lead, idx) => {
             const domain = getHostname(lead.website);
             return (
               <motion.div 

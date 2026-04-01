@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
 import axios from 'axios';
+import { BrowserManager } from '@/lib/scraper/browserManager';
 
 // ─── Free & Randomized Scraping Infrastructure ─────────────────────────────
 const USER_AGENTS = [
@@ -89,7 +90,6 @@ async function fetchDuckDuckGo(query: string) {
   return results;
 }
 
-// ─── Strategy 3: Direct LinkedIn/Social Surface ─────────────────────────────
 async function fetchSocialLeads(query: string) {
   const socialQuery = `${query} site:linkedin.com/company OR site:facebook.com "contact"`;
   const url = `https://www.bing.com/search?q=${encodeURIComponent(socialQuery)}&count=10`;
@@ -108,18 +108,65 @@ async function fetchSocialLeads(query: string) {
   return results;
 }
 
+// ─── Strategy 4: Playwright Browser Search (Power Mode) ─────────────────────
+async function fetchWithPlaywright(query: string) {
+  const dorkedQuery = `${query} (site:yelp.com OR "contact us" OR "about us")`;
+  const url = `https://www.bing.com/search?q=${encodeURIComponent(dorkedQuery)}&count=20`;
+  
+  console.log('[Scraper] Orchestrating Playwright search for:', query);
+  
+  try {
+    const { page } = await BrowserManager.createPage();
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    
+    // Wait for the results to actually render
+    await page.waitForSelector('li.b_algo', { timeout: 10000 }).catch(() => null);
+    
+    const results = await page.evaluate(() => {
+      const items: any[] = [];
+      document.querySelectorAll('li.b_algo').forEach((el) => {
+        const anchor = el.querySelector('h2 a') as HTMLAnchorElement;
+        const title = anchor?.innerText || '';
+        const href = anchor?.href || '';
+        const snippet = (el.querySelector('.b_caption p') as HTMLElement)?.innerText || '';
+        
+        if (title && href && href.startsWith('http')) {
+          items.push({ title, href, snippet });
+        }
+      });
+      return items;
+    });
+    
+    return results.map(r => ({
+      business_name: r.title.replace(/[|–-].*/, '').trim(),
+      website: r.href,
+      snippet: r.snippet || 'Business listing identified via browser engine.'
+    }));
+  } catch (e: any) {
+    console.error('[Scraper] Playwright search failed:', e.message);
+    return [];
+  }
+}
+
 export async function POST(request: Request) {
   try {
-    const { query } = await request.json();
+    const { query, usePlaywright = false } = await request.json();
     if (!query) return NextResponse.json({ error: 'Query is required' }, { status: 400 });
 
     let results: any[] = [];
 
-    // Fallback Sequence: Bing Dorks -> DDG -> Social Surface
-    try {
-      results = await fetchBing(query);
-    } catch (e: any) {
-      console.warn('Bing Strategy 1 failed:', e.message);
+    // 1. Prioritize Playwright if requested
+    if (usePlaywright) {
+      results = await fetchWithPlaywright(query);
+    }
+
+    // 2. Standard Fallback Sequence if Playwright skipped or returned 0
+    if (results.length === 0) {
+      try {
+        results = await fetchBing(query);
+      } catch (e: any) {
+        console.warn('Bing Strategy 1 failed:', e.message);
+      }
     }
 
     if (results.length < 5) {
@@ -132,12 +179,18 @@ export async function POST(request: Request) {
     }
 
     if (results.length < 3) {
-        try {
-            const socialResults = await fetchSocialLeads(query);
-            results = [...results, ...socialResults];
-        } catch (e: any) {
-            console.warn('Social Strategy failed:', e.message);
-        }
+      try {
+        const socialResults = await fetchSocialLeads(query);
+        results = [...results, ...socialResults];
+      } catch (e: any) {
+        console.warn('Social Strategy failed:', e.message);
+      }
+    }
+
+    // 3. Last Resort: Automatic Playwright Fallback
+    if (results.length === 0 && !usePlaywright) {
+      console.log('[Scraper] Standard methods failed. Triggering automatic Playwright fallback...');
+      results = await fetchWithPlaywright(query);
     }
 
     // De-duplicate by website
