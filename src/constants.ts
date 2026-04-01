@@ -24,7 +24,9 @@ import {
   FolderOpen,
   Presentation,
   Facebook,
-  Smartphone
+  Smartphone,
+  Bot,
+  Search
 } from 'lucide-react';
 import { NavItem, DashboardStat } from './types';
 
@@ -94,7 +96,9 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
 
   // ── Sales & Acquisition ──
-  { label: 'AI Growth', href: '/dashboard/sales-agent', icon: Zap },
+  { label: 'AI Growth Agent', href: '/dashboard/sales-agent', icon: Zap },
+  { label: 'Lead Finder', href: '/dashboard/sales-agent', icon: Search },
+  { label: 'Agent Chat', href: '/dashboard/sales-agent', icon: Bot },
   { label: 'Leads', href: '/dashboard/crm?stage=lead', icon: TrendingUp },
   { label: 'Contacts', href: '/dashboard/crm?stage=customer', icon: Users },
 

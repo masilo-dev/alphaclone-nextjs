@@ -217,13 +217,13 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-black text-white italic tracking-tighter uppercase">Client Nexus</h2>
+                    <h2 className="text-xl font-black text-white tracking-tight">Contacts</h2>
                     <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="blue">{clients.length} Active nodes</Badge>
-                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Global CRM Database</p>
+                        <Badge variant="blue">{clients.length} total</Badge>
+                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">CRM Database</p>
                     </div>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-2 items-center">
                     <Button
                         variant="outline"
                         onClick={() => setShowImportModal(true)}
@@ -235,21 +235,130 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         onClick={() => setShowAddModal(true)}
                         icon={<Plus className="w-4 h-4" />}
                     >
-                        Add Client
+                        Add
                     </Button>
-
-                    <div className="flex bg-slate-900 border border-slate-800 rounded-xl overflow-hidden p-1 hidden">
+                    {/* View mode toggle */}
+                    <div className="flex bg-slate-900 border border-slate-800 rounded-xl overflow-hidden p-1">
                         <button
                             onClick={() => setViewMode('list')}
+                            title="List view"
                             className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
                         >
-                            <List className="w-5 h-5" />
+                            <List className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('board')}
+                            title="Grid view"
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'board' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
+                        >
+                            <LayoutGrid className="w-4 h-4" />
                         </button>
                     </div>
                 </div>
             </div>
 
-            {viewMode === 'list' ? (
+            {viewMode === 'board' ? (
+                /* ── Compact Bio-Card Grid View ── */
+                <div className="space-y-4">
+                    {/* Search + Filter row */}
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Search contacts..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all text-sm"
+                            />
+                        </div>
+                        <select
+                            value={selectedStage}
+                            onChange={(e) => setSelectedStage(e.target.value)}
+                            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all text-sm"
+                        >
+                            <option value="all">All Stages</option>
+                            <option value="lead">Lead</option>
+                            <option value="prospect">Prospect</option>
+                            <option value="customer">Customer</option>
+                            <option value="lost">Lost</option>
+                        </select>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                        {filteredClients.map(client => {
+                            const initials = client.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+                            const stageColor = client.salesStage === 'customer' ? 'from-emerald-500 to-teal-600'
+                                : client.salesStage === 'lost' ? 'from-slate-600 to-slate-700'
+                                : client.salesStage === 'prospect' ? 'from-blue-500 to-violet-600'
+                                : 'from-teal-500 to-cyan-600';
+                            return (
+                                <div
+                                    key={client.id}
+                                    onClick={() => { setSelectedClient(client); setViewMode('list'); }}
+                                    className="group relative bg-slate-900/80 border border-slate-800 hover:border-teal-500/40 rounded-2xl p-3 cursor-pointer transition-all hover:shadow-lg hover:shadow-teal-500/10 hover:-translate-y-0.5 flex flex-col items-center text-center gap-2"
+                                >
+                                    {/* Stage indicator dot */}
+                                    <div className={`absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-gradient-to-br ${stageColor} shadow-sm`} />
+                                    {/* Avatar */}
+                                    <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${stageColor} flex items-center justify-center font-bold text-white text-sm shadow-lg`}>
+                                        {initials}
+                                    </div>
+                                    {/* Name + company */}
+                                    <div className="w-full">
+                                        <p className="font-semibold text-white text-xs truncate leading-snug">{client.name}</p>
+                                        {client.company && <p className="text-[10px] text-slate-500 truncate">{client.company}</p>}
+                                        {!client.company && client.industry && <p className="text-[10px] text-slate-500 truncate">{client.industry}</p>}
+                                    </div>
+                                    {/* Stage badge */}
+                                    <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                                        client.salesStage === 'customer' ? 'bg-emerald-500/15 text-emerald-400'
+                                        : client.salesStage === 'lost' ? 'bg-slate-700 text-slate-400'
+                                        : client.salesStage === 'prospect' ? 'bg-blue-500/15 text-blue-400'
+                                        : 'bg-teal-500/15 text-teal-400'
+                                    }`}>
+                                        {client.salesStage}
+                                    </span>
+                                    {/* Quick action icons */}
+                                    <div className="flex gap-1 w-full justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        {client.email && (
+                                            <a
+                                                href={`mailto:${client.email}`}
+                                                onClick={e => e.stopPropagation()}
+                                                className="p-1.5 rounded-lg bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 text-slate-400 transition-colors"
+                                                title={client.email}
+                                            >
+                                                <Mail className="w-3 h-3" />
+                                            </a>
+                                        )}
+                                        {client.phone && (
+                                            <a
+                                                href={`tel:${client.phone}`}
+                                                onClick={e => e.stopPropagation()}
+                                                className="p-1.5 rounded-lg bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 text-slate-400 transition-colors"
+                                                title={client.phone}
+                                            >
+                                                <Phone className="w-3 h-3" />
+                                            </a>
+                                        )}
+                                        <button
+                                            onClick={e => { e.stopPropagation(); setEditingClient(client); setShowEditModal(true); }}
+                                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 transition-colors"
+                                            title="Edit"
+                                        >
+                                            <Edit className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        {filteredClients.length === 0 && (
+                            <div className="col-span-full text-center py-16 text-slate-500 text-sm">
+                                No contacts found. Add your first contact to get started.
+                            </div>
+                        )}
+                    </div>
+                </div>
+            ) : (
                 <div className="flex flex-col md:flex-row gap-6 h-[calc(100vh-140px)] overflow-hidden">
                     <div className={`flex flex-col gap-4 h-full ${selectedClient ? 'hidden lg:flex w-full lg:w-1/3 lg:max-w-[350px]' : 'w-full'} overflow-hidden`}>
                         {/* Filters */}
@@ -452,8 +561,6 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         )}
                     </div>
                 </div>
-            ) : (
-                <CRMTab userId={user.id} userRole={user.role} />
             )}
 
             {/* Create Proposal Modal */}

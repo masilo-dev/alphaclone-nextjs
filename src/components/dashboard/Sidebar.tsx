@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, ChevronDown, Menu, ShieldAlert, Mic, HelpCircle, Activity, Sparkles, Loader2 } from 'lucide-react';
+import { LogOut, ChevronDown, Menu, ShieldAlert, Mic, HelpCircle, Activity, Sparkles, Loader2, Sun, Moon, Monitor } from 'lucide-react';
 import Image from 'next/image';
 import { LOGO_URL } from '../../constants';
 import { User } from '../../types';
@@ -64,6 +64,31 @@ const Sidebar = React.memo<SidebarProps>(({
             setSidebarOpen(false);
         }
     };
+
+    // Lightweight inline theme handler — persisted to localStorage
+    const [theme, setTheme] = useState<'light' | 'dark' | 'auto'>('dark');
+    const applyTheme = (t: 'light' | 'dark' | 'auto') => {
+        const root = document.documentElement;
+        if (t === 'auto') {
+            const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            root.classList.toggle('dark', dark);
+            root.classList.toggle('light', !dark);
+        } else {
+            root.classList.toggle('dark', t === 'dark');
+            root.classList.toggle('light', t === 'light');
+        }
+    };
+    const handleTheme = (t: 'light' | 'dark' | 'auto') => {
+        setTheme(t);
+        applyTheme(t);
+        localStorage.setItem('ac-theme', t);
+    };
+    useEffect(() => {
+        const saved = typeof window !== 'undefined'
+            ? localStorage.getItem('ac-theme') as 'light' | 'dark' | 'auto' | null
+            : null;
+        if (saved) { setTheme(saved); applyTheme(saved); }
+    }, []);
 
     return (
         <>
@@ -235,6 +260,45 @@ const Sidebar = React.memo<SidebarProps>(({
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    )}
+
+                    {/* Theme Toggle — only visible when sidebar expanded */}
+                    {sidebarOpen && (
+                        <div className="mb-3">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-600 px-1 mb-2">Appearance</p>
+                            <div className="flex items-center gap-1 bg-slate-800/80 rounded-xl p-1 border border-slate-700/50">
+                                <button
+                                    onClick={() => handleTheme('light')}
+                                    title="Light Mode"
+                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs font-semibold transition-all ${
+                                        theme === 'light' ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30' : 'text-slate-500 hover:text-white hover:bg-slate-700'
+                                    }`}
+                                >
+                                    <Sun className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">Light</span>
+                                </button>
+                                <button
+                                    onClick={() => handleTheme('dark')}
+                                    title="Dark Mode"
+                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs font-semibold transition-all ${
+                                        theme === 'dark' ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30' : 'text-slate-500 hover:text-white hover:bg-slate-700'
+                                    }`}
+                                >
+                                    <Moon className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">Dark</span>
+                                </button>
+                                <button
+                                    onClick={() => handleTheme('auto')}
+                                    title="System Theme"
+                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs font-semibold transition-all ${
+                                        theme === 'auto' ? 'bg-teal-500/20 text-teal-300 border border-teal-400/30' : 'text-slate-500 hover:text-white hover:bg-slate-700'
+                                    }`}
+                                >
+                                    <Monitor className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">Auto</span>
+                                </button>
+                            </div>
                         </div>
                     )}
 
