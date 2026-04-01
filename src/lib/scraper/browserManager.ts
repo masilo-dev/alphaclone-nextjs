@@ -4,8 +4,9 @@ import { chromium, Browser, Page } from 'playwright-core';
  * Universal Browser Manager for Lead Acquisition
  * 
  * Supports:
- * - Local Chromium (for local dev and power scraping)
- * - Remote CDP Connection (for Vercel/Production safety)
+ * - Multi-provider load balancing (e.g., Browserless & BrowserCat)
+ * - Automatic Failover (tries next provider if one fails or hits limits)
+ * - Local Chromium fallback for development
  */
 
 export class BrowserManager {
@@ -16,28 +17,44 @@ export class BrowserManager {
       return this.browser;
     }
 
-    const remoteUrl = process.env.BROWSER_WS_ENDPOINT; // e.g., wss://chrome.browserless.io?token=...
+    const endpointString = process.env.BROWSER_WS_ENDPOINT || '';
+    const endpoints = endpointString.split(',').map(u => u.trim()).filter(Boolean);
     
-    if (remoteUrl) {
-      console.log('Connecting to remote browser engine (Vercel Safe Mode)...');
-      this.browser = await chromium.connectOverCDP(remoteUrl);
-    } else {
-      // Local fallback - Requires playwright to be installed locally
-      console.log('Launching local browser engine (Power Mode)...');
-      try {
-        // We use playwright-core but need a valid executable path or a global install
-        // On local Windows, this usually works if playwright is installed.
-        this.browser = await chromium.launch({ 
-          headless: true,
-          args: ['--no-sandbox', '--disable-setuid-sandbox'] 
-        });
-      } catch (e: any) {
-        console.error('Failed to launch local browser. Ensure playwright is installed or BROWSER_WS_ENDPOINT is set.', e.message);
-        throw e;
+    // 1. Remote Multi-Provider Strategy (shuffled for load balancing)
+    if (endpoints.length > 0) {
+      const shuffledEndpoints = endpoints.sort(() => Math.random() - 0.5);
+      console.log(`[BrowserManager] Initializing connection to ${shuffledEndpoints.length} providers...`);
+      
+      for (const url of shuffledEndpoints) {
+        try {
+          const providerName = url.includes('browserless') ? 'Browserless' : 
+                               url.includes('browsercat') ? 'BrowserCat' : 'Remote Hub';
+          
+          console.log(`[BrowserManager] Orchestrating connection: ${providerName}`);
+          
+          this.browser = await chromium.connectOverCDP(url);
+          console.log(`[BrowserManager] Active Engine: ${providerName}`);
+          return this.browser;
+        } catch (e: any) {
+          console.warn(`[BrowserManager] Provider ${url} down or limited: ${e.message}. Trying next...`);
+        }
       }
+      console.warn('[BrowserManager] All remote providers exhausted/down.');
     }
 
-    return this.browser;
+    // 2. Local Fallback Strategy
+    console.log('[BrowserManager] Reverting to Local Browser Cluster...');
+    try {
+      this.browser = await chromium.launch({ 
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'] 
+      });
+      return this.browser;
+    } catch (e: any) {
+      const msg = 'Fatal: No browser engine cluster available (Remote or Local)';
+      console.error(`[BrowserManager] ${msg}:`, e.message);
+      throw new Error(msg);
+    }
   }
 
   static async createPage(): Promise<{ page: Page, browser: Browser }> {
