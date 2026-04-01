@@ -918,40 +918,14 @@ const SalesAgent: React.FC = () => {
                         <Bot className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-teal-400 flex-shrink-0" />
                         <span className="truncate">Growth Agent</span>
                     </h2>
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                        <span className="inline-flex items-center rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-1 font-semibold text-amber-300">
-                            Beta
-                        </span>
-                        <span className="text-slate-400">
-                            Lead discovery and assisted outreach are available now. Fully autonomous agent execution is still limited.
-                        </span>
-                    </div>
                 </div>
                 <div className="flex flex-wrap bg-slate-800 p-1 rounded-lg self-start sm:self-auto max-w-full overflow-x-auto custom-scrollbar">
-                    <button
-                        onClick={() => setActiveTab('leads')}
-                        className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'leads' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
-                    >
-                        Lead Finder
-                    </button>
                     <button
                         onClick={() => setActiveTab('omni')}
                         className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'omni' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
                     >
                         <Globe className="w-3.5 h-3.5" />
                         AlphaClone System Lead
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('kanban')}
-                        className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'kanban' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
-                    >
-                        CRM Kanban
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('automation')}
-                        className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'automation' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
-                    >
-                        Automations
                     </button>
                     <button
                         onClick={() => setActiveTab('agent')}
@@ -962,9 +936,9 @@ const SalesAgent: React.FC = () => {
                 </div>
             </div>
 
-            <div className="rounded-2xl border border-white/5 bg-slate-900/50 px-4 py-3 text-sm text-slate-300">
-                <span className="font-semibold text-white">Current status:</span> search, draft generation, CRM handoff, and quote creation work today.
-                Long-running autonomous missions and persistent mission history still need hardening before this should be treated as a fully autonomous agent.
+            <div className="rounded-2xl border border-white/5 bg-slate-900/50 px-4 py-2 text-[10px] uppercase tracking-widest font-bold text-slate-500 flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
+                Finding Leads & Autonomous SDR System Active
             </div>
             {/* Aerial View - Mini Widget during search or navigation - Hidden as per user request to eliminate map visuals */}
             {/* 
@@ -982,354 +956,9 @@ const SalesAgent: React.FC = () => {
 
 
 
-            {activeTab === 'leads' ? (
-                <div className="space-y-6">
-                    {/* Search Bar */}
-                    <div className="bg-transparent mb-8">
-                        <div className="flex flex-col gap-3 sm:gap-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                <div className="w-full">
-                                    <Input
-                                        label="Target Industry"
-                                        placeholder="e.g. Construction, Tech"
-                                        value={searchParams.industry}
-                                        onChange={e => setSearchParams({ ...searchParams, industry: e.target.value })}
-                                    />
-                                </div>
-                                <div className="w-full">
-                                    <Input
-                                        label="Location / Region"
-                                        placeholder="e.g. Zimbabwe, Harare"
-                                        value={searchParams.location}
-                                        onChange={e => setSearchParams({ ...searchParams, location: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Filter Row */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                <div className="w-full">
-                                    <label className="block text-xs font-medium text-slate-400 mb-2">Business Size</label>
-                                    <select
-                                        className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                                        value={filters.businessSize}
-                                        onChange={e => setFilters({ ...filters, businessSize: e.target.value })}
-                                    >
-                                        <option value="">All Sizes</option>
-                                        <option value="very_small">Very Small (1-10)</option>
-                                        <option value="small_medium">Small-Medium (11-100)</option>
-                                        <option value="enterprise">Enterprise (100+)</option>
-                                    </select>
-                                </div>
-                                <div className="w-full">
-                                    <label className="block text-xs font-medium text-slate-400 mb-2">Employee Count</label>
-                                    <select
-                                        className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                                        value={filters.employeeCount}
-                                        onChange={e => setFilters({ ...filters, employeeCount: e.target.value })}
-                                    >
-                                        <option value="">All Counts</option>
-                                        <option value="1-10">1-10 employees</option>
-                                        <option value="11-50">11-50 employees</option>
-                                        <option value="51-100">51-100 employees</option>
-                                        <option value="101-500">101-500 employees</option>
-                                        <option value="500+">500+ employees</option>
-                                    </select>
-                                </div>
-                            </div>
-
-
-
-                            <div className="flex flex-wrap gap-2 sm:gap-3">
-                                <Button onClick={handleSearch} className="flex-1 sm:flex-initial bg-teal-500 hover:bg-teal-400" isLoading={isSearching} disabled={!aiConfigured}>
-                                    <Search className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">{aiConfigured ? 'Find Leads' : 'AI core offline'}</span>
-                                </Button>
-
-                                <Button onClick={() => setShowManualModal(true)} variant="outline" className="flex-1 sm:flex-initial border-dashed border-slate-600 hover:border-teal-500 hover:text-teal-400">
-                                    <UserPlus className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Add Lead</span>
-                                </Button>
-
-                                <Button variant="outline" className="flex-1 sm:flex-initial border-dashed border-slate-600 hover:border-teal-500 hover:text-teal-400" onClick={() => setShowUpload(!showUpload)}>
-                                    <Upload className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Import</span>
-                                </Button>
-
-                                {selectedLeads.length > 0 && (
-                                    <>
-                                        <Button
-                                            onClick={handleBulkExecute}
-                                            variant="primary"
-                                            className="flex-1 sm:flex-initial bg-indigo-600 hover:bg-indigo-500"
-                                        >
-                                            <Zap className="w-4 h-4 sm:mr-2" /> Execute Selected ({selectedLeads.length})
-                                        </Button>
-                                        <Button
-                                            onClick={bulkAddLeadsToCRM}
-                                            variant="outline"
-                                            className="flex-1 sm:flex-initial border-slate-700 hover:border-teal-500 hover:text-teal-400"
-                                        >
-                                            <UserPlus className="w-4 h-4 sm:mr-2" /> Add Selection to CRM ({selectedLeads.length})
-                                        </Button>
-                                        <Button
-                                            onClick={deleteSelected}
-                                            variant="danger"
-                                            className="flex-1 sm:flex-initial bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/50"
-                                        >
-                                            <Trash2 className="w-4 h-4 sm:mr-2" />
-                                        </Button>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Dropzone */}
-                        {showUpload && (
-                            <div className="mt-4 p-8 border-2 border-dashed border-slate-700 rounded-xl bg-slate-950/50 text-center animate-fade-in relative">
-                                <button onClick={() => setShowUpload(false)} className="absolute top-2 right-2 text-slate-500 hover:text-white"><X className="w-4 h-4" /></button>
-                                <FileSpreadsheet className="w-10 h-10 text-teal-500 mx-auto mb-3" />
-                                <p className="text-white font-medium mb-1">Drag and drop Excel/CSV file</p>
-                                <p className="text-xs text-slate-500 mb-4">Supported columns: Name, Email, Phone, Industry, Location</p>
-                                <input
-                                    type="file"
-                                    accept=".xlsx, .xls, .csv"
-                                    onChange={handleFileUpload}
-                                    className="hidden"
-                                    id="file-upload"
-                                />
-                                <label htmlFor="file-upload" className="inline-block px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded cursor-pointer transition-colors text-sm">
-                                    Select File
-                                </label>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Results */}
-                    <div className="bg-transparent border-t border-white/5 min-h-[400px]">
-                        {isLoading || isSearching ? (
-                            <div className="p-4 sm:p-6">
-                                <TableSkeleton rows={5} />
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left text-xs sm:text-sm text-slate-400">
-                                    <thead className="bg-slate-950/50 text-[10px] sm:text-xs uppercase font-semibold text-slate-500">
-                                        <tr>
-                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedLeads.length === leads.length && leads.length > 0}
-                                                    onChange={toggleSelectAll}
-                                                    className="rounded border-slate-700 bg-slate-900"
-                                                />
-                                            </th>
-                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">Business</th>
-                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden md:table-cell">Industry</th>
-                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden lg:table-cell">Location</th>
-                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">Contact</th>
-                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden sm:table-cell">AI Score</th>
-                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden sm:table-cell">Source</th>
-                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-800">
-                                        {(() => {
-                                            // Apply filters
-                                            let filteredLeads = leads;
-
-                                            if (filters.businessSize) {
-                                                filteredLeads = filteredLeads.filter(lead => {
-                                                    const size = (lead as any).businessSize || (lead as any).metadata?.businessSize;
-                                                    return size === filters.businessSize;
-                                                });
-                                            }
-
-                                            if (filters.employeeCount) {
-                                                filteredLeads = filteredLeads.filter(lead => {
-                                                    const count = (lead as any).employeeCount || (lead as any).metadata?.employeeCount;
-                                                    return count === filters.employeeCount;
-                                                });
-                                            }
-
-                                            if (filteredLeads.length === 0) {
-                                                return (
-                                                    <tr>
-                                                        <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
-                                                            {leads.length === 0 ? 'No leads found. Try searching or uploading a file.' : 'No leads match the selected filters.'}
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            }
-
-                                            return filteredLeads.map((lead) => (
-                                                <tr key={lead.id} className="hover:bg-slate-800/40 transition-colors">
-                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedLeads.includes(lead.id)}
-                                                            onChange={() => toggleSelectLead(lead.id)}
-                                                            className="rounded border-slate-700 bg-slate-900"
-                                                        />
-                                                    </td>
-                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 font-medium text-white max-w-[120px] sm:max-w-none truncate cursor-pointer group/name" onClick={() => setSelectedLeadForDetail(lead)}>
-                                                        <div className="flex flex-col">
-                                                            <span className="hover:text-teal-400">{lead.businessName}</span>
-                                                            {lead.outreachHook && (
-                                                                <span className="text-[10px] text-purple-400 font-bold italic line-clamp-1 opacity-80 group-hover/name:opacity-100 flex items-center gap-1">
-                                                                    <Zap className="w-2.5 h-2.5" /> {lead.outreachHook}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden md:table-cell">{lead.industry || '-'}</td>
-                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden lg:table-cell">{lead.location || '-'}</td>
-                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
-                                                        <div className="flex flex-col gap-1">
-                                                            {lead.phone && <span className="flex items-center gap-1 text-[10px] sm:text-xs truncate max-w-[100px] sm:max-w-none"><Phone className="w-3 h-3 flex-shrink-0" /> <span className="truncate">{lead.phone}</span></span>}
-                                                            {lead.email && <span className="text-[10px] sm:text-xs text-blue-400 truncate max-w-[100px] sm:max-w-none">{lead.email}</span>}
-                                                            {lead.website && <a href={lead.website} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[10px] sm:text-xs text-teal-400 hover:underline"><ExternalLink className="w-3 h-3" /> Website</a>}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden sm:table-cell">
-                                                        {lead.isVerified ? (
-                                                            <div className="flex items-center gap-1.5 bg-teal-500/10 border border-teal-500/20 px-2 py-1 rounded-lg w-fit">
-                                                                <ShieldCheck className="w-4 h-4 text-teal-400" />
-                                                                <span className="text-xs font-bold text-teal-400">{lead.trustScore}%</span>
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-[10px] text-slate-500 italic">Unverified</span>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden sm:table-cell">
-                                                        <div className="flex flex-col gap-2">
-                                                            <span className={`text-[10px] sm:text-xs px-2 py-1 rounded-full border w-fit font-bold uppercase tracking-wider ${lead.source === 'Manus AI' ? 'bg-teal-500/20 text-teal-400 border-teal-500/30' :
-                                                                lead.source === 'Google Places' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
-                                                                    'bg-slate-800 text-slate-400 border-slate-700'
-                                                                }`}>
-                                                                {lead.source === 'Manus AI' ? 'Premium' : lead.source}
-                                                            </span>
-                                                            {lead.outreachMessage && (
-                                                                <button
-                                                                    onClick={() => setViewingMessage({ title: `Email for ${lead.businessName}`, body: lead.outreachMessage! })}
-                                                                    className="flex items-center gap-1 text-[10px] text-purple-400 hover:text-purple-300 w-fit"
-                                                                >
-                                                                    <Mail className="w-3 h-3" /> View Draft
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
-                                                        {lead.status === 'Added to CRM' || lead.stage === 'qualified' || lead.stage === 'converted' ? (
-                                                            <span className="flex items-center gap-1 text-green-400 text-[10px] sm:text-xs font-bold">
-                                                                <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Qualified</span>
-                                                            </span>
-                                                        ) : (
-                                                            <div className="relative group">
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    onClick={() => addToCRM(lead.id, lead.stage)}
-                                                                    className="text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-3"
-                                                                >
-                                                                    <UserPlus className="w-3 h-3" /> <span className="hidden sm:inline ml-1">Add to CRM</span>
-                                                                </Button>
-
-                                                                {/* Dropdown Menu on Hover */}
-                                                                <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-50 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl overflow-hidden">
-                                                                    <div className="p-2 space-y-1">
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                addToCRM(lead.id, 'qualified');
-                                                                                toast.success('Lead qualified!');
-                                                                            }}
-                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
-                                                                        >
-                                                                            <CheckCircle2 className="w-3 h-3 text-green-400" />
-                                                                            Qualify Lead
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                handleCreateDeal(lead);
-                                                                            }}
-                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
-                                                                        >
-                                                                            <Zap className="w-3 h-3 text-blue-400" />
-                                                                            Create Deal
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => handleCreateProject(lead)}
-                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
-                                                                        >
-                                                                            <Layout className="w-3 h-3 text-teal-400" />
-                                                                            Create Project
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => handleCreateTask(lead)}
-                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
-                                                                        >
-                                                                            <CheckCircle2 className="w-3 h-3 text-yellow-400" />
-                                                                            Create Task
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => handleEnrich(lead.id)}
-                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
-                                                                        >
-                                                                            <Bot className="w-3 h-3 text-purple-400" />
-                                                                            AI Research
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => setSelectedLeadForDetail(lead)}
-                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
-                                                                        >
-                                                                            <Database className="w-3 h-3 text-slate-400" />
-                                                                            Manage Lead
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => setSelectedLeadForDetail(lead)}
-                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
-                                                                        >
-                                                                            <FileText className="w-3 h-3 text-emerald-400" />
-                                                                            Create Quote
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            ));
-                                        })()}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Integrated Aerial Lead Navigator - Removed as per user request to eliminate map visuals */}
-                    {/* 
-                    {isVisualSearchActive && (
-                        <div className="absolute inset-x-0 bottom-0 top-[200px] z-50">
-                            <div className="relative w-full h-full rounded-b-xl overflow-hidden border-t border-slate-800">
-                                <AerialLeadNavigator
-                                    leads={leads}
-                                    isSearching={true}
-                                    searchTopic={visualSearchParams.industry}
-                                    searchLocation={visualSearchParams.location}
-                                />
-                            </div>
-                        </div>
-                    )}
-                    */}
-                </div>
-            ) : activeTab === 'omni' ? (
+            {activeTab === 'omni' ? (
                 <div className="flex-1 bg-transparent w-full">
                     <OmniLeadFinder />
-                </div>
-            ) : activeTab === 'kanban' ? (
-                <div className="flex-1 bg-transparent w-full border-t border-slate-200 dark:border-slate-800 pt-4">
-                    <KanbanBoard />
-                </div>
-            ) : activeTab === 'automation' ? (
-                <div className="flex-1 bg-transparent w-full pt-4">
-                    <AutomationBuilder />
                 </div>
             ) : (
                 <div className="flex-1 bg-transparent flex flex-col">
@@ -1365,19 +994,19 @@ const SalesAgent: React.FC = () => {
                                     <Input
                                         label="Target Industry"
                                         value={pendingSearch.industry}
-                                        onChange={e => setPendingSearch({ ...pendingSearch, industry: e.target.value })}
+                                        onChange={e => setPendingSearch(prev => prev ? { ...prev, industry: e.target.value } : null)}
                                     />
                                     <Input
                                         label="Target Location"
                                         value={pendingSearch.location}
-                                        onChange={e => setPendingSearch({ ...pendingSearch, location: e.target.value })}
+                                        onChange={e => setPendingSearch(prev => prev ? { ...prev, location: e.target.value } : null)}
                                     />
                                     <div className="sm:col-span-2">
                                         <Input
                                             label="Additional Filters (optional)"
                                             placeholder="e.g., 'no website', 'size > 10'"
                                             value={pendingSearch.filters || ''}
-                                            onChange={e => setPendingSearch({ ...pendingSearch, filters: e.target.value })}
+                                            onChange={e => setPendingSearch(prev => prev ? { ...prev, filters: e.target.value } : null)}
                                         />
                                     </div>
                                 </div>
@@ -1387,11 +1016,12 @@ const SalesAgent: React.FC = () => {
                                     </span>
                                     <Button variant="outline" size="sm" onClick={() => setPendingSearch(null)}>Cancel</Button>
                                     <Button size="sm" className="bg-teal-600 hover:bg-teal-500" onClick={() => {
+                                        if (!pendingSearch) return;
                                         setSearchParams({
                                             industry: pendingSearch.industry,
                                             location: pendingSearch.location
                                         });
-                                        setActiveTab('leads');
+                                        setActiveTab('omni');
                                         handleAutoSearch(pendingSearch.industry, pendingSearch.location, pendingSearch.filters);
                                         setPendingSearch(null);
                                     }}>Confirm & Start Search</Button>
@@ -1494,19 +1124,17 @@ const SalesAgent: React.FC = () => {
             </Modal>
 
             {/* Lead Detail Modal */}
-            {
-                selectedLeadForDetail && (
-                    <LeadDetailModal
-                        isOpen={!!selectedLeadForDetail}
-                        onClose={() => setSelectedLeadForDetail(null)}
-                        lead={selectedLeadForDetail}
-                        onLeadUpdate={() => {
-                            // Optional: refresh list
-                        }}
-                    />
-                )
-            }
-        </div >
+            {selectedLeadForDetail && (
+                <LeadDetailModal
+                    isOpen={!!selectedLeadForDetail}
+                    onClose={() => setSelectedLeadForDetail(null)}
+                    lead={selectedLeadForDetail}
+                    onLeadUpdate={() => {
+                        // Optional: refresh list
+                    }}
+                />
+            )}
+        </div>
     );
 };
 

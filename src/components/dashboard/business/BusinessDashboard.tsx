@@ -316,6 +316,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 );
 
             // New Routes
+            case '/dashboard/leads':
+            case '/dashboard/deals':
             case '/dashboard/crm':
             case '/dashboard/contacts':
             case '/dashboard/business/clients':
@@ -334,10 +336,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 );
             case '/dashboard/sales-agent':
                 return <SalesAgent />;
-            case '/dashboard/leads':
-            case '/dashboard/deals':
-            case '/dashboard/business/leads': // Fallback
-                return <DealsTab userId={user.id} userRole={user.role} />;
             case '/dashboard/business/contracts':
                 return <ContractDashboard user={user} initialTab="details" />;
             // Duplicate DocumentHub removed to allow EnhancedDocumentSystem to take precedence

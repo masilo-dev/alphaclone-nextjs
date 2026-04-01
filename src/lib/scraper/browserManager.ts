@@ -30,13 +30,14 @@ export class BrowserManager {
           const providerName = url.includes('browserless') ? 'Browserless' : 
                                url.includes('browsercat') ? 'BrowserCat' : 'Remote Hub';
           
-          console.log(`[BrowserManager] Orchestrating connection: ${providerName}`);
+          console.log(`[BrowserManager] Orchestrating connection: ${providerName}...`);
           
-          this.browser = await chromium.connectOverCDP(url);
+          // Using 60s timeout for remote cluster establishment
+          this.browser = await chromium.connectOverCDP(url, { timeout: 60000 });
           console.log(`[BrowserManager] Active Engine: ${providerName}`);
           return this.browser;
         } catch (e: any) {
-          console.warn(`[BrowserManager] Provider ${url} down or limited: ${e.message}. Trying next...`);
+          console.warn(`[BrowserManager] Provider ${url} connection failed: ${e.message}. Trying next...`);
         }
       }
       console.warn('[BrowserManager] All remote providers exhausted/down.');

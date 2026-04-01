@@ -147,28 +147,28 @@ export default function OmniLeadFinder() {
 
 
   return (
-    <div className="w-full space-y-6">
-      <div className="flex flex-col justify-between items-start lg:flex-row lg:items-center p-6 bg-gradient-to-r from-teal-900/40 via-slate-900/40 to-slate-900/80 rounded-2xl border border-teal-500/20 shadow-2xl backdrop-blur-xl relative overflow-hidden">
-        <div className="space-y-2 z-10 lg:pr-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/20 border border-teal-500/30 text-teal-300 text-xs font-semibold tracking-wider uppercase mb-1">
-            <Zap className="w-3 h-3 fill-current" /> Enterprise Engine
+    <div className="w-full space-y-4">
+      <div className="flex flex-col justify-between items-start lg:flex-row lg:items-center p-4 bg-gradient-to-r from-teal-900/40 via-slate-900/40 to-slate-900/80 rounded-xl border border-teal-500/20 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+        <div className="space-y-1 z-10 lg:pr-6">
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-teal-500/20 border border-teal-500/30 text-teal-300 text-[10px] font-semibold tracking-wider uppercase mb-0.5">
+            <Zap className="w-2.5 h-2.5 fill-current" /> Enterprise Engine
           </div>
-          <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-teal-200 to-emerald-300 tracking-tight">
+          <h1 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-teal-200 to-emerald-300 tracking-tight">
             AlphaClone Business Lead
           </h1>
-          <p className="text-slate-400 max-w-lg text-sm font-light leading-relaxed">
-            Universal business acquisition engine. {usePlaywright ? 'Power Mode active: Deploying full browser clusters.' : 'Standard Mode active: Optimized for speed.'}
+          <p className="text-slate-400 max-w-md text-xs font-light leading-relaxed">
+            Universal acquisition engine. {usePlaywright ? 'Power Mode active: Browser clusters deployed.' : 'Standard Mode: Optimized for speed.'}
           </p>
         </div>
 
-        <form onSubmit={handleSearch} className="mt-6 lg:mt-0 w-full lg:w-auto z-10 flex flex-col gap-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <form onSubmit={handleSearch} className="mt-4 lg:mt-0 w-full lg:w-auto z-10 flex flex-col gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <input 
               type="text" 
               placeholder="Industry (e.g. HVAC)" 
               value={niche}
               onChange={(e) => setNiche(e.target.value)}
-              className="px-3 py-2 text-sm bg-slate-900/80 border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 outline-none text-white transition-all shadow-inner"
+              className="px-2.5 py-1.5 text-xs bg-slate-900/80 border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 outline-none text-white transition-all shadow-inner w-full md:w-48"
               disabled={scanning}
             />
             <input 
@@ -176,18 +176,18 @@ export default function OmniLeadFinder() {
               placeholder="City (e.g. Miami)" 
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="px-3 py-2 text-sm bg-slate-900/80 border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 outline-none text-white transition-all shadow-inner"
+              className="px-2.5 py-1.5 text-xs bg-slate-900/80 border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 outline-none text-white transition-all shadow-inner w-full md:w-48"
               disabled={scanning}
             />
           </div>
 
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2 cursor-pointer group" onClick={() => !scanning && setUsePlaywright(!usePlaywright)}>
-              <div className={`w-8 h-4 rounded-full transition-colors relative ${usePlaywright ? 'bg-teal-500' : 'bg-slate-700'}`}>
-                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-transform ${usePlaywright ? 'left-4.5' : 'left-0.5'}`} />
+              <div className={`w-7 h-3.5 rounded-full transition-colors relative ${usePlaywright ? 'bg-teal-500' : 'bg-slate-700'}`}>
+                <div className={`absolute top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-transform ${usePlaywright ? 'left-4' : 'left-0.5'}`} />
               </div>
-              <span className={`text-[10px] font-bold uppercase tracking-widest ${usePlaywright ? 'text-teal-400' : 'text-slate-500'}`}>
-                Power Mode (Playwright)
+              <span className={`text-[9px] font-bold uppercase tracking-widest ${usePlaywright ? 'text-teal-400' : 'text-slate-500'}`}>
+                Power Mode
               </span>
             </div>
           </div>
@@ -195,10 +195,10 @@ export default function OmniLeadFinder() {
           <button 
             type="submit" 
             disabled={scanning || !niche}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 mt-1 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-medium text-sm rounded-lg transition-all shadow-[0_0_15px_rgba(20,184,166,0.3)] disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 mt-0.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-medium text-xs rounded-lg transition-all shadow-lg disabled:opacity-50"
           >
-            {scanning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
-            {scanning ? 'Scaling Acquisition...' : 'Deploy Universal Business Engine'}
+            {scanning ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Database className="w-3.5 h-3.5" />}
+            {scanning ? 'Scaling...' : 'Deploy Universal Engine'}
           </button>
         </form>
       </div>
@@ -210,16 +210,16 @@ export default function OmniLeadFinder() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="p-5 bg-slate-900/50 rounded-xl border border-slate-800 backdrop-blur-sm overflow-hidden"
+            className="p-3 bg-slate-900/50 rounded-lg border border-slate-800 backdrop-blur-sm overflow-hidden"
           >
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-teal-300 font-mono flex items-center gap-2 text-xs">
+            <div className="flex justify-between text-[10px] mb-1.5">
+              <span className="text-teal-300 font-mono flex items-center gap-1.5">
                 <RefreshCw className="w-3 h-3 animate-spin text-emerald-400" /> 
                 {progress.message}
               </span>
-              <span className="text-white font-mono font-bold text-xs">{progress.percent}%</span>
+              <span className="text-white font-mono font-bold">{progress.percent}%</span>
             </div>
-            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden shadow-inner flex">
+            <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden shadow-inner flex">
               <motion.div 
                 className="bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 h-full rounded-full relative"
                 initial={{ width: 0 }}
@@ -235,24 +235,24 @@ export default function OmniLeadFinder() {
 
       {/* Filtering and Status Row */}
       {results.length > 0 && (
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-slate-900/40 rounded-xl border border-slate-800">
-           <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 bg-slate-900/40 rounded-lg border border-slate-800">
+           <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
               <input 
                 type="text"
-                placeholder="Filter results by name, website or email..."
+                placeholder="Filter results..."
                 value={filterQuery}
                 onChange={(e) => setFilterQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-slate-950/50 border border-slate-800 rounded-lg text-sm text-slate-200 focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
+                className="w-full pl-8 pr-3 py-1.5 bg-slate-950/50 border border-slate-800 rounded-lg text-xs text-slate-200 focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
               />
            </div>
-           <div className="flex items-center gap-4 text-xs font-medium text-slate-400">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-teal-500" />
-                Total Found: {results.length}
+           <div className="flex items-center gap-3 text-[10px] font-medium text-slate-400">
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+                Found: {results.length}
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 Filtered: {filteredResults.length}
               </div>
            </div>
@@ -261,65 +261,65 @@ export default function OmniLeadFinder() {
 
       {/* Results Grid */}
       {filteredResults.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {filteredResults.map((lead, idx) => {
             const domain = getHostname(lead.website);
             return (
               <motion.div 
                 key={idx}
-                initial={{ opacity: 0, y: 15 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
-                className="group bg-slate-900/60 border border-slate-800 rounded-xl p-5 hover:border-teal-500/50 hover:bg-slate-800/80 transition-all duration-300 shadow-md hover:shadow-teal-500/10 flex flex-col"
+                transition={{ delay: idx * 0.03 }}
+                className="group bg-slate-900/60 border border-slate-800 rounded-lg p-3.5 hover:border-teal-500/50 hover:bg-slate-800/80 transition-all duration-300 shadow-md hover:shadow-teal-500/10 flex flex-col"
               >
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex items-start gap-3">
-                    <div className="border border-slate-700 group-hover:border-teal-400 transition-colors rounded-lg p-0.5 bg-slate-800">
+                <div className="flex justify-between items-start mb-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <div className="border border-slate-700 group-hover:border-teal-400 transition-colors rounded-lg p-0.5 bg-slate-800 flex-shrink-0">
                       <Avatar 
                         name={lead.business_name}
-                        size={36}
+                        size={32}
                         shape="rounded"
                         className="rounded-md"
                       />
                     </div>
-                    <div>
-                      <h3 className="text-white font-semibold text-base leading-tight line-clamp-1 group-hover:text-teal-300 transition-colors">{lead.business_name}</h3>
+                    <div className="min-w-0">
+                      <h3 className="text-white font-semibold text-sm leading-tight truncate group-hover:text-teal-300 transition-colors">{lead.business_name}</h3>
                       {domain && (
-                        <a href={lead.website} target="_blank" rel="noreferrer" className="text-slate-400 text-xs hover:text-white flex items-center gap-1 mt-1 transition-colors">
-                          <Globe className="w-3 h-3" /> {domain} <ExternalLink className="w-3 h-3 opacity-50" />
+                        <a href={lead.website} target="_blank" rel="noreferrer" className="text-slate-400 text-[10px] hover:text-white flex items-center gap-1 mt-0.5 transition-colors">
+                          <Globe className="w-2.5 h-2.5" /> {domain}
                         </a>
                       )}
                     </div>
                   </div>
                   {/* Status Indicator */}
-                  {lead.status === 'crawling' && <RefreshCw className="w-4 h-4 text-teal-400 animate-spin" />}
-                  {lead.status === 'success' && <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />}
+                  {lead.status === 'crawling' && <RefreshCw className="w-3.5 h-3.5 text-teal-400 animate-spin" />}
+                  {lead.status === 'success' && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] mt-1" />}
                 </div>
 
-                <div className="flex-grow space-y-2.5 mt-2 py-3 border-t border-slate-800/50 relative">
+                <div className="flex-grow space-y-2 mt-1 py-2 border-t border-slate-800/50 relative">
                   
                   {/* Simulated Crawl Overlay text if crawling */}
                   {lead.status === 'crawling' && (
-                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px] flex items-center justify-center rounded-md z-10">
-                       <span className="text-xs text-teal-300 font-mono animate-pulse bg-slate-800/80 px-2 py-1 rounded-full border border-teal-500/30">Extracting DOM node...</span>
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[1px] flex items-center justify-center rounded-md z-10">
+                       <span className="text-[9px] text-teal-300 font-mono animate-pulse bg-slate-800/80 px-2 py-0.5 rounded-full border border-teal-500/30">Extracting...</span>
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-slate-500" />
-                  <div className="flex-1">
-                    {lead.emails && lead.emails.length > 0 ? (
-                      <div className="text-sm font-medium text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded w-fit border border-emerald-400/20">{lead.emails[0]}</div>
-                    ) : (
-                      <span className="text-sm text-slate-600 line-through">Hidden or encrypted</span>
-                    )}
+                  <div className="flex items-center gap-1.5">
+                    <Mail className="w-3 h-3 text-slate-500" />
+                    <div className="flex-1 overflow-hidden">
+                      {lead.emails && lead.emails.length > 0 ? (
+                        <div className="text-[10px] font-medium text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded w-fit border border-emerald-400/20 truncate">{lead.emails[0]}</div>
+                      ) : (
+                        <span className="text-[10px] text-slate-600 line-through">Encrypted</span>
+                      )}
+                    </div>
                   </div>
-                </div>
                 
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-3.5 h-3.5 text-slate-500" />
-                    <div className="flex-1 text-xs text-slate-300">
-                      {lead.phone ? lead.phone : <span className="text-slate-600">Not detected in HTML header</span>}
+                  <div className="flex items-center gap-1.5">
+                    <Phone className="w-3 h-3 text-slate-500" />
+                    <div className="flex-1 text-[10px] text-slate-300 truncate">
+                      {lead.phone ? lead.phone : <span className="text-slate-600">Not detected</span>}
                     </div>
                   </div>
                 </div>
@@ -327,9 +327,9 @@ export default function OmniLeadFinder() {
                 <button 
                   onClick={() => handleSaveToCRM(lead)}
                   disabled={lead.status !== 'success'}
-                  className="w-full mt-3 flex items-center justify-center gap-1.5 py-2 hover:bg-teal-600/30 text-teal-400 hover:text-teal-300 font-medium text-sm rounded-lg border border-teal-500/20 hover:border-teal-500/50 transition-all group/btn disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full mt-2.5 flex items-center justify-center gap-1.5 py-1.5 hover:bg-teal-600/30 text-teal-400 hover:text-teal-300 font-medium text-[11px] rounded-lg border border-teal-500/20 hover:border-teal-500/50 transition-all group/btn disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Plus className="w-4 h-4 group-hover/btn:scale-125 transition-transform" /> Save to Pipeline
+                  <Plus className="w-3.5 h-3.5 group-hover/btn:scale-125 transition-transform" /> Sync CRM
                 </button>
               </motion.div>
             );

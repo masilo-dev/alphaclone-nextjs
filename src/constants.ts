@@ -95,11 +95,11 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
 
   // ── Sales & Acquisition ──
   { label: 'AI Growth', href: '/dashboard/sales-agent', icon: Zap },
-  { label: 'Leads', href: '/dashboard/leads', icon: TrendingUp },
-  { label: 'Contacts', href: '/dashboard/crm', icon: Users },
+  { label: 'Leads', href: '/dashboard/crm?stage=lead', icon: TrendingUp },
+  { label: 'Contacts', href: '/dashboard/crm?stage=customer', icon: Users },
 
   // ── Communication ──
-  { label: 'Mail', href: '/dashboard/mail', icon: Mail },
+  { label: 'Mail (Gmail)', href: '/dashboard/mail', icon: Mail, comingSoon: true },
   { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
   { label: 'Booking', href: '/dashboard/business/booking', icon: Clock },
   { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
@@ -125,12 +125,12 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
 
   // ── Integrations ──
   { label: 'Facebook', href: '/dashboard/business/facebook', icon: Facebook },
-  { label: 'Zoho Mail', href: '/dashboard/zoho/mail', icon: Mail },
+  { label: 'Mail', href: '/dashboard/zoho/mail', icon: Mail },
   { label: 'Zoho CRM', href: '/dashboard/zoho/crm', icon: Users },
 
   // ── Analytics & Operations ──
   { label: 'Daily Summary', href: '/dashboard/business/daily-summary', icon: BarChart3 },
-  { label: 'Quota Manager', href: '/dashboard/business/quotas', icon: BarChart3 },
+
 
   // ── Administration ──
   { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },

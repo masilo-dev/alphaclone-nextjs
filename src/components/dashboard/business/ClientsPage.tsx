@@ -29,7 +29,7 @@ import { useDropzone } from 'react-dropzone';
 import { supabase } from '../../../lib/supabase';
 import { dailyService } from '../../../services/dailyService';
 import { callSignalingService } from '../../../services/video/CallSignalingService';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import CRMTab from '../CRMTab';
 import { LayoutGrid, List } from 'lucide-react';
@@ -60,11 +60,20 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [selectedClientForCommunication, setSelectedClientForCommunication] = useState<BusinessClient | null>(null);
     const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(null);
 
+    const searchParams = useSearchParams();
+    const stageParam = searchParams.get('stage');
+
     useEffect(() => {
         if (currentTenant) {
             loadClients();
         }
     }, [currentTenant]);
+
+    useEffect(() => {
+        if (stageParam) {
+            setSelectedStage(stageParam);
+        }
+    }, [stageParam]);
 
     useEffect(() => {
         filterClients();
@@ -229,18 +238,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         Add Client
                     </Button>
 
-                    <div className="flex bg-slate-900 border border-slate-800 rounded-xl overflow-hidden p-1">
+                    <div className="flex bg-slate-900 border border-slate-800 rounded-xl overflow-hidden p-1 hidden">
                         <button
                             onClick={() => setViewMode('list')}
                             className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
                         >
                             <List className="w-5 h-5" />
-                        </button>
-                        <button
-                            onClick={() => setViewMode('board')}
-                            className={`p-2 rounded-lg transition-all ${viewMode === 'board' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
-                        >
-                            <LayoutGrid className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
