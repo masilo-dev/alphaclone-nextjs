@@ -46,11 +46,11 @@ function makeNode(w: number, h: number): Node {
   return {
     x: Math.random() * w,
     y: Math.random() * h,
-    vx: (Math.random() - 0.5) * 0.25,
-    vy: (Math.random() - 0.5) * 0.25,
+    vx: (Math.random() - 0.5) * 0.08,
+    vy: (Math.random() - 0.5) * 0.08,
     radius: 1.5 + Math.random() * 3,
     pulsePhase: Math.random() * Math.PI * 2,
-    pulseSpeed: 0.015 + Math.random() * 0.02,
+    pulseSpeed: 0.005 + Math.random() * 0.008,
     hue: Math.random() > 0.6 ? 185 + Math.random() * 20 : 210 + Math.random() * 25,
     opacity: 0.5 + Math.random() * 0.5,
     connections: [],
@@ -65,7 +65,7 @@ function makePacket(nodes: Node[]): DataPacket {
     fromNode: from,
     toNode: to,
     progress: Math.random(),
-    speed: 0.003 + Math.random() * 0.005,
+    speed: 0.001 + Math.random() * 0.002,
     hue: Math.random() > 0.5 ? 180 + Math.random() * 20 : 200 + Math.random() * 30,
     size: 1.5 + Math.random() * 2,
   };
@@ -75,10 +75,10 @@ function makeParticle(w: number, h: number): Particle {
   return {
     x: Math.random() * w,
     y: Math.random() * h,
-    vx: (Math.random() - 0.5) * 0.3,
-    vy: (Math.random() - 0.5) * 0.3 - 0.12,
+    vx: (Math.random() - 0.5) * 0.1,
+    vy: (Math.random() - 0.5) * 0.1 - 0.04,
     life: 0,
-    maxLife: 180 + Math.random() * 400,
+    maxLife: 300 + Math.random() * 600,
     radius: 0.6 + Math.random() * 1.4,
     hue: 185 + Math.random() * 35,
   };
