@@ -106,7 +106,7 @@ export default function ExpenseTrackerTab() {
         if (!expRes.error) setExpenses(expRes.data || []);
         if (!catRes.error) setCategories(catRes.data || []);
         setLoading(false);
-    }, [tenant?.id]);
+    }, [tenant]);
 
     useEffect(() => { loadData(); }, [loadData]);
 

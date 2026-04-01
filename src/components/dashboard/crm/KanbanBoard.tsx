@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   DndContext, 
   DragOverlay, 
@@ -184,11 +184,7 @@ export default function KanbanBoard() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  useEffect(() => {
-    loadLeads();
-  }, []);
-
-  const loadLeads = async () => {
+  const loadLeads = useCallback(async () => {
     setLoading(true);
     const { leads: dbLeads, error } = await leadService.getLeads();
     if (error) {
@@ -204,7 +200,11 @@ export default function KanbanBoard() {
         setLeads(mappedLeads);
     }
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    loadLeads();
+  }, [loadLeads]);
 
   const activeId = activeLead?.id;
 

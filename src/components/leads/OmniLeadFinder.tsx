@@ -160,10 +160,10 @@ export default function OmniLeadFinder() {
             <Zap className="w-3 h-3 fill-current" /> Enterprise Engine
           </div>
           <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-teal-200 to-emerald-300 tracking-tight">
-            AlphaClone System Lead
+            AlphaClone Business Lead
           </h1>
           <p className="text-slate-400 max-w-lg text-sm font-light leading-relaxed">
-            Deploy the deep-web acquisition engine to harvest premium B2B contacts, extract social infrastructure, and fuel your pipeline automatically.
+            Deploy the universal business acquisition engine to harvest premium B2B contacts, extract social infrastructure, and fuel your pipeline automatically. No paid APIs required.
           </p>
         </div>
 
@@ -173,7 +173,7 @@ export default function OmniLeadFinder() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-teal-400 transition-colors" />
               <input 
                 type="text" 
-                placeholder="Industry (e.g. Lawyers)" 
+                placeholder="Industry (e.g. HVAC, Legal)" 
                 value={niche}
                 onChange={(e) => setNiche(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 text-sm bg-slate-900/80 border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 outline-none text-white placeholder:text-slate-500 transition-all shadow-inner"
@@ -184,31 +184,9 @@ export default function OmniLeadFinder() {
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-teal-400 transition-colors" />
               <input 
                 type="text" 
-                placeholder="City (e.g. Seattle)" 
+                placeholder="City (e.g. Miami)" 
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-sm bg-slate-900/80 border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 outline-none text-white placeholder:text-slate-500 transition-all shadow-inner"
-                disabled={scanning}
-              />
-            </div>
-            <div className="relative group">
-              <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-teal-400 transition-colors" />
-              <input 
-                type="text" 
-                placeholder="Size (e.g. 50-200)" 
-                value={size}
-                onChange={(e) => setSize(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-sm bg-slate-900/80 border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 outline-none text-white placeholder:text-slate-500 transition-all shadow-inner"
-                disabled={scanning}
-              />
-            </div>
-            <div className="relative group">
-              <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-teal-400 transition-colors" />
-              <input 
-                type="text" 
-                placeholder="Keywords (e.g. SaaS)" 
-                value={keywords}
-                onChange={(e) => setKeywords(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 text-sm bg-slate-900/80 border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 outline-none text-white placeholder:text-slate-500 transition-all shadow-inner"
                 disabled={scanning}
               />
@@ -220,7 +198,7 @@ export default function OmniLeadFinder() {
             className="w-full flex items-center justify-center gap-2 px-4 py-2 mt-1 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-medium text-sm rounded-lg transition-all shadow-[0_0_15px_rgba(20,184,166,0.3)] hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-[1px]"
           >
             {scanning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
-            {scanning ? 'Extracting...' : 'Deploy Smart Engine'}
+            {scanning ? 'Scaling Acquisition...' : 'Deploy Universal Business Engine'}
           </button>
         </form>
       </div>
