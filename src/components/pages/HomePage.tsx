@@ -33,7 +33,12 @@ const HomePage: React.FC<HomePageProps> = ({ onLogin }) => {
     }, []);
 
     return (
-        <div className="min-h-screen bg-black text-white">
+        <div className="min-h-screen page-network-bg text-white">
+            {/* Persistent full-page animated network background */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <HeroBackground />
+            </div>
+
             {/* Critical above-the-fold content - loads immediately */}
             <React.Suspense fallback={
                 <nav className="fixed w-full z-50 bg-slate-950/95 backdrop-blur-md border-b border-slate-800/50">
@@ -50,9 +55,9 @@ const HomePage: React.FC<HomePageProps> = ({ onLogin }) => {
             </React.Suspense>
 
             <div className="relative pt-20">
-                {/* Hero Section - High-Authority Cinematic */}
+                {/* Hero Section - No inline background needed (uses fixed layer) */}
                 <section className="relative min-h-[90vh] flex items-center justify-center px-4 py-20 overflow-hidden">
-                    <HeroBackground />
+
                     
                     {/* Cinematic Gradient Overlays */}
                     <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black to-transparent z-10" />

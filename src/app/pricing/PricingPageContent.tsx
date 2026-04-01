@@ -171,7 +171,11 @@ export default function PricingPageContent() {
     const [showComparison, setShowComparison] = useState(false);
 
     return (
-        <div className="min-h-screen bg-transparent text-slate-200 selection:bg-teal-500/30">
+        <div className="min-h-screen page-network-bg text-slate-200 selection:bg-teal-500/30">
+            {/* Persistent full-page animated network background */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <HeroBackground />
+            </div>
             {/* JSON-LD Schemas */}
             <script type="application/ld+json" dangerouslySetInnerHTML={{
                 __html: JSON.stringify({
@@ -200,11 +204,9 @@ export default function PricingPageContent() {
             <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
 
             <main className="relative overflow-hidden">
-                {/* Pricing Hero Section with Video Background */}
+                {/* Pricing Hero Section */}
                 <section className="relative min-h-[60vh] flex flex-col items-center justify-center pt-20">
-                    <div className="absolute inset-0 z-0">
-                        <HeroBackground />
-                    </div>
+
                     
                     <div className="relative z-10 max-w-7xl mx-auto px-4 py-24 text-center">
                         <AnimateIn type="fadeIn" delay={0}>

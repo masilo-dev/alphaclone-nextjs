@@ -81,14 +81,16 @@ const ContactPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-transparent text-white relative overflow-hidden">
+        <div className="min-h-screen page-network-bg text-white relative overflow-hidden">
+            {/* Persistent full-page animated network background */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <HeroBackground />
+            </div>
+
             <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
             
-            {/* Contact Hero Area with Video Background */}
+            {/* Contact Hero Area */}
             <section className="relative min-h-[40vh] flex flex-col items-center justify-center pt-32">
-                <div className="absolute inset-0 z-0">
-                    <HeroBackground />
-                </div>
                 
                 <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">
                     <AnimateIn type="fadeUp">

@@ -102,14 +102,16 @@ const AboutPage: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-transparent text-white">
+        <div className="min-h-screen page-network-bg text-white">
+            {/* Persistent full-page animated network background */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <HeroBackground />
+            </div>
+
             <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
 
             <div className="pt-20 relative overflow-hidden">
                 <section className="relative min-h-[50vh] flex flex-col items-center justify-center pt-24 pb-20">
-                    <div className="absolute inset-0 z-0">
-                        <HeroBackground />
-                    </div>
                     
                     <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
                         <AnimateIn type="fadeIn" delay={0}>

@@ -9,7 +9,10 @@ interface ServiceCardProps {
         title: string;
         summary: string;
         details: string[];
+        /** @deprecated Use gradient instead — no external CDN needed */
         image?: string;
+        gradient?: string;
+        accentColor?: string;
         isComingSoon?: boolean;
         showExtra?: React.ReactNode;
     };
@@ -18,6 +21,10 @@ interface ServiceCardProps {
 
 export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index }) => {
     const [expanded, setExpanded] = useState(false);
+
+    // Default gradient per card if none provided
+    const gradient = service.gradient || 'from-teal-900/60 via-slate-900 to-slate-950';
+    const accent = service.accentColor || 'text-teal-400';
 
     return (
         <motion.div
@@ -28,23 +35,21 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index }) => {
             transition={{ delay: index * 0.1 }}
             className="bg-slate-950/40 rounded-[2.5rem] border border-slate-800/50 hover:border-teal-500/30 transition-all backdrop-blur-md relative overflow-hidden group flex flex-col h-full"
         >
-            {/* Top Image Container (40% height) */}
-            <div className="relative h-48 w-full overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 to-transparent z-10" />
-                {service.image ? (
-                    <img 
-                        src={service.image} 
-                        alt={service.title} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                    />
-                ) : (
-                    <div className="w-full h-full bg-slate-900 flex items-center justify-center">
-                        <service.icon className="w-12 h-12 text-teal-500/20" />
-                    </div>
-                )}
+            {/* Top Gradient Container — no external image needed */}
+            <div className={`relative h-48 w-full overflow-hidden bg-gradient-to-br ${gradient}`}>
+                {/* Subtle animated radial glow */}
+                <div className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-700">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full bg-teal-500 blur-3xl" />
+                </div>
+                {/* Large faded icon as background art */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-10 group-hover:opacity-20 transition-opacity duration-700">
+                    <service.icon className="w-32 h-32 text-white" />
+                </div>
+                {/* Bottom fade overlay */}
+                <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-950 to-transparent z-10" />
                 {/* Floating Icon Badge */}
-                <div className="absolute bottom-4 left-6 z-20 w-12 h-12 bg-slate-900/80 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/5 shadow-2xl group-hover:scale-110 transition-transform">
-                    <service.icon className="w-6 h-6 text-teal-400" />
+                <div className="absolute bottom-4 left-6 z-20 w-12 h-12 bg-slate-900/80 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/10 shadow-2xl group-hover:scale-110 transition-transform">
+                    <service.icon className={`w-6 h-6 ${accent}`} />
                 </div>
             </div>
 

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -110,7 +110,12 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
    };
 
    return (
-      <div className="min-h-screen bg-[#020D1A] text-slate-200 selection:bg-teal-500/30">
+      <div className="min-h-screen page-network-bg text-slate-200 selection:bg-teal-500/30">
+         {/* Persistent full-page animated network background */}
+         <div className="fixed inset-0 z-0 pointer-events-none">
+            <HeroBackground />
+         </div>
+
          {/* Navigation */}
          <nav
             className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 border-b ${
@@ -268,9 +273,6 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
          <main>
             {/* Hero Section */}
             <section id="home" className="relative min-h-[90vh] flex flex-col items-center justify-center overflow-hidden pt-12 sm:pt-20">
-               <div className="absolute inset-0 z-0">
-                  <HeroBackground />
-               </div>
                <motion.div 
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
@@ -369,7 +371,8 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            title: 'Unified CRM',
                            summary: 'Client data, pipeline, and communication history in one place.',
                            details: ['Visual Pipelines', 'Lead Automation', 'Real-time Analytics'],
-                           image: 'https://images.unsplash.com/photo-1551288049-bbda38a5f97b?auto=format&fit=crop&q=80&w=800'
+                           gradient: 'from-teal-900/70 via-slate-900 to-slate-950',
+                            accentColor: 'text-teal-400',
                         },
                         {
                            id: 'projects',
@@ -377,7 +380,8 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            title: 'Project Engine',
                            summary: 'Task management and project tracking for high-output teams.',
                            details: ['Milestone Tracking', 'Collaborative Boards', 'Asset Management'],
-                           image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800'
+                           gradient: 'from-blue-900/70 via-slate-900 to-slate-950',
+                            accentColor: 'text-blue-400',
                         },
                         {
                            id: 'billing',
@@ -385,7 +389,8 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            title: 'Finance & Billing',
                            summary: 'Automate invoices, track revenue, and manage payments.',
                            details: ['One-click Invoicing', 'Stripe Integration', 'Revenue Forecasting'],
-                           image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=800'
+                           gradient: 'from-emerald-900/70 via-slate-900 to-slate-950',
+                            accentColor: 'text-emerald-400',
                         },
                         {
                            id: 'ai-growth',
@@ -393,7 +398,8 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            title: 'AI Sales Agent',
                            summary: 'Autopilot outreach. Qualify leads and book meetings automatically.',
                            details: ['GPT-4o Powered', 'Multi-channel Outreach', 'Auto Qualification'],
-                           image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=800'
+                           gradient: 'from-violet-900/70 via-slate-900 to-slate-950',
+                            accentColor: 'text-violet-400',
                         },
                         {
                            id: 'security',
@@ -401,7 +407,8 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            title: 'Safe Ops',
                            summary: 'End-to-end encryption and granular access controls.',
                            details: ['RBAC Permissions', 'Encrypted Video', 'Audit Trails'],
-                           image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=800'
+                           gradient: 'from-rose-900/70 via-slate-900 to-slate-950',
+                            accentColor: 'text-rose-400',
                         },
                         {
                            id: 'mobile',
@@ -409,7 +416,8 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            title: 'Mobile Ready',
                            summary: 'Manage your business from anywhere with full PWA support.',
                            details: ['Real-time Alerts', 'Mobile Dashboard', 'Offline Mode'],
-                           image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&q=80&w=800'
+                           gradient: 'from-amber-900/70 via-slate-900 to-slate-950',
+                            accentColor: 'text-amber-400',
                         }
                      ].map((item, i) => (
                         <ServiceCard key={item.id} service={item} index={i} />

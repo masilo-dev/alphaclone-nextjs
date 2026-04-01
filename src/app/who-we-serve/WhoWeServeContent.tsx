@@ -37,7 +37,12 @@ export default function WhoWeServePage() {
     };
 
     return (
-        <div className="min-h-screen bg-transparent text-slate-200">
+        <div className="min-h-screen page-network-bg text-slate-200">
+            {/* Persistent full-page animated network background */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <HeroBackground />
+            </div>
+
             <LoginModal
                 isOpen={isLoginOpen}
                 onClose={() => setIsLoginOpen(false)}
@@ -50,9 +55,6 @@ export default function WhoWeServePage() {
             {/* Hero Section */}
             <div className="pt-20 relative overflow-hidden">
                 <section className="relative min-h-[60vh] flex flex-col items-center justify-center pt-24 pb-20 px-4">
-                    <div className="absolute inset-0 z-0">
-                        <HeroBackground />
-                    </div>
 
                     <div className="relative z-10 max-w-4xl mx-auto text-center">
                         <AnimateIn type="fadeIn" delay={0}>
