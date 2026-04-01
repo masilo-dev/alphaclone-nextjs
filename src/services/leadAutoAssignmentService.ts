@@ -56,8 +56,12 @@ class LeadAutoAssignmentService {
                 return { assigned: false, error: 'Lead already assigned' };
             }
 
-            // Get available sales reps
-            const salesReps = await this.getAvailableSalesReps();
+            // SECURITY: Get sales reps strictly within this lead's tenant
+            const tenantId = (lead as any).tenant_id;
+            if (!tenantId) {
+                return { assigned: false, error: 'Lead has no tenant_id — cannot safely assign' };
+            }
+            const salesReps = await this.getAvailableSalesReps(tenantId);
 
             if (salesReps.length === 0) {
                 return { assigned: false, error: 'No available sales reps' };
@@ -121,11 +125,12 @@ class LeadAutoAssignmentService {
     /**
      * Get available sales reps
      */
-    private async getAvailableSalesReps(): Promise<string[]> {
+    private async getAvailableSalesReps(tenantId: string): Promise<string[]> {
         try {
             const { data: reps } = await supabase
                 .from('profiles')
                 .select('id')
+                .eq('tenant_id', tenantId)   // ← SECURITY: strict tenant boundary
                 .eq('role', 'sales')
                 .eq('active', true);
 

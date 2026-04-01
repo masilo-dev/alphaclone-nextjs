@@ -94,7 +94,30 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Failed to record request' }, { status: 500 });
         }
 
-        // Remove facebook_integrations for this FB user ID
+        // ── Cascade delete ALL PII for this Facebook user (GDPR/CCPA) ──────────
+        // 1. Get integration IDs first (needed for cascading messenger conversations)
+        const { data: integrations } = await supabase
+            .from('facebook_integrations')
+            .select('id')
+            .eq('facebook_user_id', facebookUserId);
+
+        const integrationIds = (integrations || []).map((i: any) => i.id);
+
+        // 2. Delete messenger conversations linked to those integrations
+        if (integrationIds.length > 0) {
+            await supabase
+                .from('messenger_conversations')
+                .delete()
+                .in('integration_id', integrationIds);
+        }
+
+        // 3. Delete facebook_leads for this user
+        await supabase
+            .from('facebook_leads')
+            .delete()
+            .eq('facebook_user_id', facebookUserId);
+
+        // 4. Delete the integrations themselves
         await supabase
             .from('facebook_integrations')
             .delete()

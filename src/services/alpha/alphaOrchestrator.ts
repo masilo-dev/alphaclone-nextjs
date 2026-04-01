@@ -50,10 +50,28 @@ FORMAT: JSON array of objects: { "assignedTo": "role", "description": "concise t
         });
 
         try {
-            // Simple parsing for now, can be hardened
-            const tasksJson = response.content.match(/\[.*\]/)?.[0];
-            if (!tasksJson) throw new Error("Could not parse mission plan");
-            
+            // Robust JSON extraction — handles markdown fences, direct arrays, nested objects
+            const raw = response.content;
+            let tasksJson: string | null = null;
+
+            // 1. Try stripping ```json ... ``` fence
+            const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+            if (fenced) tasksJson = fenced[1].trim();
+
+            // 2. Try bare array [...] spanning multiple lines
+            if (!tasksJson) {
+                const arrMatch = raw.match(/(\[[\s\S]*?\])/);
+                if (arrMatch) tasksJson = arrMatch[1];
+            }
+
+            // 3. Try object wrapping array { "tasks": [...] }
+            if (!tasksJson) {
+                const objMatch = raw.match(/"(?:tasks|subtasks|plan)"\s*:\s*(\[[\s\S]*?\])/i);
+                if (objMatch) tasksJson = objMatch[1];
+            }
+
+            if (!tasksJson) throw new Error("Could not parse mission plan from AI response");
+
             const plannedTasks = JSON.parse(tasksJson);
             const subTasks: SubTask[] = plannedTasks.map((t: any, index: number) => ({
                 id: `${missionId}_t${index}`,

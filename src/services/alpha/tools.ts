@@ -34,7 +34,7 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
                 prompt,
                 systemPrompt: 'Executive Lead Prospector. Semantic accuracy and speed prioritizing.',
                 provider: 'anthropic',
-                model: 'claude-3-5-sonnet-20240620'
+                model: 'claude-3-5-sonnet-20241022'
             });
 
             // REAL IMPLEMENTATION: Save to Deals table
