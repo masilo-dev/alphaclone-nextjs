@@ -59,9 +59,9 @@ interface DataPacket {
   nodeType: 'module' | 'ambient';
 }
 
-// ── Speed constants (moderate — between "too fast" and "too slow") ──────────
-const NODE_SPEED   = 0.13;   // module node base speed
-const AMBIENT_SPD  = 0.09;
+// ── Speed constants ────────────────────────────────────────────────────────
+const NODE_SPEED   = 0.42;  // named module nodes — fast
+const AMBIENT_SPD  = 0.03;  // background ghost dots — very slow
 const PULSE_SPD    = 0.008;
 const PKT_SPEED    = 0.0022; // packet travel speed
 
