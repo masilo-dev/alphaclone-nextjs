@@ -1,15 +1,28 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Database, Zap, Globe, Mail, Phone, Plus, RefreshCw,
-  SlidersHorizontal, Star, MapPin, X, ChevronDown,
+  SlidersHorizontal, Star, MapPin, X, ChevronDown, LayoutGrid, Map,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Avatar } from '../ui/Avatar';
 import { useTenant } from '../../contexts/TenantContext';
 import { businessClientService } from '../../services/businessClientService';
+
+// Leaflet requires window — load it client-side only
+const LeadMapView = dynamic(() => import('./LeadMapView'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full flex items-center justify-center rounded-xl border border-slate-800 bg-slate-900/40" style={{ height: 480 }}>
+      <div className="text-slate-500 text-sm flex items-center gap-2">
+        <RefreshCw className="w-4 h-4 animate-spin" /> Loading map…
+      </div>
+    </div>
+  ),
+});
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface ScrapedLead {
@@ -24,6 +37,8 @@ interface ScrapedLead {
   source?:       'yelp' | 'here' | 'osm';
   social_links?: Record<string, string>;
   status:        'pending' | 'crawling' | 'success' | 'failed';
+  lat?:          number;
+  lng?:          number;
 }
 
 type SourceFilter = 'all' | 'yelp' | 'here' | 'osm';
@@ -83,6 +98,7 @@ export default function OmniLeadFinder() {
   const [filterPhone,  setFilterPhone  ] = useState(false);        // 4. has phone
   const [filterEmail,  setFilterEmail  ] = useState(false);        // 5. has email
   const [filtersOpen,  setFiltersOpen  ] = useState(false);
+  const [viewMode,     setViewMode     ] = useState<'grid' | 'map'>('grid');
 
   // Active filter count badge
   const activeFilterCount = [
@@ -402,8 +418,51 @@ export default function OmniLeadFinder() {
         </div>
       )}
 
-      {/* ── Results Grid ── */}
+      {/* ── View Toggle ── */}
       {filteredResults.length > 0 && (
+        <div className="flex items-center justify-between px-1">
+          <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
+            {filteredResults.length} result{filteredResults.length !== 1 ? 's' : ''}
+          </span>
+          <div className="flex items-center gap-1 bg-slate-900/70 rounded-lg p-0.5 border border-slate-800">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all ${
+                viewMode === 'grid'
+                  ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30'
+                  : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" /> Grid
+            </button>
+            <button
+              onClick={() => setViewMode('map')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all ${
+                viewMode === 'map'
+                  ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30'
+                  : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              <Map className="w-3.5 h-3.5" /> Map View
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Map View ── */}
+      {viewMode === 'map' && filteredResults.length > 0 && (
+        <div className="space-y-2">
+          <LeadMapView leads={filteredResults} />
+          {filteredResults.filter(l => !l.lat).length > 0 && (
+            <p className="text-[10px] text-slate-500 text-center">
+              {filteredResults.filter(l => !l.lat).length} lead{filteredResults.filter(l => !l.lat).length !== 1 ? 's' : ''} without coordinates not shown on map
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ── Results Grid ── */}
+      {viewMode === 'grid' && filteredResults.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {filteredResults.map((lead, idx) => {
             const domain = getHostname(lead.website);

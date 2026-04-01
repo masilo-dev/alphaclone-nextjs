@@ -10,6 +10,8 @@ export interface LeadResult {
   rating?: number;
   category?: string;
   source: 'yelp' | 'here' | 'osm';
+  lat?: number;
+  lng?: number;
 }
 
 // ─── Strategy 1: Yelp Fusion API ─────────────────────────────────────────────
@@ -42,6 +44,8 @@ async function fetchYelp(niche: string, location: string, limit = 50): Promise<L
     rating: b.rating,
     category: b.categories?.[0]?.title || '',
     source: 'yelp',
+    lat: b.coordinates?.latitude,
+    lng: b.coordinates?.longitude,
   }));
 }
 
@@ -77,6 +81,8 @@ async function fetchHERE(niche: string, location: string, limit = 50): Promise<L
     rating: undefined,
     category: item.categories?.[0]?.name || '',
     source: 'here',
+    lat: item.position?.lat,
+    lng: item.position?.lng,
   })).filter((r: LeadResult) => r.business_name);
 }
 
@@ -139,6 +145,8 @@ out body 60;
       rating: undefined,
       category: el.tags.amenity || el.tags.shop || el.tags.office || '',
       source: 'osm',
+      lat: el.lat ?? el.center?.lat,
+      lng: el.lon ?? el.center?.lon,
     }));
 }
 
