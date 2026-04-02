@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
     Mail, Send, Inbox, Archive, Trash2, Search, Loader2, Plus, 
     ArrowLeft, Menu, X, MoreVertical, Sparkles, Reply, Forward,
-    MoreHorizontal, CheckCircle2, RotateCcw, AlertCircle, FileText, ShieldCheck
+    MoreHorizontal, CheckCircle2, RotateCcw, AlertCircle, FileText, ShieldCheck, BookUser
 } from 'lucide-react';
 import { generateEmailReply, generateEmailDraft } from '@/services/unifiedAIService';
 import toast from 'react-hot-toast';
@@ -26,6 +26,7 @@ interface Folder {
 }
 
 import LeadOutreachModal from './LeadOutreachModal';
+import CRMContactPickerModal from './CRMContactPickerModal';
 
 export default function ZohoMailView() {
     const [folders, setFolders] = useState<Folder[]>([]);
@@ -41,6 +42,7 @@ export default function ZohoMailView() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [aiGenerating, setAiGenerating] = useState(false);
     const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
+    const [isContactPickerOpen, setIsContactPickerOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [needsReconnect, setNeedsReconnect] = useState(false);
     const [aiPrompt, setAiPrompt] = useState('');
@@ -74,7 +76,6 @@ export default function ZohoMailView() {
         const data = await zohoFetch('/api/zoho/mail?action=folders');
         if (Array.isArray(data) && data.length > 0) {
             setFolders(data);
-            // Auto-select inbox (or first folder) using real folder ID from Zoho
             const inbox = data.find((f: any) =>
                 f.folderName?.toLowerCase().includes('inbox')
             ) || data[0];
@@ -104,6 +105,34 @@ export default function ZohoMailView() {
             }
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSubscribeAutoResponder = async () => {
+        setAiGenerating(true);
+        try {
+            const res = await fetch('/api/zoho/mail?action=subscribe', { method: 'POST' });
+            const data = await res.json();
+            if (res.ok && data?.success) {
+                toast.success('AI Auto-Responder active!');
+            } else {
+                throw new Error(data?.error || 'Failed to activate auto-responder.');
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Activation failed');
+        } finally {
+            setAiGenerating(false);
+        }
+    };
+
+    const formatDate = (dateStr: any) => {
+        if (!dateStr) return 'N/A';
+        try {
+            const date = isNaN(Number(dateStr)) ? new Date(dateStr) : new Date(Number(dateStr));
+            if (isNaN(date.getTime())) return String(dateStr);
+            return date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        } catch {
+            return String(dateStr);
         }
     };
 
@@ -152,6 +181,7 @@ export default function ZohoMailView() {
             if (data !== null) {
                 setComposing(false);
                 setEmailData({ to: '', subject: '', body: '' });
+                toast.success('Email sent!');
             }
         } finally {
             setSending(false);
@@ -181,7 +211,7 @@ export default function ZohoMailView() {
             toast.success('AI reply drafted!');
         } catch (err: any) {
             console.error('AI Reply failed', err);
-            toast.error(err?.message || 'AI reply failed. Check that an AI provider key is configured in Settings.');
+            toast.error(err?.message || 'AI reply failed.');
         } finally {
             setAiGenerating(false);
         }
@@ -196,18 +226,13 @@ export default function ZohoMailView() {
         try {
             const draft = await generateEmailDraft(aiPrompt, emailData.to, emailData.subject);
             if (!draft) throw new Error('AI failed to generate a draft.');
-            
-            setEmailData(prev => ({
-                ...prev,
-                body: draft
-            }));
-            
+            setEmailData(prev => ({ ...prev, body: draft }));
             toast.success('Professional draft generated!');
             setShowAiPrompt(false);
             setAiPrompt('');
         } catch (err: any) {
             console.error('Draft generation failed:', err);
-            toast.error('Failed to generate draft. Ensure AI is configured.');
+            toast.error('Failed to generate draft.');
         } finally {
             setAiGenerating(false);
         }
@@ -220,49 +245,26 @@ export default function ZohoMailView() {
                     <div className="flex items-center gap-2 text-red-300">
                         <AlertCircle size={16} />
                         <span className="font-semibold">Zoho session expired.</span>
-                        <span className="text-red-400">{error}</span>
                     </div>
-                    <a
-                        href="/api/auth/zoho/connect"
-                        className="shrink-0 bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-4 py-1.5 rounded-lg transition-colors"
-                    >
-                        Reconnect Zoho
-                    </a>
-                </div>
-            )}
-            {error && !needsReconnect && (
-                <div className="flex items-center justify-between gap-3 px-5 py-2 bg-yellow-900/30 border-b border-yellow-500/20 text-xs text-yellow-300">
-                    <div className="flex items-center gap-2">
-                        <AlertCircle size={14} />
-                        <span>{error}</span>
-                    </div>
-                    <button onClick={() => setError(null)} className="text-yellow-500 hover:text-yellow-300">
-                        <X size={14} />
-                    </button>
+                    <a href="/api/auth/zoho/connect" className="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-4 py-1.5 rounded-lg transition-colors">Reconnect</a>
                 </div>
             )}
             <div className="flex flex-1 overflow-hidden">
-                {/* Folder Sidebar */}
                 <div className={`
                     ${isMobileMenuOpen ? 'fixed inset-0 z-50 bg-gray-950 w-64 border-r border-white/5 shadow-2xl shadow-blue-500/10' : 'hidden lg:flex'} 
                     w-64 flex-col bg-gray-900/40 backdrop-blur-xl shrink-0 transition-all duration-300
                 `}>
                     <div className="p-6 border-b border-white/5 flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
-                            <div className="p-1.5 bg-blue-600/20 rounded-lg text-blue-400">
-                                <Mail size={18} />
-                            </div>
+                            <div className="p-1.5 bg-blue-600/20 rounded-lg text-blue-400"><Mail size={18} /></div>
                             <span className="font-bold text-gray-200 tracking-tight">Zoho Mail</span>
                         </div>
-                        <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden p-1.5 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
-                            <X size={18} />
-                        </button>
                     </div>
                     
                     <div className="p-4 px-6">
                         <button 
                             onClick={() => { setComposing(true); setSelectedMessage(null); setIsMobileMenuOpen(false); }}
-                            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 px-4 rounded-xl transition-all shadow-lg shadow-blue-600/20 active:scale-95 group"
+                            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 px-4 rounded-xl transition-all shadow-lg active:scale-95 group"
                         >
                             <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" /> 
                             <span className="font-bold text-sm">Compose</span>
@@ -270,40 +272,40 @@ export default function ZohoMailView() {
                     </div>
 
                     <nav className="flex-1 overflow-y-auto px-4 pb-4 space-y-1.5 custom-scrollbar">
-                        <div className="mt-2 mb-3 px-2 text-xs font-semibold text-gray-500">Folders {folders.length === 0 && loading && <Loader2 size={10} className="inline ml-2 animate-spin" />}</div>
+                        <div className="mt-2 mb-3 px-2 text-xs font-semibold text-gray-500">Folders</div>
                         {folders.map(folder => (
                             <button
                                 key={folder.folderId}
-                                onClick={() => {
-                                    setSelectedFolder(folder.folderId);
-                                    setSelectedMessage(null);
-                                    setComposing(false);
-                                    setSearchTerm('');
-                                    setIsMobileMenuOpen(false);
-                                }}
+                                onClick={() => { setSelectedFolder(folder.folderId); setSelectedMessage(null); setComposing(false); setSearchTerm(''); setIsMobileMenuOpen(false); }}
                                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all group ${selectedFolder === folder.folderId ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}`}
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className={`transition-colors ${selectedFolder === folder.folderId ? 'text-white' : 'text-gray-500 group-hover:text-blue-400'}`}>
+                                    <div className={`${selectedFolder === folder.folderId ? 'text-white' : 'text-gray-500 group-hover:text-blue-400'}`}>
                                         {folder.folderName.toLowerCase().includes('inbox') ? <Inbox size={18} /> : 
                                          folder.folderName.toLowerCase().includes('archive') ? <Archive size={18} /> : 
-                                         folder.folderName.toLowerCase().includes('sent') ? <Send size={18} /> :
-                                         folder.folderName.toLowerCase().includes('draft') ? <FileText size={18} /> :
-                                         folder.folderName.toLowerCase().includes('trash') || folder.folderName.toLowerCase().includes('spam') ? <Trash2 size={18} /> : 
                                          <Mail size={18} />}
                                     </div>
                                     <span className="text-sm font-semibold">{folder.folderName}</span>
                                 </div>
                                 {folder.unreadCount > 0 && (
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${selectedFolder === folder.folderId ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'}`}>
-                                        {folder.unreadCount}
-                                    </span>
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${selectedFolder === folder.folderId ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'}`}>{folder.unreadCount}</span>
                                 )}
                             </button>
                         ))}
                     </nav>
 
-                    <div className="p-4 mt-auto border-t border-white/5">
+                    <div className="p-4 mt-auto border-t border-white/5 space-y-1">
+                        <button 
+                            onClick={handleSubscribeAutoResponder}
+                            disabled={aiGenerating}
+                            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-400 hover:bg-teal-500/10 hover:text-teal-400 transition-all border border-transparent hover:border-teal-500/20"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="p-1.5 bg-teal-500/10 rounded-lg text-teal-400"><ShieldCheck size={16} /></div>
+                                <span className="text-sm font-semibold">AI Auto-Reply</span>
+                            </div>
+                            {aiGenerating ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                        </button>
                         <button 
                             onClick={() => setIsLeadModalOpen(true)}
                             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-gray-200 transition-all"
@@ -314,353 +316,127 @@ export default function ZohoMailView() {
                     </div>
                 </div>
 
-                {/* Message List */}
                 <div className={`flex flex-col h-full bg-gray-900/10 border-r border-white/5 shrink-0 transition-all duration-300 ${selectedMessage ? 'hidden md:flex w-80 lg:w-96' : 'flex-1 md:w-80 lg:w-96'}`}>
                     <div className="p-4 border-b border-white/5 flex items-center gap-4 bg-gray-950/20 backdrop-blur-xl sticky top-0 z-10">
-                        <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden p-2.5 hover:bg-white/5 rounded-xl text-gray-400">
-                            <Menu size={22} />
-                        </button>
+                        <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden p-2.5 hover:bg-white/5 rounded-xl text-gray-400"><Menu size={22} /></button>
                         <form onSubmit={handleSearch} className="relative flex-1 group">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-blue-500 transition-colors pointer-events-none" size={16} />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-blue-500 transition-colors" size={16} />
                             <input 
-                                type="text" 
-                                placeholder="Search mail..." 
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full bg-gray-800/20 border border-white/5 rounded-xl pl-12 pr-4 py-2.5 focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/30 focus:outline-none transition-all placeholder:text-gray-600 text-sm"
+                                type="text" placeholder="Search mail..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+                                className="w-full bg-gray-800/20 border border-white/5 rounded-xl pl-12 pr-4 py-2.5 focus:ring-1 focus:ring-blue-500/30 outline-none text-sm"
                             />
                         </form>
-                        <button onClick={() => fetchMessages(selectedFolder)} className="p-2 text-gray-500 hover:text-white rounded-lg transition-all active:rotate-180 duration-500">
-                            <RotateCcw size={16} />
-                        </button>
-                    </div>
-
-                    <div className="px-6 py-5 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-semibold text-gray-300">
-                                {folders.find(f => f.folderId === selectedFolder)?.folderName || 'Inbox'}
-                            </h3>
-                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
-                        </div>
-                        <div className="text-xs text-gray-500">{messages.length} messages</div>
                     </div>
 
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-2 pt-0 divide-y divide-white/5">
                         {loading && messages.length === 0 ? (
-                            <div className="space-y-2 px-2">
-                                {[1,2,3,4,5,6].map(i => (
-                                    <div key={i} className="w-full h-20 bg-gray-800/20 rounded-xl animate-pulse border border-white/5" />
-                                ))}
+                            <div className="space-y-2 px-2 mt-4">
+                                {[1,2,3,4,5].map(i => <div key={i} className="w-full h-20 bg-gray-800/20 rounded-xl animate-pulse" />)}
                             </div>
                         ) : messages.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-20 text-gray-600 opacity-60 text-sm text-center px-6">
-                                <Mail size={40} className="mb-4 opacity-30" />
-                                <p className="font-semibold text-gray-400 mb-1">No messages</p>
-                                <p className="text-xs text-gray-600">This folder is empty or still loading.<br />Try refreshing or selecting another folder.</p>
-                            </div>
+                            <div className="text-center py-20 text-gray-600 text-sm">No messages</div>
                         ) : (
                             messages.map(msg => (
                                 <button
                                     key={msg.messageId}
                                     onClick={() => fetchMessageContent(msg.messageId)}
-                                    className={`w-full text-left p-4 rounded-xl transition-all group flex flex-col gap-1 relative overflow-hidden mb-1 ${selectedMessage === msg.messageId ? 'bg-blue-600/10 border border-blue-500/20' : 'hover:bg-white/5 border border-transparent'}`}
+                                    className={`w-full text-left p-4 rounded-xl transition-all flex flex-col gap-1 relative mb-1 ${selectedMessage === msg.messageId ? 'bg-blue-600/10 border border-blue-500/20' : 'hover:bg-white/5 border border-transparent'}`}
                                 >
                                     <div className="flex justify-between items-center mb-0.5">
-                                        <span className={`font-bold text-xs truncate max-w-[150px] transition-colors ${msg.status === 'unread' ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
+                                        <span className={`font-bold text-xs truncate max-w-[150px] ${msg.status === 'unread' ? 'text-white' : 'text-gray-400'}`}>
                                             {msg.sender.split('<')[0].trim()}
                                         </span>
-                                        <span className="text-[11px] text-gray-600 group-hover:text-gray-500">{new Date(msg.receivedTime).toLocaleDateString()}</span>
+                                        <span className="text-[11px] text-gray-600">{formatDate(msg.receivedTime)}</span>
                                     </div>
-                                    <p className={`text-xs font-semibold truncate ${msg.status === 'unread' ? 'text-blue-200' : 'text-gray-500 group-hover:text-gray-400'}`}>{msg.subject}</p>
-                                    <p className="text-[10px] text-gray-600 truncate line-clamp-1 opacity-60 group-hover:opacity-100">{msg.snippet}</p>
-                                    
-                                    {selectedMessage === msg.messageId && (
-                                        <div className="absolute inset-y-0 left-0 w-1 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
-                                    )}
+                                    <p className={`text-xs font-semibold truncate ${msg.status === 'unread' ? 'text-blue-200' : 'text-gray-500'}`}>{msg.subject}</p>
+                                    <p className="text-[10px] text-gray-600 truncate opacity-60">{msg.snippet}</p>
+                                    {selectedMessage === msg.messageId && <div className="absolute inset-y-0 left-0 w-1 bg-blue-500 rounded-full" />}
                                 </button>
                             ))
                         )}
                     </div>
                 </div>
 
-                <div className="flex-1 flex flex-col min-w-0 bg-slate-900/50 relative">
+                <div className="flex-1 flex flex-col min-w-0 bg-slate-900/50">
                     <AnimatePresence mode="popLayout" initial={false}>
                         {composing ? (
-                            <motion.div 
-                                key="compose"
-                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 1.05, y: -20 }}
-                                transition={{ type: "spring", damping: 20, stiffness: 150 }}
-                                className="flex-1 flex flex-col p-6 lg:p-12 overflow-y-auto max-w-5xl mx-auto w-full bg-gray-900/10"
-                            >
+                            <motion.div key="compose" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="flex-1 flex flex-col p-6 lg:p-12 overflow-y-auto w-full">
                                 <div className="flex justify-between items-center mb-10">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-14 h-14 bg-gradient-to-br from-blue-600/30 to-indigo-600/30 rounded-2xl flex items-center justify-center text-blue-400 border border-blue-500/20 shadow-xl shadow-blue-500/5">
-                                            <Send size={28} />
-                                        </div>
-                                        <div>
-                                            <h2 className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-500 tracking-tight">New Message</h2>
-                                        </div>
-                                    </div>
-                                    <button onClick={() => setComposing(false)} className="p-3 text-gray-500 hover:text-white rounded-xl hover:bg-white/5 transition-all">
-                                        <X size={24} />
-                                    </button>
+                                    <h2 className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-500">New Message</h2>
+                                    <button onClick={() => setComposing(false)} className="p-3 text-gray-500 hover:text-white rounded-xl hover:bg-white/5"><X size={24} /></button>
                                 </div>
-                                
                                 <form onSubmit={handleSend} className="space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
-                                            <label className="text-xs font-medium text-gray-400 ml-1">To</label>
-                                            <input 
-                                                type="email" 
-                                                placeholder="recipient@example.com" 
-                                                required
-                                                value={emailData.to}
-                                                onChange={e => setEmailData({...emailData, to: e.target.value})}
-                                                className="w-full bg-gray-900/40 border border-white/5 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 focus:outline-none transition-all placeholder:text-gray-700"
-                                            />
+                                            <div className="flex justify-between"><label className="text-xs font-medium text-gray-400">To</label><button type="button" onClick={() => setIsContactPickerOpen(true)} className="text-[10px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full">Directory</button></div>
+                                            <input type="email" required value={emailData.to} onChange={e => setEmailData({...emailData, to: e.target.value})} className="w-full bg-gray-900/40 border border-white/5 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-blue-500/30 outline-none" placeholder="recipient@example.com" />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-xs font-medium text-gray-400 ml-1">Subject</label>
-                                            <input 
-                                                type="text" 
-                                                placeholder="Briefly describe your topic" 
-                                                required
-                                                value={emailData.subject}
-                                                onChange={e => setEmailData({...emailData, subject: e.target.value})}
-                                                className="w-full bg-gray-900/40 border border-white/5 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 focus:outline-none transition-all placeholder:text-gray-700"
-                                            />
+                                            <label className="text-xs font-medium text-gray-400">Subject</label>
+                                            <input type="text" required value={emailData.subject} onChange={e => setEmailData({...emailData, subject: e.target.value})} className="w-full bg-gray-900/40 border border-white/5 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-blue-500/30 outline-none" placeholder="Topic" />
                                         </div>
                                     </div>
-
-                                    <div className="space-y-4 relative">
-                                        <div className="flex items-center justify-between ml-1">
-                                            <label className="text-xs font-medium text-gray-400">Message</label>
-                                            <button 
-                                                type="button"
-                                                onClick={() => setShowAiPrompt(!showAiPrompt)}
-                                                className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 px-3 py-1 rounded-full transition-all ${showAiPrompt ? 'bg-teal-500 text-white' : 'bg-teal-500/10 text-teal-400 hover:bg-teal-500/20'}`}
-                                            >
-                                                <Sparkles size={10} />
-                                                {showAiPrompt ? 'Hide AI Tool' : 'Draft with AI'}
-                                            </button>
-                                        </div>
-
-                                        <AnimatePresence>
-                                            {showAiPrompt && (
-                                                <motion.div 
-                                                    initial={{ height: 0, opacity: 0 }}
-                                                    animate={{ height: 'auto', opacity: 1 }}
-                                                    exit={{ height: 0, opacity: 0 }}
-                                                    className="overflow-hidden mb-2"
-                                                >
-                                                    <div className="bg-teal-500/5 border border-teal-500/20 rounded-2xl p-4 space-y-3 shadow-xl shadow-teal-500/5">
-                                                        <div className="flex items-center gap-2 text-teal-400 mb-1">
-                                                            <Sparkles size={14} />
-                                                            <span className="text-[10px] font-black uppercase tracking-widest leading-none">AI Generation Prompt</span>
-                                                        </div>
-                                                        <textarea 
-                                                            placeholder="Tell the AI what you want in this email (e.g., 'Write a professional follow-up to Sarah about our pricing update')..." 
-                                                            value={aiPrompt}
-                                                            onChange={e => setAiPrompt(e.target.value)}
-                                                            className="w-full bg-slate-950/50 border border-teal-500/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-teal-500/40 transition-all resize-none h-20 placeholder:text-slate-600"
-                                                        />
-                                                        <div className="flex justify-end pr-1">
-                                                            <button 
-                                                                type="button"
-                                                                disabled={aiGenerating || !aiPrompt}
-                                                                onClick={handleGenerateAiDraft}
-                                                                className="bg-teal-600 hover:bg-teal-500 text-white text-[10px] font-black uppercase tracking-widest px-6 py-2 rounded-lg transition-all shadow-lg shadow-teal-600/20 disabled:opacity-50 active:scale-95 flex items-center gap-2"
-                                                            >
-                                                                {aiGenerating ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                                                                Generate Personalized Draft
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
-
-                                        <textarea 
-                                            placeholder="Write your message here..." 
-                                            rows={showAiPrompt ? 10 : 14}
-                                            required
-                                            value={emailData.body}
-                                            onChange={e => setEmailData({...emailData, body: e.target.value})}
-                                            className="w-full bg-gray-900/40 border border-white/5 rounded-2xl px-6 py-6 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 focus:outline-none resize-none transition-all scrollbar-hide text-lg leading-relaxed placeholder:text-gray-700"
-                                        />
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between"><label className="text-xs font-medium text-gray-400">Message</label><button type="button" onClick={() => setShowAiPrompt(!showAiPrompt)} className="text-[10px] font-black uppercase bg-teal-500/10 text-teal-400 px-3 py-1 rounded-full"><Sparkles size={10} className="inline mr-1"/> Draft with AI</button></div>
+                                        {showAiPrompt && (
+                                            <div className="bg-teal-500/5 border border-teal-500/20 rounded-2xl p-4 space-y-3">
+                                                <textarea placeholder="Tell AI what to write..." value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} className="w-full bg-slate-950/50 border border-teal-500/10 rounded-xl px-4 py-3 text-sm focus:outline-none h-20 resize-none" />
+                                                <div className="flex justify-end"><button type="button" onClick={handleGenerateAiDraft} className="bg-teal-600 text-white text-[10px] font-black uppercase px-6 py-2 rounded-lg">Generate Draft</button></div>
+                                            </div>
+                                        )}
+                                        <textarea required rows={12} value={emailData.body} onChange={e => setEmailData({...emailData, body: e.target.value})} className="w-full bg-gray-900/40 border border-white/5 rounded-2xl px-6 py-6 focus:ring-2 focus:ring-blue-500/30 outline-none resize-none text-lg" placeholder="Write here..." />
                                     </div>
-
-                                    <div className="flex justify-end pt-6">
-                                        <button 
-                                            disabled={sending}
-                                            type="submit" 
-                                            className="group flex items-center gap-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 text-white font-black px-12 py-4 rounded-2xl transition-all shadow-2xl shadow-blue-600/40 active:scale-95 text-lg"
-                                        >
-                                            {sending ? <Loader2 className="animate-spin" size={24} /> : <Send size={24} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />} 
-                                            <span>{sending ? 'Sending...' : 'Send Email'}</span>
-                                        </button>
-                                    </div>
+                                    <div className="flex justify-end pt-6"><button disabled={sending} type="submit" className="bg-blue-600 text-white font-black px-12 py-4 rounded-2xl shadow-xl active:scale-95">{sending ? 'Sending...' : 'Send Email'}</button></div>
                                 </form>
                             </motion.div>
                         ) : selectedMessage ? (
-                            <motion.div 
-                                key={selectedMessage}
-                                initial={{ opacity: 0, x: 50 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -50 }}
-                                transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                                className="flex-1 flex flex-col overflow-hidden bg-gray-900/10"
-                            >
-                                <div className="p-4 border-b border-white/5 flex items-center justify-between sticky top-0 bg-gray-950/20 backdrop-blur-xl z-20">
+                            <motion.div key={selectedMessage} initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="flex-1 flex flex-col bg-gray-900/10">
+                                <div className="p-4 border-b border-white/5 flex items-center justify-between bg-gray-950/20 backdrop-blur-xl">
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <button onClick={() => setSelectedMessage(null)} className="p-2.5 hover:bg-white/5 rounded-xl text-gray-400 hover:text-white transition-colors">
-                                            <ArrowLeft size={20} />
-                                        </button>
-                                        <div className="min-w-0">
-                                            <h2 className="text-sm font-black truncate pr-4 text-gray-200 tracking-tight">{messageContent?.subject}</h2>
-                                            <p className="text-xs text-blue-400 truncate">{messageContent?.sender}</p>
-                                        </div>
+                                        <button onClick={() => setSelectedMessage(null)} className="p-2.5 hover:bg-white/5 rounded-xl text-gray-400"><ArrowLeft size={20} /></button>
+                                        <div className="min-w-0"><h2 className="text-sm font-black truncate text-gray-200">{messageContent?.subject}</h2><p className="text-xs text-blue-400 truncate">{messageContent?.sender}</p></div>
                                     </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <button 
-                                            onClick={() => handleAiReply()}
-                                            disabled={aiGenerating}
-                                            className="flex items-center gap-2 bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white px-3 py-1.5 rounded-xl transition-all border border-blue-600/20 active:scale-95 disabled:opacity-50"
-                                        >
-                                            {aiGenerating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                                            <span className="text-xs font-semibold">AI Reply</span>
-                                        </button>
-                                        <div className="w-[1px] h-6 bg-white/10 mx-1 hidden lg:block" />
-                                        <button onClick={() => handleArchive(selectedMessage!)} className="p-2 hover:bg-white/5 text-gray-500 hover:text-amber-400 rounded-lg transition-colors" title="Archive">
-                                            <Archive size={18} />
-                                        </button>
-                                        <button onClick={() => handleDelete(selectedMessage!)} className="p-2 hover:bg-white/5 text-gray-500 hover:text-red-400 rounded-lg transition-colors" title="Delete">
-                                            <Trash2 size={18} />
-                                        </button>
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={() => handleAiReply()} disabled={aiGenerating} className="flex items-center gap-2 bg-blue-600/10 text-blue-400 px-3 py-1.5 rounded-xl border border-blue-600/20"><Sparkles size={14} /> AI Reply</button>
+                                        <button onClick={() => handleArchive(selectedMessage!)} className="p-2 hover:bg-white/5 text-gray-500"><Archive size={18} /></button>
+                                        <button onClick={() => handleDelete(selectedMessage!)} className="p-2 hover:bg-white/5 text-gray-500"><Trash2 size={18} /></button>
                                     </div>
                                 </div>
                                 <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar">
-                                    {loading ? (
-                                        <div className="flex flex-col items-center justify-center py-40 gap-4 opacity-30">
-                                            <Loader2 className="animate-spin text-blue-500" size={40} />
-                                            <p className="text-xs text-gray-400">Loading...</p>
-                                        </div>
-                                    ) : (
-                                        <div className="max-w-4xl mx-auto space-y-10">
-                                            <div className="flex justify-between items-start pb-8 border-b border-white/5">
-                                                <div className="flex gap-5">
-                                                    <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center text-xl font-black border border-white/10 shadow-2xl shadow-blue-500/20">
-                                                        {messageContent?.sender?.charAt(0).toUpperCase()}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-semibold text-lg text-white">{messageContent?.sender}</p>
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <span className="text-gray-500 text-xs">To me</span>
-                                                            <div className="w-1 h-1 bg-gray-700 rounded-full" />
-                                                            <span className="text-gray-500 text-xs">{new Date(messageContent?.receivedTime).toLocaleString()}</span>
-                                                        </div>
-                                                    </div>
+                                    {loading ? <div className="text-center py-40 opacity-30"><Loader2 className="animate-spin inline mr-2"/>Loading...</div> : (
+                                        <div className="max-w-4xl mx-auto space-y-8">
+                                            <div className="flex justify-between items-center pb-6 border-b border-white/5">
+                                                <div className="flex gap-4">
+                                                    <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center font-black">{messageContent?.sender?.charAt(0).toUpperCase()}</div>
+                                                    <div><p className="font-semibold text-white">{messageContent?.sender}</p><p className="text-gray-500 text-xs">{formatDate(messageContent?.receivedTime)}</p></div>
                                                 </div>
                                             </div>
-                                            <div 
-                                                className="prose prose-invert max-w-none text-gray-300 leading-relaxed text-lg font-medium selection:bg-blue-500/30" 
-                                                dangerouslySetInnerHTML={{ __html: messageContent?.content }} 
-                                            />
-                                            <div className="pt-12 flex gap-4">
-                                                <button 
-                                                    onClick={() => {
-                                                        setEmailData({
-                                                            to: messageContent.sender,
-                                                            subject: `Re: ${messageContent.subject}`,
-                                                            body: ""
-                                                        });
-                                                        setComposing(true);
-                                                        // No need to clear selectedMessage, ComposeView overlay handles it
-                                                    }}
-                                                    className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-xl shadow-lg shadow-blue-600/20 transition-all active:scale-95 text-sm font-semibold"
-                                                >
-                                                    <Reply size={14} />
-                                                    <span>Reply</span>
-                                                </button>
-                                                <button className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-6 py-2.5 rounded-xl border border-white/5 transition-all active:scale-95 text-sm font-semibold">
-                                                    <Forward size={14} />
-                                                    <span>Forward</span>
-                                                </button>
+                                            <div className="prose prose-invert max-w-none text-gray-300 leading-relaxed text-lg" dangerouslySetInnerHTML={{ __html: messageContent?.content }} />
+                                            <div className="pt-10 flex gap-4">
+                                                <button onClick={() => { setEmailData({ to: messageContent.sender, subject: `Re: ${messageContent.subject}`, body: "" }); setComposing(true); }} className="bg-blue-600 text-white px-8 py-2.5 rounded-xl text-sm font-semibold shadow-lg">Reply</button>
                                             </div>
                                         </div>
                                     )}
                                 </div>
                             </motion.div>
                         ) : (
-                            <motion.div 
-                                key="empty"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="flex-1 flex flex-col items-center justify-center text-gray-600 p-8 text-center bg-gray-900/10"
-                            >
-                                <div className="w-24 h-24 bg-gray-800/20 rounded-3xl flex items-center justify-center mb-6 border border-white/5">
-                                    <Mail size={40} className="text-gray-700" />
-                                </div>
-                                <h3 className="text-lg font-semibold text-gray-400 mb-2">No message selected</h3>
-                                <p className="text-sm text-gray-600 max-w-xs leading-relaxed">Select a message from the list to read it here.</p>
-                                
-                                <div className="mt-12 p-6 bg-blue-600/5 rounded-2xl border border-blue-500/10 max-w-sm">
-                                    <div className="flex items-center gap-2 mb-3 text-blue-400">
-                                        <ShieldCheck size={16} />
-                                        <span className="text-xs font-semibold">Secure Connection</span>
-                                    </div>
-                                    <p className="text-xs text-gray-500 text-left leading-relaxed">
-                                        Your Zoho Mail is connected via <span className="text-gray-300 font-bold">OAuth 2.0</span> protocol. 
-                                        Authentication tokens are encrypted and stored securely in our private vault. 
-                                        No passwords are ever shared.
-                                    </p>
-                                </div>
-                            </motion.div>
+                            <div className="flex-1 flex flex-col items-center justify-center text-gray-600 p-8 text-center bg-gray-900/10"><Mail size={40} className="mb-4 opacity-30" /><h3 className="text-lg font-semibold text-gray-400">No message selected</h3><p className="text-sm text-gray-600">Select an email to read.</p></div>
                         )}
                     </AnimatePresence>
                 </div>
             </div>
-
-
-            <LeadOutreachModal 
-                isOpen={isLeadModalOpen}
-                onClose={() => setIsLeadModalOpen(false)}
-                onEmailDrafted={(data) => {
-                    setEmailData(data);
-                    setComposing(true);
-                    setSelectedMessage(null);
-                }}
-            />
-
-            {/* AI Floating Status Bar */}
-            <div className="h-10 bg-gray-950 border-t border-white/5 px-4 flex items-center gap-4 text-xs text-gray-500 z-30">
-                <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                    <span>Zoho connected</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-blue-400/70">
-                    <Sparkles size={11} />
-                    <span>AI ready</span>
-                </div>
+            <div className="h-10 bg-gray-950 border-t border-white/5 px-4 flex items-center gap-4 text-xs text-gray-500">
+                <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 bg-green-500 rounded-full" /><span>Zoho connected</span></div>
+                <div className="flex items-center gap-1.5 text-blue-400/70"><Sparkles size={11} /><span>AI Auto-Apply active</span></div>
             </div>
 
+            <LeadOutreachModal isOpen={isLeadModalOpen} onClose={() => setIsLeadModalOpen(false)} onEmailDrafted={data => { setEmailData(data); setComposing(true); setSelectedMessage(null); }} />
+            <CRMContactPickerModal isOpen={isContactPickerOpen} onClose={() => setIsContactPickerOpen(false)} onSelectContact={email => setEmailData(prev => ({ ...prev, to: email }))} />
+
             <style jsx global>{`
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 4px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: rgba(255, 255, 255, 0.05);
-                    border-radius: 10px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: rgba(255, 255, 255, 0.1);
-                }
+                .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+                .prose img { max-width: 100%; border-radius: 8px; margin: 16px 0; border: 1px solid rgba(255,255,255,0.05); }
             `}</style>
         </div>
     );

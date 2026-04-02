@@ -1,4 +1,6 @@
 import { ZohoService } from './ZohoService';
+import { routeAIRequest } from '@/services/aiRouter';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export interface ZohoMessage {
     messageId: string;
@@ -72,9 +74,6 @@ export class ZohoMailService extends ZohoService {
         return await this.callZohoAPI(`https://${config.mailApiHost}/api/accounts`);
     }
 
-    /**
-     * Get authorized sender addresses for the account
-     */
     async getSenderAddresses(): Promise<string[]> {
         try {
             const data = await this.getAccounts();
@@ -84,7 +83,7 @@ export class ZohoMailService extends ZohoService {
             for (const acc of accounts) {
                 if (acc.primaryEmailAddress) addresses.push(acc.primaryEmailAddress);
                 if (acc.incomingUserName) addresses.push(acc.incomingUserName);
-                if (acc.mailAddress) addresses.push(acc.mailAddress); // fallback
+                if (acc.mailAddress) addresses.push(acc.mailAddress);
                 if (Array.isArray(acc.sendAsAddress)) {
                     addresses.push(...acc.sendAsAddress.map((s: any) => s.mailId || s.emailAddress || s).filter(Boolean));
                 }
@@ -120,7 +119,6 @@ export class ZohoMailService extends ZohoService {
             else if (data?.data) contentStr = typeof data.data === 'string' ? data.data : data.data.content || '';
             else if (data?.content) contentStr = data.content;
 
-            // Rewrite secure Zoho inline image URLs so our frontend can proxy them
             if (contentStr) {
                 contentStr = contentStr.replace(
                     /src=["'](?:https?:\/\/[^\/]+)?(\/api\/accounts\/[^"']+\/messages\/[^"']+\/attachments\/[^"']+)["']/gi,
@@ -132,8 +130,8 @@ export class ZohoMailService extends ZohoService {
             return { content: contentStr };
         } catch (err: any) {
             if (err?.status === 404) {
-                console.warn('[ZohoMailService] Message not found (likely deleted or moved):', messageId);
-                return { content: '', error: 'The email content could not be retrieved. It may have been moved or deleted.', status: 404 };
+                console.warn('[ZohoMailService] Message not found:', messageId);
+                return { content: '', error: 'Retrieved failed.', status: 404 };
             }
             throw err;
         }
@@ -143,17 +141,12 @@ export class ZohoMailService extends ZohoService {
         const config = await this.getConfig();
         const accessToken = await this.getValidAccessToken();
         if (!accessToken || !config?.mailApiHost) throw new Error('Unauthorized');
-
-        // Ensure we only proxy valid attachment URLs
         if (!path.startsWith('/api/accounts')) throw new Error('Invalid proxy path');
 
         const url = `https://${config.mailApiHost}${path}`;
         const res = await fetch(url, {
-            headers: {
-                Authorization: `Zoho-oauthtoken ${accessToken}`
-            }
+            headers: { Authorization: `Zoho-oauthtoken ${accessToken}` }
         });
-        
         if (!res.ok) throw new Error(`Failed to proxy image: ${res.status}`);
         return res;
     }
@@ -167,19 +160,11 @@ export class ZohoMailService extends ZohoService {
         bccAddress?: string;
     }) {
         const { base } = await this.getMailBase();
-        
-        // 1. Fetch authorized addresses to validate or fill fromAddress
         const validAddresses = await this.getSenderAddresses();
         
         if (!params.fromAddress || (validAddresses.length > 0 && !validAddresses.includes(params.fromAddress))) {
             const primary = validAddresses.length > 0 ? validAddresses[0] : null;
-            if (!primary && !params.fromAddress) {
-                throw new Error('No authorized fromAddress found for this Zoho account.');
-            }
-            if (primary && params.fromAddress !== primary) {
-                console.warn(`[ZohoMailService] Using primary address "${primary}" instead of provided "${params.fromAddress}"`);
-                params.fromAddress = primary;
-            }
+            if (primary) params.fromAddress = primary;
         }
 
         return await this.callZohoAPI(`${base}/messages`, {
@@ -190,9 +175,7 @@ export class ZohoMailService extends ZohoService {
 
     async searchMessages(query: string): Promise<ZohoMessage[]> {
         const { base } = await this.getMailBase();
-        const data = await this.callZohoAPI(
-            `${base}/messages/search?searchFilter=${encodeURIComponent(query)}`
-        );
+        const data = await this.callZohoAPI(`${base}/messages/search?searchFilter=${encodeURIComponent(query)}`);
         return (data?.data ?? []) as ZohoMessage[];
     }
 
@@ -204,10 +187,7 @@ export class ZohoMailService extends ZohoService {
                 { method: 'DELETE' }
             );
         } catch (err: any) {
-            if (err?.status === 404) {
-                console.warn('[ZohoMailService] Delete failed: Message not found:', messageId);
-                return { success: true, message: 'Message already gone or moved' };
-            }
+            if (err?.status === 404) return { success: true };
             throw err;
         }
     }
@@ -215,7 +195,7 @@ export class ZohoMailService extends ZohoService {
     async archiveMessage(messageId: string, currentFolderId: string) {
         const folders = await this.getFolders();
         const archiveFolder = folders.find(f => f.folderName.toLowerCase().includes('archive'));
-        if (!archiveFolder) throw new Error('Archive folder not found in your Zoho Mail account');
+        if (!archiveFolder) throw new Error('Archive folder not found');
 
         const { base } = await this.getMailBase();
         return await this.callZohoAPI(
@@ -236,5 +216,91 @@ export class ZohoMailService extends ZohoService {
                 body: JSON.stringify({ status: isRead ? 'read' : 'unread' }),
             }
         );
+    }
+
+    async triageIncomingEmail(messageId: string, folderId: string) {
+        try {
+            const { content } = await this.getMessageContent(messageId, folderId);
+            const messages = await this.getMessages(folderId, 1, 1);
+            const meta = messages.find(m => m.messageId === messageId);
+            const subject = meta?.subject || 'No Subject';
+            const sender = meta?.sender || 'Unknown';
+
+            if (!content) return { status: 'ignored' };
+
+            const triagePrompt = `
+Analyze for AlphaClone Systems:
+Subject: ${subject}
+From: ${sender}
+Content: ${content.substring(0, 2000)}
+
+Your goal is to determine if this is a high-intent business inquiry or lead.
+Return ONLY a valid JSON object in this format: 
+{ "status": "qualified" | "ignored", "draft_reply": "Professional, helpful response moving the discussion forward" }
+
+Rules:
+- Respond in plain text. No markdown.
+- Qualified if it's a real lead, commercial question, or partnership inquiry.
+- Ignored if it's spam, newsletter, or irrelevant personal mail.
+`;
+            
+            // Use the unified AI router which tries Claude -> GPT-4 -> Gemini
+            const aiResponse = await routeAIRequest({
+                prompt: triagePrompt,
+                maxTokens: 1000,
+                temperature: 0.3
+            });
+
+            if (!aiResponse.success || !aiResponse.content) {
+                throw new Error('AI Triage failed: ' + aiResponse.error);
+            }
+
+            const data = JSON.parse(aiResponse.content.match(/\{.*\}/s)?.[0] || '{"status":"ignored"}');
+
+            if (data.status === 'qualified') {
+                const supabase = await createSupabaseServerClient();
+                const { data: log } = await supabase.from('zoho_auto_responder_logs').insert({
+                    user_id: this.userId, 
+                    message_id: messageId, 
+                    sender_email: sender, 
+                    original_subject: subject,
+                    triage_classification: 'qualified', 
+                    draft_reply: data.draft_reply, 
+                    triage_status: 'scheduled'
+                }).select().single();
+
+                if (log) {
+                    const { Client } = await import('@upstash/qstash');
+                    const qstash = new Client({ token: process.env.QSTASH_TOKEN || '' });
+                    await qstash.publishJSON({
+                        url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/zoho/process-reply`,
+                        body: { userId: this.userId, messageId, folderId, senderEmail: sender, replyText: data.draft_reply, logId: log.id },
+                        delay: 600 // 10 minute delay
+                    });
+                }
+            }
+            return data;
+        } catch (e) {
+            console.error('[ZohoMailService] Triage error:', e);
+            return { status: 'error' };
+        }
+    }
+
+    async subscribeToNotifications() {
+        const config = await this.getConfig();
+        const url = `https://${config.mailApiHost}/api/notifications/v1/subscriptions`;
+        return await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Zoho-oauthtoken ${await this.getValidAccessToken()}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                channelId: `user-${this.userId}`,
+                notifyUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/zoho/incoming`,
+                resource: '/api/v1/messages',
+                event: 'NEW_MAIL'
+            })
+        }).then(r => r.json());
     }
 }

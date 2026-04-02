@@ -68,23 +68,29 @@ export async function POST(request: Request) {
       value_add:    'lead with a free tip or insight before any ask',
     };
 
-    // Build one batch prompt (all leads in one API call → faster, cheaper)
-    const leadsJson = leads.slice(0, 20).map((l, i) => ({
-      index: i,
-      business: l.business_name,
-      industry,
-      category: l.category || industry,
-      hasEmail:   !!l.email,
-      hasPhone:   !!l.phone,
-      hasWebsite: !!l.website,
-      rating:     l.rating,
-      address:    l.address,
-      pitchAngle: l.pitchAngle,
-      pitchContext: PITCH_HOOKS[l.pitchAngle] || PITCH_HOOKS['growth-opportunity'],
-      qualityScore: l.score,
-    }));
+    const BATCH_SIZE = 5;
+    const leadsToProcess = leads.slice(0, 20); // Cap at 20
 
-    const prompt = `
+    const batches = [];
+    for (let i = 0; i < leadsToProcess.length; i += BATCH_SIZE) {
+      batches.push(leadsToProcess.slice(i, i + BATCH_SIZE).map((l, idx) => ({
+        index: i + idx,
+        business: l.business_name,
+        industry,
+        category: l.category || industry,
+        hasEmail:   !!l.email,
+        hasPhone:   !!l.phone,
+        hasWebsite: !!l.website,
+        rating:     l.rating,
+        address:    l.address,
+        pitchAngle: l.pitchAngle,
+        pitchContext: PITCH_HOOKS[l.pitchAngle] || PITCH_HOOKS['growth-opportunity'],
+        qualityScore: l.score,
+      })));
+    }
+
+    const batchPromises = batches.map(async (batchLeadsJson) => {
+        const prompt = `
 You are an elite B2B sales copywriter. Generate hyper-personalized cold outreach emails for the leads below.
 
 SENDER: ${senderName}
@@ -105,38 +111,45 @@ RULES:
 - Return ONLY valid JSON array, no other text
 
 LEADS:
-${JSON.stringify(leadsJson, null, 2)}
+${JSON.stringify(batchLeadsJson, null, 2)}
 
 Return this exact JSON structure (array of objects):
 [
   {
-    "index": 0,
+    "index": number, (MUST MATCH the index carefully)
     "subject": "...",
     "body": "..."
   }
 ]
 `;
+        try {
+            const aiRes = await fetch(`${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/ai/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, maxTokens: 4096 }),
+            });
 
-    // Call the existing AI proxy
-    const aiRes = await fetch(`${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/ai/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, maxTokens: 4096 }),
+            if (!aiRes.ok) throw new Error('AI generation failed');
+            const { text } = await aiRes.json();
+            if (!text) throw new Error('AI returned empty response');
+
+            const jsonMatch = text.match(/\[[\s\S]*\]/);
+            if (!jsonMatch) throw new Error('AI response was not valid JSON array');
+
+            return JSON.parse(jsonMatch[0]) as Array<{ index: number; subject: string; body: string }>;
+        } catch (e: any) {
+            console.error('[Outreach/Generate Batch] Error:', e.message);
+            // Fallback for failed batch
+            return batchLeadsJson.map(b => ({
+                index: b.index,
+                subject: `Strategic Discussion - ${b.business}`,
+                body: `Hello,\n\nI was reviewing ${b.business} and saw some unique opportunities in your local market.\n\nWould you be open to a brief 10-minute chat this week to discuss how we might be able to help?\n\nBest,\n${senderName}`
+            }));
+        }
     });
 
-    if (!aiRes.ok) {
-      const err = await aiRes.json();
-      throw new Error(err.error || 'AI generation failed');
-    }
-
-    const { text } = await aiRes.json();
-    if (!text) throw new Error('AI returned empty response');
-
-    // Parse JSON from AI response (may have markdown wrapper)
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) throw new Error('AI response was not valid JSON array');
-
-    const generated: Array<{ index: number; subject: string; body: string }> = JSON.parse(jsonMatch[0]);
+    const resultsBatches = await Promise.all(batchPromises);
+    const generated: Array<{ index: number; subject: string; body: string }> = resultsBatches.flat();
 
     // Merge with original lead data
     const emails: GeneratedEmail[] = generated.map(g => {

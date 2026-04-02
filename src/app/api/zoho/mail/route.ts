@@ -99,12 +99,19 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+    const { searchParams } = new URL(req.url);
+    const action = searchParams.get('action');
     const userId = await getUserId(req);
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const zohoMail = new ZohoMailService(userId);
 
     try {
+        if (action === 'subscribe') {
+            const result = await zohoMail.subscribeToNotifications();
+            return NextResponse.json({ success: true, result });
+        }
+        
         const data = await req.json();
         const result = await zohoMail.sendEmail(data);
         return NextResponse.json(result);
