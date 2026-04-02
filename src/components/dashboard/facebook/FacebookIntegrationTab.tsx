@@ -45,9 +45,12 @@ const STATUS_COLORS: Record<string, string> = {
     disqualified: 'bg-red-500/20 text-red-400 border-red-500/30',
 };
 
-export default function FacebookIntegrationTab() {
-    const { user } = useAuth();
-    const { currentTenant: tenant } = useTenant();
+interface FacebookIntegrationTabProps {
+    user: any;
+    tenant: any;
+}
+
+export default function FacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabProps) {
     const [activeTab, setActiveTab] = useState<'leads' | 'messenger' | 'posts' | 'post' | 'pages' | 'setup'>('leads');
     const [pages, setPages] = useState<FacebookPage[]>([]);
     const [leads, setLeads] = useState<FacebookLead[]>([]);
@@ -74,7 +77,10 @@ export default function FacebookIntegrationTab() {
     const isConnected = pages.length > 0;
 
     const loadData = useCallback(async () => {
-        if (!user) return;
+        if (!user || !tenant?.id) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         const [pagesRes, leadsRes, convRes] = await Promise.all([
             supabase

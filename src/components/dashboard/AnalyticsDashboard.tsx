@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { analyticsService, AnalyticsData } from '../../services/analyticsService';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
+import { WrapChart } from '../../lib/chartWrapper';
 import { TrendingUp, Users, DollarSign, Activity } from 'lucide-react';
 import { TableSkeleton } from '../ui/Skeleton';
 
@@ -112,7 +113,7 @@ const AnalyticsDashboard: React.FC = () => {
                         <TrendingUp className="w-5 h-5 text-teal-400" /> Revenue & Projects Trend
                     </h3>
                     <div className="h-[300px] w-full min-h-[300px]">
-                        <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={300} debounce={50}>
+                        <WrapChart height={300}>
                             <AreaChart data={chartData}>
                                 <defs>
                                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -136,7 +137,7 @@ const AnalyticsDashboard: React.FC = () => {
                                 <Area yAxisId="left" type="monotone" dataKey="revenue" stroke="#2dd4bf" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" name="Revenue ($)" />
                                 <Area yAxisId="right" type="monotone" dataKey="projects" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorProjects)" name="Projects" />
                             </AreaChart>
-                        </ResponsiveContainer>
+                        </WrapChart>
                     </div>
                 </div>
 
@@ -145,7 +146,7 @@ const AnalyticsDashboard: React.FC = () => {
                         <Activity className="w-5 h-5 text-violet-500" /> Project Status Distribution
                     </h3>
                     <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={250}>
+                        <WrapChart height={300}>
                             <PieChart>
                                 <Pie
                                     data={pieData}
@@ -165,7 +166,7 @@ const AnalyticsDashboard: React.FC = () => {
                                     contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#fff' }}
                                 />
                             </PieChart>
-                        </ResponsiveContainer>
+                        </WrapChart>
                         <div className="flex flex-wrap justify-center gap-4 text-xs text-slate-400 mt-4">
                             {pieData.map((entry, index) => (
                                 <div key={entry.name} className="flex items-center gap-1">

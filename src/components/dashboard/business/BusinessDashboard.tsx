@@ -385,7 +385,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/facebook':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={3} />}>
-                        <FacebookIntegrationTab />
+                        <FacebookIntegrationTab user={user} tenant={currentTenant} />
                     </React.Suspense>
                 );
             case '/dashboard/business/expenses':
@@ -403,7 +403,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/sms':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
-                        <SMSCampaignTab />
+                        <SMSCampaignTab tenant={currentTenant} />
                     </React.Suspense>
                 );
             case '/dashboard/business/social':

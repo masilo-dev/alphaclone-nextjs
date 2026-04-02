@@ -512,23 +512,14 @@ Example: [{"id":"1","title":"Introduction","content":"• Key point one\\n• Ke
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    messages: [
-                        {
-                            role: 'system',
-                            content: `You are a professional document designer for AlphaClone. Create a high-quality, colorful, and professional HTML/CSS document based on the user's description. 
+                    message: aiPrompt,
+                    systemPrompt: `You are a professional document designer for AlphaClone. Create a high-quality, colorful, and professional HTML/CSS document based on the user's description. 
                             Use modern typography (Inter, system fonts), vibrant colors, and clear sections. 
                             Format your response as valid HTML content that can be placed inside a <div>.
                             IMPORTANT: Use inline styles for all elements to ensure they render correctly in PDF.
                             Include a sophisticated header, organized content, and a professional footer.
                             Use colors like Teal (#14b8a6), Slate (#0f172a), and Violet (#7c3aed) for a premium look.
                             Make sure the background is colorful and professional, not just white.`
-                        },
-                        {
-                            role: 'user',
-                            content: aiPrompt
-                        }
-                    ],
-                    type: 'document_design'
                 })
             });
 

@@ -82,7 +82,9 @@ export const quotaService = {
                 .eq('tenant_id', tenantId)
                 .eq('user_id', userId)
                 .eq('date', today)
-                .single();
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
 
             if (usageError && usageError.code !== 'PGRST116') { // PGRST116 = not found
                 console.error('Error checking quota usage:', usageError);
@@ -170,7 +172,9 @@ export const quotaService = {
                 .eq('tenant_id', tenantId)
                 .eq('user_id', userId)
                 .eq('date', today)
-                .single();
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
 
             if (fetchError && fetchError.code !== 'PGRST116') {
                 console.error('Error fetching existing usage:', fetchError);
@@ -241,7 +245,9 @@ export const quotaService = {
                 .eq('tenant_id', tenantId)
                 .eq('user_id', userId)
                 .eq('date', today)
-                .single();
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
 
             if (error && error.code !== 'PGRST116') {
                 console.error('Error getting quota usage:', error);

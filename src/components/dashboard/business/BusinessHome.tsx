@@ -36,6 +36,7 @@ import {
     Mail
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { WrapChart } from '../../../lib/chartWrapper';
 
 // ─── Greeting Helpers ────────────────────────────────────────────────
 function getGreeting(): { text: string; Icon: React.FC<any> } {
@@ -291,7 +292,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
                         Revenue Trend
                     </h3>
                     <div className="h-[250px] w-full min-h-[250px]">
-                        <ResponsiveContainer width="100%" height={250} minWidth={0} minHeight={250} debounce={50}>
+                        <WrapChart height={250}>
                             <LineChart data={revenueData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                                 <XAxis dataKey="month" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
@@ -302,7 +303,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
                                 />
                                 <Line type="monotone" dataKey="amount" stroke="#2dd4bf" strokeWidth={3} dot={{ fill: '#2dd4bf', strokeWidth: 2 }} activeDot={{ r: 6 }} />
                             </LineChart>
-                        </ResponsiveContainer>
+                        </WrapChart>
                     </div>
                 </div>
 
@@ -323,7 +324,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
 
                     <div className="h-[250px] w-full min-h-[250px]">
                         {pipelineData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={250} minWidth={0} minHeight={250} debounce={50}>
+                            <WrapChart height={250}>
                                 <BarChart data={pipelineData} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                                     <XAxis
@@ -361,7 +362,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
                                         ))}
                                     </defs>
                                 </BarChart>
-                            </ResponsiveContainer>
+                            </WrapChart>
                         ) : (
                             <div className="h-full flex flex-col items-center justify-center text-slate-500 gap-3 border border-dashed border-slate-800 rounded-xl">
                                 <Target className="w-10 h-10 opacity-20" />

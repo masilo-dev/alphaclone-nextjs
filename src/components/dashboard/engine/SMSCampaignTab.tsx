@@ -53,8 +53,11 @@ const EMPTY_FORM = {
     scheduled_at: '',
 };
 
-export default function SMSCampaignTab() {
-    const { currentTenant: tenant } = useTenant();
+interface SMSCampaignTabProps {
+    tenant: any;
+}
+
+export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
     const [campaigns, setCampaigns] = useState<SMSCampaign[]>([]);
     const [messages, setMessages] = useState<SMSMessage[]>([]);
     const [loading, setLoading] = useState(true);
@@ -84,7 +87,11 @@ export default function SMSCampaignTab() {
     const twilioConfigured = !!process.env.NEXT_PUBLIC_TWILIO_CONFIGURED;
 
     const loadData = useCallback(async () => {
-        if (!tenant?.id) return;
+        if (!tenant?.id) {
+            setLoading(false);
+            setFetchingTwilio(false);
+            return;
+        }
         setLoading(true);
         setFetchingTwilio(true);
         

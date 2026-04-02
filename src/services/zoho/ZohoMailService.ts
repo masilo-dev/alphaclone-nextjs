@@ -215,7 +215,7 @@ export class ZohoMailService extends ZohoService {
     async markAsRead(messageId: string, folderId: string, isRead = true) {
         const { base } = await this.getMailBase();
         return await this.callZohoAPI(
-            `${base}/updatemessage`,
+            `${base}/messages`,
             {
                 method: 'PUT',
                 body: JSON.stringify({ 
