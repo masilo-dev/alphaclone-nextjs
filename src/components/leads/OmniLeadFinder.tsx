@@ -236,6 +236,9 @@ export default function OmniLeadFinder() {
 
   const { currentTenant } = useTenant();
 
+  // Daily quota state
+  const [dailyQuota, setDailyQuota] = useState<{ limit: number; used: number; remaining: number } | null>(null);
+
   // Post-search filters
   const [filterText,   setFilterText  ] = useState('');
   const [filterRating, setFilterRating] = useState(0);
@@ -289,18 +292,32 @@ export default function OmniLeadFinder() {
       const res = await fetch('/api/scraper/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ niche, location, sortBy: sortMode, usePlaywright }),
+        body: JSON.stringify({
+          niche,
+          location,
+          sortBy: sortMode,
+          usePlaywright,
+          tenantId: currentTenant?.id || '',  // ← per-tenant quota tracking
+        }),
       });
 
-      setProgress({ percent: 65, message: 'Processing results…' });
+      // Handle rate limit (429)
+      if (res.status === 429) {
+        const errData = await res.json();
+        if (errData.quota) setDailyQuota(errData.quota);
+        throw new Error(errData.error || 'Daily lead limit reached. Try again tomorrow.');
+      }
+
+      setProgress({ percent: 65, message: 'Verifying contact info on results…' });
       const data = await res.json();
 
       if (!data.success || !data.results?.length) {
-        throw new Error(data.error || 'No results found. Try a different city or industry.');
+        throw new Error(data.error || 'No verified leads found. Try a different city or industry.');
       }
 
-      if (data.sources) setSourceStats(data.sources);
+      if (data.sources)  setSourceStats(data.sources);
       if (data.fallbackUsed) setFallbackUsed(true);
+      if (data.quota) setDailyQuota(data.quota);
 
       const leads: ScrapedLead[] = data.results.map((r: any) => ({
         ...r, status: 'pending' as const,
@@ -309,9 +326,11 @@ export default function OmniLeadFinder() {
       setResults(leads);
       setProgress({ percent: 100, message: 'Done' });
 
+      const rejMsg = data.rejectedCount > 0 ? ` (${data.rejectedCount} unverified discarded)` : '';
+
       // Auto-save to contacts if enabled
       if (autoSave && currentTenant) {
-        setProgress({ percent: 100, message: `Auto-saving ${leads.length} leads to contacts…` });
+        setProgress({ percent: 100, message: `Auto-saving ${leads.length} verified leads to contacts…` });
         let saved = 0;
         await Promise.allSettled(
           leads.map(async (lead, idx) => {
@@ -319,9 +338,9 @@ export default function OmniLeadFinder() {
             if (ok) saved++;
           })
         );
-        toast.success(`Found ${leads.length} leads · Auto-saved ${saved} to contacts`);
+        toast.success(`✅ ${leads.length} verified leads · Auto-saved ${saved}${rejMsg}`);
       } else {
-        toast.success(`Found ${leads.length} leads from ${Object.values(data.sources || {}).filter(Boolean).length} sources`);
+        toast.success(`✅ ${leads.length} verified leads found${rejMsg}`);
       }
     } catch (err: any) {
       toast.error(err.message || 'Search failed');
@@ -349,17 +368,41 @@ export default function OmniLeadFinder() {
               {fallbackUsed && <span className="ml-2 text-amber-400">↳ Fallbacks activated</span>}
             </p>
           </div>
-          {Object.keys(sourceStats).length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap">
-              {Object.entries(sourceStats).map(([src, count]) =>
-                count > 0 ? (
-                  <span key={src} className={`text-[9px] font-black px-2 py-1 rounded-full border ${SOURCE_COLORS[src] || 'text-slate-400 border-slate-700 bg-slate-800'}`}>
-                    {src.toUpperCase()}: {count}
-                  </span>
-                ) : null
-              )}
-            </div>
-          )}
+          <div className="flex flex-col items-end gap-2">
+            {/* Source stat badges */}
+            {Object.keys(sourceStats).length > 0 && (
+              <div className="flex items-center gap-2 flex-wrap">
+                {Object.entries(sourceStats).map(([src, count]) =>
+                  count > 0 ? (
+                    <span key={src} className={`text-[9px] font-black px-2 py-1 rounded-full border ${SOURCE_COLORS[src] || 'text-slate-400 border-slate-700 bg-slate-800'}`}>
+                      {src.toUpperCase()}: {count}
+                    </span>
+                  ) : null
+                )}
+              </div>
+            )}
+            {/* Per-tenant daily quota meter */}
+            {dailyQuota && (
+              <div className="flex items-center gap-2 text-[10px]">
+                <span className="text-slate-500">Daily quota:</span>
+                <div className="w-24 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      dailyQuota.remaining <= 20 ? 'bg-rose-500' :
+                      dailyQuota.remaining <= 100 ? 'bg-amber-500' : 'bg-teal-500'
+                    }`}
+                    style={{ width: `${((dailyQuota.limit - dailyQuota.remaining) / dailyQuota.limit) * 100}%` }}
+                  />
+                </div>
+                <span className={`font-bold ${
+                  dailyQuota.remaining <= 20 ? 'text-rose-400' :
+                  dailyQuota.remaining <= 100 ? 'text-amber-400' : 'text-teal-400'
+                }`}>
+                  {dailyQuota.remaining}/{dailyQuota.limit} left
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -1,31 +1,60 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
-// ─── Shared Types ─────────────────────────────────────────────────────────────
+// ─── Per-tenant in-process quota cache ────────────────────────────────────────
+// key = `${tenantId}:${YYYY-MM-DD}`, value = count of leads already returned today
+// This is a fast in-memory layer — Supabase is the durable store.
+const quotaCache = new Map<string, number>();
+
+const LEADS_PER_SEARCH  = 20;   // target per search
+const DAILY_LEAD_LIMIT  = 300;  // per-tenant / per-day ceiling (15 searches × 20)
+
+// ─── Supabase admin client for quota writes ────────────────────────────────────
+function getAdminSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const key  = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
+
+// ─── Shared Types ──────────────────────────────────────────────────────────────
 export interface LeadResult {
   business_name: string;
   website:       string;
   snippet:       string;
   phone?:        string;
-  email?:        string;      // single best email when available
+  email?:        string;
   address?:      string;
   rating?:       number;
   category?:     string;
   source:        'yelp' | 'here' | 'osm';
   lat?:          number;
   lng?:          number;
+  hasContact:    boolean;   // true = phone OR email present
 }
 
-// ─── Strategy 1 (Fallback): Yelp Fusion ──────────────────────────────────────
+// ─── Contact quality guard ─────────────────────────────────────────────────────
+// A lead is only viable if it has at least a phone number OR an email address.
+function hasContactInfo(r: Partial<LeadResult>): boolean {
+  const phone = (r.phone || '').trim();
+  const email = (r.email || '').trim();
+  return phone.length > 0 || email.length > 0;
+}
+
+function enrichWithContactFlag(leads: LeadResult[]): LeadResult[] {
+  return leads.map(l => ({ ...l, hasContact: hasContactInfo(l) }));
+}
+
+// ─── Strategy 1 (Fallback): Yelp Fusion ───────────────────────────────────────
 async function fetchYelp(niche: string, location: string, limit = 20, sortBy: string): Promise<LeadResult[]> {
   const apiKey = process.env.YELP_API_KEY;
   if (!apiKey || apiKey.startsWith('your_')) throw new Error('Yelp API key not configured');
 
-  const yelpSort = sortBy === 'rating_asc' ? 'rating' : 'rating'; // Yelp only supports 'rating' desc
   const params = new URLSearchParams({
     term: niche,
     location: location || 'United States',
     limit: String(Math.min(limit, 50)),
-    sort_by: yelpSort,
+    sort_by: 'rating',
   });
 
   const res = await fetch(`https://api.yelp.com/v3/businesses/search?${params}`, {
@@ -41,12 +70,14 @@ async function fetchYelp(niche: string, location: string, limit = 20, sortBy: st
     website:       b.url || '',
     snippet:       b.categories?.[0]?.title || 'Business',
     phone:         b.display_phone || b.phone || '',
+    email:         '',   // Yelp doesn't provide email
     address:       [b.location?.address1, b.location?.city, b.location?.state, b.location?.country].filter(Boolean).join(', '),
     rating:        b.rating,
     category:      b.categories?.[0]?.title || '',
     source:        'yelp',
     lat:           b.coordinates?.latitude,
     lng:           b.coordinates?.longitude,
+    hasContact:    false, // filled by enrichWithContactFlag
   }));
 }
 
@@ -78,20 +109,22 @@ async function fetchHERE(niche: string, location: string, limit = 20): Promise<L
       website:       item.contacts?.[0]?.www?.[0]?.value || '',
       snippet:       item.categories?.[0]?.name || 'Business',
       phone:         item.contacts?.[0]?.phone?.[0]?.value || '',
+      email:         item.contacts?.[0]?.email?.[0]?.value || '',
       address:       item.address?.label || '',
       rating:        undefined,
       category:      item.categories?.[0]?.name || '',
       source:        'here',
       lat:           item.position?.lat,
       lng:           item.position?.lng,
+      hasContact:    false,
     }));
 }
 
-// ─── Strategy 3 (PRIMARY): OpenStreetMap / Overpass ──────────────────────────
-// OSM is always free, always runs. Minimum 20 results. If city not found,
-// widens the search box. We also attempt Nominatim email lookup.
+// ─── Strategy 3 (PRIMARY): OpenStreetMap / Overpass ───────────────────────────
+// OSM is always free. Always runs first. Widens bbox until targetMin VERIFIED leads found.
+// "Verified" = has phone OR email in OSM tags.
 async function fetchOpenStreetMap(niche: string, location: string, targetMin = 20): Promise<LeadResult[]> {
-  // Step 1: Nominatim → lat/lon for the city
+  // Step 1: Nominatim → lat/lon
   const nomRes = await fetch(
     `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location || 'United States')}&format=json&limit=1`,
     {
@@ -105,46 +138,60 @@ async function fetchOpenStreetMap(niche: string, location: string, targetMin = 2
 
   const { lat, lon } = nomData[0];
 
-  // Try progressively larger bounding boxes to reach targetMin results
-  const deltas = [0.15, 0.3, 0.6, 1.2]; // ~16 / 33 / 66 / 133 km radius
-  let elements: any[] = [];
+  // Progressively widen bbox until we have targetMin VERIFIED (with contact info) leads
+  const deltas = [0.15, 0.3, 0.6, 1.2, 2.5]; // ~16/33/66/133/278 km radius
+  let verifiedElements: any[] = [];
 
   for (const delta of deltas) {
     const south = +lat - delta;
     const west  = +lon - delta;
     const north = +lat + delta;
     const east  = +lon + delta;
-    const limit = Math.max(targetMin, 60);
+    // Fetch more than targetMin since we'll filter out no-contact-info ones
+    const fetchLimit = Math.max(targetMin * 4, 80);
+    const nicheEscaped = niche.replace(/["\\]/g, '');
 
+    // Extended Overpass query: match by name OR by shop/amenity category
     const q = `
-[out:json][timeout:28];
+[out:json][timeout:30];
 (
-  node["name"~"${niche.replace(/["\\]/g, '')}",i]["phone"](${south},${west},${north},${east});
-  node["name"~"${niche.replace(/["\\]/g, '')}",i]["website"](${south},${west},${north},${east});
-  node["name"~"${niche.replace(/["\\]/g, '')}",i]["amenity"](${south},${west},${north},${east});
-  node["name"~"${niche.replace(/["\\]/g, '')}",i]["shop"](${south},${west},${north},${east});
-  way["name"~"${niche.replace(/["\\]/g, '')}",i]["phone"](${south},${west},${north},${east});
-  way["name"~"${niche.replace(/["\\]/g, '')}",i]["website"](${south},${west},${north},${east});
+  node["name"~"${nicheEscaped}",i]["phone"](${south},${west},${north},${east});
+  node["name"~"${nicheEscaped}",i]["contact:phone"](${south},${west},${north},${east});
+  node["name"~"${nicheEscaped}",i]["contact:email"](${south},${west},${north},${east});
+  node["name"~"${nicheEscaped}",i]["email"](${south},${west},${north},${east});
+  node["name"~"${nicheEscaped}",i]["website"](${south},${west},${north},${east});
+  node["amenity"~"${nicheEscaped}",i]["phone"](${south},${west},${north},${east});
+  node["shop"~"${nicheEscaped}",i]["phone"](${south},${west},${north},${east});
+  way["name"~"${nicheEscaped}",i]["phone"](${south},${west},${north},${east});
+  way["name"~"${nicheEscaped}",i]["contact:phone"](${south},${west},${north},${east});
+  way["name"~"${nicheEscaped}",i]["contact:email"](${south},${west},${north},${east});
+  way["name"~"${nicheEscaped}",i]["email"](${south},${west},${north},${east});
 );
-out body ${limit};
+out body ${fetchLimit};
     `.trim();
 
     try {
       const res = await fetch('https://overpass-api.de/api/interpreter', {
         method: 'POST', body: q,
         headers: { 'Content-Type': 'text/plain' },
-        signal: AbortSignal.timeout(28000),
+        signal: AbortSignal.timeout(30000),
       });
       if (!res.ok) throw new Error(`Overpass ${res.status}`);
       const data = await res.json();
-      elements = (data.elements || []).filter((el: any) => el.tags?.name);
-      if (elements.length >= targetMin) break; // got enough — stop widening
+      const all = (data.elements || []).filter((el: any) => el.tags?.name);
+      // Filter to only elements that have phone OR email in OSM tags
+      verifiedElements = all.filter((el: any) => {
+        const p = el.tags.phone || el.tags['contact:phone'] || el.tags['phone:mobile'] || '';
+        const e = el.tags.email || el.tags['contact:email'] || '';
+        return p.trim().length > 0 || e.trim().length > 0;
+      });
+      if (verifiedElements.length >= targetMin) break;
     } catch (err) {
       console.warn('[OSM] Overpass attempt failed, widening bbox:', err);
     }
   }
 
-  return elements.map((el: any): LeadResult => ({
+  return verifiedElements.map((el: any): LeadResult => ({
     business_name: el.tags.name,
     website:  el.tags.website || el.tags.url || el.tags['contact:website'] || '',
     snippet:  el.tags.amenity || el.tags.shop || el.tags.office || el.tags.craft || 'Local business',
@@ -159,74 +206,157 @@ out body ${limit};
     source:   'osm',
     lat:      el.lat  ?? el.center?.lat,
     lng:      el.lon  ?? el.center?.lon,
+    hasContact: true, // already filtered above
   }));
 }
 
-// ─── Sort helper ─────────────────────────────────────────────────────────────
+// ─── Sort helper ──────────────────────────────────────────────────────────────
 function sortResults(results: LeadResult[], sortBy: string): LeadResult[] {
   if (sortBy === 'rating_desc') {
     return [...results].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
   }
   if (sortBy === 'rating_asc') {
     return [...results].sort((a, b) => {
-      // Put unrated last in ascending sort
       if (a.rating === undefined && b.rating === undefined) return 0;
       if (a.rating === undefined) return 1;
       if (b.rating === undefined) return -1;
       return a.rating - b.rating;
     });
   }
-  return results; // 'default' — OSM first, then fallbacks
+  return results;
 }
 
-// ─── Main POST Handler ────────────────────────────────────────────────────────
+// ─── Per-tenant daily quota ───────────────────────────────────────────────────
+// Each tenant has 300 verified lead slots per UTC day.
+// The quota is PER TENANT — so 1000 tenants each get their own 300/day independently.
+async function checkAndDeductQuota(tenantId: string, wantCount: number): Promise<{
+  allowed: boolean;
+  remaining: number;
+  used: number;
+  error?: string;
+}> {
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD UTC
+  const cacheKey = `${tenantId}:${today}`;
+
+  // Fast path: check in-process cache first
+  const cached = quotaCache.get(cacheKey) ?? 0;
+  if (cached >= DAILY_LEAD_LIMIT) {
+    return { allowed: false, remaining: 0, used: cached };
+  }
+
+  // Durable path: check Supabase
+  const admin = getAdminSupabase();
+  if (admin) {
+    try {
+      const { data, error } = await admin
+        .from('lead_search_quota')
+        .select('leads_used')
+        .eq('tenant_id', tenantId)
+        .eq('date', today)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      const used = data?.leads_used ?? 0;
+      const remaining = DAILY_LEAD_LIMIT - used;
+
+      if (remaining <= 0) {
+        quotaCache.set(cacheKey, used);
+        return { allowed: false, remaining: 0, used };
+      }
+
+      // Deduct synchronously (upsert)
+      const deductCount = Math.min(wantCount, remaining);
+      await admin
+        .from('lead_search_quota')
+        .upsert(
+          { tenant_id: tenantId, date: today, leads_used: used + deductCount },
+          { onConflict: 'tenant_id,date' }
+        );
+
+      // Update cache
+      quotaCache.set(cacheKey, used + deductCount);
+
+      return { allowed: true, remaining: remaining - deductCount, used: used + deductCount };
+    } catch (err: any) {
+      // If quota table doesn't exist yet, fail open (don't block searches)
+      console.warn('[Quota] Supabase quota check failed — failing open:', err.message);
+    }
+  }
+
+  // Fail open: no quota table → allow all (multi-tenant safe, just logs a warning)
+  return { allowed: true, remaining: DAILY_LEAD_LIMIT - cached, used: cached };
+}
+
+// ─── Main POST Handler ─────────────────────────────────────────────────────────
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const niche    = body.niche    || body.query?.split(' in ')[0]?.trim() || '';
-    const location = body.location || body.query?.split(' in ')[1]?.trim() || '';
-    const sortBy   = body.sortBy   || 'default';  // 'default' | 'rating_asc' | 'rating_desc'
-    const targetMin = 20;
+    const niche     = body.niche    || body.query?.split(' in ')[0]?.trim() || '';
+    const location  = body.location || body.query?.split(' in ')[1]?.trim() || '';
+    const sortBy    = body.sortBy   || 'default';
+    const tenantId  = body.tenantId || body.tenant_id || '';
 
     if (!niche) {
       return NextResponse.json({ error: 'Industry/niche is required' }, { status: 400 });
     }
 
+    // ── Per-tenant daily quota check ─────────────────────────────────────────
+    let quotaInfo = { allowed: true, remaining: DAILY_LEAD_LIMIT, used: 0 };
+    if (tenantId) {
+      quotaInfo = await checkAndDeductQuota(tenantId, LEADS_PER_SEARCH);
+      if (!quotaInfo.allowed) {
+        return NextResponse.json({
+          success: false,
+          error: `Daily lead limit reached (${DAILY_LEAD_LIMIT} verified leads/day). Resets at midnight UTC.`,
+          quota: { limit: DAILY_LEAD_LIMIT, used: quotaInfo.used, remaining: 0 },
+        }, { status: 429 });
+      }
+    }
+
     const results: LeadResult[] = [];
     const sourceErrors: Record<string, string> = {};
-    const sourceCounts: Record<string, number> = { osm: 0, yelp: 0, here: 0 };
+    const sourceCounts: Record<string, number>  = { osm: 0, yelp: 0, here: 0 };
 
-    // ── Step 1: OSM runs FIRST (primary, always free) ──────────────────────
+    // ── Step 1: OSM runs FIRST (primary, always free) ─────────────────────────
     try {
-      const osmResults = await fetchOpenStreetMap(niche, location, targetMin);
-      results.push(...osmResults);
-      sourceCounts.osm = osmResults.length;
-      console.log(`[Scraper] OSM returned ${osmResults.length} results`);
+      const osmResults = await fetchOpenStreetMap(niche, location, LEADS_PER_SEARCH);
+      // Double-check: only keep leads with at least phone OR email
+      const verified = osmResults.filter(r => hasContactInfo(r));
+      results.push(...enrichWithContactFlag(verified));
+      sourceCounts.osm = verified.length;
+      console.log(`[Scraper] OSM returned ${osmResults.length} raw → ${verified.length} verified (with contact)`);
     } catch (err: any) {
       sourceErrors.osm = err.message;
       console.warn('[Scraper] OSM failed:', err.message);
     }
 
-    // ── Step 2: Only call Yelp + HERE if OSM < targetMin (fallbacks) ───────
-    const needMore = results.length < targetMin;
+    // ── Step 2: Fallbacks only if OSM < LEADS_PER_SEARCH verified leads ───────
+    const needMore = results.length < LEADS_PER_SEARCH;
     if (needMore) {
-      console.log(`[Scraper] OSM only got ${results.length} results, activating fallbacks…`);
+      console.log(`[Scraper] OSM only got ${results.length} verified leads — activating fallbacks…`);
       const [yelpRes, hereRes] = await Promise.allSettled([
-        fetchYelp(niche, location, targetMin - results.length + 5, sortBy),
-        fetchHERE(niche, location, targetMin - results.length + 5),
+        fetchYelp(niche, location, LEADS_PER_SEARCH - results.length + 5, sortBy),
+        fetchHERE(niche, location, LEADS_PER_SEARCH - results.length + 5),
       ]);
 
       if (yelpRes.status === 'fulfilled') {
-        results.push(...yelpRes.value);
-        sourceCounts.yelp = yelpRes.value.length;
+        const verified = yelpRes.value.filter(r => hasContactInfo(r));
+        results.push(...enrichWithContactFlag(verified));
+        sourceCounts.yelp = verified.length;
+        const rejected = yelpRes.value.length - verified.length;
+        if (rejected > 0) console.log(`[Scraper] Yelp: ${rejected} leads rejected (no contact info)`);
       } else {
         sourceErrors.yelp = (yelpRes.reason as Error).message;
         console.warn('[Scraper] Yelp fallback failed:', sourceErrors.yelp);
       }
 
       if (hereRes.status === 'fulfilled') {
-        results.push(...hereRes.value);
-        sourceCounts.here = hereRes.value.length;
+        const verified = hereRes.value.filter(r => hasContactInfo(r));
+        results.push(...enrichWithContactFlag(verified));
+        sourceCounts.here = verified.length;
+        const rejected = hereRes.value.length - verified.length;
+        if (rejected > 0) console.log(`[Scraper] HERE: ${rejected} leads rejected (no contact info)`);
       } else {
         sourceErrors.here = (hereRes.reason as Error).message;
         console.warn('[Scraper] HERE fallback failed:', sourceErrors.here);
@@ -236,7 +366,7 @@ export async function POST(request: Request) {
     if (results.length === 0) {
       return NextResponse.json({
         success: false, results: [], sourceErrors,
-        error: 'No results found. Try a different city or industry name.',
+        error: 'No verified leads found (all results lacked phone and email). Try a different city or industry.',
       });
     }
 
@@ -248,12 +378,21 @@ export async function POST(request: Request) {
     // Apply sort
     const sorted = sortResults(unique, sortBy);
 
+    // Slice to LEADS_PER_SEARCH
+    const final = sorted.slice(0, LEADS_PER_SEARCH);
+
     return NextResponse.json({
       success: true,
-      results: sorted,          // no hard 60 cap — return all up to what OSM found
+      results: final,
       sourceErrors,
       sources: sourceCounts,
       fallbackUsed: needMore,
+      quota: tenantId ? {
+        limit:     DAILY_LEAD_LIMIT,
+        used:      quotaInfo.used,
+        remaining: quotaInfo.remaining,
+      } : undefined,
+      rejectedCount: unique.length - final.length,
     });
 
   } catch (error: any) {
