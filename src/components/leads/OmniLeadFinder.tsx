@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
@@ -6,12 +6,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Database, Zap, Globe, Mail, Phone, Plus, RefreshCw,
   SlidersHorizontal, Star, MapPin, X, ChevronDown, LayoutGrid, Map,
-  Filter, Building2, ArrowUpDown, CheckCircle2, Save,
+  Filter, Building2, ArrowUpDown, CheckCircle2, Save, Sparkles,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Avatar } from '../ui/Avatar';
 import { useTenant } from '../../contexts/TenantContext';
 import { businessClientService } from '../../services/businessClientService';
+import { qualifyLead, QualificationResult } from '../../lib/leadQualification';
+import { OutreachPanel } from './OutreachPanel';
 
 // Leaflet: window-only
 const LeadMapView = dynamic(() => import('./LeadMapView'), {
@@ -19,13 +21,13 @@ const LeadMapView = dynamic(() => import('./LeadMapView'), {
   loading: () => (
     <div className="w-full flex items-center justify-center rounded-xl border border-slate-800 bg-slate-900/40" style={{ height: 480 }}>
       <div className="text-slate-500 text-sm flex items-center gap-2">
-        <RefreshCw className="w-4 h-4 animate-spin" /> Loading map…
+        <RefreshCw className="w-4 h-4 animate-spin" /> Loading mapâ€¦
       </div>
     </div>
   ),
 });
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface ScrapedLead {
   business_name: string;
   website:       string;
@@ -40,6 +42,7 @@ interface ScrapedLead {
   status:        'pending' | 'saved' | 'failed';
   lat?:          number;
   lng?:          number;
+  qualification?: QualificationResult;  // added by engine post-search
 }
 
 type SourceFilter = 'all' | 'yelp' | 'here' | 'osm';
@@ -51,57 +54,57 @@ const SOURCE_COLORS: Record<string, string> = {
   osm:  'text-emerald-400 border-emerald-500/30 bg-emerald-500/10',
 };
 
-// ─── Industry Groups ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Industry Groups â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const INDUSTRY_GROUPS: Record<string, string[]> = {
-  '🏠 Home Services': [
+  'ðŸ  Home Services': [
     'HVAC', 'Plumbing', 'Electrician', 'Roofing', 'Landscaping',
     'Cleaning Service', 'Pest Control', 'Pool Service', 'Painting',
     'Flooring', 'Window Cleaning', 'Garage Door Repair', 'Handyman',
     'Gutter Cleaning', 'Tree Service', 'Locksmith', 'Solar Installation',
   ],
-  '🏥 Healthcare': [
+  'ðŸ¥ Healthcare': [
     'Dentist', 'Chiropractor', 'Physical Therapist', 'Optometrist',
     'Dermatologist', 'Pediatrician', 'Veterinarian', 'Pharmacy',
     'Mental Health Counselor', 'Massage Therapist', 'Urgent Care',
     'Acupuncture', 'Hearing Clinic',
   ],
-  '🍽️ Food & Hospitality': [
+  'ðŸ½ï¸ Food & Hospitality': [
     'Restaurant', 'Cafe', 'Bakery', 'Bar', 'Catering',
     'Food Truck', 'Hotel', 'Bed and Breakfast', 'Night Club',
     'Pizza Shop', 'Sushi', 'Steakhouse',
   ],
-  '⚖️ Professional Services': [
+  'âš–ï¸ Professional Services': [
     'Law Firm', 'Accountant', 'Financial Advisor', 'Insurance Agent',
     'Real Estate Agent', 'Mortgage Broker', 'Business Consultant',
     'Marketing Agency', 'Advertising Agency', 'PR Firm',
     'Notary', 'Tax Consultant',
   ],
-  '🔧 Auto & Transport': [
+  'ðŸ”§ Auto & Transport': [
     'Auto Repair', 'Car Dealership', 'Towing Service', 'Car Wash',
     'Auto Body Shop', 'Tire Shop', 'Moving Company', 'Trucking',
     'Limousine Service', 'Auto Glass',
   ],
-  '💻 Tech & Digital': [
+  'ðŸ’» Tech & Digital': [
     'IT Services', 'Web Design', 'Software Development',
     'Cyber Security', 'Data Recovery', 'Phone Repair',
     'IT Support', 'AI Consulting',
   ],
-  '🏋️ Fitness & Wellness': [
+  'ðŸ‹ï¸ Fitness & Wellness': [
     'Gym', 'Yoga Studio', 'Pilates', 'Personal Trainer',
     'Spa', 'Nail Salon', 'Hair Salon', 'Barber Shop',
     'Tanning Salon', 'Tattoo Studio',
   ],
-  '🏗️ Construction': [
+  'ðŸ—ï¸ Construction': [
     'General Contractor', 'Cabinet Maker', 'Concrete', 'Demolition',
     'Fencing', 'Masonry', 'Insulation', 'Drywall',
     'Excavation', 'Paving',
   ],
-  '📦 Retail & Commerce': [
+  'ðŸ“¦ Retail & Commerce': [
     'Grocery Store', 'Clothing Store', 'Furniture Store',
     'Pet Store', 'Bookstore', 'Gift Shop', 'Hardware Store',
     'Jewellery Store', 'Electronics Store',
   ],
-  '🎓 Education': [
+  'ðŸŽ“ Education': [
     'Tutoring', 'Driving School', 'Music School',
     'Childcare', 'Preschool', 'Language School',
     'Art Classes', 'Dance Studio',
@@ -110,7 +113,7 @@ const INDUSTRY_GROUPS: Record<string, string[]> = {
 
 const ALL_INDUSTRIES = Object.values(INDUSTRY_GROUPS).flat();
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function StarRating({ rating }: { rating?: number }) {
   if (!rating) return null;
   const full  = Math.floor(rating);
@@ -131,7 +134,7 @@ function getHostname(url: string) {
   catch { return url; }
 }
 
-// ─── Industry Combobox (self-contained, no overflow-hidden parent clip) ───────
+// â”€â”€â”€ Industry Combobox (self-contained, no overflow-hidden parent clip) â”€â”€â”€â”€â”€â”€â”€
 function IndustrySelect({ value, onChange, disabled }: { value: string; onChange: (v: string) => void; disabled: boolean }) {
   const [search, setSearch] = useState('');
   const [open, setOpen]     = useState(false);
@@ -154,7 +157,7 @@ function IndustrySelect({ value, onChange, disabled }: { value: string; onChange
       >
         <Building2 className="w-4 h-4 text-teal-400 flex-shrink-0" />
         <span className={`flex-1 text-left truncate ${value ? 'text-white' : 'text-slate-500'}`}>
-          {value || 'Select industry…'}
+          {value || 'Select industryâ€¦'}
         </span>
         {value && (
           <X className="w-3.5 h-3.5 text-slate-500 hover:text-rose-400 flex-shrink-0"
@@ -175,12 +178,12 @@ function IndustrySelect({ value, onChange, disabled }: { value: string; onChange
             <div className="p-2 border-b border-slate-800 bg-slate-950">
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
-                <input autoFocus type="text" placeholder="Search industries…"
+                <input autoFocus type="text" placeholder="Search industriesâ€¦"
                   value={search} onChange={e => setSearch(e.target.value)}
                   className="w-full pl-8 pr-3 py-1.5 text-sm bg-slate-900 border border-slate-700 rounded-lg text-white outline-none focus:border-teal-500"
                 />
               </div>
-              <p className="text-[9px] text-slate-600 mt-1 px-0.5">{ALL_INDUSTRIES.length} industries · {Object.keys(INDUSTRY_GROUPS).length} categories</p>
+              <p className="text-[9px] text-slate-600 mt-1 px-0.5">{ALL_INDUSTRIES.length} industries Â· {Object.keys(INDUSTRY_GROUPS).length} categories</p>
             </div>
 
             {/* List */}
@@ -216,7 +219,7 @@ function IndustrySelect({ value, onChange, disabled }: { value: string; onChange
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function OmniLeadFinder() {
   // Search config
   const [niche,         setNiche         ] = useState('');
@@ -234,6 +237,10 @@ export default function OmniLeadFinder() {
   const [viewMode,    setViewMode   ] = useState<'grid' | 'map'>('grid');
   const [savedIds,    setSavedIds   ] = useState<Set<number>>(new Set());
 
+  // Selection + outreach panel
+  const [selectedSet,    setSelectedSet   ] = useState<Set<number>>(new Set());
+  const [showOutreach,   setShowOutreach  ] = useState(false);
+
   const { currentTenant } = useTenant();
 
   // Daily quota state
@@ -245,9 +252,10 @@ export default function OmniLeadFinder() {
   const [filterSource, setFilterSource] = useState<SourceFilter>('all');
   const [filterPhone,  setFilterPhone ] = useState(false);
   const [filterEmail,  setFilterEmail ] = useState(false);
+  const [filterTier,   setFilterTier  ] = useState<'all' | 'hot' | 'warm' | 'cold' | 'skip'>('all');
 
-  const activeFilterCount = [filterText.length > 0, filterRating > 0, filterSource !== 'all', filterPhone, filterEmail].filter(Boolean).length;
-  const clearFilters = () => { setFilterText(''); setFilterRating(0); setFilterSource('all'); setFilterPhone(false); setFilterEmail(false); };
+  const activeFilterCount = [filterText.length > 0, filterRating > 0, filterSource !== 'all', filterPhone, filterEmail, filterTier !== 'all'].filter(Boolean).length;
+  const clearFilters = () => { setFilterText(''); setFilterRating(0); setFilterSource('all'); setFilterPhone(false); setFilterEmail(false); setFilterTier('all'); };
 
   const filteredResults = useMemo(() => {
     const q = filterText.toLowerCase();
@@ -257,11 +265,23 @@ export default function OmniLeadFinder() {
       if (filterSource !== 'all' && lead.source !== filterSource) return false;
       if (filterPhone && !lead.phone) return false;
       if (filterEmail && !lead.email) return false;
+      if (filterTier !== 'all' && lead.qualification?.tier !== filterTier) return false;
       return true;
     });
-  }, [results, filterText, filterRating, filterSource, filterPhone, filterEmail]);
+  }, [results, filterText, filterRating, filterSource, filterPhone, filterEmail, filterTier]);
 
-  // ── Save single lead to CRM ───────────────────────────────────────────────
+  // Helper: qualify all leads after search
+  function enrichWithQualification(leads: ScrapedLead[], industry: string): ScrapedLead[] {
+    return leads.map(l => ({ ...l, qualification: qualifyLead(l, industry) }));
+  }
+
+  // Selected leads for outreach
+  const selectedLeads = useMemo(() => filteredResults.filter((_, i) => selectedSet.has(i)), [filteredResults, selectedSet]);
+  const toggleSelect  = (idx: number) => setSelectedSet(prev => { const n = new Set(prev); if (n.has(idx)) n.delete(idx); else n.add(idx); return n; });
+  const selectAll     = () => setSelectedSet(new Set(filteredResults.map((_, i) => i)));
+  const clearSelected = () => setSelectedSet(new Set());
+
+  // â”€â”€ Save single lead to CRM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const saveLeadToCRM = async (lead: ScrapedLead, idx: number): Promise<boolean> => {
     if (!currentTenant) return false;
     try {
@@ -272,7 +292,7 @@ export default function OmniLeadFinder() {
         website: lead.website,
         salesStage: 'lead',
         industry: niche,
-        description: `Lead via ${lead.source?.toUpperCase()} · ${lead.category || lead.snippet || ''}`,
+        description: `Lead via ${lead.source?.toUpperCase()} Â· ${lead.category || lead.snippet || ''}`,
       });
       if (error) throw new Error(error);
       setSavedIds(prev => new Set([...prev, idx]));
@@ -280,13 +300,13 @@ export default function OmniLeadFinder() {
     } catch { return false; }
   };
 
-  // ── Search ────────────────────────────────────────────────────────────────
+  // â”€â”€ Search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!niche) return toast.error('Please select an industry');
 
     setScanning(true); setResults([]); setSourceStats({}); setSavedIds(new Set()); setFallbackUsed(false); clearFilters();
-    setProgress({ percent: 10, message: 'Querying OpenStreetMap (primary)…' });
+    setProgress({ percent: 10, message: 'Querying OpenStreetMap (primary)â€¦' });
 
     try {
       const res = await fetch('/api/scraper/search', {
@@ -297,7 +317,7 @@ export default function OmniLeadFinder() {
           location,
           sortBy: sortMode,
           usePlaywright,
-          tenantId: currentTenant?.id || '',  // ← per-tenant quota tracking
+          tenantId: currentTenant?.id || '',  // â† per-tenant quota tracking
         }),
       });
 
@@ -308,7 +328,7 @@ export default function OmniLeadFinder() {
         throw new Error(errData.error || 'Daily lead limit reached. Try again tomorrow.');
       }
 
-      setProgress({ percent: 65, message: 'Verifying contact info on results…' });
+      setProgress({ percent: 65, message: 'Verifying contact info on resultsâ€¦' });
       const data = await res.json();
 
       if (!data.success || !data.results?.length) {
@@ -319,18 +339,24 @@ export default function OmniLeadFinder() {
       if (data.fallbackUsed) setFallbackUsed(true);
       if (data.quota) setDailyQuota(data.quota);
 
-      const leads: ScrapedLead[] = data.results.map((r: any) => ({
+      const rawLeads: ScrapedLead[] = data.results.map((r: any) => ({
         ...r, status: 'pending' as const,
       }));
 
+      // â”€â”€ Run industry-aware qualification on every lead â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      const leads = enrichWithQualification(rawLeads, niche);
+
       setResults(leads);
+      setSelectedSet(new Set());
       setProgress({ percent: 100, message: 'Done' });
 
+      const hotCount  = leads.filter(l => l.qualification?.tier === 'hot').length;
+      const warmCount = leads.filter(l => l.qualification?.tier === 'warm').length;
       const rejMsg = data.rejectedCount > 0 ? ` (${data.rejectedCount} unverified discarded)` : '';
 
       // Auto-save to contacts if enabled
       if (autoSave && currentTenant) {
-        setProgress({ percent: 100, message: `Auto-saving ${leads.length} verified leads to contacts…` });
+        setProgress({ percent: 100, message: `Auto-saving ${leads.length} verified leads to contactsâ€¦` });
         let saved = 0;
         await Promise.allSettled(
           leads.map(async (lead, idx) => {
@@ -338,9 +364,9 @@ export default function OmniLeadFinder() {
             if (ok) saved++;
           })
         );
-        toast.success(`✅ ${leads.length} verified leads · Auto-saved ${saved}${rejMsg}`);
+        toast.success(`âœ… ${leads.length} verified leads Â· Auto-saved ${saved}${rejMsg}`);
       } else {
-        toast.success(`✅ ${leads.length} verified leads found${rejMsg}`);
+        toast.success(`âœ… ${leads.length} leads Â· ðŸ”¥ ${hotCount} Hot Â· ðŸŒ¡ ${warmCount} Warm${rejMsg}`);
       }
     } catch (err: any) {
       toast.error(err.message || 'Search failed');
@@ -349,11 +375,22 @@ export default function OmniLeadFinder() {
     }
   };
 
-  // ─── Render ───────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   return (
     <div className="w-full space-y-5">
 
-      {/* ══ HEADER ══════════════════════════════════════════════════════════ */}
+      {/* â•â• OUTREACH PANEL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      <AnimatePresence>
+        {showOutreach && selectedLeads.length > 0 && (
+          <OutreachPanel
+            leads={selectedLeads.map(l => ({ ...l, qualification: l.qualification! }))}
+            industry={niche}
+            onClose={() => setShowOutreach(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* â•â• HEADER â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <div className="p-4 bg-gradient-to-r from-teal-900/40 via-slate-900/50 to-slate-900 rounded-xl border border-teal-500/20 shadow-xl backdrop-blur-xl">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
@@ -364,8 +401,8 @@ export default function OmniLeadFinder() {
               AlphaClone Business Lead
             </h1>
             <p className="text-slate-500 text-xs mt-0.5">
-              Primary: <span className="text-emerald-400 font-semibold">OpenStreetMap</span> · Fallbacks: Yelp · HERE Maps
-              {fallbackUsed && <span className="ml-2 text-amber-400">↳ Fallbacks activated</span>}
+              Primary: <span className="text-emerald-400 font-semibold">OpenStreetMap</span> Â· Fallbacks: Yelp Â· HERE Maps
+              {fallbackUsed && <span className="ml-2 text-amber-400">â†³ Fallbacks activated</span>}
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
@@ -406,7 +443,7 @@ export default function OmniLeadFinder() {
         </div>
       </div>
 
-      {/* ══ SEARCH FORM ═════════════════════════════════════════════════════ */}
+      {/* â•â• SEARCH FORM â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <form onSubmit={handleSearch} className="space-y-4">
 
         {/* Row 1: Industry + City */}
@@ -423,7 +460,7 @@ export default function OmniLeadFinder() {
             </label>
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <input type="text" placeholder="e.g. Miami, London, Johannesburg…"
+              <input type="text" placeholder="e.g. Miami, London, Johannesburgâ€¦"
                 value={location} onChange={e => setLocation(e.target.value)} disabled={scanning}
                 className="w-full pl-9 pr-3 py-2.5 text-sm bg-slate-900/80 border border-slate-700 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none text-white transition-all hover:border-slate-600 disabled:opacity-50"
               />
@@ -439,7 +476,7 @@ export default function OmniLeadFinder() {
             <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Sort</span>
             <div className="flex rounded-lg overflow-hidden border border-slate-700 text-[11px] font-semibold">
-              {([['default', 'Default'], ['rating_desc', '★ High→Low'], ['rating_asc', '★ Low→High']] as [SortMode, string][]).map(([mode, label]) => (
+              {([['default', 'Default'], ['rating_desc', 'â˜… Highâ†’Low'], ['rating_asc', 'â˜… Lowâ†’High']] as [SortMode, string][]).map(([mode, label]) => (
                 <button key={mode} type="button" onClick={() => setSortMode(mode)}
                   className={`px-2.5 py-1 transition-all ${sortMode === mode ? 'bg-teal-500 text-white' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800'}`}>
                   {label}
@@ -474,11 +511,11 @@ export default function OmniLeadFinder() {
         <button type="submit" disabled={scanning || !niche}
           className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-semibold text-sm rounded-xl transition-all shadow-lg shadow-teal-500/20 disabled:opacity-40 disabled:cursor-not-allowed">
           {scanning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
-          {scanning ? 'Scanning directories…' : 'Deploy Universal Search Engine'}
+          {scanning ? 'Scanning directoriesâ€¦' : 'Deploy Universal Search Engine'}
         </button>
       </form>
 
-      {/* ══ PROGRESS ════════════════════════════════════════════════════════ */}
+      {/* â•â• PROGRESS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <AnimatePresence>
         {scanning && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
@@ -495,7 +532,7 @@ export default function OmniLeadFinder() {
         )}
       </AnimatePresence>
 
-      {/* ══ POST-SEARCH FILTER PANEL ════════════════════════════════════════ */}
+      {/* â•â• POST-SEARCH FILTER PANEL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {results.length > 0 && (
         <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-800 space-y-3">
           {/* Header */}
@@ -517,16 +554,31 @@ export default function OmniLeadFinder() {
           </div>
 
           {/* Controls */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             {/* Text */}
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Search results</label>
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
-                <input type="text" placeholder="Name, address, category…"
+                <input type="text" placeholder="Name, address, categoryâ€¦"
                   value={filterText} onChange={e => setFilterText(e.target.value)}
                   className="w-full pl-8 pr-3 py-1.5 bg-slate-950/60 border border-slate-800 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-teal-500/30 focus:border-teal-500 outline-none"
                 />
+              </div>
+            </div>
+
+            {/* Qualification Tier */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Qualification</label>
+              <div className="flex flex-wrap gap-1">
+                {(['all','hot','warm','cold','skip'] as const).map(tier => (
+                  <button key={tier} onClick={() => setFilterTier(tier)}
+                    className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition-all border ${
+                      filterTier === tier ? 'bg-teal-500/20 border-teal-500/40 text-teal-300' : 'border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-300'
+                    }`}>
+                    {tier === 'all' ? 'All' : tier === 'hot' ? 'ðŸ”¥ Hot' : tier === 'warm' ? 'ðŸŒ¡ Warm' : tier === 'cold' ? 'ðŸ§Š Cold' : 'âœ— Skip'}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -537,7 +589,7 @@ export default function OmniLeadFinder() {
                 {(['all', 'osm', 'yelp', 'here'] as SourceFilter[]).map(src => (
                   <button key={src} onClick={() => setFilterSource(src)}
                     className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition-all border ${filterSource === src ? 'bg-teal-500/20 border-teal-500/40 text-teal-300' : 'border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-300'}`}>
-                    {src === 'all' ? 'All' : src === 'osm' ? '🟢 OSM' : src === 'yelp' ? '🟠 Yelp' : '🔵 HERE'}
+                    {src === 'all' ? 'All' : src === 'osm' ? 'ðŸŸ¢ OSM' : src === 'yelp' ? 'ðŸŸ  Yelp' : 'ðŸ”µ HERE'}
                   </button>
                 ))}
               </div>
@@ -550,7 +602,7 @@ export default function OmniLeadFinder() {
                 {[0,1,2,3,4,5].map(r => (
                   <button key={r} onClick={() => setFilterRating(r === filterRating ? 0 : r)}
                     className={`px-1.5 py-1 rounded text-[10px] font-bold transition-all border ${filterRating === r ? 'bg-amber-500/20 border-amber-500/40 text-amber-300' : 'border-slate-800 text-slate-500 hover:border-slate-600'}`}>
-                    {r === 0 ? 'Any' : `${r}★`}
+                    {r === 0 ? 'Any' : `${r}â˜…`}
                   </button>
                 ))}
               </div>
@@ -572,8 +624,24 @@ export default function OmniLeadFinder() {
             </div>
           </div>
 
-          {/* View toggle */}
-          <div className="flex justify-end pt-1 border-t border-slate-800/50">
+
+          {/* Bottom: selection toolbar + view toggle */}
+          <div className="flex justify-between items-center pt-1 border-t border-slate-800/50 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <button onClick={selectAll} className="text-[10px] text-teal-400 hover:text-teal-300 font-bold">Select all</button>
+              {selectedSet.size > 0 && (
+                <>
+                  <span className="text-slate-600">|</span>
+                  <button onClick={clearSelected} className="text-[10px] text-slate-500 hover:text-slate-300">Clear ({selectedSet.size})</button>
+                  <button
+                    onClick={() => setShowOutreach(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white text-[11px] font-bold rounded-lg transition-all"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" /> Automate {selectedSet.size} selected
+                  </button>
+                </>
+              )}
+            </div>
             <div className="flex gap-1 bg-slate-950/70 rounded-lg p-0.5 border border-slate-800">
               {(['grid', 'map'] as const).map(mode => (
                 <button key={mode} onClick={() => setViewMode(mode)}
@@ -586,7 +654,7 @@ export default function OmniLeadFinder() {
         </div>
       )}
 
-      {/* ══ MAP VIEW ════════════════════════════════════════════════════════ */}
+      {/* == MAP VIEW == */}
       {viewMode === 'map' && filteredResults.length > 0 && (
         <div className="space-y-1.5">
           <LeadMapView leads={filteredResults} />
@@ -598,58 +666,80 @@ export default function OmniLeadFinder() {
         </div>
       )}
 
-      {/* ══ GRID VIEW ═══════════════════════════════════════════════════════ */}
+      {/* == GRID VIEW == */}
       {viewMode === 'grid' && filteredResults.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {filteredResults.map((lead, idx) => {
-            const domain  = getHostname(lead.website);
-            const email   = lead.email || lead.emails?.[0] || '';
-            const isSaved = savedIds.has(idx);
+            const domain     = getHostname(lead.website);
+            const email      = lead.email || lead.emails?.[0] || '';
+            const isSaved    = savedIds.has(idx);
+            const isSelected = selectedSet.has(idx);
+            const qual       = lead.qualification;
             return (
               <motion.div key={idx} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.018 }}
-                className="group bg-slate-900/60 border border-slate-800 rounded-xl p-3.5 hover:border-teal-500/40 hover:bg-slate-800/70 transition-all duration-200 flex flex-col shadow">
-
-                {/* Header */}
+                className={`group bg-slate-900/60 border rounded-xl p-3.5 hover:bg-slate-800/70 transition-all duration-200 flex flex-col shadow cursor-pointer ${
+                  isSelected ? 'border-teal-500/60 ring-1 ring-teal-500/20 bg-slate-800/60' : 'border-slate-800 hover:border-teal-500/40'
+                }`}
+                onClick={() => toggleSelect(idx)}
+              >
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-start gap-2 flex-1 min-w-0">
+                    <div className={`w-4 h-4 rounded border flex-shrink-0 mt-0.5 flex items-center justify-center transition-all ${
+                      isSelected ? 'bg-teal-500 border-teal-500' : 'border-slate-600 group-hover:border-teal-500/50'
+                    }`}>
+                      {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
+                    </div>
                     <div className="border border-slate-700 group-hover:border-teal-500/50 rounded-lg p-0.5 bg-slate-800 flex-shrink-0 transition-colors">
-                      <Avatar name={lead.business_name} size={28} shape="rounded" className="rounded-md" />
+                      <Avatar name={lead.business_name} size={26} shape="rounded" className="rounded-md" />
                     </div>
                     <div className="min-w-0">
                       <h3 className="text-white font-semibold text-sm leading-tight truncate group-hover:text-teal-300 transition-colors">{lead.business_name}</h3>
                       {domain && (
-                        <a href={lead.website} target="_blank" rel="noreferrer"
+                        <a href={lead.website} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
                            className="text-slate-500 text-[10px] hover:text-teal-400 flex items-center gap-1 mt-0.5 transition-colors truncate">
                           <Globe className="w-2.5 h-2.5 flex-shrink-0" /> {domain}
                         </a>
                       )}
                     </div>
                   </div>
-                  {lead.source && (
-                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border flex-shrink-0 uppercase ml-1 ${SOURCE_COLORS[lead.source] || ''}`}>
-                      {lead.source}
-                    </span>
-                  )}
+                  <div className="flex flex-col items-end gap-1 ml-1 flex-shrink-0">
+                    {lead.source && (
+                      <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border uppercase ${SOURCE_COLORS[lead.source] || ''}`}>
+                        {lead.source}
+                      </span>
+                    )}
+                    {qual && (
+                      <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border ${qual.bgColor} ${qual.borderColor} ${qual.color}`}>
+                        {qual.label} · {qual.score}
+                      </span>
+                    )}
+                  </div>
                 </div>
+
+                {qual && qual.insights.length > 0 && (
+                  <div className="mb-2 space-y-0.5">
+                    {qual.insights.slice(0, 2).map((insight, i) => (
+                      <p key={i} className="text-[9px] text-slate-500 flex items-center gap-1">
+                        <span className="w-1 h-1 rounded-full bg-slate-600 flex-shrink-0" /> {insight}
+                      </p>
+                    ))}
+                  </div>
+                )}
 
                 {lead.rating && <div className="mb-1.5"><StarRating rating={lead.rating} /></div>}
                 {lead.category && <p className="text-[10px] text-slate-500 truncate mb-1.5">{lead.category}</p>}
 
-                {/* Contact info */}
                 <div className="flex-grow space-y-1.5 py-2 border-t border-slate-800/50">
-                  {/* Email */}
                   <div className="flex items-center gap-1.5">
                     <Mail className="w-3 h-3 text-slate-500 flex-shrink-0" />
                     {email
                       ? <span className="text-[10px] font-medium text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20 truncate">{email}</span>
-                      : <span className="text-[10px] text-slate-600 italic">No email</span>}
+                      : <span className="text-[10px] text-slate-600 italic">No email — phone outreach</span>}
                   </div>
-                  {/* Phone */}
                   <div className="flex items-center gap-1.5">
                     <Phone className="w-3 h-3 text-slate-500 flex-shrink-0" />
                     <span className="text-[10px] text-slate-300 truncate">{lead.phone || <span className="text-slate-600 italic">No phone</span>}</span>
                   </div>
-                  {/* Address */}
                   {lead.address && (
                     <div className="flex items-start gap-1.5">
                       <MapPin className="w-3 h-3 text-slate-500 flex-shrink-0 mt-0.5" />
@@ -658,22 +748,31 @@ export default function OmniLeadFinder() {
                   )}
                 </div>
 
-                {/* CRM button */}
-                <button onClick={() => saveLeadToCRM(lead, idx)} disabled={isSaved}
-                  className={`w-full mt-2.5 flex items-center justify-center gap-1.5 py-1.5 text-[11px] font-medium rounded-lg border transition-all ${
-                    isSaved
-                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 cursor-default'
-                      : 'hover:bg-teal-600/20 text-teal-400 hover:text-teal-300 border border-teal-500/20 hover:border-teal-500/40'
-                  }`}>
-                  {isSaved ? <><CheckCircle2 className="w-3.5 h-3.5" /> Saved to CRM</> : <><Plus className="w-3.5 h-3.5" /> Sync to CRM</>}
-                </button>
+                <div className="flex gap-1.5 mt-2.5" onClick={e => e.stopPropagation()}>
+                  <button onClick={() => saveLeadToCRM(lead, idx)} disabled={isSaved}
+                    className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium rounded-lg border transition-all ${
+                      isSaved
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 cursor-default'
+                        : 'hover:bg-teal-600/20 text-teal-400 hover:text-teal-300 border-teal-500/20 hover:border-teal-500/40'
+                    }`}>
+                    {isSaved ? <><CheckCircle2 className="w-3 h-3" /> Saved</> : <><Plus className="w-3 h-3" /> CRM</>}
+                  </button>
+                  {email && (
+                    <button
+                      onClick={() => { setSelectedSet(new Set([idx])); setShowOutreach(true); }}
+                      title="Quick AI outreach"
+                      className="flex items-center gap-1 px-2 py-1.5 text-[10px] font-bold rounded-lg border border-teal-500/20 text-teal-400 hover:border-teal-500/50 hover:bg-teal-500/10 transition-all"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </motion.div>
             );
           })}
         </div>
       )}
 
-      {/* ══ EMPTY ═══════════════════════════════════════════════════════════ */}
       {!scanning && results.length > 0 && filteredResults.length === 0 && (
         <div className="text-center py-10 text-slate-500">
           <SlidersHorizontal className="w-8 h-8 mx-auto mb-2 opacity-30" />

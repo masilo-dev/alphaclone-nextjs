@@ -440,11 +440,10 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${stageColor} flex items-center justify-center font-bold text-white text-sm shadow-lg`}>
                                         {initials}
                                     </div>
-                                    {/* Name + company */}
+                                    {/* Name + Industry */}
                                     <div className="w-full">
                                         <p className="font-semibold text-white text-xs truncate leading-snug">{client.name}</p>
-                                        {client.company && <p className="text-[10px] text-slate-500 truncate">{client.company}</p>}
-                                        {!client.company && client.industry && <p className="text-[10px] text-slate-500 truncate">{client.industry}</p>}
+                                        {client.industry && <p className="text-[10px] text-slate-500 truncate">{client.industry}</p>}
                                     </div>
                                     {/* Stage badge */}
                                     <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
