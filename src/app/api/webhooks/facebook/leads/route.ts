@@ -12,10 +12,18 @@ export async function GET(req: NextRequest) {
     const token = searchParams.get('hub.verify_token');
     const challenge = searchParams.get('hub.challenge');
 
+    console.log(`[Facebook Leads Webhook] Incoming verification request: mode=${mode}, token=${token}`);
+
     if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-        return new NextResponse(challenge, { status: 200 });
+        console.log('[Facebook Leads Webhook] Verification successful!');
+        return new Response(challenge, {
+            status: 200,
+            headers: { 'Content-Type': 'text/plain' },
+        });
     }
-    return new NextResponse('Forbidden', { status: 403 });
+    
+    console.warn(`[Facebook Leads Webhook] Verification failed. Expected token: ${VERIFY_TOKEN}, Received: ${token}`);
+    return new Response('Forbidden', { status: 403 });
 }
 
 // Facebook webhook events (POST)
