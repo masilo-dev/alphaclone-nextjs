@@ -11,19 +11,20 @@ export async function POST(req: NextRequest) {
 
     const { data: integration } = await supabase
         .from('facebook_integrations')
-        .select('page_access_token, page_name')
+        .select('page_access_token, user_access_token, page_name')
         .eq('user_id', user.id)
         .eq('page_id', pageId)
         .eq('is_active', true)
         .single();
 
-    if (!integration?.page_access_token) {
-        return NextResponse.json({ error: 'Facebook page not connected' }, { status: 400 });
+    const token = integration?.page_access_token || integration?.user_access_token;
+    if (!token) {
+        return NextResponse.json({ error: 'Facebook page not connected — please reconnect your page to grant posting permissions' }, { status: 400 });
     }
 
     const body: Record<string, string> = {
         message,
-        access_token: integration.page_access_token,
+        access_token: token,
     };
     if (link) body.link = link;
 

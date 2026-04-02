@@ -17,14 +17,15 @@ export async function GET(req: NextRequest) {
   // Get integration token
   const { data: integration } = await supabase
     .from('facebook_integrations')
-    .select('page_access_token, tenant_id')
+    .select('page_access_token, user_access_token, tenant_id')
     .eq('user_id', user.id)
     .eq('page_id', pageId)
     .eq('is_active', true)
     .single();
 
-  if (!integration?.page_access_token) {
-    return NextResponse.json({ error: 'Facebook page not connected' }, { status: 400 });
+  const token = integration?.page_access_token || integration?.user_access_token;
+  if (!token) {
+    return NextResponse.json({ error: 'Facebook page not connected or token missing — please reconnect your page' }, { status: 400 });
   }
 
   try {
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
       'shares',
     ].join(',');
 
-    const graphUrl = `https://graph.facebook.com/v19.0/${pageId}/feed?fields=${fields}&limit=${limit}&access_token=${integration.page_access_token}`;
+    const graphUrl = `https://graph.facebook.com/v19.0/${pageId}/feed?fields=${fields}&limit=${limit}&access_token=${token}`;
     const res = await fetch(graphUrl, { next: { revalidate: 0 } });
     const fbData = await res.json();
 
