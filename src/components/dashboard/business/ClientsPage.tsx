@@ -22,7 +22,9 @@ import {
     History,
     MessageSquare,
     Receipt,
-    ChevronLeft
+    ChevronLeft,
+    FileSpreadsheet,
+    Grid3X3,
 } from 'lucide-react';
 import { Button, Input, Modal, Badge, Dropdown, Card } from '../../ui/UIComponents';
 import { useDropzone } from 'react-dropzone';
@@ -34,6 +36,7 @@ import toast from 'react-hot-toast';
 import CRMTab from '../CRMTab';
 import { LayoutGrid, List } from 'lucide-react';
 import { CommunicationModal } from '../crm/CommunicationModal';
+import * as XLSX from 'xlsx';
 
 interface ClientsPageProps {
     user: User;
@@ -51,7 +54,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [editingClient, setEditingClient] = useState<BusinessClient | null>(null);
     const [showImportModal, setShowImportModal] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
+    const [viewMode, setViewMode] = useState<'list' | 'board' | 'micro'>('list');
     const [showProposalModal, setShowProposalModal] = useState(false);
     const [selectedClientForProposal, setSelectedClientForProposal] = useState<BusinessClient | null>(null);
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
@@ -151,6 +154,31 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         }
     };
 
+    // ── Export all contacts to Excel ──────────────────────────────────
+    const handleExportExcel = () => {
+        if (filteredClients.length === 0) {
+            toast.error('No contacts to export');
+            return;
+        }
+        const rows = filteredClients.map(c => ({
+            Name: c.name,
+            Email: c.email || '',
+            Phone: c.phone || '',
+            Industry: c.industry || '',
+            Stage: c.salesStage,
+            Value: c.value,
+            Location: c.location || '',
+            Website: c.website || '',
+            Description: c.description || '',
+            Created: new Date(c.createdAt).toLocaleDateString(),
+        }));
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Contacts');
+        XLSX.writeFile(wb, `alphaclone-contacts-${Date.now()}.xlsx`);
+        toast.success(`Exported ${filteredClients.length} contacts to Excel`);
+    };
+
     const handleDeleteClient = async (clientId: string) => {
         if (!confirm('Are you sure you want to delete this client?')) return;
 
@@ -170,9 +198,9 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         if (!error) {
             await loadClients();
             setShowImportModal(false);
-            alert(`Successfully imported ${count} clients!`);
+            toast.success(`Successfully imported ${count} clients!`);
         } else {
-            alert(`Error importing clients: ${error}`);
+            toast.error(`Error importing clients: ${error}`);
         }
     };
 
@@ -247,7 +275,15 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">CRM Database</p>
                     </div>
                 </div>
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-2 items-center flex-wrap">
+                    <Button
+                        variant="outline"
+                        onClick={handleExportExcel}
+                        icon={<FileSpreadsheet className="w-4 h-4" />}
+                        title="Export contacts to Excel"
+                    >
+                        Export
+                    </Button>
                     <Button
                         variant="outline"
                         onClick={() => setShowImportModal(true)}
@@ -272,16 +308,93 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         </button>
                         <button
                             onClick={() => setViewMode('board')}
-                            title="Grid view"
+                            title="Card view"
                             className={`p-2 rounded-lg transition-all ${viewMode === 'board' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
                         >
                             <LayoutGrid className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('micro')}
+                            title="Micro grid view"
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'micro' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
+                        >
+                            <Grid3X3 className="w-4 h-4" />
                         </button>
                     </div>
                 </div>
             </div>
 
-            {viewMode === 'board' ? (
+            {viewMode === 'micro' ? (
+                /* ── MICRO VIEW: tiny pill chips with full contact slide-in ── */
+                <div className="space-y-4">
+                    {/* Search + Filter */}
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input type="text" placeholder="Search contacts..."
+                                value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+                                className="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all text-sm"
+                            />
+                        </div>
+                        <select value={selectedStage} onChange={e => setSelectedStage(e.target.value)}
+                            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-teal-500">
+                            <option value="all">All Stages</option>
+                            <option value="lead">Lead</option>
+                            <option value="prospect">Prospect</option>
+                            <option value="customer">Customer</option>
+                            <option value="lost">Lost</option>
+                        </select>
+                    </div>
+
+                    {/* Micro grid — tiny chips */}
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
+                        {filteredClients.map(client => {
+                            const initials = client.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+                            const stageDot: Record<string, string> = {
+                                lead: 'bg-cyan-400', prospect: 'bg-blue-400',
+                                customer: 'bg-emerald-400', lost: 'bg-rose-400'
+                            };
+                            const stageGrad: Record<string, string> = {
+                                lead: 'from-cyan-500 to-teal-600',
+                                prospect: 'from-blue-500 to-violet-600',
+                                customer: 'from-emerald-500 to-teal-600',
+                                lost: 'from-slate-500 to-slate-700'
+                            };
+                            return (
+                                <button
+                                    key={client.id}
+                                    onClick={() => { setSelectedClient(client); setViewMode('list'); }}
+                                    title={`${client.name}\n${client.industry || ''}\n${client.salesStage}`}
+                                    className="group flex flex-col items-center gap-1.5 p-2 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-teal-500/50 hover:bg-slate-800/80 transition-all hover:-translate-y-0.5 cursor-pointer text-center"
+                                >
+                                    {/* Avatar */}
+                                    <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${stageGrad[client.salesStage] || 'from-teal-500 to-violet-600'} flex items-center justify-center font-bold text-white text-xs relative`}>
+                                        {initials}
+                                        <span className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 ${stageDot[client.salesStage] || 'bg-slate-500'}`} />
+                                    </div>
+                                    {/* Name truncated to ~8 chars */}
+                                    <p className="text-[10px] font-semibold text-slate-300 group-hover:text-white leading-tight w-full truncate">
+                                        {client.name.split(' ')[0]}
+                                    </p>
+                                </button>
+                            );
+                        })}
+                        {filteredClients.length === 0 && (
+                            <div className="col-span-full text-center py-8 text-slate-500 text-sm">No contacts found</div>
+                        )}
+                    </div>
+
+                    {/* Legend */}
+                    <div className="flex items-center gap-4 text-[10px] text-slate-500 border-t border-slate-800/50 pt-2">
+                        {[['cyan-400','Lead'],['blue-400','Prospect'],['emerald-400','Customer'],['rose-400','Lost']].map(([color, label]) => (
+                            <span key={label} className="flex items-center gap-1">
+                                <span className={`w-2 h-2 rounded-full bg-${color}`} />{label}
+                            </span>
+                        ))}
+                        <span className="ml-auto text-slate-600">{filteredClients.length} contacts · click any to open</span>
+                    </div>
+                </div>
+            ) : viewMode === 'board' ? (
                 /* ── Compact Bio-Card Grid View ── */
                 <div className="space-y-4">
                     {/* Search + Filter row */}
@@ -1078,11 +1191,11 @@ const ImportClientsModal = ({ onClose, onImport }: any) => {
             if (result && !result.error) {
                 setImportedClients(result.contacts);
             } else {
-                alert(`Error importing file: ${result?.error}`);
+                toast.error(`Error importing file: ${result?.error}`);
             }
         } catch (error) {
             console.error('Import error:', error);
-            alert('Error importing file');
+            toast.error('Error importing file');
         } finally {
             setImporting(false);
         }
