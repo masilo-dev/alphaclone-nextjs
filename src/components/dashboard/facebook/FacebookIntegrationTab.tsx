@@ -48,13 +48,15 @@ const STATUS_COLORS: Record<string, string> = {
 export default function FacebookIntegrationTab() {
     const { user } = useAuth();
     const { currentTenant: tenant } = useTenant();
-    const [activeTab, setActiveTab] = useState<'leads' | 'messenger' | 'activity' | 'post' | 'pages' | 'setup'>('leads');
+    const [activeTab, setActiveTab] = useState<'leads' | 'messenger' | 'posts' | 'post' | 'pages' | 'setup'>('leads');
     const [pages, setPages] = useState<FacebookPage[]>([]);
     const [leads, setLeads] = useState<FacebookLead[]>([]);
     const [activities, setActivities] = useState<any[]>([]);
+    const [pagePosts, setPagePosts] = useState<any[]>([]);
     const [conversations, setConversations] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [activityLoading, setActivityLoading] = useState(false);
+    const [postsLoading, setPostsLoading] = useState(false);
     const [statusFilter, setStatusFilter] = useState<string>('all');
 
     // Post form
@@ -112,13 +114,27 @@ export default function FacebookIntegrationTab() {
         }
     }, []);
 
+    const fetchPagePosts = useCallback(async (pageId: string) => {
+        if (!pageId) return;
+        setPostsLoading(true);
+        try {
+            const res = await fetch(`/api/facebook/posts?pageId=${pageId}&limit=20`);
+            const data = await res.json();
+            if (data.posts) setPagePosts(data.posts);
+        } catch (err) {
+            console.error('Failed to fetch page posts:', err);
+        } finally {
+            setPostsLoading(false);
+        }
+    }, []);
+
     useEffect(() => { loadData(); }, [loadData]);
 
     useEffect(() => {
-        if (activeTab === 'activity' && selectedPageId) {
-            fetchActivity(selectedPageId);
+        if (activeTab === 'posts' && selectedPageId) {
+            fetchPagePosts(selectedPageId);
         }
-    }, [activeTab, selectedPageId, fetchActivity]);
+    }, [activeTab, selectedPageId, fetchPagePosts]);
 
     const handleConnect = () => {
         window.location.href = '/api/auth/facebook/connect';
@@ -153,6 +169,9 @@ export default function FacebookIntegrationTab() {
                 toast.success('Posted to Facebook!', { id: toastId });
                 setPostMessage('');
                 setPostLink('');
+                // Refresh posts tab
+                setActiveTab('posts');
+                setTimeout(() => fetchPagePosts(selectedPageId), 2000);
             } else {
                 toast.error(data.error || 'Failed to post', { id: toastId });
             }
@@ -276,7 +295,7 @@ export default function FacebookIntegrationTab() {
                 <>
                     {/* Tabs */}
                     <div className="flex gap-1 p-1 bg-slate-800/60 border border-slate-700 rounded-xl overflow-x-auto no-scrollbar max-w-full">
-                        {(['leads', 'messenger', 'activity', 'post', 'pages', 'setup'] as const).map(tab => (
+                        {(['leads', 'messenger', 'posts', 'post', 'pages', 'setup'] as const).map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
@@ -288,7 +307,7 @@ export default function FacebookIntegrationTab() {
                             >
                                 {tab === 'leads' && `Leads (${leads.length})`}
                                 {tab === 'messenger' && 'Inbox'}
-                                {tab === 'activity' && 'Activity Feed'}
+                                {tab === 'posts' && 'Page Posts'}
                                 {tab === 'post' && 'Publish'}
                                 {tab === 'pages' && 'Pages'}
                                 {tab === 'setup' && 'Setup Guide'}
@@ -565,6 +584,124 @@ export default function FacebookIntegrationTab() {
                     {activeTab === 'messenger' && (
                         <div className="h-[760px]">
                             <MessengerInbox />
+                        </div>
+                    )}
+
+                    {/* PAGE POSTS TAB */}
+                    {activeTab === 'posts' && (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Activity className="w-5 h-5 text-blue-400" />
+                                        Your Page Posts
+                                    </h3>
+                                    <p className="text-xs text-slate-500 mt-0.5">Live feed from your Facebook page — saved to your CRM</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <select
+                                        value={selectedPageId}
+                                        onChange={e => { setSelectedPageId(e.target.value); fetchPagePosts(e.target.value); }}
+                                        className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500"
+                                    >
+                                        {pages.map(p => (
+                                            <option key={p.page_id} value={p.page_id}>{p.page_name}</option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        onClick={() => fetchPagePosts(selectedPageId)}
+                                        disabled={postsLoading}
+                                        className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors"
+                                    >
+                                        <RefreshCw className={`w-4 h-4 ${postsLoading ? 'animate-spin' : ''}`} />
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('post')}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-semibold transition-colors"
+                                    >
+                                        <Plus className="w-3.5 h-3.5" />
+                                        New Post
+                                    </button>
+                                </div>
+                            </div>
+
+                            {postsLoading ? (
+                                <div className="flex items-center justify-center py-20">
+                                    <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                                </div>
+                            ) : pagePosts.length === 0 ? (
+                                <div className="text-center py-20 border border-dashed border-slate-700 rounded-2xl">
+                                    <Image className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+                                    <p className="text-slate-400 font-semibold">No posts found on this page</p>
+                                    <p className="text-slate-600 text-sm mt-1">Create your first post using the Publish tab</p>
+                                    <button
+                                        onClick={() => setActiveTab('post')}
+                                        className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold transition-colors"
+                                    >
+                                        Create a Post
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 gap-4">
+                                    {pagePosts.map((post: any) => (
+                                        <div key={post.id} className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-blue-500/30 transition-all group">
+                                            <div className="flex gap-4 p-4">
+                                                {post.full_picture && (
+                                                    <div className="w-28 h-28 rounded-xl overflow-hidden flex-shrink-0 border border-slate-800 bg-slate-950">
+                                                        <img
+                                                            src={post.full_picture}
+                                                            alt="Post"
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                        />
+                                                    </div>
+                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
+                                                            post.type === 'photo' ? 'bg-blue-500/10 text-blue-400' :
+                                                            post.type === 'video' ? 'bg-violet-500/10 text-violet-400' :
+                                                            post.type === 'share' ? 'bg-amber-500/10 text-amber-400' :
+                                                            'bg-teal-500/10 text-teal-400'
+                                                        }`}>
+                                                            {post.type || 'Post'}
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-500">
+                                                            {post.created_time ? new Date(post.created_time).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm text-slate-200 line-clamp-3 mb-3 leading-relaxed">
+                                                        {post.message || post.story || <span className="italic text-slate-500">No text content</span>}
+                                                    </p>
+                                                    <div className="flex items-center gap-4 flex-wrap">
+                                                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                                                            <span>👍</span>
+                                                            {post.likes?.summary?.total_count ?? 0}
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                                                            <span>💬</span>
+                                                            {post.comments?.summary?.total_count ?? 0}
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                                                            <span>🔁</span>
+                                                            {post.shares?.count ?? 0}
+                                                        </div>
+                                                        {post.permalink_url && (
+                                                            <a
+                                                                href={post.permalink_url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="ml-auto text-xs text-blue-400 hover:text-blue-300 font-bold flex items-center gap-1"
+                                                            >
+                                                                View on Facebook <ExternalLink className="w-3 h-3" />
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
 
