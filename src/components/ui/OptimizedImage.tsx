@@ -32,7 +32,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   width,
   height,
   className = '',
-  fallback = '/placeholder.png',
+  fallback = '/placeholder.svg',
   loading = 'lazy',
   quality = 80,
   format,
@@ -93,6 +93,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
       <Image
         src={error ? fallback : optimizedSrc}
         alt={alt}
+        referrerPolicy="no-referrer"
         width={typeof width === 'number' ? width : 800}
         height={typeof height === 'number' ? height : 600}
         loading={loading}

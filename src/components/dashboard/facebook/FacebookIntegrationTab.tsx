@@ -651,6 +651,7 @@ export default function FacebookIntegrationTab() {
                                                         <img
                                                             src={post.full_picture}
                                                             alt="Post"
+                                                            referrerPolicy="no-referrer"
                                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                         />
                                                     </div>

@@ -53,6 +53,8 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
   const [tone,          setTone         ] = useState('professional');
   const [customContext, setCustomContext ] = useState('');
   const [senderName,    setSenderName   ] = useState('');
+  const [fromAddress,   setFromAddress  ] = useState('');
+  const [senderOptions, setSenderOptions] = useState<string[]>([]);
   const [status,        setStatus       ] = useState<SendStatus>('idle');
   const [emails,        setEmails       ] = useState<GeneratedEmail[]>([]);
   const [editingIdx,    setEditingIdx   ] = useState<number | null>(null);
@@ -63,12 +65,23 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
   const emailable = leads.filter(l => l.qualification.canAutoSend);
   const noEmail   = leads.filter(l => !l.qualification.canAutoSend);
 
-  // Fetch user display name for sender personalisation
+  // Fetch user display name and Zoho sender addresses on mount
   useEffect(() => {
     supabase.auth.getUser().then(({ data }: { data: { user: { email?: string; user_metadata?: Record<string, string> } | null } }) => {
       if (data?.user?.user_metadata?.full_name) setSenderName(data.user.user_metadata.full_name);
       else if (data?.user?.email) setSenderName(data.user.email.split('@')[0]);
     });
+
+    // Fetch Zoho sender addresses so we can pass fromAddress explicitly
+    fetch('/api/zoho/mail?action=sender-addresses')
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data?.addresses) && data.addresses.length > 0) {
+          setSenderOptions(data.addresses);
+          setFromAddress(data.addresses[0]); // default to primary
+        }
+      })
+      .catch(() => {}); // non-fatal
   }, []);
 
   // ── Generate emails ────────────────────────────────────────────────────────
@@ -129,15 +142,16 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            tenantId:   currentTenant.id,
-            leadEmail:  lead.email,
-            leadName:   lead.business_name,
-            subject:    email.subject,
-            body:       email.body,
-            pitchAngle: lead.qualification.pitchAngle,
+            tenantId:    currentTenant.id,
+            leadEmail:   lead.email,
+            leadName:    lead.business_name,
+            subject:     email.subject,
+            body:        email.body,
+            pitchAngle:  lead.qualification.pitchAngle,
             industry,
-            score:      lead.qualification.score,
-            queue:      queueOnly,
+            score:       lead.qualification.score,
+            fromAddress: fromAddress || undefined,
+            queue:       queueOnly,
           }),
         });
         const data = await res.json();
@@ -244,6 +258,22 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
                 className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white min-h-[80px] resize-none focus:outline-none focus:border-teal-500 transition-all"
               />
             </div>
+
+            {/* From address selector */}
+            {senderOptions.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Send From</p>
+                <select
+                  value={fromAddress}
+                  onChange={e => setFromAddress(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-teal-500"
+                >
+                  {senderOptions.map(addr => (
+                    <option key={addr} value={addr}>{addr}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Queue vs Send toggle */}
             <div className="flex items-center gap-3 p-3 bg-slate-900 rounded-xl border border-slate-800">

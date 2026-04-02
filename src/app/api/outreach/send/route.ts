@@ -9,10 +9,10 @@ function adminSupabase() {
   );
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL
-  || process.env.NEXTAUTH_URL
-  || process.env.NEXT_PUBLIC_BASE_URL
-  || 'https://alphaclone.tech';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL;
+const BASE_URL = SITE_URL && !SITE_URL.includes('localhost') 
+  ? SITE_URL 
+  : 'https://alphaclone.tech';
 
 /**
  * Inject open-tracking pixel into email body HTML.
