@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import VideoEditor from '../../video/VideoEditor';
+import { cn, cleanAIJSONResponse } from '../../../lib/utils';
 import toast from 'react-hot-toast';
 
 interface MediaAsset {
@@ -394,13 +395,24 @@ export default function SocialMediaComposer() {
             const data = await res.json();
             if (data.text) {
                 try {
-                    const parsed = JSON.parse(data.text.trim());
+                    const cleaned = cleanAIJSONResponse(data.text);
+                    const parsed = JSON.parse(cleaned);
                     if (parsed.caption) setCaption(parsed.caption);
-                    if (parsed.hashtags?.length) setHashtags(parsed.hashtags.map((h: string) => h.replace(/^#/, '')));
+                    if (parsed.hashtags?.length) {
+                        setHashtags(prev => {
+                            const newTags = [...prev];
+                            parsed.hashtags.forEach((h: string) => {
+                                const tag = h.replace(/^#/, '');
+                                if (!newTags.includes(tag)) newTags.push(tag);
+                            });
+                            return newTags;
+                        });
+                    }
                     toast.success('AI generated caption + hashtags!');
                     setShowAiPanel(false);
                     setAiTopic('');
-                } catch {
+                } catch (err) {
+                    console.error('AI Parse error:', err, 'Raw:', data.text);
                     setCaption(data.text);
                     toast.success('AI generated caption!');
                     setShowAiPanel(false);

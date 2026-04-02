@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
@@ -21,13 +21,13 @@ const LeadMapView = dynamic(() => import('./LeadMapView'), {
   loading: () => (
     <div className="w-full flex items-center justify-center rounded-xl border border-slate-800 bg-slate-900/40" style={{ height: 480 }}>
       <div className="text-slate-500 text-sm flex items-center gap-2">
-        <RefreshCw className="w-4 h-4 animate-spin" /> Loading mapâ€¦
+        <RefreshCw className="w-4 h-4 animate-spin" /> Loading map...
       </div>
     </div>
   ),
 });
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Types ──────────────────────────────────────────────
 interface ScrapedLead {
   business_name: string;
   website:       string;
@@ -54,57 +54,57 @@ const SOURCE_COLORS: Record<string, string> = {
   osm:  'text-emerald-400 border-emerald-500/30 bg-emerald-500/10',
 };
 
-// â”€â”€â”€ Industry Groups â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Industry Groups ──────────────────────────────────────
 const INDUSTRY_GROUPS: Record<string, string[]> = {
-  'ðŸ  Home Services': [
+  '🏠 Home Services': [
     'HVAC', 'Plumbing', 'Electrician', 'Roofing', 'Landscaping',
     'Cleaning Service', 'Pest Control', 'Pool Service', 'Painting',
     'Flooring', 'Window Cleaning', 'Garage Door Repair', 'Handyman',
     'Gutter Cleaning', 'Tree Service', 'Locksmith', 'Solar Installation',
   ],
-  'ðŸ¥ Healthcare': [
+  '🏥 Healthcare': [
     'Dentist', 'Chiropractor', 'Physical Therapist', 'Optometrist',
     'Dermatologist', 'Pediatrician', 'Veterinarian', 'Pharmacy',
     'Mental Health Counselor', 'Massage Therapist', 'Urgent Care',
     'Acupuncture', 'Hearing Clinic',
   ],
-  'ðŸ½ï¸ Food & Hospitality': [
+  '🍽️ Food & Hospitality': [
     'Restaurant', 'Cafe', 'Bakery', 'Bar', 'Catering',
     'Food Truck', 'Hotel', 'Bed and Breakfast', 'Night Club',
     'Pizza Shop', 'Sushi', 'Steakhouse',
   ],
-  'âš–ï¸ Professional Services': [
+  '⚖️ Professional Services': [
     'Law Firm', 'Accountant', 'Financial Advisor', 'Insurance Agent',
     'Real Estate Agent', 'Mortgage Broker', 'Business Consultant',
     'Marketing Agency', 'Advertising Agency', 'PR Firm',
     'Notary', 'Tax Consultant',
   ],
-  'ðŸ”§ Auto & Transport': [
+  '🔧 Auto & Transport': [
     'Auto Repair', 'Car Dealership', 'Towing Service', 'Car Wash',
     'Auto Body Shop', 'Tire Shop', 'Moving Company', 'Trucking',
     'Limousine Service', 'Auto Glass',
   ],
-  'ðŸ’» Tech & Digital': [
+  '💻 Tech & Digital': [
     'IT Services', 'Web Design', 'Software Development',
     'Cyber Security', 'Data Recovery', 'Phone Repair',
     'IT Support', 'AI Consulting',
   ],
-  'ðŸ‹ï¸ Fitness & Wellness': [
+  '🏋️‍♂️ Fitness & Wellness': [
     'Gym', 'Yoga Studio', 'Pilates', 'Personal Trainer',
     'Spa', 'Nail Salon', 'Hair Salon', 'Barber Shop',
     'Tanning Salon', 'Tattoo Studio',
   ],
-  'ðŸ—ï¸ Construction': [
+  '🏗️ Construction': [
     'General Contractor', 'Cabinet Maker', 'Concrete', 'Demolition',
     'Fencing', 'Masonry', 'Insulation', 'Drywall',
     'Excavation', 'Paving',
   ],
-  'ðŸ“¦ Retail & Commerce': [
+  '📦 Retail & Commerce': [
     'Grocery Store', 'Clothing Store', 'Furniture Store',
     'Pet Store', 'Bookstore', 'Gift Shop', 'Hardware Store',
     'Jewellery Store', 'Electronics Store',
   ],
-  'ðŸŽ“ Education': [
+  '🎓 Education': [
     'Tutoring', 'Driving School', 'Music School',
     'Childcare', 'Preschool', 'Language School',
     'Art Classes', 'Dance Studio',
@@ -113,7 +113,7 @@ const INDUSTRY_GROUPS: Record<string, string[]> = {
 
 const ALL_INDUSTRIES = Object.values(INDUSTRY_GROUPS).flat();
 
-// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Helpers ────────────────────────────────────────────
 function StarRating({ rating }: { rating?: number }) {
   if (!rating) return null;
   const full  = Math.floor(rating);
@@ -134,7 +134,7 @@ function getHostname(url: string) {
   catch { return url; }
 }
 
-// â”€â”€â”€ Industry Combobox (self-contained, no overflow-hidden parent clip) â”€â”€â”€â”€â”€â”€â”€
+// ── Industry Combobox (self-contained, no overflow-hidden parent clip) ─────
 function IndustrySelect({ value, onChange, disabled }: { value: string; onChange: (v: string) => void; disabled: boolean }) {
   const [search, setSearch] = useState('');
   const [open, setOpen]     = useState(false);
@@ -157,7 +157,7 @@ function IndustrySelect({ value, onChange, disabled }: { value: string; onChange
       >
         <Building2 className="w-4 h-4 text-teal-400 flex-shrink-0" />
         <span className={`flex-1 text-left truncate ${value ? 'text-white' : 'text-slate-500'}`}>
-          {value || 'Select industryâ€¦'}
+          {value || 'Select industry...'}
         </span>
         {value && (
           <X className="w-3.5 h-3.5 text-slate-500 hover:text-rose-400 flex-shrink-0"
@@ -178,12 +178,12 @@ function IndustrySelect({ value, onChange, disabled }: { value: string; onChange
             <div className="p-2 border-b border-slate-800 bg-slate-950">
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
-                <input autoFocus type="text" placeholder="Search industriesâ€¦"
+                <input autoFocus type="text" placeholder="Search industries..."
                   value={search} onChange={e => setSearch(e.target.value)}
                   className="w-full pl-8 pr-3 py-1.5 text-sm bg-slate-900 border border-slate-700 rounded-lg text-white outline-none focus:border-teal-500"
                 />
               </div>
-              <p className="text-[9px] text-slate-600 mt-1 px-0.5">{ALL_INDUSTRIES.length} industries Â· {Object.keys(INDUSTRY_GROUPS).length} categories</p>
+              <p className="text-[9px] text-slate-600 mt-1 px-0.5">{ALL_INDUSTRIES.length} industries · {Object.keys(INDUSTRY_GROUPS).length} categories</p>
             </div>
 
             {/* List */}
@@ -219,7 +219,7 @@ function IndustrySelect({ value, onChange, disabled }: { value: string; onChange
   );
 }
 
-// â”€â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Main Component ────────────────────────────────────────
 export default function OmniLeadFinder() {
   // Search config
   const [niche,         setNiche         ] = useState('');
@@ -281,7 +281,7 @@ export default function OmniLeadFinder() {
   const selectAll     = () => setSelectedSet(new Set(filteredResults.map((_, i) => i)));
   const clearSelected = () => setSelectedSet(new Set());
 
-  // â”€â”€ Save single lead to CRM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Save single lead to CRM ────────────────────────────────
   const saveLeadToCRM = async (lead: ScrapedLead, idx: number): Promise<boolean> => {
     if (!currentTenant) return false;
     try {
@@ -292,7 +292,7 @@ export default function OmniLeadFinder() {
         website: lead.website,
         salesStage: 'lead',
         industry: niche,
-        description: `Lead via ${lead.source?.toUpperCase()} Â· ${lead.category || lead.snippet || ''}`,
+        description: `Lead via ${lead.source?.toUpperCase()} · ${lead.category || lead.snippet || ''}`,
       });
       if (error) throw new Error(error);
       setSavedIds(prev => new Set([...prev, idx]));
@@ -300,13 +300,13 @@ export default function OmniLeadFinder() {
     } catch { return false; }
   };
 
-  // â”€â”€ Search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Search ───────────────────────────────────────────
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!niche) return toast.error('Please select an industry');
 
     setScanning(true); setResults([]); setSourceStats({}); setSavedIds(new Set()); setFallbackUsed(false); clearFilters();
-    setProgress({ percent: 10, message: 'Querying OpenStreetMap (primary)â€¦' });
+    setProgress({ percent: 10, message: 'Querying OpenStreetMap (primary)...' });
 
     try {
       const res = await fetch('/api/scraper/search', {
@@ -317,7 +317,7 @@ export default function OmniLeadFinder() {
           location,
           sortBy: sortMode,
           usePlaywright,
-          tenantId: currentTenant?.id || '',  // â† per-tenant quota tracking
+          tenantId: currentTenant?.id || '',  // ← per-tenant quota tracking
         }),
       });
 
@@ -328,7 +328,7 @@ export default function OmniLeadFinder() {
         throw new Error(errData.error || 'Daily lead limit reached. Try again tomorrow.');
       }
 
-      setProgress({ percent: 65, message: 'Verifying contact info on resultsâ€¦' });
+      setProgress({ percent: 65, message: 'Verifying contact info on results...' });
       const data = await res.json();
 
       if (!data.success || !data.results?.length) {
@@ -343,7 +343,7 @@ export default function OmniLeadFinder() {
         ...r, status: 'pending' as const,
       }));
 
-      // â”€â”€ Run industry-aware qualification on every lead â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Run industry-aware qualification on every lead ───────────
       const leads = enrichWithQualification(rawLeads, niche);
 
       setResults(leads);
@@ -356,7 +356,7 @@ export default function OmniLeadFinder() {
 
       // Auto-save to contacts if enabled
       if (autoSave && currentTenant) {
-        setProgress({ percent: 100, message: `Auto-saving ${leads.length} verified leads to contactsâ€¦` });
+        setProgress({ percent: 100, message: `Auto-saving ${leads.length} verified leads to contacts...` });
         let saved = 0;
         await Promise.allSettled(
           leads.map(async (lead, idx) => {
@@ -364,9 +364,9 @@ export default function OmniLeadFinder() {
             if (ok) saved++;
           })
         );
-        toast.success(`âœ… ${leads.length} verified leads Â· Auto-saved ${saved}${rejMsg}`);
+        toast.success(`✅ ${leads.length} verified leads · Auto-saved ${saved}${rejMsg}`);
       } else {
-        toast.success(`âœ… ${leads.length} leads Â· ðŸ”¥ ${hotCount} Hot Â· ðŸŒ¡ ${warmCount} Warm${rejMsg}`);
+        toast.success(`✅ ${leads.length} leads · 🔥 ${hotCount} Hot · 🌡️ ${warmCount} Warm${rejMsg}`);
       }
     } catch (err: any) {
       toast.error(err.message || 'Search failed');
@@ -375,11 +375,10 @@ export default function OmniLeadFinder() {
     }
   };
 
-  // â”€â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Render ──────────────────────────────────────────
   return (
     <div className="w-full space-y-5">
 
-      {/* â•â• OUTREACH PANEL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <AnimatePresence>
         {showOutreach && selectedLeads.length > 0 && (
           <OutreachPanel
@@ -390,7 +389,6 @@ export default function OmniLeadFinder() {
         )}
       </AnimatePresence>
 
-      {/* â•â• HEADER â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <div className="p-4 bg-gradient-to-r from-teal-900/40 via-slate-900/50 to-slate-900 rounded-xl border border-teal-500/20 shadow-xl backdrop-blur-xl">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
@@ -401,12 +399,11 @@ export default function OmniLeadFinder() {
               AlphaClone Business Lead
             </h1>
             <p className="text-slate-500 text-xs mt-0.5">
-              Primary: <span className="text-emerald-400 font-semibold">OpenStreetMap</span> Â· Fallbacks: Yelp Â· HERE Maps
-              {fallbackUsed && <span className="ml-2 text-amber-400">â†³ Fallbacks activated</span>}
+              Primary: <span className="text-emerald-400 font-semibold">OpenStreetMap</span> · Fallbacks: Yelp · HERE Maps
+              {fallbackUsed && <span className="ml-2 text-amber-400">↳ Fallbacks activated</span>}
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
-            {/* Source stat badges */}
             {Object.keys(sourceStats).length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
                 {Object.entries(sourceStats).map(([src, count]) =>
@@ -418,7 +415,6 @@ export default function OmniLeadFinder() {
                 )}
               </div>
             )}
-            {/* Per-tenant daily quota meter */}
             {dailyQuota && (
               <div className="flex items-center gap-2 text-[10px]">
                 <span className="text-slate-500">Daily quota:</span>
@@ -443,10 +439,7 @@ export default function OmniLeadFinder() {
         </div>
       </div>
 
-      {/* â•â• SEARCH FORM â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <form onSubmit={handleSearch} className="space-y-4">
-
-        {/* Row 1: Industry + City */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -460,7 +453,7 @@ export default function OmniLeadFinder() {
             </label>
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <input type="text" placeholder="e.g. Miami, London, Johannesburgâ€¦"
+              <input type="text" placeholder="e.g. Miami, London, Johannesburg..."
                 value={location} onChange={e => setLocation(e.target.value)} disabled={scanning}
                 className="w-full pl-9 pr-3 py-2.5 text-sm bg-slate-900/80 border border-slate-700 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none text-white transition-all hover:border-slate-600 disabled:opacity-50"
               />
@@ -468,15 +461,12 @@ export default function OmniLeadFinder() {
           </div>
         </div>
 
-        {/* Row 2: Rating sort + toggles */}
         <div className="flex flex-wrap items-center gap-4 p-3 bg-slate-900/40 rounded-xl border border-slate-800">
-
-          {/* Sort by rating */}
           <div className="flex items-center gap-2">
             <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Sort</span>
             <div className="flex rounded-lg overflow-hidden border border-slate-700 text-[11px] font-semibold">
-              {([['default', 'Default'], ['rating_desc', 'â˜… Highâ†’Low'], ['rating_asc', 'â˜… Lowâ†’High']] as [SortMode, string][]).map(([mode, label]) => (
+              {([['default', 'Default'], ['rating_desc', '★ High to Low'], ['rating_asc', '★ Low to High']] as [SortMode, string][]).map(([mode, label]) => (
                 <button key={mode} type="button" onClick={() => setSortMode(mode)}
                   className={`px-2.5 py-1 transition-all ${sortMode === mode ? 'bg-teal-500 text-white' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800'}`}>
                   {label}
@@ -485,7 +475,6 @@ export default function OmniLeadFinder() {
             </div>
           </div>
 
-          {/* Auto-save toggle */}
           <div className="flex items-center gap-2 cursor-pointer select-none" onClick={() => setAutoSave(v => !v)}>
             <div className={`w-8 h-4 rounded-full transition-colors relative flex-shrink-0 ${autoSave ? 'bg-teal-500' : 'bg-slate-700'}`}>
               <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${autoSave ? 'translate-x-4' : 'translate-x-0.5'}`} />
@@ -495,7 +484,6 @@ export default function OmniLeadFinder() {
             </span>
           </div>
 
-          {/* Power Mode */}
           <div className="flex items-center gap-2 cursor-pointer select-none" onClick={() => !scanning && setUsePlaywright(v => !v)}>
             <div className={`w-8 h-4 rounded-full transition-colors relative flex-shrink-0 ${usePlaywright ? 'bg-amber-500' : 'bg-slate-700'}`}>
               <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${usePlaywright ? 'translate-x-4' : 'translate-x-0.5'}`} />
@@ -504,18 +492,15 @@ export default function OmniLeadFinder() {
               <Zap className="w-3 h-3 inline mr-1" />Power Mode
             </span>
           </div>
-
         </div>
 
-        {/* Submit */}
         <button type="submit" disabled={scanning || !niche}
           className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-semibold text-sm rounded-xl transition-all shadow-lg shadow-teal-500/20 disabled:opacity-40 disabled:cursor-not-allowed">
           {scanning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
-          {scanning ? 'Scanning directoriesâ€¦' : 'Deploy Universal Search Engine'}
+          {scanning ? 'Scanning directories...' : 'Deploy Universal Search Engine'}
         </button>
       </form>
 
-      {/* â•â• PROGRESS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <AnimatePresence>
         {scanning && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
@@ -532,10 +517,8 @@ export default function OmniLeadFinder() {
         )}
       </AnimatePresence>
 
-      {/* â•â• POST-SEARCH FILTER PANEL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {results.length > 0 && (
         <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-800 space-y-3">
-          {/* Header */}
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <Filter className="w-3.5 h-3.5 text-teal-400" />
@@ -553,21 +536,18 @@ export default function OmniLeadFinder() {
             </div>
           </div>
 
-          {/* Controls */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-            {/* Text */}
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Search results</label>
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
-                <input type="text" placeholder="Name, address, categoryâ€¦"
+                <input type="text" placeholder="Name, address, category..."
                   value={filterText} onChange={e => setFilterText(e.target.value)}
                   className="w-full pl-8 pr-3 py-1.5 bg-slate-950/60 border border-slate-800 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-teal-500/30 focus:border-teal-500 outline-none"
                 />
               </div>
             </div>
 
-            {/* Qualification Tier */}
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Qualification</label>
               <div className="flex flex-wrap gap-1">
@@ -576,39 +556,36 @@ export default function OmniLeadFinder() {
                     className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition-all border ${
                       filterTier === tier ? 'bg-teal-500/20 border-teal-500/40 text-teal-300' : 'border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-300'
                     }`}>
-                    {tier === 'all' ? 'All' : tier === 'hot' ? 'ðŸ”¥ Hot' : tier === 'warm' ? 'ðŸŒ¡ Warm' : tier === 'cold' ? 'ðŸ§Š Cold' : 'âœ— Skip'}
+                    {tier === 'all' ? 'All' : tier === 'hot' ? '🔥 Hot' : tier === 'warm' ? '🌡️ Warm' : tier === 'cold' ? '🧊 Cold' : '✕ Skip'}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Source */}
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Source</label>
               <div className="flex flex-wrap gap-1">
                 {(['all', 'osm', 'yelp', 'here'] as SourceFilter[]).map(src => (
                   <button key={src} onClick={() => setFilterSource(src)}
                     className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition-all border ${filterSource === src ? 'bg-teal-500/20 border-teal-500/40 text-teal-300' : 'border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-300'}`}>
-                    {src === 'all' ? 'All' : src === 'osm' ? 'ðŸŸ¢ OSM' : src === 'yelp' ? 'ðŸŸ  Yelp' : 'ðŸ”µ HERE'}
+                    {src === 'all' ? 'All' : src === 'osm' ? '🟢 OSM' : src === 'yelp' ? '🟠 Yelp' : '🔵 HERE'}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Min Rating */}
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Min Rating</label>
               <div className="flex items-center gap-1">
                 {[0,1,2,3,4,5].map(r => (
                   <button key={r} onClick={() => setFilterRating(r === filterRating ? 0 : r)}
                     className={`px-1.5 py-1 rounded text-[10px] font-bold transition-all border ${filterRating === r ? 'bg-amber-500/20 border-amber-500/40 text-amber-300' : 'border-slate-800 text-slate-500 hover:border-slate-600'}`}>
-                    {r === 0 ? 'Any' : `${r}â˜…`}
+                    {r === 0 ? 'Any' : `${r}★`}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Toggles */}
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Has</label>
               <div className="flex flex-col gap-1.5">
@@ -624,8 +601,6 @@ export default function OmniLeadFinder() {
             </div>
           </div>
 
-
-          {/* Bottom: selection toolbar + view toggle */}
           <div className="flex justify-between items-center pt-1 border-t border-slate-800/50 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <button onClick={selectAll} className="text-[10px] text-teal-400 hover:text-teal-300 font-bold">Select all</button>
@@ -654,7 +629,6 @@ export default function OmniLeadFinder() {
         </div>
       )}
 
-      {/* == MAP VIEW == */}
       {viewMode === 'map' && filteredResults.length > 0 && (
         <div className="space-y-1.5">
           <LeadMapView leads={filteredResults} />
@@ -666,7 +640,6 @@ export default function OmniLeadFinder() {
         </div>
       )}
 
-      {/* == GRID VIEW == */}
       {viewMode === 'grid' && filteredResults.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {filteredResults.map((lead, idx) => {

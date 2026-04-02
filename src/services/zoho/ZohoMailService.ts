@@ -1,6 +1,7 @@
 import { ZohoService } from './ZohoService';
 import { routeAIRequest } from '@/services/aiRouter';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { cleanAIJSONResponse } from '@/lib/utils';
 
 export interface ZohoMessage {
     messageId: string;
@@ -255,7 +256,8 @@ Rules:
                 throw new Error('AI Triage failed: ' + aiResponse.error);
             }
 
-            const data = JSON.parse(aiResponse.content.match(/\{.*\}/s)?.[0] || '{"status":"ignored"}');
+            const cleaned = cleanAIJSONResponse(aiResponse.content);
+            const data = JSON.parse(cleaned || '{"status":"ignored"}');
 
             if (data.status === 'qualified') {
                 const supabase = await createSupabaseServerClient();
@@ -288,6 +290,7 @@ Rules:
 
     async subscribeToNotifications() {
         const config = await this.getConfig();
+        if (!config) throw new Error('Zoho config not found');
         const url = `https://${config.mailApiHost}/api/notifications/v1/subscriptions`;
         return await fetch(url, {
             method: 'POST',
