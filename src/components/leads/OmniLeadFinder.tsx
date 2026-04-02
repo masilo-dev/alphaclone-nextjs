@@ -1,18 +1,19 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Database, Zap, Globe, Mail, Phone, Plus, RefreshCw,
   SlidersHorizontal, Star, MapPin, X, ChevronDown, LayoutGrid, Map,
+  Filter, Building2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Avatar } from '../ui/Avatar';
 import { useTenant } from '../../contexts/TenantContext';
 import { businessClientService } from '../../services/businessClientService';
 
-// Leaflet requires window — load it client-side only
+// Leaflet requires window — load client-side only
 const LeadMapView = dynamic(() => import('./LeadMapView'), {
   ssr: false,
   loading: () => (
@@ -24,7 +25,7 @@ const LeadMapView = dynamic(() => import('./LeadMapView'), {
   ),
 });
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface ScrapedLead {
   business_name: string;
   website:       string;
@@ -43,69 +44,72 @@ interface ScrapedLead {
 
 type SourceFilter = 'all' | 'yelp' | 'here' | 'osm';
 
-const SOURCE_LABELS: Record<SourceFilter, string> = {
-  all:  'All Sources',
-  yelp: '🟠 Yelp',
-  here: '🔵 HERE',
-  osm:  '🟢 OpenStreetMap',
-};
-
 const SOURCE_COLORS: Record<string, string> = {
   yelp: 'text-orange-400 border-orange-500/30 bg-orange-500/10',
   here: 'text-blue-400 border-blue-500/30 bg-blue-500/10',
   osm:  'text-emerald-400 border-emerald-500/30 bg-emerald-500/10',
 };
 
-// ─── Industry Groups ─────────────────────────────────────────────────────────
+// ─── Industry Groups (80+ options) ───────────────────────────────────────────
 const INDUSTRY_GROUPS: Record<string, string[]> = {
   '🏠 Home Services': [
     'HVAC', 'Plumbing', 'Electrician', 'Roofing', 'Landscaping',
     'Cleaning Service', 'Pest Control', 'Pool Service', 'Painting',
     'Flooring', 'Window Cleaning', 'Garage Door Repair', 'Handyman',
-    'Gutter Cleaning', 'Tree Service', 'Locksmith',
+    'Gutter Cleaning', 'Tree Service', 'Locksmith', 'Solar Installation',
   ],
   '🏥 Healthcare': [
     'Dentist', 'Chiropractor', 'Physical Therapist', 'Optometrist',
     'Dermatologist', 'Pediatrician', 'Veterinarian', 'Pharmacy',
     'Mental Health Counselor', 'Massage Therapist', 'Urgent Care',
+    'Acupuncture', 'Hearing Clinic',
   ],
   '🍽️ Food & Hospitality': [
     'Restaurant', 'Cafe', 'Bakery', 'Bar', 'Catering',
     'Food Truck', 'Hotel', 'Bed and Breakfast', 'Night Club',
+    'Pizza Shop', 'Sushi', 'Steakhouse',
   ],
   '⚖️ Professional Services': [
     'Law Firm', 'Accountant', 'Financial Advisor', 'Insurance Agent',
     'Real Estate Agent', 'Mortgage Broker', 'Business Consultant',
     'Marketing Agency', 'Advertising Agency', 'PR Firm',
+    'Notary', 'Tax Consultant',
   ],
   '🔧 Auto & Transport': [
     'Auto Repair', 'Car Dealership', 'Towing Service', 'Car Wash',
     'Auto Body Shop', 'Tire Shop', 'Moving Company', 'Trucking',
+    'Limousine Service', 'Auto Glass',
   ],
   '💻 Tech & Digital': [
     'IT Services', 'Web Design', 'Software Development',
     'Cyber Security', 'Data Recovery', 'Phone Repair',
+    'IT Support', 'AI Consulting',
   ],
   '🏋️ Fitness & Wellness': [
     'Gym', 'Yoga Studio', 'Pilates', 'Personal Trainer',
     'Spa', 'Nail Salon', 'Hair Salon', 'Barber Shop',
+    'Tanning Salon', 'Tattoo Studio',
   ],
   '🏗️ Construction': [
     'General Contractor', 'Cabinet Maker', 'Concrete', 'Demolition',
     'Fencing', 'Masonry', 'Insulation', 'Drywall',
+    'Excavation', 'Paving',
   ],
   '📦 Retail & Commerce': [
     'Grocery Store', 'Clothing Store', 'Furniture Store',
     'Pet Store', 'Bookstore', 'Gift Shop', 'Hardware Store',
+    'Jewellery Store', 'Electronics Store',
   ],
   '🎓 Education': [
     'Tutoring', 'Driving School', 'Music School',
     'Childcare', 'Preschool', 'Language School',
+    'Art Classes', 'Dance Studio',
   ],
 };
 
 const ALL_INDUSTRIES = Object.values(INDUSTRY_GROUPS).flat();
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function StarRating({ rating }: { rating?: number }) {
   if (!rating) return null;
   const full  = Math.floor(rating);
@@ -128,9 +132,131 @@ function getHostname(url: string) {
   } catch { return url; }
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Industry Combobox (rendered in a portal-like absolute, no overflow clip) ─
+interface IndustrySelectProps {
+  value:    string;
+  onChange: (v: string) => void;
+  disabled: boolean;
+}
+
+function IndustrySelect({ value, onChange, disabled }: IndustrySelectProps) {
+  const [search, setSearch]   = useState('');
+  const [open, setOpen]       = useState(false);
+  const containerRef          = useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setSearch('');
+      }
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative w-full">
+      {/* Trigger */}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setOpen(o => !o)}
+        className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm rounded-xl border transition-all outline-none ${
+          open
+            ? 'border-teal-500 ring-2 ring-teal-500/25 bg-slate-900'
+            : 'border-slate-700 bg-slate-900/80 hover:border-slate-600'
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+      >
+        <Building2 className="w-4 h-4 text-teal-400 flex-shrink-0" />
+        <span className={`flex-1 text-left truncate ${value ? 'text-white' : 'text-slate-500'}`}>
+          {value || 'Select industry…'}
+        </span>
+        {value && (
+          <X
+            className="w-3.5 h-3.5 text-slate-500 hover:text-rose-400 flex-shrink-0"
+            onClick={e => { e.stopPropagation(); onChange(''); setSearch(''); }}
+          />
+        )}
+        <ChevronDown className={`w-4 h-4 text-slate-500 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {/* Dropdown — rendered OUTSIDE button but inside container (no overflow clip parent) */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            transition={{ duration: 0.12 }}
+            className="absolute left-0 right-0 top-full mt-1 bg-slate-950 border border-slate-700 rounded-xl shadow-2xl overflow-hidden"
+            style={{ zIndex: 9999, maxWidth: '380px' }}
+          >
+            {/* Search inside dropdown */}
+            <div className="p-2 border-b border-slate-800 bg-slate-950 sticky top-0">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="Search all industries…"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 text-sm bg-slate-900 border border-slate-700 rounded-lg text-white outline-none focus:border-teal-500 transition-colors"
+                />
+              </div>
+              <p className="text-[10px] text-slate-600 mt-1 px-0.5">{ALL_INDUSTRIES.length} industries across {Object.keys(INDUSTRY_GROUPS).length} categories</p>
+            </div>
+
+            {/* Grouped list */}
+            <div className="overflow-y-auto" style={{ maxHeight: '280px' }}>
+              {/* Custom value option */}
+              {search && !ALL_INDUSTRIES.some(i => i.toLowerCase() === search.toLowerCase()) && (
+                <div
+                  className="px-3 py-2.5 text-sm text-teal-400 hover:bg-teal-500/10 cursor-pointer border-b border-slate-800 flex items-center gap-2"
+                  onClick={() => { onChange(search); setOpen(false); setSearch(''); }}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Use &quot;{search}&quot; as custom industry
+                </div>
+              )}
+
+              {Object.entries(INDUSTRY_GROUPS).map(([group, items]) => {
+                const filtered = items.filter(i => i.toLowerCase().includes(search.toLowerCase()));
+                if (filtered.length === 0) return null;
+                return (
+                  <div key={group}>
+                    <p className="px-3 py-1 text-[9px] font-black text-slate-500 uppercase tracking-widest bg-slate-900/60 border-b border-slate-800/50">
+                      {group}
+                    </p>
+                    {filtered.map(industry => (
+                      <div
+                        key={industry}
+                        className={`px-4 py-2 text-sm cursor-pointer transition-colors ${
+                          value === industry
+                            ? 'bg-teal-500/20 text-teal-300 font-semibold'
+                            : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                        }`}
+                        onClick={() => { onChange(industry); setOpen(false); setSearch(''); }}
+                      >
+                        {industry}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function OmniLeadFinder() {
-  // ── Search State ──────────────────────────────────────────────────────────
+  // ── Search params ────────────────────────────────────────────────────────
   const [niche,        setNiche        ] = useState('');
   const [location,     setLocation     ] = useState('');
   const [usePlaywright, setUsePlaywright] = useState(false);
@@ -138,30 +264,28 @@ export default function OmniLeadFinder() {
   const [results,      setResults      ] = useState<ScrapedLead[]>([]);
   const [progress,     setProgress     ] = useState({ percent: 0, message: '' });
   const [sourceStats,  setSourceStats  ] = useState<Record<string, number>>({});
+  const [viewMode,     setViewMode     ] = useState<'grid' | 'map'>('grid');
 
   const { currentTenant } = useTenant();
 
-  // ── Filter State (5 Filters) ──────────────────────────────────────────────
-  const [filterText,   setFilterText   ] = useState('');           // 1. text search
-  const [filterRating, setFilterRating ] = useState(0);            // 2. min star rating (0 = off)
-  const [filterSource, setFilterSource ] = useState<SourceFilter>('all'); // 3. source
-  const [filterPhone,  setFilterPhone  ] = useState(false);        // 4. has phone
-  const [filterEmail,  setFilterEmail  ] = useState(false);        // 5. has email
-  const [filtersOpen,  setFiltersOpen  ] = useState(false);
-  const [viewMode,     setViewMode     ] = useState<'grid' | 'map'>('grid');
-  const [industrySearch,   setIndustrySearch  ] = useState('');
-  const [showIndustryDrop, setShowIndustryDrop] = useState(false);
+  // ── Post-search result filters ───────────────────────────────────────────
+  const [filterText,   setFilterText  ] = useState('');
+  const [filterRating, setFilterRating] = useState(0);
+  const [filterSource, setFilterSource] = useState<SourceFilter>('all');
+  const [filterPhone,  setFilterPhone ] = useState(false);
+  const [filterEmail,  setFilterEmail ] = useState(false);
 
-  // Active filter count badge
   const activeFilterCount = [
-    filterText.length > 0,
-    filterRating > 0,
-    filterSource !== 'all',
-    filterPhone,
-    filterEmail,
+    filterText.length > 0, filterRating > 0,
+    filterSource !== 'all', filterPhone, filterEmail,
   ].filter(Boolean).length;
 
-  // ── Filtered Results (all 5 filters applied) ──────────────────────────────
+  const clearFilters = () => {
+    setFilterText(''); setFilterRating(0);
+    setFilterSource('all'); setFilterPhone(false); setFilterEmail(false);
+  };
+
+  // ── Filtered results ──────────────────────────────────────────────────────
   const filteredResults = useMemo(() => {
     const q = filterText.toLowerCase();
     return results.filter(lead => {
@@ -181,425 +305,299 @@ export default function OmniLeadFinder() {
     const toastId = toast.loading(`Syncing ${lead.business_name}…`);
     try {
       const { error } = await businessClientService.createClient(currentTenant.id, {
-        name:        lead.business_name,
-        email:       lead.emails?.[0] || '',
-        phone:       lead.phone || '',
-        website:     lead.website,
-        salesStage:  'lead',
-        industry:    niche,
-        description: lead.snippet || `Lead via ${lead.source?.toUpperCase() || 'Omni Search'}`,
+        name: lead.business_name, email: lead.emails?.[0] || '',
+        phone: lead.phone || '', website: lead.website,
+        salesStage: 'lead', industry: niche,
+        description: lead.snippet || `Lead via ${lead.source?.toUpperCase()}`,
       });
       if (error) throw new Error(error);
-      toast.success('Lead synchronized to CRM!', { id: toastId });
+      toast.success('Lead synced to CRM!', { id: toastId });
     } catch (err: any) {
-      toast.error(err.message || 'Failed to save lead', { id: toastId });
+      toast.error(err.message || 'Failed to save', { id: toastId });
     }
   };
 
   // ── Search ────────────────────────────────────────────────────────────────
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!niche) return toast.error('Please enter an industry or niche');
+    if (!niche) return toast.error('Please select an industry');
 
-    setScanning(true);
-    setResults([]);
-    setSourceStats({});
-    setProgress({ percent: 15, message: `Querying Yelp · HERE Maps · OpenStreetMap for "${niche}"…` });
+    setScanning(true); setResults([]); setSourceStats({}); clearFilters();
+    setProgress({ percent: 15, message: `Querying Yelp · HERE · OpenStreetMap for "${niche}"…` });
 
     try {
-      const searchRes = await fetch('/api/scraper/search', {
-        method:  'POST',
+      const res = await fetch('/api/scraper/search', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ niche, location, usePlaywright }),
+        body: JSON.stringify({ niche, location, usePlaywright }),
       });
 
-      setProgress({ percent: 60, message: 'Aggregating directory results…' });
-      const searchData = await searchRes.json();
+      setProgress({ percent: 60, message: 'Aggregating results…' });
+      const data = await res.json();
 
-      if (!searchData.success || !searchData.results?.length) {
-        throw new Error(searchData.error || 'No results found from any directory.');
+      if (!data.success || !data.results?.length) {
+        throw new Error(data.error || 'No results found. Try a different city or industry.');
       }
 
-      if (searchData.sources) setSourceStats(searchData.sources);
-
-      // Map API results → ScrapedLead with status
-      const leads: ScrapedLead[] = searchData.results.map((r: any) => ({
-        ...r,
-        status: r.emails?.length ? 'success' : 'pending',
+      if (data.sources) setSourceStats(data.sources);
+      const leads: ScrapedLead[] = data.results.map((r: any) => ({
+        ...r, status: r.emails?.length ? 'success' : 'pending',
       }));
 
       setResults(leads);
-      setProgress({ percent: 100, message: 'Complete' });
-      toast.success(`Found ${leads.length} leads from ${Object.values(searchData.sources || {}).filter(Boolean).length} sources!`);
+      setProgress({ percent: 100, message: 'Done' });
+      toast.success(`Found ${leads.length} leads!`);
     } catch (err: any) {
-      toast.error(err.message || 'Search failed. Check API keys or try a different location.');
+      toast.error(err.message || 'Search failed');
     } finally {
-      setTimeout(() => setScanning(false), 800);
+      setTimeout(() => setScanning(false), 600);
     }
-  };
-
-  const clearFilters = () => {
-    setFilterText(''); setFilterRating(0);
-    setFilterSource('all'); setFilterPhone(false); setFilterEmail(false);
   };
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-5">
 
-      {/* ── Header + Search (unchanged from original) ── */}
-      <div className="flex flex-col justify-between items-start lg:flex-row lg:items-center p-4 bg-gradient-to-r from-teal-900/40 via-slate-900/40 to-slate-900/80 rounded-xl border border-teal-500/20 shadow-2xl backdrop-blur-xl relative overflow-hidden">
-        <div className="space-y-1 z-10 lg:pr-6">
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-teal-500/20 border border-teal-500/30 text-teal-300 text-[10px] font-semibold tracking-wider uppercase mb-0.5">
-            <Zap className="w-2.5 h-2.5 fill-current" /> Enterprise Engine
+      {/* ══ HEADER ══════════════════════════════════════════════════════════ */}
+      <div className="p-4 bg-gradient-to-r from-teal-900/40 via-slate-900/50 to-slate-900 rounded-xl border border-teal-500/20 shadow-xl backdrop-blur-xl">
+        <div className="flex items-start justify-between flex-wrap gap-3">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-teal-500/20 border border-teal-500/30 text-teal-300 text-[10px] font-bold tracking-wider uppercase mb-1">
+              <Zap className="w-2.5 h-2.5 fill-current" /> Enterprise Engine
+            </div>
+            <h1 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-teal-200 to-emerald-300">
+              AlphaClone Business Lead
+            </h1>
+            <p className="text-slate-400 text-xs mt-0.5">
+              Powered by Yelp · HERE Maps · OpenStreetMap — no 403 errors, always free.
+            </p>
           </div>
-          <h1 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-teal-200 to-emerald-300 tracking-tight">
-            AlphaClone Business Lead
-          </h1>
-          <p className="text-slate-400 max-w-md text-xs font-light leading-relaxed">
-            Universal acquisition engine — Yelp · HERE Maps · OpenStreetMap.{' '}
-            {usePlaywright ? 'Power Mode: Browser clusters active.' : 'Standard Mode: All directories active.'}
-          </p>
-          {/* Source stats pills */}
+          {/* Source result pills */}
           {Object.keys(sourceStats).length > 0 && (
-            <div className="flex items-center gap-2 pt-1 flex-wrap">
-              {Object.entries(sourceStats).map(([src, count]) => (
+            <div className="flex items-center gap-2 flex-wrap">
+              {Object.entries(sourceStats).map(([src, count]) =>
                 count > 0 ? (
-                  <span key={src} className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${SOURCE_COLORS[src] || 'text-slate-400 border-slate-700 bg-slate-800'}`}>
-                    {src.toUpperCase()}: {String(count)}
+                  <span key={src} className={`text-[9px] font-black px-2 py-1 rounded-full border ${SOURCE_COLORS[src] || 'text-slate-400 border-slate-700 bg-slate-800'}`}>
+                    {src.toUpperCase()}: {count}
                   </span>
                 ) : null
-              ))}
+              )}
             </div>
           )}
         </div>
+      </div>
 
-        <form onSubmit={handleSearch} className="mt-4 lg:mt-0 w-full lg:w-auto z-10 flex flex-col gap-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      {/* ══ SEARCH FORM (outside overflow-hidden, dropdown never clipped) ══ */}
+      <form onSubmit={handleSearch} className="space-y-3">
 
-            {/* ── Searchable Industry Dropdown ── */}
-            <div className="relative" style={{ zIndex: 50 }}>
-              <div
-                className={`flex items-center px-2.5 py-1.5 text-xs bg-slate-900/80 border rounded-lg cursor-pointer gap-1.5 transition-all ${
-                  showIndustryDrop ? 'border-teal-500 ring-2 ring-teal-500/30' : 'border-slate-700'
-                } ${scanning ? 'opacity-50 pointer-events-none' : ''}`}
-                onClick={() => setShowIndustryDrop(v => !v)}
-              >
-                <Search className="w-3 h-3 text-slate-500 flex-shrink-0" />
-                <span className={niche ? 'text-white' : 'text-slate-500'}>
-                  {niche || 'Select industry…'}
-                </span>
-                <ChevronDown className={`w-3 h-3 ml-auto text-slate-500 transition-transform ${showIndustryDrop ? 'rotate-180' : ''}`} />
-              </div>
+        {/* Row 1: Industry + City */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
-              {showIndustryDrop && (
-                <div className="absolute top-full mt-1 left-0 right-0 w-72 bg-slate-950 border border-slate-700 rounded-xl shadow-2xl overflow-hidden" style={{ zIndex: 9999 }}>
-                  {/* Search box inside dropdown */}
-                  <div className="p-2 border-b border-slate-800 sticky top-0 bg-slate-950">
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500" />
-                      <input
-                        autoFocus
-                        type="text"
-                        placeholder="Search all industries…"
-                        value={industrySearch}
-                        onChange={e => setIndustrySearch(e.target.value)}
-                        className="w-full pl-7 pr-2.5 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white outline-none focus:border-teal-500"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Grouped list */}
-                  <div className="max-h-64 overflow-y-auto">
-                    {/* Custom option */}
-                    {industrySearch && !ALL_INDUSTRIES.some(i => i.toLowerCase() === industrySearch.toLowerCase()) && (
-                      <div
-                        className="px-3 py-2 text-xs text-teal-400 hover:bg-teal-500/10 cursor-pointer border-b border-slate-800 flex items-center gap-2"
-                        onClick={() => { setNiche(industrySearch); setShowIndustryDrop(false); setIndustrySearch(''); }}
-                      >
-                        <Plus className="w-3 h-3" /> Use &quot;{industrySearch}&quot; as custom industry
-                      </div>
-                    )}
-
-                    {/* Filter entries by search, keep group structure */}
-                    {Object.entries(INDUSTRY_GROUPS).map(([group, items]) => {
-                      const filtered = items.filter(i =>
-                        i.toLowerCase().includes(industrySearch.toLowerCase())
-                      );
-                      if (filtered.length === 0) return null;
-                      return (
-                        <div key={group}>
-                          <p className="px-3 py-1.5 text-[9px] font-black text-slate-500 uppercase tracking-widest bg-slate-900/50 sticky">
-                            {group}
-                          </p>
-                          {filtered.map(industry => (
-                            <div
-                              key={industry}
-                              className={`px-4 py-1.5 text-xs cursor-pointer transition-colors ${
-                                niche === industry
-                                  ? 'bg-teal-500/20 text-teal-300 font-semibold'
-                                  : 'text-slate-300 hover:bg-slate-800'
-                              }`}
-                              onClick={() => {
-                                setNiche(industry);
-                                setShowIndustryDrop(false);
-                                setIndustrySearch('');
-                              }}
-                            >
-                              {industry}
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Clear selection */}
-                  {niche && (
-                    <div
-                      className="px-3 py-2 text-[10px] text-rose-400 hover:bg-rose-500/10 cursor-pointer border-t border-slate-800 flex items-center gap-1.5"
-                      onClick={() => { setNiche(''); setShowIndustryDrop(false); setIndustrySearch(''); }}
-                    >
-                      <X className="w-3 h-3" /> Clear selection
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* City input */}
-            <input
-              type="text" placeholder="City (e.g. Miami)"
-              value={location} onChange={e => setLocation(e.target.value)}
-              disabled={scanning}
-              className="px-2.5 py-1.5 text-xs bg-slate-900/80 border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 outline-none text-white transition-all shadow-inner w-full md:w-48"
-            />
+          {/* Industry — full searchable combobox, no clipping parent */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Building2 className="w-3 h-3 text-teal-400" /> Industry *
+            </label>
+            <IndustrySelect value={niche} onChange={setNiche} disabled={scanning} />
           </div>
 
-          {/* Power Mode toggle */}
-          <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-2 cursor-pointer group" onClick={() => !scanning && setUsePlaywright(!usePlaywright)}>
-              <div className={`w-7 h-3.5 rounded-full transition-colors relative ${usePlaywright ? 'bg-teal-500' : 'bg-slate-700'}`}>
-                <div className={`absolute top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-transform ${usePlaywright ? 'left-4' : 'left-0.5'}`} />
-              </div>
-              <span className={`text-[9px] font-bold uppercase tracking-widest ${usePlaywright ? 'text-teal-400' : 'text-slate-500'}`}>
-                Power Mode
-              </span>
+          {/* City */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <MapPin className="w-3 h-3 text-teal-400" /> City / Location
+            </label>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <input
+                type="text"
+                placeholder="e.g. Miami, London, Warsaw…"
+                value={location}
+                onChange={e => setLocation(e.target.value)}
+                disabled={scanning}
+                className="w-full pl-9 pr-3 py-2.5 text-sm bg-slate-900/80 border border-slate-700 rounded-xl focus:ring-2 focus:ring-teal-500/25 focus:border-teal-500 outline-none text-white transition-all hover:border-slate-600 disabled:opacity-50"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Row 2: Power Mode + Submit */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div
+            className={`flex items-center gap-2.5 cursor-pointer group select-none ${scanning ? 'opacity-40 pointer-events-none' : ''}`}
+            onClick={() => setUsePlaywright(v => !v)}
+          >
+            <div className={`w-9 h-5 rounded-full transition-colors relative flex-shrink-0 ${usePlaywright ? 'bg-teal-500' : 'bg-slate-700'}`}>
+              <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${usePlaywright ? 'translate-x-4' : 'translate-x-0.5'}`} />
+            </div>
+            <div>
+              <p className={`text-xs font-bold ${usePlaywright ? 'text-teal-400' : 'text-slate-500'}`}>Power Mode</p>
+              <p className="text-[9px] text-slate-600">Browser cluster extraction</p>
             </div>
           </div>
 
           <button
-            type="submit" disabled={scanning || !niche}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 mt-0.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-medium text-xs rounded-lg transition-all shadow-lg disabled:opacity-50"
+            type="submit"
+            disabled={scanning || !niche}
+            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-semibold text-sm rounded-xl transition-all shadow-lg shadow-teal-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {scanning ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Database className="w-3.5 h-3.5" />}
-            {scanning ? 'Scanning directories…' : 'Deploy Universal Engine'}
+            {scanning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
+            {scanning ? 'Scanning…' : 'Deploy Universal Engine'}
           </button>
-        </form>
-      </div>
+        </div>
+      </form>
 
-      {/* ── Progress Bar ── */}
+      {/* ══ PROGRESS BAR ════════════════════════════════════════════════════ */}
       <AnimatePresence>
         {scanning && (
           <motion.div
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-            className="p-3 bg-slate-900/50 rounded-lg border border-slate-800 overflow-hidden"
+            className="p-3 bg-slate-900/50 rounded-xl border border-slate-800 overflow-hidden"
           >
-            <div className="flex justify-between text-[10px] mb-1.5">
-              <span className="text-teal-300 font-mono flex items-center gap-1.5">
-                <RefreshCw className="w-3 h-3 animate-spin text-emerald-400" />
-                {progress.message}
+            <div className="flex justify-between text-[11px] mb-2">
+              <span className="text-teal-300 flex items-center gap-1.5">
+                <RefreshCw className="w-3 h-3 animate-spin text-emerald-400" /> {progress.message}
               </span>
               <span className="text-white font-mono font-bold">{progress.percent}%</span>
             </div>
-            <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+            <div className="w-full bg-slate-800 rounded-full h-1.5">
               <motion.div
                 className="bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 h-full rounded-full"
-                initial={{ width: 0 }} animate={{ width: `${progress.percent}%` }} transition={{ duration: 0.4 }}
+                animate={{ width: `${progress.percent}%` }} transition={{ duration: 0.4 }}
               />
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── 5 Filters Panel ── */}
+      {/* ══ POST-SEARCH FILTERS + VIEW TOGGLE (appear after results load) ══ */}
       {results.length > 0 && (
         <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-800 space-y-3">
 
-          {/* Filter Header Row */}
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setFiltersOpen(!filtersOpen)}
-              className="flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-teal-400" />
-              Filters
+          {/* Header row */}
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <Filter className="w-3.5 h-3.5 text-teal-400" />
+              <span className="text-xs font-bold text-slate-300">Filter Results</span>
               {activeFilterCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-teal-500 text-slate-950 text-[9px] font-black flex items-center justify-center">
+                <span className="w-5 h-5 rounded-full bg-teal-500 text-slate-950 text-[10px] font-black flex items-center justify-center">
                   {activeFilterCount}
                 </span>
               )}
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
-            </button>
-            <div className="flex items-center gap-3 text-[10px] text-slate-500">
-              <span>Found: <span className="text-white font-bold">{results.length}</span></span>
-              <span>Showing: <span className="text-teal-400 font-bold">{filteredResults.length}</span></span>
+            </div>
+            <div className="flex items-center gap-3 text-[11px] text-slate-500">
+              <span>Total: <b className="text-white">{results.length}</b></span>
+              <span>Showing: <b className="text-teal-400">{filteredResults.length}</b></span>
               {activeFilterCount > 0 && (
-                <button onClick={clearFilters} className="flex items-center gap-1 text-rose-400 hover:text-rose-300 transition-colors">
+                <button onClick={clearFilters} className="flex items-center gap-1 text-rose-400 hover:text-rose-300">
                   <X className="w-3 h-3" /> Clear
                 </button>
               )}
             </div>
           </div>
 
-          <AnimatePresence>
-            {filtersOpen && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
-              >
-                <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {/* Filter controls */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
 
-                  {/* Filter 1: Text Search */}
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Search</label>
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500" />
-                      <input
-                        type="text" placeholder="Name, email, category…"
-                        value={filterText} onChange={e => setFilterText(e.target.value)}
-                        className="w-full pl-7 pr-3 py-1.5 bg-slate-950/60 border border-slate-800 rounded-lg text-xs text-slate-200 focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Filter 2: Min Star Rating */}
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Min Rating</label>
-                    <div className="flex items-center gap-1">
-                      {[0, 1, 2, 3, 4, 5].map(r => (
-                        <button
-                          key={r}
-                          onClick={() => setFilterRating(r === filterRating ? 0 : r)}
-                          className={`flex items-center gap-0.5 px-2 py-1 rounded-md text-[10px] font-bold transition-all border ${
-                            filterRating === r
-                              ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
-                              : 'border-slate-800 text-slate-500 hover:border-slate-600'
-                          }`}
-                        >
-                          {r === 0 ? 'Any' : <><Star className={`w-3 h-3 ${filterRating >= r ? 'fill-amber-400 text-amber-400' : ''}`} />{r}+</>}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Filter 3: Source */}
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Directory Source</label>
-                    <div className="flex flex-wrap gap-1">
-                      {(['all', 'yelp', 'here', 'osm'] as SourceFilter[]).map(src => (
-                        <button
-                          key={src}
-                          onClick={() => setFilterSource(src)}
-                          className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all border ${
-                            filterSource === src
-                              ? 'bg-teal-500/20 border-teal-500/50 text-teal-300'
-                              : 'border-slate-800 text-slate-500 hover:border-slate-600'
-                          }`}
-                        >
-                          {SOURCE_LABELS[src]}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Filter 4: Has Phone */}
-                  <div className="flex items-center gap-3">
-                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Has Phone</label>
-                    <button
-                      onClick={() => setFilterPhone(!filterPhone)}
-                      className={`w-10 h-5 rounded-full transition-colors relative ${filterPhone ? 'bg-teal-500' : 'bg-slate-700'}`}
-                    >
-                      <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform shadow ${filterPhone ? 'left-5' : 'left-0.5'}`} />
-                    </button>
-                    {filterPhone && <span className="text-[10px] text-teal-400 font-medium">Active</span>}
-                  </div>
-
-                  {/* Filter 5: Has Email */}
-                  <div className="flex items-center gap-3">
-                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Has Email</label>
-                    <button
-                      onClick={() => setFilterEmail(!filterEmail)}
-                      className={`w-10 h-5 rounded-full transition-colors relative ${filterEmail ? 'bg-teal-500' : 'bg-slate-700'}`}
-                    >
-                      <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform shadow ${filterEmail ? 'left-5' : 'left-0.5'}`} />
-                    </button>
-                    {filterEmail && <span className="text-[10px] text-teal-400 font-medium">Active</span>}
-                  </div>
-
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Always-visible quick text filter when closed */}
-          {!filtersOpen && (
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
-              <input
-                type="text" placeholder="Quick filter results…"
-                value={filterText} onChange={e => setFilterText(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 bg-slate-950/50 border border-slate-800 rounded-lg text-xs text-slate-200 focus:ring-2 focus:ring-teal-500/30 outline-none"
-              />
+            {/* 1. Text search */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Search results</label>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                <input
+                  type="text" placeholder="Name, email, category…"
+                  value={filterText} onChange={e => setFilterText(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 bg-slate-950/60 border border-slate-800 rounded-lg text-sm text-slate-200 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all"
+                />
+              </div>
             </div>
-          )}
-        </div>
-      )}
 
-      {/* ── View Toggle ── */}
-      {filteredResults.length > 0 && (
-        <div className="flex items-center justify-between px-1">
-          <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
-            {filteredResults.length} result{filteredResults.length !== 1 ? 's' : ''}
-          </span>
-          <div className="flex items-center gap-1 bg-slate-900/70 rounded-lg p-0.5 border border-slate-800">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all ${
-                viewMode === 'grid'
-                  ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30'
-                  : 'text-slate-500 hover:text-slate-300'
-              }`}
-            >
-              <LayoutGrid className="w-3.5 h-3.5" /> Grid
-            </button>
-            <button
-              onClick={() => setViewMode('map')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all ${
-                viewMode === 'map'
-                  ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30'
-                  : 'text-slate-500 hover:text-slate-300'
-              }`}
-            >
-              <Map className="w-3.5 h-3.5" /> Map View
-            </button>
+            {/* 2. Source */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Directory Source</label>
+              <div className="flex flex-wrap gap-1">
+                {(['all', 'yelp', 'here', 'osm'] as SourceFilter[]).map(src => (
+                  <button key={src} onClick={() => setFilterSource(src)}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border ${
+                      filterSource === src
+                        ? 'bg-teal-500/20 border-teal-500/50 text-teal-300'
+                        : 'border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-300'
+                    }`}>
+                    {src === 'all' ? 'All' : src === 'osm' ? '🟢 OSM' : src === 'yelp' ? '🟠 Yelp' : '🔵 HERE'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 3. Min Rating */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Min Rating</label>
+              <div className="flex items-center gap-1">
+                {[0,1,2,3,4,5].map(r => (
+                  <button key={r} onClick={() => setFilterRating(r === filterRating ? 0 : r)}
+                    className={`flex items-center gap-0.5 px-1.5 py-1 rounded text-[11px] font-bold transition-all border ${
+                      filterRating === r
+                        ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
+                        : 'border-slate-800 text-slate-500 hover:border-slate-600'
+                    }`}>
+                    {r === 0 ? 'Any' : <>{r}★</>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 4. Has Phone */}
+            <div className="flex items-center gap-3 py-1">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider min-w-[70px]">Has Phone</label>
+              <button onClick={() => setFilterPhone(!filterPhone)}
+                className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${filterPhone ? 'bg-teal-500' : 'bg-slate-700'}`}>
+                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${filterPhone ? 'left-5' : 'left-0.5'}`} />
+              </button>
+              {filterPhone && <span className="text-[11px] text-teal-400">Active</span>}
+            </div>
+
+            {/* 5. Has Email */}
+            <div className="flex items-center gap-3 py-1">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider min-w-[70px]">Has Email</label>
+              <button onClick={() => setFilterEmail(!filterEmail)}
+                className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${filterEmail ? 'bg-teal-500' : 'bg-slate-700'}`}>
+                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${filterEmail ? 'left-5' : 'left-0.5'}`} />
+              </button>
+              {filterEmail && <span className="text-[11px] text-teal-400">Active</span>}
+            </div>
+
+          </div>
+
+          {/* View toggle */}
+          <div className="flex items-center justify-end pt-1 border-t border-slate-800/50">
+            <div className="flex items-center gap-1 bg-slate-950/70 rounded-lg p-0.5 border border-slate-800">
+              {(['grid', 'map'] as const).map(mode => (
+                <button key={mode} onClick={() => setViewMode(mode)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                    viewMode === mode
+                      ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}>
+                  {mode === 'grid' ? <><LayoutGrid className="w-3.5 h-3.5" /> Grid</> : <><Map className="w-3.5 h-3.5" /> Map</>}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── Map View ── */}
+      {/* ══ MAP VIEW ════════════════════════════════════════════════════════ */}
       {viewMode === 'map' && filteredResults.length > 0 && (
         <div className="space-y-2">
           <LeadMapView leads={filteredResults} />
           {filteredResults.filter(l => !l.lat).length > 0 && (
             <p className="text-[10px] text-slate-500 text-center">
-              {filteredResults.filter(l => !l.lat).length} lead{filteredResults.filter(l => !l.lat).length !== 1 ? 's' : ''} without coordinates not shown on map
+              {filteredResults.filter(l => !l.lat).length} leads without coordinates not shown on map
             </p>
           )}
         </div>
       )}
 
-      {/* ── Results Grid ── */}
+      {/* ══ GRID VIEW ═══════════════════════════════════════════════════════ */}
       {viewMode === 'grid' && filteredResults.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {filteredResults.map((lead, idx) => {
@@ -607,14 +605,14 @@ export default function OmniLeadFinder() {
             return (
               <motion.div
                 key={idx}
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.025 }}
-                className="group bg-slate-900/60 border border-slate-800 rounded-lg p-3.5 hover:border-teal-500/50 hover:bg-slate-800/80 transition-all duration-300 shadow-md hover:shadow-teal-500/10 flex flex-col"
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.02 }}
+                className="group bg-slate-900/60 border border-slate-800 rounded-xl p-3.5 hover:border-teal-500/50 hover:bg-slate-800/80 transition-all duration-300 shadow hover:shadow-teal-500/10 flex flex-col"
               >
-                {/* Card Header: Name + Source Badge */}
+                {/* Card header */}
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-start gap-2 flex-1 min-w-0">
-                    <div className="border border-slate-700 group-hover:border-teal-400 transition-colors rounded-lg p-0.5 bg-slate-800 flex-shrink-0">
-                      <Avatar name={lead.business_name} size={30} shape="rounded" className="rounded-md" />
+                    <div className="border border-slate-700 group-hover:border-teal-400 rounded-lg p-0.5 bg-slate-800 flex-shrink-0 transition-colors">
+                      <Avatar name={lead.business_name} size={28} shape="rounded" className="rounded-md" />
                     </div>
                     <div className="min-w-0">
                       <h3 className="text-white font-semibold text-sm leading-tight truncate group-hover:text-teal-300 transition-colors">
@@ -622,48 +620,33 @@ export default function OmniLeadFinder() {
                       </h3>
                       {domain && (
                         <a href={lead.website} target="_blank" rel="noreferrer"
-                          className="text-slate-400 text-[10px] hover:text-teal-400 flex items-center gap-1 mt-0.5 transition-colors truncate">
+                          className="text-slate-500 text-[10px] hover:text-teal-400 flex items-center gap-1 mt-0.5 transition-colors truncate">
                           <Globe className="w-2.5 h-2.5 flex-shrink-0" /> {domain}
                         </a>
                       )}
                     </div>
                   </div>
                   {lead.source && (
-                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border flex-shrink-0 uppercase ${SOURCE_COLORS[lead.source] || ''}`}>
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border flex-shrink-0 uppercase ml-1 ${SOURCE_COLORS[lead.source] || ''}`}>
                       {lead.source}
                     </span>
                   )}
                 </div>
 
-                {/* Rating */}
-                {lead.rating && (
-                  <div className="mb-1.5">
-                    <StarRating rating={lead.rating} />
-                  </div>
-                )}
+                {lead.rating && <div className="mb-1.5"><StarRating rating={lead.rating} /></div>}
+                {lead.category && <p className="text-[10px] text-slate-500 truncate mb-1">{lead.category}</p>}
 
-                {/* Category */}
-                {lead.category && (
-                  <p className="text-[10px] text-slate-500 truncate mb-2">{lead.category}</p>
-                )}
-
-                {/* Contact Details */}
+                {/* Contact */}
                 <div className="flex-grow space-y-1.5 py-2 border-t border-slate-800/50">
                   <div className="flex items-center gap-1.5">
                     <Mail className="w-3 h-3 text-slate-500 flex-shrink-0" />
-                    {lead.emails?.[0] ? (
-                      <span className="text-[10px] font-medium text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20 truncate">
-                        {lead.emails[0]}
-                      </span>
-                    ) : (
-                      <span className="text-[10px] text-slate-600">No email</span>
-                    )}
+                    {lead.emails?.[0]
+                      ? <span className="text-[10px] font-medium text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20 truncate">{lead.emails[0]}</span>
+                      : <span className="text-[10px] text-slate-600">No email</span>}
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Phone className="w-3 h-3 text-slate-500 flex-shrink-0" />
-                    <span className="text-[10px] text-slate-300 truncate">
-                      {lead.phone || <span className="text-slate-600">No phone</span>}
-                    </span>
+                    <span className="text-[10px] text-slate-300 truncate">{lead.phone || <span className="text-slate-600">No phone</span>}</span>
                   </div>
                   {lead.address && (
                     <div className="flex items-start gap-1.5">
@@ -673,12 +656,10 @@ export default function OmniLeadFinder() {
                   )}
                 </div>
 
-                {/* CRM Sync */}
-                <button
-                  onClick={() => handleSaveToCRM(lead)}
-                  className="w-full mt-2.5 flex items-center justify-center gap-1.5 py-1.5 hover:bg-teal-600/30 text-teal-400 hover:text-teal-300 font-medium text-[11px] rounded-lg border border-teal-500/20 hover:border-teal-500/50 transition-all"
-                >
-                  <Plus className="w-3.5 h-3.5" /> Sync CRM
+                {/* CRM sync */}
+                <button onClick={() => handleSaveToCRM(lead)}
+                  className="w-full mt-2.5 flex items-center justify-center gap-1.5 py-1.5 hover:bg-teal-600/20 text-teal-400 hover:text-teal-300 text-[11px] font-medium rounded-lg border border-teal-500/20 hover:border-teal-500/40 transition-all">
+                  <Plus className="w-3.5 h-3.5" /> Sync to CRM
                 </button>
               </motion.div>
             );
@@ -686,12 +667,12 @@ export default function OmniLeadFinder() {
         </div>
       )}
 
-      {/* ── Empty State ── */}
+      {/* ══ EMPTY FILTER STATE ═══════════════════════════════════════════════ */}
       {!scanning && results.length > 0 && filteredResults.length === 0 && (
         <div className="text-center py-10 text-slate-500">
           <Search className="w-8 h-8 mx-auto mb-2 opacity-30" />
           <p className="text-sm">No results match your filters.</p>
-          <button onClick={clearFilters} className="mt-2 text-xs text-teal-400 hover:text-teal-300 underline">Clear all filters</button>
+          <button onClick={clearFilters} className="mt-2 text-xs text-teal-400 hover:underline">Clear all filters</button>
         </div>
       )}
     </div>
