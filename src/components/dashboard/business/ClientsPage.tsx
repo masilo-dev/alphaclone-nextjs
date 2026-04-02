@@ -127,6 +127,30 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         }
     };
 
+    // ── One-click stage conversion (no modal) ────────────────────────────────
+    const STAGE_PIPELINE: { id: string; label: string; next?: string }[] = [
+        { id: 'lead',     label: 'Lead',     next: 'prospect' },
+        { id: 'prospect', label: 'Prospect', next: 'customer' },
+        { id: 'customer', label: 'Customer' },
+        { id: 'lost',     label: 'Lost' },
+    ];
+
+    const handleStageConvert = async (client: BusinessClient, newStage: string) => {
+        const prev = client.salesStage;
+        // Optimistic update
+        setClients(cs => cs.map(c => c.id === client.id ? { ...c, salesStage: newStage as any } : c));
+        if (selectedClient?.id === client.id) setSelectedClient(s => s ? { ...s, salesStage: newStage as any } : s);
+        const { error } = await businessClientService.updateClient(client.id, { salesStage: newStage as any });
+        if (error) {
+            // Rollback on error
+            setClients(cs => cs.map(c => c.id === client.id ? { ...c, salesStage: prev as any } : c));
+            if (selectedClient?.id === client.id) setSelectedClient(s => s ? { ...s, salesStage: prev as any } : s);
+            toast.error('Stage update failed');
+        } else {
+            toast.success(`${client.name} → ${newStage.charAt(0).toUpperCase() + newStage.slice(1)}`);
+        }
+    };
+
     const handleDeleteClient = async (clientId: string) => {
         if (!confirm('Are you sure you want to delete this client?')) return;
 
@@ -388,26 +412,41 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
                         {/* Client List */}
                         <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                            {filteredClients.map(client => (
+                            {filteredClients.map(client => {
+                                const nextStage = STAGE_PIPELINE.find(s => s.id === client.salesStage)?.next;
+                                return (
                                 <div
                                     key={client.id}
                                     onClick={() => setSelectedClient(client)}
-                                    className={`p-4 rounded-xl cursor-pointer transition-all border ${selectedClient?.id === client.id ? 'bg-teal-500/10 border-teal-500 shadow-sm shadow-teal-500/20' : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'}`}
+                                    className={`group p-3 rounded-xl cursor-pointer transition-all border ${selectedClient?.id === client.id ? 'bg-teal-500/10 border-teal-500 shadow-sm shadow-teal-500/20' : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'}`}
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white">
+                                        <div className="w-9 h-9 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-sm">
                                             {client.name.charAt(0)}
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <h3 className="font-semibold text-white truncate">{client.name}</h3>
-                                            {client.industry && <p className="text-xs text-slate-400 truncate">{client.industry}</p>}
+                                            <h3 className="font-semibold text-white text-sm truncate">{client.name}</h3>
+                                            {client.industry && <p className="text-[11px] text-slate-400 truncate">{client.industry}</p>}
                                         </div>
-                                        <Badge variant={client.salesStage === 'customer' ? 'success' : client.salesStage === 'lost' ? 'error' : 'blue'}>
-                                            {client.salesStage.charAt(0).toUpperCase() + client.salesStage.slice(1)}
-                                        </Badge>
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            {/* One-click convert button — visible on hover */}
+                                            {nextStage && (
+                                                <button
+                                                    onClick={e => { e.stopPropagation(); handleStageConvert(client, nextStage); }}
+                                                    className="opacity-0 group-hover:opacity-100 transition-opacity px-2 py-0.5 text-[10px] font-bold rounded-full bg-teal-500/20 border border-teal-500/40 text-teal-300 hover:bg-teal-500/40 hover:text-white whitespace-nowrap"
+                                                    title={`Convert to ${nextStage}`}
+                                                >
+                                                    → {nextStage.charAt(0).toUpperCase() + nextStage.slice(1)}
+                                                </button>
+                                            )}
+                                            <Badge variant={client.salesStage === 'customer' ? 'success' : client.salesStage === 'lost' ? 'error' : 'blue'}>
+                                                {client.salesStage.charAt(0).toUpperCase() + client.salesStage.slice(1)}
+                                            </Badge>
+                                        </div>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -496,6 +535,38 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         </div>
                                     </div>
                                 )}
+
+                                {/* ── Stage Pipeline — one-click convert ──── */}
+                                <div className="mb-6 shrink-0">
+                                    <h3 className="text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">Convert Stage</h3>
+                                    <div className="flex items-center gap-0 rounded-xl overflow-hidden border border-slate-800">
+                                        {STAGE_PIPELINE.map((stage, i) => {
+                                            const isActive = selectedClient.salesStage === stage.id;
+                                            const stageColors: Record<string, string> = {
+                                                lead: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+                                                prospect: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+                                                customer: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+                                                lost: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
+                                            };
+                                            return (
+                                                <button
+                                                    key={stage.id}
+                                                    onClick={() => !isActive && handleStageConvert(selectedClient, stage.id)}
+                                                    className={`flex-1 py-2 text-xs font-bold transition-all border-r border-slate-800 last:border-r-0 ${
+                                                        isActive
+                                                            ? stageColors[stage.id]
+                                                            : 'bg-slate-900 text-slate-500 hover:text-white hover:bg-slate-800'
+                                                    }`}
+                                                    disabled={isActive}
+                                                    title={isActive ? 'Current stage' : `Convert to ${stage.label}`}
+                                                >
+                                                    {isActive ? '● ' : ''}{stage.label}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <p className="text-[10px] text-slate-600 mt-1">Click any stage to convert instantly</p>
+                                </div>
 
                                 <div className="mt-auto">
                                     <h3 className="text-base font-semibold text-white mb-4">Quick Actions</h3>
