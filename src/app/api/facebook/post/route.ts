@@ -17,9 +17,21 @@ export async function POST(req: NextRequest) {
         .eq('is_active', true)
         .single();
 
-    const token = integration?.page_access_token || integration?.user_access_token;
+    if (!integration) {
+        return NextResponse.json({ error: 'Facebook page not connected. Please reconnect your Facebook account.' }, { status: 400 });
+    }
+
+    // IMPORTANT: Posting to a Facebook Page REQUIRES the Page Access Token.
+    // Using the User Access Token will always fail with the permissions error:
+    // "requires pages_read_engagement and pages_manage_posts".
+    // The Page Access Token is obtained during the OAuth callback via /me/accounts.
+    const token = integration.page_access_token;
+
     if (!token) {
-        return NextResponse.json({ error: 'Facebook page not connected — please reconnect your page to grant posting permissions' }, { status: 400 });
+        return NextResponse.json({
+            error: 'Page Access Token is missing. Please disconnect and reconnect your Facebook account to refresh permissions.',
+            action: 'reconnect',
+        }, { status: 400 });
     }
 
     const body: Record<string, string> = {
@@ -41,7 +53,24 @@ export async function POST(req: NextRequest) {
     });
 
     const data = await res.json();
-    if (data.error) return NextResponse.json({ error: data.error.message }, { status: 400 });
+
+    if (data.error) {
+        console.error('[Facebook Post] Graph API error:', data.error);
+
+        // Provide a helpful message for the specific permissions error (code 200)
+        if (data.error.code === 200 || data.error.message?.includes('pages_manage_posts')) {
+            return NextResponse.json({
+                error: 'Posting failed: your Facebook account needs to be reconnected to grant the required page permissions (pages_manage_posts). Please disconnect and reconnect your Facebook page.',
+                action: 'reconnect',
+                fb_error: data.error,
+            }, { status: 403 });
+        }
+
+        return NextResponse.json({
+            error: data.error.message || 'Failed to post to Facebook',
+            fb_error: data.error,
+        }, { status: 400 });
+    }
 
     return NextResponse.json({ success: true, post_id: data.id || data.post_id });
 }
