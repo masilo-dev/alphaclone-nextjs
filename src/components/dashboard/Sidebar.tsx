@@ -221,7 +221,8 @@ const Sidebar = React.memo<SidebarProps>(({
                                     <div className="ml-4 mt-0.5 pl-4 border-l border-slate-700/60 space-y-0.5">
                                         {item.subItems.map((sub: any, sIdx: number) => {
                                             const SubIcon = sub.icon;
-                                            const subActive = activeTab === sub.href || activeTab.startsWith(sub.href.split('?')[0]);
+                                            const subHref = sub.href.split('?')[0];
+                                            const subActive = activeTab === subHref;
                                             return (
                                                 <button
                                                     key={sIdx}
