@@ -200,10 +200,14 @@ export class ZohoMailService extends ZohoService {
 
         const { base } = await this.getMailBase();
         return await this.callZohoAPI(
-            `${base}/folders/${encodeURIComponent(currentFolderId)}/messages/${encodeURIComponent(messageId)}`,
+            `${base}/messages`,
             {
                 method: 'PUT',
-                body: JSON.stringify({ folderId: archiveFolder.folderId }),
+                body: JSON.stringify({ 
+                    mode: 'moveMessage',
+                    messageId: [messageId],
+                    destfolderId: archiveFolder.folderId
+                }),
             }
         );
     }
@@ -211,10 +215,13 @@ export class ZohoMailService extends ZohoService {
     async markAsRead(messageId: string, folderId: string, isRead = true) {
         const { base } = await this.getMailBase();
         return await this.callZohoAPI(
-            `${base}/folders/${encodeURIComponent(folderId)}/messages/${encodeURIComponent(messageId)}`,
+            `${base}/updatemessage`,
             {
                 method: 'PUT',
-                body: JSON.stringify({ status: isRead ? 'read' : 'unread' }),
+                body: JSON.stringify({ 
+                    mode: isRead ? 'markAsRead' : 'markAsUnRead',
+                    messageId: [messageId]
+                }),
             }
         );
     }
