@@ -55,6 +55,19 @@ const nextConfig: NextConfig = {
     config.output.chunkLoadTimeout = 180000; // 3 minutes (default is 120s)
     return config;
   },
+  async rewrites() {
+    return [
+      {
+        // Rewrite Facebook/WhatsApp webhook verification and event requests.
+        // Meta sends GET (verification) and POST (events) to the configured callback URL.
+        // Since /dashboard/business/facebook is a client-side UI route, we rewrite
+        // incoming webhook requests to the dedicated API handler.
+        source: '/dashboard/business/facebook',
+        destination: '/api/webhooks/facebook/whatsapp',
+      },
+    ];
+  },
+
   async headers() {
     const isDev = process.env.NODE_ENV === 'development';
     const cspHeader = `
