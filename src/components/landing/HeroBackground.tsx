@@ -280,6 +280,24 @@ export default function HeroBackground() {
       const r = n.radius * pulse;
       const alpha = n.opacity * pulse;
 
+      // JARVIS HUD EFFECT: Drawing rotating rings around nodes
+      if (n.isHub || Math.random() > 0.8) {
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, r * 3, 0, Math.PI * 2);
+        ctx.strokeStyle = `hsla(${n.hue}, 90%, 65%, ${alpha * 0.2})`;
+        ctx.setLineDash([2, 4]);
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // HUD Text Readout (Subtle)
+        if (n.isHub && Math.random() > 0.5) {
+            ctx.fillStyle = `hsla(${n.hue}, 90%, 80%, ${alpha * 0.4})`;
+            ctx.font = '7px JetBrains Mono, monospace';
+            ctx.fillText('OS_ACTIVE_SYS_STABLE', n.x + r * 4, n.y - r * 4);
+        }
+      }
+
       // Outer glow — hub gets a much larger aura
       const glowR = n.isHub ? r * 9 : r * 6;
       const glow = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, glowR);
@@ -321,6 +339,15 @@ export default function HeroBackground() {
       ctx.textBaseline = 'middle';
       ctx.fillText(n.label, n.x, py2 + ph / 2);
     }
+
+    // JARVIS SCAN LINE
+    const scanPos = (Date.now() % 4000) / 4000 * h;
+    ctx.beginPath();
+    ctx.moveTo(0, scanPos);
+    ctx.lineTo(w, scanPos);
+    ctx.strokeStyle = `rgba(20, 184, 166, 0.05)`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
 
     rafRef.current = requestAnimationFrame(drawFrame);
   }, [buildConnections]);

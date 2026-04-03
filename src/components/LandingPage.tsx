@@ -24,6 +24,7 @@ import dynamic from 'next/dynamic';
 import { Button } from './ui/UIComponents';
 import MarketingFooter from './landing/MarketingFooter';
 import { ServiceCard } from './landing/ServiceCard';
+import { AIWorkerGraphic } from './ui/AIWorkerGraphic';
 
 const HeroBackground = dynamic(() => import('./landing/HeroBackground'), {
    ssr: false,
@@ -112,7 +113,17 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
    return (
       <div className="min-h-screen page-network-bg text-slate-200 selection:bg-teal-500/30">
          {/* Persistent full-page animated network background */}
-         <div className="fixed inset-0 z-0 pointer-events-none">
+         <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+            {/* Base Jarvis Image Layer */}
+            <div 
+               className="absolute inset-0 bg-cover bg-center opacity-15 mix-blend-screen scale-110"
+               style={{ backgroundImage: 'url("/images/jarvis-bg.png")' }}
+            />
+            
+            {/* ICT Overlays: Scanlines & Vignette */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(2,6,23,0.8)_100%)] z-[1]" />
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.02),rgba(0,255,0,0.01),rgba(0,0,255,0.02))] z-[1] bg-[length:100%_3px,3px_100%] pointer-events-none opacity-20" />
+            
             <HeroBackground />
          </div>
 
@@ -279,7 +290,11 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
 
          <main>
             {/* Hero Section */}
-            <section id="home" className="relative min-h-[90vh] flex flex-col items-center justify-center overflow-hidden pt-12 sm:pt-20">
+            <section id="home" className="relative min-h-[95vh] flex flex-col items-center justify-center overflow-hidden pt-12 sm:pt-20">
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-[600px] opacity-40 z-0">
+                  <AIWorkerGraphic />
+               </div>
+               
                <motion.div 
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
@@ -433,33 +448,74 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                </div>
             </section>
 
-            {/* Who We Serve Section */}
-            <section className="py-16 bg-[#050B14]">
-               <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="text-center mb-10">
-                     <h2 className="text-3xl md:text-4xl font-black text-white mb-3 tracking-tight">
-                        Built for the <span className="text-teal-400">Ambitious</span>
+            {/* The Momentum Engine - Sequence of Business Section */}
+            <section className="py-24 relative overflow-hidden bg-slate-950/40 border-y border-slate-900">
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                  <div className="text-center mb-16">
+                     <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight">
+                        The <span className="text-teal-400">Momentum</span> Engine
                      </h2>
-                     <p className="text-base text-slate-400 max-w-xl mx-auto">
-                        For agencies, freelancers, and startups that want enterprise control without enterprise overhead.
+                     <p className="text-slate-400 max-w-2xl mx-auto text-lg">
+                        Business is a sequence. AlphaClone enforces the workflow that leads to revenue.
                      </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  <div className="relative">
+                     {/* Connecting Line (Desktop) */}
+                     <div className="hidden lg:block absolute top-[44px] left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-teal-500/30 to-transparent z-0" />
+                     
+                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-8 relative z-10">
+                        {[
+                           { step: '01', title: 'Find', desc: 'Auto-crawl high-intent leads.', icon: '🔍' },
+                           { step: '02', title: 'Contact', desc: 'AI outreach via SMS & AI.', icon: '⚡' },
+                           { step: '03', title: 'Track', desc: 'Monitor every handshake.', icon: '📊' },
+                           { step: '04', title: 'Close', desc: 'E-sign & lock in the deal.', icon: '✍️' },
+                           { step: '05', title: 'Invoice', desc: 'One-click billing & Stripe.', icon: '💰' },
+                           { step: '06', title: 'Execute', desc: 'Project boards & automation.', icon: '🚀' },
+                        ].map((item, idx) => (
+                           <motion.div 
+                              key={item.title}
+                              initial={{ opacity: 0, y: 20 }}
+                              whileInView={{ opacity: 1, y: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ delay: idx * 0.1 }}
+                              className="group text-center"
+                           >
+                              <div className="relative mb-6 mx-auto w-20 h-20 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-3xl group-hover:border-teal-500/50 group-hover:shadow-[0_0_20px_rgba(20,184,166,0.15)] transition-all">
+                                 <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-black text-teal-400 font-mono">
+                                    {item.step}
+                                 </div>
+                                 {item.icon}
+                              </div>
+                              <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
+                              <p className="text-slate-500 text-sm leading-relaxed">{item.desc}</p>
+                           </motion.div>
+                        ))}
+                     </div>
+                  </div>
+               </div>
+            </section>
+
+            {/* Who We Serve Section (Compact) */}
+            <section className="py-20 bg-[#050B14]">
+               <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                      {[
-                        { title: 'Agencies', desc: 'Scale client delivery without adding more software.', icon: Briefcase },
-                        { title: 'Freelancers', desc: 'Run a professional solo business with unified ops.', icon: UserIcon },
-                        { title: 'Startups', desc: 'Consolidate 10+ subscriptions into one Business OS.', icon: TrendingUp }
+                        { title: 'Agencies', desc: 'Unified ops for client delivery.', icon: Briefcase },
+                        { title: 'Freelancers', desc: 'Pro tools for solo makers.', icon: UserIcon },
+                        { title: 'Startups', desc: 'The OS for high-growth teams.', icon: TrendingUp }
                      ].map((item) => (
                         <div
                            key={item.title}
-                           className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-teal-500/40 transition-all"
+                           className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800/60 hover:border-teal-500/30 transition-all flex items-center gap-4"
                         >
-                           <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center mb-4">
+                           <div className="p-3 rounded-xl bg-teal-500/5 border border-teal-500/20">
                               <item.icon className="w-5 h-5 text-teal-400" />
                            </div>
-                           <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
-                           <p className="text-slate-400 text-sm">{item.desc}</p>
+                           <div>
+                              <h3 className="text-base font-bold text-white">{item.title}</h3>
+                              <p className="text-slate-500 text-xs mt-0.5">{item.desc}</p>
+                           </div>
                         </div>
                      ))}
                   </div>

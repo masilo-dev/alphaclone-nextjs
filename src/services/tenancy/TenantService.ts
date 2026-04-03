@@ -209,7 +209,7 @@ class TenantService {
     async getTenantUsers(tenantId: string): Promise<TenantUser[]> {
         const { data, error } = await supabase
             .from('tenant_users')
-            .select('*, users(*)')
+            .select('*, profiles(*)')
             .eq('tenant_id', tenantId);
 
         if (error) throw error;
@@ -350,10 +350,10 @@ class TenantService {
         return null;
     }
 
-    async getDashboardStats(tenantId: string): Promise<{ stats: any | null; error: string | null }> {
-        if (!tenantId) {
-            console.warn('getDashboardStats called without a valid tenantId');
-            return { stats: null, error: 'No tenant ID provided' };
+    async getDashboardStats(tenantId: string, userId: string): Promise<{ stats: any | null; error: string | null }> {
+        if (!tenantId || !userId) {
+            console.warn('getDashboardStats called with missing parameters', { tenantId, userId });
+            return { stats: null, error: 'Missing tenant or user ID' };
         }
 
         // --- Return cached stats immediately if fresh (< 60s old) ---
@@ -367,17 +367,17 @@ class TenantService {
                     if (Date.now() - ts < CACHE_TTL) {
                         console.log('[TenantService] Returning cached dashboard stats');
                         // Refresh in background after returning
-                        setTimeout(() => this.fetchAndCacheStats(tenantId, CACHE_KEY), 0);
+                        setTimeout(() => this.fetchAndCacheStats(tenantId, userId, CACHE_KEY), 0);
                         return { stats, error: null };
                     }
                 }
             }
         } catch (_) { /* ignore cache read errors */ }
 
-        return this.fetchAndCacheStats(tenantId, CACHE_KEY);
+        return this.fetchAndCacheStats(tenantId, userId, CACHE_KEY);
     }
 
-    private async fetchAndCacheStats(tenantId: string, cacheKey: string): Promise<{ stats: any | null; error: string | null }> {
+    private async fetchAndCacheStats(tenantId: string, userId: string, cacheKey: string): Promise<{ stats: any | null; error: string | null }> {
         const EMPTY_STATS = {
             totalRevenue: 0, clientCount: 0, activeProjects: 0,
             pendingInvoices: 0, overdueInvoices: 0, totalMessages: 0, pendingRevenue: 0,
@@ -393,7 +393,10 @@ class TenantService {
 
             // Execute the CONSOLIDATED RPC call - fetches everything in one pass
             const { data: rpcData, error: rpcError } = await Promise.race([
-                supabase.rpc('get_consolidated_dashboard_stats', { p_tenant_id: tenantId }),
+                supabase.rpc('get_consolidated_dashboard_stats', { 
+                    p_tenant_id: tenantId,
+                    p_user_id: userId
+                }),
                 timeout
             ]) as any;
 

@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS security_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    user_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
     event_type TEXT NOT NULL, -- 'login', 'logout', 'failed_login', 'data_access', 'settings_change', etc.
     ip_address TEXT NOT NULL,
     user_agent TEXT,

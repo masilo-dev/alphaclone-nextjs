@@ -6,6 +6,8 @@ import { EmptyState } from '../ui/EmptyState';
 import { Project, User, DashboardStat } from '../../types';
 import { useRouter } from 'next/navigation';
 import { AIPredictiveWidget } from './AIPredictiveWidget';
+import { MomentumHUD } from './MomentumHUD';
+import { motion } from 'framer-motion';
 
 interface HomeTabProps {
     user: User;
@@ -15,6 +17,11 @@ interface HomeTabProps {
     updateProjectStage: (id: string, stage: any) => void;
     STAGES: string[];
     onProjectClick: (id: string) => void;
+    // Momentum Metrics
+    momentumScore?: number;
+    loginStreak?: number;
+    activity24h?: number;
+    newLeads24h?: number;
 }
 
 const getGreeting = (): { text: string; Icon: any } => {
@@ -25,6 +32,9 @@ const getGreeting = (): { text: string; Icon: any } => {
     if (hour < 21) return { text: 'Good evening', Icon: Zap };
     return { text: 'Working late', Icon: Moon };
 };
+
+import { CelebrationOverlay } from '../ui/CelebrationOverlay';
+import { useState } from 'react';
 
 const TodayAgendaCard: React.FC<{ projects: Project[]; user: User }> = ({ projects, user }) => {
     const { text: greeting, Icon: GreetIcon } = useMemo(() => getGreeting(), []);
@@ -91,17 +101,50 @@ const HomeTab: React.FC<HomeTabProps> = ({
     isLoadingProjects,
     updateProjectStage,
     STAGES,
-    onProjectClick
+    onProjectClick,
+    momentumScore = 0,
+    loginStreak = 0,
+    activity24h = 0,
+    newLeads24h = 0
 }) => {
     const router = useRouter();
+    const [celebration, setCelebration] = useState<{ show: boolean, message: string }>({ 
+        show: false, 
+        message: '' 
+    });
+
+    const handleActionComplete = (message: string) => {
+        setCelebration({ show: true, message });
+    };
 
     return (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-6 animate-fade-in relative">
+            {/* Celebration Overlay */}
+            <CelebrationOverlay 
+                show={celebration.show} 
+                message={celebration.message}
+                onComplete={() => setCelebration(prev => ({ ...prev, show: false }))}
+            />
+
+            {/* Momentum HUD */}
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+            >
+                <MomentumHUD 
+                    score={momentumScore}
+                    streak={loginStreak}
+                    activity24h={activity24h}
+                    newLeads={newLeads24h}
+                />
+            </motion.div>
+
             {/* Today's Agenda Card */}
             <TodayAgendaCard projects={filteredProjects} user={user} />
 
             {/* 900% Automation: Mission Control Widget */}
-            <AIPredictiveWidget />
+            <AIPredictiveWidget onActionComplete={handleActionComplete} />
 
             {/* Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" data-tour="dashboard-overview">

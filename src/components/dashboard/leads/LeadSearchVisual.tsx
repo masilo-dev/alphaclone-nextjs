@@ -13,16 +13,21 @@ const LeadSearchVisual: React.FC<LeadSearchVisualProps> = ({ industry, location 
     const [statusText, setStatusText] = useState("Deploying AI Sales Agents...");
 
     // Memoize grid and targets to avoid purity errors during render
-    const gridItems = useMemo(() => Array.from({ length: 36 }).map(() => ({
-        hasBuilding: Math.random() > 0.6,
-        buildingHeight: Math.random() * 60 + 20,
-        delay: Math.random() * 2
-    })), []);
+    const [gridItems, setGridItems] = useState<any[]>([]);
+    const [targetPositions, setTargetPositions] = useState<any[]>([]);
 
-    const targetPositions = useMemo(() => Array.from({ length: 5 }).map(() => ({
-        left: Math.random() * 80 + 10,
-        top: Math.random() * 80 + 10
-    })), []);
+    useEffect(() => {
+        setGridItems(Array.from({ length: 36 }).map(() => ({
+            hasBuilding: Math.random() > 0.6,
+            buildingHeight: Math.random() * 60 + 20,
+            delay: Math.random() * 2
+        })));
+        
+        setTargetPositions(Array.from({ length: 5 }).map(() => ({
+            left: Math.random() * 80 + 10,
+            top: Math.random() * 80 + 10
+        })));
+    }, []);
 
     // Simulate progress and phase changes
     useEffect(() => {

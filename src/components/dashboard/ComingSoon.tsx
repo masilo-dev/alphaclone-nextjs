@@ -24,13 +24,18 @@ const ComingSoon: React.FC<ComingSoonProps> = ({ title, subtitle, videoUrl }) =>
     }, []);
 
     // Memoize particles to avoid purity errors during render
-    const particles = useMemo(() => [...Array(20)].map(() => ({
-        width: Math.random() * 4 + 2,
-        height: Math.random() * 4 + 2,
-        left: Math.random() * 100,
-        top: Math.random() * 100,
-        duration: Math.random() * 5 + 5
-    })), []);
+    const [particles, setParticles] = useState<any[]>([]);
+
+    useEffect(() => {
+        const newParticles = [...Array(20)].map(() => ({
+            width: Math.random() * 4 + 2,
+            height: Math.random() * 4 + 2,
+            left: Math.random() * 100,
+            top: Math.random() * 100,
+            duration: Math.random() * 5 + 5
+        }));
+        setParticles(newParticles);
+    }, []);
 
     return (
         <div className="relative w-full h-[calc(100vh-100px)] overflow-hidden rounded-[2.5rem] bg-slate-950 border border-white/5 flex items-center justify-center">

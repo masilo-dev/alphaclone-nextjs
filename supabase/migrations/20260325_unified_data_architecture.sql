@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS companies (
   last_contacted_at TIMESTAMPTZ,
 
   -- Assignment
-  assigned_to UUID REFERENCES users(id),
+  assigned_to UUID REFERENCES profiles(id),
 
   -- Flexible Data
   custom_fields JSONB DEFAULT '{}'::jsonb,
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS companies (
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  created_by UUID REFERENCES users(id),
+  created_by UUID REFERENCES profiles(id),
 
   -- Constraints
   CONSTRAINT domain_or_name_required CHECK (domain IS NOT NULL OR name IS NOT NULL)
@@ -115,7 +115,7 @@ CREATE TABLE IF NOT EXISTS contacts (
   preferred_contact_method TEXT DEFAULT 'email' CHECK (preferred_contact_method IN ('email', 'phone', 'sms', 'linkedin')),
 
   -- Assignment
-  assigned_to UUID REFERENCES users(id),
+  assigned_to UUID REFERENCES profiles(id),
 
   -- Flexible Data
   custom_fields JSONB DEFAULT '{}'::jsonb,
@@ -125,7 +125,7 @@ CREATE TABLE IF NOT EXISTS contacts (
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  created_by UUID REFERENCES users(id),
+  created_by UUID REFERENCES profiles(id),
 
   -- Constraints
   CONSTRAINT email_or_phone_required CHECK (email IS NOT NULL OR phone IS NOT NULL OR mobile_phone IS NOT NULL),
@@ -187,7 +187,7 @@ CREATE TABLE IF NOT EXISTS opportunities (
   competitor TEXT,
 
   -- Assignment
-  owner_id UUID REFERENCES users(id),
+  owner_id UUID REFERENCES profiles(id),
 
   -- Smart Tracking
   last_activity_at TIMESTAMPTZ,
@@ -203,7 +203,7 @@ CREATE TABLE IF NOT EXISTS opportunities (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   closed_at TIMESTAMPTZ,
-  created_by UUID REFERENCES users(id)
+  created_by UUID REFERENCES profiles(id)
 );
 
 -- Indexes for opportunities
@@ -254,8 +254,8 @@ CREATE TABLE IF NOT EXISTS activities (
   outcome TEXT,
 
   -- Actors
-  created_by UUID REFERENCES users(id),
-  assigned_to UUID REFERENCES users(id),
+  created_by UUID REFERENCES profiles(id),
+  assigned_to UUID REFERENCES profiles(id),
 
   -- Timing
   scheduled_at TIMESTAMPTZ,

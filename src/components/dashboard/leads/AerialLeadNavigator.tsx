@@ -36,11 +36,17 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
     const [isLoaded, setIsLoaded] = useState(false);
 
     // Memoize drone paths to avoid purity errors during render
-    const dronePositions = useMemo(() => Array.from({ length: 3 }).map((_, i) => ({
-        x: [Math.random() * 500, Math.random() * 800],
-        y: [Math.random() * 500, Math.random() * 800],
-        duration: 5 + i
-    })), []);
+    const [dronePositions, setDronePositions] = useState<any[]>([]);
+
+    useEffect(() => {
+        const newPositions = Array.from({ length: 3 }).map((_, i) => ({
+            x: [Math.random() * 500, Math.random() * 800],
+            y: [Math.random() * 300, Math.random() * 500],
+            duration: 10 + Math.random() * 10,
+            delay: i * 2
+        }));
+        setDronePositions(newPositions);
+    }, []);
 
     const apiKey = ENV.GOOGLE_API_KEY || '';
 

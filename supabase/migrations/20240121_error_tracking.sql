@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS failed_logins (
 CREATE TABLE IF NOT EXISTS error_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    user_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
     error_type TEXT NOT NULL, -- 'client_error', 'server_error', 'api_error'
     error_message TEXT NOT NULL,
     error_stack TEXT,

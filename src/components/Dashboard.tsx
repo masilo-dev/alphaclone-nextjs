@@ -95,6 +95,9 @@ const ClientsPage = React.lazy(() => import('./dashboard/business/ClientsPage'))
 
 const CustomVideoRoom = React.lazy(() => import('./dashboard/video/CustomVideoRoom'));
 
+import { MomentumHUD } from './dashboard/MomentumHUD';
+import { CelebrationOverlay } from './ui/CelebrationOverlay';
+
 // Zoho Components
 const ZohoMailView = React.lazy(() => import('./dashboard/zoho/ZohoMailView'));
 const ZohoCRMIntegration = React.lazy(() => import('./dashboard/zoho/ZohoCRMIntegration'));
@@ -460,10 +463,10 @@ const Dashboard: React.FC<DashboardProps> = ({
     if (lastTenantIdRef.current === currentTenant.id) return; // already loaded for this tenant
     lastTenantIdRef.current = currentTenant.id;
 
-    getDashboardStats(currentTenant.id).then(({ stats }) => {
+    getDashboardStats(currentTenant.id, user.id).then(({ stats }) => {
       if (stats) setDashboardStats(stats);
     }).catch(() => { /* stats are non-critical */ });
-  }, [currentTenant?.id]);
+  }, [currentTenant?.id, user.id]);
 
   // PRELOAD: Prefetch the most-visited lazy tabs sequentially in the background after mount
   // so they're already downloaded when the user clicks them (eliminates Suspense delay)
@@ -1548,6 +1551,10 @@ const Dashboard: React.FC<DashboardProps> = ({
             isLoadingProjects={isLoadingProjects}
             updateProjectStage={updateProjectStage}
             STAGES={STAGES}
+            momentumScore={dashboardStats?.momentumScore ?? 0}
+            loginStreak={dashboardStats?.loginStreak ?? 1}
+            activity24h={dashboardStats?.activity24h ?? 0}
+            newLeads24h={dashboardStats?.newLeads24h ?? 0}
             onProjectClick={(id) => {
               const project = filteredProjects.find(p => p.id === id);
               if (project) {
@@ -1849,19 +1856,31 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3">
-              {activeBgTasksCount > 0 && (
-                <div className="flex items-center gap-2 bg-slate-800/50 text-teal-400 px-3 py-1.5 rounded-full text-xs font-semibold animate-pulse border border-teal-500/30">
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span className="hidden sm:inline">{activeBgTasksCount} Task(s)</span>
-                </div>
-              )}
-              <EnhancedGlobalSearch
-                user={user}
-                onNavigate={router.push}
-              />
-              <ThemeToggle userId={user.id} />
-              <NotificationCenter userId={user.id} tenantId={currentTenant?.id || ''} />
+            <div className="flex items-center gap-4">
+              <div className="hidden md:flex items-center">
+                <MomentumHUD 
+                  score={dashboardStats?.momentumScore || 0}
+                  streak={dashboardStats?.loginStreak || 0}
+                  activity24h={dashboardStats?.activity24h || 0}
+                  newLeads={dashboardStats?.newLeads24h || 0}
+                  variant="global"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 sm:gap-3">
+                {activeBgTasksCount > 0 && (
+                  <div className="flex items-center gap-2 bg-slate-800/50 text-teal-400 px-3 py-1.5 rounded-full text-xs font-semibold animate-pulse border border-teal-500/30">
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span className="hidden sm:inline">{activeBgTasksCount} Task(s)</span>
+                  </div>
+                )}
+                <EnhancedGlobalSearch
+                  user={user}
+                  onNavigate={router.push}
+                />
+                <ThemeToggle userId={user.id} />
+                <NotificationCenter userId={user.id} tenantId={currentTenant?.id || ''} />
+              </div>
             </div>
           </div>
         </header>
@@ -1976,6 +1995,10 @@ const Dashboard: React.FC<DashboardProps> = ({
         isOpen={showProductTour}
         onComplete={() => setShowProductTour(false)}
         userRole={user.role}
+      />
+      <CelebrationOverlay 
+        trigger={false} 
+        onComplete={() => {}} 
       />
     </div>
   );

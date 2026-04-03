@@ -60,12 +60,16 @@ const ContractDraftingVisual: React.FC<ContractDraftingVisualProps> = ({
     const CurrentIcon = phases[phase].icon;
 
     // Memoize random positions to avoid purity errors during render
-    const docPositions = useMemo(() => Array.from({ length: 8 }).map(() => ({
-        x: Math.random() * 300 + 50,
-        y: Math.random() * 300 + 50,
-        rotateZ: Math.random() * 90 - 45,
-        duration: Math.random() * 2 + 2
-    })), []);
+    const [docPositions, setDocPositions] = useState<any[]>([]);
+
+    useEffect(() => {
+        setDocPositions(Array.from({ length: 8 }).map(() => ({
+            x: Math.random() * 300 + 50,
+            y: Math.random() * 300 + 50,
+            rotateZ: Math.random() * 90 - 45,
+            duration: Math.random() * 2 + 2
+        })));
+    }, []);
 
     return (
         <div className="absolute inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-indigo-500/30">
