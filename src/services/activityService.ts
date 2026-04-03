@@ -454,5 +454,24 @@ export const activityService = {
             .limit(limit);
 
         return { errorLogs: data, error };
+    },
+
+    /**
+     * Standardized system-wide audit logging
+     * Use this for critical business actions (deletions, exports, settings changes)
+     */
+    async logSystemAction(
+        userId: string,
+        action: 'DELETE' | 'EDIT' | 'EXPORT' | 'GENERATE' | 'SECURITY' | 'INTEGRATION' | 'EXECUTE' | 'AI_INSIGHTS',
+        details: string,
+        metadata: Record<string, any> = {},
+        tenantId?: string
+    ) {
+        return this.logActivity(userId, `SYSTEM_${action}`, {
+            ...metadata,
+            description: details,
+            timestamp: new Date().toISOString(),
+            isSystemAction: true
+        }, tenantId);
     }
 };

@@ -201,46 +201,79 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 currency: 'USD'
             };
 
+            console.log('Orchestrating invoice finalization...', invoiceData);
             const { invoice, error } = await businessInvoiceService.createInvoice(currentTenant.id, invoiceData as any);
 
             if (error) {
+                console.error('Core invoice creation failed:', error);
                 throw new Error(error);
             }
 
             if (invoice) {
+                console.log('Invoice created successfully, ID:', invoice.id);
                 setCreatedInvoiceId(invoice.id);
                 setCreatedInvoice(invoice);
 
-                // Auto-save PDF
-                try {
-                    const client = clients.find(c => c.id === finalClientId);
-                    // generatePDF(invoice: any, tenant: any, client: any, signature?: { type: 'draw' | 'type', data: string })
-                    const doc = businessInvoiceService.generatePDF(invoice, currentTenant, client, invoiceData.signature);
-                    const pdfBlob = doc.output('blob');
-                    
-                    const filename = `Invoice_${invoice.invoiceNumber || invoice.id}_${Date.now()}.pdf`;
-                    const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
-                    
-                    const uploadedFile = await fileUploadService.uploadFile(
-                        pdfFile,
-                        'invoice',
-                        invoice.id,
-                        currentTenant.id, // userId
-                        currentTenant.id, // tenantId
-                        {
-                            category: 'Invoices',
-                            tags: ['Automated', 'Invoice']
-                        }
-                    );
+                // Auto-save PDF - Wrapped in a non-blocking try-catch to prevent hanging
+                const autoSavePdf = async () => {
+                    try {
+                        const client = clients.find(c => c.id === finalClientId);
+                        console.log('Generating PDF for auto-save...', { invoiceId: invoice.id, invoiceNumber: invoice.invoiceNumber });
+                        
+                        // Set a timeout for the entire PDF/Upload operation
+                        const pdfGenerationPromise = (async () => {
+                            const doc = businessInvoiceService.generatePDF(invoice, currentTenant, client, invoiceData.signature);
+                            const pdfBlob = doc.output('blob');
+                            
+                            const filename = `Invoice_${invoice.invoiceNumber || invoice.id}_${Date.now()}.pdf`;
+                            const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
+                            
+                            console.log('Uploading generated PDF to Storage Hub...');
+                            const uploadedFile = await fileUploadService.uploadFile(
+                                pdfFile,
+                                'invoice',
+                                invoice.id,
+                                currentTenant.id, // userId
+                                currentTenant.id, // tenantId
+                                {
+                                    category: 'Invoices',
+                                    tags: ['Automated', 'Invoice', 'Finalized']
+                                }
+                            );
 
-                    if (uploadedFile && uploadedFile.success) {
-                        // We need the full file object for handleOpenFile, but uploadFile returns FileUploadResult
-                        // Let's fetch the file record or just pass enough info
-                        const { file: fullFile } = await fileUploadService.getFileInfo(uploadedFile.fileId!);
-                        setLastCreatedFile(fullFile);
+                            if (uploadedFile && uploadedFile.success) {
+                                console.log('PDF uploaded successfully, fileId:', uploadedFile.fileId);
+                                const { file: fullFile } = await fileUploadService.getFileInfo(uploadedFile.fileId!);
+                                setLastCreatedFile(fullFile);
+                            }
+                        })();
+
+                        // Timeout safety: 15 seconds max for PDF steps
+                        await Promise.race([
+                            pdfGenerationPromise,
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('PDF generation/upload timed out')), 15000))
+                        ]);
+
+                    } catch (pdfErr) {
+                        console.warn('Non-critical: Failed to auto-save invoice PDF, but invoice was created.', pdfErr);
+                        // We don't throw here to ensure the user can still see the success state
                     }
-                } catch (pdfErr) {
-                    console.error('Failed to auto-save invoice PDF:', pdfErr);
+                };
+
+                // Run PDF auto-save but don't strictly block the UI if it's already "Finalized" in DB
+                await autoSavePdf();
+
+                // Audit Trail
+                const { activityService } = await import('../../services/activityService');
+                const { data: { user } } = await (await import('../../lib/supabase')).supabase.auth.getUser();
+                if (user) {
+                    await activityService.logSystemAction(
+                        user.id,
+                        'GENERATE',
+                        `Finalized and processed invoice ${invoice.invoiceNumber}`,
+                        { invoiceId: invoice.id, amount: invoice.total },
+                        currentTenant.id
+                    );
                 }
 
                 setStep('success');
@@ -248,8 +281,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 onInvoiceCreated();
             }
         } catch (err: any) {
-            console.error('Invoice creation error:', err);
-            toast.error(err.message || 'Failed to create invoice');
+            console.error('Invoice finalization error:', err);
+            // Handle specific "Abort" or "Timeout" errors gracefully if needed
+            toast.error(err.message || 'Failed to finalize invoice. Please check your connection.');
         } finally {
             setIsSubmitting(false);
         }

@@ -6,8 +6,9 @@ import { createClient } from '@supabase/supabase-js';
 // This is a fast in-memory layer — Supabase is the durable store.
 const quotaCache = new Map<string, number>();
 
-const LEADS_PER_SEARCH  = 20;   // target per search
-const DAILY_LEAD_LIMIT  = 300;  // per-tenant / per-day ceiling (15 searches × 20)
+const LEADS_PER_SEARCH  = 20;   // default target per search
+const MAX_LEADS_BROAD    = 100;  // extended limit for global/broad searches
+const DAILY_LEAD_LIMIT  = 300;  // per-tenant / per-day ceiling
 
 // ─── Supabase admin client for quota writes ────────────────────────────────────
 function getAdminSupabase() {
@@ -124,31 +125,43 @@ async function fetchHERE(niche: string, location: string, limit = 20): Promise<L
 // OSM is always free. Always runs first. Widens bbox until targetMin VERIFIED leads found.
 // "Verified" = has phone OR email in OSM tags.
 async function fetchOpenStreetMap(niche: string, location: string, targetMin = 20): Promise<LeadResult[]> {
-  // Step 1: Nominatim → lat/lon
-  const nomRes = await fetch(
-    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location || 'United States')}&format=json&limit=1`,
-    {
-      headers: { 'User-Agent': 'AlphaClone-LeadFinder/1.0 (support@alphaclone.tech)' },
-      signal: AbortSignal.timeout(10000),
-    }
-  );
+  // 1. Nominatim → lat/lon (Using for free world-wide coverage)
+  const isGlobal = !location || /global|world|anywhere/i.test(location);
+  const geoQuery = isGlobal ? 'London, UK' : location; // Default to major hub if global
+  
+  const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(geoQuery)}&format=json&limit=1`;
+  const nomRes = await fetch(nomUrl, { 
+    headers: { 'User-Agent': 'AlphaClone-LeadFinder/1.0 (support@alphaclone.tech)' },
+    signal: AbortSignal.timeout(10000),
+  });
+  
   if (!nomRes.ok) throw new Error('Nominatim geocoding failed');
   const nomData = await nomRes.json();
-  if (!nomData[0]) throw new Error('OSM: location not found');
+  if (!nomData[0]) throw new Error(`OSM: location not found "${location}"`);
 
-  const { lat, lon } = nomData[0];
+  const centerLat = parseFloat(nomData[0].lat);
+  const centerLon = parseFloat(nomData[0].lon);
 
-  // Progressively widen bbox until we have targetMin VERIFIED (with contact info) leads
-  const deltas = [0.15, 0.3, 0.6, 1.2, 2.5]; // ~16/33/66/133/278 km radius
+  // 2. Adaptive Bounding Box (Progressively widen)
+  // For street-level precision, we start with a very small delta (0.01 deg ~= 1km)
+  // For broad queries like "California", we start much wider.
+  const isBroad = isGlobal || /state|province|country|usa|uk|canada|europe/i.test(location);
+  
+  // If location contains a comma (likely specific address/city) or is "Global", use specialized deltas
+  const deltas = isBroad 
+    ? [2.5, 5.0, 12.5] 
+    : (location.includes(',') ? [0.01, 0.05, 0.15, 0.5] : [0.15, 0.3, 0.6, 1.2, 2.5]);
+  
   let verifiedElements: any[] = [];
 
   for (const delta of deltas) {
-    const south = +lat - delta;
-    const west  = +lon - delta;
-    const north = +lat + delta;
-    const east  = +lon + delta;
-    // Fetch more than targetMin since we'll filter out no-contact-info ones
-    const fetchLimit = Math.max(targetMin * 4, 80);
+    const south = centerLat - delta;
+    const north = centerLat + delta;
+    const west  = centerLon - delta;
+    const east  = centerLon + delta;
+
+    // Increase fetch limit for broad searches to ensure density
+    const fetchLimit = isBroad ? 200 : Math.max(targetMin * 4, 80);
     const nicheEscaped = niche.replace(/["\\]/g, '');
 
     // Extended Overpass query: match by name OR by shop/amenity category

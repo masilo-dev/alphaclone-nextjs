@@ -147,6 +147,17 @@ const SubscriptionSection: React.FC<SubscriptionSectionProps> = ({ user, tenantI
                 throw new Error(data.error || 'Failed to create checkout session');
             }
 
+            // Audit Trail
+            import('../../services/activityService').then(({ activityService }) => {
+                activityService.logSystemAction(
+                    user.id,
+                    'INTEGRATION',
+                    `Initiated subscription checkout for ${plan.name} plan`,
+                    { planId: plan.id, priceId: plan.priceId },
+                    tenantId
+                );
+            });
+
             window.location.href = data.url;
         } catch (err: any) {
             console.error('Checkout error:', err);
@@ -327,6 +338,17 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                 console.error('Failed to auto-save PnL PDF to Document Hub:', uploadErr);
                 toast.success('P&L Report generated, but auto-save failed.', { id: 'pnl-gen' });
             }
+
+            // Audit Trail
+            import('../../services/activityService').then(({ activityService }) => {
+                activityService.logSystemAction(
+                    user.id,
+                    'GENERATE',
+                    `Generated monthly Profit & Loss report: ${fileName}`,
+                    { startDate, endDate, fileName },
+                    tenant.id
+                );
+            });
         } catch (err) {
             console.error('Failed to generate P&L:', err);
             toast.error('Failed to generate P&L Report', { id: 'pnl-gen' });
@@ -357,6 +379,17 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
             a.click();
             a.remove();
             toast.success(`${category.charAt(0).toUpperCase() + category.slice(1)} report exported`);
+
+            // Audit Trail
+            import('../../services/activityService').then(({ activityService }) => {
+                activityService.logSystemAction(
+                    user.id,
+                    'EXPORT',
+                    `Exported financial report (${type.toUpperCase()}): ${category}`,
+                    { type, category },
+                    tenant.id
+                );
+            });
         } catch (err) {
             console.error("Export error:", err);
             toast.error("Failed to export report");

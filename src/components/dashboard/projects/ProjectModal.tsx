@@ -55,6 +55,21 @@ export default function ProjectModal({ isOpen, onClose, clientId, ownerId, owner
             if (error) throw new Error(error);
 
             if (project) {
+                // 900% AUTOMATION: Trigger background auto-drafting
+                const { contractService } = await import('../../../services/contractService');
+                const { activityService } = await import('../../../services/activityService');
+                
+                // Fire and forget auto-draft (non-blocking)
+                contractService.autoDraftForProject(project.id).catch(err => console.error('Auto-draft failure:', err));
+
+                // Log project launch for audit trail
+                await activityService.logSystemAction(
+                    ownerId,
+                    'GENERATE',
+                    `Launched new project: ${project.name}`,
+                    { projectId: project.id, category: project.category }
+                );
+
                 toast.success(selectedTemplateId ? 'Project created with template!' : 'Project created!');
                 onSuccess(project);
                 onClose();

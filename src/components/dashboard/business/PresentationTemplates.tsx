@@ -156,7 +156,7 @@ export default function PresentationTemplates() {
     const [previewMode, setPreviewMode] = useState(false);
     const [currentSlide, setCurrentSlide] = useState(0);
     const [isExporting, setIsExporting] = useState(false);
-    const [exportFormat, setExportFormat] = useState<'pdf' | 'pptx'>('pdf');
+    const [exportFormat, setExportFormat] = useState<'pdf'>('pdf');
 
     const slideRef = useRef<HTMLDivElement>(null);
 
@@ -226,54 +226,6 @@ export default function PresentationTemplates() {
         }
     };
 
-    const exportToPPTX = async () => {
-        setIsExporting(true);
-        try {
-            // For now, we'll use a simple approach to create a PowerPoint-like experience
-            // In a real implementation, you would use a library like pptxgenjs
-            const htmlContent = `
-                <html>
-                    <head>
-                        <title>${selectedTemplate?.name || 'Presentation'}</title>
-                        <style>
-                            body { font-family: Arial, sans-serif; margin: 40px; }
-                            .slide { page-break-after: always; min-height: 600px; }
-                            h1 { color: ${selectedTemplate?.colors[selectedColor] || '#1e40af'}; font-size: 32px; }
-                            h2 { color: ${selectedTemplate?.colors[selectedColor] || '#1e40af'}; font-size: 24px; font-style: italic; }
-                            p { font-size: 18px; line-height: 1.6; }
-                            ul { font-size: 18px; }
-                        </style>
-                    </head>
-                    <body>
-                        ${slides.map(slide => `
-                            <div class="slide">
-                                <h1>${slide.title}</h1>
-                                ${slide.subtitle ? `<h2>${slide.subtitle}</h2>` : ''}
-                                ${slide.content.map(item => `<p>• ${item}</p>`).join('')}
-                            </div>
-                        `).join('')}
-                    </body>
-                </html>
-            `;
-
-            const blob = new Blob([htmlContent], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const printWindow = window.open(url, '_blank');
-            
-            if (printWindow) {
-                printWindow.onload = () => {
-                    printWindow.print();
-                };
-            }
-
-            toast.success('Presentation exported successfully!');
-        } catch (error) {
-            console.error('Error exporting to PowerPoint:', error);
-            toast.error('Failed to export presentation');
-        } finally {
-            setIsExporting(false);
-        }
-    };
 
     const renderSlideContent = (slide: SlideContent, index: number) => {
         const primaryColor = selectedTemplate?.colors[selectedColor] || '#1e40af';

@@ -11,6 +11,7 @@ const receiver = new Receiver({
 export async function POST(req: NextRequest) {
     // 1. Verify QStash signature (Optional but recommended for security)
     const signature = req.headers.get('upstash-signature');
+    let data: any;
     if (signature && process.env.QSTASH_CURRENT_SIGNING_KEY) {
         const body = await req.text();
         const isValid = await receiver.verify({
@@ -22,9 +23,9 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
         }
         // Re-parse body
-        var data = JSON.parse(body);
+        data = JSON.parse(body);
     } else {
-        var data = await req.json();
+        data = await req.json();
     }
 
     const { userId, messageId, folderId, replyText, senderEmail, logId } = data;

@@ -453,5 +453,102 @@ export const contractService = {
     downloadPDF(contract: any, tenant?: any) {
         const doc = this.generateProfessionalPDF(contract, tenant);
         doc.save(`${contract.title.replace(/\s+/g, '_')}.pdf`);
+    },
+
+    /**
+     * 900% AUTOMATION: Data-driven industry-agnostic drafting
+     */
+    async generateDeepContextDraft(params: {
+        projectId?: string,
+        clientId?: string,
+        type: 'NDA' | 'MSA' | 'SOW' | 'Contract-One-Page' | 'Full MSA',
+        tone?: 'Corporate' | 'Concise' | 'Consultative',
+        language?: string
+    }) {
+        const tenantId = this.getTenantId();
+        const { aiCore } = await import('@/services/core/AICore');
+
+        // Aggregating context (Projects, Clients, etc.)
+        const [
+            { data: project },
+            { data: client },
+            businessContext
+        ] = await Promise.all([
+            params.projectId ? supabase.from('projects').select('*').eq('id', params.projectId).single() : Promise.resolve({ data: null }),
+            params.clientId ? supabase.from('business_clients').select('*').eq('id', params.clientId).single() : Promise.resolve({ data: null }),
+            aiCore.getBusinessContext(tenantId)
+        ]);
+
+        const prompt = `
+        Draft a high-stakes, 100% professional ${params.type} in ${params.language || 'English'}.
+        Tone: ${params.tone || 'Corporate'}
+        
+        PARTIES:
+        Provider: ${businessContext}
+        Client: ${client?.name || 'Valued Client'} (ID: ${params.clientId || 'Unknown'})
+        
+        PROJECT CONTEXT:
+        Title: ${project?.name || 'Standard Engagement'}
+        Description: ${project?.description || 'Professional Services'}
+        Status: ${project?.status || 'Initiated'}
+        
+        LEGAL RULES:
+        - No placeholders like [INSERT NAME]
+        - No "As an AI..."
+        - No AI markers.
+        - High-stakes legal terminology appropriate for the identified industry.
+        - Industry-agnostic but context-aware clauses.
+        - Ensure a 100% human appearance.
+        `;
+
+        try {
+            const draft = await generateText(prompt);
+            const cleanDraft = aiCore.cleanProOutput(draft);
+
+            // Log the achievement
+            const { activityService } = await import('@/services/activityService');
+            await activityService.logSystemAction(
+                'system_ai',
+                'GENERATE',
+                `Auto-drafted ${params.type} for ${project?.name || 'Project'}`,
+                { projectId: params.projectId, type: params.type },
+                tenantId
+            );
+
+            return cleanDraft;
+        } catch (error) {
+            console.error('Deep Context Drafting failed:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * PROACTIVE TRIGGER: Auto-draft contract on project creation (900% automation)
+     */
+    async autoDraftForProject(projectId: string) {
+        try {
+            const { data: project } = await supabase.from('projects').select('tenant_id, client_id, name').eq('id', projectId).single();
+            if (!project) return;
+
+            const draft = await this.generateDeepContextDraft({
+                projectId,
+                clientId: project.client_id,
+                type: 'MSA',
+                tone: 'Corporate'
+            });
+
+            // Save the auto-draft to DB
+            await this.createContract({
+                project_id: projectId,
+                client_id: project.client_id,
+                title: `Auto-Draft: ${project.name} MSA`,
+                content: draft,
+                status: 'draft'
+            });
+
+            console.log(`[900% Automation] Auto-drafted contract for project ${projectId}`);
+        } catch (err) {
+            console.error('Auto-draft trigger failed:', err);
+        }
     }
 };

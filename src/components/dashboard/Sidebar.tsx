@@ -3,12 +3,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     LogOut, ChevronDown, ChevronRight, ShieldAlert, Activity, Loader2,
-    Sun, Moon
+    Sun, Moon, X
 } from 'lucide-react';
 import Image from 'next/image';
 import { LOGO_URL } from '../../constants';
 import { User } from '../../types';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useBackgroundTasks, BackgroundTask } from '@/contexts/BackgroundTaskContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface SidebarProps {
@@ -58,6 +60,7 @@ const Sidebar = React.memo<SidebarProps>(({
 }) => {
     const router = useRouter();
     const { languageFlag } = useLanguage();
+    const { tasks, dismissTask } = useBackgroundTasks();
 
     // ── ALL hooks must be declared before any conditional return ─────────
     const [theme, setTheme] = useState<ThemeMode>('dark');
@@ -256,18 +259,60 @@ const Sidebar = React.memo<SidebarProps>(({
                 {/* ── Bottom bar ── */}
                 <div className="p-4 border-t border-slate-800 bg-slate-900 mt-auto shrink-0">
 
-                    {/* Active tasks */}
-                    {activeBgTasksCount > 0 && (
-                        <div className={`mb-3 ${sidebarOpen ? 'px-3 py-2.5 bg-teal-500/5 border border-teal-500/20 rounded-xl flex items-center gap-3' : 'flex justify-center'}`}>
-                            <Loader2 className="w-4 h-4 text-teal-400 animate-spin flex-shrink-0" />
-                            {sidebarOpen && (
-                                <div className="min-w-0">
-                                    <p className="text-[9px] font-black uppercase text-teal-400 tracking-widest">Status</p>
-                                    <p className="text-xs text-slate-300 font-medium truncate">
-                                        {activeBgTasksCount} Task{activeBgTasksCount > 1 ? 's' : ''} running
-                                    </p>
+                    {/* Operations HUD (Integrated) */}
+                    {tasks.length > 0 && sidebarOpen && (
+                        <div className="mb-4 border border-teal-500/20 bg-teal-500/5 rounded-xl overflow-hidden">
+                            <div className="px-3 py-2 bg-teal-500/10 border-b border-teal-500/20 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Activity className="w-3.5 h-3.5 text-teal-400" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-teal-400">Operations</span>
                                 </div>
-                            )}
+                                <span className="px-1.5 py-0.5 rounded-md bg-teal-500/20 text-[9px] font-bold text-teal-300">
+                                    {tasks.filter(t => t.status === 'running').length} Active
+                                </span>
+                            </div>
+                            <div className="max-h-40 overflow-y-auto custom-scrollbar p-1.5 space-y-1">
+                                {tasks.map((task) => (
+                                    <div key={task.id} className="p-2 rounded-lg bg-slate-900/50 border border-slate-800 flex flex-col gap-1.5">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                {task.status === 'running' ? (
+                                                    <Loader2 className="w-3 h-3 text-teal-400 animate-spin" />
+                                                ) : task.status === 'completed' ? (
+                                                    <Activity className="w-3 h-3 text-emerald-400" />
+                                                ) : (
+                                                    <Activity className="w-3 h-3 text-rose-400" />
+                                                )}
+                                                <span className="text-[10px] font-bold text-slate-300 truncate">{task.name}</span>
+                                            </div>
+                                            {(task.status === 'completed' || task.status === 'error') && (
+                                                <button onClick={() => dismissTask(task.id)} className="p-1 hover:bg-slate-800 rounded">
+                                                    <X className="w-2.5 h-2.5 text-slate-500" />
+                                                </button>
+                                            )}
+                                        </div>
+                                        {task.status === 'running' && (
+                                            <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                                                <motion.div 
+                                                    className="h-full bg-teal-500"
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${task.progress || 50}%` }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Collapsed simple indicator */}
+                    {tasks.length > 0 && !sidebarOpen && (
+                        <div className="mb-4 flex flex-col items-center gap-2">
+                            <div className="relative">
+                                <Activity className="w-5 h-5 text-teal-400 animate-pulse" />
+                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-teal-500 rounded-full" />
+                            </div>
                         </div>
                     )}
 

@@ -459,6 +459,148 @@ Format as JSON with: successProbability (number), factors (array of {factor, imp
       throw error;
     }
   }
+
+  /**
+   * CONTEXT: Aggregates current business state for AI awareness
+   */
+  async getBusinessContext(tenantId: string): Promise<string> {
+    try {
+      const [
+        { data: tenant },
+        { data: projects },
+        { data: deals },
+        { data: clients },
+        { data: invoices }
+      ] = await Promise.all([
+        supabase.from('tenants').select('*').eq('id', tenantId).single(),
+        supabase.from('projects').select('*').eq('tenant_id', tenantId).limit(5),
+        supabase.from('deals').select('*').eq('tenant_id', tenantId).limit(5),
+        supabase.from('business_clients').select('*').eq('tenant_id', tenantId).limit(5),
+        supabase.from('invoices').select('*').eq('tenant_id', tenantId).eq('status', 'pending').limit(5)
+      ]);
+
+      return `
+Business Name: ${tenant?.name || 'Unknown'}
+Industry: ${tenant?.industry || 'General Business'}
+Active Projects: ${projects?.map((p: any) => p.name).join(', ') || 'None'}
+Recent Deals: ${deals?.map((d: any) => d.title).join(', ') || 'None'}
+Key Clients: ${clients?.map((c: any) => c.name).join(', ') || 'None'}
+Pending Revenue: ${invoices?.reduce((sum: number, inv: any) => sum + (inv.total || 0), 0) || 0} USD
+`;
+    } catch (error) {
+      console.error('Error fetching business context:', error);
+      return 'Context unavailable';
+    }
+  }
+
+  /**
+   * PROACTIVE: Generates "Mission Control" actions for 900% automation
+   */
+  async getProactiveInsights(tenantId: string): Promise<Array<{
+    type: 'action' | 'warning' | 'opportunity';
+    title: string;
+    description: string;
+    priority: 'low' | 'medium' | 'high';
+    actionLabel: string;
+    actionType: string;
+    metadata?: any;
+  }>> {
+    const contextText = await this.getBusinessContext(tenantId);
+    
+    const prompt = `
+You are the AlphaClone Autonomous Business Engine. Analyze the following business context and generate 3-5 PROACTIVE high-stakes actions.
+Your goal is 900% business automation (AI handles the heavy lifing).
+
+Context:
+${contextText}
+
+Return a JSON array of objects with:
+- type: "action" (standard task), "warning" (risk), "opportunity" (revenue)
+- title: Short punchy title
+- description: 1 sentence explanation
+- priority: "low", "medium", "high"
+- actionLabel: Button text (e.g., "Draft Contract", "Follow-up")
+- actionType: Identifier for the action (e.g., "DRAFT_CONTRACT", "CLIENT_FOLLOWUP")
+- metadata: Relevant IDs
+
+Invisible AI Rule: No "Based on the data". No conversation. Just the JSON. Handle any industry contextually.
+`;
+
+    try {
+      const result = await this.model.generateContent(prompt);
+      const response = result.response.text();
+      const jsonMatch = response.match(/\[[\s\S]*\]/);
+      
+      const insights = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+      
+      // Log for audit trail
+      if (typeof window !== 'undefined') {
+        const { activityService } = await import('@/services/activityService');
+        await activityService.logSystemAction(
+          'system_ai',
+          'AI_INSIGHTS',
+          `Generated ${insights.length} proactive business insights`,
+          { insightCount: insights.length },
+          tenantId
+        );
+      }
+
+      return insights;
+    } catch (error) {
+      console.error('Proactive insights failed:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 900% AUTOMATION: Generate lead outreach email
+   */
+  async generateLeadOutreach(lead: any): Promise<{ subject: string; body: string }> {
+    const prompt = `
+You are the AlphaClone High-Stakes Growth Engine. Generate a personalized, high-converting outreach email for this lead.
+Lead Name: ${lead.name}
+Industry: ${lead.industry || 'Business Services'}
+Description: ${lead.description || 'Professional engagement'}
+Website: ${lead.website || 'N/A'}
+
+Rules:
+1. Invisible AI: No conversational fluff, no [Placeholders], no "As an AI".
+2. Hook: Start with a specific, industry-relevant value proposition.
+3. Call to Action: Professional and low-friction.
+4. Tone: High-Stakes Corporate / Professional intro.
+5. Return Format: JSON object with "subject" and "body". No other text.
+`;
+
+    try {
+      const result = await this.model.generateContent(prompt);
+      const response = result.response.text();
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      const data = jsonMatch ? JSON.parse(jsonMatch[0]) : { subject: 'Strategic Partnership Inquiry', body: 'I would like to discuss how we can support your business growth.' };
+      
+      // Clean the body to ensure 100% human finish
+      data.body = this.cleanProOutput(data.body);
+      
+      return data;
+    } catch (error) {
+      console.error('Lead outreach generation failed:', error);
+      return { subject: 'Strategic Introduction', body: `I followed your work in the ${lead.industry || 'industry'} and would love to introduce our services.` };
+    }
+  }
+
+  /**
+   * CLEANER: Removes AI identifiers for a 100% human finish
+   */
+  cleanProOutput(text: string): string {
+    return text
+      // Remove AI conversational prefixes
+      .replace(/^(Certainly|Here is|Sure|I have generated|As an AI|Please find|This is a draft|Subject:|Note:).*/gi, '')
+      // Replace common AI placeholders with real-looking defaults or empty space
+      .replace(/\[Client Name\]/g, 'Valued Partner')
+      .replace(/\[Your Name\]/g, '') // Usually handled by signature
+      .replace(/\[.*?\]/g, '') // Remove remaining [Placeholders]
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
+  }
 }
 
 // Singleton instance

@@ -170,12 +170,77 @@ export const businessClientService = {
                 if (!quotaSuccess) {
                     console.warn('Failed to increment lead quota:', quotaError);
                 }
+                
+                // 900% AUTOMATION: Trigger background outreach drafting
+                // Non-blocking so consumer doesn't wait
+                this.autoDraftOutreach(newClient.id).catch(e => console.error('Auto-draft background err:', e));
             }
 
             return { client: newClient, error: null };
         } catch (err: any) {
             console.error('Error creating client:', err);
             return { client: null, error: err.message };
+        }
+    },
+
+    /**
+     * 900% AUTOMATION: Auto-draft email outreach for a lead
+     */
+    async autoDraftOutreach(clientId: string) {
+        try {
+            const { data: lead, error } = await supabase
+                .from('business_clients')
+                .select('*')
+                .eq('id', clientId)
+                .single();
+
+            if (error || !lead) return;
+
+            // Generate draft using AI Core
+            const { aiCore } = await import('./core/AICore');
+            const draft = await aiCore.generateLeadOutreach({
+                name: lead.name,
+                industry: lead.industry,
+                description: lead.description,
+                website: lead.website
+            });
+
+            // Update lead with draft in custom_fields
+            const newCustomFields = {
+                ...(lead.custom_fields || {}),
+                ai_outreach_draft: draft
+            };
+
+            await supabase
+                .from('business_clients')
+                .update({ custom_fields: newCustomFields })
+                .eq('id', clientId);
+
+            console.log(`[900% Automation] Auto-drafted outreach for lead: ${lead.name}`);
+        } catch (err) {
+            console.error('Auto-draft outreach failed:', err);
+        }
+    },
+
+    /**
+     * Get user signature for email
+     */
+    async getUserSignature(userId: string): Promise<string> {
+        try {
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('name, custom_fields')
+                .eq('id', userId)
+                .single();
+
+            if (profile?.custom_fields?.signature) {
+                return profile.custom_fields.signature;
+            }
+
+            // Default professional signature
+            return `\n\nBest regards,\n${profile?.name || 'Managing Director'}\nAlphaClone Business OS`;
+        } catch (err) {
+            return `\n\nBest regards,\nAlphaClone Business OS`;
         }
     },
 

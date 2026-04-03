@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Mail, Send, X, Loader2, CheckCircle2, User, Search, Users, ChevronDown } from 'lucide-react';
+import { Mail, Send, X, Loader2, CheckCircle2, User, Search, Users, ChevronDown, MailCheck } from 'lucide-react';
 import { Button, Input, Modal } from '../../ui/UIComponents';
 import { BusinessClient, businessClientService } from '../../../services/businessClientService';
 import { supabase } from '../../../lib/supabase';
@@ -14,78 +14,47 @@ interface CommunicationModalProps {
     onSent: () => void;
 }
 
-export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client: initialClient, user, onClose, onSent }) => {
+type EmailProvider = 'gmail' | 'zoho' | null;
+ 
+export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, user, onClose, onSent }) => {
+    const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(client || null);
     const [subject, setSubject] = useState('');
     const [body, setBody] = useState('');
     const [isSending, setIsSending] = useState(false);
-    const [provider, setProvider] = useState<'gmail' | null>(null);
-    const [loadingProvider, setLoadingProvider] = useState(true);
+    const [selectedProvider, setSelectedProvider] = useState<EmailProvider>(null);
+    const [loadingProvider, setLoadingProvider] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [clients, setClients] = useState<BusinessClient[]>([]);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-    // Contact picker state
-    const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(initialClient || null);
-    const [contacts, setContacts] = useState<BusinessClient[]>([]);
-    const [contactSearch, setContactSearch] = useState('');
-    const [showPicker, setShowPicker] = useState(false);
-    const pickerRef = useRef<HTMLDivElement>(null);
+    const [signature, setSignature] = useState('');
 
-    const filteredContacts = contacts.filter(c =>
-        c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
-        (c.email || '').toLowerCase().includes(contactSearch.toLowerCase())
-    );
-
-    // Load client contacts
+    // Load signature
     useEffect(() => {
-        const load = async () => {
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                const uid = user?.id || session?.user?.id;
-                if (!uid) return;
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('tenant_id')
-                    .eq('id', uid)
-                    .single();
-                if (!profile?.tenant_id) return;
-                const { clients } = await businessClientService.getClients(profile.tenant_id, 1, 100);
-                setContacts(clients.filter(c => !!c.email));
-            } catch (e) {
-                console.warn('Could not load contacts:', e);
-            }
+        const fetchSignature = async () => {
+            const sig = await businessClientService.getUserSignature(user.id);
+            setSignature(sig);
         };
-        load();
-    }, [user?.id]);
-
-    // Close picker on outside click
-    useEffect(() => {
-        const handler = (e: MouseEvent) => {
-            if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
-                setShowPicker(false);
-            }
-        };
-        document.addEventListener('mousedown', handler);
-        return () => document.removeEventListener('mousedown', handler);
-    }, []);
-
-    // Check connected email provider
-    useEffect(() => {
-        const checkConnections = async () => {
-            setLoadingProvider(true);
-            try {
-
-                const { data: integrations } = await supabase
-                    .from('integrations')
-                    .select('type')
-                    .eq('user_id', user.id);
-                const gmailConnected = integrations?.some((i: any) => i.type === 'gmail');
-                setProvider(gmailConnected ? 'gmail' : null);
-            } catch (err) {
-                console.error("Failed to check provider:", err);
-            } finally {
-                setLoadingProvider(false);
-            }
-        };
-        checkConnections();
+        fetchSignature();
     }, [user.id]);
+
+    // Handle AI Auto-drafting and Signature Appending
+    useEffect(() => {
+        if (selectedClient?.customFields?.ai_outreach_draft) {
+            const draft = selectedClient.customFields.ai_outreach_draft;
+            setSubject(draft.subject || '');
+            
+            // Only update body if it's currently empty to avoid overwriting user edits
+            // But always ensure signature is present if empty
+            if (!body) {
+                setBody(`${draft.body || ''}${signature}`);
+            }
+        } else if (selectedClient && !subject && !body) {
+            // Default template for non-draft clients
+            setSubject(`Strategic Update: ${selectedClient.name}`);
+            setBody(`Hello ${selectedClient.name.split(' ')[0]},\n\nI would like to follow up on our recent discussion...\n${signature}`);
+        }
+    }, [selectedClient, signature]);
 
     const handleSend = async () => {
         if (!selectedClient?.email) {
@@ -96,19 +65,44 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client: 
             toast.error("Subject and message body cannot be empty.");
             return;
         }
-        if (!provider) {
-            toast.error("No email provider connected. Please connect Gmail in settings.");
+        if (!selectedProvider) {
+            toast.error("No email provider connected. Please connect Zoho or Gmail in settings.");
             return;
         }
 
         setIsSending(true);
         try {
-            if (provider === 'gmail') {
+            if (selectedProvider === 'zoho') {
+                const response = await fetch('/api/zoho/mail', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        toAddress: selectedClient.email,
+                        subject: subject,
+                        content: body // Body already contains signature from useEffect
+                    })
+                });
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Failed to send via Zoho');
+                
+                // Audit log for outreach
+                await supabase.from('activity_logs').insert({
+                    user_id: user.id,
+                    type: 'EXECUTE',
+                    action: 'Email Sent',
+                    details: { to: selectedClient.email, subject, provider: 'zoho' }
+                });
+
+                toast.success("Email sent successfully via Zoho Mail!");
+                onSent();
+            } else if (selectedProvider === 'gmail') {
                 toast.success("Message drafting enabled. Active Gmail sending arriving in next sync.");
                 onSent();
             }
-        } catch (err) {
-            toast.error("Network error while sending email.");
+        } catch (err: any) {
+            console.error("Send error:", err);
+            toast.error(err.message || "Network error while sending email.");
         } finally {
             setIsSending(false);
         }
@@ -117,6 +111,26 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client: 
     return (
         <Modal isOpen={true} onClose={onClose} title="Send Email" maxWidth="max-w-2xl">
             <div className="space-y-6">
+                {/* Provider Selector if multiple exist */}
+                {availableProviders.length > 1 && (
+                    <div className="flex gap-2 p-1 bg-slate-900/50 rounded-xl border border-slate-800">
+                        {availableProviders.map(p => (
+                            <button
+                                key={p}
+                                onClick={() => setSelectedProvider(p)}
+                                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all ${
+                                    selectedProvider === p 
+                                    ? 'bg-teal-500 text-slate-950 shadow-lg shadow-teal-500/20' 
+                                    : 'text-slate-500 hover:text-slate-300'
+                                }`}
+                            >
+                                <MailCheck className="w-3.5 h-3.5" />
+                                {p === 'zoho' ? 'Zoho Mail' : 'Gmail'}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 {/* Recipient selector */}
                 <div ref={pickerRef}>
                     <label className="block text-sm font-medium text-slate-300 mb-2">Recipient</label>
@@ -221,8 +235,8 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client: 
                     <div className="text-slate-500 text-xs flex items-center gap-2">
                         {loadingProvider ? (
                             <><Loader2 className="w-3 h-3 animate-spin" /> Detecting provider...</>
-                        ) : provider ? (
-                            <><CheckCircle2 className="w-3 h-3 text-teal-500" /> Using Gmail to send securely</>
+                        ) : selectedProvider ? (
+                            <><CheckCircle2 className="w-3 h-3 text-teal-500" /> Using {selectedProvider === 'zoho' ? 'Zoho Mail' : 'Gmail'} to send securely</>
                         ) : (
                             <><span className="text-amber-500">⚠ No provider connected. Emails cannot be sent.</span></>
                         )}
@@ -233,7 +247,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client: 
                         </Button>
                         <Button
                             onClick={handleSend}
-                            disabled={isSending || loadingProvider || !selectedClient?.email || !provider}
+                            disabled={isSending || loadingProvider || !selectedClient?.email || !selectedProvider}
                             icon={isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                             className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold"
                         >

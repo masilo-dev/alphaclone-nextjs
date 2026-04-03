@@ -125,6 +125,19 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             setShowEditModal(false);
             setEditingClient(null);
             toast.success('Client updated successfully!');
+
+            // Audit Trail
+            if (currentTenant) {
+                import('../../../services/activityService').then(({ activityService }) => {
+                    activityService.logSystemAction(
+                        user.id,
+                        'EDIT',
+                        `Updated client details for ${updates.name || 'a contact'}`,
+                        { clientId, updates },
+                        currentTenant.id
+                    );
+                });
+            }
         } else {
             toast.error('Failed to update client');
         }
@@ -151,6 +164,19 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             toast.error('Stage update failed');
         } else {
             toast.success(`${client.name} → ${newStage.charAt(0).toUpperCase() + newStage.slice(1)}`);
+            
+            // Audit Trail
+            if (currentTenant) {
+                import('../../../services/activityService').then(({ activityService }) => {
+                    activityService.logSystemAction(
+                        user.id,
+                        'EDIT',
+                        `Converted ${client.name} stage from ${prev} to ${newStage}`,
+                        { clientId: client.id, prevStage: prev, newStage },
+                        currentTenant.id
+                    );
+                });
+            }
         }
     };
 
@@ -177,15 +203,42 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         XLSX.utils.book_append_sheet(wb, ws, 'Contacts');
         XLSX.writeFile(wb, `alphaclone-contacts-${Date.now()}.xlsx`);
         toast.success(`Exported ${filteredClients.length} contacts to Excel`);
+
+        // Audit Trail
+        if (currentTenant) {
+            import('../../../services/activityService').then(({ activityService }) => {
+                activityService.logSystemAction(
+                    user.id,
+                    'EXPORT',
+                    `Exported ${filteredClients.length} contacts to Excel database`,
+                    { count: filteredClients.length },
+                    currentTenant.id
+                );
+            });
+        }
     };
 
     const handleDeleteClient = async (clientId: string) => {
         if (!confirm('Are you sure you want to delete this client?')) return;
 
+        const clientToDelete = clients.find(c => c.id === clientId);
         const { error } = await businessClientService.deleteClient(clientId);
         if (!error) {
             setClients(clients.filter(c => c.id !== clientId));
             toast.success('Client deleted successfully!');
+
+            // Audit Trail
+            if (currentTenant) {
+                import('../../../services/activityService').then(({ activityService }) => {
+                    activityService.logSystemAction(
+                        user.id,
+                        'DELETE',
+                        `Permanently deleted client: ${clientToDelete?.name || clientId}`,
+                        { clientId, name: clientToDelete?.name },
+                        currentTenant.id
+                    );
+                });
+            }
         } else {
             toast.error('Failed to delete client');
         }

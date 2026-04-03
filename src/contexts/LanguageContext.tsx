@@ -6,9 +6,9 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 export type SupportedLanguage = 'en' | 'es' | 'pl';
 
 export const LANGUAGES: { code: SupportedLanguage; label: string; flag: string; nativeName: string }[] = [
-    { code: 'en', label: 'English',  flag: '🇬🇧', nativeName: 'English' },
-    { code: 'es', label: 'Spanish',  flag: '🇪🇸', nativeName: 'Español' },
-    { code: 'pl', label: 'Polish',   flag: '🇵🇱', nativeName: 'Polski'  },
+    { code: 'en', label: 'English', flag: '🇬🇧', nativeName: 'English' },
+    { code: 'es', label: 'Spanish', flag: '🇪🇸', nativeName: 'Español' },
+    { code: 'pl', label: 'Polish', flag: '🇵🇱', nativeName: 'Polski' },
 ];
 
 export const LANGUAGE_STORAGE_KEY = 'ac-language';
@@ -24,7 +24,7 @@ interface LanguageContextType {
 // Safe default so the hook never crashes even outside the provider
 const LanguageContext = createContext<LanguageContextType>({
     language: 'en',
-    setLanguage: () => {},
+    setLanguage: () => { },
     languageLabel: 'English',
     languageFlag: '🇬🇧',
 });
