@@ -135,6 +135,8 @@ const navigationSchema = {
   ],
 };
 
+import Script from "next/script";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -142,7 +144,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head />
+      <head>
+        <Script src="/lockdown-install.js" strategy="beforeInteractive" />
+      </head>
       <body
         className={`${inter.variable} antialiased text-base subpixel-antialiased font-sans`}
       >

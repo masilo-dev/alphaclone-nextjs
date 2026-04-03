@@ -13,6 +13,29 @@ import { useAuth } from '@/contexts/AuthContext';
 import MessengerInbox from '../messenger/MessengerInbox';
 import toast from 'react-hot-toast';
 
+// Specialized Error Boundary for Third-Party Integrations
+class FacebookErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(error: any, errorInfo: any) { console.error("[FacebookTab] Error:", error, errorInfo); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center p-12 text-center bg-slate-900/50 rounded-3xl border border-slate-800 backdrop-blur-xl">
+          <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+          <h2 className="text-xl font-bold text-white mb-2">Integration Sync Error</h2>
+          <p className="text-slate-400 mb-6">Facebook connection expired or blocked.</p>
+          <button onClick={() => window.location.reload()} className="px-6 py-2 bg-blue-600 text-white rounded-xl">Retry Connection</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 interface FacebookPage {
     id: string;
     page_id: string;
@@ -50,7 +73,15 @@ interface FacebookIntegrationTabProps {
     tenant: any;
 }
 
-export default function FacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabProps) {
+export default function FacebookIntegrationTab(props: FacebookIntegrationTabProps) {
+  return (
+    <FacebookErrorBoundary>
+      <InnerFacebookIntegrationTab {...props} />
+    </FacebookErrorBoundary>
+  );
+}
+
+function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabProps) {
     const [activeTab, setActiveTab] = useState<'leads' | 'messenger' | 'posts' | 'post' | 'pages' | 'setup'>('leads');
     const [pages, setPages] = useState<FacebookPage[]>([]);
     const [leads, setLeads] = useState<FacebookLead[]>([]);
@@ -61,6 +92,7 @@ export default function FacebookIntegrationTab({ user, tenant }: FacebookIntegra
     const [activityLoading, setActivityLoading] = useState(false);
     const [postsLoading, setPostsLoading] = useState(false);
     const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [reconnectRequired, setReconnectRequired] = useState(false);
 
     // Post form
     const [selectedPageId, setSelectedPageId] = useState('');
@@ -111,10 +143,15 @@ export default function FacebookIntegrationTab({ user, tenant }: FacebookIntegra
         setActivityLoading(true);
         try {
             const res = await fetch(`/api/facebook/activity?pageId=${pageId}`);
+            if (res.status === 401 || res.status === 403) {
+                setReconnectRequired(true);
+                toast.error('Facebook session expired. Please re-connect.');
+                return;
+            }
             const data = await res.json();
             if (data.activity) setActivities(data.activity);
         } catch (err) {
-            console.error('Failed to fetch activity:', err);
+            console.error('[Facebook] Failed to fetch activity:', err);
         } finally {
             setActivityLoading(false);
         }
@@ -125,10 +162,16 @@ export default function FacebookIntegrationTab({ user, tenant }: FacebookIntegra
         setPostsLoading(true);
         try {
             const res = await fetch(`/api/facebook/posts?pageId=${pageId}&limit=20`);
+            if (res.status === 401 || res.status === 403) {
+                setReconnectRequired(true);
+                toast.error('Facebook access denied. Re-authentication required.');
+                return;
+            }
             const data = await res.json();
             if (data.posts) setPagePosts(data.posts);
+            setReconnectRequired(false); // Reset if successful
         } catch (err) {
-            console.error('Failed to fetch page posts:', err);
+            console.error('[Facebook] Failed to fetch page posts:', err);
         } finally {
             setPostsLoading(false);
         }
@@ -251,7 +294,20 @@ export default function FacebookIntegrationTab({ user, tenant }: FacebookIntegra
                         <p className="text-sm text-slate-400">Lead Ads capture · Page posting · Client discovery</p>
                     </div>
                 </div>
-                {!isConnected ? (
+                {isConnected && !reconnectRequired ? (
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/30 rounded-lg">
+                        <CheckCircle2 className="w-4 h-4 text-green-400" />
+                        <span className="text-sm text-green-400 font-medium">Connected</span>
+                    </div>
+                ) : isConnected && reconnectRequired ? (
+                    <button
+                        onClick={handleConnect}
+                        className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-semibold text-sm transition-colors animate-pulse"
+                    >
+                        <AlertCircle className="w-4 h-4" />
+                        Re-connect Facebook
+                    </button>
+                ) : (
                     <button
                         onClick={handleConnect}
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold text-sm transition-colors"
@@ -259,11 +315,6 @@ export default function FacebookIntegrationTab({ user, tenant }: FacebookIntegra
                         <Facebook className="w-4 h-4" />
                         Connect Facebook
                     </button>
-                ) : (
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/30 rounded-lg">
-                        <CheckCircle2 className="w-4 h-4 text-green-400" />
-                        <span className="text-sm text-green-400 font-medium">Connected</span>
-                    </div>
                 )}
             </div>
 
@@ -659,6 +710,10 @@ export default function FacebookIntegrationTab({ user, tenant }: FacebookIntegra
                                                             alt="Post"
                                                             referrerPolicy="no-referrer"
                                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                            onError={(e) => {
+                                                                // Suppress broken Facebook CDN images that cause 403 console errors
+                                                                (e.target as HTMLImageElement).parentElement?.remove();
+                                                            }}
                                                         />
                                                     </div>
                                                 )}
@@ -673,7 +728,7 @@ export default function FacebookIntegrationTab({ user, tenant }: FacebookIntegra
                                                             {post.type || 'Post'}
                                                         </span>
                                                         <span className="text-[10px] text-slate-500">
-                                                            {post.created_time ? new Date(post.created_time).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                                                            {post.created_time ? new Date(post.created_time).toLocaleDateString() : ''}
                                                         </span>
                                                     </div>
                                                     <p className="text-sm text-slate-200 line-clamp-3 mb-3 leading-relaxed">

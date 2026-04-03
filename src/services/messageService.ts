@@ -323,15 +323,16 @@ export const messageService = {
     ) {
         const tenantId = this.getTenantId();
         if (!tenantId) {
-            console.warn('Realtime: Waiting for tenant ID...');
+            console.warn('[Realtime] Waiting for tenant ID...');
             return () => { };
         }
 
         // Create unique channel per user for better isolation
-        // Sanitize IDs to ensure valid channel name (alphanumeric, underscores, hyphens)
         const safeUserId = userId.replace(/[^a-zA-Z0-9-_]/g, '_');
         const safeTenantId = tenantId.replace(/[^a-zA-Z0-9-_]/g, '_');
         const channelName = `messages_${safeUserId}_${safeTenantId}`;
+
+        console.log(`[Realtime] Subscribing to messages for tenant: ${tenantId}, channel: ${channelName}`);
 
         const channel = supabase
             .channel(channelName)
@@ -376,19 +377,15 @@ export const messageService = {
             )
             .subscribe(async (status: string, err?: Error) => {
                 if (status === 'SUBSCRIBED') {
-                    console.log('✅ Subscribed to real-time messages (INSERT + UPDATE)');
+                    console.log(`✅ [Realtime] Subscribed to messages (INSERT + UPDATE) for ${tenantId}`);
                 } else if (status === 'CHANNEL_ERROR') {
-                    console.error('❌ Failed to subscribe to messages:', err?.message || 'Unknown channel error');
-                    console.error('Subscription details:', { tenantId, channelName });
-                    // Retry after 5s on error
-                    setTimeout(() => messageService.subscribeToMessages(userId, isAdmin, callback), 5000);
+                    console.error('❌ [Realtime] Failed to subscribe to messages:', err?.message || 'Unknown channel error');
+                    console.error('Subscription details:', { tenantId, channelName, error: err });
+                    // Potential mismatch between server and client bindings often manifests here
                 } else if (status === 'CLOSED') {
-                    console.log('Message subscription closed temporarily gracefully. Reconnecting...');
-                    // Reconnect after 3s
-                    setTimeout(() => messageService.subscribeToMessages(userId, isAdmin, callback), 3000);
+                    console.info('[Realtime] Message subscription closed. Reconnecting logic handled by Supabase SDK.');
                 } else if (status === 'TIMED_OUT') {
-                    console.error('❌ Message subscription timed out - retrying in 5s...');
-                    setTimeout(() => messageService.subscribeToMessages(userId, isAdmin, callback), 5000);
+                    console.error('❌ [Realtime] Message subscription timed out - check network or database load.');
                 }
             });
 

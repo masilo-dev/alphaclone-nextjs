@@ -256,64 +256,77 @@ const Dashboard: React.FC<DashboardProps> = ({
     : invoices.filter(i => i.clientId === user.id), [user.id, user.role, invoices]);
 
   // Stats Logic
-  // Stats Logic - REAL DATA ONLY (No Placeholders)
   const projectDays = useMemo(() => {
     if (filteredProjects.length === 0) return 0;
     const oldest = Math.min(...filteredProjects.map(p => new Date(p.createdAt || Date.now()).getTime()));
     return Math.floor((Date.now() - oldest) / (1000 * 60 * 60 * 24));
   }, [filteredProjects]);
 
-  const currentStats: DashboardStat[] = useMemo(() => user.role === 'admin' ? [
-    {
-      label: 'Total Clients',
-      value: (dashboardStats?.clientCount || totalClientCount).toString(),
-      icon: Users,
-      color: 'bg-indigo-600'
-    },
-    {
-      label: 'Active Projects',
-      value: (dashboardStats?.activeProjects || projects.filter(p => p.status === 'Active').length).toString(),
-      icon: Briefcase,
-      color: 'bg-teal-600'
-    },
-    {
-      label: 'Total Revenue',
-      value: `$${(dashboardStats?.totalRevenue || invoices.filter(i => i.status === 'Paid').reduce((acc: number, curr: Invoice) => acc + curr.amount, 0)).toLocaleString()}`,
-      icon: DollarSign,
-      color: 'bg-green-600'
-    },
-    {
-      label: 'Pending Requests',
-      value: (projects.filter(p => p.status === 'Pending').length).toString(),
-      icon: AlertCircle,
-      color: 'bg-orange-600'
-    },
-  ] : [
-    {
-      label: 'My Projects',
-      value: (filteredProjects.length).toString(),
-      icon: Briefcase,
-      color: 'bg-teal-600'
-    },
-    {
-      label: 'Messages',
-      value: (dashboardStats?.totalMessages || filteredMessages.length).toString(),
-      icon: UserIcon,
-      color: 'bg-blue-600'
-    },
-    {
-      label: 'Due Invoices',
-      value: `$${(dashboardStats?.pendingRevenue || filteredInvoices.filter(i => i.status === 'Unpaid').reduce((acc: number, curr: Invoice) => acc + curr.amount, 0)).toLocaleString()}`,
-      icon: DollarSign,
-      color: 'bg-yellow-600'
-    },
-    {
-      label: 'Project Days',
-      value: projectDays.toString(),
-      icon: Clock,
-      color: 'bg-purple-600'
-    }
-  ], [user.role, user.id, dashboardStats, totalClientCount, projects, invoices, filteredProjects, filteredMessages, filteredInvoices, projectDays]);
+  // Stats Logic - PRIORITIZE REAL DATA FROM RPC (No Placeholders)
+    const currentStats: DashboardStat[] = useMemo(() => {
+      const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
+      
+      if (isAdmin) {
+        return [
+          {
+            label: 'Total Clients',
+            value: (dashboardStats?.clientCount ?? 0).toString(),
+            icon: Users,
+            color: 'bg-indigo-600'
+          },
+          {
+            label: 'Active Projects',
+            value: (dashboardStats?.activeProjects ?? 0).toString(),
+            icon: Briefcase,
+            color: 'bg-teal-600'
+          },
+          {
+            label: 'Total Revenue',
+            value: `$${(dashboardStats?.totalRevenue ?? 0).toLocaleString()}`,
+            icon: DollarSign,
+            color: 'bg-green-600'
+          },
+          {
+            label: 'Pending Revenue',
+            value: `$${(dashboardStats?.pendingRevenue ?? 0).toLocaleString()}`,
+            icon: AlertCircle,
+            color: 'bg-orange-600'
+          },
+        ];
+      }
+
+    // Client View
+    const myProjectsCount = filteredProjects.length;
+    const myMessagesCount = dashboardStats?.totalMessages ?? filteredMessages.length;
+    const myDueRevenue = dashboardStats?.pendingRevenue ?? filteredInvoices.filter(i => i.status === 'Unpaid').reduce((acc: number, curr: Invoice) => acc + curr.amount, 0);
+    
+    return [
+      {
+        label: 'My Projects',
+        value: myProjectsCount.toString(),
+        icon: Briefcase,
+        color: 'bg-teal-600'
+      },
+      {
+        label: 'Messages',
+        value: myMessagesCount.toString(),
+        icon: MessageSquare,
+        color: 'bg-blue-600'
+      },
+      {
+        label: 'Due Invoices',
+        value: `$${myDueRevenue.toLocaleString()}`,
+        icon: DollarSign,
+        color: 'bg-yellow-600'
+      },
+      {
+        label: 'Project Days',
+        value: projectDays.toString(),
+        icon: Clock,
+        color: 'bg-purple-600'
+      }
+    ];
+  }, [user.role, dashboardStats, totalClientCount, projects, invoices, filteredProjects, filteredMessages, filteredInvoices, projectDays]);
 
   // Forms State
   const [newProject, setNewProject] = useState({ name: '', category: '', description: '', image: '' });

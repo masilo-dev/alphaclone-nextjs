@@ -386,98 +386,23 @@ class TenantService {
         };
 
         try {
-            const now = new Date().toISOString();
-            
-            // Race all queries against an 12-second timeout
+            // Race the optimized RPC against a 20-second timeout
             const timeout = new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('Stats query timeout')), 12000)
+                setTimeout(() => reject(new Error('Stats query timeout')), 20000)
             );
 
-            const queries = Promise.all([
-                supabase.from('projects').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-                supabase.from('business_clients').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-                supabase.from('leads').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-                supabase.from('deals').select('value, probability, expected_close_date, stage').eq('tenant_id', tenantId),
-                supabase.from('business_invoices').select('id, status, total, due_date').eq('tenant_id', tenantId),
-            ]);
+            // Execute the CONSOLIDATED RPC call - fetches everything in one pass
+            const { data: rpcData, error: rpcError } = await Promise.race([
+                supabase.rpc('get_consolidated_dashboard_stats', { p_tenant_id: tenantId }),
+                timeout
+            ]) as any;
 
-            const [
-                { count: totalProjects },
-                { count: totalClients },
-                { count: totalLeads },
-                { data: dealsData },
-                { data: invoiceData },
-            ] = await Promise.race([queries, timeout]) as any;
+            if (rpcError) throw rpcError;
 
-            const deals = dealsData || [];
-            const invoices = invoiceData || [];
-
-            // Invoice calculations
-            const totalRevenue = invoices
-                .filter((i: any) => i.status === 'paid')
-                .reduce((sum: number, i: any) => sum + parseFloat(i.total || 0), 0);
-            
-            const pendingInvoices = invoices.filter((i: any) => i.status === 'sent' || i.status === 'pending').length;
-            
-            const overdueInvoices = invoices.filter((i: any) => 
-                (i.status === 'sent' || i.status === 'pending' || i.status === 'overdue') && 
-                i.due_date && i.due_date < now.split('T')[0]
-            ).length;
-
-            const pendingRevenue = invoices
-                .filter((i: any) => ['pending', 'sent'].includes(i.status))
-                .reduce((sum: number, i: any) => sum + parseFloat(i.total || 0), 0);
-
-            // Deal calculations
-            const activeDeals = deals.filter((d: any) => !['closed_won', 'closed_lost'].includes(d.stage));
-            const totalDeals = deals.length;
-            
-            const weightedPipeline = activeDeals.reduce((sum: number, d: any) => {
-                const val = parseFloat(d.value || 0);
-                const prob = parseFloat(d.probability || 0) / 100;
-                return sum + (val * prob);
-            }, 0);
-
-            const salesForecast = deals
-                .filter((d: any) => d.stage === 'closed_won' || (!['closed_lost'].includes(d.stage) && d.expected_close_date && d.expected_close_date >= now.split('T')[0]))
-                .reduce((sum: number, d: any) => {
-                    const val = parseFloat(d.value || 0);
-                    const prob = d.stage === 'closed_won' ? 1 : (parseFloat(d.probability || 0) / 100);
-                    return sum + (val * prob);
-                }, 0);
-
-            // Monthly Revenue (last 6 months)
-            const monthlyRevenueMap = new Map();
-            const last6Months = Array.from({ length: 6 }, (_, i) => {
-                const d = new Date();
-                d.setMonth(d.getMonth() - i);
-                return d.toLocaleString('default', { month: 'short' });
-            }).reverse();
-
-            last6Months.forEach(m => monthlyRevenueMap.set(m, 0));
-
-            invoices.filter((i: any) => i.status === 'paid' && i.due_date).forEach((i: any) => {
-                const m = new Date(i.due_date).toLocaleString('default', { month: 'short' });
-                if (monthlyRevenueMap.has(m)) {
-                    monthlyRevenueMap.set(m, monthlyRevenueMap.get(m) + parseFloat(i.total || 0));
-                }
-            });
-
+            // Map and Enrich the stats from the RPC response
             const stats = {
-                totalRevenue: Math.round(totalRevenue * 100) / 100,
-                clientCount: totalClients || 0,
-                activeProjects: totalProjects || 0,
-                pendingInvoices,
-                overdueInvoices,
-                totalMessages: 0,
-                pendingRevenue: Math.round(pendingRevenue * 100) / 100,
-                totalLeads: totalLeads || 0,
-                totalDeals,
-                weightedPipeline: Math.round(weightedPipeline * 100) / 100,
-                salesForecast: Math.round(salesForecast * 100) / 100,
-                recentActivity: [],
-                monthlyRevenue: last6Months.map(m => ({ month: m, revenue: monthlyRevenueMap.get(m) })),
-                pipeline: {}
+                ...rpcData,
+                totalMessages: 0, // Not yet in RPC
             };
 
             // Cache the fresh stats

@@ -12,6 +12,7 @@ const CalendlySettings: React.FC = () => {
     const [manualUrl, setManualUrl] = useState('');
     const [showManual, setShowManual] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [reconnectRequired, setReconnectRequired] = useState(false);
 
     // New state for fetching event types and syncing
     const [eventTypes, setEventTypes] = useState<any[]>([]);
@@ -31,9 +32,14 @@ const CalendlySettings: React.FC = () => {
         setLoadingEvents(true);
         try {
             const res = await fetch(`/api/calendly/event-types?tenantId=${currentTenant?.id}`);
+            if (res.status === 401 || res.status === 403) {
+                setReconnectRequired(true);
+                return;
+            }
             if (res.ok) {
                 const data = await res.json();
                 setEventTypes(data.eventTypes || []);
+                setReconnectRequired(false);
             }
         } catch (error) {
             console.error('Failed to fetch event types:', error);
@@ -53,8 +59,14 @@ const CalendlySettings: React.FC = () => {
             });
 
             const data = await res.json();
+            if (res.status === 401 || res.status === 403) {
+                setReconnectRequired(true);
+                toast.error('Calendly session expired. Please reconnect.');
+                return;
+            }
             if (res.ok) {
                 toast.success(`Successfully synced ${data.syncedCount} new events!`);
+                setReconnectRequired(false);
             } else {
                 toast.error(data.error || 'Failed to sync events');
             }
@@ -150,6 +162,24 @@ const CalendlySettings: React.FC = () => {
                     Connect your Calendly account to enable the automated booking system, sync events to your dashboard, and manage your meetings.
                 </p>
             </div>
+
+            {reconnectRequired && (
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-between animate-pulse">
+                    <div className="flex items-center gap-3">
+                        <AlertCircle className="w-5 h-5 text-red-500" />
+                        <div>
+                            <p className="text-red-200 text-sm font-bold">Re-authentication Required</p>
+                            <p className="text-red-500/70 text-xs">Your Calendly connection has expired or been revoked.</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleConnect}
+                        className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-lg transition-all"
+                    >
+                        Reconnect Now
+                    </button>
+                </div>
+            )}
 
             <div className={`p-6 rounded-2xl border ${isConnected ? 'bg-teal-500/5 border-teal-500/20' : 'bg-slate-900/50 border-slate-800'}`}>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">

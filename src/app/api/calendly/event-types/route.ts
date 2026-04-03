@@ -36,7 +36,27 @@ export async function GET(req: Request) {
 
         if (!response.ok) {
             const errorText = await response.text();
-            return NextResponse.json({ error: `Calendly API error: ${response.status}`, details: errorText }, { status: response.status });
+            
+            if (response.status === 401) {
+                return NextResponse.json({ 
+                    error: 'Unauthorized', 
+                    code: 'CALENDLY_AUTH_INVALID',
+                    message: 'Calendly token is invalid or expired. Please re-connect.' 
+                }, { status: 401 });
+            }
+
+            if (response.status === 403) {
+                return NextResponse.json({ 
+                    error: 'Forbidden', 
+                    code: 'CALENDLY_ACCESS_DENIED',
+                    message: 'Your Calendly account does not have permission to access event types.' 
+                }, { status: 403 });
+            }
+
+            return NextResponse.json({ 
+                error: `Calendly API error: ${response.status}`, 
+                details: errorText 
+            }, { status: response.status });
         }
 
         const data = await response.json();
