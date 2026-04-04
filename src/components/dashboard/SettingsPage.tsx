@@ -485,96 +485,66 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             <div className="space-y-6">
                                 <div>
                                     <h3 className="text-lg font-bold text-white mb-4">Security Settings</h3>
-                                                    placeholder="Enter current password"
-                                                    value={passwordData.currentPassword}
-                                                    onChange={(e: any) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                                                />
-                                                <Input
-                                                    label="New Password"
-                                                    type="password"
-                                                    placeholder="Enter new password (min 8 characters)"
-                                                    value={passwordData.newPassword}
-                                                    onChange={(e: any) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                                                />
-                                                <Input
-                                                    label="Confirm New Password"
-                                                    type="password"
-                                                    placeholder="Confirm new password"
-                                                    value={passwordData.confirmPassword}
-                                                    onChange={(e: any) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                                                />
-                                                <Button
-                                                    size="sm"
-                                                    onClick={handleChangePassword}
-                                                    disabled={isSaving}
-                                                    className="bg-teal-600 hover:bg-teal-500"
-                                                >
-                                                    {isSaving ? (
-                                                        <>
-                                                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                                                            Updating...
-                                                        </>
-                                                    ) : (
-                                                        'Update Password'
-                                                    )}
-                                                </Button>
-                                            </div>
-                                        </div>
-
-                                        <div className="p-4 bg-slate-900 rounded-xl border border-slate-800">
-                                            <h4 className="text-white font-medium mb-2">Two-Factor Authentication</h4>
-                                            <p className="text-sm text-slate-400 mb-3">Add an extra layer of security to your account</p>
+                                    <div className="p-4 bg-slate-900 rounded-xl border border-slate-800">
+                                        <h4 className="text-white font-medium mb-3">Change Password</h4>
+                                        <div className="space-y-4">
+                                            <Input
+                                                label="Current Password"
+                                                type="password"
+                                                placeholder="Enter current password"
+                                                value={passwordData.currentPassword}
+                                                onChange={(e: any) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                                            />
+                                            <Input
+                                                label="New Password"
+                                                type="password"
+                                                placeholder="Enter new password (min 8 characters)"
+                                                value={passwordData.newPassword}
+                                                onChange={(e: any) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                            />
+                                            <Input
+                                                label="Confirm New Password"
+                                                type="password"
+                                                placeholder="Confirm new password"
+                                                value={passwordData.confirmPassword}
+                                                onChange={(e: any) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                            />
                                             <Button
-                                                variant="outline"
                                                 size="sm"
-                                                onClick={() => window.location.href = '/dashboard/security/2fa'}
-                                                className="w-full sm:w-auto"
+                                                onClick={handleChangePassword}
+                                                disabled={isSaving}
+                                                className="bg-teal-600 hover:bg-teal-500"
                                             >
-                                                Enable 2FA
+                                                {isSaving ? (
+                                                    <>
+                                                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                                        Updating...
+                                                    </>
+                                                ) : (
+                                                    'Update Password'
+                                                )}
                                             </Button>
-                                        </div>
-
-                                        <div className="p-4 bg-slate-900 rounded-xl border border-slate-800">
-                                            <h4 className="text-white font-medium mb-2">Active Sessions</h4>
-                                            <p className="text-sm text-slate-400 mb-3">Manage devices where you're currently logged in</p>
-                                            <div className="space-y-2">
-                                                <div className="flex items-start sm:items-center justify-between gap-3 p-3 bg-slate-800 rounded-lg border border-slate-700">
-                                                    <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
-                                                        <Globe className="w-5 h-5 text-teal-400 flex-shrink-0 mt-0.5 sm:mt-0" />
-                                                        <div className="min-w-0 flex-1">
-                                                            <p className="text-sm text-white font-medium">Current Session</p>
-                                                            <p className="text-xs text-slate-400 break-words">Windows • Chrome • Active now</p>
-                                                        </div>
-                                                    </div>
-                                                    <span className="text-xs text-green-400 flex-shrink-0">Active</span>
-                                                </div>
-                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="mt-8 pt-8 border-t border-slate-800">
-                                        <h4 className="text-red-500 font-bold mb-2 flex items-center gap-2 uppercase text-xs tracking-widest">
-                                            Danger Zone
-                                        </h4>
-                                        <div className="p-4 bg-red-500/5 rounded-xl border border-red-500/10">
-                                            <h4 className="text-white font-medium mb-1 text-sm">Delete Account</h4>
-                                            <p className="text-xs text-slate-400 mb-4">
-                                                Once scheduled, your data will be kept for 30 days before permanent removal.
-                                                You can cancel this request at any time during this period.
-                                            </p>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => setDeleteModalOpen(true)}
-                                                className="border-red-500/30 text-red-500 hover:bg-red-500/10 text-xs"
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5 mr-2" />
-                                                Delete My Account
-                                            </Button>
-                                        </div>
+                                    <div className="p-4 bg-slate-900 rounded-xl border border-slate-800">
+                                        <h4 className="text-white font-medium mb-2">Two-Factor Authentication</h4>
+                                        <p className="text-sm text-slate-400 mb-3">Add an extra layer of security to your account</p>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => window.location.href = '/dashboard/security/2fa'}
+                                            className="w-full sm:w-auto"
+                                        >
+                                            Enable 2FA
+                                        </Button>
                                     </div>
                                 </div>
                             </div>
+                        )}
+
+                        {activeSection === 'integrations' && (
+                            <IntegrationSettings />
                         )}
 
                         {activeSection === 'billing' && (

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Modal, Input } from '../../ui/UIComponents';
 import { toast } from 'react-hot-toast';
-import { Send, CheckCircle, AlertCircle, Settings, Mail, BarChart3, Template, AlertTriangle } from 'lucide-react';
+import { Mail, CheckCircle, AlertCircle, Settings, BarChart3, Code, Zap, AlertTriangle, Send } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import { motion } from 'framer-motion';
 
@@ -358,7 +358,7 @@ export function SendGridIntegration() {
                   templates.slice(0, 3).map((template) => (
                     <div key={template.id} className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
-                        <Template className="w-3 h-3 text-blue-400" />
+                        <Send className="w-3 h-3 text-blue-400" />
                         <span className="text-slate-400 truncate">{template.name}</span>
                       </div>
                       <span className="text-slate-500">{template.subject}</span>
