@@ -302,23 +302,22 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      transition={{ duration: 0.6 }}
                   >
                      {/* Brand pill */}
-                     <div className="inline-flex items-center gap-2 bg-slate-800/60 border border-slate-700/60 rounded-full px-4 py-1.5 mb-8 text-xs sm:text-sm text-slate-300 backdrop-blur-sm">
-                        <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-                        <span className="font-bold">Replace 12+ Tools. Save $300+/mo.</span>
+                     <div className="inline-flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 mb-8 text-sm text-slate-300">
+                        <span className="font-bold">Business Management Platform</span>
                      </div>
 
                      {/* Headline */}
                      <h1 className="font-black text-white mb-6 tracking-tight">
-                        Stop Paying for
+                        AlphaClone Systems
                         <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">
-                           Dozens of SaaS Tools
+                           Complete Business Management
                         </span>
                      </h1>
 
                      {/* Solution subheadline */}
-                     <p className="text-base sm:text-lg md:text-xl text-slate-400 mb-4 max-w-3xl mx-auto leading-relaxed">
-                        Stop paying <span className="text-red-400 font-bold">$300+/month</span> for HubSpot, QuickBooks, DocuSign, Asana, Mailchimp, Zoom, and 6 other tools. AlphaClone gives you <span className="text-teal-400 font-bold">everything in one platform</span> for <span className="text-green-400 font-bold">$45/month</span>.
+                     <p className="text-base sm:text-lg md:text-xl text-slate-300 mb-4 max-w-3xl mx-auto leading-relaxed">
+                        Manage your entire business with one unified system. <span className="text-teal-400 font-bold">AlphaClone Systems</span> provides CRM, invoicing, contracts, projects, and communications in a single platform for <span className="text-green-400 font-bold">$45/month</span>.
                      </p>
 
                      {/* Platform modules */}

@@ -262,7 +262,15 @@ export default function OmniLeadFinder() {
   const filteredResults = useMemo(() => {
     const q = filterText.toLowerCase();
     return results.filter(lead => {
-      if (q && ![lead.business_name, lead.website, lead.email || '', lead.address || '', lead.category || ''].some(v => v.toLowerCase().includes(q))) return false;
+      if (q && ![
+        lead.business_name,
+        lead.website,
+        lead.email || '',
+        lead.address || '',
+        lead.category || '',
+        lead.phone || '',
+        lead.description || ''
+      ].some(v => v && v.toLowerCase().includes(q))) return false;
       if (filterRating > 0 && (lead.rating === undefined || lead.rating < filterRating)) return false;
       if (filterSource !== 'all' && lead.source !== filterSource) return false;
       if (filterPhone && !lead.phone) return false;
@@ -553,7 +561,7 @@ export default function OmniLeadFinder() {
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Search results</label>
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
-                <input type="text" placeholder="Name, address, category..."
+                <input type="text" placeholder="Search business name, email, phone, address..."
                   value={filterText} onChange={e => setFilterText(e.target.value)}
                   className="w-full pl-8 pr-3 py-1.5 bg-slate-950/60 border border-slate-800 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-teal-500/30 focus:border-teal-500 outline-none"
                 />
