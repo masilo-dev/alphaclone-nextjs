@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Modal, Input } from '../../ui/UIComponents';
 import { toast } from 'react-hot-toast';
-import { Send, CheckCircle, AlertCircle, Settings, Mail, BarChart3, Template } from 'lucide-react';
+import { Send, CheckCircle, AlertCircle, Settings, Mail, BarChart3, Template, AlertTriangle } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
+import { motion } from 'framer-motion';
 
 interface SendGridStatus {
   isConnected: boolean;
@@ -21,6 +22,13 @@ interface EmailTemplate {
   lastUsed?: string;
 }
 
+interface ClientFriendlyError {
+  title: string;
+  message: string;
+  suggestion: string;
+  type: 'warning' | 'error' | 'info';
+}
+
 export function SendGridIntegration() {
   const { currentTenant } = useTenant();
   const [status, setStatus] = useState<SendGridStatus>({ isConnected: false });
@@ -33,6 +41,7 @@ export function SendGridIntegration() {
   const [testEmail, setTestEmail] = useState('');
   const [testSubject, setTestSubject] = useState('Test from AlphaClone');
   const [testMessage, setTestMessage] = useState('This is a test email from your AlphaClone platform.');
+  const [clientError, setClientError] = useState<ClientFriendlyError | null>(null);
 
   useEffect(() => {
     if (currentTenant?.id) {
@@ -131,11 +140,30 @@ export function SendGridIntegration() {
 
   const sendTestEmail = async () => {
     if (!testEmail.trim()) {
-      toast.error('Please enter a test email address');
+      setClientError({
+        title: 'Email Address Required',
+        message: 'Please enter an email address to send the test email.',
+        suggestion: 'Enter a valid email address (e.g., user@example.com)',
+        type: 'warning'
+      });
+      return;
+    }
+
+    // Basic email validation
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(testEmail.trim())) {
+      setClientError({
+        title: 'Invalid Email Address',
+        message: 'Please enter a valid email address.',
+        suggestion: 'Make sure the email address is formatted correctly (e.g., user@example.com)',
+        type: 'warning'
+      });
       return;
     }
 
     setIsLoading(true);
+    setClientError(null);
+
     try {
       const response = await fetch(`/api/sendgrid/send`, {
         method: 'POST',
@@ -148,17 +176,83 @@ export function SendGridIntegration() {
         })
       });
 
-      if (response.ok) {
-        toast.success('Test email sent successfully!');
-        setTestEmail('');
-      } else {
-        throw new Error('Failed to send test email');
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle client-friendly errors
+        const friendlyError = translateEmailError(data.error || new Error(data.message));
+        setClientError(friendlyError);
+        return;
       }
+
+      // Success
+      toast.success(`Test email sent to ${testEmail}! Check your inbox.`);
+      setTestEmail('');
+
     } catch (error) {
-      toast.error('Failed to send test email');
+      const friendlyError = translateEmailError(error);
+      setClientError(friendlyError);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const translateEmailError = (error: any): ClientFriendlyError => {
+    const errorMessage = error?.message || error?.toString() || 'Unknown error';
+    
+    // SendGrid specific errors
+    if (errorMessage.includes('invalid_api_key') || errorMessage.includes('unauthorized')) {
+      return {
+        title: 'API Key Issue',
+        message: 'Your SendGrid API key is not working correctly.',
+        suggestion: 'Please check your API key in settings and try again.',
+        type: 'error'
+      };
+    }
+    
+    if (errorMessage.includes('from_address') || errorMessage.includes('invalid from')) {
+      return {
+        title: 'From Email Problem',
+        message: 'The sender email address is not configured correctly.',
+        suggestion: 'Check your SendGrid from email settings in integration configuration.',
+        type: 'error'
+      };
+    }
+    
+    if (errorMessage.includes('recipient') || errorMessage.includes('invalid email')) {
+      return {
+        title: 'Recipient Email Issue',
+        message: 'The recipient email address is not valid.',
+        suggestion: 'Please double-check the email address and try again.',
+        type: 'warning'
+      };
+    }
+    
+    if (errorMessage.includes('rate_limit') || errorMessage.includes('too many requests')) {
+      return {
+        title: 'Sending Limit Reached',
+        message: 'SendGrid has temporarily limited email sending.',
+        suggestion: 'Please wait a few minutes and try again.',
+        type: 'warning'
+      };
+    }
+    
+    if (errorMessage.includes('network') || errorMessage.includes('timeout')) {
+      return {
+        title: 'Connection Problem',
+        message: 'Cannot connect to SendGrid servers right now.',
+        suggestion: 'Please check your internet connection and try again.',
+        type: 'warning'
+      };
+    }
+    
+    // Default friendly error
+    return {
+      title: 'Email Sending Failed',
+      message: 'We encountered an issue sending your test email.',
+      suggestion: 'Please try again. If this continues, check your SendGrid configuration.',
+      type: 'error'
+    };
   };
 
   return (
@@ -277,6 +371,42 @@ export function SendGridIntegration() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Client-Friendly Error Display */}
+      {clientError && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-4"
+        >
+          <div className={`p-4 rounded-lg border ${
+            clientError.type === 'error' ? 'bg-red-500/10 border-red-500/30' :
+            clientError.type === 'warning' ? 'bg-yellow-500/10 border-yellow-500/30' :
+            'bg-blue-500/10 border-blue-500/30'
+          }`}>
+            <div className="flex items-start gap-3">
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                clientError.type === 'error' ? 'bg-red-500/20' :
+                clientError.type === 'warning' ? 'bg-yellow-500/20' :
+                'bg-blue-500/20'
+              }`}>
+                {clientError.type === 'error' ? (
+                  <AlertTriangle className="w-3 h-3 text-red-400" />
+                ) : clientError.type === 'warning' ? (
+                  <AlertCircle className="w-3 h-3 text-yellow-400" />
+                ) : (
+                  <AlertCircle className="w-3 h-3 text-blue-400" />
+                )}
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-white mb-1">{clientError.title}</h4>
+                <p className="text-sm text-slate-300 mb-2">{clientError.message}</p>
+                <p className="text-xs text-slate-400">{clientError.suggestion}</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       )}
 
       {/* Settings Modal */}
