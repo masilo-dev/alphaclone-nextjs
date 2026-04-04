@@ -337,7 +337,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
 
             if (projectError) throw new Error(projectError);
 
-            toast.success(`🚀 Project "${name}" initialized successfully!`);
+            toast.success(`Project "${name}" initialized successfully!`);
 
             // Log activity
             await leadService.addLeadActivity(lead.id, user.id, 'project_created', `Project created: ${name}`, { projectId: project?.id });

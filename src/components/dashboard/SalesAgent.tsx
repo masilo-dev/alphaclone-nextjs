@@ -302,7 +302,7 @@ const SalesAgent: React.FC = () => {
             `lead_search_${Date.now()}`,
             taskName,
             async () => {
-                console.log('🚀 Starting AI lead generation...');
+                console.log('Starting AI lead generation...');
                 // Assuming generateLeads now returns { leads: Lead[], rawMapsData: any[] }
                 const res = await generateLeads(searchParams.industry, searchParams.location, '', 'tenant');
 
@@ -505,7 +505,7 @@ const SalesAgent: React.FC = () => {
 
             if (projectError) throw new Error(projectError);
 
-            toast.success(`🚀 Project "${name}" initialized!`);
+            toast.success(`Project "${name}" initialized!`);
             loadLeads();
         } catch (error: any) {
             toast.error('Failed to create project: ' + error.message);

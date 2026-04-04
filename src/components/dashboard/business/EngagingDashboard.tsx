@@ -121,14 +121,11 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
 
     const generateWelcomeMessage = () => {
         const messages = [
-            `Ready to crush it today, ${firstName}? 🚀`,
-            `Let's make today amazing, ${firstName}! ✨`,
-            `${firstName}, you're doing fantastic! Keep it up! 💪`,
-            `Time to build your empire, ${firstName}! 🏗️`,
-            `${firstName}, today's your day to shine! ⭐`,
-            `Let's get those wins, ${firstName}! 🎯`,
-            `You're on fire, ${firstName}! 🔥`,
-            `${firstName}, success is calling! 📞`
+            `Welcome back, ${firstName}.`,
+            `Ready to build today, ${firstName}?`,
+            `${firstName}, let's make progress.`,
+            `Time to grow your business, ${firstName}.`,
+            `Let's achieve your goals, ${firstName}.`,
         ];
         setWelcomeMessage(messages[Math.floor(Math.random() * messages.length)]);
     };
@@ -195,7 +192,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                         completed: progressData.onboardingProgress?.hasProjects || false,
                         action: 'New Project',
                         actionUrl: '/dashboard/projects',
-                        reward: '🚀 Project Pro Badge'
+                        reward: 'Project Pro Badge'
                     },
                     {
                         id: 'setup-integrations',
@@ -253,7 +250,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 completed: false,
                 action: 'New Project',
                 actionUrl: '/dashboard/projects',
-                reward: '🚀 Project Pro Badge'
+                reward: 'Project Pro Badge'
             },
             {
                 id: 'setup-integrations',
@@ -348,43 +345,24 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
     }
 
     return (
-        <div className="space-y-6">
-            {/* Welcome Section with Emotion */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white"
-            >
-                <div className="flex items-center justify-between">
-                    <div>
-                        <div className="flex items-center gap-3 mb-2">
-                            <greeting.Icon className="w-6 h-6" />
-                            <h1 className="text-3xl font-bold">
-                                {greeting.text}, {firstName}!
-                            </h1>
-                        </div>
-                        <p className="text-xl text-blue-100 mb-4">{welcomeMessage}</p>
-                        
-                        {/* Streak Counter */}
-                        <div className="flex items-center gap-4 bg-white/10 rounded-lg p-3 inline-block">
-                            <div className="flex items-center gap-2">
-                                <Flame className="w-5 h-5 text-orange-300" />
-                                <span className="font-semibold">{streak} day streak!</span>
-                            </div>
-                            <div className="h-6 w-px bg-white/20" />
-                            <div className="flex items-center gap-2">
-                                <Target className="w-5 h-5 text-green-300" />
-                                <span className="font-semibold">{progressPercentage.toFixed(0)}% setup complete</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div className="text-center">
-                        <div className="text-5xl mb-2">🚀</div>
-                        <div className="text-sm text-blue-100">Level {Math.floor(progressPercentage / 20) + 1}</div>
-                    </div>
+        <div className="p-6 max-w-7xl mx-auto space-y-6">
+            {/* Professional Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-semibold text-slate-900">
+                        Good {greeting}, {firstName}
+                    </h1>
+                    <p className="text-slate-600 mt-1">{welcomeMessage}</p>
                 </div>
-            </motion.div>
+                <div className="flex items-center gap-3">
+                    <button className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                        Quick Add
+                    </button>
+                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                        New Project
+                    </button>
+                </div>
+            </div>
 
             {/* Onboarding Progress */}
             {progressPercentage < 100 && (
@@ -521,7 +499,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                         color: 'text-purple-400',
                         bgColor: 'bg-purple-500/10',
                         borderColor: 'border-purple-500/30',
-                        emotion: metrics.activeProjects > 0 ? '🚀 Building empire!' : '🏗️ Time to build!',
+                        emotion: metrics.activeProjects > 0 ? 'Building momentum!' : 'Time to build!',
                         trend: '+2'
                     },
                     {

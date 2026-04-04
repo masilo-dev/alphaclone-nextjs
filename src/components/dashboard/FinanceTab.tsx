@@ -257,7 +257,7 @@ const SubscriptionSection: React.FC<SubscriptionSectionProps> = ({ user, tenantI
 
             {/* Founder Involvement Banner */}
             <div className="text-center bg-gradient-to-r from-teal-500/10 via-violet-500/10 to-amber-500/10 border border-teal-500/20 rounded-xl p-5">
-                <p className="text-white font-bold text-sm mb-1">🚀 Subscribe now and get the founder personally involved for the next 100 days!</p>
+                <p className="text-white font-bold text-sm mb-1">Subscribe now and get expert guidance for the next 100 days!</p>
                 <p className="text-slate-400 text-xs">Hands-on guidance, strategy sessions, and direct support to help you succeed.</p>
             </div>
 
