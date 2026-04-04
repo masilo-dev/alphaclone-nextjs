@@ -474,19 +474,18 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     Quick Actions
                 </h2>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
                     {quickActions.map((action, index) => (
                         <motion.button
                             key={action.id}
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: 0.3 + index * 0.1 }}
+                            transition={{ delay: 0.3 + index * 0.05 }}
                             onClick={action.action}
-                            className={`${action.color} p-4 rounded-xl text-white hover:opacity-90 transition-all transform hover:scale-105`}
+                            className="bg-gradient-to-r from-teal-500/20 to-orange-500/20 hover:from-teal-500/30 hover:to-orange-500/30 border border-teal-500/30 hover:border-orange-500/50 p-2 rounded-lg text-white transition-all transform hover:scale-105"
                         >
-                            <action.icon className="w-6 h-6 mb-2" />
-                            <div className="font-medium">{action.title}</div>
-                            <div className="text-xs opacity-90">{action.description}</div>
+                            <action.icon className="w-4 h-4 mb-1 text-teal-400 group-hover:text-orange-400 transition-colors" />
+                            <div className="text-xs font-medium">{action.title}</div>
                         </motion.button>
                     ))}
                 </div>

@@ -493,16 +493,14 @@ const QuickActionButton = ({ label, icon: Icon, onClick, disabled = false }: any
     <button
         onClick={disabled ? undefined : onClick}
         disabled={disabled}
-        className={`flex items-center justify-between p-4 border rounded-2xl transition-all group ${disabled
+        className={`flex items-center gap-2 p-2 border rounded-lg transition-all group ${disabled
             ? 'bg-slate-800/30 border-slate-700/50 cursor-not-allowed opacity-50'
-            : 'bg-slate-800/50 hover:bg-slate-800 border-slate-700 hover:border-teal-500/50'
+            : 'bg-gradient-to-r from-teal-500/10 to-orange-500/10 hover:from-teal-500/20 hover:to-orange-500/20 border-teal-500/30 hover:border-orange-500/50'
             }`}
     >
-        <div className="flex items-center gap-3">
-            <Icon className={`w-5 h-5 transition-colors ${disabled ? 'text-slate-600' : 'text-slate-400 group-hover:text-teal-400'}`} />
-            <span className={`font-medium transition-colors ${disabled ? 'text-slate-600' : 'text-slate-300 group-hover:text-white'}`}>{label}</span>
-        </div>
-        <ArrowRight className={`w-4 h-4 transition-colors ${disabled ? 'text-slate-700' : 'text-slate-600 group-hover:text-teal-400'}`} />
+        <Icon className={`w-4 h-4 transition-colors ${disabled ? 'text-slate-600' : 'text-teal-400 group-hover:text-orange-400'}`} />
+        <span className={`text-sm font-medium transition-colors ${disabled ? 'text-slate-600' : 'text-slate-300 group-hover:text-white'}`}>{label}</span>
+        <ArrowRight className={`w-3.5 h-3.5 transition-colors ${disabled ? 'text-slate-700' : 'text-orange-400/60 group-hover:text-orange-400'}`} />
     </button>
 );
 

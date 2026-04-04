@@ -256,7 +256,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                 </div>
                             </div>
                                 <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-2">
-                                    <Sparkles className="w-3 h-3 text-teal-500" />
+                                    <Sparkles className="w-3 h-3 bg-gradient-to-r from-teal-500 to-orange-500 text-transparent bg-clip-text" />
                                     Quick Actions
                                 </div>
                         </div>
