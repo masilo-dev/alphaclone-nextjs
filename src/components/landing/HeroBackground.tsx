@@ -22,7 +22,6 @@ const MODULES = [
   { label: 'Invoices',      isHub: false, hue: 140, size: 3 },
 ];
 
-const AMBIENT_COUNT  = 22;   // extra ghost nodes (no label)
 const MAX_DIST_HUB   = 380;  // hub connects to anything within this
 const MAX_DIST_PEER  = 220;  // peer-to-peer connection distance
 const PACKET_COUNT   = 18;
@@ -40,15 +39,6 @@ interface ModuleNode {
   connections: number[];
 }
 
-interface AmbientNode {
-  x: number; y: number;
-  vx: number; vy: number;
-  hue: number;
-  radius: number;
-  pulsePhase: number;
-  opacity: number;
-}
-
 interface DataPacket {
   fromIdx: number;
   toIdx: number;
@@ -56,12 +46,11 @@ interface DataPacket {
   speed: number;
   hue: number;
   size: number;
-  nodeType: 'module' | 'ambient';
+  nodeType: 'module';
 }
 
 // ── Speed constants ────────────────────────────────────────────────────────
 const NODE_SPEED   = 0.42;  // named module nodes — fast
-const AMBIENT_SPD  = 0.03;  // background ghost dots — very slow
 const PULSE_SPD    = 0.008;
 const PKT_SPEED    = 0.0022; // packet travel speed
 
@@ -69,7 +58,6 @@ export default function HeroBackground() {
   const canvasRef   = useRef<HTMLCanvasElement>(null);
   const rafRef      = useRef<number>(0);
   const moduleNodes = useRef<ModuleNode[]>([]);
-  const ambientNodes = useRef<AmbientNode[]>([]);
   const packets     = useRef<DataPacket[]>([]);
   const visibleRef  = useRef(true);
   const dimRef      = useRef({ w: 0, h: 0 });
@@ -114,17 +102,6 @@ export default function HeroBackground() {
         connections: [],
       };
     });
-
-    ambientNodes.current = Array.from({ length: AMBIENT_COUNT }, () => ({
-      x: Math.random() * w,
-      y: Math.random() * h,
-      vx: (Math.random() - 0.5) * AMBIENT_SPD,
-      vy: (Math.random() - 0.5) * AMBIENT_SPD,
-      hue: 180 + Math.random() * 60,
-      radius: 1 + Math.random() * 2,
-      pulsePhase: Math.random() * Math.PI * 2,
-      opacity: 0.2 + Math.random() * 0.3,
-    }));
   }, []);
 
   // ── Build connection graph ──────────────────────────────────────────────
@@ -178,7 +155,6 @@ export default function HeroBackground() {
     }
 
     const mnodes = moduleNodes.current;
-    const anodes = ambientNodes.current;
     const pkts   = packets.current;
 
     // ── 1. Move module nodes ──────────────────────────────────────────────
@@ -191,32 +167,10 @@ export default function HeroBackground() {
       n.pulsePhase += n.pulseSpeed;
     }
 
-    // ── 2. Move ambient nodes ─────────────────────────────────────────────
-    for (const a of anodes) {
-      a.x += a.vx;
-      a.y += a.vy;
-      if (a.x < 0 || a.x > w) a.vx *= -1;
-      if (a.y < 0 || a.y > h) a.vy *= -1;
-      a.pulsePhase += 0.006;
-    }
-
-    // ── 3. Rebuild connections ────────────────────────────────────────────
+    // ── 2. Rebuild connections ────────────────────────────────────────────
     buildConnections(mnodes);
 
-    // ── 4. Draw ambient node soft glow (background layer) ────────────────
-    for (const a of anodes) {
-      const pulse = 0.8 + Math.sin(a.pulsePhase) * 0.2;
-      const r = a.radius * pulse;
-      const glow = ctx.createRadialGradient(a.x, a.y, 0, a.x, a.y, r * 6);
-      glow.addColorStop(0, `hsla(${a.hue}, 70%, 65%, ${a.opacity * 0.4})`);
-      glow.addColorStop(1, `hsla(${a.hue}, 70%, 65%, 0)`);
-      ctx.beginPath();
-      ctx.arc(a.x, a.y, r * 6, 0, Math.PI * 2);
-      ctx.fillStyle = glow;
-      ctx.fill();
-    }
-
-    // ── 5. Draw connection lines ──────────────────────────────────────────
+    // ── 3. Draw connection lines ──────────────────────────────────────────
     for (let i = 0; i < mnodes.length; i++) {
       const a = mnodes[i];
       for (const j of a.connections) {
@@ -240,7 +194,7 @@ export default function HeroBackground() {
       }
     }
 
-    // ── 6. Draw data packets along lines ─────────────────────────────────
+    // ── 4. Draw data packets along lines ─────────────────────────────────
     for (const pkt of pkts) {
       pkt.progress += pkt.speed;
       if (pkt.progress > 1) {
@@ -274,7 +228,7 @@ export default function HeroBackground() {
       ctx.fill();
     }
 
-    // ── 7. Draw module nodes ──────────────────────────────────────────────
+    // ── 5. Draw module nodes ──────────────────────────────────────────────
     for (const n of mnodes) {
       const pulse = 0.85 + Math.sin(n.pulsePhase) * 0.15;
       const r = n.radius * pulse;
@@ -317,7 +271,7 @@ export default function HeroBackground() {
       ctx.fillStyle = core;
       ctx.fill();
 
-      // ── 8. Draw node labels ─────────────────────────────────────────────
+      // ── 6. Draw node labels ─────────────────────────────────────────────
       const labelAlpha = alpha * (n.isHub ? 1 : 0.82);
       const fontSize = n.isHub ? 11 : 9;
       ctx.font = `${n.isHub ? 700 : 500} ${fontSize}px Inter, system-ui, sans-serif`;
@@ -349,7 +303,7 @@ export default function HeroBackground() {
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    rafRef.current = requestAnimationFrame(drawFrame);
+    rafRef.current = requestAnimationFrame(draw);
   }, [buildConnections]);
 
   // ── Setup / teardown ────────────────────────────────────────────────────
