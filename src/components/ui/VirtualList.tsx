@@ -7,7 +7,7 @@ const List = dynamic(
     {
         ssr: false,
         loading: () => (
-            <div className="flex items-center justify-center h-64 text-slate-400">
+            <div className="flex items-center justify-center h-64 text-white">
                 <div className="w-6 h-6 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div>
             </div>
         )
@@ -19,7 +19,7 @@ const AutoSizer = dynamic(
     {
         ssr: false,
         loading: () => (
-            <div className="flex items-center justify-center h-64 text-slate-400">
+            <div className="flex items-center justify-center h-64 text-white">
                 <div className="w-6 h-6 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div>
             </div>
         )
@@ -43,7 +43,7 @@ export function VirtualList<T>({
 }: VirtualListProps<T>) {
     if (items.length === 0) {
         return (
-            <div className={`flex items-center justify-center p-8 text-slate-400 ${className}`}>
+            <div className={`flex items-center justify-center p-8 text-white ${className}`}>
                 {emptyMessage}
             </div>
         );

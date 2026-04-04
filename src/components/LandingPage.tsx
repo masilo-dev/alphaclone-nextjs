@@ -420,7 +420,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      <h2 className="text-4xl md:text-6xl font-black text-white mb-6">
                         The Business OS That <span className="text-teal-400">Actually Works</span>
                      </h2>
-                     <p className="text-xl text-slate-400 max-w-3xl mx-auto">
+                     <p className="text-xl text-slate-300 max-w-3xl mx-auto">
                         Stop juggling 12 different tools. AlphaClone replaces your entire business stack with one unified system.
                      </p>
                   </motion.div>
@@ -489,7 +489,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      <h2 className="text-4xl md:text-6xl font-black text-white mb-6">
                         Simple, <span className="text-teal-400">Transparent Pricing</span>
                      </h2>
-                     <p className="text-xl text-slate-400 max-w-3xl mx-auto">
+                     <p className="text-xl text-slate-300 max-w-3xl mx-auto">
                         No hidden fees. No surprise charges. Just powerful software that grows with your business.
                      </p>
                   </motion.div>
@@ -590,7 +590,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-3 tracking-tight">
                         Get in Touch
                      </h2>
-                     <p className="text-base text-slate-400 max-w-xl mx-auto mb-8">
+                     <p className="text-base text-slate-300 max-w-xl mx-auto mb-8">
                         Have questions? Reach out to our team directly.
                      </p>
                      

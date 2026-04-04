@@ -25,8 +25,8 @@ export const Button: React.FC<ButtonProps> = ({
   const variants = {
     primary: "bg-teal-600 text-white hover:bg-teal-500 shadow-lg shadow-teal-900/20",
     secondary: "bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-900/20",
-    outline: "border border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white",
-    ghost: "text-slate-400 hover:text-white hover:bg-slate-800/50",
+    outline: "border border-slate-600 text-white hover:bg-slate-800",
+    ghost: "text-white hover:text-teal-400 hover:bg-slate-800/50",
     danger: "bg-red-600 text-white hover:bg-red-500",
   };
 
@@ -77,10 +77,10 @@ interface BadgeProps {
 export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', className = '' }) => {
   const variants = {
     success: "bg-teal-500/10 text-teal-400 border-teal-500/20",
-    warning: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
-    neutral: "bg-slate-500/10 text-slate-400 border-slate-500/20",
-    error: "bg-red-500/10 text-red-400 border-red-500/20",
-    blue: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    warning: "bg-yellow-500/10 text-yellow-300 border-yellow-500/20",
+    neutral: "bg-slate-500/10 text-slate-300 border-slate-500/20",
+    error: "bg-red-500/10 text-red-300 border-red-500/20",
+    blue: "bg-blue-500/10 text-blue-300 border-blue-500/20",
   };
 
   return (
@@ -109,7 +109,7 @@ export const Input: React.FC<InputProps> = ({
 }) => {
   return (
     <div className="w-full">
-      {label && <label className="block text-sm font-medium text-slate-300 mb-1.5">{label}</label>}
+      {label && <label className="block text-sm font-medium text-white mb-1.5">{label}</label>}
       <div className="relative group">
         {icon && (
           <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors">
@@ -118,12 +118,12 @@ export const Input: React.FC<InputProps> = ({
         )}
         {textarea ? (
           <textarea
-            className={`w-full bg-slate-900 border ${error ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all min-h-[100px] resize-y ${icon ? 'pl-11' : ''} ${className}`}
+            className={`w-full bg-slate-900 border ${error ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all min-h-[100px] resize-y ${icon ? 'pl-11' : ''} ${className}`}
             {...(props as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
           />
         ) : (
           <input
-            className={`w-full bg-slate-900 border ${error ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all ${icon ? 'pl-11' : ''} ${className}`}
+            className={`w-full bg-slate-900 border ${error ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all ${icon ? 'pl-11' : ''} ${className}`}
             {...(props as React.InputHTMLAttributes<HTMLInputElement>)}
           />
         )}
