@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
+import { SlackIntegration } from '../integrations/SlackIntegration';
 import { businessClientService } from '../../../services/businessClientService';
 import { dailyService } from '../../../services/dailyService';
 import { supabase } from '../../../lib/supabase';

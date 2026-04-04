@@ -24,6 +24,7 @@ import {
     Receipt,
     RefreshCw
 } from 'lucide-react';
+import { SlackIntegration } from '../integrations/SlackIntegration';
 import { Project, User } from '../../../types';
 import { projectService } from '../../../services/projectService';
 import { useTenant } from '../../../contexts/TenantContext';

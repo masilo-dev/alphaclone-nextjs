@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '../../../types';
-import { useTenant } from '../../../contexts/TenantContext';
+import { SlackIntegration } from '../integrations/SlackIntegration';
+import { useBackgroundTasks, BackgroundTask } from '@/contexts/BackgroundTaskContext';
 import { businessClientService } from '../../../services/businessClientService';
 import { dailyService } from '../../../services/dailyService';
 import { supabase } from '../../../lib/supabase';
@@ -439,6 +440,15 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     </AnimatePresence>
                 </motion.div>
             )}
+
+            {/* Slack Integration */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+            >
+                <SlackIntegration />
+            </motion.div>
 
             {/* Quick Actions */}
             <motion.div
