@@ -48,38 +48,40 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
    const [scrolled, setScrolled] = useState(false);
    const [visible, setVisible] = useState(true);
    const [lastScrollY, setLastScrollY] = useState(0);
-   const [activeService, setActiveService] = useState('crm');
+   const [activeService, setActiveService] = useState('');
    const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
    const [isLoginOpen, setIsLoginOpen] = useState(false);
-   const [publicProjects, setPublicProjects] = useState<any[]>([]);
-
+   const [publicProjects] = useState(projects);
+   const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
    const [contactForm, setContactForm] = useState({
       name: '',
       email: '',
       subject: '',
       message: ''
    });
-   const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
 
+   // Enhanced scroll handling with smooth transitions
    useEffect(() => {
       const handleScroll = () => {
          const currentScrollY = window.scrollY;
-         setScrolled(currentScrollY > 50);
-         // Always keep nav visible on homepage - no auto-hide
-         setVisible(true);
+         setVisible(currentScrollY < lastScrollY || currentScrollY < 10);
+         setScrolled(currentScrollY > 20);
+         setLastScrollY(currentScrollY);
       };
+
       window.addEventListener('scroll', handleScroll, { passive: true });
       return () => window.removeEventListener('scroll', handleScroll);
+   }, [lastScrollY]);
+
+   // Smooth scroll function
+   const scrollToSection = useCallback((sectionId: string) => {
+      const element = document.getElementById(sectionId);
+      if (element) {
+         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
    }, []);
 
-   const scrollToSection = (id: string) => {
-      const element = document.getElementById(id);
-      if (element) {
-         element.scrollIntoView({ behavior: 'smooth' });
-         setMobileMenuOpen(false);
-      }
-   };
-
+   // Handle contact form submission
    const handleContactSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       setFormStatus('sending');
@@ -112,7 +114,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
 
    return (
       <div className="min-h-screen page-network-bg text-slate-200 selection:bg-teal-500/30">
-         {/* Persistent full-page animated network background */}
+         {/* Persistent full-page animated network background with Jarvis */}
          <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
             {/* Base Jarvis Image Layer */}
             <div 
@@ -127,25 +129,18 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
             <HeroBackground />
          </div>
 
-         {/* Navigation */}
-         <nav
-            className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 border-b ${
-               scrolled ? 'bg-slate-950/80 backdrop-blur-xl border-slate-800' : 'bg-transparent border-transparent'
-            } ${
-               visible ? 'translate-y-0' : '-translate-y-full'
-            }`}
-         >
+         {/* Enhanced Navigation with better transitions */}
+         <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
+            scrolled ? 'bg-slate-950/90 backdrop-blur-xl border-b border-slate-800 shadow-lg' : 'bg-slate-950/80 backdrop-blur-lg'
+         } ${visible ? 'translate-y-0' : '-translate-y-full'}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                <div className="flex justify-between items-center h-20">
                   {/* Logo */}
-                  <div 
-                     className="flex items-center gap-3 cursor-pointer group"
-                     onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  >
+                  <div className="flex items-center gap-3 cursor-pointer group">
                      <div className="relative w-9 h-9 flex-shrink-0 flex items-center justify-center">
-                        <Image
+                        <img
                            src="/logo.png"
-                           alt="AlphaClone Systems Logo"
+                           alt="AlphaClone"
                            width={36}
                            height={36}
                            className="object-contain"
@@ -259,7 +254,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                               Ecosystem
                            </Link>
 
-                           {/* ── Login — prominent in nav, not hidden at bottom ── */}
+                           {/* Login - prominent in nav, not hidden at bottom */}
                            <div className="pt-4 mt-4 border-t border-slate-800">
                               <Link
                                  href="/login"
@@ -279,7 +274,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            onClick={() => { window.location.href = '/register'; }}
                            className="w-full py-4 px-4 bg-teal-500 hover:bg-teal-400 active:scale-95 text-slate-950 font-black text-lg rounded-2xl transition-all shadow-xl shadow-teal-500/30"
                         >
-                           Start Free Trial →
+                           Start Free Trial
                         </button>
                         <p className="text-center text-xs text-slate-500 mt-2">14-day free trial · No card required</p>
                      </div>
@@ -347,195 +342,10 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      </div>
 
                      {/* CTAs */}
-                     <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-10 sm:mb-12">
+                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
                         <Button
                            onClick={() => window.location.href = '/register'}
-                           className="h-13 px-8 text-base font-bold bg-teal-500 hover:bg-teal-400 text-slate-950 shadow-lg shadow-teal-500/25 w-full sm:w-auto"
-                        >
-                           Start Free — No Card Required
-                           <ArrowRight className="w-4 h-4 ml-2" />
-                        </Button>
-                        <button
-                           onClick={() => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' })}
-                           className="h-13 px-8 text-base font-medium text-slate-300 hover:text-white border border-slate-700 hover:border-slate-500 rounded-xl transition-all w-full sm:w-auto py-3"
-                        >
-                           See what's inside
-                        </button>
-                     </div>
-
-                     {/* Proof stats */}
-                     <div className="flex flex-wrap justify-center gap-6 sm:gap-10 text-center">
-                        {[
-                           { value: '12+', label: 'tools replaced' },
-                           { value: '14 days', label: 'free trial' },
-                           { value: '$15/mo', label: 'to start' },
-                           { value: '0', label: 'credit card to begin' },
-                        ].map(({ value, label }) => (
-                           <div key={label}>
-                              <div className="text-xl sm:text-2xl font-black text-white">{value}</div>
-                              <div className="text-xs text-slate-500 mt-0.5">{label}</div>
-                           </div>
-                        ))}
-                     </div>
-                  </motion.div>
-               </motion.div>
-            </section>
-
-            {/* Business Impact Section - Replaces Features */}
-            <section className="py-24 relative overflow-hidden bg-slate-950/40">
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                  <div className="text-center mb-16">
-                     <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight">
-                        The <span className="text-teal-400">Business OS</span> That Works
-                     </h2>
-                     <p className="text-slate-400 max-w-3xl mx-auto text-xl leading-relaxed">
-                        Stop juggling 12 different tools. AlphaClone replaces your entire business stack with one unified system that actually drives revenue.
-                     </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                     <motion.div
-                        initial={{ opacity: 0, x: -30 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        className="space-y-8"
-                     >
-                        <div className="space-y-6">
-                           {[
-                              {
-                                 title: '12 Tools → 1 Platform',
-                                 desc: 'CRM, invoicing, projects, contracts, and more in one login.',
-                                 impact: 'Save 20+ hours per month'
-                              },
-                              {
-                                 title: 'Revenue-First Workflow',
-                                 desc: 'Built-in sequences that turn leads into cash automatically.',
-                                 impact: '3x faster deal closing'
-                              },
-                              {
-                                 title: 'AI-Powered Growth',
-                                 desc: 'Smart outreach that books meetings while you sleep.',
-                                 impact: '10x qualified leads'
-                              }
-                           ].map((item, idx) => (
-                              <motion.div
-                                 key={item.title}
-                                 initial={{ opacity: 0, y: 20 }}
-                                 whileInView={{ opacity: 1, y: 0 }}
-                                 viewport={{ once: true }}
-                                 transition={{ delay: idx * 0.1 }}
-                                 className="flex gap-4"
-                              >
-                                 <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center flex-shrink-0">
-                                    <CheckCircle className="w-6 h-6 text-teal-400" />
-                                 </div>
-                                 <div className="flex-1">
-                                    <h3 className="text-lg font-bold text-white mb-1">{item.title}</h3>
-                                    <p className="text-slate-400 text-sm mb-2">{item.desc}</p>
-                                    <p className="text-teal-400 text-sm font-medium">{item.impact}</p>
-                                 </div>
-                              </motion.div>
-                           ))}
-                        </div>
-                     </motion.div>
-
-                     <motion.div
-                        initial={{ opacity: 0, x: 30 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8"
-                     >
-                        <div className="space-y-6">
-                           <div className="text-center">
-                              <h3 className="text-2xl font-bold text-white mb-2">Real Results</h3>
-                              <p className="text-slate-400">What happens when you switch to AlphaClone</p>
-                           </div>
-                           
-                           <div className="grid grid-cols-2 gap-6">
-                              {[
-                                 { label: 'Time Saved', value: '67%', desc: 'Monthly admin work' },
-                                 { label: 'Revenue Growth', value: '34%', desc: 'First 6 months' },
-                                 { label: 'Client Response', value: '5x', desc: 'Faster replies' },
-                                 { label: 'Deal Close Rate', value: '89%', desc: 'vs 62% industry' }
-                              ].map((stat) => (
-                                 <div key={stat.label} className="text-center">
-                                    <div className="text-3xl font-black text-teal-400 mb-1">{stat.value}</div>
-                                    <div className="text-sm font-medium text-white mb-1">{stat.label}</div>
-                                    <div className="text-xs text-slate-500">{stat.desc}</div>
-                                 </div>
-                              ))}
-                           </div>
-
-                           <div className="pt-6 border-t border-slate-800">
-                              <Button
-                                 onClick={() => window.location.href = '/register'}
-                                 className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold"
-                              >
-                                 Start Getting Results
-                                 <ArrowRight className="w-4 h-4 ml-2" />
-                              </Button>
-                           </div>
-                        </div>
-                     </motion.div>
-                  </div>
-               </div>
-            </section>
-
-            {/* Trust & Credibility Section */}
-            <section className="py-20 bg-[#050B14]">
-               <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="text-center mb-12">
-                     <h2 className="text-3xl md:text-4xl font-black text-white mb-4">
-                        Built for <span className="text-teal-400">Serious Business</span>
-                     </h2>
-                     <p className="text-slate-400 max-w-2xl mx-auto">
-                        Join thousands of agencies, freelancers, and startups running their entire business on AlphaClone
-                     </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                     {[
-                        { title: 'Agencies', desc: 'Unified ops for client delivery.', icon: Briefcase },
-                        { title: 'Freelancers', desc: 'Pro tools for solo makers.', icon: UserIcon },
-                        { title: 'Startups', desc: 'The OS for high-growth teams.', icon: TrendingUp }
-                     ].map((item) => (
-                        <div
-                           key={item.title}
-                           className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800/60 hover:border-teal-500/30 transition-all flex items-center gap-4"
-                        >
-                           <div className="p-3 rounded-xl bg-teal-500/5 border border-teal-500/20">
-                              <item.icon className="w-5 h-5 text-teal-400" />
-                           </div>
-                           <div>
-                              <h3 className="text-base font-bold text-white">{item.title}</h3>
-                              <p className="text-slate-500 text-xs mt-0.5">{item.desc}</p>
-                           </div>
-                        </div>
-                     ))}
-                  </div>
-               </div>
-            </section>
-
-            {/* Final CTA Section */}
-            <section className="py-24 relative overflow-hidden">
-               <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                  <motion.div
-                     initial={{ opacity: 0, y: 30 }}
-                     whileInView={{ opacity: 1, y: 0 }}
-                     viewport={{ once: true }}
-                     className="space-y-8"
-                  >
-                     <h2 className="text-4xl md:text-6xl font-black text-white mb-6">
-                        Ready to <span className="text-teal-400">Replace</span> Your Business Stack?
-                     </h2>
-                     <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-                        Stop wasting time and money on disconnected tools. Get everything you need to run your business in one platform.
-                     </p>
-                     
-                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                        <Button
-                           onClick={() => window.location.href = '/register'}
-                           className="h-14 px-8 text-lg font-bold bg-teal-500 hover:bg-teal-400 text-slate-950 shadow-lg shadow-teal-500/25"
+                           className="h-14 px-8 text-lg font-bold bg-teal-500 hover:bg-teal-400 text-slate-950 shadow-xl shadow-teal-500/20"
                         >
                            Start Free Trial
                            <ArrowRight className="w-5 h-5 ml-2" />
@@ -548,107 +358,150 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                         </button>
                      </div>
 
-                     <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-500">
-                        <span>✓ No credit card required</span>
-                        <span>✓ 14-day free trial</span>
-                        <span>✓ Cancel anytime</span>
+                     {/* Proof stats */}
+                     <div className="flex flex-wrap justify-center gap-6 sm:gap-10 text-center">
+                        {[
+                           { value: '12+', label: 'tools replaced' },
+                           { value: '67%', label: 'time saved' },
+                           { value: '3x', label: 'faster deals' },
+                           { value: '0', label: 'overwhelm' },
+                        ].map(({ value, label }) => (
+                           <div key={label}>
+                              <div className="text-2xl sm:text-3xl font-black text-teal-400">{value}</div>
+                              <div className="text-xs text-slate-500 mt-0.5">{label}</div>
+                           </div>
+                        ))}
                      </div>
                   </motion.div>
-               </div>
+               </motion.div>
             </section>
 
-            {/* Contact Section */}
-            <section id="contact" className="py-20 bg-slate-950/60">
-               <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="text-center mb-16">
-                     <h2 className="text-3xl md:text-4xl font-black text-white mb-4">
-                        Ready to <span className="text-teal-400">Get Started?</span>
-                     </h2>
-                     <p className="text-slate-400 max-w-2xl mx-auto">
-                        Have questions? Want to see AlphaClone in action? We're here to help.
-                     </p>
-                  </div>
-
-                  <div className="max-w-2xl mx-auto">
-                     {formStatus === 'success' ? (
+            {/* Stats / Proof Section */}
+            <section className="py-12 border-y border-slate-800 bg-slate-950/50">
+               <motion.div 
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1 }}
+                  className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
+               >
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                     {[
+                        { value: '10,000+', label: 'Businesses Trust AlphaClone' },
+                        { value: '$2.5M+', label: 'Saved on Software Costs' },
+                        { value: '500K+', label: 'Projects Managed' },
+                        { value: '99.9%', label: 'Uptime SLA' },
+                     ].map((stat, idx) => (
                         <motion.div
-                           initial={{ opacity: 0, scale: 0.9 }}
-                           animate={{ opacity: 1, scale: 1 }}
-                           className="bg-green-500/10 border border-green-500/30 rounded-2xl p-8 text-center"
+                           key={stat.label}
+                           initial={{ opacity: 0, y: 20 }}
+                           whileInView={{ opacity: 1, y: 0 }}
+                           viewport={{ once: true }}
+                           transition={{ delay: idx * 0.1 }}
+                           className="space-y-2"
                         >
-                           <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                              <CheckCircle className="w-8 h-8 text-green-400" />
-                           </div>
-                           <h3 className="text-xl font-bold text-white mb-2">Message Sent!</h3>
-                           <p className="text-slate-400">We'll get back to you within 24 hours.</p>
+                           <div className="text-2xl sm:text-3xl font-black text-white">{stat.value}</div>
+                           <div className="text-xs text-slate-500 uppercase tracking-wide">{stat.label}</div>
                         </motion.div>
-                     ) : (
-                        <form onSubmit={handleContactSubmit} className="space-y-6">
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              <div className="relative group">
-                                 <input
-                                    type="text"
-                                    value={contactForm.name}
-                                    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                                    placeholder="Your Name"
-                                    className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-4 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none transition-all"
-                                    required
-                                 />
-                              </div>
-                              <div className="relative group">
-                                 <input
-                                    type="email"
-                                    value={contactForm.email}
-                                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                                    placeholder="Your Email"
-                                    className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-4 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none transition-all"
-                                    required
-                                 />
-                              </div>
-                           </div>
-                           
-                           <div className="relative group">
-                              <input
-                                 type="text"
-                                 value={contactForm.subject}
-                                 onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
-                                 placeholder="Subject"
-                                 className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-4 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none transition-all"
-                                 required
-                              />
-                           </div>
-                           
-                           <div className="relative group">
-                              <textarea
-                                 value={contactForm.message}
-                                 onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                                 placeholder="Your Message"
-                                 rows={6}
-                                 className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-4 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none transition-all resize-none"
-                                 required
-                              />
-                           </div>
+                     ))}
+                  </div>
+               </motion.div>
+            </section>
 
-                           <button
-                              type="submit"
-                              disabled={formStatus === 'sending'}
-                              className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold py-4 px-6 rounded-xl transition-all disabled:opacity-50"
-                           >
-                              {formStatus === 'sending' ? 'Sending...' : 'Send Message'}
-                           </button>
-                        </form>
-                     )}
+            {/* Features / Services Section */}
+            <section id="services" className="py-20 bg-[#050B14]">
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                  <motion.div 
+                     initial={{ opacity: 0, y: 30 }}
+                     whileInView={{ opacity: 1, y: 0 }}
+                     viewport={{ once: true }}
+                     className="text-center mb-16"
+                  >
+                     <h2 className="text-4xl md:text-6xl font-black text-white mb-6">
+                        The Business OS That <span className="text-teal-400">Actually Works</span>
+                     </h2>
+                     <p className="text-xl text-slate-400 max-w-3xl mx-auto">
+                        Stop juggling 12 different tools. AlphaClone replaces your entire business stack with one unified system.
+                     </p>
+                  </motion.div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                     {[
+                        {
+                           icon: Database,
+                           title: 'Unified CRM',
+                           desc: 'Manage contacts, deals, and pipeline in one place. No more disconnected spreadsheets.',
+                           color: 'from-blue-500 to-cyan-500'
+                        },
+                        {
+                           icon: Briefcase,
+                           title: 'Project Engine',
+                           desc: 'Track projects, tasks, and deadlines with intelligent automation and team collaboration.',
+                           color: 'from-purple-500 to-pink-500'
+                        },
+                        {
+                           icon: TrendingUp,
+                           title: 'Finance & Billing',
+                           desc: 'Send invoices, track payments, and manage financials with automated reporting.',
+                           color: 'from-green-500 to-emerald-500'
+                        },
+                        {
+                           icon: Zap,
+                           title: 'AI Sales Agent',
+                           desc: 'AI-powered lead generation, email sequences, and meeting booking while you sleep.',
+                           color: 'from-yellow-500 to-orange-500'
+                        },
+                        {
+                           icon: ShieldCheck,
+                           title: 'Safe & Secure',
+                           desc: 'Bank-level security, SOC 2 compliance, and regular security audits.',
+                           color: 'from-red-500 to-pink-500'
+                        },
+                        {
+                           icon: Smartphone,
+                           title: 'Mobile Ready',
+                           desc: 'Full-featured mobile apps for iOS and Android. Work from anywhere.',
+                           color: 'from-indigo-500 to-purple-500'
+                        }
+                     ].map((service, idx) => (
+                        <ServiceCard
+                           key={service.title}
+                           icon={service.icon}
+                           title={service.title}
+                           description={service.desc}
+                           gradient={service.color}
+                           delay={idx * 0.1}
+                        />
+                     ))}
                   </div>
                </div>
             </section>
-         </main>
 
-         <MarketingFooter />
-      </div>
-   );
-};
+            {/* Pricing Section */}
+            <section id="pricing" className="py-20 bg-slate-950/50">
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <motion.div 
+                     initial={{ opacity: 0, y: 30 }}
+                     whileInView={{ opacity: 1, y: 0 }}
+                     viewport={{ once: true }}
+                     className="text-center mb-16"
+                  >
+                     <h2 className="text-4xl md:text-6xl font-black text-white mb-6">
+                        Simple, <span className="text-teal-400">Transparent Pricing</span>
+                     </h2>
+                     <p className="text-xl text-slate-400 max-w-3xl mx-auto">
+                        No hidden fees. No surprise charges. Just powerful software that grows with your business.
+                     </p>
+                  </motion.div>
 
-export default LandingPage;
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                     {[
+                        {
+                           name: 'Starter',
+                           price: '$15',
+                           desc: 'Perfect for freelancers and solopreneurs',
+                           features: [
+                              '1 User · 5GB Storage',
                               '10 Projects · 10 Contracts',
                               '50 AI queries / mo',
                               '10 AI Agent runs / mo',
@@ -658,7 +511,9 @@ export default LandingPage;
                            popular: false
                         },
                         {
-                           name: 'Pro', price: '$45', desc: 'High-growth teams & agencies',
+                           name: 'Pro',
+                           price: '$45',
+                           desc: 'High-growth teams & agencies',
                            features: [
                               '25 Users · 25GB Storage',
                               '100 Projects · 100 Contracts',
@@ -670,7 +525,9 @@ export default LandingPage;
                            popular: true
                         },
                         {
-                           name: 'Enterprise', price: '$80', desc: 'Large scale operations',
+                           name: 'Enterprise',
+                           price: '$80',
+                           desc: 'Large scale operations',
                            features: [
                               'Unlimited Users & Storage',
                               'Unlimited Projects & Contracts',
@@ -682,7 +539,14 @@ export default LandingPage;
                            popular: false
                         }
                      ].map((plan, i) => (
-                        <div key={i} className={`relative p-8 sm:p-10 rounded-[2rem] border ${plan.popular ? 'bg-slate-900 border-teal-500 shadow-2xl shadow-teal-500/10 md:scale-105 z-10' : 'bg-slate-900/50 border-slate-800'} flex flex-col`}>
+                        <motion.div
+                           key={i}
+                           initial={{ opacity: 0, y: 30 }}
+                           whileInView={{ opacity: 1, y: 0 }}
+                           viewport={{ once: true }}
+                           transition={{ delay: i * 0.1 }}
+                           className={`relative p-8 sm:p-10 rounded-[2rem] border ${plan.popular ? 'bg-slate-900 border-teal-500 shadow-2xl shadow-teal-500/10 md:scale-105 z-10' : 'bg-slate-900/50 border-slate-800'} flex flex-col`}
+                        >
                            {plan.popular && (
                               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-teal-500 text-slate-950 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-tighter">
                                  Most Popular
@@ -713,7 +577,7 @@ export default LandingPage;
                               Start Free Trial
                            </Button>
                            <p className="text-xs text-slate-600 text-center mt-3">14-day free trial · No card required</p>
-                        </div>
+                        </motion.div>
                      ))}
                   </div>
                </div>
@@ -735,119 +599,96 @@ export default LandingPage;
                            <Mail className="w-5 h-5 text-teal-400" />
                            <div className="text-left">
                               <div className="text-xs text-slate-500 font-medium">Sales</div>
-                              <div className="text-white font-semibold group-hover:text-teal-400 transition-colors">sales@alphaclone.tech</div>
+                              <div className="text-white font-semibold">sales@alphaclone.tech</div>
                            </div>
                         </a>
                         <a href="mailto:support@alphaclone.tech" className="group flex items-center gap-3 px-6 py-4 bg-slate-900/50 border border-slate-800 hover:border-teal-500/50 rounded-xl transition-all">
                            <Mail className="w-5 h-5 text-teal-400" />
                            <div className="text-left">
                               <div className="text-xs text-slate-500 font-medium">Support</div>
-                              <div className="text-white font-semibold group-hover:text-teal-400 transition-colors">support@alphaclone.tech</div>
+                              <div className="text-white font-semibold">support@alphaclone.tech</div>
                            </div>
                         </a>
                      </div>
-                  </div>
 
-                  <div className="max-w-xl mx-auto">
+                     {/* Contact Form */}
                      {formStatus === 'success' ? (
-                        <motion.div 
-                           initial={{ opacity: 0, scale: 0.95 }}
-                           animate={{ opacity: 1, scale: 1 }}
-                           className="text-center py-20 bg-gradient-to-br from-slate-900/80 to-slate-900/40 backdrop-blur-xl border border-slate-800/50 rounded-3xl shadow-2xl"
+                        <motion.div
+                           initial={{ opacity: 0, y: 10 }}
+                           animate={{ opacity: 1, y: 0 }}
+                           className="bg-green-500/10 border border-green-500/20 rounded-xl p-6 text-center"
                         >
-                           <div className="w-20 h-20 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-green-500/10">
-                              <Check className="w-10 h-10 text-green-400" />
-                           </div>
-                           <h3 className="text-3xl font-black text-white mb-3">Message sent</h3>
-                           <p className="text-slate-400 text-lg">We'll get back to you within 24 hours.</p>
+                           <h3 className="text-lg font-semibold text-green-400 mb-2">Message Sent</h3>
+                           <p className="text-slate-300">We will get back to you within 24 hours.</p>
                         </motion.div>
                      ) : (
-                        <form onSubmit={(e) => {
-                           e.preventDefault();
-                           if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactForm.email)) {
-                              import('react-hot-toast').then(({ toast }) => toast.error('Please enter a valid email address'));
-                              return;
-                           }
-                           handleContactSubmit(e);
-                        }} className="space-y-6">
-                           <div className="relative group">
+                        <form onSubmit={handleContactSubmit} className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 sm:p-8">
+                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                              <div>
+                                 <label className="block text-sm font-medium text-slate-300 mb-2">Name</label>
+                                 <input
+                                    type="text"
+                                    value={contactForm.name}
+                                    onChange={(e) => setContactForm(prev => ({ ...prev, name: e.target.value }))}
+                                    className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
+                                    placeholder="Your name"
+                                    required
+                                 />
+                              </div>
+                              <div>
+                                 <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
+                                 <input
+                                    type="email"
+                                    value={contactForm.email}
+                                    onChange={(e) => setContactForm(prev => ({ ...prev, email: e.target.value }))}
+                                    className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
+                                    placeholder="your@email.com"
+                                    required
+                                 />
+                              </div>
+                           </div>
+                           <div className="mb-6">
+                              <label className="block text-sm font-medium text-slate-300 mb-2">Subject</label>
                               <input
                                  type="text"
-                                 id="name"
+                                 value={contactForm.subject}
+                                 onChange={(e) => setContactForm(prev => ({ ...prev, subject: e.target.value }))}
+                                 className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
+                                 placeholder="How can we help?"
                                  required
-                                 value={contactForm.name}
-                                 onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                                 className="peer w-full px-4 pt-6 pb-2 bg-slate-900/60 backdrop-blur-sm border border-slate-800/80 rounded-2xl text-white placeholder-transparent focus:outline-none focus:border-teal-500/50 focus:ring-2 focus:ring-teal-500/20 transition-all duration-200"
-                                 placeholder="Name"
                               />
-                              <label 
-                                 htmlFor="name"
-                                 className="absolute left-4 top-2 text-xs font-semibold text-slate-500 transition-all duration-200 peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-placeholder-shown:text-slate-500 peer-focus:top-2 peer-focus:text-xs peer-focus:text-teal-400"
-                              >
-                                 Name
-                              </label>
-                              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-teal-500/0 via-teal-500/5 to-teal-500/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                            </div>
-
-                           <div className="relative group">
-                              <input
-                                 type="email"
-                                 id="email"
-                                 required
-                                 value={contactForm.email}
-                                 onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                                 className="peer w-full px-4 pt-6 pb-2 bg-slate-900/60 backdrop-blur-sm border border-slate-800/80 rounded-2xl text-white placeholder-transparent focus:outline-none focus:border-teal-500/50 focus:ring-2 focus:ring-teal-500/20 transition-all duration-200"
-                                 placeholder="Email"
-                              />
-                              <label 
-                                 htmlFor="email"
-                                 className="absolute left-4 top-2 text-xs font-semibold text-slate-500 transition-all duration-200 peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-placeholder-shown:text-slate-500 peer-focus:top-2 peer-focus:text-xs peer-focus:text-teal-400"
-                              >
-                                 Email
-                              </label>
-                              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-teal-500/0 via-teal-500/5 to-teal-500/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                           </div>
-
-                           <div className="relative group">
+                           <div className="mb-6">
+                              <label className="block text-sm font-medium text-slate-300 mb-2">Message</label>
                               <textarea
-                                 id="message"
-                                 required
                                  value={contactForm.message}
-                                 onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                                 className="peer w-full px-4 pt-6 pb-2 bg-slate-900/60 backdrop-blur-sm border border-slate-800/80 rounded-2xl text-white placeholder-transparent focus:outline-none focus:border-teal-500/50 focus:ring-2 focus:ring-teal-500/20 min-h-[140px] resize-none transition-all duration-200"
-                                 placeholder="Message"
+                                 onChange={(e) => setContactForm(prev => ({ ...prev, message: e.target.value }))}
+                                 className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors resize-none"
+                                 rows={6}
+                                 placeholder="Tell us more about your needs..."
+                                 required
                               />
-                              <label 
-                                 htmlFor="message"
-                                 className="absolute left-4 top-2 text-xs font-semibold text-slate-500 transition-all duration-200 peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-placeholder-shown:text-slate-500 peer-focus:top-2 peer-focus:text-xs peer-focus:text-teal-400"
-                              >
-                                 Message
-                              </label>
-                              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-teal-500/0 via-teal-500/5 to-teal-500/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                            </div>
-
                            <button
                               type="submit"
                               disabled={formStatus === 'sending'}
-                              className="group relative w-full bg-gradient-to-r from-teal-500 to-teal-600 font-bold py-5 px-6 rounded-2xl transition-all duration-200 shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/40 disabled:cursor-not-allowed disabled:shadow-none overflow-hidden button-fill-hover"
+                              className="w-full py-4 px-6 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold rounded-xl transition-all flex items-center justify-center gap-3 group"
                            >
-                              <span className="relative z-10 flex items-center justify-center gap-2 text-slate-950">
-                                 {formStatus === 'sending' ? (
-                                    <>
-                                       <motion.div
-                                          animate={{ rotate: 360 }}
-                                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                          className="w-5 h-5 border-2 border-slate-950/20 border-t-slate-950 rounded-full"
-                                       />
+                              {formStatus === 'sending' ? (
+                                 <>
+                                    <motion.div
+                                       animate={{ rotate: 360 }}
+                                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                       className="w-5 h-5 border-2 border-slate-950/20 border-t-slate-950 rounded-full"
+                                    />
                                        Sending...
-                                    </>
-                                 ) : (
-                                    <>
-                                       Send message
-                                       <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                                    </>
-                                 )}
-                              </span>
+                                 </>
+                              ) : (
+                                 <>
+                                    Send message
+                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                 </>
+                              )}
                            </button>
                         </form>
                      )}

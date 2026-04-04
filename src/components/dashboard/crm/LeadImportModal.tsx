@@ -98,7 +98,8 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
     const filteredLeads = leads.filter(l =>
         l.businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (l.industry?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (l.location?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+        (l.location?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (l.pmein?.toLowerCase() || '').includes(searchTerm.toLowerCase())
     );
 
     return (

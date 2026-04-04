@@ -273,8 +273,8 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
       </div>
 
       {isOpen && (
-        <div className={`absolute z-[110] mt-2 w-56 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl animate-in fade-in zoom-in duration-200 ${align === 'right' ? 'right-0' : 'left-0'}`}>
-          <div className="p-2 space-y-1">
+        <div className={`absolute z-[110] mt-2 w-48 rounded-lg bg-slate-900 border border-slate-700 shadow-lg animate-in fade-in slide-in-from-top-1 duration-150 ${align === 'right' ? 'right-0' : 'left-0'}`}>
+          <div className="p-1 space-y-0.5">
             {items.map((item, index) => (
               <button
                 key={index}
@@ -282,7 +282,7 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
                   item.onClick();
                   setIsOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-xl transition-all ${
+                className={`w-full flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all duration-150 ${
                   item.variant === 'danger'
                     ? 'text-red-400 hover:bg-red-500/10'
                     : 'text-slate-300 hover:bg-slate-800 hover:text-white'
