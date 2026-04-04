@@ -22,6 +22,9 @@ interface ServiceCardProps {
 export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index }) => {
     const [expanded, setExpanded] = useState(false);
 
+    // Safety check for service object
+    if (!service) return null;
+
     // Default gradient per card if none provided
     const gradient = service.gradient || 'from-teal-900/60 via-slate-900 to-slate-950';
     const accent = service.accentColor || 'text-teal-400';

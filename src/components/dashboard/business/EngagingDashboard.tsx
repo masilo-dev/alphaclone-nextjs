@@ -475,7 +475,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 </h2>
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                    {quickActions.map((action, index) => (
+                    {quickActions.filter(action => action && action.icon).map((action, index) => (
                         <motion.button
                             key={action.id}
                             initial={{ opacity: 0, scale: 0.9 }}
