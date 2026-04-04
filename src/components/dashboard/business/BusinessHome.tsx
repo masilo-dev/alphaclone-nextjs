@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { WrapChart } from '../../../lib/chartWrapper';
+import EngagingDashboard from './EngagingDashboard';
 
 // ─── Greeting Helpers ────────────────────────────────────────────────
 function getGreeting(): { text: string; Icon: React.FC<any> } {
@@ -61,25 +62,8 @@ interface BusinessHomeProps {
 }
 
 const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
-    const { currentTenant } = useTenant();
-    const [metrics, setMetrics] = useState({
-        totalRevenue: stats?.totalRevenue || 0,
-        totalClients: stats?.clientCount || 0,
-        activeProjects: stats?.activeProjects || 0,
-        pendingInvoices: stats?.pendingInvoices || 0,
-        overdueInvoices: stats?.overdueInvoices || 0,
-        weightedPipeline: stats?.weightedPipeline || 0,
-        salesForecast: stats?.salesForecast || 0
-    });
-    const [revenueData, setRevenueData] = useState<any[]>(stats?.monthlyRevenue || []);
-    const [pipelineData, setPipelineData] = useState<any[]>([]);
-    const [recentActivity, setRecentActivity] = useState<any[]>(stats?.recentActivity || []);
-    const [loading, setLoading] = useState(!stats);
-    const [invoiceStats, setInvoiceStats] = useState<InvoiceStats>({
-        overdue: 0, dueSoon: 0, inProgress: 0, totalActive: 0, loadingInvoices: true
-    });
-    const greeting = getGreeting();
-    const firstName = (user.name || user.email || 'there').split(' ')[0];
+    // Use the new engaging dashboard instead of the old static one
+    return <EngagingDashboard user={user} stats={stats} />;
 
     const mapPipelineData = (pipeline: Record<string, number>) => {
         const stageLabels: Record<string, string> = {

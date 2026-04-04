@@ -381,128 +381,118 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                </motion.div>
             </section>
 
-            {/* Features / Services Section */}
-            <section id="services" className="py-12 sm:py-20 relative overflow-hidden">
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                  <div className="text-center mb-12">
-                     <h2 className="font-black text-white mb-4 tracking-tight">Everything you need.<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">Nothing you don't.</span></h2>
-                     <p className="text-slate-400 max-w-2xl mx-auto">Each module works together — CRM, invoices, contracts, projects, and AI sales automation in one login.</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10">
-                     {[
-                        {
-                           id: 'crm',
-                           icon: Database,
-                           title: 'Unified CRM',
-                           summary: 'Client data, pipeline, and communication history in one place.',
-                           details: ['Visual Pipelines', 'Lead Automation', 'Real-time Analytics'],
-                           gradient: 'from-teal-900/70 via-slate-900 to-slate-950',
-                            accentColor: 'text-teal-400',
-                        },
-                        {
-                           id: 'projects',
-                           icon: Layers,
-                           title: 'Project Engine',
-                           summary: 'Task management and project tracking for high-output teams.',
-                           details: ['Milestone Tracking', 'Collaborative Boards', 'Asset Management'],
-                           gradient: 'from-blue-900/70 via-slate-900 to-slate-950',
-                            accentColor: 'text-blue-400',
-                        },
-                        {
-                           id: 'billing',
-                           icon: BarChart,
-                           title: 'Finance & Billing',
-                           summary: 'Automate invoices, track revenue, and manage payments.',
-                           details: ['One-click Invoicing', 'Stripe Integration', 'Revenue Forecasting'],
-                           gradient: 'from-emerald-900/70 via-slate-900 to-slate-950',
-                            accentColor: 'text-emerald-400',
-                        },
-                        {
-                           id: 'ai-growth',
-                           icon: Zap,
-                           title: 'AI Sales Agent',
-                           summary: 'Autopilot outreach. Qualify leads and book meetings automatically.',
-                           details: ['GPT-4o Powered', 'Multi-channel Outreach', 'Auto Qualification'],
-                           gradient: 'from-violet-900/70 via-slate-900 to-slate-950',
-                            accentColor: 'text-violet-400',
-                        },
-                        {
-                           id: 'security',
-                           icon: ShieldCheck,
-                           title: 'Safe Ops',
-                           summary: 'End-to-end encryption and granular access controls.',
-                           details: ['RBAC Permissions', 'Encrypted Video', 'Audit Trails'],
-                           gradient: 'from-rose-900/70 via-slate-900 to-slate-950',
-                            accentColor: 'text-rose-400',
-                        },
-                        {
-                           id: 'mobile',
-                           icon: Smartphone,
-                           title: 'Mobile Ready',
-                           summary: 'Manage your business from anywhere with full PWA support.',
-                           details: ['Real-time Alerts', 'Mobile Dashboard', 'Offline Mode'],
-                           gradient: 'from-amber-900/70 via-slate-900 to-slate-950',
-                            accentColor: 'text-amber-400',
-                        }
-                     ].map((item, i) => (
-                        <ServiceCard key={item.id} service={item} index={i} />
-                     ))}
-                  </div>
-               </div>
-            </section>
-
-            {/* The Momentum Engine - Sequence of Business Section */}
-            <section className="py-24 relative overflow-hidden bg-slate-950/40 border-y border-slate-900">
+            {/* Business Impact Section - Replaces Features */}
+            <section className="py-24 relative overflow-hidden bg-slate-950/40">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                   <div className="text-center mb-16">
-                     <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight">
-                        The <span className="text-teal-400">Momentum</span> Engine
+                     <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight">
+                        The <span className="text-teal-400">Business OS</span> That Works
                      </h2>
-                     <p className="text-slate-400 max-w-2xl mx-auto text-lg">
-                        Business is a sequence. AlphaClone enforces the workflow that leads to revenue.
+                     <p className="text-slate-400 max-w-3xl mx-auto text-xl leading-relaxed">
+                        Stop juggling 12 different tools. AlphaClone replaces your entire business stack with one unified system that actually drives revenue.
                      </p>
                   </div>
 
-                  <div className="relative">
-                     {/* Connecting Line (Desktop) */}
-                     <div className="hidden lg:block absolute top-[44px] left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-teal-500/30 to-transparent z-0" />
-                     
-                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-8 relative z-10">
-                        {[
-                           { step: '01', title: 'Find', desc: 'Auto-crawl high-intent leads.', icon: '🔍' },
-                           { step: '02', title: 'Contact', desc: 'AI outreach via SMS & AI.', icon: '⚡' },
-                           { step: '03', title: 'Track', desc: 'Monitor every handshake.', icon: '📊' },
-                           { step: '04', title: 'Close', desc: 'E-sign & lock in the deal.', icon: '✍️' },
-                           { step: '05', title: 'Invoice', desc: 'One-click billing & Stripe.', icon: '💰' },
-                           { step: '06', title: 'Execute', desc: 'Project boards & automation.', icon: '🚀' },
-                        ].map((item, idx) => (
-                           <motion.div 
-                              key={item.title}
-                              initial={{ opacity: 0, y: 20 }}
-                              whileInView={{ opacity: 1, y: 0 }}
-                              viewport={{ once: true }}
-                              transition={{ delay: idx * 0.1 }}
-                              className="group text-center"
-                           >
-                              <div className="relative mb-6 mx-auto w-20 h-20 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-3xl group-hover:border-teal-500/50 group-hover:shadow-[0_0_20px_rgba(20,184,166,0.15)] transition-all">
-                                 <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-black text-teal-400 font-mono">
-                                    {item.step}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                     <motion.div
+                        initial={{ opacity: 0, x: -30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        className="space-y-8"
+                     >
+                        <div className="space-y-6">
+                           {[
+                              {
+                                 title: '12 Tools → 1 Platform',
+                                 desc: 'CRM, invoicing, projects, contracts, and more in one login.',
+                                 impact: 'Save 20+ hours per month'
+                              },
+                              {
+                                 title: 'Revenue-First Workflow',
+                                 desc: 'Built-in sequences that turn leads into cash automatically.',
+                                 impact: '3x faster deal closing'
+                              },
+                              {
+                                 title: 'AI-Powered Growth',
+                                 desc: 'Smart outreach that books meetings while you sleep.',
+                                 impact: '10x qualified leads'
+                              }
+                           ].map((item, idx) => (
+                              <motion.div
+                                 key={item.title}
+                                 initial={{ opacity: 0, y: 20 }}
+                                 whileInView={{ opacity: 1, y: 0 }}
+                                 viewport={{ once: true }}
+                                 transition={{ delay: idx * 0.1 }}
+                                 className="flex gap-4"
+                              >
+                                 <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center flex-shrink-0">
+                                    <CheckCircle className="w-6 h-6 text-teal-400" />
                                  </div>
-                                 {item.icon}
-                              </div>
-                              <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
-                              <p className="text-slate-500 text-sm leading-relaxed">{item.desc}</p>
-                           </motion.div>
-                        ))}
-                     </div>
+                                 <div className="flex-1">
+                                    <h3 className="text-lg font-bold text-white mb-1">{item.title}</h3>
+                                    <p className="text-slate-400 text-sm mb-2">{item.desc}</p>
+                                    <p className="text-teal-400 text-sm font-medium">{item.impact}</p>
+                                 </div>
+                              </motion.div>
+                           ))}
+                        </div>
+                     </motion.div>
+
+                     <motion.div
+                        initial={{ opacity: 0, x: 30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8"
+                     >
+                        <div className="space-y-6">
+                           <div className="text-center">
+                              <h3 className="text-2xl font-bold text-white mb-2">Real Results</h3>
+                              <p className="text-slate-400">What happens when you switch to AlphaClone</p>
+                           </div>
+                           
+                           <div className="grid grid-cols-2 gap-6">
+                              {[
+                                 { label: 'Time Saved', value: '67%', desc: 'Monthly admin work' },
+                                 { label: 'Revenue Growth', value: '34%', desc: 'First 6 months' },
+                                 { label: 'Client Response', value: '5x', desc: 'Faster replies' },
+                                 { label: 'Deal Close Rate', value: '89%', desc: 'vs 62% industry' }
+                              ].map((stat) => (
+                                 <div key={stat.label} className="text-center">
+                                    <div className="text-3xl font-black text-teal-400 mb-1">{stat.value}</div>
+                                    <div className="text-sm font-medium text-white mb-1">{stat.label}</div>
+                                    <div className="text-xs text-slate-500">{stat.desc}</div>
+                                 </div>
+                              ))}
+                           </div>
+
+                           <div className="pt-6 border-t border-slate-800">
+                              <Button
+                                 onClick={() => window.location.href = '/register'}
+                                 className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold"
+                              >
+                                 Start Getting Results
+                                 <ArrowRight className="w-4 h-4 ml-2" />
+                              </Button>
+                           </div>
+                        </div>
+                     </motion.div>
                   </div>
                </div>
             </section>
 
-            {/* Who We Serve Section (Compact) */}
+            {/* Trust & Credibility Section */}
             <section className="py-20 bg-[#050B14]">
                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="text-center mb-12">
+                     <h2 className="text-3xl md:text-4xl font-black text-white mb-4">
+                        Built for <span className="text-teal-400">Serious Business</span>
+                     </h2>
+                     <p className="text-slate-400 max-w-2xl mx-auto">
+                        Join thousands of agencies, freelancers, and startups running their entire business on AlphaClone
+                     </p>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                      {[
                         { title: 'Agencies', desc: 'Unified ops for client delivery.', icon: Briefcase },
@@ -526,57 +516,139 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                </div>
             </section>
 
-            {/* Video Explainer Section */}
-            <motion.div
-               initial={{ opacity: 0, y: 30 }}
-               whileInView={{ opacity: 1, y: 0 }}
-               viewport={{ once: true }}
-               transition={{ duration: 0.8 }}
-            >
-               <VideoExplainer />
-            </motion.div>
+            {/* Final CTA Section */}
+            <section className="py-24 relative overflow-hidden">
+               <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                  <motion.div
+                     initial={{ opacity: 0, y: 30 }}
+                     whileInView={{ opacity: 1, y: 0 }}
+                     viewport={{ once: true }}
+                     className="space-y-8"
+                  >
+                     <h2 className="text-4xl md:text-6xl font-black text-white mb-6">
+                        Ready to <span className="text-teal-400">Replace</span> Your Business Stack?
+                     </h2>
+                     <p className="text-xl text-slate-400 max-w-2xl mx-auto">
+                        Stop wasting time and money on disconnected tools. Get everything you need to run your business in one platform.
+                     </p>
+                     
+                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                        <Button
+                           onClick={() => window.location.href = '/register'}
+                           className="h-14 px-8 text-lg font-bold bg-teal-500 hover:bg-teal-400 text-slate-950 shadow-lg shadow-teal-500/25"
+                        >
+                           Start Free Trial
+                           <ArrowRight className="w-5 h-5 ml-2" />
+                        </Button>
+                        <button
+                           onClick={() => window.location.href = '/demo'}
+                           className="h-14 px-8 text-lg font-medium text-slate-300 hover:text-white border border-slate-700 hover:border-slate-500 rounded-xl transition-all"
+                        >
+                           Book a Demo
+                        </button>
+                     </div>
 
-            {/* Stats / Proof Section */}
-            <section className="py-12 border-y border-slate-800 bg-slate-950/50">
-               <motion.div 
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1 }}
-                  className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
-               >
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-                     {[
-                        { label: 'Uptime', value: '99.9%' },
-                        { label: 'Tools Replaced', value: '12+' },
-                        { label: 'Support', value: '24/7' },
-                        { label: 'Encryption', value: 'AES-256' }
-                     ].map((stat, i) => (
-                        <div key={i}>
-                           <div className="text-3xl sm:text-4xl font-black text-white mb-1">{stat.value}</div>
-                           <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">{stat.label}</div>
-                        </div>
-                     ))}
-                  </div>
-               </motion.div>
+                     <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-500">
+                        <span>✓ No credit card required</span>
+                        <span>✓ 14-day free trial</span>
+                        <span>✓ Cancel anytime</span>
+                     </div>
+                  </motion.div>
+               </div>
             </section>
 
-            {/* Pricing Section */}
-            <section id="pricing" className="py-16 sm:py-20 relative">
-               <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="text-center mb-12">
-                     <h2 className="text-3xl md:text-4xl font-black text-white mb-3 tracking-tight">Simple, Transparent Pricing</h2>
-                     <p className="text-base text-slate-400 max-w-xl mx-auto">
-                        One price for total control. No hidden fees. No surprises.
+            {/* Contact Section */}
+            <section id="contact" className="py-20 bg-slate-950/60">
+               <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="text-center mb-16">
+                     <h2 className="text-3xl md:text-4xl font-black text-white mb-4">
+                        Ready to <span className="text-teal-400">Get Started?</span>
+                     </h2>
+                     <p className="text-slate-400 max-w-2xl mx-auto">
+                        Have questions? Want to see AlphaClone in action? We're here to help.
                      </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
-                     {[
-                        {
-                           name: 'Starter', price: '$15', desc: 'Solo founders & freelancers',
-                           features: [
-                              '5 Users · 5GB Storage',
+                  <div className="max-w-2xl mx-auto">
+                     {formStatus === 'success' ? (
+                        <motion.div
+                           initial={{ opacity: 0, scale: 0.9 }}
+                           animate={{ opacity: 1, scale: 1 }}
+                           className="bg-green-500/10 border border-green-500/30 rounded-2xl p-8 text-center"
+                        >
+                           <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                              <CheckCircle className="w-8 h-8 text-green-400" />
+                           </div>
+                           <h3 className="text-xl font-bold text-white mb-2">Message Sent!</h3>
+                           <p className="text-slate-400">We'll get back to you within 24 hours.</p>
+                        </motion.div>
+                     ) : (
+                        <form onSubmit={handleContactSubmit} className="space-y-6">
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div className="relative group">
+                                 <input
+                                    type="text"
+                                    value={contactForm.name}
+                                    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                                    placeholder="Your Name"
+                                    className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-4 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none transition-all"
+                                    required
+                                 />
+                              </div>
+                              <div className="relative group">
+                                 <input
+                                    type="email"
+                                    value={contactForm.email}
+                                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                                    placeholder="Your Email"
+                                    className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-4 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none transition-all"
+                                    required
+                                 />
+                              </div>
+                           </div>
+                           
+                           <div className="relative group">
+                              <input
+                                 type="text"
+                                 value={contactForm.subject}
+                                 onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
+                                 placeholder="Subject"
+                                 className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-4 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none transition-all"
+                                 required
+                              />
+                           </div>
+                           
+                           <div className="relative group">
+                              <textarea
+                                 value={contactForm.message}
+                                 onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                                 placeholder="Your Message"
+                                 rows={6}
+                                 className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-4 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none transition-all resize-none"
+                                 required
+                              />
+                           </div>
+
+                           <button
+                              type="submit"
+                              disabled={formStatus === 'sending'}
+                              className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold py-4 px-6 rounded-xl transition-all disabled:opacity-50"
+                           >
+                              {formStatus === 'sending' ? 'Sending...' : 'Send Message'}
+                           </button>
+                        </form>
+                     )}
+                  </div>
+               </div>
+            </section>
+         </main>
+
+         <MarketingFooter />
+      </div>
+   );
+};
+
+export default LandingPage;
                               '10 Projects · 10 Contracts',
                               '50 AI queries / mo',
                               '10 AI Agent runs / mo',
