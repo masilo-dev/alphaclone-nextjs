@@ -4,17 +4,17 @@
 import { useState } from 'react';
 import { Button } from '../ui/UIComponents';
 import { 
-  CreditCard, 
-  Users, 
-  Calendar, 
+  Mail, 
+  Send, 
   MessageSquare, 
+  Calendar, 
+  CreditCard, 
+  Zap, 
   FileText, 
-  Building, 
-  Zap,
-  CheckCircle,
-  AlertCircle,
-  ExternalLink,
-  Lock
+  Briefcase, 
+  Users, 
+  Settings, 
+  Globe
 } from 'lucide-react';
 import { StripeConnectOnboarding } from './StripeConnectOnboarding';
 import toast from 'react-hot-toast';
@@ -79,6 +79,36 @@ export const IntegrationMarketplace: React.FC = () => {
         'Daily summaries'
       ],
       actionPoints: 15
+    },
+    {
+      id: 'sendgrid',
+      name: 'SendGrid',
+      description: 'Professional email delivery and marketing',
+      icon: Send,
+      category: 'communication',
+      status: 'available',
+      features: [
+        'Email campaigns',
+        'Automated sequences',
+        'Analytics and tracking',
+        'Template management'
+      ],
+      actionPoints: 25
+    },
+    {
+      id: 'resend',
+      name: 'Resend',
+      description: 'Modern email API for developers',
+      icon: Mail,
+      category: 'communication',
+      status: 'available',
+      features: [
+        'Email API',
+        'Templates and components',
+        'Analytics',
+        'Bulk sending'
+      ],
+      actionPoints: 20
     },
     {
       id: 'google-calendar',
@@ -183,6 +213,24 @@ export const IntegrationMarketplace: React.FC = () => {
       toast.success('Redirecting to Slack authorization...');
       setTimeout(() => {
         window.open('/api/slack/oauth', '_blank');
+      }, 1000);
+      return;
+    }
+
+    if (integrationId === 'sendgrid') {
+      // Handle SendGrid integration
+      toast.success('Opening SendGrid configuration...');
+      setTimeout(() => {
+        window.open('/api/sendgrid/oauth', '_blank');
+      }, 1000);
+      return;
+    }
+
+    if (integrationId === 'resend') {
+      // Handle Resend integration
+      toast.success('Opening Resend configuration...');
+      setTimeout(() => {
+        window.open('/api/resend/oauth', '_blank');
       }, 1000);
       return;
     }
