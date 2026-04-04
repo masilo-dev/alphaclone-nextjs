@@ -153,6 +153,8 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
 
                   {/* Desktop Nav */}
                   <div className="hidden lg:flex items-center gap-8">
+                     <Link href="/" className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Home</Link>
+                     <Link href="/guide" className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Guide</Link>
                      <button onClick={() => scrollToSection('services')} className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Platform</button>
                      <button onClick={() => scrollToSection('pricing')} className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Pricing</button>
                      <Link href="/docs" className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Docs</Link>
@@ -230,6 +232,20 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      {/* Mobile Menu Content */}
                      <div className="flex-1 px-4 py-6">
                         <nav className="space-y-1">
+                           <Link
+                              href="/"
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="block w-full text-left px-4 py-4 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
+                           >
+                              Home
+                           </Link>
+                           <Link
+                              href="/guide"
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="block w-full text-left px-4 py-4 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
+                           >
+                              Guide
+                           </Link>
                            {['services', 'pricing', 'contact'].map((item) => (
                               <button
                                  key={item}
@@ -299,7 +315,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                   <motion.div
                      initial={{ opacity: 0, y: 20 }}
                      animate={{ opacity: 1, y: 0 }}
-                     transition={{ duration: 1.2 }}
+                     transition={{ duration: 2.0 }}
                   >
                      {/* Brand pill */}
                      <div className="inline-flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 mb-8 text-sm text-slate-300">
@@ -381,7 +397,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 1.5 }}
+                  transition={{ duration: 2.5 }}
                   className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
                >
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
@@ -677,7 +693,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                                  <>
                                     <motion.div
                                        animate={{ rotate: 360 }}
-                                       transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                       transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
                                        className="w-5 h-5 border-2 border-slate-950/20 border-t-slate-950 rounded-full"
                                     />
                                        Sending...
