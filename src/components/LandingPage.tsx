@@ -309,21 +309,21 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      {/* Brand pill */}
                      <div className="inline-flex items-center gap-2 bg-slate-800/60 border border-slate-700/60 rounded-full px-4 py-1.5 mb-8 text-xs sm:text-sm text-slate-300 backdrop-blur-sm">
                         <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-                        The all-in-one Business OS for agencies &amp; teams
+                        <span className="font-bold">Replace 12+ Tools. Save $300+/mo.</span>
                      </div>
 
                      {/* Headline */}
                      <h1 className="font-black text-white mb-6 tracking-tight">
-                        AlphaClone Systems
+                        Stop Paying for
                         <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">
-                           One platform. Every tool.
+                           Dozens of SaaS Tools
                         </span>
                      </h1>
 
                      {/* Solution subheadline */}
                      <p className="text-base sm:text-lg md:text-xl text-slate-400 mb-4 max-w-3xl mx-auto leading-relaxed">
-                        AlphaClone gives agencies, freelancers, and service businesses a single platform for their <span className="text-white font-medium">CRM, invoicing, contracts, project management,</span> and <span className="text-teal-400 font-medium">AI-powered sales automation</span> — replacing a dozen tools with one login.
+                        Stop paying <span className="text-red-400 font-bold">$300+/month</span> for HubSpot, QuickBooks, DocuSign, Asana, Mailchimp, Zoom, and 6 other tools. AlphaClone gives you <span className="text-teal-400 font-bold">everything in one platform</span> for <span className="text-green-400 font-bold">$45/month</span>.
                      </p>
 
                      {/* Platform modules */}
@@ -335,6 +335,10 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            'Projects',
                            'Bookings',
                            'AI Sales Agent',
+                           'Video Calls',
+                           'Email Campaigns',
+                           'Analytics',
+                           'Team Chat'
                         ].map(label => (
                            <div key={label} className="bg-slate-800/50 border border-teal-500/20 rounded-full px-3 py-1 text-xs text-slate-300">
                               {label}

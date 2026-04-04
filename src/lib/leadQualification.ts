@@ -10,6 +10,8 @@
  *  5. Returns a pitchAngle for AI email personalisation
  */
 
+import { COMPREHENSIVE_INDUSTRIES, findIndustryByNameOrKeyword } from './comprehensiveIndustries';
+
 export type QualityTier = 'hot' | 'warm' | 'cold' | 'skip';
 
 export interface QualificationResult {

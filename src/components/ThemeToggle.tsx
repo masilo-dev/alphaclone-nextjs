@@ -44,7 +44,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ userId }) => {
         <div className="flex items-center gap-1 bg-slate-800 rounded-lg p-1">
             <button
                 onClick={() => handleThemeChange('light')}
-                className={`p - 2 rounded - md transition - colors ${theme === 'light'
+                className={`p-2 rounded-md transition-colors ${theme === 'light'
                         ? 'bg-slate-700 text-yellow-400'
                         : 'text-slate-400 hover:text-white'
                     } `}
@@ -54,7 +54,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ userId }) => {
             </button>
             <button
                 onClick={() => handleThemeChange('dark')}
-                className={`p - 2 rounded - md transition - colors ${theme === 'dark'
+                className={`p-2 rounded-md transition-colors ${theme === 'dark'
                         ? 'bg-slate-700 text-blue-400'
                         : 'text-slate-400 hover:text-white'
                     } `}
@@ -64,7 +64,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ userId }) => {
             </button>
             <button
                 onClick={() => handleThemeChange('auto')}
-                className={`p - 2 rounded - md transition - colors ${theme === 'auto'
+                className={`p-2 rounded-md transition-colors ${theme === 'auto'
                         ? 'bg-slate-700 text-teal-400'
                         : 'text-slate-400 hover:text-white'
                     } `}

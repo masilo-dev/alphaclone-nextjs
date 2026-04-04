@@ -28,6 +28,9 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const [signature, setSignature] = useState('');
+    
+    // Define available email providers
+    const availableProviders: EmailProvider[] = ['gmail', 'zoho'];
 
     // Load signature
     useEffect(() => {

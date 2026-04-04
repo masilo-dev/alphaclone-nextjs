@@ -82,21 +82,37 @@ class EventBusService {
     private startListening(): void {
         if (this.isListening) return;
 
-        // Listen for new events via PostgreSQL NOTIFY
-        supabase
-            .channel('event_bus')
-            .on('postgres_changes', {
-                event: 'INSERT',
-                schema: 'public',
-                table: 'events'
-            }, async (payload: RealtimePostgresChangesPayload<Event>) => {
-                const event = payload.new as Event;
-                await this.processEvent(event);
-            })
-            .subscribe();
+        try {
+            // Listen for new events via PostgreSQL NOTIFY
+            const channel = supabase
+                .channel('event_bus')
+                .on('postgres_changes', {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'events'
+                }, async (payload: RealtimePostgresChangesPayload<Event>) => {
+                    const event = payload.new as Event;
+                    await this.processEvent(event);
+                })
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        console.log('[EventBus] Successfully subscribed to event channel');
+                    } else if (status === 'CHANNEL_ERROR') {
+                        console.error('[EventBus] Failed to subscribe to event channel');
+                    } else if (status === 'TIMED_OUT') {
+                        console.warn('[EventBus] Event channel subscription timed out');
+                    } else if (status === 'CLOSED') {
+                        console.warn('[EventBus] Event channel closed');
+                        this.isListening = false;
+                    }
+                });
 
-        this.isListening = true;
-        console.log('[EventBus] Started listening for events');
+            this.isListening = true;
+            console.log('[EventBus] Started listening for events');
+        } catch (error) {
+            console.error('[EventBus] Failed to start listening:', error);
+            this.isListening = false;
+        }
     }
 
     /**

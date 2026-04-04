@@ -52,12 +52,22 @@ export function BackgroundTaskProvider({ children }: { children: ReactNode }) {
 
         } catch (error: any) {
             console.error(`Background task failed: ${name}`, error);
+            
+            // Better error handling for different types of errors
+            let errorMessage = 'Unknown error';
+            if (error?.message) {
+                errorMessage = error.message;
+            } else if (typeof error === 'string') {
+                errorMessage = error;
+            } else if (error && typeof error === 'object') {
+                errorMessage = 'Task execution failed';
+            }
 
             setTasks(prev => prev.map(t =>
-                t.id === id ? { ...t, status: 'error', error: error.message || String(error) } : t
+                t.id === id ? { ...t, status: 'error', error: errorMessage } : t
             ));
 
-            toast.error(`${name} failed: ${error.message || 'Unknown error'}`);
+            toast.error(`${name} failed: ${errorMessage}`);
 
             if (onError) onError(error);
         }

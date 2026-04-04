@@ -62,8 +62,8 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
   const [queueOnly,     setQueueOnly    ] = useState(false);
 
   // Leads that can receive auto-outreach (have email)
-  const emailable = leads.filter(l => l.qualification.canAutoSend);
-  const noEmail   = leads.filter(l => !l.qualification.canAutoSend);
+  const emailable = leads.filter(l => l?.qualification?.canAutoSend && l?.email);
+  const noEmail   = leads.filter(l => !l?.qualification?.canAutoSend || !l?.email);
 
   // Fetch user display name and Zoho sender addresses on mount
   useEffect(() => {
@@ -98,16 +98,16 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           leads: emailable.map(l => ({
-            business_name: l.business_name,
+            business_name: l.business_name || 'Unknown Business',
             email:    l.email,
-            phone:    l.phone,
-            website:  l.website,
-            rating:   l.rating,
-            address:  l.address,
-            category: l.category,
-            pitchAngle: l.qualification.pitchAngle,
-            insights:   l.qualification.insights,
-            score:      l.qualification.score,
+            phone:    l.phone || '',
+            website:  l.website || '',
+            rating:   l.rating || 0,
+            address:  l.address || '',
+            category: l.category || '',
+            pitchAngle: l.qualification?.pitchAngle || 'professional',
+            insights:   l.qualification?.insights || '',
+            score:      l.qualification?.score || 0,
           })),
           industry,
           tone,
@@ -144,24 +144,24 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
           body: JSON.stringify({
             tenantId:    currentTenant.id,
             leadEmail:   lead.email,
-            leadName:    lead.business_name,
+            leadName:    lead.business_name || 'Unknown Business',
             subject:     email.subject,
             body:        email.body,
-            pitchAngle:  lead.qualification.pitchAngle,
+            pitchAngle:  lead.qualification?.pitchAngle || 'professional',
             industry,
-            score:       lead.qualification.score,
+            score:       lead.qualification?.score || 0,
             fromAddress: fromAddress || undefined,
             queue:       queueOnly,
           }),
         });
         const data = await res.json();
         results.push({
-          name:   email.business_name,
+          name:   email.business_name || 'Unknown Business',
           status: data.status === 'sent' ? 'sent' : data.status === 'queued' ? 'queued' : 'failed',
           error:  data.error,
         });
       } catch (err: any) {
-        results.push({ name: email.business_name, status: 'failed', error: err.message });
+        results.push({ name: email.business_name || 'Unknown Business', status: 'failed', error: err.message });
       }
     }
 

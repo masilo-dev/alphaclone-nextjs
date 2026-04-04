@@ -1,20 +1,20 @@
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
-import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download, PenLine, Copy, List, Plus, Users, Search, CheckCircle2, Send, Mail, AlertCircle } from 'lucide-react';
+import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download, PenLine, Copy, List, Plus, Users, Search, CheckCircle2, Send, Mail, AlertCircle, Building2, ChevronDown, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from '../ui/UIComponents';
 import { paymentService } from '../../services/paymentService';
 import { Project } from '../../types';
 import toast from 'react-hot-toast';
 import { useTenant } from '../../contexts/TenantContext';
-import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '../../services/universalServiceCatalog';
-import { ChevronDown, Sparkles } from 'lucide-react';
+import { COMPREHENSIVE_INDUSTRIES, getAllIndustryNames, getServicesByIndustry, findIndustryByNameOrKeyword, ServiceItem } from '../../lib/comprehensiveIndustries';
 
 
 interface LineItem {
     description: string;
     quantity: number;
     rate: number;
+    serviceId?: string; // Reference to selected service
 }
 
 interface CreateInvoiceModalProps {
@@ -49,11 +49,20 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [userSectors, setUserSectors] = useState<string[]>([]);
     const [myServices, setMyServices] = useState<Record<string, any>>({});
     const [showServiceDropdown, setShowServiceDropdown] = useState<{ index: number; open: boolean }>({ index: -1, open: false });
-    const [enablePaymentLinks, setEnablePaymentLinks] = useState(false); // DISABLED by default
-    const [clientEmail, setClientEmail] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [showContactDropdown, setShowContactDropdown] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Service selection state
+    const [selectedIndustry, setSelectedIndustry] = useState<string>('');
+    const [availableServices, setAvailableServices] = useState<ServiceItem[]>([]);
+    const [showIndustryDropdown, setShowIndustryDropdown] = useState(false);
+    const [industrySearchQuery, setIndustrySearchQuery] = useState('');
+    const [serviceSearchQuery, setServiceSearchQuery] = useState('');
+
+    // Missing state variables
+    const [clientEmail, setClientEmail] = useState('');
+    const [enablePaymentLinks, setEnablePaymentLinks] = useState(false);
 
     // Set default bank and mobile money details from tenant
     const tenantSettings = currentTenant?.settings as {
@@ -124,6 +133,23 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         }
     }, [selectedClientId, clients]);
 
+    // Update available services when industry changes
+    React.useEffect(() => {
+        if (selectedIndustry) {
+            const services = getServicesByIndustry(selectedIndustry);
+            setAvailableServices(services);
+            
+            // Set default tax rate for the industry
+            const industry = COMPREHENSIVE_INDUSTRIES.find(ind => ind.id === selectedIndustry);
+            if (industry) {
+                setTaxRate(industry.commonTaxRate * 100); // Convert to percentage
+            }
+        } else {
+            setAvailableServices([]);
+            setTaxRate(0);
+        }
+    }, [selectedIndustry]);
+
     const addLineItem = () => {
         setLineItems([...lineItems, { description: '', quantity: 1, rate: 0 }]);
     };
@@ -139,7 +165,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     };
 
     const calculateTax = () => {
-        return (calculateSubtotal() * taxRate) / 100;
+        const subtotal = calculateSubtotal();
+        const taxableAmount = Math.max(0, subtotal - discountAmount);
+        return (taxableAmount * taxRate) / 100; // taxRate is already in percentage (e.g., 15 for 15%)
     };
 
     const calculateTotal = () => {

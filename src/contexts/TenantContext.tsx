@@ -156,14 +156,23 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           console.error('Auto-create error details:', {
             message: error?.message,
             code: error?.code,
-            details: error?.details
+            details: error?.details,
+            hint: error?.hint
           });
+
+          // Handle specific function overload error
+          let errorMessage = 'Unable to create your organization. Please contact support.';
+          if (error?.code === 'PGRST203') {
+            errorMessage = 'Database function conflict detected. Please refresh the page and try again.';
+          } else if (error?.message?.includes('Failed to fetch')) {
+            errorMessage = 'Network connection unstable. Please check your internet connection and try again.';
+          }
 
           // CRITICAL: Set loading to false and error immediately
           setCurrentTenant(null);
           setUserTenants([]);
           tenantService.clearCurrentTenant();
-          setError('Unable to create your organization. Please contact support.');
+          setError(errorMessage);
           if (timeoutId) clearTimeout(timeoutId);
           setIsLoading(false);
 
@@ -185,16 +194,39 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         hint: error?.hint
       });
 
+      // Handle specific network errors
+      const isNetworkError = error?.message?.includes('Failed to fetch') || 
+                           error?.message?.includes('ERR_NETWORK_CHANGED') ||
+                           error?.message?.includes('ERR_FAILED') ||
+                           error?.code === 'NETWORK_ERROR';
+
       // CRITICAL: Set error and stop loading immediately
-      const errorMessage = error?.code === 'PGRST301' || error?.message?.includes('403')
-        ? 'Permission denied. Please contact support.'
-        : error?.message || 'Failed to load tenants';
+      let errorMessage = error?.message || 'Failed to load tenants';
+      
+      if (isNetworkError) {
+        errorMessage = 'Network connection unstable. Please check your internet connection and refresh.';
+      } else if (error?.code === 'PGRST301' || error?.message?.includes('403')) {
+        errorMessage = 'Permission denied. Please contact support.';
+      } else if (error?.code === 'PGRST203') {
+        errorMessage = 'Database function conflict. Please refresh the page.';
+      }
 
       setError(errorMessage);
       setCurrentTenant(null);
       setUserTenants([]);
       if (timeoutId) clearTimeout(timeoutId);
       setIsLoading(false);
+
+      // For network errors, retry after a delay
+      if (isNetworkError && !timeoutId) {
+        console.log('[TenantContext] Network error detected, scheduling retry...');
+        setTimeout(() => {
+          if (user?.id && !currentTenant) {
+            console.log('[TenantContext] Retrying tenant load after network error...');
+            loadUserTenants();
+          }
+        }, 3000); // Retry after 3 seconds
+      }
     }
   }, [user]);
 
@@ -225,22 +257,38 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     return tenant;
   }, [user, refreshTenants, switchTenant]);
 
-  const getDashboardStats = useCallback(async (tenantId: string, userId: string) => {
-    return await tenantService.getDashboardStats(tenantId, userId);
+  const getDashboardStats = useCallback(async (tenantId: string, userId?: string) => {
+    if (!tenantId) {
+      console.warn('[TenantContext] getDashboardStats called with missing tenantId');
+      return null;
+    }
+    
+    if (!userId) {
+      console.warn('[TenantContext] getDashboardStats called with missing userId');
+      return null;
+    }
+    
+    try {
+      return await tenantService.getDashboardStats(tenantId, userId);
+    } catch (error) {
+      console.error('[TenantContext] getDashboardStats failed:', error);
+      return null;
+    }
   }, []);
 
   useEffect(() => {
     if (user?.id) {
-      // Timeout safeguard: Force loading to false after 15 seconds to allow Vercel cold starts
+      // Timeout safeguard: Force loading to false after 20 seconds to allow Vercel cold starts
       const timeoutId = setTimeout(() => {
         setIsLoading((current) => {
           if (current) {
             console.warn('TenantContext: Loading timeout reached, forcing isLoading to false');
+            setError('Loading workspace data took too long. Please refresh the page.');
             return false;
           }
           return current;
         });
-      }, 10000);
+      }, 20000); // Increased from 10 to 20 seconds
 
       loadUserTenants(timeoutId);
 

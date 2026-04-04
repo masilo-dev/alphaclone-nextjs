@@ -8,9 +8,10 @@ import {
 import Image from 'next/image';
 import { LOGO_URL } from '../../constants';
 import { User } from '../../types';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage, LANGUAGES } from '@/contexts/LanguageContext';
 import { useBackgroundTasks, BackgroundTask } from '@/contexts/BackgroundTaskContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface SidebarProps {
@@ -347,10 +348,28 @@ const Sidebar = React.memo<SidebarProps>(({
                                     <p className="text-[10px] text-slate-500 truncate capitalize">{user.role || 'member'}</p>
                                 </div>
 
-                                {/* Language flag shortcut */}
+                                {/* Language switcher - immediate change */}
                                 <button
-                                    onClick={() => navigate('/dashboard/business/settings')}
-                                    title="Language & Appearance settings"
+                                    onClick={() => {
+                                        const { setLanguage } = useLanguage();
+                                        const LANGUAGES = [
+                                            { code: 'en', label: 'English', flag: '🇬🇧' },
+                                            { code: 'es', label: 'Spanish', flag: '🇪🇸' },
+                                            { code: 'fr', label: 'French', flag: '🇫🇷' },
+                                            { code: 'de', label: 'German', flag: '🇩🇪' },
+                                            { code: 'it', label: 'Italian', flag: '🇮🇹' },
+                                            { code: 'pt', label: 'Portuguese', flag: '🇵🇹' },
+                                            { code: 'nl', label: 'Dutch', flag: '🇳🇱' },
+                                            { code: 'zh', label: 'Chinese', flag: '🇨🇳' },
+                                            { code: 'ja', label: 'Japanese', flag: '🇯🇵' },
+                                            { code: 'ko', label: 'Korean', flag: '🇰🇷' }
+                                        ];
+                                        const currentLang = LANGUAGES.find(l => l.flag === languageFlag);
+                                        const nextLang = LANGUAGES[(LANGUAGES.findIndex(l => l.code === currentLang?.code) + 1) % LANGUAGES.length];
+                                        setLanguage(nextLang.code);
+                                        toast.success(`Switched to ${nextLang.label}`);
+                                    }}
+                                    title="Switch language"
                                     className="text-lg leading-none hover:scale-125 transition-transform flex-shrink-0"
                                 >
                                     {languageFlag}

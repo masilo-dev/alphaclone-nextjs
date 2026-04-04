@@ -41,6 +41,30 @@ export class ErrorBoundary extends Component<Props, State> {
             errorInfo,
         });
 
+        // Handle ChunkLoadError specifically
+        if (error.name === 'ChunkLoadError' || error.message.includes('Loading chunk')) {
+            console.log('[ErrorBoundary] ChunkLoadError detected, clearing cache and reloading...');
+            
+            // Clear service worker cache if available
+            if ('caches' in window) {
+                caches.keys().then(cacheNames => {
+                    return Promise.all(
+                        cacheNames.map(cacheName => caches.delete(cacheName))
+                    );
+                }).then(() => {
+                    console.log('[ErrorBoundary] Cache cleared, reloading...');
+                    window.location.reload();
+                }).catch(err => {
+                    console.error('[ErrorBoundary] Failed to clear cache:', err);
+                    window.location.reload();
+                });
+            } else {
+                // Fallback: just reload
+                window.location.reload();
+            }
+            return;
+        }
+
         // ✅ Log to Sentry with full context
         Sentry.captureException(error, {
             contexts: {

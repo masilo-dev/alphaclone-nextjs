@@ -13,6 +13,17 @@ export default {
     darkMode: 'class',
     theme: {
         extend: {
+            screens: {
+                'xs': '475px',
+                'sm': '640px',
+                'md': '768px',
+                'lg': '1024px',
+                'xl': '1280px',
+                '2xl': '1536px',
+                'small-laptop': '1440px',  // For 13-14" laptops
+                'tablet': '768px',
+                'mobile': '640px'
+            },
             colors: {
                 teal: {
                     50: '#f0fdfa',
@@ -38,7 +49,31 @@ export default {
                 }
             },
             fontFamily: {
-                sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                sans: [
+                    'Segoe UI',          // Microsoft modern
+                    'Inter',            // Current primary
+                    'Calibri',          // Microsoft documents
+                    'system-ui',
+                    '-apple-system',
+                    'BlinkMacSystemFont',
+                    'Roboto',
+                    'Helvetica Neue',
+                    'Arial',
+                    'sans-serif'
+                ],
+                serif: [
+                    'Cambria',          // Microsoft serif
+                    'Georgia',
+                    'serif'
+                ],
+                mono: [
+                    'Consolas',         // Microsoft monospace
+                    'SF Mono',
+                    'Monaco',
+                    'Inconsolata',
+                    'Roboto Mono',
+                    'monospace'
+                ]
             },
             // STRICT APP TYPOGRAPHY SCALE
             fontSize: {
@@ -84,5 +119,30 @@ export default {
             }
         },
     },
-    plugins: [typography],
+    plugins: [
+        typography,
+        // Add responsive text plugin
+        function({ addUtilities }) {
+            addUtilities({
+                '.text-responsive-xs': {
+                    'font-size': '0.75rem',
+                    '@screen sm': { 'font-size': '0.875rem' }
+                },
+                '.text-responsive-sm': {
+                    'font-size': '0.875rem',
+                    '@screen sm': { 'font-size': '1rem' }
+                },
+                '.text-responsive-base': {
+                    'font-size': '0.875rem',
+                    '@screen sm': { 'font-size': '1rem' },
+                    '@screen lg': { 'font-size': '1.125rem' }
+                },
+                '.text-responsive-lg': {
+                    'font-size': '1.125rem',
+                    '@screen sm': { 'font-size': '1.25rem' },
+                    '@screen lg': { 'font-size': '1.5rem' }
+                }
+            });
+        }
+    ],
 }

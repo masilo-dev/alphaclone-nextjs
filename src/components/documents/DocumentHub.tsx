@@ -6,10 +6,11 @@ import {
     Filter,
     Printer,
     Share2,
-    Presentation,
     ScanLine,
     Image as ImageIcon,
-    Type
+    Type,
+    FileQuestion,
+    Quote
 } from 'lucide-react';
 import { googleDriveService } from '../../services/googleDriveService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -45,7 +46,7 @@ interface DocumentHubProps {
     user: User;
 }
 
-type ViewMode = 'list' | 'viewer' | 'editor' | 'image' | 'presentation' | 'designer';
+type ViewMode = 'list' | 'viewer' | 'editor' | 'image' | 'designer';
 
 interface Slide {
     id: string;
@@ -78,7 +79,8 @@ function getFileIcon(fileType: string) {
     if (fileType === 'application/pdf') return <FileText className="w-5 h-5 text-red-400" />;
     if (fileType.includes('word') || fileType.includes('msword')) return <FileText className="w-5 h-5 text-blue-400" />;
     if (fileType.includes('image')) return <FileIcon className="w-5 h-5 text-green-400" />;
-    return <FileIcon className="w-5 h-5 text-slate-400" />;
+    if (fileType.includes('quote') || fileType.includes('quotation')) return <Quote className="w-5 h-5 text-purple-400" />;
+    return <FileQuestion className="w-5 h-5 text-slate-400" />;
 }
 
 function getFileLabel(fileType: string): string {
@@ -86,7 +88,8 @@ function getFileLabel(fileType: string): string {
     if (fileType.includes('wordprocessingml') || fileType.includes('msword')) return 'Word';
     if (fileType.includes('spreadsheetml') || fileType.includes('ms-excel')) return 'Excel';
     if (fileType.includes('image')) return 'Image';
-    return 'File';
+    if (fileType.includes('quote') || fileType.includes('quotation')) return 'Quote';
+    return 'Document';
 }
 
 const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
@@ -107,10 +110,6 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     const [storageUsed, setStorageUsed] = useState(0);
     const { user: authUser } = useAuth();
     const [isSavingToDrive, setIsSavingToDrive] = useState<string | null>(null);
-    const [slides, setSlides] = useState<Slide[]>([{ id: '1', title: 'New Presentation', content: 'Subtitle or description' }]);
-    const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-    const [presentationPrompt, setPresentationPrompt] = useState('');
-    const [isGeneratingSlides, setIsGeneratingSlides] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const scanInputRef = useRef<HTMLInputElement>(null);
 
@@ -206,48 +205,47 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         setViewMode('editor');
     };
 
-    const handleGenerateSlides = async () => {
-        if (!presentationPrompt.trim()) return;
-        setIsGeneratingSlides(true);
-        try {
-            const prompt = `Create a professional presentation about: "${presentationPrompt}"
-
-Generate exactly 6 slides. Return ONLY a valid JSON array, no markdown, no explanation.
-Each slide object must have:
-- id: "1" through "6" as strings
-- title: slide title (concise, max 8 words)
-- content: slide body content (2-4 bullet points or a short paragraph, max 100 words)
-
-Example: [{"id":"1","title":"Introduction","content":"• Key point one\\n• Key point two\\n• Key point three"}]`;
-
-            const { text } = await generateText(prompt, 1200);
-            if (text) {
-                const parsed: Slide[] = JSON.parse(text);
-                setSlides(parsed);
-                setCurrentSlideIndex(0);
-                toast.success('Presentation generated!');
-            }
-        } catch (err) {
-            console.error('Failed to generate slides:', err);
-            toast.error('Failed to generate slides. Please try again.');
-        } finally {
-            setIsGeneratingSlides(false);
-        }
-    };
-
-    const handleCreatePresentation = () => {
-        setSlides([{ id: '1', title: 'Presentation Title', content: 'Subtitle or description' }]);
-        setCurrentSlideIndex(0);
+    const handleCreateQuote = () => {
+        setEditorContent(`
+            <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px;">
+                <h1 style="text-align: center; color: #333; margin-bottom: 30px;">Price Quote</h1>
+                <div style="margin-bottom: 30px;">
+                    <p><strong>Quote #:</strong> ${format(new Date(), 'yyyy-MM-dd')}-001</p>
+                    <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+                    <p><strong>Valid Until:</strong> ${format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd')}</p>
+                </div>
+                <h2 style="color: #333; margin-bottom: 20px;">Items & Services</h2>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                    <tr style="border-bottom: 2px solid #333;">
+                        <th style="padding: 10px; text-align: left;">Description</th>
+                        <th style="padding: 10px; text-align: right;">Quantity</th>
+                        <th style="padding: 10px; text-align: right;">Unit Price</th>
+                        <th style="padding: 10px; text-align: right;">Total</th>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #ccc;">
+                        <td style="padding: 10px;">Service Description</td>
+                        <td style="padding: 10px; text-align: right;">1</td>
+                        <td style="padding: 10px; text-align: right;">$0.00</td>
+                        <td style="padding: 10px; text-align: right;">$0.00</td>
+                    </tr>
+                </table>
+                <div style="text-align: right;">
+                    <p><strong>Subtotal:</strong> $0.00</p>
+                    <p><strong>Tax:</strong> $0.00</p>
+                    <p><strong>Total:</strong> $0.00</p>
+                </div>
+            </div>
+        `);
         setSelectedFile({
-            id: 'new-ppt',
-            original_filename: `Presentation-${format(new Date(), 'yyyy-MM-dd-HHmm')}.pdf`,
-            file_type: 'application/pdf', // We export as PDF
+            id: 'new-quote',
+            original_filename: `Quote-${format(new Date(), 'yyyy-MM-dd-HHmm')}.docx`,
+            file_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             file_size: 0,
             storage_path: '',
             created_at: new Date().toISOString(),
             deleted_at: null
         });
-        setViewMode('presentation');
+        setViewMode('editor');
     };
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -702,58 +700,9 @@ Example: [{"id":"1","title":"Introduction","content":"• Key point one\\n• Ke
                                     <div
                                         id="editor-pdf-content"
                                         className="p-10 max-w-none min-h-[1056px] [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:mb-6 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:mb-4 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:mb-3 [&_p]:mb-4 [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-4 [&_strong]:font-bold [&_em]:italic"
-                                        style={{ color: '#000000', backgroundColor: '#ffffff' }}
+                                        style={{ color: '#000000', backgroundColor: '#ffffff', fontFamily: "'Segoe UI', Arial, sans-serif" }}
                                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(editorContent) }}
                                     />
-                                </div>
-                            </div>
-                        </div>
-                    ) : viewMode === 'presentation' ? (
-                        <div className="h-full flex flex-col bg-slate-950 p-6 gap-6">
-                            {/* Prompt bar */}
-                            <div className="flex gap-3 shrink-0">
-                                <input
-                                    type="text"
-                                    value={presentationPrompt}
-                                    onChange={e => setPresentationPrompt(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && handleGenerateSlides()}
-                                    placeholder="Describe your presentation (e.g. Q3 Sales Review for SaaS company)..."
-                                    className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-orange-500/50"
-                                />
-                                <button
-                                    onClick={handleGenerateSlides}
-                                    disabled={isGeneratingSlides || !presentationPrompt.trim()}
-                                    className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm rounded-xl transition-all"
-                                >
-                                    {isGeneratingSlides ? <Loader2 className="w-4 h-4 animate-spin" /> : <Presentation className="w-4 h-4" />}
-                                    {isGeneratingSlides ? 'Generating...' : 'Generate'}
-                                </button>
-                            </div>
-                            {/* Slide viewer */}
-                            <div className="flex-1 flex gap-4 min-h-0">
-                                {/* Thumbnail strip */}
-                                <div className="w-28 shrink-0 flex flex-col gap-2 overflow-y-auto pr-1">
-                                    {slides.map((slide, i) => (
-                                        <button
-                                            key={slide.id}
-                                            onClick={() => setCurrentSlideIndex(i)}
-                                            className={`w-full aspect-video rounded-lg border text-[8px] text-left p-1.5 transition-all ${currentSlideIndex === i ? 'border-orange-500 bg-orange-500/10' : 'border-slate-700 bg-slate-900 hover:border-slate-500'}`}
-                                        >
-                                            <div className="font-bold text-white truncate">{slide.title}</div>
-                                            <div className="text-slate-500 line-clamp-2">{slide.content}</div>
-                                        </button>
-                                    ))}
-                                </div>
-                                {/* Main slide */}
-                                <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-900 to-orange-950/20 border border-slate-800 rounded-2xl p-12 relative">
-                                    <div className="absolute top-4 right-4 text-xs text-slate-600 font-mono">{currentSlideIndex + 1} / {slides.length}</div>
-                                    <h2 className="text-4xl font-black text-white mb-8 text-center leading-tight">{slides[currentSlideIndex]?.title}</h2>
-                                    <div className="text-slate-300 text-lg leading-relaxed text-center max-w-2xl whitespace-pre-line">{slides[currentSlideIndex]?.content}</div>
-                                    {/* Nav arrows */}
-                                    <div className="absolute bottom-4 flex gap-3">
-                                        <button onClick={() => setCurrentSlideIndex(Math.max(0, currentSlideIndex - 1))} disabled={currentSlideIndex === 0} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 rounded-lg text-white text-sm transition-all">← Prev</button>
-                                        <button onClick={() => setCurrentSlideIndex(Math.min(slides.length - 1, currentSlideIndex + 1))} disabled={currentSlideIndex === slides.length - 1} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 rounded-lg text-white text-sm transition-all">Next →</button>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -827,7 +776,7 @@ Example: [{"id":"1","title":"Introduction","content":"• Key point one\\n• Ke
                                 onClick={() => setViewMode('designer')}
                                 className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-violet-500/20 group"
                             >
-                                <Presentation className="w-3.5 h-3.5 group-hover:rotate-12 transition-transform" />
+                                <ScanLine className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
                                 <span className="hidden sm:inline">AI Designer</span>
                             </button>
 
@@ -855,11 +804,11 @@ Example: [{"id":"1","title":"Introduction","content":"• Key point one\\n• Ke
                             </button>
 
                             <button
-                                onClick={handleCreatePresentation}
-                                className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-orange-600/20 hover:bg-orange-600/30 text-orange-400 text-xs font-bold transition-colors border border-orange-500/30"
+                                onClick={handleCreateQuote}
+                                className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 text-xs font-bold transition-colors border border-purple-500/30"
                             >
-                                <Presentation className="w-3.5 h-3.5" />
-                                <span className="hidden sm:inline">Slides</span>
+                                <Quote className="w-3.5 h-3.5" />
+                                <span className="hidden sm:inline">Create Quote</span>
                             </button>
 
                             <label className="cursor-pointer">
@@ -1051,11 +1000,11 @@ Example: [{"id":"1","title":"Introduction","content":"• Key point one\\n• Ke
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-2xl bg-violet-600 flex items-center justify-center">
-                                    <Presentation className="w-7 h-7 text-white" />
+                                    <ScanLine className="w-7 h-7 text-white" />
                                 </div>
                                 <div>
                                     <h3 className="text-2xl font-black text-white italic tracking-tighter uppercase">AI Document Designer</h3>
-                                    <p className="text-slate-400 text-sm font-medium">Transform descriptions into professional assets</p>
+                                    <p className="text-slate-400 text-sm font-medium">Transform descriptions into professional documents</p>
                                 </div>
                             </div>
                             <button
@@ -1115,7 +1064,7 @@ Example: [{"id":"1","title":"Introduction","content":"• Key point one\\n• Ke
                                 ))}
                             </div>
                             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-                                Utilizing deep learning models for professional typography and layout optimization
+                                Utilizing advanced AI for professional document generation
                             </p>
                         </div>
                     </div>
