@@ -40,6 +40,11 @@ export function BackgroundTaskProvider({ children }: { children: ReactNode }) {
         });
 
         try {
+            // Validate that taskFn is actually a function
+            if (typeof taskFn !== 'function') {
+                throw new Error('Task function is not callable');
+            }
+
             const result = await taskFn();
 
             setTasks(prev => prev.map(t =>

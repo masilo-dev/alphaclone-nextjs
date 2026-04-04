@@ -260,19 +260,20 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const getDashboardStats = useCallback(async (tenantId: string, userId?: string) => {
     if (!tenantId) {
       console.warn('[TenantContext] getDashboardStats called with missing tenantId');
-      return null;
+      return { stats: null, error: 'Missing tenantId' };
     }
     
     if (!userId) {
       console.warn('[TenantContext] getDashboardStats called with missing userId');
-      return null;
+      return { stats: null, error: 'Missing userId' };
     }
     
     try {
-      return await tenantService.getDashboardStats(tenantId, userId);
+      const stats = await tenantService.getDashboardStats(tenantId, userId);
+      return { stats, error: null };
     } catch (error) {
       console.error('[TenantContext] getDashboardStats failed:', error);
-      return null;
+      return { stats: null, error: 'Failed to fetch stats' };
     }
   }, []);
 
