@@ -50,9 +50,9 @@ interface DataPacket {
 }
 
 // ── Speed constants ────────────────────────────────────────────────────────
-const NODE_SPEED   = 0.08;  // named module nodes — much slower
-const PULSE_SPD    = 0.001; // much slower pulse
-const PKT_SPEED    = 0.0004; // much slower packet travel speed
+const NODE_SPEED   = 0.03;  // named module nodes — extremely slow
+const PULSE_SPD    = 0.0002; // extremely slow pulse
+const PKT_SPEED    = 0.0001; // extremely slow packet travel speed
 
 export default function HeroBackground() {
   const canvasRef   = useRef<HTMLCanvasElement>(null);
