@@ -14,7 +14,8 @@ import {
   Briefcase, 
   Users, 
   Settings, 
-  Globe
+  Globe,
+  Search
 } from 'lucide-react';
 import { StripeConnectOnboarding } from './StripeConnectOnboarding';
 import toast from 'react-hot-toast';
@@ -109,6 +110,21 @@ export const IntegrationMarketplace: React.FC = () => {
         'Bulk sending'
       ],
       actionPoints: 20
+    },
+    {
+      id: 'playwright',
+      name: 'Lead Discovery',
+      description: 'Find business leads from any website',
+      icon: Search,
+      category: 'crm',
+      status: 'available',
+      features: [
+        'Web scraping for leads',
+        'Contact information extraction',
+        'Company details discovery',
+        'Client-friendly error handling'
+      ],
+      actionPoints: 30
     },
     {
       id: 'google-calendar',

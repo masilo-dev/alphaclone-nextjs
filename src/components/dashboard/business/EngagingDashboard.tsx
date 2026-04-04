@@ -6,6 +6,7 @@ import { User } from '../../../types';
 import { SlackIntegration } from '../integrations/SlackIntegration';
 import { SendGridIntegration } from '../integrations/SendGridIntegration';
 import { ResendIntegration } from '../integrations/ResendIntegration';
+import { PlaywrightIntegration } from '../integrations/PlaywrightIntegration';
 import { useBackgroundTasks, BackgroundTask } from '@/contexts/BackgroundTaskContext';
 import { businessClientService } from '../../../services/businessClientService';
 import { dailyService } from '../../../services/dailyService';
@@ -442,6 +443,15 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     </AnimatePresence>
                 </motion.div>
             )}
+
+            {/* Lead Discovery Integration */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+            >
+                <PlaywrightIntegration />
+            </motion.div>
 
             {/* Email Integrations */}
             <motion.div
