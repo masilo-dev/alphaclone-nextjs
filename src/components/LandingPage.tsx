@@ -200,7 +200,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: 0.5 }}
                   className="fixed inset-0 bg-slate-950 z-[200] lg:hidden overflow-y-auto"
                >
                   <div className="min-h-screen flex flex-col">
@@ -299,7 +299,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                   <motion.div
                      initial={{ opacity: 0, y: 20 }}
                      animate={{ opacity: 1, y: 0 }}
-                     transition={{ duration: 0.6 }}
+                     transition={{ duration: 1.2 }}
                   >
                      {/* Brand pill */}
                      <div className="inline-flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 mb-8 text-sm text-slate-300">
@@ -381,7 +381,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 1 }}
+                  transition={{ duration: 1.5 }}
                   className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
                >
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
@@ -677,7 +677,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                                  <>
                                     <motion.div
                                        animate={{ rotate: 360 }}
-                                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                       transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                                        className="w-5 h-5 border-2 border-slate-950/20 border-t-slate-950 rounded-full"
                                     />
                                        Sending...
