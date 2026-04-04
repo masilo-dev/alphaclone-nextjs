@@ -116,6 +116,12 @@ const GlobalSettingsTab: React.FC = () => {
                                         details="Server: Alpha-V1"
                                     />
                                     <IntegrationItem
+                                        name="Slack Workspace"
+                                        status="Inactive"
+                                        description="Platform-wide notifications and team communications."
+                                        details="No OAuth connection found"
+                                    />
+                                    <IntegrationItem
                                         name="Intercom"
                                         status="Inactive"
                                         description="Platform-wide customer support and live chat."
