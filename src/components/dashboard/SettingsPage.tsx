@@ -16,7 +16,8 @@ import {
     ShieldCheck,
     User as UserIcon,
     Palette,
-    Globe
+    Globe,
+    Settings
 } from 'lucide-react';
 import { Button, Card, Input, Modal } from '../ui/UIComponents';
 import { User as UserType } from '../../types';
@@ -28,6 +29,7 @@ import CalendlySettings from './business/CalendlySettings';
 // import GmailIntegration from './business/GmailIntegration';
 import HubspotIntegration from './business/HubspotIntegration';
 import StripeConnectSettings from './business/StripeConnectSettings';
+import { IntegrationSettings } from './settings/IntegrationSettings';
 import BrandingSettings from './settings/BrandingSettings';
 import { Building, Trash2 } from 'lucide-react';
 import { authService } from '../../services/authService';
@@ -46,7 +48,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const validSections = ['profile', 'notifications', 'security', 'appearance', 'billing', 'booking'];
     const defaultSection = validSections.includes(initialSection) ? initialSection : 'profile';
 
-    const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'security' | 'appearance' | 'billing' | 'booking' | 'branding' | null>(null);
+    const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'security' | 'appearance' | 'billing' | 'booking' | 'branding' | 'integrations' | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const { currentTenant } = useTenant();
 
@@ -95,13 +97,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         { id: 'profile' as const, label: 'Profile', icon: UserIcon },
         { id: 'notifications' as const, label: 'Notifications', icon: Bell },
         { id: 'security' as const, label: 'Security', icon: Lock },
+        { id: 'integrations' as const, label: 'Integrations', icon: Settings },
         { id: 'appearance' as const, label: 'Appearance', icon: Palette },
-        // SHOW BILLING FOR ALL BUSINESS USERS (EXCEPT CLIENTS)
-        ...(user.role !== 'client' ? [
-            { id: 'billing' as const, label: 'Plans & Billing', icon: CreditCardIcon },
-            { id: 'branding' as const, label: 'Branding', icon: Building }
-        ] : []),
-        { id: 'booking' as const, label: 'Booking & Integrations', icon: CalendarIcon }
+        { id: 'billing' as const, label: 'Plans & Billing', icon: CreditCard },
+        { id: 'booking' as const, label: 'Booking & Integrations', icon: Calendar },
+        { id: 'branding' as const, label: 'Branding', icon: Sparkles }
     ];
 
     const handleSaveProfile = async () => {
@@ -485,13 +485,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             <div className="space-y-6">
                                 <div>
                                     <h3 className="text-lg font-bold text-white mb-4">Security Settings</h3>
-                                    <div className="space-y-4">
-                                        <div className="p-4 bg-slate-900 rounded-xl border border-slate-800">
-                                            <h4 className="text-white font-medium mb-2">Change Password</h4>
-                                            <div className="space-y-3">
-                                                <Input
-                                                    label="Current Password"
-                                                    type="password"
                                                     placeholder="Enter current password"
                                                     value={passwordData.currentPassword}
                                                     onChange={(e: any) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
@@ -746,6 +739,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             </div>
                         )}
                     </Card>
+
+                    {activeSection === 'integrations' && (
+                        <IntegrationSettings />
+                    )}
 
                     {activeSection === 'booking' && (
                         <div className="space-y-12">
