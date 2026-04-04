@@ -290,7 +290,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
 
          <main>
             {/* Hero Section */}
-            <section id="home" className="relative min-h-[95vh] flex flex-col items-center justify-center overflow-hidden pt-12 sm:pt-20">
+            <section id="home" className="relative min-h-[95vh] flex flex-col items-center justify-center overflow-hidden pt-24 sm:pt-32">
                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-[600px] opacity-40 z-0">
                   <AIWorkerGraphic />
                </div>
