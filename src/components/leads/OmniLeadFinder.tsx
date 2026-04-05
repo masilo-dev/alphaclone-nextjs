@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Avatar } from '../ui/Avatar';
-import { useTenant } from '../../contexts/TenantContext';
+import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
 import { useBackgroundTasks } from '../../contexts/BackgroundTaskContext';
 import { businessClientService } from '../../services/businessClientService';
 import { qualifyLead, QualificationResult } from '../../lib/leadQualification';
@@ -242,8 +242,15 @@ export default function OmniLeadFinder() {
   const [selectedSet,    setSelectedSet   ] = useState<Set<number>>(new Set());
   const [showOutreach,   setShowOutreach  ] = useState(false);
 
-  const { currentTenant } = useTenant();
+  const currentTenant = useCurrentTenantSafe();
   const { startTask } = useBackgroundTasks();
+
+  // Validate that required functions are available
+  useEffect(() => {
+    if (typeof startTask !== 'function') {
+        console.error('startTask function is not available. Background tasks will not work.');
+    }
+  }, []);
 
   // Daily quota state
   const [dailyQuota, setDailyQuota] = useState<{ limit: number; used: number; remaining: number } | null>(null);
@@ -315,75 +322,72 @@ export default function OmniLeadFinder() {
     e.preventDefault();
     if (!niche) return toast.error('Please select an industry');
 
-    const taskId = startTask({
-        name: `Finding ${niche} leads in ${location || 'Global'}`,
-    });
+    // Validate functions are available before proceeding
+    if (typeof startTask !== 'function') {
+        toast.error('Background task service is not available. Please refresh the page.');
+        return;
+    }
+
+    const taskId = `omni_search_${Date.now()}`;
+    const taskName = `Finding ${niche} leads in ${location || 'Global'}`;
 
     setScanning(true); setResults([]); setSourceStats({}); setSavedIds(new Set()); setFallbackUsed(false); clearFilters();
     setProgress({ percent: 10, message: 'Geocoding broad region...' });
 
-    try {
-      const res = await fetch('/api/scraper/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          niche,
-          location,
-          sortBy: sortMode,
-          usePlaywright,
-          tenantId: currentTenant?.id || '',
-        }),
-      });
+    startTask(taskId, taskName, async () => {
+        try {
+            const res = await fetch('/api/scraper/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    niche,
+                    location,
+                    sortBy: sortMode,
+                    usePlaywright,
+                    tenantId: currentTenant?.id || '',
+                }),
+            });
 
-      if (res.status === 429) {
-        const errData = await res.json();
-        if (errData.quota) setDailyQuota(errData.quota);
-        throw new Error(errData.error || 'Daily lead limit reached.');
-      }
+            if (res.status === 429) {
+                const errData = await res.json();
+                throw new Error(errData.error || 'Rate limit exceeded. Please try again later.');
+            }
 
-      setProgress({ percent: 65, message: 'Filtering verified contacts...' });
-      const data = await res.json();
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || 'Search failed');
+            }
 
-      if (!data.success || !data.results?.length) {
-        throw new Error(data.error || 'No verified leads found.');
-      }
+            const data = await res.json();
+            const leads = data.results || [];
 
-      if (data.sources) setSourceStats(data.sources);
-      if (data.fallbackUsed) setFallbackUsed(true);
-      if (data.quota) setDailyQuota(data.quota);
+            // Update progress and results
+            setProgress({ percent: 85, message: 'Qualifying leads...' });
+            setResults(leads);
+            setSourceStats(data.sourceStats || {});
+            setFallbackUsed(!!data.fallbackUsed);
 
-      const rawLeads: ScrapedLead[] = data.results.map((r: any) => ({
-        ...r, status: 'pending' as const,
-      }));
+            // Qualify leads
+            const qualifiedLeads = leads.map(lead => ({
+                ...lead,
+                qualification: qualifyLead(lead),
+            }));
 
-      const leads = enrichWithQualification(rawLeads, niche);
-      setResults(leads);
-      setSelectedSet(new Set());
-      setProgress({ percent: 100, message: 'Done' });
+            setResults(qualifiedLeads);
+            setSelectedSet(new Set());
+            setProgress({ percent: 100, message: 'Done' });
 
-      startTask({ id: taskId, status: 'completed', progress: 100 });
+            const rejMsg = data.rejectedCount > 0 ? ` (${data.rejectedCount} unverified discarded)` : '';
+            toast.success(`✅ Found ${leads.length} leads${rejMsg}`);
 
-      const rejMsg = data.rejectedCount > 0 ? ` (${data.rejectedCount} unverified discarded)` : '';
-
-      if (autoSave && currentTenant) {
-        setProgress({ percent: 100, message: `Auto-saving ${leads.length} leads...` });
-        let saved = 0;
-        await Promise.allSettled(
-          leads.map(async (lead, idx) => {
-            const ok = await saveLeadToCRM(lead, idx);
-            if (ok) saved++;
-          })
-        );
-        toast.success(`✅ Found & Auto-saved ${saved} leads${rejMsg}`);
-      } else {
-        toast.success(`✅ Found ${leads.length} leads${rejMsg}`);
-      }
-    } catch (err: any) {
-      startTask({ id: taskId, status: 'error', error: err.message });
-      toast.error(err.message || 'Search failed');
-    } finally {
-      setTimeout(() => setScanning(false), 600);
-    }
+            return { leads: qualifiedLeads, sourceStats: data.sourceStats };
+        } catch (err: any) {
+            toast.error(err.message || 'Search failed');
+            throw err;
+        } finally {
+            setTimeout(() => setScanning(false), 600);
+        }
+    });
   };
 
   // ── Render ──────────────────────────────────────────
