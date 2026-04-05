@@ -92,8 +92,6 @@ const UserLocationTable = React.lazy(() => import('./dashboard/admin/UserLocatio
 const MailTab = React.lazy(() => import('./dashboard/MailTab'));
 const GlobalSettingsTab = React.lazy(() => import('./dashboard/admin/GlobalSettingsTab'));
 const ClientsPage = React.lazy(() => import('./dashboard/business/ClientsPage'));
-const MarketplacePage = React.lazy(() => import('./dashboard/MarketplacePage'));
-
 const CustomVideoRoom = React.lazy(() => import('./dashboard/video/CustomVideoRoom'));
 
 import { MomentumHUD } from './dashboard/MomentumHUD';
@@ -1051,12 +1049,10 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         );
 
-      case '/dashboard/marketplace':
-        return (
-          <React.Suspense fallback={<TabSkeleton />}>
-            <MarketplacePage />
-          </React.Suspense>
-        );
+      case '/dashboard/marketplace': {
+        router.replace('/dashboard/business/settings?tab=integrations');
+        return null;
+      }
 
       // New Enterprise Views
       case '/dashboard/admin/tenants':

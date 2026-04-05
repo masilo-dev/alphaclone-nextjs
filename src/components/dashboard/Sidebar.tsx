@@ -60,7 +60,7 @@ const Sidebar = React.memo<SidebarProps>(({
     activeBgTasksCount = 0,
 }) => {
     const router = useRouter();
-    const { languageFlag } = useLanguage();
+    const { languageFlag, setLanguage } = useLanguage();
     const { tasks, dismissTask } = useBackgroundTasks();
 
     // ── ALL hooks must be declared before any conditional return ─────────
@@ -351,21 +351,8 @@ const Sidebar = React.memo<SidebarProps>(({
                                 {/* Language switcher - immediate change */}
                                 <button
                                     onClick={() => {
-                                        const { setLanguage } = useLanguage();
-                                        const LANGUAGES = [
-                                            { code: 'en', label: 'English', flag: '🇬🇧' },
-                                            { code: 'es', label: 'Spanish', flag: '🇪🇸' },
-                                            { code: 'fr', label: 'French', flag: '🇫🇷' },
-                                            { code: 'de', label: 'German', flag: '🇩🇪' },
-                                            { code: 'it', label: 'Italian', flag: '🇮🇹' },
-                                            { code: 'pt', label: 'Portuguese', flag: '🇵🇹' },
-                                            { code: 'nl', label: 'Dutch', flag: '🇳🇱' },
-                                            { code: 'zh', label: 'Chinese', flag: '🇨🇳' },
-                                            { code: 'ja', label: 'Japanese', flag: '🇯🇵' },
-                                            { code: 'ko', label: 'Korean', flag: '🇰🇷' }
-                                        ];
-                                        const currentLang = LANGUAGES.find(l => l.flag === languageFlag);
-                                        const nextLang = LANGUAGES[(LANGUAGES.findIndex(l => l.code === currentLang?.code) + 1) % LANGUAGES.length];
+                                        const currentIdx = LANGUAGES.findIndex(l => l.flag === languageFlag);
+                                        const nextLang = LANGUAGES[(currentIdx + 1) % LANGUAGES.length];
                                         setLanguage(nextLang.code);
                                         toast.success(`Switched to ${nextLang.label}`);
                                     }}
