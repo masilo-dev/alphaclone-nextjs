@@ -120,7 +120,7 @@ const replacedTools = [
     { icon: Brain, name: 'HubSpot CRM', cost: '$50/mo', replaced: 'CRM & Deals module' },
     { icon: Video, name: 'Zoom Pro', cost: '$15/mo', replaced: 'Video Meetings module' },
     { icon: FileText, name: 'DocuSign', cost: '$25/mo', replaced: 'Contract Engine' },
-    { icon: DollarSign, name: 'QuickBooks', cost: '$30/mo', replaced: 'Financial Suite' },
+    { icon: DollarSign, name: 'Financial Software', cost: '$30/mo', replaced: 'Financial Suite' },
     { icon: Mail, name: 'Mailchimp', cost: '$20/mo', replaced: 'Comms & Email module' },
     { icon: Calendar, name: 'Calendly Pro', cost: '$12/mo', replaced: 'Calendar integration' },
     { icon: BarChart3, name: 'Asana', cost: '$25/mo', replaced: 'Task Management module' },
@@ -185,7 +185,7 @@ export default function PricingPageContent() {
                         { '@type': 'Question', name: 'How much does AlphaClone cost?', acceptedAnswer: { '@type': 'Answer', text: 'AlphaClone offers three plans: Starter at $15/month (up to 5 users), Professional at $45/month (up to 25 users, includes AI Growth Agent), and Enterprise at $80/month (unlimited users, white-label, dedicated support). All plans include a 14-day free trial with no credit card required.' } },
                         { '@type': 'Question', name: 'Is there a free trial for AlphaClone?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. All AlphaClone plans include a 14-day free trial with full access to all features in that plan. No credit card is required to start.' } },
                         { '@type': 'Question', name: 'Can I cancel AlphaClone at any time?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. You can cancel at any time from Settings > Billing. Cancellation takes effect at the end of the current billing period. Your data is retained for 90 days after cancellation.' } },
-                        { '@type': 'Question', name: 'Does AlphaClone replace HubSpot, Zoom, DocuSign, and QuickBooks?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. AlphaClone replaces HubSpot (CRM), Zoom (video meetings), DocuSign (contracts), QuickBooks (financial management), Mailchimp (email), and several other tools for a fraction of the combined cost.' } },
+                        { '@type': 'Question', name: 'Does AlphaClone replace HubSpot, Zoom, DocuSign, and other business software?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. AlphaClone replaces HubSpot (CRM), Zoom (video meetings), DocuSign (contracts), various financial management tools, Mailchimp (email), and several other tools for a fraction of the combined cost.' } },
                     ]
                 })
             }} />

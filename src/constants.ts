@@ -26,7 +26,9 @@ import {
   Facebook,
   Smartphone,
   Bot,
-  Search
+  Search,
+  Rocket,
+  Star
 } from 'lucide-react';
 import { NavItem, DashboardStat } from './types';
 
@@ -46,6 +48,7 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
   { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
   { label: 'Creative Intel Lab', href: '/dashboard/ai-studio', icon: Palette },
   { label: 'Documents', href: '/dashboard/submit', icon: FileText },
+  { label: 'Marketplace', href: '/dashboard/marketplace', icon: Rocket },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
@@ -94,6 +97,9 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
 export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   // ── 0. Action HUD ──
   { label: 'Momentum Dashboard', href: '/dashboard', icon: Zap },
+
+  // ── 0.5. Marketplace ──
+  { label: 'Marketplace', href: '/dashboard/marketplace', icon: Rocket },
 
   // ── 1. FIND (Lead Generation) ──
   {

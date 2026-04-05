@@ -203,23 +203,6 @@ export function IntegrationMarketplaceDashboard() {
       actionPoints: 15,
       connected: false
     },
-    // Accounting
-    {
-      id: 'quickbooks',
-      name: 'QuickBooks',
-      description: 'Accounting and financial management',
-      icon: FileText,
-      category: 'accounting',
-      status: 'coming-soon',
-      features: [
-        'Financial tracking',
-        'Invoicing',
-        'Expense management',
-        'Tax preparation'
-      ],
-      actionPoints: 25,
-      connected: false
-    },
     // Analytics
     {
       id: 'google-analytics',

@@ -92,6 +92,7 @@ const UserLocationTable = React.lazy(() => import('./dashboard/admin/UserLocatio
 const MailTab = React.lazy(() => import('./dashboard/MailTab'));
 const GlobalSettingsTab = React.lazy(() => import('./dashboard/admin/GlobalSettingsTab'));
 const ClientsPage = React.lazy(() => import('./dashboard/business/ClientsPage'));
+const MarketplacePage = React.lazy(() => import('./dashboard/MarketplacePage'));
 
 const CustomVideoRoom = React.lazy(() => import('./dashboard/video/CustomVideoRoom'));
 
@@ -1047,6 +1048,13 @@ const Dashboard: React.FC<DashboardProps> = ({
         return (
           <React.Suspense fallback={<TabSkeleton />}>
             <AIStudioTab user={user} />
+          </React.Suspense>
+        );
+
+      case '/dashboard/marketplace':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <MarketplacePage />
           </React.Suspense>
         );
 

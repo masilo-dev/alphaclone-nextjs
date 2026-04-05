@@ -66,8 +66,8 @@ const ServicesPage: React.FC = () => {
             title: 'Financial Suite & Invoicing',
             subtitle: 'Professional accounting without the accountant',
             color: 'from-emerald-500 to-teal-500',
-            badge: 'Replaces QuickBooks',
-            description: `AlphaClone includes a complete financial management system that handles everything from sending your first invoice to producing year-end financial statements. For the vast majority of small businesses, it completely replaces the need for separate accounting software like QuickBooks or FreshBooks.`,
+            badge: 'Professional Accounting',
+            description: `AlphaClone includes a complete financial management system that handles everything from sending your first invoice to producing year-end financial statements. For the vast majority of small businesses, it provides comprehensive accounting capabilities without the need for separate software.`,
             extendedDescription: `You can generate, brand, and send a professional invoice in under 60 seconds. Invoices include your logo, itemized line items, payment terms, and a direct payment link. The system tracks payment status automatically — you see at a glance which invoices are paid, pending, or overdue. Beyond invoicing, the full accounting suite gives you a proper Chart of Accounts, journal entry recording, income statements, balance sheets, and cash flow reports. This is the same professional-grade accounting structure that your accountant expects to see at tax time — just presented in a way that a business owner without an accounting degree can actually understand and use.`,
             features: [
                 'Branded professional invoice generation',

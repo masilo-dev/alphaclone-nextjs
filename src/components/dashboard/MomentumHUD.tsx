@@ -1,5 +1,5 @@
 import React from 'react';
-import { Zap, Flame, Target, TrendingUp, ArrowUpRight, Activity } from 'lucide-react';
+import { Zap, Flame, Target, TrendingUp, ArrowUpRight, Activity, Award, Gift, Star, Rocket } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -10,6 +10,9 @@ interface MomentumHUDProps {
     newLeads: number;
     className?: string;
     variant?: 'full' | 'global';
+    actionsCompleted?: number;
+    rewardsUnlocked?: number;
+    nextReward?: string;
 }
 
 export const MomentumHUD: React.FC<MomentumHUDProps> = ({
@@ -17,6 +20,9 @@ export const MomentumHUD: React.FC<MomentumHUDProps> = ({
     streak = 0,
     activity24h = 0,
     newLeads = 0,
+    actionsCompleted = 0,
+    rewardsUnlocked = 0,
+    nextReward = 'Complete 5 more actions',
     className,
     variant = 'full'
 }) => {
@@ -112,9 +118,39 @@ export const MomentumHUD: React.FC<MomentumHUDProps> = ({
                     </div>
                 </div>
 
-                {/* 2. Key High-Momentum Stats */}
+                {/* 2. Action & Rewards Stats */}
                 <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-6 w-full">
                     
+                    {/* Actions Completed */}
+                    <div className="space-y-1.5 px-4 border-l border-white/5">
+                        <div className="flex items-center gap-2">
+                            <Rocket className="w-4 h-4 text-teal-400" />
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Actions</span>
+                        </div>
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-3xl font-black text-white italic">{actionsCompleted}</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase bg-white/5 px-2 rounded tracking-widest">Done</span>
+                        </div>
+                        <div className="text-[9px] font-black text-teal-500/80 uppercase tracking-tighter">
+                            TODAY
+                        </div>
+                    </div>
+
+                    {/* Rewards Unlocked */}
+                    <div className="space-y-1.5 px-4 border-l border-white/5">
+                        <div className="flex items-center gap-2">
+                            <Award className="w-4 h-4 text-amber-400" />
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Rewards</span>
+                        </div>
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-3xl font-black text-white italic">{rewardsUnlocked}</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase bg-white/5 px-2 rounded tracking-widest">Won</span>
+                        </div>
+                        <div className="text-[9px] font-black text-amber-500/80 uppercase tracking-tighter">
+                            UNLOCKED
+                        </div>
+                    </div>
+
                     {/* Streak */}
                     <div className="space-y-1.5 px-4 border-l border-white/5">
                         <div className="flex items-center gap-2">
@@ -123,38 +159,28 @@ export const MomentumHUD: React.FC<MomentumHUDProps> = ({
                         </div>
                         <div className="flex items-baseline gap-1">
                             <span className="text-3xl font-black text-white italic">{streak}</span>
-                            <span className="text-[10px] font-bold text-slate-400 capitalize bg-white/5 px-2 rounded tracking-widest">Days</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase bg-white/5 px-2 rounded tracking-widest">Days</span>
                         </div>
                         <div className="text-[9px] font-black text-teal-500 uppercase tracking-tighter flex items-center gap-1">
                             {streak > 0 ? 'KEEP IT ALIVE' : 'START NOW'}
                         </div>
                     </div>
 
-                    {/* Leads Found */}
-                    <div className="space-y-1.5 px-4 border-l border-white/5">
-                        <div className="flex items-center gap-2">
-                            <Target className="w-4 h-4 text-teal-400" />
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Find</span>
-                        </div>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-3xl font-black text-white italic">{newLeads}</span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase bg-white/5 px-2 rounded tracking-widest">Leads</span>
-                        </div>
-                        <div className="text-[9px] font-black text-teal-500/80 flex items-center gap-0.5 uppercase tracking-tighter">
-                            <Activity className="w-3 h-3" />
-                            {activity24h} Actions
-                        </div>
-                    </div>
-
-                    {/* Level Badge */}
+                    {/* Level & Next Reward */}
                     <div className="col-span-2 flex flex-col justify-center items-end text-right border-l border-white/5 px-4">
                         <div className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/5 mb-2 shadow-lg", level.bg, level.color)}>
                             <Zap className="w-3 h-3 fill-current" />
                             {level.name} MODE
                         </div>
-                        <p className="text-[11px] text-slate-400 font-bold max-w-[180px] leading-tight uppercase tracking-tighter">
-                            {score >= 70 ? 'CRITICAL MOMENTUM ACHIEVED. DO NOT STOP.' : 'FEED THE SYSTEM. START THE SEQUENCE.'}
-                        </p>
+                        <div className="space-y-1">
+                            <p className="text-[11px] text-slate-400 font-bold max-w-[180px] leading-tight uppercase tracking-tighter">
+                                {score >= 70 ? 'CRITICAL MOMENTUM ACHIEVED. DO NOT STOP.' : 'FEED THE SYSTEM. START THE SEQUENCE.'}
+                            </p>
+                            <p className="text-[10px] text-amber-400 font-medium flex items-center gap-1">
+                                <Gift className="w-3 h-3" />
+                                {nextReward}
+                            </p>
+                        </div>
                     </div>
 
                 </div>
