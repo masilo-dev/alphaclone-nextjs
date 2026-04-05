@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Modal } from '../../ui/UIComponents';
 import { toast } from 'react-hot-toast';
 import { Slack, CheckCircle, AlertCircle, Settings, MessageSquare, Calendar, Users, Send, RefreshCw } from 'lucide-react';
-import { useTenant } from '@/contexts/TenantContext';
+import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
 
 interface SlackStatus {
   isConnected: boolean;
@@ -22,7 +22,7 @@ interface SlackNotification {
 }
 
 export function SlackIntegration() {
-  const { currentTenant } = useTenant();
+  const currentTenant = useCurrentTenantSafe();
   const [status, setStatus] = useState<SlackStatus>({ isConnected: false });
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);

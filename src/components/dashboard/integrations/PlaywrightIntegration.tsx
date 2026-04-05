@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Modal, Input } from '../../ui/UIComponents';
 import { toast } from 'react-hot-toast';
 import { Search, CheckCircle, AlertCircle, Settings, Globe, Users, Target, Zap, AlertTriangle } from 'lucide-react';
-import { useTenant } from '@/contexts/TenantContext';
+import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
 
 interface PlaywrightStatus {
   isConnected: boolean;
@@ -31,7 +31,7 @@ interface ClientFriendlyError {
 }
 
 export function PlaywrightIntegration() {
-  const { currentTenant } = useTenant();
+  const currentTenant = useCurrentTenantSafe();
   const [status, setStatus] = useState<PlaywrightStatus>({ isConnected: false });
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);

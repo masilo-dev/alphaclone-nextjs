@@ -9,6 +9,7 @@ import { ResendIntegration } from '../integrations/ResendIntegration';
 import { PlaywrightIntegration } from '../integrations/PlaywrightIntegration';
 import { IntegrationMarketplaceDashboard } from '../integrations/IntegrationMarketplaceDashboard';
 import { useBackgroundTasks, BackgroundTask } from '@/contexts/BackgroundTaskContext';
+import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
 import { businessClientService } from '../../../services/businessClientService';
 import { dailyService } from '../../../services/dailyService';
 import { supabase } from '../../../lib/supabase';
@@ -98,7 +99,7 @@ interface QuickAction {
 }
 
 const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats }) => {
-    const { currentTenant } = useTenant();
+    const currentTenant = useCurrentTenantSafe();
     const [metrics, setMetrics] = useState({
         totalRevenue: stats?.totalRevenue || 0,
         totalClients: stats?.clientCount || 0,

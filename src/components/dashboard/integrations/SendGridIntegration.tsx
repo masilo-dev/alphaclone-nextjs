@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Modal, Input } from '../../ui/UIComponents';
 import { toast } from 'react-hot-toast';
 import { Mail, CheckCircle, AlertCircle, Settings, BarChart3, Code, Zap, AlertTriangle, Send } from 'lucide-react';
-import { useTenant } from '@/contexts/TenantContext';
+import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
 import { motion } from 'framer-motion';
 
 interface SendGridStatus {
@@ -30,7 +30,7 @@ interface ClientFriendlyError {
 }
 
 export function SendGridIntegration() {
-  const { currentTenant } = useTenant();
+  const currentTenant = useCurrentTenantSafe();
   const [status, setStatus] = useState<SendGridStatus>({ isConnected: false });
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
