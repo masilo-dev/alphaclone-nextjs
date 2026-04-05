@@ -25,6 +25,16 @@ const SalesAgent: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'leads' | 'agent' | 'omni' | 'kanban' | 'automation'>('omni'); // Set default to omni
     const [searchParams, setSearchParams] = useState({ industry: '', location: '' });
     const [leads, setLeads] = useState<Lead[]>([]);
+    
+    // Validate that required functions are available
+    useEffect(() => {
+        if (typeof generateLeads !== 'function') {
+            console.error('generateLeads function is not available. AI leads generation will not work.');
+        }
+        if (typeof startTask !== 'function') {
+            console.error('startTask function is not available. Background tasks will not work.');
+        }
+    }, []);
     const [isSearching, setIsSearching] = useState(false);
     const [isVisualSearchActive, setIsVisualSearchActive] = useState(false);
     const [visualSearchParams, setVisualSearchParams] = useState({ industry: '', location: '' });
@@ -284,15 +294,54 @@ const SalesAgent: React.FC = () => {
             toast.error('Please enter a location');
             return;
         }
-
-        // CHECK LEAD LIMIT BEFORE GENERATING
-        const { data: { user: authUsr } } = await (await import('../../lib/supabase')).supabase.auth.getUser();
-        const limitCheck = await leadService.checkLeadLimit((authUsr as any)?.role);
-        if (!limitCheck.allowed) {
-            toast.error(limitCheck.error || 'Daily lead limit reached.');
+        
+        if (contacts.length === 0) {
+            toast.error("No valid contacts found in file.");
             return;
         }
 
+        // Map ParsedContact to Lead
+        const leadsToAdd = contacts.map(c => ({
+            businessName: c.name || 'Unknown Business',
+            email: c.email,
+            phone: c.phone,
+            industry: c.industry || 'Imported',
+            location: c.location || 'Unknown',
+            notes: c.description,
+            source: 'CSV Import'
+            // value: c.value // Pending DB support for value
+        }));
+
+        const { count, error: dbError } = await leadService.addBulkLeads(leadsToAdd);
+
+        if (dbError) {
+            toast.error(`Database error: ${dbError}`);
+            return;
+        }
+
+        toast.success(`Successfully added ${count} leads from CSV`);
+        setShowUpload(false);
+        setContacts([]);
+    };
+
+    const handleVisualSearch = async () => {
+        if (!searchParams.industry || !searchParams.location) {
+            toast.error('Please enter both industry and location for AI lead search');
+            return;
+        }
+        
+        // Validate functions are available before proceeding
+        if (typeof generateLeads !== 'function') {
+            toast.error('AI leads generation service is not available. Please contact support.');
+            return;
+        }
+        
+        if (typeof startTask !== 'function') {
+            toast.error('Background task service is not available. Please refresh the page.');
+            return;
+        }
+
+        setIsSearching(true);
         const taskName = `AI Senior SDR & Data Scientist Lead Search for ${searchParams.industry} in ${searchParams.location}`;
 
         setVisualSearchParams({ industry: searchParams.industry, location: searchParams.location });
@@ -303,6 +352,12 @@ const SalesAgent: React.FC = () => {
             taskName,
             async () => {
                 console.log('Starting AI lead generation...');
+                
+                // Check if generateLeads is available
+                if (typeof generateLeads !== 'function') {
+                    throw new Error('generateLeads function is not available. Please check AI service configuration.');
+                }
+                
                 // Assuming generateLeads now returns { leads: Lead[], rawMapsData: any[] }
                 const res = await generateLeads(searchParams.industry, searchParams.location, '', 'tenant');
 
@@ -778,6 +833,11 @@ const SalesAgent: React.FC = () => {
             `auto_search_${Date.now()}`,
             taskName,
             async () => {
+                // Check if generateLeads is available
+                if (typeof generateLeads !== 'function') {
+                    throw new Error('generateLeads function is not available. Please check AI service configuration.');
+                }
+                
                 // Assuming generateLeads now returns { leads: Lead[], rawMapsData: any[] }
                 const res = await generateLeads(industry, location, '', 'tenant', filters);
 
