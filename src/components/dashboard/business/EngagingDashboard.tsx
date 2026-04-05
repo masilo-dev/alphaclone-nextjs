@@ -120,6 +120,13 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
     const greeting = getGreeting();
     const firstName = (user.name || user.email || 'there').split(' ')[0];
 
+    // Defensive checks to prevent React errors
+    useEffect(() => {
+        if (!greeting || !greeting.text || !greeting.Icon) {
+            console.error('Invalid greeting object:', greeting);
+        }
+    }, [greeting]);
+
     useEffect(() => {
         loadDashboardData();
         generateWelcomeMessage();
@@ -356,7 +363,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold text-slate-900">
-                        Good {greeting}, {firstName}
+                        {greeting?.text || 'Hello'}, {firstName}
                     </h1>
                     <p className="text-slate-600 mt-1">{welcomeMessage}</p>
                 </div>
@@ -497,17 +504,17 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 </h2>
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                    {quickActions.filter(action => action && action.icon).map((action, index) => (
+                    {quickActions.filter(action => action && action.icon && action.id && action.title).map((action, index) => (
                         <motion.button
-                            key={action.id}
+                            key={action.id || `action-${index}`}
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: 0.3 + index * 0.05 }}
                             onClick={action.action}
                             className="bg-gradient-to-r from-teal-500/20 to-orange-500/20 hover:from-teal-500/30 hover:to-orange-500/30 border border-teal-500/30 hover:border-orange-500/50 p-2 rounded-lg text-white transition-all transform hover:scale-105"
                         >
-                            <action.icon className="w-4 h-4 mb-1 text-teal-400 group-hover:text-orange-400 transition-colors" />
-                            <div className="text-xs font-medium">{action.title}</div>
+                            {action.icon && <action.icon className="w-4 h-4 mb-1 text-teal-400 group-hover:text-orange-400 transition-colors" />}
+                            <div className="text-xs font-medium">{action.title || 'Action'}</div>
                         </motion.button>
                     ))}
                 </div>
