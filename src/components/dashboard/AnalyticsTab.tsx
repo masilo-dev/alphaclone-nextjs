@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card } from '../ui/UIComponents';
-import { Activity, Users, DollarSign, Server, Cpu, TrendingUp, TrendingDown } from 'lucide-react';
+import { Activity, Users, DollarSign, Server, Cpu, TrendingUp, TrendingDown, Search, Sparkles } from 'lucide-react';
 import { analyticsService, AnalyticsData } from '../../services/analyticsService';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { ChartContainer } from '../ui/ChartContainer';
@@ -21,7 +21,48 @@ const AnalyticsTab: React.FC = () => {
     const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
     const [error, setError] = useState<string | null>(null);
     const [isExporting, setIsExporting] = useState(false);
+    const [nlQuery, setNlQuery] = useState('');
+    const [nlResult, setNlResult] = useState<string | null>(null);
     const { format: formatCurrency } = useCurrency();
+
+    // Simple natural language query parser
+    const parseNaturalLanguageQuery = (query: string) => {
+        const lowerQuery = query.toLowerCase();
+        
+        // Revenue queries
+        if (lowerQuery.includes('revenue')) {
+            if (lowerQuery.includes('this month') || lowerQuery.includes('month')) {
+                setDateRange('30d');
+                return `Showing revenue for the last 30 days. Total: ${analytics?.revenue.total ? formatCurrency(analytics.revenue.total) : 'N/A'}`;
+            } else if (lowerQuery.includes('this week') || lowerQuery.includes('week')) {
+                setDateRange('7d');
+                return `Showing revenue for the last 7 days. Total: ${analytics?.revenue.total ? formatCurrency(analytics.revenue.total) : 'N/A'}`;
+            } else if (lowerQuery.includes('year')) {
+                setDateRange('1y');
+                return `Showing revenue for the last year. Total: ${analytics?.revenue.total ? formatCurrency(analytics.revenue.total) : 'N/A'}`;
+            }
+            return `Total revenue: ${analytics?.revenue.total ? formatCurrency(analytics.revenue.total) : 'N/A'}`;
+        }
+        
+        // User queries
+        if (lowerQuery.includes('user') || lowerQuery.includes('customer') || lowerQuery.includes('client')) {
+            return `Total users: ${analytics?.users.total || 0} (New this month: ${analytics?.users.newThisMonth || 0})`;
+        }
+        
+        // Project queries
+        if (lowerQuery.includes('project')) {
+            return `Total projects: ${analytics?.projects.total || 0} (Active: ${analytics?.projects.active || 0})`;
+        }
+        
+        return 'I couldn\'t understand that query. Try asking about "revenue this month", "users", or "projects".';
+    };
+
+    const handleNaturalLanguageQuery = () => {
+        if (!nlQuery.trim()) return;
+        const result = parseNaturalLanguageQuery(nlQuery);
+        setNlResult(result);
+        toast.success('Query processed');
+    };
 
     const handleExport = async (type: 'pdf' | 'xlsx', category: string) => {
         if (!tenant?.id) {
@@ -116,6 +157,35 @@ const AnalyticsTab: React.FC = () => {
 
     return (
         <div className="space-y-6 animate-fade-in">
+            {/* Natural Language Query */}
+            <div className="bg-slate-900/60 backdrop-blur border border-slate-700 rounded-2xl p-4">
+                <div className="flex items-center gap-3 mb-3">
+                    <Sparkles className="w-5 h-5 text-purple-400" />
+                    <span className="text-sm font-semibold text-purple-400">AI Query Assistant</span>
+                </div>
+                <div className="flex gap-2">
+                    <input
+                        type="text"
+                        value={nlQuery}
+                        onChange={(e) => setNlQuery(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleNaturalLanguageQuery()}
+                        placeholder='Ask: "Show me revenue this month"'
+                        className="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                    />
+                    <button
+                        onClick={handleNaturalLanguageQuery}
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg flex items-center gap-2"
+                    >
+                        <Search className="w-4 h-4" />
+                        <span className="hidden sm:inline">Ask</span>
+                    </button>
+                </div>
+                {nlResult && (
+                    <div className="mt-3 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                        <p className="text-sm text-slate-300">{nlResult}</p>
+                    </div>
+                )}
+            </div>
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white flex items-center gap-2">
                     <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-teal-400" /> Live Operations

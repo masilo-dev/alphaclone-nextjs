@@ -3,7 +3,7 @@
 import { supabase } from '../../lib/supabase';
 
 import React, { useEffect, useState } from 'react';
-import { TrendingUp, Plus, DollarSign, Calendar, User, Target, UserPlus, BarChart2, PieChart as PieChartIcon } from 'lucide-react';
+import { TrendingUp, Plus, DollarSign, Calendar, User, Target, UserPlus, BarChart2, PieChart as PieChartIcon, Heart, AlertTriangle, CheckCircle } from 'lucide-react';
 import { dealService, Deal, DealStage } from '../../services/dealService';
 import { leadService, Lead } from '../../services/leadService';
 import { Button, Modal, Input } from '../ui/UIComponents';
@@ -73,6 +73,79 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
         negotiation: 'Negotiation',
         closed_won: 'Won',
         closed_lost: 'Lost',
+    };
+
+    // Calculate deal health score (0-100)
+    const calculateDealHealth = (deal: Deal): { score: number; status: 'healthy' | 'warning' | 'critical' } => {
+        let score = 100;
+        
+        // Factor 1: Probability (0-30 points)
+        score += (deal.probability / 100) * 30 - 30;
+        
+        // Factor 2: Stage time (0-25 points)
+        // Deals that linger too long in early stages lose points
+        const daysInStage = deal.updatedAt ? 
+            Math.floor((Date.now() - new Date(deal.updatedAt).getTime()) / (1000 * 60 * 60 * 24)) : 0;
+        
+        const stageTimeThresholds: Record<DealStage, number> = {
+            lead: 30,      // 30 days
+            qualified: 45, // 45 days
+            proposal: 30,  // 30 days
+            negotiation: 14, // 14 days
+            closed_won: 0,
+            closed_lost: 0
+        };
+        
+        const threshold = stageTimeThresholds[deal.stage] || 30;
+        if (daysInStage > threshold) {
+            const overage = daysInStage - threshold;
+            score -= Math.min(25, overage * 2); // Lose 2 points per day over threshold, max 25
+        }
+        
+        // Factor 3: Expected close date proximity (0-20 points)
+        if (deal.expectedCloseDate && deal.stage !== 'closed_won' && deal.stage !== 'closed_lost') {
+            const daysUntilClose = Math.floor((new Date(deal.expectedCloseDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            
+            if (daysUntilClose < 0) {
+                score -= 20; // Overdue
+            } else if (daysUntilClose < 7) {
+                score -= 10; // Closing soon but no activity
+            } else if (daysUntilClose > 90 && deal.stage === 'lead') {
+                score -= 15; // Lead with far-off close date
+            }
+        }
+        
+        // Factor 4: Value consideration (0-15 points)
+        // Higher value deals get slightly better scores (engagement incentive)
+        if (deal.value && deal.value > 10000) {
+            score += 5;
+        } else if (deal.value && deal.value > 50000) {
+            score += 10;
+        } else if (deal.value && deal.value > 100000) {
+            score += 15;
+        }
+        
+        // Factor 5: Stage progression (0-10 points)
+        // Deals in later stages are healthier
+        const stageProgression: Record<DealStage, number> = {
+            lead: 0,
+            qualified: 3,
+            proposal: 6,
+            negotiation: 9,
+            closed_won: 10,
+            closed_lost: 0
+        };
+        score += stageProgression[deal.stage];
+        
+        // Clamp score between 0 and 100
+        score = Math.max(0, Math.min(100, score));
+        
+        // Determine status
+        let status: 'healthy' | 'warning' | 'critical' = 'healthy';
+        if (score < 40) status = 'critical';
+        else if (score < 70) status = 'warning';
+        
+        return { score, status };
     };
 
     useEffect(() => {
@@ -520,7 +593,21 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                 </div>
 
                                 <div className="space-y-3 max-h-[800px] overflow-y-auto custom-scrollbar">
-                                    {stageDeals.map((deal) => (
+                                    {stageDeals.map((deal) => {
+                                        const health = calculateDealHealth(deal);
+                                        const healthColors = {
+                                            healthy: 'bg-green-500/20 text-green-400 border-green-500/30',
+                                            warning: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+                                            critical: 'bg-red-500/20 text-red-400 border-red-500/30'
+                                        };
+                                        const healthIcon = {
+                                            healthy: CheckCircle,
+                                            warning: Heart,
+                                            critical: AlertTriangle
+                                        };
+                                        const HealthIcon = healthIcon[health.status];
+
+                                        return (
                                         <div
                                             key={deal.id}
                                             onClick={() => typeof setSelectedDealForDetail === 'function' && setSelectedDealForDetail(deal)}
@@ -528,24 +615,30 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                         >
                                             <div className="flex justify-between items-start mb-2">
                                                 <h4 className="font-bold text-white pr-6">{deal.name}</h4>
-                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 absolute top-3 right-3">
-                                                    <button
-                                                        onClick={() => handleViewDocuments(deal)}
-                                                        className="p-1 text-slate-400 hover:text-teal-400"
-                                                        title="Documents"
-                                                    >
-                                                        <FileText className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => {
-                                                            setDealToDelete(deal);
-                                                            setShowDeleteModal(true);
-                                                        }}
-                                                        className="p-1 text-slate-400 hover:text-red-400"
-                                                        title="Delete Deal"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${healthColors[health.status]}`}>
+                                                        <HealthIcon className="w-3 h-3" />
+                                                        {health.score}
+                                                    </div>
+                                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                                        <button
+                                                            onClick={() => handleViewDocuments(deal)}
+                                                            className="p-1 text-slate-400 hover:text-teal-400"
+                                                            title="Documents"
+                                                        >
+                                                            <FileText className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                setDealToDelete(deal);
+                                                                setShowDeleteModal(true);
+                                                            }}
+                                                            className="p-1 text-slate-400 hover:text-red-400"
+                                                            title="Delete Deal"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -598,7 +691,8 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                                 </select>
                                             )}
                                         </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         );

@@ -17,11 +17,14 @@ type SearchResult = {
     link: string;
 };
 
+type SearchFilter = 'all' | 'project' | 'message' | 'invoice';
+
 const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoices, onNavigate }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<SearchResult[]>([]);
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const [typeFilter, setTypeFilter] = useState<SearchFilter>('all');
     const inputRef = useRef<HTMLInputElement>(null);
 
     // Keyboard shortcut (Cmd/Ctrl + K)
@@ -99,9 +102,14 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
             }
         });
 
-        setResults(searchResults.slice(0, 10)); // Limit to 10 results
+        // Apply type filter
+        const filteredResults = typeFilter === 'all' 
+            ? searchResults 
+            : searchResults.filter(result => result.type === typeFilter);
+
+        setResults(filteredResults.slice(0, 10)); // Limit to 10 results
         setSelectedIndex(0);
-    }, [query, projects, messages, invoices]);
+    }, [query, projects, messages, invoices, typeFilter]);
 
     // Keyboard navigation
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -192,6 +200,23 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
                                         <X className="w-5 h-5" />
                                     </button>
                                 )}
+                            </div>
+
+                            {/* Type Filters */}
+                            <div className="flex gap-2 p-3 border-b border-slate-800">
+                                {(['all', 'project', 'message', 'invoice'] as SearchFilter[]).map(filter => (
+                                    <button
+                                        key={filter}
+                                        onClick={() => setTypeFilter(filter)}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-all ${
+                                            typeFilter === filter
+                                                ? 'bg-blue-600 text-white'
+                                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                                        }`}
+                                    >
+                                        {filter}
+                                    </button>
+                                ))}
                             </div>
 
                             {/* Results */}

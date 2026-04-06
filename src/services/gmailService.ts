@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase';
 
+export type EmailCategory = 'urgent' | 'follow-up' | 'newsletter' | 'spam' | 'normal';
+
 export interface GmailMessage {
     id: string;
     threadId: string;
@@ -9,6 +11,7 @@ export interface GmailMessage {
     date?: string;
     body?: string;
     messageCount?: number;
+    category?: EmailCategory;
 }
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -112,7 +115,7 @@ export const gmailService = {
         }
 
         return {
-            threads: results.filter((t): t is GmailMessage => t !== null),
+            threads: this.categorizeMessages(results.filter((t): t is GmailMessage => t !== null)),
             nextPageToken: data.nextPageToken
         };
     },
@@ -131,7 +134,7 @@ export const gmailService = {
         const data = await this.getThreadRaw(userId, threadId);
         if (!data.messages) return [];
 
-        return data.messages.map((msg: any) => this.parseMessageDetail(msg));
+        return this.categorizeMessages(data.messages.map((msg: any) => this.parseMessageDetail(msg)));
     },
 
     /**
@@ -218,5 +221,63 @@ export const gmailService = {
             .maybeSingle();
 
         return !!data && !error;
+    },
+
+    /**
+     * Categorize email based on sender, subject, and content
+     */
+    categorizeEmail(message: GmailMessage): EmailCategory {
+        const { from, subject, snippet, date } = message;
+        const lowerSubject = (subject || '').toLowerCase();
+        const lowerSnippet = snippet.toLowerCase();
+        const lowerFrom = (from || '').toLowerCase();
+        const combinedText = `${lowerSubject} ${lowerSnippet}`;
+
+        // Spam detection
+        const spamKeywords = ['winner', 'congratulations', 'free money', 'prize', 'lottery', 'viagra', 'casino', 'investment opportunity', 'urgent action required', 'your account', 'verify now', 'click here'];
+        const spamDomains = ['noreply@', 'notifications@', 'alert@'];
+        if (spamKeywords.some(k => combinedText.includes(k)) || spamDomains.some(d => lowerFrom.includes(d))) {
+            return 'spam';
+        }
+
+        // Newsletter detection
+        const newsletterKeywords = ['unsubscribe', 'newsletter', 'digest', 'weekly', 'monthly', 'update', 'announcement'];
+        const newsletterDomains = ['newsletter', 'updates', 'news', 'digest', 'noreply'];
+        if (newsletterKeywords.some(k => combinedText.includes(k)) || newsletterDomains.some(d => lowerFrom.includes(d))) {
+            return 'newsletter';
+        }
+
+        // Urgent detection
+        const urgentKeywords = ['urgent', 'asap', 'immediately', 'deadline', 'expiring', 'expires soon', 'time sensitive', 'important', 'critical', 'emergency'];
+        if (urgentKeywords.some(k => combinedText.includes(k))) {
+            return 'urgent';
+        }
+
+        // Follow-up detection
+        const followUpKeywords = ['follow up', 'following up', 'check in', 'checking in', 'just checking', 'reminder', 're:', 'fw:', 'fwd:'];
+        if (followUpKeywords.some(k => combinedText.includes(k))) {
+            return 'follow-up';
+        }
+
+        // Time-based urgency (emails older than 3 days but less than 7 days)
+        if (date) {
+            const emailDate = new Date(date);
+            const daysSince = (Date.now() - emailDate.getTime()) / (1000 * 60 * 60 * 24);
+            if (daysSince > 3 && daysSince < 7) {
+                return 'follow-up';
+            }
+        }
+
+        return 'normal';
+    },
+
+    /**
+     * Batch categorize messages
+     */
+    categorizeMessages(messages: GmailMessage[]): GmailMessage[] {
+        return messages.map(msg => ({
+            ...msg,
+            category: this.categorizeEmail(msg)
+        }));
     }
 };

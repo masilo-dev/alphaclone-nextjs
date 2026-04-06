@@ -64,6 +64,8 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
     // Feature States
     const [priority, setPriority] = useState<'normal' | 'high' | 'urgent'>('normal');
     const [autoReplyEnabled, setAutoReplyEnabled] = useState(false);
+    const [conversationSummary, setConversationSummary] = useState<string | null>(null);
+    const [isSummarizing, setIsSummarizing] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -230,6 +232,37 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
     const handleEmojiClick = (emojiData: EmojiClickData) => {
         setNewMessage(newMessage + emojiData.emoji);
         setShowEmojiPicker(false);
+    };
+
+    const handleSummarizeConversation = async () => {
+        if (visibleMessages.length === 0) {
+            toast.error('No messages to summarize');
+            return;
+        }
+
+        setIsSummarizing(true);
+        try {
+            const conversationText = visibleMessages
+                .map(msg => `${msg.senderId === user.id ? 'You' : (isAdmin ? selectedClient?.name : 'Admin')}: ${msg.content}`)
+                .join('\n');
+            
+            const summary = await chatWithAI(
+                `Summarize this conversation:\n\n${conversationText}`,
+                'You are a helpful assistant that summarizes conversations concisely.'
+            );
+            
+            if (summary) {
+                setConversationSummary(summary);
+                toast.success('Conversation summarized!');
+            } else {
+                toast.error('Failed to summarize conversation');
+            }
+        } catch (err) {
+            console.error('Summarization error:', err);
+            toast.error('Failed to summarize conversation');
+        } finally {
+            setIsSummarizing(false);
+        }
     };
 
     // Filter messages based on view - Use useMemo to prevent re-initialization issues
@@ -456,8 +489,8 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
     };
 
     const filteredClients = clients.filter(c =>
-        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.email.toLowerCase().includes(searchQuery.toLowerCase())
+        (c.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (c.email || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const isRecipientTyping = isAdmin
@@ -561,7 +594,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                     filteredClients.map(client => (
                                         <div
                                             key={client.id}
-                                            onClick={() => setSelectedClient(client)}
+                                            onClick={() => { setSelectedClient(client); setConversationSummary(null); }}
                                             className={`p-3 md:p-4 flex items-center gap-3 cursor-pointer transition-all border-b border-slate-700 hover:bg-slate-800/50 ${selectedClient?.id === client.id ? 'bg-teal-500/10 border-l-2 border-l-teal-500' : 'border-l-2 border-l-transparent'}`}
                                         >
                                             <div className="relative">
@@ -616,12 +649,13 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                                         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(contact.name)}&background=0D9488&color=fff`
                                                     };
                                                     setSelectedClient(mappedUser);
-                                                    setSidebarTab('chats'); // Switch back to see the chat
+                                                    setConversationSummary(null);
+                                                    setSidebarTab('chats'); 
                                                 }}
                                                 className="p-3 md:p-4 flex items-center gap-3 cursor-pointer transition-all border-b border-slate-700 hover:bg-slate-800/50"
                                             >
                                                 <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-teal-400 font-bold">
-                                                    {contact.name.charAt(0)}
+                                                    {(contact.name || '?').charAt(0)}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <h4 className="text-sm font-medium text-slate-300 truncate">{contact.name}</h4>
@@ -706,16 +740,29 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
 
                                 {/* Admin Auto-Pilot Toggle */}
                                 {isAdmin && !isMobile && (
-                                    <button
-                                        onClick={() => setAutoReplyEnabled(!autoReplyEnabled)}
-                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${autoReplyEnabled
-                                            ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/30'
-                                            : 'bg-slate-800 text-slate-400 hover:text-white border border-white/10'
-                                            }`}
-                                    >
-                                        <Bot size={14} className={autoReplyEnabled ? 'animate-pulse' : ''} />
-                                        {autoReplyEnabled ? 'AUTO-PILOT ON' : 'ENABLE AI AGENT'}
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => setAutoReplyEnabled(!autoReplyEnabled)}
+                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${autoReplyEnabled
+                                                ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/30'
+                                                : 'bg-slate-800 text-slate-400 hover:text-white border border-white/10'
+                                                }`}
+                                        >
+                                            <Bot size={14} className={autoReplyEnabled ? 'animate-pulse' : ''} />
+                                            {autoReplyEnabled ? 'AUTO-PILOT ON' : 'ENABLE AI AGENT'}
+                                        </button>
+                                        <button
+                                            onClick={handleSummarizeConversation}
+                                            disabled={isSummarizing || visibleMessages.length === 0}
+                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${isSummarizing
+                                                ? 'bg-purple-500/50 text-white'
+                                                : 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20'
+                                                }`}
+                                        >
+                                            <Wand2 size={14} className={isSummarizing ? 'animate-spin' : ''} />
+                                            {isSummarizing ? 'Summarizing...' : 'Summarize'}
+                                        </button>
+                                    </div>
                                 )}
                             </div>
 
@@ -728,7 +775,25 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                     </div>
                                 ) : (
                                     <>
-                                        {visibleMessages.length === 0 && (
+                                        {conversationSummary && (
+                                            <div className="mb-4 p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <Wand2 className="w-4 h-4 text-purple-400" />
+                                                        <span className="text-sm font-semibold text-purple-400">AI Summary</span>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setConversationSummary(null)}
+                                                        className="text-slate-500 hover:text-white"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                                <p className="text-sm text-slate-300">{conversationSummary}</p>
+                                            </div>
+                                        )}
+
+                                        {visibleMessages.length === 0 && !conversationSummary && (
                                             <div className="text-center text-slate-500 mt-10">No messages yet. Start the conversation!</div>
                                         )}
 

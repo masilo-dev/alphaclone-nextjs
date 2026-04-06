@@ -6,7 +6,7 @@ import type { Tenant, SubscriptionPlan } from '../services/tenancy/types';
 import { authService } from '../services/authService';
 import { User } from '../types';
 
-interface TenantContextType {
+export interface TenantContextType {
   currentTenant: Tenant | null;
   userTenants: Array<Tenant & { role: string }>;
   isLoading: boolean;
@@ -23,7 +23,7 @@ interface CreateTenantData {
   plan?: SubscriptionPlan;
 }
 
-const TenantContext = createContext<TenantContextType | undefined>(undefined);
+export const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 export function TenantProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);

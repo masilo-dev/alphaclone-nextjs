@@ -224,8 +224,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         checkTasks();
 
         // Fetch consolidated stats
-        if (currentTenant?.id && !dashboardStats) {
-            getDashboardStats(currentTenant.id).then((result) => {
+        if (currentTenant?.id && user?.id && !dashboardStats) {
+            getDashboardStats(currentTenant.id, user.id).then((result) => {
                 if (result && result.stats) setDashboardStats(result.stats);
             });
         }

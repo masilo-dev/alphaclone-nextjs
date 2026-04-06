@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '../ui/UIComponents';
-import { Video, Copy, ExternalLink, RefreshCw, AlertTriangle, Check, Zap, Lock } from 'lucide-react';
+import { Video, Copy, ExternalLink, RefreshCw, AlertTriangle, Check, Zap, Lock, Clock, Users, Download, Play, ChevronDown, Calendar } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { User } from '../../types';
-import { dailyService } from '../../services/dailyService';
+import { dailyService, VideoCall } from '../../services/dailyService';
 import { useRouter } from 'next/navigation';
 import { useTenant } from '../../contexts/TenantContext'; // Added useTenant
 import { supabase } from '@/lib/supabase'; // Added supabase for direct query
@@ -35,6 +35,8 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
     const [isRegenerating, setIsRegenerating] = useState(false);
+    const [pastMeetings, setPastMeetings] = useState<VideoCall[]>([]);
+    const [showPastMeetings, setShowPastMeetings] = useState(false);
 
     const initRef = useRef(false);
 
@@ -43,7 +45,27 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
         initRef.current = true;
 
         initializeVideoService();
+        loadPastMeetings();
     }, [currentTenant]); // Re-run if tenant changes, but initRef prevents loops
+
+    const loadPastMeetings = async () => {
+        if (!currentTenant) return;
+        
+        try {
+            const { data, error } = await supabase
+                .from('video_calls')
+                .select('*')
+                .eq('tenant_id', currentTenant.id)
+                .in('status', ['ended', 'cancelled'])
+                .order('created_at', { ascending: false })
+                .limit(10);
+
+            if (error) throw error;
+            setPastMeetings(data || []);
+        } catch (err) {
+            console.error('Failed to load past meetings:', err);
+        }
+    };
 
     const initializeVideoService = async () => {
         if (!currentTenant) return;
@@ -369,6 +391,72 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                     </Button>
                 </div>
             </div>
+
+            {/* Past Meetings Section */}
+            {pastMeetings.length > 0 && (
+                <div className="mt-6">
+                    <button
+                        onClick={() => setShowPastMeetings(!showPastMeetings)}
+                        className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-white transition-colors mb-4"
+                    >
+                        <Clock className="w-4 h-4" />
+                        Past Meetings ({pastMeetings.length})
+                    </button>
+                    
+                    {showPastMeetings && (
+                        <div className="space-y-3">
+                            {pastMeetings.map((meeting) => (
+                                <div key={meeting.id} className="bg-slate-900/50 border border-white/5 rounded-lg p-4 hover:bg-slate-900/70 transition-colors">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="text-sm font-bold text-white truncate">{meeting.title}</h4>
+                                            <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
+                                                <span className="flex items-center gap-1">
+                                                    <Clock className="w-3 h-3" />
+                                                    {new Date(meeting.created_at).toLocaleDateString()}
+                                                </span>
+                                                {meeting.duration_seconds && (
+                                                    <span className="flex items-center gap-1">
+                                                        {Math.floor(meeting.duration_seconds / 60)} min
+                                                    </span>
+                                                )}
+                                                <span className="flex items-center gap-1">
+                                                    <Users className="w-3 h-3" />
+                                                    {meeting.participants?.length || 0}
+                                                </span>
+                                            </div>
+                                            {meeting.status === 'ended' && meeting.recording_url && (
+                                                <div className="mt-3 flex items-center gap-2">
+                                                    <span className="px-2 py-0.5 bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-bold uppercase rounded-full">
+                                                        Recording Available
+                                                    </span>
+                                                    <a
+                                                        href={meeting.recording_url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-teal-400 hover:text-teal-300 text-xs font-medium flex items-center gap-1"
+                                                    >
+                                                        <Play className="w-3 h-3" />
+                                                        Watch
+                                                    </a>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${
+                                            meeting.status === 'ended' ? 'bg-green-500/10 text-green-400' :
+                                            meeting.status === 'cancelled' ? 'bg-red-500/10 text-red-400' :
+                                            'bg-slate-500/10 text-slate-400'
+                                        }`}>
+                                            {meeting.status}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
         );
     }
 

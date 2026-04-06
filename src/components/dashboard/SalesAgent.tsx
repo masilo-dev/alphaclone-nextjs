@@ -19,6 +19,15 @@ import OmniLeadFinder from '../leads/OmniLeadFinder';
 import KanbanBoard from './crm/KanbanBoard';
 import AutomationBuilder from './workflows/AutomationBuilder';
 
+interface ParsedContact {
+    name?: string;
+    email?: string;
+    phone?: string;
+    industry?: string;
+    location?: string;
+    description?: string;
+}
+
 const SalesAgent: React.FC = () => {
     const aiConfigured = isAnyAIConfigured();
     const { startTask } = useBackgroundTasks();
@@ -43,6 +52,7 @@ const SalesAgent: React.FC = () => {
     const [filters, setFilters] = useState({ businessSize: '', employeeCount: '' });
 
     const [showUpload, setShowUpload] = useState(false);
+    const [contacts, setContacts] = useState<ParsedContact[]>([]);
 
     const [selectedLeadForDetail, setSelectedLeadForDetail] = useState<Lead | null>(null);
     const [viewingMessage, setViewingMessage] = useState<{ title: string; body: string } | null>(null);
@@ -784,7 +794,7 @@ const SalesAgent: React.FC = () => {
                 const { businessName, context } = commands.research;
                 // Find visible lead with this name if possible
                 const matchingLead = leads.find(l =>
-                    l.businessName.toLowerCase().includes(businessName.toLowerCase())
+                    (l.businessName || '').toLowerCase().includes((businessName || '').toLowerCase())
                 );
 
                 if (matchingLead) {

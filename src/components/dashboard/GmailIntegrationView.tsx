@@ -17,7 +17,7 @@ import {
     User as UserIcon
 } from 'lucide-react';
 import { Button, Badge } from '../ui/UIComponents';
-import { gmailService, GmailMessage } from '../../services/gmailService';
+import { gmailService, GmailMessage, EmailCategory } from '../../services/gmailService';
 import { toast } from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -26,6 +26,15 @@ const LABELS = [
     { id: 'SENT', label: 'Sent', Icon: Send },
     { id: 'TRASH', label: 'Trash', Icon: Trash2 },
     { id: 'STARRED', label: 'Starred', Icon: Star },
+];
+
+const CATEGORY_FILTERS: { id: EmailCategory | 'all', label: string, color: string }[] = [
+    { id: 'all', label: 'All', color: 'bg-slate-600' },
+    { id: 'urgent', label: 'Urgent', color: 'bg-red-500' },
+    { id: 'follow-up', label: 'Follow-up', color: 'bg-orange-500' },
+    { id: 'newsletter', label: 'Newsletter', color: 'bg-blue-500' },
+    { id: 'spam', label: 'Spam', color: 'bg-gray-500' },
+    { id: 'normal', label: 'Normal', color: 'bg-slate-500' },
 ];
 
 interface GmailIntegrationViewProps {
@@ -41,6 +50,7 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
     const [replyBody, setReplyBody] = useState('');
     const [isSending, setIsSending] = useState(false);
     const [activeLabel, setActiveLabel] = useState('INBOX');
+    const [categoryFilter, setCategoryFilter] = useState<EmailCategory | 'all'>('all');
 
     // Simplified content cleaner for "Coming Soon" phase
     const cleanEmailBody = (html?: string) => {
@@ -61,6 +71,11 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
             setIsLoading(false);
         }
     };
+
+    // Filter threads by category
+    const filteredThreads = categoryFilter === 'all'
+        ? threads
+        : threads.filter(thread => thread.category === categoryFilter);
 
     useEffect(() => {
         fetchThreads(activeLabel);
@@ -149,44 +164,72 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
                     </Button>
                 </div>
 
+                {/* Category Filter Chips */}
+                <div className="p-3 border-b border-slate-800 flex gap-2 overflow-x-auto custom-scrollbar">
+                    {CATEGORY_FILTERS.map((filter) => (
+                        <button
+                            key={filter.id}
+                            onClick={() => setCategoryFilter(filter.id)}
+                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+                                categoryFilter === filter.id
+                                    ? `${filter.color} text-white shadow-lg`
+                                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
+                            }`}
+                        >
+                            {filter.label}
+                        </button>
+                    ))}
+                </div>
+
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
                     {isLoading ? (
                         Array.from({ length: 5 }).map((_, i) => (
                             <div key={i} className="p-4 rounded-xl border border-transparent bg-slate-900/40 animate-pulse h-24 mb-2" />
                         ))
-                    ) : threads.length === 0 ? (
+                    ) : filteredThreads.length === 0 ? (
                         <div className="text-center py-12 text-slate-500">
                             <Mail className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                            <p className="text-sm">No emails found in {LABELS.find(l => l.id === activeLabel)?.label}</p>
+                            <p className="text-sm">No emails found in {LABELS.find(l => l.id === activeLabel)?.label}{categoryFilter !== 'all' ? ` with category "${CATEGORY_FILTERS.find(f => f.id === categoryFilter)?.label}"` : ''}</p>
                         </div>
                     ) : (
-                        threads.map((thread) => (
-                            <button
-                                key={thread.threadId}
-                                onClick={() => handleThreadSelect(thread.threadId)}
-                                className={`w-full text-left p-4 rounded-xl transition-all border ${selectedThreadId === thread.threadId
-                                    ? 'bg-teal-500/10 border-teal-500/50 shadow-lg shadow-teal-500/5'
-                                    : 'border-transparent hover:bg-slate-900 hover:border-slate-800'
-                                    }`}
-                            >
-                                <div className="flex justify-between items-start mb-1">
-                                    <span className="text-xs font-bold text-teal-400 truncate max-w-[140px] uppercase tracking-wider">
-                                        {activeLabel === 'SENT'
-                                            ? (thread.subject?.slice(0, 15) || 'Sent Message')
-                                            : (thread.from?.split('<')[0].trim() || 'Unknown')}
-                                    </span>
-                                    <span className="text-[10px] text-slate-500 whitespace-nowrap">
-                                        {thread.date ? formatDistanceToNow(new Date(thread.date), { addSuffix: true }) : ''}
-                                    </span>
-                                </div>
-                                <h4 className="text-sm font-bold text-white truncate mb-1">
-                                    {thread.subject || '(No Subject)'}
-                                </h4>
-                                <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed opacity-70">
-                                    {thread.snippet}
-                                </p>
-                            </button>
-                        ))
+                        filteredThreads.map((thread) => {
+                            const category = thread.category || 'normal';
+                            const categoryInfo = CATEGORY_FILTERS.find(f => f.id === category) || CATEGORY_FILTERS[5]; // default to normal
+                            return (
+                                <button
+                                    key={thread.threadId}
+                                    onClick={() => handleThreadSelect(thread.threadId)}
+                                    className={`w-full text-left p-4 rounded-xl transition-all border ${selectedThreadId === thread.threadId
+                                        ? 'bg-teal-500/10 border-teal-500/50 shadow-lg shadow-teal-500/5'
+                                        : 'border-transparent hover:bg-slate-900 hover:border-slate-800'
+                                        }`}
+                                >
+                                    <div className="flex justify-between items-start mb-1">
+                                        <span className="text-xs font-bold text-teal-400 truncate max-w-[140px] uppercase tracking-wider">
+                                            {activeLabel === 'SENT'
+                                                ? (thread.subject?.slice(0, 15) || 'Sent Message')
+                                                : (thread.from?.split('<')[0].trim() || 'Unknown')}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            {category !== 'normal' && (
+                                                <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider ${categoryInfo.color} text-white`}>
+                                                    {categoryInfo.label}
+                                                </span>
+                                            )}
+                                            <span className="text-[10px] text-slate-500 whitespace-nowrap">
+                                                {thread.date ? formatDistanceToNow(new Date(thread.date), { addSuffix: true }) : ''}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <h4 className="text-sm font-bold text-white truncate mb-1">
+                                        {thread.subject || '(No Subject)'}
+                                    </h4>
+                                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed opacity-70">
+                                        {thread.snippet}
+                                    </p>
+                                </button>
+                            );
+                        })
                     )}
                 </div>
             </div>

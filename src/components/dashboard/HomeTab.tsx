@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Plus, Briefcase, Clock, Calendar, FileText, AlertCircle, Sun, Moon, Coffee, Zap } from 'lucide-react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { Plus, Briefcase, Clock, Calendar, FileText, AlertCircle, Sun, Moon, Coffee, Zap, GripVertical } from 'lucide-react';
 import { Button } from '../ui/UIComponents';
 import { TableSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
@@ -34,7 +34,6 @@ const getGreeting = (): { text: string; Icon: any } => {
 };
 
 import { CelebrationOverlay } from '../ui/CelebrationOverlay';
-import { useState } from 'react';
 
 const TodayAgendaCard: React.FC<{ projects: Project[]; user: User }> = ({ projects, user }) => {
     const { text: greeting, Icon: GreetIcon } = useMemo(() => getGreeting(), []);
@@ -113,6 +112,48 @@ const HomeTab: React.FC<HomeTabProps> = ({
         message: '' 
     });
 
+    // Widget customization state
+    const [widgetOrder, setWidgetOrder] = useState<string[]>(['momentum', 'agenda', 'ai-widget', 'stats']);
+    const [draggedItem, setDraggedItem] = useState<string | null>(null);
+
+    // Load widget order from localStorage
+    useEffect(() => {
+        const savedOrder = localStorage.getItem('widgetOrder');
+        if (savedOrder) {
+            setWidgetOrder(JSON.parse(savedOrder));
+        }
+    }, []);
+
+    // Save widget order to localStorage
+    useEffect(() => {
+        localStorage.setItem('widgetOrder', JSON.stringify(widgetOrder));
+    }, [widgetOrder]);
+
+    const handleDragStart = (e: React.DragEvent<HTMLDivElement>, widgetId: string) => {
+        setDraggedItem(widgetId);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetWidgetId: string) => {
+        e.preventDefault();
+        if (!draggedItem || draggedItem === targetWidgetId) return;
+
+        const newOrder = [...widgetOrder];
+        const draggedIndex = newOrder.indexOf(draggedItem);
+        const targetIndex = newOrder.indexOf(targetWidgetId);
+
+        newOrder.splice(draggedIndex, 1);
+        newOrder.splice(targetIndex, 0, draggedItem);
+
+        setWidgetOrder(newOrder);
+        setDraggedItem(null);
+    };
+
     const handleActionComplete = (message: string) => {
         setCelebration({ show: true, message });
     };
@@ -126,40 +167,69 @@ const HomeTab: React.FC<HomeTabProps> = ({
                 onComplete={() => setCelebration(prev => ({ ...prev, show: false }))}
             />
 
-            {/* Momentum HUD */}
-            <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-            >
-                <MomentumHUD 
-                    score={momentumScore}
-                    streak={loginStreak}
-                    activity24h={activity24h}
-                    newLeads={newLeads24h}
-                />
-            </motion.div>
-
-            {/* Today's Agenda Card */}
-            <TodayAgendaCard projects={filteredProjects} user={user} />
-
-            {/* 900% Automation: Mission Control Widget */}
-            <AIPredictiveWidget onActionComplete={handleActionComplete} />
-
-            {/* Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" data-tour="dashboard-overview">
-                {currentStats.map((stat, idx) => (
-                    <div key={idx} className="bg-slate-900/60 backdrop-blur border border-slate-700 p-4 md:p-5 rounded-2xl hover:border-teal-500/30 transition-colors group">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className={`p-2.5 rounded-lg ${stat.color} bg-opacity-10 text-white`}>
-                                {stat.icon && <stat.icon className="w-5 h-5" />}
+            {/* Render widgets in custom order */}
+            {widgetOrder.map((widgetId) => {
+                const isDragging = draggedItem === widgetId;
+                
+                return (
+                    <div
+                        key={widgetId}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e as React.DragEvent<HTMLDivElement>, widgetId)}
+                        onDragOver={(e) => handleDragOver(e as React.DragEvent<HTMLDivElement>)}
+                        onDrop={(e) => handleDrop(e as React.DragEvent<HTMLDivElement>, widgetId)}
+                        className={`relative group ${isDragging ? 'opacity-50' : ''}`}
+                        style={{ cursor: 'move' }}
+                    >
+                        {/* Drag handle */}
+                        <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="p-1 bg-slate-800 rounded cursor-grab">
+                                <GripVertical className="w-4 h-4 text-slate-400" />
                             </div>
                         </div>
-                        <div className="text-2xl font-bold text-white mb-1 group-hover:text-teal-400 transition-colors">{stat.value}</div>
-                        <div className="text-sm text-slate-500">{stat.label}</div>
+
+                        {widgetId === 'momentum' && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5 }}
+                            >
+                                <MomentumHUD 
+                                    score={momentumScore}
+                                    streak={loginStreak}
+                                    activity24h={activity24h}
+                                    newLeads={newLeads24h}
+                                />
+                            </motion.div>
+                        )}
+
+                        {widgetId === 'agenda' && (
+                            <TodayAgendaCard projects={filteredProjects} user={user} />
+                        )}
+
+                        {widgetId === 'ai-widget' && (
+                            <AIPredictiveWidget onActionComplete={handleActionComplete} />
+                        )}
+
+                        {widgetId === 'stats' && (
+                            /* Stats Row */
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" data-tour="dashboard-overview">
+                                {currentStats.map((stat, idx) => (
+                                    <div key={idx} className="bg-slate-900/60 backdrop-blur border border-slate-700 p-4 md:p-5 rounded-2xl hover:border-teal-500/30 transition-colors group">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div className={`p-2.5 rounded-lg ${stat.color} bg-opacity-10 text-white`}>
+                                                {stat.icon && <stat.icon className="w-5 h-5" />}
+                                            </div>
+                                        </div>
+                                        <div className="text-2xl font-bold text-white mb-1 group-hover:text-teal-400 transition-colors">{stat.value}</div>
+                                        <div className="text-sm text-slate-500">{stat.label}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
-                ))}
-            </div>
+                );
+            })}
 
 
             {/* Projects Table */}

@@ -200,7 +200,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                             <div key={member.user_id} className="flex flex-col items-center relative group">
                                                 <div className="absolute -top-4 left-1/2 w-px h-4 bg-slate-700"></div>
                                                 <div className="p-3 bg-slate-800 border border-slate-700 rounded-xl min-w-[140px] text-center hover:border-teal-500/50 transition-all">
-                                                    <div className="font-bold text-white text-sm">{member.user.name}</div>
+                                                    <div className="font-bold text-white text-sm">{member.user?.name || 'Unknown'}</div>
                                                     <div className="text-xs text-slate-500 uppercase">{member.role}</div>
                                                 </div>
                                             </div>

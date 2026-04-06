@@ -147,7 +147,7 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
                                     <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-slate-400 flex-wrap">
                                         <span className="flex items-center gap-1">
                                             <Users className="w-3 h-3" />
-                                            <span className="whitespace-nowrap">{m.participants.length} participant{m.participants.length !== 1 ? 's' : ''}</span>
+                                            <span className="whitespace-nowrap">{(m.participants || []).length} participant{(m.participants || []).length !== 1 ? 's' : ''}</span>
                                         </span>
                                         {m.started_at && (
                                             <span className="flex items-center gap-1">

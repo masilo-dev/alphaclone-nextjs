@@ -96,7 +96,7 @@ const SalesForecastTab = () => {
                 <Card className="bg-slate-900 border-slate-800 p-4">
                     <div className="flex justify-between items-start mb-2">
                         <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400"><Target className="w-5 h-5" /></div>
-                        <span className="text-xs text-slate-400">{summary?.achievementRate.toFixed(1)}% to Goal</span>
+                        <span className="text-xs text-slate-400">{(summary?.achievementRate ?? 0).toFixed(1)}% to Goal</span>
                     </div>
                     <div className="text-2xl font-bold text-white">{format(summary?.totalForecastedRevenue || 0)}</div>
                     <div className="text-xs text-slate-500">Revenue Target</div>

@@ -49,10 +49,45 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
         isOpen: false
     });
 
+    // Conversation memory (localStorage-based)
+    const [conversationHistory, setConversationHistory] = useState<Array<{ type: 'user' | 'ai'; content: string; timestamp: number }>>([]);
+
     useEffect(() => {
         loadRemainingGenerations();
         loadHistory();
+        loadConversationHistory();
     }, []);
+
+    const loadConversationHistory = () => {
+        try {
+            const saved = localStorage.getItem(`ai_conversation_${user.id}`);
+            if (saved) {
+                setConversationHistory(JSON.parse(saved));
+            }
+        } catch (err) {
+            console.error('Failed to load conversation history:', err);
+        }
+    };
+
+    const saveConversationHistory = (newEntry: { type: 'user' | 'ai'; content: string; timestamp: number }) => {
+        const updated = [...conversationHistory, newEntry];
+        setConversationHistory(updated);
+        try {
+            localStorage.setItem(`ai_conversation_${user.id}`, JSON.stringify(updated));
+        } catch (err) {
+            console.error('Failed to save conversation history:', err);
+        }
+    };
+
+    const clearConversationHistory = () => {
+        setConversationHistory([]);
+        try {
+            localStorage.removeItem(`ai_conversation_${user.id}`);
+            toast.success('Conversation history cleared');
+        } catch (err) {
+            console.error('Failed to clear conversation history:', err);
+        }
+    };
 
     const loadRemainingGenerations = async () => {
         const types: GenerationType[] = ['logo', 'image', 'content'];
@@ -92,6 +127,13 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
         setIsGenerating(true);
         setGeneratedResult(null);
 
+        // Save user prompt to conversation history
+        saveConversationHistory({
+            type: 'user',
+            content: prompt,
+            timestamp: Date.now()
+        });
+
         try {
             let result;
 
@@ -108,6 +150,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
             }
 
             if (result.success) {
+                const resultContent = result.url || result.content || '';
                 if (result.url) {
                     setGeneratedResult(result.url);
                     toast.success('Generated successfully!');
@@ -115,6 +158,13 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                     setGeneratedResult(result.content);
                     toast.success('Content generated successfully!');
                 }
+
+                // Save AI response to conversation history
+                saveConversationHistory({
+                    type: 'ai',
+                    content: resultContent,
+                    timestamp: Date.now()
+                });
 
                 // Update remaining count
                 if (result.remaining !== undefined) {
@@ -217,6 +267,47 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                     </button>
                 ))}
             </div>
+
+            {/* Conversation Memory */}
+            {conversationHistory.length > 0 && (
+                <div className="bg-slate-900/60 backdrop-blur border border-slate-700 rounded-2xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-purple-400" />
+                            <span className="text-sm font-semibold text-purple-400">Conversation Memory</span>
+                            <span className="text-xs text-slate-500">({conversationHistory.length} messages)</span>
+                        </div>
+                        <button
+                            onClick={clearConversationHistory}
+                            className="text-xs text-slate-500 hover:text-red-400 transition-colors"
+                        >
+                            Clear
+                        </button>
+                    </div>
+                    <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+                        {conversationHistory.slice(-10).map((msg, idx) => (
+                            <div
+                                key={idx}
+                                className={`p-2 rounded-lg text-sm ${
+                                    msg.type === 'user'
+                                        ? 'bg-teal-500/10 border border-teal-500/20 text-teal-300'
+                                        : 'bg-purple-500/10 border border-purple-500/20 text-purple-300'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-xs font-semibold uppercase">
+                                        {msg.type === 'user' ? 'You' : 'AI'}
+                                    </span>
+                                    <span className="text-xs text-slate-500">
+                                        {new Date(msg.timestamp).toLocaleTimeString()}
+                                    </span>
+                                </div>
+                                <p className="text-slate-300 line-clamp-2">{msg.content}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Generation Form */}
             <Card className="p-6">

@@ -20,10 +20,13 @@ import {
     History,
     ChevronDown,
     Edit2,
-    Search
+    Search,
+    Link2,
+    Unlink
 } from 'lucide-react';
 import { taskService, Task } from '../../services/taskService';
 import { taskRecurrenceService, RecurrenceFrequency } from '../../services/taskRecurrenceService';
+import { taskDependencyService } from '../../services/taskDependencyService';
 import { notificationService } from '../../services/dashboardService';
 import { Button, Modal, Input } from '../ui/UIComponents';
 import { TaskCountdown } from './tasks/TaskCountdown';
@@ -107,7 +110,8 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         estimatedHours: '',
         isRecurring: false,
         recurrenceFrequency: 'Weekly' as RecurrenceFrequency,
-        recurrenceInterval: '1'
+        recurrenceInterval: '1',
+        dependencies: [] as string[]
     });
 
     // Computed Tasks
@@ -130,10 +134,48 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         );
     }, [tasks, searchQuery, filter]);
 
+    // Check if task is blocked by incomplete dependencies
+    const isTaskBlocked = (task: Task): boolean => {
+        const deps = (task.metadata?.dependencies as string[]) || [];
+        if (deps.length === 0) return false;
+        
+        const incompleteDeps = deps.filter(depId => {
+            const depTask = tasks?.find(t => t.id === depId);
+            return depTask && depTask.status !== 'completed';
+        });
+        
+        return incompleteDeps.length > 0;
+    };
+
     const handleStatusChange = async (taskId: string, newStatus: Task['status']) => {
+        // Check if trying to complete a task that has incomplete dependencies
+        if (newStatus === 'completed') {
+            const task = tasks?.find(t => t.id === taskId);
+            if (task && isTaskBlocked(task)) {
+                const deps = (task.metadata?.dependencies as string[]) || [];
+                const incompleteDepTitles = deps
+                    .filter(depId => {
+                        const depTask = tasks?.find(t => t.id === depId);
+                        return depTask && depTask.status !== 'completed';
+                    })
+                    .map(depId => tasks?.find(t => t.id === depId)?.title);
+                
+                toast.error(`Cannot complete task. Dependencies not met: ${incompleteDepTitles.join(', ')}`);
+                return;
+            }
+        }
+        
         try {
             await updateTaskMutation.mutateAsync({ taskId, updates: { status: newStatus } });
             toast.success('Task status updated');
+            
+            // If task was just completed, check if any dependent tasks can be unblocked
+            if (newStatus === 'completed') {
+                const dependentTasks = await taskDependencyService.getDependentTasks(taskId);
+                for (const depTask of dependentTasks) {
+                    await taskDependencyService.updateTaskStatusByDependencies(depTask.id);
+                }
+            }
         } catch (err) {
             toast.error('Failed to update task');
         }
@@ -169,10 +211,30 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                         assignedTo: (taskForm as any).assignedTo || undefined,
                         relatedToProject: (taskForm as any).relatedToProject || undefined,
                         relatedToLead: (taskForm as any).relatedToLead || undefined,
-                        estimatedHours: taskForm.estimatedHours ? parseFloat(taskForm.estimatedHours) : undefined
+                        estimatedHours: taskForm.estimatedHours ? parseFloat(taskForm.estimatedHours) : undefined,
+                        metadata: { dependencies: (taskForm as any).dependencies || [] }
                     }
                 });
                 await handleRecurrencePersistence(editingTask.id);
+                
+                // Update dependencies - remove old ones, add new ones
+                const oldDeps = (editingTask.metadata?.dependencies as string[]) || [];
+                const newDeps = (taskForm as any).dependencies || [];
+                
+                // Remove dependencies that are no longer needed
+                for (const oldDep of oldDeps) {
+                    if (!newDeps.includes(oldDep)) {
+                        await taskDependencyService.removeDependency(editingTask.id, oldDep);
+                    }
+                }
+                
+                // Add new dependencies
+                for (const newDep of newDeps) {
+                    if (!oldDeps.includes(newDep)) {
+                        await taskDependencyService.addDependency(editingTask.id, newDep);
+                    }
+                }
+                
                 toast.success('Task updated successfully!');
             } else {
                 const result = await createTaskMutation.mutateAsync({
@@ -186,12 +248,19 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                         assignedTo: (taskForm as any).assignedTo || undefined,
                         relatedToProject: (taskForm as any).relatedToProject || undefined,
                         relatedToLead: (taskForm as any).relatedToLead || undefined,
-                        estimatedHours: taskForm.estimatedHours ? parseFloat(taskForm.estimatedHours) : undefined
+                        estimatedHours: taskForm.estimatedHours ? parseFloat(taskForm.estimatedHours) : undefined,
+                        metadata: { dependencies: (taskForm as any).dependencies || [] }
                     }
                 });
 
                 if (result?.id) {
                     await handleRecurrencePersistence(result.id);
+                    
+                    // Add dependencies
+                    const deps = (taskForm as any).dependencies || [];
+                    for (const depId of deps) {
+                        await taskDependencyService.addDependency(result.id, depId);
+                    }
                 }
                 toast.success('Task created successfully!');
             }
@@ -218,7 +287,8 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
             estimatedHours: '',
             isRecurring: false,
             recurrenceFrequency: 'Weekly',
-            recurrenceInterval: '1'
+            recurrenceInterval: '1',
+            dependencies: []
         } as any);
     };
 
@@ -240,7 +310,8 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
             estimatedHours: task.estimatedHours?.toString() || '',
             isRecurring: !!recurrenceData,
             recurrenceFrequency: recurrenceData?.frequency || 'Weekly',
-            recurrenceInterval: recurrenceData?.interval?.toString() || '1'
+            recurrenceInterval: recurrenceData?.interval?.toString() || '1',
+            dependencies: (task.metadata?.dependencies as string[]) || []
         } as any);
         setShowCreateModal(true);
     };
@@ -301,14 +372,27 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                         {task.status === 'completed' ? <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" /> : <Target className="w-5 h-5 sm:w-6 sm:h-6" />}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h4 className="text-sm sm:text-base font-black text-slate-200 group-hover:text-white transition-colors truncate tracking-tight">
-                                            {task.title}
-                                        </h4>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="text-sm sm:text-base font-black text-slate-200 group-hover:text-white transition-colors truncate tracking-tight">
+                                                {task.title}
+                                            </h4>
+                                            {isTaskBlocked(task) && (
+                                                <span className="px-2 py-0.5 bg-red-500/20 border border-red-500/30 text-red-400 text-[8px] font-bold uppercase tracking-wider rounded-full shrink-0">
+                                                    Blocked
+                                                </span>
+                                            )}
+                                        </div>
                                         <div className="flex items-center gap-2 sm:gap-3 mt-0.5 sm:mt-1.5">
                                             {task.description && (
                                                 <p className="text-[10px] sm:text-xs text-slate-500 truncate max-w-[150px] sm:max-w-[200px] font-medium italic">
                                                     {task.description}
                                                 </p>
+                                            )}
+                                            {(task.metadata?.dependencies as string[])?.length > 0 && (
+                                                <span className="text-[8px] text-slate-600 font-mono flex items-center gap-1">
+                                                    <Link2 className="w-2.5 h-2.5" />
+                                                    {(task.metadata?.dependencies as string[])?.length} dep{(task.metadata?.dependencies as string[])?.length === 1 ? '' : 's'}
+                                                </span>
                                             )}
                                         </div>
                                     </div>
@@ -646,6 +730,44 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                             <option key={l.id} value={l.id}>{l.businessName}</option>
                                         ))}
                                     </select>
+                                </div>
+                            </div>
+
+                            {/* Task Dependencies */}
+                            <div className="md:col-span-2 pt-4 mt-2 border-t border-white/5">
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 font-mono flex items-center gap-2">
+                                    <Link2 className="w-3 h-3" />
+                                    Dependencies (tasks that must complete first)
+                                </label>
+                                <div className="bg-slate-950/50 border border-white/10 rounded-xl p-4">
+                                    <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-2">
+                                        {(tasks || []).filter(t => t.id !== editingTask?.id).map(task => (
+                                            <div key={task.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-900/50 transition-colors">
+                                                <input
+                                                    type="checkbox"
+                                                    id={`dep-${task.id}`}
+                                                    checked={(taskForm as any).dependencies?.includes(task.id)}
+                                                    onChange={(e) => {
+                                                        const deps = (taskForm as any).dependencies || [];
+                                                        if (e.target.checked) {
+                                                            setTaskForm({ ...taskForm, dependencies: [...deps, task.id] });
+                                                        } else {
+                                                            setTaskForm({ ...taskForm, dependencies: deps.filter((d: string) => d !== task.id) });
+                                                        }
+                                                    }}
+                                                    className="w-4 h-4 rounded border-white/10 bg-slate-900 text-teal-500 focus:ring-teal-500"
+                                                />
+                                                <label htmlFor={`dep-${task.id}`} className="flex-1 text-xs text-slate-300 cursor-pointer flex items-center gap-2">
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${task.status === 'completed' ? 'bg-green-500' : task.status === 'in_progress' ? 'bg-teal-500' : 'bg-slate-500'}`} />
+                                                    {task.title}
+                                                </label>
+                                                <span className="text-[10px] text-slate-500 font-mono">{task.status}</span>
+                                            </div>
+                                        ))}
+                                        {(tasks || []).filter(t => t.id !== editingTask?.id).length === 0 && (
+                                            <p className="text-xs text-slate-500 italic">No other tasks available to depend on</p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>

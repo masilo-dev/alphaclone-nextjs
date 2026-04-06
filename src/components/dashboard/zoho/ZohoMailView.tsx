@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
     Mail, Send, Inbox, Archive, Trash2, Search, Loader2, Plus, 
     ArrowLeft, Menu, X, MoreVertical, Sparkles, Reply, Forward,
-    MoreHorizontal, CheckCircle2, RotateCcw, AlertCircle, FileText, ShieldCheck, BookUser
+    MoreHorizontal, CheckCircle2, RotateCcw, AlertCircle, FileText, ShieldCheck, BookUser, CheckSquare, Users
 } from 'lucide-react';
 import { generateEmailReply, generateEmailDraft } from '@/services/unifiedAIService';
+import { taskService } from '@/services/taskService';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -17,6 +18,7 @@ interface Message {
     receivedTime: string;
     snippet: string;
     status?: string; // read/unread
+    category?: 'urgent' | 'follow-up' | 'newsletter' | 'spam' | 'normal';
 }
 
 interface Folder {
@@ -47,6 +49,54 @@ export default function ZohoMailView() {
     const [needsReconnect, setNeedsReconnect] = useState(false);
     const [aiPrompt, setAiPrompt] = useState('');
     const [showAiPrompt, setShowAiPrompt] = useState(false);
+    const [categoryFilter, setCategoryFilter] = useState<'all' | 'urgent' | 'follow-up' | 'newsletter' | 'spam' | 'normal'>('all');
+    const [showTaskModal, setShowTaskModal] = useState(false);
+    const [taskFromEmail, setTaskFromEmail] = useState<{ title: string; description: string; priority: string } | null>(null);
+    const [emailSummary, setEmailSummary] = useState<string | null>(null);
+    const [isSummarizing, setIsSummarizing] = useState(false);
+    const [replySuggestions, setReplySuggestions] = useState<string[]>([]);
+    const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
+    const [showRouteModal, setShowRouteModal] = useState(false);
+    const [routeToEmail, setRouteToEmail] = useState('');
+
+    // Email categorization function
+    const categorizeEmail = (message: Message): 'urgent' | 'follow-up' | 'newsletter' | 'spam' | 'normal' => {
+        const subject = (message.subject || '').toLowerCase();
+        const sender = (message.sender || '').toLowerCase();
+        const snippet = (message.snippet || '').toLowerCase();
+
+        // Urgent keywords
+        const urgentKeywords = ['urgent', 'asap', 'emergency', 'critical', 'deadline', 'important', 'priority', 'immediately'];
+        if (urgentKeywords.some(kw => subject.includes(kw) || snippet.includes(kw))) {
+            return 'urgent';
+        }
+
+        // Follow-up keywords
+        const followUpKeywords = ['follow up', 'checking in', 'reminder', 'update', 'status', 'next steps', 'action required'];
+        if (followUpKeywords.some(kw => subject.includes(kw) || snippet.includes(kw))) {
+            return 'follow-up';
+        }
+
+        // Newsletter indicators
+        const newsletterIndicators = ['unsubscribe', 'newsletter', 'digest', 'weekly', 'update', '@newsletter.com', '@news.', '@digest.'];
+        if (newsletterIndicators.some(ind => subject.includes(ind) || sender.includes(ind) || snippet.includes(ind))) {
+            return 'newsletter';
+        }
+
+        // Spam indicators
+        const spamIndicators = ['winner', 'congratulations', 'free money', 'click here', 'limited time', 'act now', 'you have been selected', 'prize', 'lottery'];
+        if (spamIndicators.some(ind => subject.includes(ind) || snippet.includes(ind))) {
+            return 'spam';
+        }
+
+        return 'normal';
+    };
+
+    // Filter messages by category
+    const filteredMessages = useMemo(() => {
+        if (categoryFilter === 'all') return messages;
+        return messages.filter(msg => msg.category === categoryFilter);
+    }, [messages, categoryFilter]);
 
     // Central fetch helper — detects AUTH_EXPIRED (reconnect: true) from API
     const zohoFetch = async (url: string, options?: RequestInit): Promise<any> => {
@@ -87,8 +137,16 @@ export default function ZohoMailView() {
         setLoading(true);
         try {
             const data = await zohoFetch(`/api/zoho/mail?action=messages&folderId=${folderId}`);
-            if (Array.isArray(data)) setMessages(data);
-            else setMessages([]);
+            if (Array.isArray(data)) {
+                // Apply categorization to each message
+                const categorizedMessages = data.map((msg: Message) => ({
+                    ...msg,
+                    category: categorizeEmail(msg)
+                }));
+                setMessages(categorizedMessages);
+            } else {
+                setMessages([]);
+            }
         } finally {
             setLoading(false);
         }
@@ -101,6 +159,8 @@ export default function ZohoMailView() {
             if (data) {
                 setMessageContent(data);
                 setSelectedMessage(id);
+                setEmailSummary(null);
+                setReplySuggestions([]);
                 fetch(`/api/zoho/mail?action=markRead&messageId=${id}&folderId=${selectedFolder}`).catch(() => {});
             }
         } finally {
@@ -238,6 +298,122 @@ export default function ZohoMailView() {
         }
     };
 
+    const handleCreateTaskFromEmail = () => {
+        if (!messageContent) return;
+        
+        const title = messageContent.subject || 'Task from email';
+        const description = `From: ${messageContent.sender}\n\n${messageContent.content || messageContent.snippet || ''}`;
+        
+        setTaskFromEmail({ title, description, priority: 'medium' });
+        setShowTaskModal(true);
+    };
+
+    const handleSaveTask = async (taskData: { title: string; description: string; priority: string }) => {
+        // Get current user ID from localStorage or context
+        const userId = localStorage.getItem('userId') || '';
+        
+        try {
+            const { error } = await taskService.createTask(userId, {
+                title: taskData.title,
+                description: taskData.description,
+                priority: taskData.priority as any,
+                dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Due in 7 days
+            });
+            
+            if (!error) {
+                toast.success('Task created successfully!');
+                setShowTaskModal(false);
+                setTaskFromEmail(null);
+            } else {
+                toast.error('Failed to create task');
+            }
+        } catch (err) {
+            toast.error('Failed to create task');
+        }
+    };
+
+    const handleSummarizeEmail = async () => {
+        if (!messageContent) return;
+        
+        setIsSummarizing(true);
+        try {
+            const content = messageContent.content || messageContent.snippet || '';
+            const summary = await generateEmailDraft(
+                `Summarize this email:\n\nSubject: ${messageContent.subject}\nFrom: ${messageContent.sender}\n\n${content}`,
+                '',
+                ''
+            );
+            
+            if (summary) {
+                setEmailSummary(summary);
+                toast.success('Email summarized!');
+            } else {
+                toast.error('Failed to summarize email');
+            }
+        } catch (err) {
+            toast.error('Failed to summarize email');
+        } finally {
+            setIsSummarizing(false);
+        }
+    };
+
+    const handleGenerateReplySuggestions = async () => {
+        if (!messageContent) return;
+        
+        setIsGeneratingSuggestions(true);
+        try {
+            const content = messageContent.content || messageContent.snippet || '';
+            const suggestions = await generateEmailDraft(
+                `Generate 3 different reply suggestions for this email. Return them as a numbered list:\n\nSubject: ${messageContent.subject}\nFrom: ${messageContent.sender}\n\n${content}`,
+                '',
+                ''
+            );
+            
+            if (suggestions) {
+                // Parse the numbered list into an array
+                const parsedSuggestions = suggestions
+                    .split('\n')
+                    .filter(line => line.match(/^\d+\./))
+                    .map(line => line.replace(/^\d+\.\s*/, ''));
+                
+                setReplySuggestions(parsedSuggestions.length > 0 ? parsedSuggestions : [suggestions]);
+                toast.success('Reply suggestions generated!');
+            } else {
+                toast.error('Failed to generate suggestions');
+            }
+        } catch (err) {
+            toast.error('Failed to generate suggestions');
+        } finally {
+            setIsGeneratingSuggestions(false);
+        }
+    };
+
+    const handleRouteEmail = async () => {
+        if (!messageContent || !routeToEmail) {
+            toast.error('Please select an email to route to');
+            return;
+        }
+
+        try {
+            // Forward the email to the team member
+            await zohoFetch('/api/zoho/mail?action=forward', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messageId: selectedMessage,
+                    to: routeToEmail,
+                    folderId: selectedFolder
+                })
+            });
+            
+            toast.success('Email routed successfully!');
+            setShowRouteModal(false);
+            setRouteToEmail('');
+        } catch (err) {
+            toast.error('Failed to route email');
+        }
+    };
+
     return (
         <div className="flex flex-col bg-gray-950 text-gray-100 rounded-2xl border border-white/5 overflow-hidden shadow-2xl h-[calc(100vh-140px)] min-h-[600px] relative">
             {needsReconnect && (
@@ -329,30 +505,65 @@ export default function ZohoMailView() {
                     </div>
 
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-2 pt-0 divide-y divide-white/5">
+                        {/* Category Filter */}
+                        <div className="flex gap-2 px-2 py-3 overflow-x-auto custom-scrollbar">
+                            {(['all', 'urgent', 'follow-up', 'newsletter', 'spam', 'normal'] as const).map(cat => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setCategoryFilter(cat)}
+                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+                                        categoryFilter === cat
+                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                                            : 'bg-gray-800/50 text-gray-400 hover:bg-gray-800 hover:text-gray-200'
+                                    }`}
+                                >
+                                    {cat === 'all' ? 'All' : cat}
+                                </button>
+                            ))}
+                        </div>
+
                         {loading && messages.length === 0 ? (
                             <div className="space-y-2 px-2 mt-4">
                                 {[1,2,3,4,5].map(i => <div key={i} className="w-full h-20 bg-gray-800/20 rounded-xl animate-pulse" />)}
                             </div>
-                        ) : messages.length === 0 ? (
-                            <div className="text-center py-20 text-gray-600 text-sm">No messages</div>
+                        ) : filteredMessages.length === 0 ? (
+                            <div className="text-center py-20 text-gray-600 text-sm">No messages in this category</div>
                         ) : (
-                            messages.map(msg => (
-                                <button
-                                    key={msg.messageId}
-                                    onClick={() => fetchMessageContent(msg.messageId)}
-                                    className={`w-full text-left p-4 rounded-xl transition-all flex flex-col gap-1 relative mb-1 ${selectedMessage === msg.messageId ? 'bg-blue-600/10 border border-blue-500/20' : 'hover:bg-white/5 border border-transparent'}`}
-                                >
-                                    <div className="flex justify-between items-center mb-0.5">
-                                        <span className={`font-bold text-xs truncate max-w-[150px] ${msg.status === 'unread' ? 'text-white' : 'text-gray-400'}`}>
-                                            {msg.sender.split('<')[0].trim()}
-                                        </span>
-                                        <span className="text-[11px] text-gray-600">{formatDate(msg.receivedTime)}</span>
-                                    </div>
-                                    <p className={`text-xs font-semibold truncate ${msg.status === 'unread' ? 'text-blue-200' : 'text-gray-500'}`}>{msg.subject}</p>
-                                    <p className="text-[10px] text-gray-600 truncate opacity-60">{msg.snippet}</p>
-                                    {selectedMessage === msg.messageId && <div className="absolute inset-y-0 left-0 w-1 bg-blue-500 rounded-full" />}
-                                </button>
-                            ))
+                            filteredMessages.map(msg => {
+                                const categoryColors = {
+                                    urgent: 'bg-red-500/20 text-red-400 border-red-500/30',
+                                    'follow-up': 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+                                    newsletter: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+                                    spam: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+                                    normal: 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                                };
+                                const categoryColor = categoryColors[msg.category || 'normal'];
+                                
+                                return (
+                                    <button
+                                        key={msg.messageId}
+                                        onClick={() => fetchMessageContent(msg.messageId)}
+                                        className={`w-full text-left p-4 rounded-xl transition-all flex flex-col gap-1 relative mb-1 ${selectedMessage === msg.messageId ? 'bg-blue-600/10 border border-blue-500/20' : 'hover:bg-white/5 border border-transparent'}`}
+                                    >
+                                        <div className="flex justify-between items-center mb-0.5">
+                                            <span className={`font-bold text-xs truncate max-w-[150px] ${msg.status === 'unread' ? 'text-white' : 'text-gray-400'}`}>
+                                                {(msg.sender || '').split('<')[0].trim() || 'Unknown'}
+                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                {msg.category && msg.category !== 'normal' && (
+                                                    <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase border ${categoryColor}`}>
+                                                        {msg.category}
+                                                    </span>
+                                                )}
+                                                <span className="text-[11px] text-gray-600">{formatDate(msg.receivedTime)}</span>
+                                            </div>
+                                        </div>
+                                        <p className={`text-xs font-semibold truncate ${msg.status === 'unread' ? 'text-blue-200' : 'text-gray-500'}`}>{msg.subject}</p>
+                                        <p className="text-[10px] text-gray-600 truncate opacity-60">{msg.snippet}</p>
+                                        {selectedMessage === msg.messageId && <div className="absolute inset-y-0 left-0 w-1 bg-blue-500 rounded-full" />}
+                                    </button>
+                                );
+                            })
                         )}
                     </div>
                 </div>
@@ -397,6 +608,10 @@ export default function ZohoMailView() {
                                         <div className="min-w-0"><h2 className="text-sm font-black truncate text-gray-200">{messageContent?.subject}</h2><p className="text-xs text-blue-400 truncate">{messageContent?.sender}</p></div>
                                     </div>
                                     <div className="flex items-center gap-2">
+                                        <button onClick={() => handleSummarizeEmail()} disabled={isSummarizing} className="flex items-center gap-2 bg-purple-600/10 text-purple-400 px-3 py-1.5 rounded-xl border border-purple-600/20"><Sparkles size={14} /> {isSummarizing ? 'Summarizing...' : 'Summarize'}</button>
+                                        <button onClick={() => handleGenerateReplySuggestions()} disabled={isGeneratingSuggestions} className="flex items-center gap-2 bg-amber-600/10 text-amber-400 px-3 py-1.5 rounded-xl border border-amber-600/20"><Sparkles size={14} /> {isGeneratingSuggestions ? 'Generating...' : 'Smart Replies'}</button>
+                                        <button onClick={() => setShowRouteModal(true)} className="flex items-center gap-2 bg-indigo-600/10 text-indigo-400 px-3 py-1.5 rounded-xl border border-indigo-600/20"><Users size={14} /> Route</button>
+                                        <button onClick={() => handleCreateTaskFromEmail()} className="flex items-center gap-2 bg-teal-600/10 text-teal-400 px-3 py-1.5 rounded-xl border border-teal-600/20"><CheckSquare size={14} /> Create Task</button>
                                         <button onClick={() => handleAiReply()} disabled={aiGenerating} className="flex items-center gap-2 bg-blue-600/10 text-blue-400 px-3 py-1.5 rounded-xl border border-blue-600/20"><Sparkles size={14} /> AI Reply</button>
                                         <button onClick={() => handleArchive(selectedMessage!)} className="p-2 hover:bg-white/5 text-gray-500"><Archive size={18} /></button>
                                         <button onClick={() => handleDelete(selectedMessage!)} className="p-2 hover:bg-white/5 text-gray-500"><Trash2 size={18} /></button>
@@ -411,9 +626,52 @@ export default function ZohoMailView() {
                                                     <div><p className="font-semibold text-white">{messageContent?.sender}</p><p className="text-gray-500 text-xs">{formatDate(messageContent?.receivedTime)}</p></div>
                                                 </div>
                                             </div>
-                                            <div className="prose prose-invert max-w-none text-gray-300 leading-relaxed text-lg" dangerouslySetInnerHTML={{ __html: messageContent?.content }} />
+                                            <div className="prose prose-invert max-w-none text-gray-300 leading-relaxed text-lg" dangerouslySetInnerHTML={{ __html: messageContent?.content ?? '' }} />
+                                            
+                                            {emailSummary && (
+                                                <div className="mt-6 p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <Sparkles className="w-4 h-4 text-purple-400" />
+                                                        <span className="text-sm font-semibold text-purple-400">AI Summary</span>
+                                                    </div>
+                                                    <p className="text-sm text-gray-300">{emailSummary}</p>
+                                                </div>
+                                            )}
+
+                                            {replySuggestions.length > 0 && (
+                                                <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <Sparkles className="w-4 h-4 text-amber-400" />
+                                                            <span className="text-sm font-semibold text-amber-400">Smart Reply Suggestions</span>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => setReplySuggestions([])}
+                                                            className="text-slate-500 hover:text-white"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        {replySuggestions.map((suggestion, index) => (
+                                                            <button
+                                                                key={index}
+                                                                onClick={() => {
+                                                                    setEmailData({ to: messageContent?.sender ?? '', subject: `Re: ${messageContent?.subject ?? ''}`, body: suggestion });
+                                                                    setComposing(true);
+                                                                    setReplySuggestions([]);
+                                                                }}
+                                                                className="w-full text-left p-3 bg-slate-900/50 rounded-lg hover:bg-slate-800 transition-colors"
+                                                            >
+                                                                <p className="text-sm text-gray-300">{suggestion}</p>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
                                             <div className="pt-10 flex gap-4">
-                                                <button onClick={() => { setEmailData({ to: messageContent.sender, subject: `Re: ${messageContent.subject}`, body: "" }); setComposing(true); }} className="bg-blue-600 text-white px-8 py-2.5 rounded-xl text-sm font-semibold shadow-lg">Reply</button>
+                                                <button onClick={() => { setEmailData({ to: messageContent?.sender ?? '', subject: `Re: ${messageContent?.subject ?? ''}`, body: "" }); setComposing(true); }} className="bg-blue-600 text-white px-8 py-2.5 rounded-xl text-sm font-semibold shadow-lg">Reply</button>
                                             </div>
                                         </div>
                                     )}
@@ -438,6 +696,95 @@ export default function ZohoMailView() {
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
                 .prose img { max-width: 100%; border-radius: 8px; margin: 16px 0; border: 1px solid rgba(255,255,255,0.05); }
             `}</style>
+
+            {/* Task Creation Modal */}
+            {showTaskModal && taskFromEmail && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 w-full max-w-md">
+                        <h3 className="text-xl font-bold text-white mb-4">Create Task from Email</h3>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Task Title</label>
+                                <input
+                                    type="text"
+                                    value={taskFromEmail.title}
+                                    onChange={(e) => setTaskFromEmail({ ...taskFromEmail, title: e.target.value })}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Description</label>
+                                <textarea
+                                    value={taskFromEmail.description}
+                                    onChange={(e) => setTaskFromEmail({ ...taskFromEmail, description: e.target.value })}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white h-32 resize-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Priority</label>
+                                <select
+                                    value={taskFromEmail.priority}
+                                    onChange={(e) => setTaskFromEmail({ ...taskFromEmail, priority: e.target.value })}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white"
+                                >
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                            <div className="flex gap-3 justify-end pt-4">
+                                <button
+                                    onClick={() => setShowTaskModal(false)}
+                                    className="px-4 py-2 text-slate-400 hover:text-white"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => handleSaveTask(taskFromEmail)}
+                                    className="px-4 py-2 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700"
+                                >
+                                    Create Task
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Route Email Modal */}
+            {showRouteModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 w-full max-w-md">
+                        <h3 className="text-xl font-bold text-white mb-4">Route Email to Team Member</h3>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Team Member Email</label>
+                                <input
+                                    type="email"
+                                    value={routeToEmail}
+                                    onChange={(e) => setRouteToEmail(e.target.value)}
+                                    placeholder="colleague@company.com"
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white"
+                                />
+                            </div>
+                            <div className="flex gap-3 justify-end pt-4">
+                                <button
+                                    onClick={() => setShowRouteModal(false)}
+                                    className="px-4 py-2 text-slate-400 hover:text-white"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleRouteEmail}
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700"
+                                >
+                                    Route Email
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

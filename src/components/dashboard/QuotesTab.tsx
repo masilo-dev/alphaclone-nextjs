@@ -15,7 +15,16 @@ import toast from 'react-hot-toast';
 import { useCurrency } from '../../hooks/useCurrency';
 import { exportToCSV } from '../../utils/exportUtils';
 import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '../../services/universalServiceCatalog';
-import { Sparkles, ChevronDown } from 'lucide-react';
+import { Sparkles, ChevronDown, Copy, FilePlus } from 'lucide-react';
+
+interface QuoteTemplate {
+    id: string;
+    name: string;
+    description: string;
+    lineItems: Partial<QuoteItem>[];
+    notes?: string;
+    validForDays?: string;
+}
 
 interface QuotesTabProps {
     userId: string;
@@ -42,6 +51,57 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [storageUsage, setStorageUsage] = useState<number>(0);
     const MAX_STORAGE = 100 * 1024 * 1024; // 100MB
+    const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+
+    // Pre-defined quote templates
+    const quoteTemplates: QuoteTemplate[] = [
+        {
+            id: 'web-dev',
+            name: 'Web Development Package',
+            description: 'Standard website development with design and deployment',
+            lineItems: [
+                { productName: 'Website Design', description: 'Custom responsive design', quantity: 1, unitPrice: 2500 },
+                { productName: 'Frontend Development', description: 'React/Next.js implementation', quantity: 1, unitPrice: 3500 },
+                { productName: 'Backend Development', description: 'API and database setup', quantity: 1, unitPrice: 3000 },
+                { productName: 'Deployment & Setup', description: 'Production deployment and configuration', quantity: 1, unitPrice: 1000 }
+            ],
+            notes: 'Includes 2 rounds of revisions. Maintenance available at $500/month.',
+            validForDays: '30'
+        },
+        {
+            id: 'consulting',
+            name: 'Consulting Services',
+            description: 'Professional consulting and advisory services',
+            lineItems: [
+                { productName: 'Initial Consultation', description: 'Discovery and strategy session', quantity: 1, unitPrice: 500 },
+                { productName: 'Strategy Planning', description: 'Comprehensive business strategy', quantity: 1, unitPrice: 2000 },
+                { productName: 'Implementation Support', description: 'Ongoing guidance (per hour)', quantity: 10, unitPrice: 150 }
+            ],
+            notes: 'Consulting hours can be adjusted based on needs.',
+            validForDays: '14'
+        },
+        {
+            id: 'maintenance',
+            name: 'Annual Maintenance',
+            description: 'Ongoing support and maintenance package',
+            lineItems: [
+                { productName: 'Monthly Maintenance', description: '24/7 support and updates', quantity: 12, unitPrice: 500 },
+                { productName: 'Security Updates', description: 'Regular security patches', quantity: 4, unitPrice: 200 },
+                { productName: 'Performance Optimization', description: 'Quarterly performance tuning', quantity: 4, unitPrice: 300 }
+            ],
+            notes: 'Includes priority support response time under 4 hours.',
+            validForDays: '60'
+        },
+        {
+            id: 'custom',
+            name: 'Custom Quote',
+            description: 'Start from scratch with custom line items',
+            lineItems: [
+                { productName: '', description: '', quantity: 1, unitPrice: 0 }
+            ],
+            validForDays: '30'
+        }
+    ];
 
     // Create quote form state
     const [quoteForm, setQuoteForm] = useState({
@@ -85,6 +145,37 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
         };
         setLineItems(newItems);
         setShowServiceDropdown({ index: -1, open: false });
+    };
+
+    const handleTemplateSelect = (templateId: string) => {
+        const template = quoteTemplates.find(t => t.id === templateId);
+        if (template) {
+            setSelectedTemplate(templateId);
+            setLineItems(template.lineItems);
+            if (template.notes) {
+                setQuoteForm(prev => ({ ...prev, notes: template.notes || '' }));
+            }
+            if (template.validForDays) {
+                setQuoteForm(prev => ({ ...prev, validForDays: template.validForDays || '30' }));
+            }
+            if (template.id !== 'custom') {
+                setQuoteForm(prev => ({ ...prev, name: template.name }));
+            }
+        }
+    };
+
+    const handleOpenCreateModal = () => {
+        setSelectedTemplate('custom');
+        setQuoteForm({
+            name: '',
+            validForDays: '30',
+            notes: '',
+            currency: currencyCode,
+            contactId: '',
+            dealId: ''
+        });
+        setLineItems([{ productName: '', description: '', quantity: 1, unitPrice: 0 }]);
+        setShowCreateModal(true);
     };
 
     useEffect(() => {
@@ -670,7 +761,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                                     Export CSV
                                 </Button>
                                 <Button
-                                    onClick={() => setShowCreateModal(true)}
+                                    onClick={handleOpenCreateModal}
                                     className="flex-1 sm:flex-none shadow-lg shadow-teal-500/20 h-10 px-4"
                                 >
                                     <Plus className="w-4 h-4 mr-2" /> Create
@@ -687,7 +778,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                         <CardSkeleton key={i} />
                     ))}
                 </div>
-            ) : quotes.filter(q => q.name.toLowerCase().includes(searchQuery.toLowerCase()) || q.quoteNumber.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
+            ) : quotes.filter(q => (q.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || (q.quoteNumber || '').toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
                 <EmptyState
                     icon={Search}
                     title="No Matches Found"
@@ -696,7 +787,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {quotes
-                        .filter(q => q.name.toLowerCase().includes(searchQuery.toLowerCase()) || q.quoteNumber.toLowerCase().includes(searchQuery.toLowerCase()))
+                        .filter(q => (q.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || (q.quoteNumber || '').toLowerCase().includes(searchQuery.toLowerCase()))
                         .map((quote) => (
                             <div key={quote.id} className="glass-panel p-5 rounded-2xl border border-white/5 hover:border-teal-500/30 transition-all flex flex-col">
                                 <div className="flex items-start justify-between mb-3">
@@ -803,6 +894,30 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
 
             <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Create New Quote">
                 <div className="space-y-6">
+                    {/* Template Selector */}
+                    <div className="space-y-3">
+                        <label className="block text-sm font-medium text-slate-300 flex items-center gap-2">
+                            <FilePlus className="w-4 h-4" />
+                            Start from Template
+                        </label>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {quoteTemplates.map(template => (
+                                <button
+                                    key={template.id}
+                                    onClick={() => handleTemplateSelect(template.id)}
+                                    className={`p-3 rounded-lg border text-left transition-all ${
+                                        selectedTemplate === template.id
+                                            ? 'bg-teal-600/20 border-teal-500 text-teal-400'
+                                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600 hover:bg-slate-700'
+                                    }`}
+                                >
+                                    <div className="font-semibold text-xs mb-1">{template.name}</div>
+                                    <div className="text-[10px] opacity-70 line-clamp-2">{template.description}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Input
                             label="Quote Name *"

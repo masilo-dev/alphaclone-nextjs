@@ -276,6 +276,14 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
     const [isExporting, setIsExporting] = React.useState(false);
     const [subTab, setSubTab] = React.useState<'invoices' | 'quotes' | 'subscription'>(initialSubTab);
     const [showPDFPreview, setShowPDFPreview] = React.useState<string | null>(null);
+    const [showRecurringModal, setShowRecurringModal] = React.useState(false);
+    const [recurringConfig, setRecurringConfig] = React.useState({
+        clientName: '',
+        amount: '',
+        frequency: 'monthly' as 'monthly' | 'weekly' | 'yearly',
+        startDate: '',
+        description: ''
+    });
 
     const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
 
@@ -284,6 +292,32 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
 
     // Expenses
     const [isExpenseModalOpen, setIsExpenseModalOpen] = React.useState(false);
+
+    const handleSaveRecurringInvoice = () => {
+        if (!recurringConfig.clientName || !recurringConfig.amount || !recurringConfig.startDate) {
+            toast.error('Please fill in all required fields');
+            return;
+        }
+
+        // Save to localStorage (in a real app, this would go to a database)
+        const recurringInvoices = JSON.parse(localStorage.getItem('recurring_invoices') || '[]');
+        recurringInvoices.push({
+            id: Date.now().toString(),
+            ...recurringConfig,
+            createdAt: new Date().toISOString()
+        });
+        localStorage.setItem('recurring_invoices', JSON.stringify(recurringInvoices));
+
+        toast.success('Recurring invoice schedule saved');
+        setShowRecurringModal(false);
+        setRecurringConfig({
+            clientName: '',
+            amount: '',
+            frequency: 'monthly',
+            startDate: '',
+            description: ''
+        });
+    };
 
     React.useEffect(() => {
         const fetchPnL = async () => {
@@ -507,12 +541,21 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                             </Button>
                         )}
                         {isAdmin && (
-                            <Button
-                                onClick={onCreateInvoice}
-                                className="flex-1 sm:flex-none text-xs sm:text-sm py-1.5 px-3 h-10"
-                            >
-                                Create Invoice
-                            </Button>
+                            <>
+                                <Button
+                                    onClick={onCreateInvoice}
+                                    className="flex-1 sm:flex-none text-xs sm:text-sm py-1.5 px-3 h-10"
+                                >
+                                    Create Invoice
+                                </Button>
+                                <Button
+                                    onClick={() => setShowRecurringModal(true)}
+                                    className="flex-1 sm:flex-none text-xs sm:text-sm py-1.5 px-3 h-10 bg-violet-600 hover:bg-violet-500 text-white"
+                                >
+                                    <FileDown className="w-3.5 h-3.5 mr-1.5" />
+                                    Recurring
+                                </Button>
+                            </>
                         )}
                         {isAdmin && (
                             <Button
@@ -787,6 +830,82 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                 className="w-full h-full border-0"
                                 title="Invoice Preview"
                             />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Recurring Invoice Modal */}
+            {showRecurringModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-md">
+                        <h3 className="text-xl font-bold text-white mb-4">Setup Recurring Invoice</h3>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Client Name *</label>
+                                <input
+                                    type="text"
+                                    value={recurringConfig.clientName}
+                                    onChange={(e) => setRecurringConfig({...recurringConfig, clientName: e.target.value})}
+                                    placeholder="Client name"
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Amount *</label>
+                                <input
+                                    type="number"
+                                    value={recurringConfig.amount}
+                                    onChange={(e) => setRecurringConfig({...recurringConfig, amount: e.target.value})}
+                                    placeholder="0.00"
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Frequency</label>
+                                <select
+                                    value={recurringConfig.frequency}
+                                    onChange={(e) => setRecurringConfig({...recurringConfig, frequency: e.target.value as any})}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white"
+                                >
+                                    <option value="monthly">Monthly</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="yearly">Yearly</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Start Date *</label>
+                                <input
+                                    type="date"
+                                    value={recurringConfig.startDate}
+                                    onChange={(e) => setRecurringConfig({...recurringConfig, startDate: e.target.value})}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1">Description</label>
+                                <textarea
+                                    value={recurringConfig.description}
+                                    onChange={(e) => setRecurringConfig({...recurringConfig, description: e.target.value})}
+                                    placeholder="Invoice description"
+                                    rows={3}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white"
+                                />
+                            </div>
+                            <div className="flex gap-3 justify-end pt-4">
+                                <button
+                                    onClick={() => setShowRecurringModal(false)}
+                                    className="px-4 py-2 text-slate-400 hover:text-white"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSaveRecurringInvoice}
+                                    className="px-4 py-2 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700"
+                                >
+                                    Save Schedule
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

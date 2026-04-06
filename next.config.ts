@@ -86,7 +86,6 @@ const nextConfig: NextConfig = {
       connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co *.upstash.io *.stripe.com https://*.dicebear.com https://*.daily.co wss://*.daily.co https://*.sentry.io https://cdn.jsdelivr.net https://challenges.cloudflare.com https://*.hubspot.com https://images.unsplash.com https://alphaclone.tech wss://alphaclone.tech https://challenges.cloudflare.com/cdn-cgi/challenge-platform;
       worker-src 'self' blob: https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
       upgrade-insecure-requests;
-      permissions-policy: xr-spatial-tracking=();
     `.replace(/\s{2,}/g, ' ').trim();
 
     return [
@@ -126,6 +125,10 @@ const nextConfig: NextConfig = {
           {
             key: 'X-Frame-Options',
             value: 'SAMEORIGIN',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'xr-spatial-tracking=()',
           },
         ],
       },

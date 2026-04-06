@@ -402,7 +402,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     {/* Micro grid — tiny chips */}
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
                         {filteredClients.map(client => {
-                            const initials = client.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+                            const initials = (client.name || '?').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
                             const stageDot: Record<string, string> = {
                                 lead: 'bg-cyan-400', prospect: 'bg-blue-400',
                                 customer: 'bg-emerald-400', lost: 'bg-rose-400'
@@ -427,7 +427,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     </div>
                                     {/* Name truncated to ~8 chars */}
                                     <p className="text-[10px] font-semibold text-slate-300 group-hover:text-white leading-tight w-full truncate">
-                                        {client.name.split(' ')[0]}
+                                        {(client.name || '').split(' ')[0]}
                                     </p>
                                 </button>
                             );
@@ -476,7 +476,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                         {filteredClients.map(client => {
-                            const initials = client.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+                            const initials = (client.name || '?').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
                             const stageColor = client.salesStage === 'customer' ? 'from-emerald-500 to-teal-600'
                                 : client.salesStage === 'lost' ? 'from-slate-600 to-slate-700'
                                 : client.salesStage === 'prospect' ? 'from-blue-500 to-violet-600'
@@ -587,7 +587,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className="w-9 h-9 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-sm">
-                                            {client.name.charAt(0)}
+                                            {(client.name || '?').charAt(0)}
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <h3 className="font-semibold text-white text-sm truncate">{client.name}</h3>
@@ -637,7 +637,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     <div className="flex justify-between items-start mb-6 shrink-0">
                                     <div className="flex items-center gap-4">
                                         <div className="w-16 h-16 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-2xl">
-                                            {selectedClient.name.charAt(0)}
+                                            {(selectedClient.name || '?').charAt(0)}
                                         </div>
                                         <div>
                                             <h2 className="text-2xl font-bold text-white">{selectedClient.name}</h2>
@@ -951,7 +951,7 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0 mr-2">
                     <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white">
-                        {client.name.charAt(0)}
+                        {(client.name || '?').charAt(0)}
                     </div>
                     <div className="min-w-0">
                         <h3 className="font-semibold text-white truncate" title={client.name}>{client.name}</h3>

@@ -214,12 +214,12 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Selected Leads</p>
               <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
                 {leads.map((l, i) => (
-                  <div key={i} className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs ${l.qualification.bgColor} ${l.qualification.borderColor}`}>
+                  <div key={i} className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs ${l.qualification?.bgColor ?? ''} ${l.qualification?.borderColor ?? ''}`}>
                     <span className="font-semibold text-white truncate flex-1">{l.business_name}</span>
-                    <span className={`text-[9px] font-black uppercase ${l.qualification.color}`}>
-                      {l.qualification.label}
+                    <span className={`text-[9px] font-black uppercase ${l.qualification?.color ?? ''}`}>
+                      {l.qualification?.label}
                     </span>
-                    {!l.qualification.canAutoSend && (
+                    {!l.qualification?.canAutoSend && (
                       <span title="No email — will be skipped for auto-send">
                         <AlertCircle className="w-3 h-3 text-amber-400 flex-shrink-0" />
                       </span>

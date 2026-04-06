@@ -75,14 +75,15 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
         ? notifications.filter(n => !n.read)
         : notifications;
 
-    // Group by date
-    const groups: Record<string, Notification[]> = {};
+    // Group by date and type
+    const groups: Record<string, Record<string, Notification[]>> = {};
     for (const n of filteredNotifications) {
-        const g = getGroup(n.created_at);
-        if (!groups[g]) groups[g] = [];
-        groups[g].push(n);
+        const dateGroup = getGroup(n.created_at);
+        if (!groups[dateGroup]) groups[dateGroup] = {};
+        if (!groups[dateGroup][n.type]) groups[dateGroup][n.type] = [];
+        groups[dateGroup][n.type].push(n);
     }
-    const groupOrder = ['Today', 'Yesterday', 'Earlier'];
+    const dateOrder = ['Today', 'Yesterday', 'Earlier'];
 
     return (
         <div className="relative">
@@ -176,31 +177,44 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                         </p>
                                     </div>
                                 ) : (
-                                    groupOrder.map(group => {
-                                        if (!groups[group]?.length) return null;
+                                    dateOrder.map(dateGroup => {
+                                        const typeGroups = groups[dateGroup];
+                                        if (!typeGroups || Object.keys(typeGroups).length === 0) return null;
                                         return (
-                                            <div key={group}>
+                                            <div key={dateGroup}>
                                                 <div className="px-4 py-2 text-[9px] font-black uppercase tracking-[0.2em] text-slate-600 bg-slate-950 sticky top-0 z-10">
-                                                    {group}
+                                                    {dateGroup}
                                                 </div>
-                                                {groups[group].map((n) => {
-                                                    const cfg = TYPE_CONFIG[n.type] || TYPE_CONFIG.system;
+                                                {Object.entries(typeGroups).map(([type, notifs]) => {
+                                                    const cfg = TYPE_CONFIG[type] || TYPE_CONFIG.system;
                                                     const Icon = cfg.Icon;
+                                                    const unreadCount = notifs.filter(n => !n.read).length;
+                                                    
                                                     return (
-                                                        <motion.div
-                                                            key={n.id}
-                                                            layout
-                                                            initial={{ opacity: 0 }}
-                                                            animate={{ opacity: 1 }}
-                                                            exit={{ opacity: 0 }}
-                                                            className={`group px-4 py-3.5 border-b border-white/[0.03] hover:bg-white/[0.03] transition-all ${!n.read ? 'bg-white/[0.02]' : ''}`}
-                                                        >
-                                                            <div className="flex gap-3 items-start">
-                                                                {/* Icon */}
-                                                                <div className={`mt-0.5 w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 border ${cfg.bg}`}>
-                                                                    <Icon className={`w-4 h-4 ${cfg.color}`} />
+                                                        <div key={type} className="border-b border-white/[0.03]">
+                                                            {/* Type Header */}
+                                                            <div className="px-4 py-2 bg-white/[0.02] flex items-center gap-2">
+                                                                <div className={`w-5 h-5 rounded-lg flex items-center justify-center border ${cfg.bg}`}>
+                                                                    <Icon className={`w-3 h-3 ${cfg.color}`} />
                                                                 </div>
-                                                                <div className="flex-1 min-w-0">
+                                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex-1">
+                                                                    {cfg.label}
+                                                                </span>
+                                                                <span className="text-[9px] text-slate-600 font-mono">
+                                                                    {notifs.length} {unreadCount > 0 ? `(${unreadCount} unread)` : ''}
+                                                                </span>
+                                                            </div>
+                                                            
+                                                            {/* Notifications of this type */}
+                                                            {notifs.map((n) => (
+                                                                <motion.div
+                                                                    key={n.id}
+                                                                    layout
+                                                                    initial={{ opacity: 0 }}
+                                                                    animate={{ opacity: 1 }}
+                                                                    exit={{ opacity: 0 }}
+                                                                    className={`group px-4 py-3 border-b border-white/[0.02] hover:bg-white/[0.02] transition-all pl-12 ${!n.read ? 'bg-teal-500/[0.02]' : ''}`}
+                                                                >
                                                                     <div className="flex items-start justify-between gap-1">
                                                                         <p className={`text-xs font-bold leading-snug ${n.read ? 'text-slate-400' : 'text-white'}`}>
                                                                             {n.title}
@@ -243,9 +257,9 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                                                             </button>
                                                                         </div>
                                                                     </div>
-                                                                </div>
-                                                            </div>
-                                                        </motion.div>
+                                                                </motion.div>
+                                                            ))}
+                                                        </div>
                                                     );
                                                 })}
                                             </div>

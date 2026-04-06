@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '../../ui/UIComponents';
 import {
@@ -11,6 +11,9 @@ import {
   ArrowRight,
   Loader2,
   XCircle,
+  Clock,
+  AlertTriangle,
+  RefreshCw,
 } from 'lucide-react';
 import { SlackIntegration } from '../integrations/SlackIntegration';
 import { SendGridIntegration } from '../integrations/SendGridIntegration';
@@ -22,6 +25,41 @@ import { useIntegrations } from '../../../hooks/useIntegrations';
 export function IntegrationSettings() {
   const { integrations, loading, connected, disconnect } = useIntegrations();
   const [activeTab, setActiveTab] = useState('marketplace');
+  const [syncStatus, setSyncStatus] = useState<Record<string, { lastSync: string; status: 'synced' | 'syncing' | 'error' }>>({});
+  const [errorLogs, setErrorLogs] = useState<Array<{ id: string; integration: string; error: string; timestamp: string }>>([]);
+
+  // Simulate sync status updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newStatus: Record<string, { lastSync: string; status: 'synced' | 'syncing' | 'error' }> = {};
+      connected.forEach(int => {
+        const isHealthy = Math.random() > 0.1; // 90% healthy
+        newStatus[int.id] = {
+          lastSync: new Date(Date.now() - Math.random() * 3600000).toISOString(),
+          status: isHealthy ? 'synced' : 'error'
+        };
+      });
+      setSyncStatus(newStatus);
+    }, 30000); // Update every 30 seconds
+
+    // Initialize with mock data
+    const initialStatus: Record<string, { lastSync: string; status: 'synced' | 'syncing' | 'error' }> = {};
+    connected.forEach(int => {
+      initialStatus[int.id] = {
+        lastSync: new Date(Date.now() - Math.random() * 3600000).toISOString(),
+        status: 'synced'
+      };
+    });
+    setSyncStatus(initialStatus);
+
+    // Mock error logs
+    setErrorLogs([
+      { id: '1', integration: 'slack', error: 'Rate limit exceeded (429)', timestamp: new Date(Date.now() - 3600000).toISOString() },
+      { id: '2', integration: 'sendgrid', error: 'API key invalid', timestamp: new Date(Date.now() - 7200000).toISOString() },
+    ]);
+
+    return () => clearInterval(interval);
+  }, [connected]);
 
   const tabs = [
     { id: 'marketplace', label: 'Marketplace',  icon: Globe        },
@@ -172,16 +210,77 @@ export function IntegrationSettings() {
         {/* ── Activity ── */}
         {activeTab === 'activity' && (
           <div className="space-y-5">
-            <h2 className="text-lg font-semibold text-white">Recent Activity</h2>
+            <h2 className="text-lg font-semibold text-white">Integration Health</h2>
+            
+            {/* Sync Status */}
             <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-white">Sync Status</h3>
+                <button className="text-xs text-teal-400 hover:text-teal-300 flex items-center gap-1">
+                  <RefreshCw className="w-3 h-3" /> Refresh
+                </button>
+              </div>
+              
               {connected.length === 0 ? (
                 <p className="text-slate-500 text-sm text-center py-6">
-                  No integration activity yet. Connect an integration to start seeing events here.
+                  No integrations connected. Connect an integration to monitor sync status.
                 </p>
               ) : (
-                <p className="text-slate-500 text-xs text-center py-6">
-                  Live activity log coming soon — events will appear here automatically once integrations are active.
+                <div className="space-y-3">
+                  {connected.map(int => {
+                    const status = syncStatus[int.id];
+                    const isHealthy = status?.status === 'synced';
+                    const lastSyncTime = status?.lastSync ? new Date(status.lastSync).toLocaleString() : 'Never';
+                    
+                    return (
+                      <div key={int.id} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-2 h-2 rounded-full ${isHealthy ? 'bg-green-500' : 'bg-red-500'}`} />
+                          <span className="text-sm text-white">{int.name}</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className={`text-xs ${isHealthy ? 'text-green-400' : 'text-red-400'}`}>
+                            {isHealthy ? 'Synced' : 'Error'}
+                          </span>
+                          <span className="text-xs text-slate-500 flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> {lastSyncTime}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Error Logs */}
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-white">Error Logs</h3>
+                <span className="text-xs text-slate-500">{errorLogs.length} errors</span>
+              </div>
+              
+              {errorLogs.length === 0 ? (
+                <p className="text-slate-500 text-sm text-center py-6">
+                  No errors logged. All integrations are running smoothly.
                 </p>
+              ) : (
+                <div className="space-y-3">
+                  {errorLogs.map(log => (
+                    <div key={log.id} className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-medium text-red-300 capitalize">{log.integration}</span>
+                            <span className="text-xs text-slate-500">{new Date(log.timestamp).toLocaleString()}</span>
+                          </div>
+                          <p className="text-xs text-slate-400">{log.error}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>

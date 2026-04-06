@@ -79,7 +79,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers }) => {
                 const mentionedName = mentionMatch[1].toLowerCase();
                 const targetMember = teamMembers.find(m => 
                     m.user.name?.toLowerCase().includes(mentionedName) || 
-                    m.user.email.toLowerCase().includes(mentionedName)
+                    m.user.email?.toLowerCase().includes(mentionedName)
                 );
 
                 if (targetMember) {

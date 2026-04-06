@@ -39,6 +39,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     const [internalIsOpen, setInternalIsOpen] = useState(false);
     const [search, setSearch] = useState('');
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const [recentCommands, setRecentCommands] = useState<string[]>([]);
     const router = useRouter();
 
     const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
@@ -125,11 +126,21 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen]); // Added isOpen to dependencies to ensure setIsOpen refers to current state source
 
+    useEffect(() => {
+        const saved = localStorage.getItem('commandHistory');
+        if (saved) {
+            setRecentCommands(JSON.parse(saved));
+        }
+    }, []);
+
     const handleAction = useCallback((cmd: Command) => {
         cmd.action();
+        const newRecent = [cmd.id, ...recentCommands.filter(id => id !== cmd.id)].slice(0, 5);
+        setRecentCommands(newRecent);
+        localStorage.setItem('commandHistory', JSON.stringify(newRecent));
         setIsOpen(false);
         setSearch('');
-    }, [setIsOpen]);
+    }, [setIsOpen, recentCommands]);
 
     useEffect(() => {
         if (isOpen) {
@@ -193,6 +204,54 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                 </div>
                             ) : (
                                 <div className="space-y-4 py-2">
+                                    {/* Recent Commands Section - only show when not searching */}
+                                    {!search && recentCommands.length > 0 && (
+                                        <div className="space-y-1">
+                                            <div className="px-3 py-1 text-[10px] font-black text-teal-500/50 uppercase tracking-[0.2em] flex items-center gap-2">
+                                                <Clock className="w-3 h-3" />
+                                                Recent
+                                            </div>
+                                            {recentCommands.map(cmdId => {
+                                                const cmd = commands.find(c => c.id === cmdId);
+                                                if (!cmd) return null;
+                                                const globalIndex = filteredCommands.indexOf(cmd);
+                                                const isSelected = selectedIndex === globalIndex;
+
+                                                return (
+                                                    <button
+                                                        key={cmd.id}
+                                                        onClick={() => handleAction(cmd)}
+                                                        onMouseEnter={() => setSelectedIndex(globalIndex)}
+                                                        className={`w-full text-left p-3 rounded-2xl transition-all flex items-center gap-4 group ${isSelected
+                                                            ? 'bg-teal-500/10 border-teal-500/20'
+                                                            : 'hover:bg-slate-800/50 border-transparent'
+                                                            } border`}
+                                                    >
+                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isSelected ? 'bg-teal-500 text-slate-950' : 'bg-slate-800 text-slate-400'
+                                                            }`}>
+                                                            <cmd.icon className="w-5 h-5" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className={`font-bold ${isSelected ? 'text-white' : 'text-slate-300'}`}>{cmd.title}</span>
+                                                                {cmd.shortcut && (
+                                                                    <span className="text-[10px] font-black bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-700 uppercase tracking-tighter">
+                                                                        {cmd.shortcut}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-xs text-slate-500 truncate">{cmd.description}</p>
+                                                        </div>
+                                                        {isSelected && (
+                                                            <ArrowRight className="w-4 h-4 text-teal-400 mr-2" />
+                                                        )}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
+                                    {/* All Commands */}
                                     {['Actions', 'Navigate', 'Finance', 'CRM', 'Internal'].map(category => {
                                         const catCmds = filteredCommands.filter(c => c.category === category);
                                         if (catCmds.length === 0) return null;

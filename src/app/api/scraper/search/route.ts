@@ -385,7 +385,7 @@ export async function POST(request: Request) {
 
     // Deduplicate by normalised name
     const unique = Array.from(
-      new Map(results.map(r => [r.business_name.toLowerCase().trim(), r])).values()
+      new Map(results.map(r => [(r.business_name || '').toLowerCase().trim(), r])).values()
     );
 
     // Apply sort

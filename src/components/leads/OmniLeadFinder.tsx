@@ -370,7 +370,7 @@ export default function OmniLeadFinder() {
             // Qualify leads
             const qualifiedLeads = leads.map(lead => ({
                 ...lead,
-                qualification: qualifyLead(lead),
+                qualification: qualifyLead(lead, niche),
             }));
 
             setResults(qualifiedLeads);
