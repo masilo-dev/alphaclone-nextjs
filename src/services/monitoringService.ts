@@ -1,5 +1,7 @@
 // import { performanceMonitor } from '../utils/performance'; // Unused for now
 
+import { supabase } from '../lib/supabase';
+
 interface ErrorLog {
   message: string;
   stack?: string;
@@ -7,6 +9,8 @@ interface ErrorLog {
   userAgent: string;
   url: string;
   userId?: string;
+  tenantId?: string;
+  severity?: 'error' | 'warning' | 'info';
 }
 
 interface PerformanceLog {
@@ -14,6 +18,24 @@ interface PerformanceLog {
   value: number;
   timestamp: string;
   page: string;
+  userId?: string;
+  tenantId?: string;
+}
+
+interface HealthCheck {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  checks: {
+    database: boolean;
+    api: boolean;
+    auth: boolean;
+    storage: boolean;
+  };
+  metrics: {
+    errorRate: number;
+    avgResponseTime: number;
+    activeUsers: number;
+  };
+  timestamp: string;
 }
 
 class MonitoringService {
@@ -77,6 +99,9 @@ class MonitoringService {
       this.errorLogs.shift();
     }
 
+    // Log to database for persistence
+    this.persistErrorLog(error);
+
     // Send to Sentry if available
     try {
       import('./errorTracking').then(({ captureException }) => {
@@ -94,6 +119,24 @@ class MonitoringService {
     } catch (e) {
       // Sentry not available, just log
       console.error('[Error Logged]:', error);
+    }
+  }
+
+  private async persistErrorLog(error: ErrorLog) {
+    try {
+      await supabase.from('error_logs').insert({
+        message: error.message,
+        stack: error.stack,
+        user_agent: error.userAgent,
+        url: error.url,
+        user_id: error.userId,
+        tenant_id: error.tenantId,
+        severity: error.severity || 'error',
+        created_at: error.timestamp
+      });
+    } catch (err) {
+      // Silently fail if database logging fails
+      console.error('[Failed to persist error log]:', err);
     }
   }
 
@@ -163,7 +206,7 @@ class MonitoringService {
   }
 
   // Health check
-  getHealthStatus() {
+  async getHealthStatus(): Promise<HealthCheck> {
     const recentErrors = this.errorLogs.filter(
       (log) => new Date(log.timestamp).getTime() > Date.now() - 60000 // Last minute
     );
@@ -171,14 +214,60 @@ class MonitoringService {
     const avgPageLoad = this.getAveragePerformance('page-load');
     const avgApiRequest = this.getAveragePerformance('api-request');
 
+    // Check database connectivity
+    let databaseHealthy = false;
+    try {
+      const { error } = await supabase.from('tenants').select('id').limit(1);
+      databaseHealthy = !error;
+    } catch (e) {
+      databaseHealthy = false;
+    }
+
+    // Check auth service
+    let authHealthy = false;
+    try {
+      const { data } = await supabase.auth.getSession();
+      authHealthy = data !== null;
+    } catch (e) {
+      authHealthy = false;
+    }
+
+    // Check storage
+    let storageHealthy = false;
+    try {
+      const { error } = await supabase.storage.listBuckets();
+      storageHealthy = !error;
+    } catch (e) {
+      storageHealthy = false;
+    }
+
+    // Calculate overall status
+    const checksPassed = [databaseHealthy, authHealthy, storageHealthy].filter(Boolean).length;
+    const totalChecks = 3;
+    
+    let status: 'healthy' | 'degraded' | 'unhealthy';
+    if (checksPassed === totalChecks && recentErrors.length < 5 && avgPageLoad < 3000) {
+      status = 'healthy';
+    } else if (checksPassed >= totalChecks - 1 && recentErrors.length < 10 && avgPageLoad < 5000) {
+      status = 'degraded';
+    } else {
+      status = 'unhealthy';
+    }
+
     return {
-      healthy: recentErrors.length < 5 && avgPageLoad < 5000,
-      errors: recentErrors.length,
-      performance: {
-        pageLoad: avgPageLoad.toFixed(2),
-        apiRequest: avgApiRequest.toFixed(2),
+      status,
+      checks: {
+        database: databaseHealthy,
+        api: true, // Assuming API is healthy if we're running this
+        auth: authHealthy,
+        storage: storageHealthy
       },
-      timestamp: new Date().toISOString(),
+      metrics: {
+        errorRate: recentErrors.length,
+        avgResponseTime: avgPageLoad,
+        activeUsers: 0 // Would need to be calculated from active sessions
+      },
+      timestamp: new Date().toISOString()
     };
   }
 
