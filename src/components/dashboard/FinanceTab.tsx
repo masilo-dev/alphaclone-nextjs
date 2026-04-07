@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button, Badge } from '../ui/UIComponents';
-import { CreditCard, CheckCircle, Download, TrendingUp, TrendingDown, DollarSign, FileDown, Zap, Star, Rocket, Check, ShieldCheck, ExternalLink, Eye, X } from 'lucide-react';
+import { CreditCard, CheckCircle, Download, TrendingUp, TrendingDown, DollarSign, FileDown, Zap, Star, Rocket, Check, ShieldCheck, ExternalLink, Eye, X, History } from 'lucide-react';
 import { User, Invoice } from '../../types';
 import { businessInvoiceService } from '../../services/businessInvoiceService';
 import { paymentService } from '../../services/paymentService';
@@ -274,7 +274,20 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
     const { currentTenant: tenant } = useTenant();
     const { format } = useCurrency();
     const [isExporting, setIsExporting] = React.useState(false);
-    const [subTab, setSubTab] = React.useState<'invoices' | 'quotes' | 'subscription'>(initialSubTab);
+    const [subTab, setSubTab] = React.useState<'invoices' | 'quotes' | 'subscription' | 'receipts'>(initialSubTab);
+    const [payments, setPayments] = React.useState<any[]>([]);
+    const [paymentsLoading, setPaymentsLoading] = React.useState(false);
+    const [selectedReceipt, setSelectedReceipt] = React.useState<any | null>(null);
+
+    React.useEffect(() => {
+        if (subTab === 'receipts') {
+            setPaymentsLoading(true);
+            paymentService.getPaymentHistory(user.id).then(({ payments: p }) => {
+                setPayments(p || []);
+                setPaymentsLoading(false);
+            });
+        }
+    }, [subTab, user.id]);
     const [showPDFPreview, setShowPDFPreview] = React.useState<string | null>(null);
     const [showRecurringModal, setShowRecurringModal] = React.useState(false);
     const [recurringConfig, setRecurringConfig] = React.useState({
@@ -585,6 +598,13 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                     Quotes & Proposals
                     {subTab === 'quotes' && <motion.div layoutId="activeSubTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-400" />}
                 </button>
+                <button
+                    onClick={() => setSubTab('receipts')}
+                    className={`pb-4 px-2 text-sm font-bold transition-all relative ${subTab === 'receipts' ? 'text-teal-400' : 'text-slate-500 hover:text-slate-300'}`}
+                >
+                    Payment History
+                    {subTab === 'receipts' && <motion.div layoutId="activeSubTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-400" />}
+                </button>
                 {isAdmin && (
                     <button
                         onClick={() => setSubTab('subscription')}
@@ -600,6 +620,95 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
             {subTab === 'quotes' ? (
                 <div className="pt-4">
                     <QuotesTab userId={user.id} userRole={user.role} />
+                </div>
+            ) : subTab === 'receipts' ? (
+                <div className="pt-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                            <History className="w-5 h-5 text-teal-400" /> Payment History
+                        </h3>
+                        <span className="text-xs text-slate-500">{payments.length} record{payments.length !== 1 ? 's' : ''}</span>
+                    </div>
+                    {paymentsLoading ? (
+                        <div className="flex justify-center py-16"><div className="w-6 h-6 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" /></div>
+                    ) : payments.length === 0 ? (
+                        <div className="text-center py-16 bg-slate-900 border border-slate-800 rounded-2xl">
+                            <CreditCard className="w-12 h-12 text-slate-700 mx-auto mb-4" />
+                            <p className="text-white font-semibold mb-1">No payments yet</p>
+                            <p className="text-slate-400 text-sm">Completed payments will appear here with receipt details.</p>
+                        </div>
+                    ) : (
+                        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-950 text-xs uppercase font-semibold text-slate-500">
+                                    <tr>
+                                        <th className="px-6 py-4">Date</th>
+                                        <th className="px-6 py-4">Description</th>
+                                        <th className="px-6 py-4">Amount</th>
+                                        <th className="px-6 py-4">Status</th>
+                                        <th className="px-6 py-4">Receipt</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-800">
+                                    {payments.map((p) => (
+                                        <tr key={p.id} className="hover:bg-slate-800/50 transition-colors">
+                                            <td className="px-6 py-4 text-slate-300 whitespace-nowrap">
+                                                {p.paid_at ? new Date(p.paid_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'}
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-300">{p.description || 'Stripe Payment'}</td>
+                                            <td className="px-6 py-4 text-white font-semibold">
+                                                {new Intl.NumberFormat('en-US', { style: 'currency', currency: p.currency || 'USD' }).format(p.amount)}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                                    p.status === 'succeeded' ? 'bg-green-500/10 text-green-400' :
+                                                    p.status === 'refunded' ? 'bg-amber-500/10 text-amber-400' :
+                                                    p.status === 'failed' ? 'bg-red-500/10 text-red-400' :
+                                                    'bg-slate-500/10 text-slate-400'
+                                                }`}>
+                                                    <CheckCircle className="w-3 h-3" />
+                                                    {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <Button size="sm" variant="outline" onClick={() => setSelectedReceipt(p)} title="View Receipt">
+                                                    <Eye className="w-4 h-4 mr-1" /> View
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    {/* Receipt Modal */}
+                    {selectedReceipt && (
+                        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setSelectedReceipt(null)}>
+                            <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 w-full max-w-md" onClick={e => e.stopPropagation()}>
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-xl font-bold text-white">Payment Receipt</h3>
+                                    <button onClick={() => setSelectedReceipt(null)} className="text-slate-400 hover:text-white"><X className="w-5 h-5" /></button>
+                                </div>
+                                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-green-500/10 border border-green-500/30 mx-auto mb-6">
+                                    <CheckCircle className="w-7 h-7 text-green-400" />
+                                </div>
+                                <div className="text-center mb-6">
+                                    <p className="text-3xl font-bold text-white">
+                                        {new Intl.NumberFormat('en-US', { style: 'currency', currency: selectedReceipt.currency || 'USD' }).format(selectedReceipt.amount)}
+                                    </p>
+                                    <p className="text-slate-400 text-sm mt-1">{selectedReceipt.status === 'succeeded' ? 'Payment Successful' : selectedReceipt.status}</p>
+                                </div>
+                                <div className="space-y-3 bg-slate-800/50 rounded-xl p-4 text-sm">
+                                    <div className="flex justify-between"><span className="text-slate-400">Date</span><span className="text-white">{selectedReceipt.paid_at ? new Date(selectedReceipt.paid_at).toLocaleString() : '—'}</span></div>
+                                    <div className="flex justify-between"><span className="text-slate-400">Payment ID</span><span className="text-white font-mono text-xs">{selectedReceipt.stripe_payment_intent_id?.slice(0, 20)}…</span></div>
+                                    {selectedReceipt.description && <div className="flex justify-between"><span className="text-slate-400">Description</span><span className="text-white">{selectedReceipt.description}</span></div>}
+                                    <div className="flex justify-between"><span className="text-slate-400">Currency</span><span className="text-white uppercase">{selectedReceipt.currency}</span></div>
+                                </div>
+                                <p className="text-center text-xs text-slate-500 mt-4 flex items-center justify-center gap-1"><ShieldCheck className="w-3 h-3" /> Secured by Stripe</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             ) : subTab === 'subscription' ? (
                 <div className="pt-4">

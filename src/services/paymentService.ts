@@ -43,9 +43,15 @@ export interface InvoiceItem {
 
 export interface Payment {
     id: string;
+    stripe_payment_intent_id: string;
+    tenant_id?: string;
+    customer_id?: string;
     amount: number;
+    amount_cents: number;
     currency: string;
     status: 'pending' | 'succeeded' | 'failed' | 'refunded';
+    description?: string;
+    paid_at?: string;
     created_at: string;
 }
 
@@ -521,19 +527,31 @@ export const paymentService = {
      */
     async getPaymentHistory(userId: string) {
         const tenantId = tenantService.getCurrentTenantId();
-        let query = supabase
-            .from('payments')
+        if (!tenantId) return { payments: [], error: null };
+
+        const { data, error } = await supabase
+            .from('stripe_payments')
             .select('*')
-            .eq('user_id', userId);
+            .eq('tenant_id', tenantId)
+            .order('paid_at', { ascending: false });
 
-        if (tenantId) {
-            query = query.eq('tenant_id', tenantId);
-        }
+        if (error) return { payments: [], error };
 
-        const { data, error } = await query
-            .order('created_at', { ascending: false });
+        const payments: Payment[] = (data || []).map((row: any) => ({
+            id: row.id,
+            stripe_payment_intent_id: row.stripe_payment_intent_id,
+            tenant_id: row.tenant_id,
+            customer_id: row.customer_id,
+            amount_cents: row.amount_cents,
+            amount: (row.amount_cents ?? 0) / 100,
+            currency: row.currency ?? 'USD',
+            status: row.status,
+            description: row.description,
+            paid_at: row.paid_at,
+            created_at: row.paid_at ?? row.created_at,
+        }));
 
-        return { payments: data, error };
+        return { payments, error: null };
     },
 
     /**
