@@ -365,13 +365,9 @@ export function PlaywrightIntegration() {
 
           {/* Client-Friendly Error Display */}
           {clientError && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-4"
-            >
+            <div className="mt-4">
               <ClientErrorDisplay error={clientError} />
-            </motion.div>
+            </div>
           )}
         </div>
       )}

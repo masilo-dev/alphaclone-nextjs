@@ -577,8 +577,8 @@ async function getFinancialSummary(tenantId: string, config: any, supabase: any)
       .lte('date', endDate);
 
     // Calculate totals
-    const totalRevenue = invoices?.reduce((sum, inv) => sum + (inv.paid_amount || 0), 0) || 0;
-    const totalExpenses = expenses?.reduce((sum, exp) => sum + exp.amount, 0) || 0;
+    const totalRevenue = invoices?.reduce((sum: number, inv: any) => sum + (inv.paid_amount || 0), 0) || 0;
+    const totalExpenses = expenses?.reduce((sum: number, exp: any) => sum + exp.amount, 0) || 0;
     const netProfit = totalRevenue - totalExpenses;
 
     // Get leads and deals for revenue tracking
@@ -601,14 +601,14 @@ async function getFinancialSummary(tenantId: string, config: any, supabase: any)
       data: {
         revenue: {
           total: totalRevenue,
-          invoiced: invoices?.reduce((sum, inv) => sum + inv.total, 0) || 0,
+          invoiced: invoices?.reduce((sum: number, inv: any) => sum + inv.total, 0) || 0,
           paid: totalRevenue,
-          pending: invoices?.reduce((sum, inv) => sum + (inv.total - (inv.paid_amount || 0)), 0) || 0
+          pending: invoices?.reduce((sum: number, inv: any) => sum + (inv.total - (inv.paid_amount || 0)), 0) || 0
         },
         expenses: {
           total: totalExpenses,
-          pending: expenses?.filter(exp => exp.status === 'pending').reduce((sum, exp) => sum + exp.amount, 0) || 0,
-          approved: expenses?.filter(exp => exp.status === 'approved').reduce((sum, exp) => sum + exp.amount, 0) || 0
+          pending: expenses?.filter((exp: any) => exp.status === 'pending').reduce((sum: number, exp: any) => sum + exp.amount, 0) || 0,
+          approved: expenses?.filter((exp: any) => exp.status === 'approved').reduce((sum: number, exp: any) => sum + exp.amount, 0) || 0
         },
         profit: {
           gross: totalRevenue,

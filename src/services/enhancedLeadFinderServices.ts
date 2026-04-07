@@ -286,9 +286,9 @@ export const leadEnrichmentService = {
     const socials = {};
     
     // Extract social media from tags or website
-    if (lead.tags?.contact:facebook) socials.facebook = lead.tags['contact:facebook'];
-    if (lead.tags?.contact:twitter) socials.twitter = lead.tags['contact:twitter'];
-    if (lead.tags?.contact:linkedin) socials.linkedin = lead.tags['contact:linkedin'];
+    if (lead.tags?.['contact:facebook']) (socials as any).facebook = lead.tags['contact:facebook'];
+    if (lead.tags?.['contact:twitter']) (socials as any).twitter = lead.tags['contact:twitter'];
+    if (lead.tags?.['contact:linkedin']) (socials as any).linkedin = lead.tags['contact:linkedin'];
     
     return socials;
   }

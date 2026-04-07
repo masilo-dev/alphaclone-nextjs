@@ -153,6 +153,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
 
     const calendlyConfig = (currentTenant?.settings as any)?.calendly;
     const isConnected = calendlyConfig?.enabled && calendlyConfig?.accessToken;
+    const greeting = getGreeting();
 
     return (
         <div className="space-y-6">

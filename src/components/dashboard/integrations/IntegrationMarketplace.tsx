@@ -15,7 +15,9 @@ import {
   Users, 
   Settings, 
   Globe,
-  Search
+  Search,
+  CheckCircle,
+  Building
 } from 'lucide-react';
 import { StripeConnectOnboarding } from './StripeConnectOnboarding';
 import toast from 'react-hot-toast';

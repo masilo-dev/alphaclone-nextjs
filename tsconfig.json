@@ -42,6 +42,9 @@
     "**/*.test.ts",
     "**/*.spec.ts",
     "supabase",
-    "mobile"
+    "mobile",
+    "demo_data_fix.ts",
+    "scripts",
+    "tmp"
   ]
 }
