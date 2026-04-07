@@ -558,6 +558,29 @@ export const leadService = {
     },
 
     /**
+     * Get related deals for a lead
+     */
+    async getRelatedDeals(leadId: string): Promise<{ data: any[]; error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            
+            // Get deals where contact was created from this lead
+            const { data: deals, error } = await supabase
+                .from('deals')
+                .select('*')
+                .eq('tenant_id', tenantId)
+                .or(`metadata->>originalLeadId.eq.${leadId},contact_id.in.(SELECT client_id FROM leads WHERE id = '${leadId}')`)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            return { data: deals || [], error: null };
+        } catch (err: any) {
+            console.error('Error fetching related deals:', err);
+            return { data: [], error: err.message };
+        }
+    },
+
+    /**
      * Get all target criteria for the Growth Agent
      */
     async getGrowthAgentTargets(): Promise<{ targets: GrowthAgentTarget[]; error: string | null }> {

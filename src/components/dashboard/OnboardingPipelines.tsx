@@ -3,6 +3,7 @@ import { Plus, MoreVertical, Mail, Phone, Calendar, DollarSign, Edit, Trash2, X,
 import { Button, Card, Modal, Input } from '../ui/UIComponents';
 import { User } from '../../types';
 import { leadService, Lead } from '../../services/leadService';
+import LeadDetailView from './leads/LeadDetailView';
 import toast from 'react-hot-toast';
 
 interface OnboardingPipelinesProps {
@@ -23,6 +24,8 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
     const [editingLead, setEditingLead] = useState<Lead | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [draggedLead, setDraggedLead] = useState<Lead | null>(null);
+    const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+    const [showDetailView, setShowDetailView] = useState(false);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -275,11 +278,15 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                             {leads
                                 .filter((lead) => lead.stage === stage.id)
                                 .map((lead) => (
-                                    <Card
+                                    <div 
                                         key={lead.id}
                                         draggable
                                         onDragStart={() => handleDragStart(lead)}
-                                        className="p-4 hover:border-teal-500/50 transition-all cursor-move group"
+                                        onClick={() => {
+                                            setSelectedLead(lead);
+                                            setShowDetailView(true);
+                                        }}
+                                        className="p-4 hover:border-teal-500/50 transition-all cursor-pointer group bg-slate-800/50 rounded-lg border border-slate-700"
                                     >
                                         <div className="flex items-start justify-between mb-3">
                                             <div className="flex-1">
@@ -339,7 +346,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                                                 <p className="text-xs text-slate-400 line-clamp-2">{lead.notes}</p>
                                             </div>
                                         )}
-                                    </Card>
+                                    </div>
                                 ))}
 
                             {/* Empty State */}
@@ -471,6 +478,25 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                     </div>
                 </Modal>
             )}
+
+            {/* Lead Detail View */}
+            <LeadDetailView
+                lead={selectedLead!}
+                isOpen={showDetailView}
+                onClose={() => {
+                    setShowDetailView(false);
+                    setSelectedLead(null);
+                }}
+                onUpdate={(updatedLead) => {
+                    setLeads(leads.map(l => l.id === updatedLead.id ? updatedLead : l));
+                }}
+                onDelete={(leadId) => {
+                    setLeads(leads.filter(l => l.id !== leadId));
+                    setShowDetailView(false);
+                    setSelectedLead(null);
+                    toast.success('Lead deleted');
+                }}
+            />
         </div>
     );
 };
