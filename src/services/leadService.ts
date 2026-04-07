@@ -51,12 +51,43 @@ export interface GrowthAgentTarget {
 
 export const leadService = {
     /**
-     * Get tenant ID (required for all operations)
+     * Get tenant ID with better error handling
      */
     getTenantId(): string {
-        const tenantId = tenantService.getCurrentTenantId();
-        if (!tenantId) throw new Error('No active tenant. Please select an organization.');
-        return tenantId;
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) {
+                console.error('[LeadService] No tenant ID available');
+                throw new Error('No active organization. Please select a workspace.');
+            }
+            return tenantId;
+        } catch (err) {
+            console.error('[LeadService] Error getting tenant:', err);
+            throw new Error('Unable to determine organization context');
+        }
+    },
+
+    /**
+     * Check if user has valid session and tenant
+     */
+    async validateSession(): Promise<{ user: any; tenantId: string; error: string | null }> {
+        try {
+            const { data: { user }, error: authError } = await supabase.auth.getUser();
+            
+            if (authError || !user) {
+                // Try to refresh session
+                const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+                if (refreshError || !refreshData.user) {
+                    return { user: null, tenantId: '', error: 'Session expired. Please sign in again.' };
+                }
+                return { user: refreshData.user, tenantId: this.getTenantId(), error: null };
+            }
+            
+            const tenantId = this.getTenantId();
+            return { user, tenantId, error: null };
+        } catch (err: any) {
+            return { user: null, tenantId: '', error: err.message || 'Authentication error' };
+        }
     },
 
     /**
