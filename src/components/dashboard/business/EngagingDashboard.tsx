@@ -433,7 +433,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                                         
                                         {!step.completed && step.actionUrl && (
                                             <Button
-                                                onClick={() => window.location.href = step.actionUrl}
+                                                onClick={() => router.push(step.actionUrl)}
                                                 className="bg-blue-500 hover:bg-blue-600"
                                             >
                                                 {step.action}
@@ -621,14 +621,14 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 </p>
                 <div className="mt-4 flex justify-center gap-4">
                     <Button
-                        onClick={() => window.location.href = '/dashboard/integrations'}
+                        onClick={() => router.push('/dashboard/integrations')}
                         className="bg-white text-purple-600 hover:bg-purple-50"
                     >
                         <Sparkles className="w-4 h-4 mr-2" />
                         Unlock More Features
                     </Button>
                     <Button
-                        onClick={() => window.location.href = '/dashboard/settings'}
+                        onClick={() => router.push('/dashboard/settings')}
                         variant="outline"
                         className="border-white text-white hover:bg-white/10"
                     >
