@@ -390,7 +390,6 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                         New Room
                     </Button>
                 </div>
-            </div>
 
             {/* Past Meetings Section */}
             {pastMeetings.length > 0 && (
