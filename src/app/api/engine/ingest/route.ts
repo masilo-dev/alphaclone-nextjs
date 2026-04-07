@@ -8,6 +8,11 @@ import { processContent } from '@/services/engine/ProcessingEngine';
  * Accepts raw content, runs processing, stores event, triggers workflows
  */
 export async function POST(req: NextRequest) {
+    const internalKey = req.headers.get('x-internal-api-key');
+    if (!internalKey || internalKey !== process.env.INTERNAL_API_KEY) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const supabase = createSupabaseAdminClient();
 
     try {
