@@ -2,19 +2,22 @@ import { NextResponse } from 'next/server';
 import { geminiService } from '@/services/geminiService';
 import unifiedAIService from '@/services/unifiedAIService';
 import { ENV } from '@/config/env';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function GET() {
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const status = {
         config: {
             hasGeminiKey: !!ENV.VITE_GEMINI_API_KEY,
-            keyPrefix: ENV.VITE_GEMINI_API_KEY ? ENV.VITE_GEMINI_API_KEY.substring(0, 4) + '...' : 'NONE',
             providers: unifiedAIService.getAvailableProviders()
         },
         tests: {
             geminiDirect: null as any,
             unifiedService: null as any
         },
-        env_dump_keys: Object.keys(process.env).filter(k => k.includes('GEMINI') || k.includes('GOOGLE') || k.includes('AI') || k.includes('API_KEY'))
     };
 
     // Test 1: Direct Gemini Service

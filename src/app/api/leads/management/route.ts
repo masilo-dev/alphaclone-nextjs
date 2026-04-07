@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function POST(req: NextRequest) {
+  const authClient = await createSupabaseServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   try {
     const { tenantId, action, config } = await req.json();
 
@@ -94,7 +98,7 @@ async function findLeads(tenantId: string, config: any, supabase: any) {
 
 async function searchOpenStreetMapLeads(location: string, businessType: string, radius: number, limit: number, filters: any) {
   try {
-    const leads = [];
+    const leads: any[] = [];
     
     // Geocode location
     const geoResponse = await fetch(
