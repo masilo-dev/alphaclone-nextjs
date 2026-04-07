@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase-server';
 
 /**
  * POST /api/email/send
@@ -7,6 +7,10 @@ import { createSupabaseAdminClient } from '@/lib/supabase-server';
  * Uses per-account credentials from the 'integrations' table.
  */
 export async function POST(req: NextRequest) {
+    const authClient = await createSupabaseServerClient();
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const supabase = createSupabaseAdminClient();
 
     try {

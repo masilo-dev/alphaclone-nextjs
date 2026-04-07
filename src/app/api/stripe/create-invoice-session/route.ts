@@ -3,6 +3,10 @@ import { stripe } from '@/lib/stripe';
 import { createSupabaseServerClient, createSupabaseAdminClient } from '@/lib/supabase-server';
 
 export async function POST(req: Request) {
+    const authClient = await createSupabaseServerClient();
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     try {
         const { invoiceId, successUrl, cancelUrl } = await req.json();
 
