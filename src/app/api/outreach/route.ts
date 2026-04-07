@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { gmailServerService } from '../../../services/server/gmailServerService';
-import { createSupabaseAdminClient } from '../../../lib/supabase-server';
+import { createSupabaseAdminClient, createSupabaseServerClient } from '../../../lib/supabase-server';
 import { routeAIRequest as generateText } from '../../../services/aiRouter';
 
 export async function POST(req: NextRequest) {
+    const authClient = await createSupabaseServerClient();
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     try {
-        const { searchParams } = new URL(req.url);
-        const userId = searchParams.get('userId');
         const body = await req.json();
         const { leadIds, customPrompt, tone, fromAddress } = body;
+        const userId = user.id;
 
-        if (!userId || !leadIds || !Array.isArray(leadIds)) {
+        if (!leadIds || !Array.isArray(leadIds)) {
             return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
         }
 

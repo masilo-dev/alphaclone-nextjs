@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {
+  const authClient = await createSupabaseServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const tenantId = searchParams.get('tenantId');
@@ -60,16 +64,16 @@ export async function GET(request: NextRequest) {
 
     // Calculate metrics
     const clientCount = clientsResult.data?.length || 0;
-    const activeProjects = projectsResult.data?.filter(p => p.status === 'active').length || 0;
-    const totalRevenue = invoicesResult.data?.reduce((sum, inv) => 
+    const activeProjects = projectsResult.data?.filter((p: any) => p.status === 'active').length || 0;
+    const totalRevenue = invoicesResult.data?.reduce((sum: number, inv: any) => 
       inv.status === 'paid' ? sum + (inv.amount || 0) : sum, 0
     ) || 0;
-    const pendingInvoices = invoicesResult.data?.filter(inv => inv.status === 'pending').length || 0;
+    const pendingInvoices = invoicesResult.data?.filter((inv: any) => inv.status === 'pending').length || 0;
     const leadCount = leadsResult.data?.length || 0;
-    const upcomingMeetings = meetingsResult.data?.filter(m => 
+    const upcomingMeetings = meetingsResult.data?.filter((m: any) => 
       m.status === 'scheduled' && new Date(m.created_at) > new Date()
     ).length || 0;
-    const activeIntegrations = integrationsResult.data?.filter(inv => inv.status === 'active').length || 0;
+    const activeIntegrations = integrationsResult.data?.filter((inv: any) => inv.status === 'active').length || 0;
 
     // Calculate monthly revenue for chart
     const monthlyRevenue = calculateMonthlyRevenue(invoicesResult.data || []);
