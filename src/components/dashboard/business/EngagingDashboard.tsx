@@ -3,11 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '../../../types';
-import { SlackIntegration } from '../integrations/SlackIntegration';
-import { SendGridIntegration } from '../integrations/SendGridIntegration';
-import { ResendIntegration } from '../integrations/ResendIntegration';
-import { PlaywrightIntegration } from '../integrations/PlaywrightIntegration';
-import { IntegrationMarketplaceDashboard } from '../integrations/IntegrationMarketplaceDashboard';
 import { useBackgroundTasks, BackgroundTask } from '@/contexts/BackgroundTaskContext';
 import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
 import { businessClientService } from '../../../services/businessClientService';
@@ -452,44 +447,6 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     </AnimatePresence>
                 </motion.div>
             )}
-
-            {/* Integration Marketplace */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-            >
-                <IntegrationMarketplaceDashboard />
-            </motion.div>
-
-            {/* Lead Discovery Integration */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-            >
-                <PlaywrightIntegration />
-            </motion.div>
-
-            {/* Email Integrations */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-            >
-                <SendGridIntegration />
-                <ResendIntegration />
-            </motion.div>
-
-            {/* Slack Integration */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-            >
-                <SlackIntegration />
-            </motion.div>
 
             {/* Quick Actions */}
             <motion.div
