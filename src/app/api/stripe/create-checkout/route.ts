@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { PLAN_PRICING, SubscriptionPlan } from '@/services/tenancy/types';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 async function verifyTurnstile(token: string): Promise<boolean> {
     const secretKey = process.env.TURNSTILE_SECRET_KEY;
@@ -22,10 +23,15 @@ async function verifyTurnstile(token: string): Promise<boolean> {
 }
 
 export async function POST(req: NextRequest) {
-    try {
-        const { plan, tenantId, userId, turnstileToken } = await req.json();
+    const authClient = await createSupabaseServerClient();
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-        if (!plan || !tenantId || !userId) {
+    try {
+        const { plan, tenantId, turnstileToken } = await req.json();
+        const userId = user.id;
+
+        if (!plan || !tenantId) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
