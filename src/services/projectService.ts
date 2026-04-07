@@ -23,24 +23,16 @@ export const projectService = {
      */
     async getProjects(userId: string, role: UserRole, limit: number = 100): Promise<{ projects: Project[]; error: string | null }> {
         try {
+            const tenantId = this.getTenantId();
+            if (!tenantId) return { projects: [], error: null };
+
             let query = supabase
                 .from('projects')
-                .select('*');
+                .select('*')
+                .eq('tenant_id', tenantId);
 
-            // Super Admin (role === 'admin') and Tenant Admin (role === 'tenant_admin') 
-            // both see projects within their current active tenant context.
-            // This ensures business account projects are hidden from a global Super Admin view.
-            if (role === 'tenant_admin' || role === 'admin') {
-                const tenantId = this.getTenantId();
-                if (tenantId) {
-                    query = query.eq('tenant_id', tenantId);
-                }
-            } else {
-                // Regular clients: filter by owner AND tenant
-                const tenantId = this.getTenantId();
-                if (tenantId) {
-                    query = query.eq('tenant_id', tenantId);
-                }
+            // Regular clients: also filter by owner
+            if (role !== 'tenant_admin' && role !== 'admin') {
                 query = query.eq('owner_id', userId);
             }
 

@@ -16,6 +16,7 @@ const serwist = new Serwist({
     skipWaiting: true,
     clientsClaim: true,
     navigationPreload: true,
+    cleanupOutdatedCaches: true,
     runtimeCaching: [
         {
             // Bypass service worker for critical API calls, Supabase, and Daily.co
