@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function POST(req: NextRequest) {
+  const authClient = await createSupabaseServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   try {
     const { tenantId, integrationType, action, config } = await req.json();
 
@@ -14,7 +18,7 @@ export async function POST(req: NextRequest) {
     // Set tenant context for RLS
     await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
 
-    let result = { success: false, data: null, error: null };
+    let result: any = { success: false, data: null, error: null };
 
     switch (integrationType) {
       case 'slack':
@@ -39,7 +43,7 @@ export async function POST(req: NextRequest) {
         result = await handleSendGridAction(tenantId, action, config, supabase);
         break;
       default:
-        result = { success: false, error: 'Unsupported integration type' };
+        result = { success: false, error: 'Unsupported integration type', data: null };
     }
 
     return NextResponse.json(result);
@@ -621,7 +625,7 @@ async function testSlackIntegration(webhookUrl: string) {
 
     return { success: response.ok, status: response.status };
   } catch (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: (error as Error).message };
   }
 }
 
@@ -634,7 +638,7 @@ async function testFacebookIntegration(accessToken: string) {
     const data = await response.json();
     return { success: response.ok, data };
   } catch (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: (error as Error).message };
   }
 }
 
@@ -654,7 +658,7 @@ async function testTwilioIntegration(accountSid: string, authToken: string) {
     const data = await response.json();
     return { success: response.ok, data };
   } catch (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: (error as Error).message };
   }
 }
 
@@ -667,6 +671,6 @@ async function testGoogleCalendarIntegration(accessToken: string) {
     const data = await response.json();
     return { success: response.ok, data };
   } catch (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: (error as Error).message };
   }
 }

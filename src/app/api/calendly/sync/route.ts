@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase-server';
 import { ENV } from '@/config/env';
 
 export async function POST(req: Request) {
-    try {
-        const { tenantId, userId } = await req.json();
+    const authClient = await createSupabaseServerClient();
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-        if (!tenantId || !userId) {
+    try {
+        const { tenantId } = await req.json();
+        const userId = user.id;
+
+        if (!tenantId) {
             return NextResponse.json({ error: 'Missing tenant ID or user ID' }, { status: 400 });
         }
 
