@@ -10,6 +10,7 @@ function getAppUrl(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
+    try {
     const { searchParams } = new URL(req.url);
     const region = searchParams.get('region') || 'US';
     const state = searchParams.get('state') || ''; // user ID or secure nonce
@@ -51,4 +52,8 @@ export async function GET(req: NextRequest) {
     authUrl.searchParams.append('state', JSON.stringify({ region, state }));
 
     return NextResponse.redirect(authUrl.toString());
+    } catch (err) {
+        console.error('[zoho/connect] GET error:', err);
+        return NextResponse.json({ error: 'OAuth initialization failed' }, { status: 500 });
+    }
 }

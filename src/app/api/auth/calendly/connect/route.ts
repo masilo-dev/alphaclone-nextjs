@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { ENV } from '@/config/env';
 
 export async function GET(req: NextRequest) {
+    try {
     const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -40,4 +41,8 @@ export async function GET(req: NextRequest) {
     const authUrl = `https://auth.calendly.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
 
     return NextResponse.redirect(authUrl);
+    } catch (err) {
+        console.error('[calendly/connect] GET error:', err);
+        return NextResponse.redirect(new URL('/dashboard/settings?tab=booking&error=oauth_failed', req.url));
+    }
 }

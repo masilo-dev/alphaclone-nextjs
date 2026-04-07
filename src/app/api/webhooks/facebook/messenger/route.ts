@@ -7,23 +7,28 @@ const APP_SECRET = process.env.FACEBOOK_APP_SECRET || '';
 
 // Facebook webhook verification (GET)
 export async function GET(req: NextRequest) {
-    const { searchParams } = new URL(req.url);
-    const mode = searchParams.get('hub.mode');
-    const token = searchParams.get('hub.verify_token');
-    const challenge = searchParams.get('hub.challenge');
+    try {
+        const { searchParams } = new URL(req.url);
+        const mode = searchParams.get('hub.mode');
+        const token = searchParams.get('hub.verify_token');
+        const challenge = searchParams.get('hub.challenge');
 
-    console.log(`[Facebook Messenger Webhook] Incoming verification request: mode=${mode}, token=${token}`);
+        console.log(`[Facebook Messenger Webhook] Incoming verification request: mode=${mode}, token=${token}`);
 
-    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-        console.log('[Facebook Messenger Webhook] Verification successful!');
-        return new Response(challenge, {
-            status: 200,
-            headers: { 'Content-Type': 'text/plain' },
-        });
+        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+            console.log('[Facebook Messenger Webhook] Verification successful!');
+            return new Response(challenge, {
+                status: 200,
+                headers: { 'Content-Type': 'text/plain' },
+            });
+        }
+        
+        console.warn(`[Facebook Messenger Webhook] Verification failed. Expected token: ${VERIFY_TOKEN}, Received: ${token}`);
+        return new Response('Forbidden', { status: 403 });
+    } catch (err) {
+        console.error('[Facebook Messenger Webhook] GET error:', err);
+        return new Response('Internal error', { status: 500 });
     }
-    
-    console.warn(`[Facebook Messenger Webhook] Verification failed. Expected token: ${VERIFY_TOKEN}, Received: ${token}`);
-    return new Response('Forbidden', { status: 403 });
 }
 
 // Messenger webhook events (POST)

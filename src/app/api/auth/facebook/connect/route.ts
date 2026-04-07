@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function GET(req: NextRequest) {
+    try {
     const supabase = await createSupabaseServerClient();
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error || !user) {
@@ -34,4 +35,8 @@ export async function GET(req: NextRequest) {
     authUrl.searchParams.set('response_type', 'code');
 
     return NextResponse.redirect(authUrl.toString());
+    } catch (err) {
+        console.error('[facebook/connect] GET error:', err);
+        return NextResponse.json({ error: 'OAuth initialization failed' }, { status: 500 });
+    }
 }

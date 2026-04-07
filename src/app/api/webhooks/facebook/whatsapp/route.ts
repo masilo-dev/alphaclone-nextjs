@@ -16,35 +16,40 @@ const APP_SECRET = process.env.FACEBOOK_APP_SECRET || '';
  * To verify the webhook, respond with the challenge value as plain text.
  */
 export async function GET(req: NextRequest) {
-    const { searchParams } = new URL(req.url);
-    const mode = searchParams.get('hub.mode');
-    const token = searchParams.get('hub.verify_token');
-    const challenge = searchParams.get('hub.challenge');
+    try {
+        const { searchParams } = new URL(req.url);
+        const mode = searchParams.get('hub.mode');
+        const token = searchParams.get('hub.verify_token');
+        const challenge = searchParams.get('hub.challenge');
 
-    console.log('[Facebook/WhatsApp Webhook] Verification request received:', {
-        mode,
-        token: token ? '***' : 'missing',
-        challenge: challenge ? 'present' : 'missing'
-    });
-
-    // Verify the mode and token match
-    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-        console.log('[Facebook/WhatsApp Webhook] ✓ Verification successful');
-        // Respond with the challenge value
-        return new NextResponse(challenge, { 
-            status: 200,
-            headers: {
-                'Content-Type': 'text/plain'
-            }
+        console.log('[Facebook/WhatsApp Webhook] Verification request received:', {
+            mode,
+            token: token ? '***' : 'missing',
+            challenge: challenge ? 'present' : 'missing'
         });
+
+        // Verify the mode and token match
+        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+            console.log('[Facebook/WhatsApp Webhook] ✓ Verification successful');
+            // Respond with the challenge value
+            return new NextResponse(challenge, { 
+                status: 200,
+                headers: {
+                    'Content-Type': 'text/plain'
+                }
+            });
+        }
+
+        console.warn('[Facebook/WhatsApp Webhook] ✗ Verification failed:', {
+            expectedToken: VERIFY_TOKEN ? '***' : 'not set',
+            receivedToken: token || 'none'
+        });
+
+        return new NextResponse('Forbidden', { status: 403 });
+    } catch (err) {
+        console.error('[Facebook/WhatsApp Webhook] GET error:', err);
+        return new NextResponse('Internal error', { status: 500 });
     }
-
-    console.warn('[Facebook/WhatsApp Webhook] ✗ Verification failed:', {
-        expectedToken: VERIFY_TOKEN ? '***' : 'not set',
-        receivedToken: token || 'none'
-    });
-
-    return new NextResponse('Forbidden', { status: 403 });
 }
 
 /**

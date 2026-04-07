@@ -10,23 +10,28 @@ const APP_SECRET = process.env.FACEBOOK_APP_SECRET || '';
  * Used when connecting the webhook in the Meta App Dashboard
  */
 export async function GET(req: NextRequest) {
-    const { searchParams } = new URL(req.url);
-    const mode = searchParams.get('hub.mode');
-    const token = searchParams.get('hub.verify_token');
-    const challenge = searchParams.get('hub.challenge');
+    try {
+        const { searchParams } = new URL(req.url);
+        const mode = searchParams.get('hub.mode');
+        const token = searchParams.get('hub.verify_token');
+        const challenge = searchParams.get('hub.challenge');
 
-    console.log(`[Facebook Page Webhook] Incoming verification request: mode=${mode}, token=${token}`);
+        console.log(`[Facebook Page Webhook] Incoming verification request: mode=${mode}, token=${token}`);
 
-    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-        console.log('[Facebook Page Webhook] Verification successful!');
-        return new Response(challenge, {
-            status: 200,
-            headers: { 'Content-Type': 'text/plain' },
-        });
+        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+            console.log('[Facebook Page Webhook] Verification successful!');
+            return new Response(challenge, {
+                status: 200,
+                headers: { 'Content-Type': 'text/plain' },
+            });
+        }
+        
+        console.warn(`[Facebook Page Webhook] Verification failed. Expected token: ${VERIFY_TOKEN}, Received: ${token}`);
+        return new Response('Forbidden', { status: 403 });
+    } catch (err) {
+        console.error('[Facebook Page Webhook] GET error:', err);
+        return new Response('Internal error', { status: 500 });
     }
-    
-    console.warn(`[Facebook Page Webhook] Verification failed. Expected token: ${VERIFY_TOKEN}, Received: ${token}`);
-    return new Response('Forbidden', { status: 403 });
 }
 
 /**
