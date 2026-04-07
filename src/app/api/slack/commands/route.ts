@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     const channelId = params.get('channel_id');
 
     // Get Slack integration
-    const integration = await slackService.getSlackIntegration(teamId);
+    const integration = await slackService.getSlackIntegration(teamId ?? '');
     if (!integration) {
       return NextResponse.json({
         text: '❌ Slack integration not found. Please connect your workspace first.',
@@ -47,15 +47,15 @@ export async function POST(request: NextRequest) {
 
     switch (command) {
       case '/alphaclone':
-        response = await handleAlphacloneCommand(text, integration, userId, channelId);
+        response = await handleAlphacloneCommand(text, integration, userId ?? '', channelId ?? '');
         break;
       
       case '/lead':
-        response = await handleLeadCommand(text, integration, userId, channelId);
+        response = await handleLeadCommand(text, integration, userId ?? '', channelId ?? '');
         break;
       
       case '/meeting':
-        response = await handleMeetingCommand(text, integration, userId, channelId);
+        response = await handleMeetingCommand(text, integration, userId ?? '', channelId ?? '');
         break;
       
       default:
