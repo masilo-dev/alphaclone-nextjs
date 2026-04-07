@@ -1,2 +1,0 @@
-﻿src/services/zoho/ZohoMailService.ts
-src/services/zoho/ZohoService.ts

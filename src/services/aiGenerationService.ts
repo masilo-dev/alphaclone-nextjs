@@ -22,8 +22,8 @@ interface GenerationResult {
 }
 
 class AIGenerationService {
-    private readonly OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || '';
-    private readonly ANTHROPIC_API_KEY = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY || process.env.VITE_ANTHROPIC_API_KEY || '';
+    private readonly OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
+    private readonly ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
 
     /**
      * Generate logo using DALL-E 3

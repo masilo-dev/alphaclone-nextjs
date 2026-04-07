@@ -255,7 +255,7 @@ export async function POST(req: Request) {
         }
 
         // 6. Send Email
-        const resendApiKey = process.env.RESEND_API_KEY || process.env.NEXT_PUBLIC_RESEND_API_KEY;
+        const resendApiKey = process.env.RESEND_API_KEY;
         if (resendApiKey) {
             const resend = new Resend(resendApiKey);
             const dateStr = new Date(start_time).toLocaleString('en-US', {

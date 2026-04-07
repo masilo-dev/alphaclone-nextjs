@@ -48,3 +48,51 @@ public/sw.js
 public/sw.js.map
 public/workbox-*.js
 public/workbox-*.js.map
+
+# Credentials and secrets
+creds-output.txt
+*creds*.txt
+*secrets*.txt
+*credentials*.txt
+
+# Build logs
+*.log
+build_*.log
+build_error*.log
+build_output.log
+tsc.log
+dev_*.log
+dev_error*.log
+
+# Lint output
+lint_*.txt
+lint_*.json
+eslint_*.txt
+
+# Error files
+ts_errors.txt
+*_errors.txt
+*_errors.csv
+*_errors.json
+critical_errors.*
+current_ts*.txt
+current_tsc*.txt
+
+# Test artifacts
+/playwright-report/
+/test-results/
+
+# Misc output files
+diff.txt
+conflicts.txt
+build_log_v*.txt
+build_err*.txt
+build_check*.log
+error_read.txt
+
+# OS files
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

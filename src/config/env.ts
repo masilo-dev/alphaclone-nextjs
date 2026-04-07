@@ -82,40 +82,40 @@ function validateEnv() {
         NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.superbase_anon_public_key,
         VITE_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.superbase_anon_public_key,
 
-        ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY || process.env.VITE_ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY,
-        OPENAI_API_KEY: process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-        OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || process.env.NEXT_PUBLIC_OPENROUTER_API_KEY,
+        ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY,
+        OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+        OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
         VITE_GEMINI_API_KEY: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_KEY || process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_API_KEY,
         GOOGLE_API_KEY: process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || process.env.VITE_GOOGLE_API_KEY || process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_AI_KEY,
         MANUS_API_KEY: process.env.MANUS_API_KEY || process.env.NEXT_PUBLIC_MANUS_API_KEY || process.env.VITE_MANUS_API_KEY,
 
         VITE_DAILY_DOMAIN: process.env.NEXT_PUBLIC_DAILY_DOMAIN || process.env.VITE_DAILY_DOMAIN,
-        DAILY_API_KEY: process.env.DAILY_API_KEY || process.env.NEXT_PUBLIC_DAILY_API_KEY,
+        DAILY_API_KEY: process.env.DAILY_API_KEY,
         VITE_STRIPE_PUBLIC_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLIC_KEY,
         VITE_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.VITE_SENTRY_DSN,
         VITE_CALENDLY_CLIENT_ID: process.env.NEXT_PUBLIC_CALENDLY_CLIENT_ID || process.env.VITE_CALENDLY_CLIENT_ID || process.env.CALENDLY_CLIENT_ID,
-        CALENDLY_CLIENT_SECRET: process.env.CALENDLY_CLIENT_SECRET || process.env.VITE_CALENDLY_CLIENT_SECRET || process.env.NEXT_PUBLIC_CALENDLY_CLIENT_SECRET,
+        CALENDLY_CLIENT_SECRET: process.env.CALENDLY_CLIENT_SECRET,
         VITE_CALENDLY_REDIRECT_URI: process.env.NEXT_PUBLIC_CALENDLY_REDIRECT_URI || process.env.VITE_CALENDLY_REDIRECT_URI || process.env.CALENDLY_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech'}/api/auth/calendly/callback`,
         CALENDLY_WEBHOOK_SIGNING_KEY: process.env.CALENDLY_WEBHOOK_SIGNING_KEY || process.env.VITE_CALENDLY_WEBHOOK_SIGNING_KEY || process.env.NEXT_PUBLIC_CALENDLY_WEBHOOK_SIGNING_KEY,
 
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-        GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET,
+        GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
 
         HUBSPOT_CLIENT_ID: process.env.HUBSPOT_CLIENT_ID || process.env.NEXT_PUBLIC_HUBSPOT_CLIENT_ID,
-        HUBSPOT_CLIENT_SECRET: process.env.HUBSPOT_CLIENT_SECRET || process.env.NEXT_PUBLIC_HUBSPOT_CLIENT_SECRET,
+        HUBSPOT_CLIENT_SECRET: process.env.HUBSPOT_CLIENT_SECRET,
         HUBSPOT_REDIRECT_URI: process.env.HUBSPOT_REDIRECT_URI || process.env.NEXT_PUBLIC_HUBSPOT_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech'}/api/auth/hubspot/callback`,
 
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
         STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
 
-        RESEND_API_KEY: process.env.RESEND_API_KEY || process.env.NEXT_PUBLIC_RESEND_API_KEY,
+        RESEND_API_KEY: process.env.RESEND_API_KEY,
 
         SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
 
         ENCRYPTION_SECRET: process.env.ENCRYPTION_SECRET,
 
         ZOHO_CLIENT_ID: process.env.ZOHO_CLIENT_ID || process.env.NEXT_PUBLIC_ZOHO_CLIENT_ID,
-        ZOHO_CLIENT_SECRET: process.env.ZOHO_CLIENT_SECRET || process.env.NEXT_PUBLIC_ZOHO_CLIENT_SECRET,
+        ZOHO_CLIENT_SECRET: process.env.ZOHO_CLIENT_SECRET,
         ZOHO_REDIRECT_URI: process.env.ZOHO_REDIRECT_URI || process.env.NEXT_PUBLIC_ZOHO_REDIRECT_URI,
         ZOHO_ENCRYPTION_SECRET: process.env.ZOHO_ENCRYPTION_SECRET || process.env.ENCRYPTION_SECRET,
 
