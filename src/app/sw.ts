@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { Serwist, NetworkOnly } from "serwist";
+import { Serwist, NetworkOnly, NetworkFirst } from "serwist";
 
 declare global {
     interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -18,6 +18,13 @@ const serwist = new Serwist({
     navigationPreload: true,
     cleanupOutdatedCaches: true,
     runtimeCaching: [
+        {
+            // Always fetch page navigations from the network — never serve from cache
+            matcher({ request }) {
+                return request.mode === 'navigate';
+            },
+            handler: new NetworkFirst({ networkTimeoutSeconds: 10 }),
+        },
         {
             // Bypass service worker for critical API calls, Supabase, and Daily.co
             matcher({ url }) {

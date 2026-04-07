@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '../../../types';
 import { useBackgroundTasks, BackgroundTask } from '@/contexts/BackgroundTaskContext';
@@ -309,6 +310,8 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
         setAchievements(demoAchievements);
     };
 
+    const router = useRouter();
+
     const quickActions: QuickAction[] = [
         {
             id: 'new-client',
@@ -316,7 +319,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
             description: 'Grow your network',
             icon: UserPlus,
             color: 'bg-blue-500',
-            action: () => window.location.href = '/dashboard/crm'
+            action: () => router.push('/dashboard/crm')
         },
         {
             id: 'new-invoice',
@@ -324,7 +327,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
             description: 'Get paid faster',
             icon: FileText,
             color: 'bg-green-500',
-            action: () => window.location.href = '/dashboard/accounting'
+            action: () => router.push('/dashboard/accounting')
         },
         {
             id: 'schedule-meeting',
@@ -332,7 +335,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
             description: 'Connect with clients',
             icon: Calendar,
             color: 'bg-purple-500',
-            action: () => window.location.href = '/dashboard/calendar'
+            action: () => router.push('/dashboard/calendar')
         },
         {
             id: 'view-reports',
@@ -340,7 +343,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
             description: 'Track your progress',
             icon: BarChart2,
             color: 'bg-orange-500',
-            action: () => window.location.href = '/dashboard/reports'
+            action: () => router.push('/dashboard/reports')
         }
     ];
 
