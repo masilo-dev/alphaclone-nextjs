@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZohoService } from '../../../../../services/zoho/ZohoService';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function POST(req: NextRequest) {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
-
-    if (!userId) {
-        return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
-    }
+    const authClient = await createSupabaseServerClient();
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     try {
-        const zohoService = new ZohoService(userId);
+        const zohoService = new ZohoService(user.id);
         await zohoService.disconnect();
         
         return NextResponse.json({ success: true });

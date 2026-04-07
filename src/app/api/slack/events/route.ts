@@ -23,7 +23,13 @@ export async function POST(request: NextRequest) {
       .update(baseString)
       .digest('hex');
 
-    if (signature !== expectedSignature) {
+    let isValid = false;
+    try {
+      isValid = crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
+    } catch {
+      isValid = false;
+    }
+    if (!isValid) {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
@@ -119,7 +125,7 @@ async function handleTeamJoinEvent(event: any) {
   }
 
   // Send welcome message to new user
-  await slackService.sendDirectMessage(integration, user, {
+  await slackService.sendMessage(team, user, {
     text: '🎉 Welcome to AlphaClone!',
     blocks: [
       {
