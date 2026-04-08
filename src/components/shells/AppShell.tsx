@@ -24,7 +24,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     sessionStorage.getItem('auth_callback_in_progress') === 'true'
                 );
 
-                if (pathname !== '/auth/login' && !pathname.startsWith('/auth/') && !isAuthCallback) {
+                if (pathname && pathname !== '/auth/login' && !pathname.startsWith('/auth/') && !isAuthCallback) {
                     console.log('AppShell: No user and not in auth callback, redirecting to login');
                     setIsRedirecting(true);
                     await router.replace('/auth/login');
@@ -33,7 +33,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 }
             } else {
                 // Authenticated — needsMfa already available from top-level useAuth()
-                if (needsMfa && pathname !== '/auth/login' && !pathname.startsWith('/auth/')) {
+                if (needsMfa && pathname && pathname !== '/auth/login' && !pathname.startsWith('/auth/')) {
                     console.log('AppShell: MFA required, redirecting to login challenge');
                     setIsRedirecting(true);
                     await router.replace('/auth/login?reason=mfa_required');

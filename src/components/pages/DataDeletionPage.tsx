@@ -9,7 +9,7 @@ import {
 
 function DataDeletionContent() {
     const searchParams = useSearchParams();
-    const codeFromUrl = searchParams.get('code');
+    const codeFromUrl = searchParams?.get('code');
 
     const [email, setEmail] = useState('');
     const [name, setName] = useState('');

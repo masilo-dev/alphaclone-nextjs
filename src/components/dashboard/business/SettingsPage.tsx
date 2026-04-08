@@ -215,8 +215,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     };
 
     useEffect(() => {
-        const error = searchParams.get('error');
-        const tab = searchParams.get('tab');
+        const error = searchParams?.get('error');
+        const tab = searchParams?.get('tab');
 
         if (tab && ['notifications', 'security', 'business', 'booking', 'integrations', 'billing'].includes(tab)) {
             setActiveTab(tab as any);
@@ -228,7 +228,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
             toast.error(`Error: ${error}`);
         }
 
-        const success = searchParams.get('success');
+        const success = searchParams?.get('success');
         if (success === 'calendly_connected') {
             toast.success('Calendly connected successfully!');
             setActiveTab('booking');

@@ -36,7 +36,7 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
             }
             setIsGmailIntegrated(connectedGmail);
 
-            if (connectedGmail && searchParams.get('gmail') === 'connected') {
+            if (connectedGmail && searchParams?.get('gmail') === 'connected') {
                 toast.success('Gmail connected successfully.', {
                     duration: 5000,
                 });
@@ -50,7 +50,7 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
 
     useEffect(() => {
         checkStatus();
-    }, [user?.id, searchParams.get('gmail')]);
+    }, [user?.id, searchParams?.get('gmail')]);
 
     const handleConnectGmail = () => {
         setIsConnecting(true);

@@ -13,7 +13,7 @@ import toast, { Toaster } from 'react-hot-toast';
 
 export default function PublicContractPage() {
     const params = useParams();
-    const id = params.id as string;
+    const id = params?.id as string;
     const { user } = useAuth();
 
     const [contract, setContract] = useState<any>(null);

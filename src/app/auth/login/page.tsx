@@ -27,10 +27,10 @@ function LoginContent() {
     const { isPWA } = usePWA();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const isRegisterMode = searchParams.get('register') === 'true';
-    const typeParam = searchParams.get('type');
-    const planParam = searchParams.get('plan') as SubscriptionPlan | null;
-    const businessNameParam = searchParams.get('businessName');
+    const isRegisterMode = searchParams?.get('register') === 'true';
+    const typeParam = searchParams?.get('type');
+    const planParam = searchParams?.get('plan') as SubscriptionPlan | null;
+    const businessNameParam = searchParams?.get('businessName');
 
     const [isRegistering, setIsRegistering] = useState(isRegisterMode);
     const [email, setEmail] = useState('');

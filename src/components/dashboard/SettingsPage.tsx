@@ -43,7 +43,7 @@ interface SettingsPageProps {
 
 const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const searchParams = useSearchParams();
-    const initialSection = searchParams.get('section') as any;
+    const initialSection = searchParams?.get('section') as any;
 
     const validSections = ['profile', 'notifications', 'security', 'appearance', 'billing', 'booking'];
     const defaultSection = validSections.includes(initialSection) ? initialSection : 'profile';

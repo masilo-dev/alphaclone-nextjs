@@ -25,7 +25,7 @@ export default function MeetPage() {
     const [pinError, setPinError] = useState('');
 
     // This ID is the database UUID or the business slug
-    const meetingIdOrSlug = params.id as string;
+    const meetingIdOrSlug = params?.id as string;
 
     // Use lazy state to generate a stable guest ID once
     const [guestId] = React.useState(() => `guest-${Date.now()}`);

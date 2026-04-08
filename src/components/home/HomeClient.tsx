@@ -23,7 +23,7 @@ export default function HomeClient({ initialProjects }: HomeClientProps) {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
-    const mode = searchParams.get('mode');
+    const mode = searchParams?.get('mode');
     const isStandalone = typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone);
     if (mode === 'pwa' || isStandalone) {
       setIsPwa(true);
@@ -50,8 +50,8 @@ export default function HomeClient({ initialProjects }: HomeClientProps) {
   }, [user, loading, router, isPwa]);
 
   useEffect(() => {
-    const authStatus = searchParams.get('auth_status');
-    const message = searchParams.get('message');
+    const authStatus = searchParams?.get('auth_status');
+    const message = searchParams?.get('message');
 
     if (authStatus === 'new_account') {
       import('react-hot-toast').then(({ default: toast }) => {

@@ -64,7 +64,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(null);
 
     const searchParams = useSearchParams();
-    const stageParam = searchParams.get('stage');
+    const stageParam = searchParams?.get('stage');
 
     useEffect(() => {
         if (currentTenant) {

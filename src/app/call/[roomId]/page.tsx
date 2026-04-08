@@ -15,7 +15,7 @@ export default function CallPage() {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const callId = params.roomId as string;
+    const callId = params?.roomId as string;
 
     useEffect(() => {
         if (authLoading) return;

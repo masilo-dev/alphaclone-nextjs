@@ -90,7 +90,7 @@ const MCPSetupGuide: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
-  const isEnterprise = currentTenant?.plan === 'enterprise';
+  const isEnterprise = currentTenant?.subscription_plan === 'enterprise';
   const tenantId = currentTenant?.id ?? 'your-workspace-id';
 
   // 1. Fetch Auth & Token Context
