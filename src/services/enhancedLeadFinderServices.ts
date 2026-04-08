@@ -106,7 +106,7 @@ export const leadScoringService = {
 // 4. Outreach Automation Service
 export const outreachAutomationService = {
   async createSequence(leads: any[], templateType: string = 'standard') {
-    const sequences = {
+    const sequences: Record<'standard' | 'aggressive', Array<{ delay: number; template: string; subject: string }>> = {
       standard: [
         { delay: 0, template: 'initial_contact', subject: 'Introduction' },
         { delay: 1, template: 'follow_up_1', subject: 'Following Up' },
@@ -120,11 +120,11 @@ export const outreachAutomationService = {
       ]
     };
 
-    const sequence = sequences[templateType] || sequences.standard;
+    const sequence = sequences[templateType as keyof typeof sequences] || sequences.standard;
     
     return leads.map(lead => ({
       leadId: lead.id,
-      emails: sequence.map((step, index) => ({
+      emails: sequence.map((step: { delay: number; template: string; subject: string }, index: number) => ({
         ...step,
         scheduledDate: new Date(Date.now() + step.delay * 24 * 60 * 60 * 1000),
         templateData: {
@@ -146,7 +146,7 @@ export const outreachAutomationService = {
         body: JSON.stringify(emailData)
       });
       return response.json();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to send email:', error);
       return { success: false, error: error.message };
     }

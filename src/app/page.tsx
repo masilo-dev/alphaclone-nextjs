@@ -24,47 +24,35 @@ export default async function Home() {
       .order('created_at', { ascending: false })
       .limit(20);
 
-    // Check if this is a mock client response (will be a Proxy/function)
-    const isMockClient = typeof response === 'function' || 
-                         (response && typeof response.toString === 'function' && 
-                          response.toString().includes('[Mock Supabase Object]'));
-
-    if (isMockClient) {
-      // Mock client detected - return empty array for build time
-      console.log('[Home] Using mock Supabase client, returning empty projects array');
-      formattedProjects = [];
-    } else {
-      const { data: projects, error } = response;
-      
-      if (!error && projects && Array.isArray(projects)) {
-        // Format data to match our Project interface - ensure all data is serializable
-        formattedProjects = projects.map((p: any) => ({
-          id: String(p.id || ''),
-          ownerId: p.owner_id ? String(p.owner_id) : undefined,
-          ownerName: p.owner_name || '',
-          name: p.name || '',
-          category: p.category || '',
-          status: p.status || '',
-          currentStage: p.current_stage || '',
-          progress: Number(p.progress) || 0,
-          dueDate: p.due_date || null,
-          startDate: p.start_date || null,
-          team: Array.isArray(p.team) ? p.team : [],
-          image: p.image || null,
-          description: p.description || '',
-          contractStatus: p.contract_status || 'None',
-          contractText: p.contract_text || null,
-          externalUrl: p.external_url || null,
-          isPublic: Boolean(p.is_public),
-          showInPortfolio: Boolean(p.show_in_portfolio),
-          clientId: p.client_id ? String(p.client_id) : undefined,
-          budget: p.budget ? Number(p.budget) : undefined,
-          risk: p.risk || 'Low',
-          health: p.health || 'On Track',
-          resources: Array.isArray(p.resources) ? p.resources : [],
-          createdAt: p.created_at || new Date().toISOString(),
-        }));
-      }
+    const { data: projects, error } = response;
+    
+    if (!error && projects && Array.isArray(projects)) {
+      formattedProjects = projects.map((p: any) => ({
+        id: String(p.id || ''),
+        ownerId: p.owner_id ? String(p.owner_id) : undefined,
+        ownerName: p.owner_name || '',
+        name: p.name || '',
+        category: p.category || '',
+        status: p.status || '',
+        currentStage: p.current_stage || '',
+        progress: Number(p.progress) || 0,
+        dueDate: p.due_date || null,
+        startDate: p.start_date || null,
+        team: Array.isArray(p.team) ? p.team : [],
+        image: p.image || null,
+        description: p.description || '',
+        contractStatus: p.contract_status || 'None',
+        contractText: p.contract_text || null,
+        externalUrl: p.external_url || null,
+        isPublic: Boolean(p.is_public),
+        showInPortfolio: Boolean(p.show_in_portfolio),
+        clientId: p.client_id ? String(p.client_id) : undefined,
+        budget: p.budget ? Number(p.budget) : undefined,
+        risk: p.risk || 'Low',
+        health: p.health || 'On Track',
+        resources: Array.isArray(p.resources) ? p.resources : [],
+        createdAt: p.created_at || new Date().toISOString(),
+      }));
     }
   } catch (error) {
     console.error('Error fetching projects:', error);

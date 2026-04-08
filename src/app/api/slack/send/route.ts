@@ -1,26 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+import {
+  createAdminSupabaseClientOrThrow,
+  requireTenantAccess,
+  routeErrorResponse,
+} from '@/lib/apiAuth';
 
 export async function POST(request: NextRequest) {
   try {
-    const { tenant_id, message, channel = '#general' } = await request.json();
+    const { tenant_id, tenantId: tenantIdInput, message, channel = '#general' } = await request.json();
+    const tenantId = tenantIdInput || tenant_id;
 
-    if (!tenant_id || !message) {
+    if (!tenantId || !message) {
       return NextResponse.json(
-        { error: 'Missing tenant_id or message' },
+        { error: 'Missing tenantId or message' },
         { status: 400 }
       );
     }
 
+    await requireTenantAccess(tenantId);
+
     // Get Slack integration for this tenant
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createAdminSupabaseClientOrThrow();
     const { data: integration, error } = await supabase
       .from('tenant_integrations')
       .select('*')
-      .eq('tenant_id', tenant_id)
+      .eq('tenant_id', tenantId)
       .eq('integration_type', 'slack')
       .eq('status', 'active')
       .single();
@@ -60,7 +64,7 @@ export async function POST(request: NextRequest) {
     await supabase
       .from('slack_notifications')
       .insert({
-        tenant_id,
+        tenant_id: tenantId,
         message,
         channel,
         slack_message_id: slackData.ts,
@@ -75,10 +79,6 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Slack send error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return routeErrorResponse(error, 'Internal server error');
   }
 }

@@ -8,6 +8,7 @@ import { Project } from '../../types';
 import toast from 'react-hot-toast';
 import { useTenant } from '../../contexts/TenantContext';
 import { COMPREHENSIVE_INDUSTRIES, getAllIndustryNames, getServicesByIndustry, findIndustryByNameOrKeyword, ServiceItem } from '../../lib/comprehensiveIndustries';
+import { UNIVERSAL_SERVICE_CATALOG } from '../../services/universalServiceCatalog';
 
 
 interface LineItem {

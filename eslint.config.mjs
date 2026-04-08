@@ -34,6 +34,7 @@ const eslintConfig = defineConfig([
     "public/sw.js",
     "public/sw.js.map",
     "public/workbox-*.js",
+    "demo_data_fix.ts",
   ]),
 ]);
 

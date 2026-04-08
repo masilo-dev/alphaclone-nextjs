@@ -20,11 +20,11 @@ export function setupGlobalErrorHandlers() {
           window.location.reload();
         }).catch(err => {
           console.error('[GlobalErrorHandler] Failed to clear cache:', err);
-          window.location.reload();
+          globalThis.location.reload();
         });
       } else {
         // Fallback: just reload
-        window.location.reload();
+        globalThis.location.reload();
       }
     }
   };
@@ -106,6 +106,15 @@ export async function retryOperation<T>(
   delay: number = 1000
 ): Promise<T> {
   let lastError: any;
+
+  const getErrorCode = (error: unknown): string | undefined => {
+    if (typeof error === 'object' && error !== null && 'code' in error) {
+      const code = (error as { code?: unknown }).code;
+      return typeof code === 'string' ? code : undefined;
+    }
+
+    return undefined;
+  };
   
   for (let i = 0; i < maxRetries; i++) {
     try {
@@ -114,7 +123,8 @@ export async function retryOperation<T>(
       lastError = error;
       
       // Don't retry on certain errors
-      if (error?.code === 'PGRST203' || error?.code === 'PGRST301') {
+      const errorCode = getErrorCode(error);
+      if (errorCode === 'PGRST203' || errorCode === 'PGRST301') {
         throw error;
       }
       

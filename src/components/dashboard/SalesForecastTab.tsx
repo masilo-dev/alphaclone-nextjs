@@ -130,7 +130,7 @@ const SalesForecastTab = () => {
                             <LineChart data={chartData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                                 <XAxis dataKey="month" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => format(value, { notation: 'compact' } as any)} />
+                                <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value: number) => format(value, { notation: 'compact' } as any)} />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#f8fafc' }}
                                     formatter={(value: any) => format(value, { notation: 'compact' } as any)}
@@ -150,7 +150,7 @@ const SalesForecastTab = () => {
                         <ResponsiveContainer width="100%" height={320} minWidth={0} minHeight={320}>
                             <BarChart data={pipelineChartData} layout="vertical" margin={{ left: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
-                                <XAxis type="number" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => format(value, { notation: 'compact' } as any)} />
+                                <XAxis type="number" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value: number) => format(value, { notation: 'compact' } as any)} />
                                 <YAxis dataKey="stage" type="category" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} width={80} />
                                 <Tooltip
                                     formatter={(value: any) => format(value, { notation: 'compact' } as any)}

@@ -13,11 +13,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   transpilePackages: ['@blocknote/core', '@blocknote/react', '@blocknote/mantine'],
-  typescript: {
-    // Speed up local builds — Vercel runs tsc separately
-    ignoreBuildErrors: true,
-  },
-  // Expose VITE_ variables to the client-side bundle
   env: {
     VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL,
     VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY,
@@ -47,17 +42,12 @@ const nextConfig: NextConfig = {
   },
   turbopack: {},
   webpack: (config) => {
-    // Increase chunk load timeout to prevent ChunkLoadError during slow dev compilations
-    config.output.chunkLoadTimeout = 180000; // 3 minutes (default is 120s)
+    config.output.chunkLoadTimeout = 180000;
     return config;
   },
   async rewrites() {
     return [
       {
-        // Rewrite Facebook/WhatsApp webhook verification and event requests.
-        // Meta sends GET (verification) and POST (events) to the configured callback URL.
-        // Since /dashboard/business/facebook is a client-side UI route, we rewrite
-        // incoming webhook requests to the dedicated API handler.
         source: '/dashboard/business/facebook',
         destination: '/api/webhooks/facebook/whatsapp',
       },
@@ -95,7 +85,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: '/(.*)\.(ico|png|jpg|jpeg|webp|avif|svg|woff|woff2)',
+        source: '/(.*)\\.(ico|png|jpg|jpeg|webp|avif|svg|woff|woff2)',
         headers: [
           {
             key: 'Cache-Control',
@@ -138,7 +128,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-
 };
 
 export default withSentryConfig(

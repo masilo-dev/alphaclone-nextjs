@@ -112,6 +112,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'Active Leads',    href: '/dashboard/crm?stage=lead',          icon: TrendingUp },
       { label: 'Contacts',        href: '/dashboard/crm?stage=customer',      icon: Users },
+      { label: 'Gmail',           href: '/dashboard/mail',                   icon: Mail },
       { label: 'Facebook Inbox',  href: '/dashboard/business/facebook',      icon: Facebook },
       { label: 'Zoho Mail',       href: '/dashboard/zoho/mail',               icon: Mail },
       { label: 'SMS Outreach',    href: '/dashboard/business/sms',            icon: Smartphone },

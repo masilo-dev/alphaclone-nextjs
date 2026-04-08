@@ -200,7 +200,7 @@ export default function AutomationBuilder() {
   };
 
   const onConnect = useCallback(
-    (params: Connection | Edge) => setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: '#0d9488', strokeWidth: 2 } } as Edge, eds)),
+    (params: Connection | Edge) => setEdges((eds: Edge[]) => addEdge({ ...params, animated: true, style: { stroke: '#0d9488', strokeWidth: 2 } } as Edge, eds)),
     [setEdges],
   );
 
@@ -213,12 +213,12 @@ export default function AutomationBuilder() {
     setSaving(true);
     try {
       // Find trigger node
-      const triggerNode = nodes.find(n => n.type === 'triggerNode');
+      const triggerNode = nodes.find((n: Node) => n.type === 'triggerNode');
       
       // Convert ReactFlow nodes to workflow actions 
       // (We store the full graph in trigger_conditions/metadata for UI restoration)
-      const actionNodes = nodes.filter(n => n.type !== 'triggerNode');
-      const steps = actionNodes.map((node, index) => ({
+      const actionNodes = nodes.filter((n: Node) => n.type !== 'triggerNode');
+      const steps = actionNodes.map((node: Node, index: number) => ({
         action_type: (node.data as any).actionType || 'webhook',
         action_order: index,
         action_config: {
@@ -348,7 +348,7 @@ export default function AutomationBuilder() {
           actionType: selectedTemplate.actionType,
         }
     };
-    setNodes((nds) => [...nds, newNode]);
+    setNodes((nds: Node[]) => [...nds, newNode]);
     setShowActionMenu(false);
     setActiveCategory('all');
   };
@@ -571,12 +571,12 @@ export default function AutomationBuilder() {
         >
             <Controls className="bg-white dark:bg-slate-800 border-none shadow-xl rounded-xl overflow-hidden" />
             <MiniMap 
-                nodeStrokeColor={(n) => {
+                nodeStrokeColor={(n: Node) => {
                     if (n.type === 'triggerNode') return '#4f46e5';
                     if (n.type === 'actionNode') return '#0f172a';
                     return '#eee';
                 }}
-                nodeColor={(n) => {
+                nodeColor={(n: Node) => {
                     if (n.type === 'triggerNode') return '#6366f1';
                     if (n.type === 'actionNode') return '#1e293b';
                     return '#fff';

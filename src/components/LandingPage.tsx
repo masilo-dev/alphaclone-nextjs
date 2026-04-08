@@ -144,7 +144,6 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            width={36}
                            height={36}
                            className="object-contain"
-                           priority
                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
                         />
                      </div>
@@ -481,11 +480,15 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      ].map((service, idx) => (
                         <ServiceCard
                            key={service.title}
-                           icon={service.icon}
-                           title={service.title}
-                           description={service.desc}
-                           gradient={service.color}
-                           delay={idx * 0.1}
+                           index={idx}
+                           service={{
+                              id: service.title.toLowerCase().replace(/\s+/g, '-'),
+                              icon: service.icon,
+                              title: service.title,
+                              summary: service.desc,
+                              details: [],
+                              gradient: service.color,
+                           }}
                         />
                      ))}
                   </div>

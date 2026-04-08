@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import {
+    createAdminSupabaseClientOrThrow,
+    requireAuthenticatedUser,
+    routeErrorResponse,
+} from '@/lib/apiAuth';
 
 /**
  * POST /api/meetings/create
@@ -9,33 +13,32 @@ import crypto from 'crypto';
  */
 export async function POST(req: NextRequest) {
     try {
+        const { user } = await requireAuthenticatedUser();
         const body = await req.json();
         const {
             title,
-            hostId,
+            hostId: requestedHostId,
             maxParticipants = 10,
             durationMinutes = 40,
             calendarEventId,
             participants = []
         } = body;
 
+        const hostId = requestedHostId || user.id;
+
         // Validation
         if (!title || !hostId) {
             return NextResponse.json({ error: 'Title and hostId are required' }, { status: 400 });
         }
 
+        if (hostId !== user.id) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
         // Enforce 40-minute maximum
         const actualDuration = Math.min(durationMinutes, 40);
 
-        // Initialize Supabase client
-        const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
-
-        if (!supabaseUrl || !supabaseKey) {
-            return NextResponse.json({ error: 'Server configuration error: Missing Supabase credentials' }, { status: 500 });
-        }
-
-        const supabase = createClient(supabaseUrl, supabaseKey);
+        const supabase = createAdminSupabaseClientOrThrow();
 
         // Step 1: Create Daily.co room
         const roomName = `room-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
@@ -142,9 +145,6 @@ export async function POST(req: NextRequest) {
         });
 
     } catch (error) {
-        console.error('Error creating meeting:', error);
-        return NextResponse.json({
-            error: error instanceof Error ? error.message : 'Failed to create meeting'
-        }, { status: 500 });
+        return routeErrorResponse(error, error instanceof Error ? error.message : 'Failed to create meeting');
     }
 }

@@ -7,10 +7,10 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await context.params;
     
     if (!id) {
       return NextResponse.json({ error: 'Lead ID required' }, { status: 400 });
@@ -82,10 +82,10 @@ export async function GET(
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await context.params;
     
     if (!id) {
       return NextResponse.json({ error: 'Lead ID required' }, { status: 400 });
@@ -193,10 +193,10 @@ export async function PATCH(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await context.params;
     
     if (!id) {
       return NextResponse.json({ error: 'Lead ID required' }, { status: 400 });

@@ -13,7 +13,7 @@ Sentry.init({
     tracesSampleRate: 0.1,
 
     // Before sending to Sentry, scrub sensitive data
-    beforeSend(event) {
+    beforeSend(event: any) {
         // Remove sensitive data
         if (event.request?.cookies) {
             delete event.request.cookies;

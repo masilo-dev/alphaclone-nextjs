@@ -2,7 +2,7 @@
 
 'use client';
 import { useState } from 'react';
-import { Button } from '../ui/UIComponents';
+import { Button } from '../../ui/UIComponents';
 import { 
   Mail, 
   Send, 
@@ -17,10 +17,13 @@ import {
   Globe,
   Search,
   CheckCircle,
-  Building
+  Building,
+  ExternalLink,
+  AlertCircle,
+  Lock
 } from 'lucide-react';
 import { StripeConnectOnboarding } from './StripeConnectOnboarding';
-import toast from 'react-hot-toast';
+import { useToast } from '@/components/Toast';
 
 interface Integration {
   id: string;
@@ -35,6 +38,7 @@ interface Integration {
 }
 
 export const IntegrationMarketplace: React.FC = () => {
+  const toast = useToast();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [integrations, setIntegrations] = useState<Integration[]>([
     {

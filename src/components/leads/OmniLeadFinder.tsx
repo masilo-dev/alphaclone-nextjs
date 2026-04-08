@@ -276,7 +276,7 @@ export default function OmniLeadFinder() {
         lead.address || '',
         lead.category || '',
         lead.phone || '',
-        lead.description || ''
+        lead.snippet || ''
       ].some(v => v && v.toLowerCase().includes(q))) return false;
       if (filterRating > 0 && (lead.rating === undefined || lead.rating < filterRating)) return false;
       if (filterSource !== 'all' && lead.source !== filterSource) return false;
@@ -368,7 +368,7 @@ export default function OmniLeadFinder() {
             setFallbackUsed(!!data.fallbackUsed);
 
             // Qualify leads
-            const qualifiedLeads = leads.map(lead => ({
+            const qualifiedLeads = leads.map((lead: ScrapedLead) => ({
                 ...lead,
                 qualification: qualifyLead(lead, niche),
             }));

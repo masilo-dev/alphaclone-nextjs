@@ -100,7 +100,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         { id: 'integrations' as const, label: 'Integrations', icon: Settings },
         { id: 'appearance' as const, label: 'Appearance', icon: Palette },
         { id: 'billing' as const, label: 'Plans & Billing', icon: CreditCard },
-        { id: 'booking' as const, label: 'Booking & Integrations', icon: Calendar },
+        { id: 'booking' as const, label: 'Booking & Integrations', icon: CalendarIcon },
         { id: 'branding' as const, label: 'Branding', icon: Sparkles }
     ];
 

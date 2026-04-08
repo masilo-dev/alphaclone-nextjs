@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { ENV } from '@/config/env';
+import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
 import { redis } from '@/lib/cache/redis';
 
 /**
@@ -10,9 +11,15 @@ import { redis } from '@/lib/cache/redis';
 export async function GET() {
     const startTime = Date.now();
     const checks: Record<string, any> = {};
+    const supabaseConfigured = !!ENV.VITE_SUPABASE_URL && !!ENV.SUPABASE_SERVICE_ROLE_KEY;
+    const stripeConfigured = !!ENV.STRIPE_SECRET_KEY;
+    const dailyConfigured = !!ENV.DAILY_API_KEY;
+    const resendConfigured = !!ENV.RESEND_API_KEY;
+    const pushConfigured = !!ENV.VITE_VAPID_PUBLIC_KEY && !!process.env.VAPID_PRIVATE_KEY;
 
     // 1. Check database connection
     try {
+        const supabase = createAdminSupabaseClientOrThrow();
         const { error: dbError } = await supabase
             .from('tenants')
             .select('id')
@@ -56,11 +63,10 @@ export async function GET() {
     // 3. Check auth service (Supabase Auth)
     try {
         const authStart = Date.now();
-        const { error: authError } = await supabase.auth.getSession();
         checks.auth = {
-            status: authError ? 'unhealthy' : 'healthy',
+            status: supabaseConfigured && !!ENV.VITE_SUPABASE_ANON_KEY ? 'healthy' : 'unhealthy',
             responseTime: Date.now() - authStart,
-            error: authError?.message,
+            error: supabaseConfigured && !!ENV.VITE_SUPABASE_ANON_KEY ? undefined : 'Supabase auth configuration is incomplete',
         };
     } catch (error) {
         checks.auth = {
@@ -70,6 +76,19 @@ export async function GET() {
     }
 
     // 4. System info
+    checks.config = {
+        status: supabaseConfigured ? 'healthy' : 'unhealthy',
+        services: {
+            supabase: supabaseConfigured ? 'configured' : 'missing',
+            supabaseAuth: ENV.VITE_SUPABASE_ANON_KEY ? 'configured' : 'missing',
+            stripe: stripeConfigured ? 'configured' : 'missing',
+            daily: dailyConfigured ? 'configured' : 'missing',
+            resend: resendConfigured ? 'configured' : 'missing',
+            webPush: pushConfigured ? 'configured' : 'missing',
+        },
+    };
+
+    // 5. System info
     checks.system = {
         uptime: process.uptime(),
         memory: {

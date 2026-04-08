@@ -132,9 +132,9 @@ async function builtWithLookup(domain: string): Promise<BuiltWithResult | null> 
     if (!result) return null;
 
     // Extract technologies
-    const technologies = result.Paths?.flatMap((p: any) => 
+    const technologies = (result.Paths?.flatMap((p: any) => 
       p.Technologies?.map((t: any) => t.Name) || []
-    ) || [];
+    ) || []) as string[];
 
     // Get company info from first path
     const firstPath = result.Paths?.[0];

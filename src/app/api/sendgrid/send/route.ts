@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+import {
+  createAdminSupabaseClientOrThrow,
+  requireTenantAccess,
+  routeErrorResponse,
+} from '@/lib/apiAuth';
 
 // Client-friendly error messages
 const CLIENT_ERRORS = {
@@ -74,9 +75,10 @@ function translateErrorToClient(error: any): typeof CLIENT_ERRORS[keyof typeof C
 
 export async function POST(request: NextRequest) {
   try {
-    const { tenant_id, to, subject, message } = await request.json();
+    const { tenant_id, tenantId: tenantIdInput, to, subject, message } = await request.json();
+    const tenantId = tenantIdInput || tenant_id;
 
-    if (!tenant_id || !to || !subject || !message) {
+    if (!tenantId || !to || !subject || !message) {
       const clientError = CLIENT_ERRORS.RECIPIENT_EMAIL_ISSUE;
       return NextResponse.json({
         error: clientError,
@@ -94,12 +96,14 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    await requireTenantAccess(tenantId);
+
     // Get SendGrid integration for this tenant
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createAdminSupabaseClientOrThrow();
     const { data: integration, error } = await supabase
       .from('tenant_integrations')
       .select('*')
-      .eq('tenant_id', tenant_id)
+      .eq('tenant_id', tenantId)
       .eq('integration_type', 'sendgrid')
       .eq('status', 'active')
       .single();
@@ -160,7 +164,7 @@ export async function POST(request: NextRequest) {
     await supabase
       .from('email_logs')
       .insert({
-        tenant_id,
+        tenant_id: tenantId,
         provider: 'sendgrid',
         to_email: to,
         subject,
@@ -177,7 +181,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('SendGrid send error:', error);
     const clientError = translateErrorToClient(error);
-    
+
+    if ((error as any)?.name === 'RouteAuthError') {
+      return routeErrorResponse(error, 'Internal server error');
+    }
+
     return NextResponse.json({
       error: clientError,
       clientFriendly: true

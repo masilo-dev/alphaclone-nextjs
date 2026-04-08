@@ -18,25 +18,25 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case 'create_invoice':
-        return await createInvoice(tenantId, config, supabase);
+        return NextResponse.json(await createInvoice(tenantId, config, supabase));
       case 'update_invoice':
-        return await updateInvoice(tenantId, config, supabase);
+        return NextResponse.json(await updateInvoice(tenantId, config, supabase));
       case 'get_invoices':
-        return await getInvoices(tenantId, config, supabase);
+        return NextResponse.json(await getInvoices(tenantId, config, supabase));
       case 'get_invoice_details':
-        return await getInvoiceDetails(tenantId, config, supabase);
+        return NextResponse.json(await getInvoiceDetails(tenantId, config, supabase));
       case 'download_invoice':
-        return await downloadInvoice(tenantId, config, supabase);
+        return NextResponse.json(await downloadInvoice(tenantId, config, supabase));
       case 'send_invoice':
-        return await sendInvoice(tenantId, config, supabase);
+        return NextResponse.json(await sendInvoice(tenantId, config, supabase));
       case 'record_payment':
-        return await recordPayment(tenantId, config, supabase);
+        return NextResponse.json(await recordPayment(tenantId, config, supabase));
       case 'create_expense':
-        return await createExpense(tenantId, config, supabase);
+        return NextResponse.json(await createExpense(tenantId, config, supabase));
       case 'get_expenses':
-        return await getExpenses(tenantId, config, supabase);
+        return NextResponse.json(await getExpenses(tenantId, config, supabase));
       case 'get_financial_summary':
-        return await getFinancialSummary(tenantId, config, supabase);
+        return NextResponse.json(await getFinancialSummary(tenantId, config, supabase));
       default:
         return NextResponse.json({ error: 'Unsupported action' }, { status: 400 });
     }
@@ -621,13 +621,13 @@ async function getFinancialSummary(tenantId: string, config: any, supabase: any)
         },
         leads: {
           total: leads?.length || 0,
-          converted: leads?.filter(lead => lead.status === 'converted').length || 0,
-          value: leads?.reduce((sum, lead) => sum + (lead.value || 0), 0) || 0
+          converted: leads?.filter((lead: any) => lead.status === 'converted').length || 0,
+          value: leads?.reduce((sum: number, lead: any) => sum + (lead.value || 0), 0) || 0
         },
         deals: {
           total: deals?.length || 0,
-          won: deals?.filter(deal => deal.status === 'won').length || 0,
-          value: deals?.reduce((sum, deal) => sum + (deal.value || 0), 0) || 0
+          won: deals?.filter((deal: any) => deal.status === 'won').length || 0,
+          value: deals?.reduce((sum: number, deal: any) => sum + (deal.value || 0), 0) || 0
         }
       }
     };

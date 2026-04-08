@@ -775,7 +775,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                             </defs>
                                             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                                             <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
-                                            <YAxis stroke="#64748b" fontSize={12} tickFormatter={(value) => format(value)} />
+                                            <YAxis stroke="#64748b" fontSize={12} tickFormatter={(value: number) => format(value)} />
                                             <Tooltip
                                                 contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b' }}
                                                 formatter={(value: any) => format(value)}

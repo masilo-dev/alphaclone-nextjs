@@ -56,11 +56,11 @@ export class ErrorBoundary extends Component<Props, State> {
                     window.location.reload();
                 }).catch(err => {
                     console.error('[ErrorBoundary] Failed to clear cache:', err);
-                    window.location.reload();
+                    globalThis.location.reload();
                 });
             } else {
                 // Fallback: just reload
-                window.location.reload();
+                globalThis.location.reload();
             }
             return;
         }

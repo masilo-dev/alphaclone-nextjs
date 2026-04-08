@@ -243,16 +243,16 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
         setIsSummarizing(true);
         try {
             const conversationText = visibleMessages
-                .map(msg => `${msg.senderId === user.id ? 'You' : (isAdmin ? selectedClient?.name : 'Admin')}: ${msg.content}`)
+                .map(msg => `${msg.senderId === user.id ? 'You' : (isAdmin ? selectedClient?.name : 'Admin')}: ${msg.text}`)
                 .join('\n');
             
-            const summary = await chatWithAI(
-                `Summarize this conversation:\n\n${conversationText}`,
-                'You are a helpful assistant that summarizes conversations concisely.'
+            const { text } = await chatWithAI(
+                [],
+                `Summarize this conversation concisely.\n\n${conversationText}`
             );
             
-            if (summary) {
-                setConversationSummary(summary);
+            if (text) {
+                setConversationSummary(text);
                 toast.success('Conversation summarized!');
             } else {
                 toast.error('Failed to summarize conversation');

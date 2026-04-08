@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { RouteAuthError, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
 // ─── Per-tenant in-process quota cache ────────────────────────────────────────
 // key = `${tenantId}:${YYYY-MM-DD}`, value = count of leads already returned today
@@ -308,11 +309,13 @@ export async function POST(request: Request) {
     const niche     = body.niche    || body.query?.split(' in ')[0]?.trim() || '';
     const location  = body.location || body.query?.split(' in ')[1]?.trim() || '';
     const sortBy    = body.sortBy   || 'default';
-    const tenantId  = body.tenantId || body.tenant_id || '';
+    const tenantId  = (body.tenantId || body.tenant_id || '').trim();
 
     if (!niche) {
       return NextResponse.json({ error: 'Industry/niche is required' }, { status: 400 });
     }
+
+    await requireTenantAccess(tenantId);
 
     // ── Per-tenant daily quota check ─────────────────────────────────────────
     let quotaInfo = { allowed: true, remaining: DAILY_LEAD_LIMIT, used: 0 };
@@ -409,6 +412,10 @@ export async function POST(request: Request) {
     });
 
   } catch (error: any) {
+    if (error instanceof RouteAuthError) {
+      return routeErrorResponse(error);
+    }
+
     console.error('[Scraper] Fatal:', error.message);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

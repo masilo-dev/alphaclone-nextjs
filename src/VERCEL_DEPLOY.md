@@ -53,7 +53,7 @@ Enter: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV
 ```bash
 vercel env add VITE_RESEND_API_KEY
 ```
-Enter: `re_QeWpKcSk_Gopimybtfo8G3JmJTk7BCasFr`
+Enter: `re_your_resend_key`
 
 ## Step 5: Redeploy with Environment Variables
 
@@ -81,7 +81,7 @@ Go to Project Settings > Environment Variables and add:
 | `VITE_SUPABASE_URL` | `https://ehekzoiogvtweugeinktn.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | Your Supabase anon key |
 | `VITE_SUPABASE_SERVICE_KEY` | Your Supabase service key |
-| `VITE_RESEND_API_KEY` | `re_QeWpKcSk_Gopimybtfo8G3JmJTk7BCasFr` |
+| `VITE_RESEND_API_KEY` | `re_your_resend_key` |
 
 ## Step 6: Update Supabase Auth Settings
 

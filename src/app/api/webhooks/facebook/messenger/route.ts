@@ -2,18 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
 import crypto from 'crypto';
 
-const VERIFY_TOKEN = process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN || 'alphaclone_fb_verify';
-const APP_SECRET = process.env.FACEBOOK_APP_SECRET || '';
+const VERIFY_TOKEN = process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN;
+const APP_SECRET = process.env.FACEBOOK_APP_SECRET;
 
 // Facebook webhook verification (GET)
 export async function GET(req: NextRequest) {
     try {
+        if (!VERIFY_TOKEN) {
+            console.error('[Facebook Messenger Webhook] Verification token is not configured');
+            return new Response('Webhook not configured', { status: 503 });
+        }
+
         const { searchParams } = new URL(req.url);
         const mode = searchParams.get('hub.mode');
         const token = searchParams.get('hub.verify_token');
         const challenge = searchParams.get('hub.challenge');
 
-        console.log(`[Facebook Messenger Webhook] Incoming verification request: mode=${mode}, token=${token}`);
+        console.log(`[Facebook Messenger Webhook] Incoming verification request: mode=${mode}, token=${token ? 'present' : 'missing'}`);
 
         if (mode === 'subscribe' && token === VERIFY_TOKEN) {
             console.log('[Facebook Messenger Webhook] Verification successful!');
@@ -23,7 +28,7 @@ export async function GET(req: NextRequest) {
             });
         }
         
-        console.warn(`[Facebook Messenger Webhook] Verification failed. Expected token: ${VERIFY_TOKEN}, Received: ${token}`);
+        console.warn('[Facebook Messenger Webhook] Verification failed');
         return new Response('Forbidden', { status: 403 });
     } catch (err) {
         console.error('[Facebook Messenger Webhook] GET error:', err);
@@ -34,10 +39,15 @@ export async function GET(req: NextRequest) {
 // Messenger webhook events (POST)
 export async function POST(req: NextRequest) {
     try {
+        if (!APP_SECRET) {
+            console.error('[Facebook Messenger Webhook] App secret is not configured');
+            return new NextResponse('Webhook not configured', { status: 503 });
+        }
+
         const bodyText = await req.text();
         const signatureHeader = req.headers.get('x-hub-signature-256');
 
-        if (APP_SECRET && signatureHeader) {
+        if (signatureHeader) {
             const signature = signatureHeader.replace('sha256=', '');
             const expectedSignature = crypto
                 .createHmac('sha256', APP_SECRET)
@@ -58,7 +68,7 @@ export async function POST(req: NextRequest) {
                 console.warn('[Facebook Messenger Webhook] Rejected: invalid HMAC signature');
                 return new NextResponse('Unauthorized', { status: 401 });
             }
-        } else if (APP_SECRET && !signatureHeader) {
+        } else {
             console.warn('[Facebook Messenger Webhook] Rejected: missing signature header');
             return new NextResponse('Unauthorized', { status: 401 });
         }

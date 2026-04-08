@@ -18,15 +18,15 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case 'create_post':
-        return await createFacebookPost(tenantId, config, supabase);
+        return NextResponse.json(await createFacebookPost(tenantId, config, supabase));
       case 'manage_page':
-        return await manageFacebookPage(tenantId, config, supabase);
+        return NextResponse.json(await manageFacebookPage(tenantId, config, supabase));
       case 'generate_contract':
-        return await generateContract(tenantId, config, supabase);
+        return NextResponse.json(await generateContract(tenantId, config, supabase));
       case 'update_contract':
-        return await updateContract(tenantId, config, supabase);
+        return NextResponse.json(await updateContract(tenantId, config, supabase));
       case 'download_contract':
-        return await downloadContract(tenantId, config, supabase);
+        return NextResponse.json(await downloadContract(tenantId, config, supabase));
       default:
         return NextResponse.json({ error: 'Unsupported action' }, { status: 400 });
     }

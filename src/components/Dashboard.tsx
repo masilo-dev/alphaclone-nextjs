@@ -2000,10 +2000,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         onComplete={() => setShowProductTour(false)}
         userRole={user.role}
       />
-      <CelebrationOverlay 
-        trigger={false} 
-        onComplete={() => {}} 
-      />
+      <CelebrationOverlay show={false} onComplete={() => {}} />
     </div>
   );
 };

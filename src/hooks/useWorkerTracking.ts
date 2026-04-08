@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { workerTrackingService } from '@/services/workerTrackingService';
 import { usePathname } from 'next/navigation';
 
@@ -97,6 +97,6 @@ export function withWorkerTracking<P extends object>(
 ) {
   return function WrappedComponent(props: P) {
     useWorkerTracking({ appName, trackNavigation: true });
-    return <Component {...props} />;
+    return React.createElement(Component, props);
   };
 }

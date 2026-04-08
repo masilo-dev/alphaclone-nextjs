@@ -17,7 +17,7 @@ Sentry.init({
     // Custom integrations can be added when needed
 
     // Before sending to Sentry, scrub sensitive data
-    beforeSend(event, hint) {
+    beforeSend(event: any, hint: any) {
         // Remove PII (Personally Identifiable Information)
         if (event.request) {
             // Remove cookies
@@ -46,7 +46,7 @@ Sentry.init({
 
         // Scrub sensitive data from error messages
         if (event.exception?.values) {
-            event.exception.values.forEach(exception => {
+            event.exception.values.forEach((exception: any) => {
                 if (exception.value) {
                     // Redact potential tokens/keys in error messages
                     exception.value = exception.value.replace(

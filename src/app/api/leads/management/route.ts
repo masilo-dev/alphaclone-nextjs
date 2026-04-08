@@ -18,19 +18,19 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case 'find_leads':
-        return await findLeads(tenantId, config, supabase);
+        return NextResponse.json(await findLeads(tenantId, config, supabase));
       case 'save_lead':
-        return await saveLead(tenantId, config, supabase);
+        return NextResponse.json(await saveLead(tenantId, config, supabase));
       case 'update_lead':
-        return await updateLead(tenantId, config, supabase);
+        return NextResponse.json(await updateLead(tenantId, config, supabase));
       case 'get_leads':
-        return await getLeads(tenantId, config, supabase);
+        return NextResponse.json(await getLeads(tenantId, config, supabase));
       case 'convert_lead':
-        return await convertLead(tenantId, config, supabase);
+        return NextResponse.json(await convertLead(tenantId, config, supabase));
       case 'delete_lead':
-        return await deleteLead(tenantId, config, supabase);
+        return NextResponse.json(await deleteLead(tenantId, config, supabase));
       case 'bulk_actions':
-        return await bulkLeadsActions(tenantId, config, supabase);
+        return NextResponse.json(await bulkLeadsActions(tenantId, config, supabase));
       default:
         return NextResponse.json({ error: 'Unsupported action' }, { status: 400 });
     }

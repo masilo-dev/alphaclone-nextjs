@@ -502,8 +502,12 @@ export const contractService = {
         `;
 
         try {
-            const draft = await generateText(prompt);
-            const cleanDraft = aiCore.cleanProOutput(draft);
+            const { text, error } = await generateText(prompt);
+            if (error || !text) {
+                throw error || new Error('Failed to generate contract draft');
+            }
+
+            const cleanDraft = aiCore.cleanProOutput(text);
 
             // Log the achievement
             const { activityService } = await import('@/services/activityService');

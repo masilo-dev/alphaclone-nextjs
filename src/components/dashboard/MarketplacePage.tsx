@@ -185,8 +185,9 @@ const MarketplacePage: React.FC = () => {
     
     // Navigate to the item's page if it has an action URL
     if (selectedItem.actionUrl) {
+      const actionUrl = selectedItem.actionUrl;
       setTimeout(() => {
-        window.location.href = selectedItem.actionUrl;
+        window.location.href = actionUrl;
       }, 1000);
     }
   };

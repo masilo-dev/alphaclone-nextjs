@@ -94,7 +94,7 @@ class EventBusService {
                     const event = payload.new as Event;
                     await this.processEvent(event);
                 })
-                .subscribe((status) => {
+                .subscribe((status: string) => {
                     if (status === 'SUBSCRIBED') {
                         console.log('[EventBus] Successfully subscribed to event channel');
                     } else if (status === 'CHANNEL_ERROR') {

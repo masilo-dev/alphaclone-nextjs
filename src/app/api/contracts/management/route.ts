@@ -18,15 +18,15 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case 'create_contract':
-        return await createContract(tenantId, config, supabase);
+        return NextResponse.json(await createContract(tenantId, config, supabase));
       case 'update_contract':
-        return await updateContract(tenantId, config, supabase);
+        return NextResponse.json(await updateContract(tenantId, config, supabase));
       case 'get_contracts':
-        return await getContracts(tenantId, config, supabase);
+        return NextResponse.json(await getContracts(tenantId, config, supabase));
       case 'download_contract':
-        return await downloadContract(tenantId, config, supabase);
+        return NextResponse.json(await downloadContract(tenantId, config, supabase));
       case 'delete_contract':
-        return await deleteContract(tenantId, config, supabase);
+        return NextResponse.json(await deleteContract(tenantId, config, supabase));
       default:
         return NextResponse.json({ error: 'Unsupported action' }, { status: 400 });
     }

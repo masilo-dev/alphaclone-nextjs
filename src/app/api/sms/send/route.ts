@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase-server';
+import {
+    createAdminSupabaseClientOrThrow,
+    requireAuthenticatedUser,
+    requireTenantAccess,
+    routeErrorResponse,
+} from '@/lib/apiAuth';
 import { normalizePhoneNumber } from '@/services/engine/CommunicationEngine';
 
 /**
@@ -7,21 +12,22 @@ import { normalizePhoneNumber } from '@/services/engine/CommunicationEngine';
  * Send a single SMS via Twilio using per-account credentials
  */
 export async function POST(req: NextRequest) {
-    const authClient = await createSupabaseServerClient();
-    const { data: { user } } = await authClient.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const supabase = createSupabaseAdminClient();
-
     try {
-        const { to, message, from, tenantId, userId, campaignId, leadId } = await req.json();
+        const { user } = await requireAuthenticatedUser();
+        const supabase = createAdminSupabaseClientOrThrow();
+        const { to, message, from, tenantId, userId: ignoredUserId, campaignId, leadId } = await req.json();
+        const resolvedUserId = user.id;
 
         if (!to || !message) {
             return NextResponse.json({ error: 'to and message are required' }, { status: 400 });
         }
 
+        if (tenantId) {
+            await requireTenantAccess(tenantId);
+        }
+
         // 1. Resolve Twilio Credentials (Per-Tenant or Env Fallback)
-        console.log(`[SMS Send] Resolving credentials for Tenant: ${tenantId}, User: ${userId}`);
+        console.log(`[SMS Send] Resolving credentials for Tenant: ${tenantId}, User: ${resolvedUserId}`);
 
         let accountSid = process.env.TWILIO_ACCOUNT_SID;
         let authToken  = process.env.TWILIO_AUTH_TOKEN;
@@ -47,17 +53,17 @@ export async function POST(req: NextRequest) {
         } 
         
         // Fallback to legacy 'integrations' table if no tenant-specific creds found yet
-        if ((!accountSid || !authToken) && userId) {
+        if ((!accountSid || !authToken) && resolvedUserId) {
             const { data: integration } = await supabase
                 .from('integrations')
                 .select('config, enabled')
-                .eq('user_id', userId)
+                .eq('user_id', resolvedUserId)
                 .eq('type', 'twilio')
                 .eq('enabled', true)
                 .maybeSingle();
 
             if (integration?.config) {
-                console.log(`[SMS Send] Using legacy user-specific Twilio integration for ${userId}`);
+                console.log(`[SMS Send] Using legacy user-specific Twilio integration for ${resolvedUserId}`);
                 accountSid = (integration.config as any).accountSid || accountSid;
                 authToken  = (integration.config as any).authToken  || authToken;
                 fromNumber = from || (integration.config as any).fromNumber || fromNumber;
@@ -65,7 +71,7 @@ export async function POST(req: NextRequest) {
         }
 
         if (!accountSid || !authToken) {
-            console.error('[SMS Send] Failed: Missing SID or Auth Token', { tenantId, userId, hasSid: !!accountSid, hasToken: !!authToken });
+            console.error('[SMS Send] Failed: Missing SID or Auth Token', { tenantId, userId: resolvedUserId, hasSid: !!accountSid, hasToken: !!authToken });
             return NextResponse.json({ 
                 error: 'Twilio SID or Auth Token not found for this account. Please verify your Twilio integration in Settings.' 
             }, { status: 503 });
@@ -144,7 +150,6 @@ export async function POST(req: NextRequest) {
         });
 
     } catch (err) {
-        console.error('SMS send error:', err);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        return routeErrorResponse(err, 'Internal server error');
     }
 }

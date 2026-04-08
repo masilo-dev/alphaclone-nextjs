@@ -2,32 +2,52 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { ENV } from '@/config/env'
 
-// Helper to create a chainable mock Supabase client for build time
-const createMockSupabaseClient = (serviceName: string) => {
-    console.warn(`[${serviceName}] Missing credentials, returning mock client for build time`);
-    
-    // The Super Ultimate Proxy: handles destructuring, chaining, and function calls
-    const mock: any = new Proxy(() => {}, {
-        get: (target, prop) => {
-            if (prop === 'then') return undefined;
-            if (prop === 'error') return null; // Error should be null to avoid triggering error checks
+const allowUnsafeMockClients = process.env.ALLOW_UNSAFE_INFRASTRUCTURE_MOCKS === 'true';
+
+// Helper to create a chainable unavailable Supabase client for non-production fallback scenarios
+const createUnavailableSupabaseClient = (serviceName: string) => {
+    console.warn(`[${serviceName}] Supabase credentials are missing. Returning an unavailable client.`);
+
+    const mockError = { message: `[${serviceName}] Supabase is not configured` };
+    const mockResult = { data: null, error: mockError, count: 0 };
+
+    const queryChain: any = new Proxy(() => { }, {
+        get: (_, prop) => {
+            if (prop === 'then') return Promise.resolve(mockResult).then.bind(Promise.resolve(mockResult));
+            if (prop === 'catch') return Promise.resolve(mockResult).catch.bind(Promise.resolve(mockResult));
+            if (prop === 'finally') return Promise.resolve(mockResult).finally.bind(Promise.resolve(mockResult));
+            if (prop === 'data') return null;
+            if (prop === 'error') return mockError;
+            if (prop === 'count') return 0;
             if (typeof prop === 'symbol') return undefined;
-            if (prop === 'toString' || prop === 'valueOf') return () => '[Mock Supabase Object]';
-            if (prop === 'id') return 'mock-uuid-for-build';
-
-            // Special case for properties often used in URL construction
-            if (prop === 'region') return 'com';
-
-            // For any other property (including 'data'), return the mock again to support nested destructuring
-            // e.g. { data: { user } } works because mock.data is mock, and mock.user is mock
-            return mock;
+            if (prop === 'toString' || prop === 'valueOf') return () => '[Mock Supabase Query]';
+            return (..._args: any[]) => queryChain;
         },
-        apply: (target, thisArg, argList) => {
-            return mock;
-        }
+        apply: () => queryChain,
     });
-    
-    return mock;
+
+    const auth = {
+        getUser: async () => ({ data: { user: null }, error: mockError }),
+        getSession: async () => ({ data: { session: null }, error: mockError }),
+        signOut: async () => ({ error: mockError }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } }),
+    };
+
+    return new Proxy({}, {
+        get: (_, prop) => {
+            if (prop === 'then') return undefined;
+            if (prop === 'auth') return auth;
+            if (prop === 'from' || prop === 'rpc') return (..._args: any[]) => queryChain;
+            if (prop === 'storage') {
+                return {
+                    from: (..._args: any[]) => queryChain,
+                };
+            }
+            if (prop === 'toString' || prop === 'valueOf') return () => '[Mock Supabase Client]';
+            if (typeof prop === 'symbol') return undefined;
+            return queryChain;
+        },
+    }) as any;
 };
 
 /**
@@ -35,9 +55,12 @@ const createMockSupabaseClient = (serviceName: string) => {
  * This should be used in Server Components, API routes, and Server Actions.
  */
 export async function createSupabaseServerClient() {
-    // Safety check for missing environment variables during build time
     if (!ENV.VITE_SUPABASE_URL || !ENV.VITE_SUPABASE_ANON_KEY) {
-        return createMockSupabaseClient('SupabaseServer');
+        if (process.env.NODE_ENV === 'production' && !allowUnsafeMockClients) {
+            throw new Error('[SupabaseServer] Required Supabase environment variables are missing');
+        }
+
+        return createUnavailableSupabaseClient('SupabaseServer');
     }
 
     const cookieStore = await cookies()
@@ -71,9 +94,12 @@ export async function createSupabaseServerClient() {
  * This bypasses RLS and should ONLY be used in server-side code (API routes, Server Actions).
  */
 export function createSupabaseAdminClient() {
-    // Safety check for missing environment variables during build time
     if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
-        return createMockSupabaseClient('SupabaseAdmin');
+        if (process.env.NODE_ENV === 'production' && !allowUnsafeMockClients) {
+            throw new Error('[SupabaseAdmin] Required Supabase environment variables are missing');
+        }
+
+        return createUnavailableSupabaseClient('SupabaseAdmin');
     }
 
     return createServerClient(

@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
 import crypto from 'crypto';
 
-const VERIFY_TOKEN = process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN || 'alphaclone_fb_verify';
-const APP_SECRET = process.env.FACEBOOK_APP_SECRET || '';
+const VERIFY_TOKEN = process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN;
+const APP_SECRET = process.env.FACEBOOK_APP_SECRET;
 
 /**
  * Facebook/WhatsApp Webhook Verification (GET)
@@ -17,6 +17,11 @@ const APP_SECRET = process.env.FACEBOOK_APP_SECRET || '';
  */
 export async function GET(req: NextRequest) {
     try {
+        if (!VERIFY_TOKEN) {
+            console.error('[Facebook/WhatsApp Webhook] Verification token is not configured');
+            return new NextResponse('Webhook not configured', { status: 503 });
+        }
+
         const { searchParams } = new URL(req.url);
         const mode = searchParams.get('hub.mode');
         const token = searchParams.get('hub.verify_token');
@@ -60,11 +65,15 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
     try {
+        if (!APP_SECRET) {
+            console.error('[Facebook/WhatsApp Webhook] App secret is not configured');
+            return new NextResponse('Webhook not configured', { status: 503 });
+        }
+
         const bodyText = await req.text();
         const signatureHeader = req.headers.get('x-hub-signature-256');
 
-        // Verify the signature if APP_SECRET is configured
-        if (APP_SECRET && signatureHeader) {
+        if (signatureHeader) {
             const signature = signatureHeader.replace('sha256=', '');
             const expectedSignature = crypto
                 .createHmac('sha256', APP_SECRET)
@@ -85,7 +94,7 @@ export async function POST(req: NextRequest) {
                 console.warn('[Facebook/WhatsApp Webhook] Rejected: invalid HMAC signature');
                 return new NextResponse('Unauthorized', { status: 401 });
             }
-        } else if (APP_SECRET && !signatureHeader) {
+        } else {
             console.warn('[Facebook/WhatsApp Webhook] Rejected: missing signature header');
             return new NextResponse('Unauthorized', { status: 401 });
         }

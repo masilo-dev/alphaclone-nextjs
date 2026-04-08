@@ -1,13 +1,10 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { ZohoMailService } from '../../../../services/zoho/ZohoMailService';
-
-function adminSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
+import {
+  createAdminSupabaseClientOrThrow,
+  requireTenantAccess,
+  routeErrorResponse,
+} from '@/lib/apiAuth';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL;
 const BASE_URL = SITE_URL && !SITE_URL.includes('localhost') 
@@ -48,8 +45,6 @@ function injectTrackingPixel(body: string, trackingId: string): string {
  * }
  */
 export async function POST(request: Request) {
-  const admin = adminSupabase();
-
   try {
     const body = await request.json();
     const {
@@ -69,6 +64,9 @@ export async function POST(request: Request) {
     if (!leadEmail)  return NextResponse.json({ error: 'leadEmail required' }, { status: 400 });
     if (!subject)    return NextResponse.json({ error: 'subject required'   }, { status: 400 });
     if (!emailBody)  return NextResponse.json({ error: 'body required'      }, { status: 400 });
+
+    await requireTenantAccess(tenantId);
+    const admin = createAdminSupabaseClientOrThrow();
 
     // 1. Generate tracking ID
     const trackingId = crypto.randomUUID();
@@ -156,7 +154,6 @@ export async function POST(request: Request) {
     }
 
   } catch (error: any) {
-    console.error('[Outreach/Send] Fatal:', error.message);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return routeErrorResponse(error, error?.message || 'Failed to send outreach email');
   }
 }

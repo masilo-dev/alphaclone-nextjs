@@ -1,8 +1,8 @@
 // Stripe Connect Onboarding Component
 
 'use client';
-import { useState } from 'react';
-import { Button } from '../ui/UIComponents';
+import React, { useEffect, useState } from 'react';
+import { Button } from '../../ui/UIComponents';
 import { CreditCard, ExternalLink, CheckCircle, AlertCircle } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
@@ -95,7 +95,7 @@ export const StripeConnectOnboarding: React.FC = () => {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     checkConnectStatus();
   }, [currentTenant?.id]);
 

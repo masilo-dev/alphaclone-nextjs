@@ -99,7 +99,7 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
         l.businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (l.industry?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
         (l.location?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (l.pmein?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+        (l.email?.toLowerCase() || '').includes(searchTerm.toLowerCase())
     );
 
     return (

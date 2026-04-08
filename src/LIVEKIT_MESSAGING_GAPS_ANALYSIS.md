@@ -33,12 +33,12 @@ Get at: https://makersuite.google.com/app/apikey
 **Required Changes in .env**:
 ```env
 # ❌ DELETE THESE (Insecure)
-VITE_LIVEKIT_API_KEY=APImFRQhfaKprTy      # Remove!
+VITE_LIVEKIT_API_KEY=your-livekit-api-key      # Remove!
 VITE_LIVEKIT_API_SECRET=AePpOuJ7...       # Remove!
 
 # ✅ ADD THESE (Secure - no VITE_ prefix)
-LIVEKIT_API_KEY=APImFRQhfaKprTy
-LIVEKIT_API_SECRET=AePpOuJ7Eqa14GprmYuZ99UM9TdAPcGoNeRhQG6tqcj
+LIVEKIT_API_KEY=your-livekit-api-key
+LIVEKIT_API_SECRET=your-livekit-api-secret
 
 # ✅ KEEP THIS (Safe for browser)
 VITE_LIVEKIT_URL=wss://alphaclone-systems-6klanimr.livekit.cloud
@@ -522,7 +522,6 @@ Your platform has:
 5. Prioritize remaining features based on user feedback
 
 **Status**: Platform is **production-ready** but has room for **significant enhancement**.
-
 
 
 

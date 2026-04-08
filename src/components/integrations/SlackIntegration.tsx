@@ -202,7 +202,7 @@ export function SlackIntegration({ tenantId, onConnected }: SlackIntegrationProp
         </div>
 
         {showModal && (
-          <Modal onClose={() => setShowModal(false)} title="Slack Configuration">
+          <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Slack Configuration">
             <div className="space-y-4">
               <div>
                 <h4 className="text-white font-medium mb-2">Slack Commands</h4>

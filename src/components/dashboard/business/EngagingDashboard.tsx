@@ -433,7 +433,11 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                                         
                                         {!step.completed && step.actionUrl && (
                                             <Button
-                                                onClick={() => router.push(step.actionUrl)}
+                                                onClick={() => {
+                                                    if (step.actionUrl) {
+                                                        router.push(step.actionUrl);
+                                                    }
+                                                }}
                                                 className="bg-blue-500 hover:bg-blue-600"
                                             >
                                                 {step.action}
@@ -464,7 +468,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 </h2>
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                    {quickActions.filter(action => action && action.icon && action.id && action.title).map((action, index) => (
+                    {quickActions.filter(action => action.id && action.title).map((action, index) => (
                         <motion.button
                             key={action.id || `action-${index}`}
                             initial={{ opacity: 0, scale: 0.9 }}

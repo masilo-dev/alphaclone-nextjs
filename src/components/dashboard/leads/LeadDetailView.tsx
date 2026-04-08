@@ -17,7 +17,8 @@ import { quoteService } from '@/services/quoteService';
 import { dealService } from '@/services/dealService';
 import { calendarService } from '@/services/calendarService';
 import { taskService } from '@/services/taskService';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/components/Toast';
+import { supabase } from '@/lib/supabase';
 import { formatDistanceToNow, format } from 'date-fns';
 
 interface LeadDetailViewProps {
@@ -154,7 +155,7 @@ function QuickActionButton({
 }
 
 export default function LeadDetailView({ lead, isOpen, onClose, onUpdate, onDelete }: LeadDetailViewProps) {
-  const { toast } = useToast();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'deals' | 'tasks'>('overview');
   const [isLoading, setIsLoading] = useState(false);
   const [activities, setActivities] = useState<any[]>([]);
@@ -215,7 +216,7 @@ export default function LeadDetailView({ lead, isOpen, onClose, onUpdate, onDele
       if (error) throw new Error(error);
       
       toast.success('Lead converted to contact');
-      onUpdate?.({ ...lead, client_id: contactId, stage: 'qualified' });
+      onUpdate?.({ ...lead, client_id: contactId ?? undefined, stage: 'qualified' });
       setShowConvertModal(false);
       loadRelatedData();
     } catch (err: any) {
@@ -228,7 +229,16 @@ export default function LeadDetailView({ lead, isOpen, onClose, onUpdate, onDele
   const handleCreateDeal = async () => {
     setIsLoading(true);
     try {
-      const { deal, error } = await dealService.createDealFromLead(lead);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('You must be signed in to create a deal');
+
+      const { deal, error } = await dealService.createDeal(user.id, {
+        name: lead.businessName,
+        contactId: lead.client_id,
+        value: lead.value,
+        description: lead.notes,
+        stage: lead.stage === 'qualified' ? 'qualified' : 'lead'
+      });
       if (error) throw new Error(error);
       
       toast.success('Deal created from lead');
@@ -257,11 +267,16 @@ export default function LeadDetailView({ lead, isOpen, onClose, onUpdate, onDele
     }
     
     // Create a task for the call
-    await taskService.createTask({
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('You must be signed in to create tasks');
+      return;
+    }
+
+    await taskService.createTask(user.id, {
       title: `Call ${lead.businessName}`,
       description: `Phone: ${lead.phone}`,
-      relatedLeadId: lead.id,
-      type: 'call',
+      relatedToLead: lead.id,
       priority: 'high'
     });
     

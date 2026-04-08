@@ -503,7 +503,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                         fontSize={10}
                                         tickLine={false}
                                         axisLine={false}
-                                        tickFormatter={(value) => `$${value >= 1000 ? (value / 1000).toFixed(0) + 'k' : value}`}
+                                        tickFormatter={(value: number) => `$${value >= 1000 ? (value / 1000).toFixed(0) + 'k' : value}`}
                                     />
                                     <Tooltip
                                         contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '8px' }}

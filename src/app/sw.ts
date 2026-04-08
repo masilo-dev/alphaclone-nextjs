@@ -16,7 +16,6 @@ const serwist = new Serwist({
     skipWaiting: true,
     clientsClaim: true,
     navigationPreload: true,
-    cleanupOutdatedCaches: true,
     runtimeCaching: [
         {
             // Always fetch page navigations from the network — never serve from cache

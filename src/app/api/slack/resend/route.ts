@@ -1,27 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+import {
+  createAdminSupabaseClientOrThrow,
+  requireTenantAccess,
+  routeErrorResponse,
+} from '@/lib/apiAuth';
 
 export async function POST(request: NextRequest) {
   try {
-    const { tenant_id, notification_id } = await request.json();
+    const { tenant_id, tenantId: tenantIdInput, notification_id, notificationId } = await request.json();
+    const tenantId = tenantIdInput || tenant_id;
+    const notificationIdValue = notificationId || notification_id;
 
-    if (!tenant_id || !notification_id) {
+    if (!tenantId || !notificationIdValue) {
       return NextResponse.json(
-        { error: 'Missing tenant_id or notification_id' },
+        { error: 'Missing tenantId or notificationId' },
         { status: 400 }
       );
     }
 
+    await requireTenantAccess(tenantId);
+
     // Get the original notification
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createAdminSupabaseClientOrThrow();
     const { data: notification, error } = await supabase
       .from('slack_notifications')
       .select('*')
-      .eq('id', notification_id)
-      .eq('tenant_id', tenant_id)
+      .eq('id', notificationIdValue)
+      .eq('tenant_id', tenantId)
       .single();
 
     if (error || !notification) {
@@ -35,7 +40,7 @@ export async function POST(request: NextRequest) {
     const { data: integration, error: integrationError } = await supabase
       .from('tenant_integrations')
       .select('*')
-      .eq('tenant_id', tenant_id)
+      .eq('tenant_id', tenantId)
       .eq('integration_type', 'slack')
       .eq('status', 'active')
       .single();
@@ -79,7 +84,7 @@ export async function POST(request: NextRequest) {
         slack_message_id: slackData.ts,
         resent_at: new Date().toISOString()
       })
-      .eq('id', notification_id);
+      .eq('id', notificationIdValue);
 
     return NextResponse.json({
       success: true,
@@ -88,10 +93,6 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Slack resend error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return routeErrorResponse(error, 'Internal server error');
   }
 }

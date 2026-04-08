@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import axios from 'axios';
+import * as cheerio from 'cheerio';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+import { BrowserManager } from '@/lib/scraper/browserManager';
+import {
+  RouteAuthError,
+  createAdminSupabaseClientOrThrow,
+  requireTenantAccess,
+  routeErrorResponse,
+} from '@/lib/apiAuth';
 
 // Client-friendly error messages
 const CLIENT_ERRORS = {
@@ -97,20 +103,122 @@ function translateErrorToClient(error: any): typeof CLIENT_ERRORS[keyof typeof C
   return CLIENT_ERRORS.UNKNOWN_ERROR;
 }
 
+type ScrapedLead = {
+  businessName: string;
+  website: string;
+  email: string;
+  phone: string;
+  address: string;
+  category: string;
+};
+
+const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+const PHONE_REGEX = /(?:\+?\d{1,3}[-.\s()]*)?(?:\d{2,4}[-.\s()]*){2,4}\d{2,4}/g;
+
+function extractFirstEmail(html: string, $: cheerio.CheerioAPI) {
+  const mailto = $('a[href^="mailto:"]').first().attr('href')?.replace('mailto:', '').split('?')[0].trim();
+  if (mailto) return mailto.toLowerCase();
+
+  const matches = html.match(EMAIL_REGEX) || [];
+  return matches
+    .map((match) => match.toLowerCase())
+    .find((match) => !match.includes('example.com') && !match.endsWith('.png') && !match.endsWith('.jpg'))
+    || '';
+}
+
+function extractFirstPhone(html: string, $: cheerio.CheerioAPI) {
+  const tel = $('a[href^="tel:"]').first().attr('href')?.replace('tel:', '').trim();
+  if (tel) return tel;
+
+  const matches = html.match(PHONE_REGEX) || [];
+  return matches.find((match) => match.replace(/\D/g, '').length >= 7) || '';
+}
+
+async function loadPageHtml(url: string) {
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+      },
+      timeout: 10000,
+    });
+
+    if (typeof response.data === 'string' && response.data.length > 1000) {
+      return response.data;
+    }
+  } catch (error) {
+    console.warn('[Playwright Scrape] Static fetch failed, falling back to browser engine:', error);
+  }
+
+  const { page } = await BrowserManager.createPage();
+
+  try {
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
+    await page.waitForTimeout(1500);
+    return await page.content();
+  } finally {
+    await page.context().close().catch(() => undefined);
+  }
+}
+
+async function scrapeLead(url: string): Promise<{ leadsFound: number; leads: ScrapedLead[] }> {
+  const html = await loadPageHtml(url);
+  const $ = cheerio.load(html);
+  const hostname = new URL(url).hostname.replace(/^www\./, '');
+
+  const businessName =
+    $('meta[property="og:site_name"]').attr('content')?.trim()
+    || $('h1').first().text().trim()
+    || $('title').text().split(/[-|:]/)[0].trim()
+    || hostname;
+
+  const email = extractFirstEmail(html, $);
+  const phone = extractFirstPhone(html, $);
+  const address = $('address').first().text().replace(/\s+/g, ' ').trim();
+  const category =
+    $('meta[name="description"]').attr('content')?.trim()
+    || $('meta[property="og:description"]').attr('content')?.trim()
+    || 'Website lead';
+
+  if (!email && !phone) {
+    return { leadsFound: 0, leads: [] };
+  }
+
+  return {
+    leadsFound: 1,
+    leads: [{
+      businessName,
+      website: url,
+      email,
+      phone,
+      address,
+      category,
+    }],
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { tenant_id, url } = await request.json();
+    const body = await request.json();
+    const tenantId = (body.tenant_id || body.tenantId || '').trim();
+    const url = body.url;
 
-    if (!tenant_id || !url) {
+    if (!tenantId || !url) {
       return NextResponse.json(
-        { error: 'Missing tenant_id or url' },
+        { error: 'Missing tenantId or url' },
         { status: 400 }
       );
     }
 
+    await requireTenantAccess(tenantId);
+
     // Basic URL validation
     try {
-      new URL(url);
+      const parsedUrl = new URL(url);
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+        throw new Error('Unsupported protocol');
+      }
     } catch {
       const clientError = CLIENT_ERRORS.NOT_FOUND;
       return NextResponse.json({
@@ -120,11 +228,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Create a scraping job record
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createAdminSupabaseClientOrThrow();
     const { data: job, error: jobError } = await supabase
       .from('scraping_jobs')
       .insert({
-        tenant_id,
+        tenant_id: tenantId,
         url,
         status: 'pending',
         leads_found: 0,
@@ -141,13 +249,8 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Start the scraping process in the background
-    // In a real implementation, you would use a queue system like Bull or Redis
-    // For now, we'll simulate the scraping process
-    
     try {
-      // Simulate scraping attempt
-      const scrapingResult = await simulateScraping(url);
+      const scrapingResult = await scrapeLead(url);
       
       // Update job with results
       await supabase
@@ -165,7 +268,7 @@ export async function POST(request: NextRequest) {
           await supabase
             .from('leads')
             .insert({
-              tenant_id,
+              tenant_id: tenantId,
               business_name: lead.businessName,
               website: lead.website,
               email: lead.email,
@@ -182,7 +285,9 @@ export async function POST(request: NextRequest) {
         success: true,
         jobId: job.id,
         leadsFound: scrapingResult.leadsFound,
-        message: `Successfully found ${scrapingResult.leadsFound} leads`
+        message: scrapingResult.leadsFound > 0
+          ? `Successfully found ${scrapingResult.leadsFound} leads`
+          : 'No contactable leads were found on this page'
       });
 
     } catch (scrapingError) {
@@ -206,6 +311,10 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
+    if (error instanceof RouteAuthError) {
+      return routeErrorResponse(error);
+    }
+
     console.error('Playwright scraping error:', error);
     const clientError = translateErrorToClient(error);
     
@@ -214,48 +323,4 @@ export async function POST(request: NextRequest) {
       clientFriendly: true
     }, { status: 500 });
   }
-}
-
-// Simulate scraping process - replace with actual Playwright implementation
-async function simulateScraping(url: string): Promise<{ leadsFound: number; leads?: any[] }> {
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  // Simulate different outcomes based on URL
-  if (url.includes('example.com') || url.includes('test.com')) {
-    return { leadsFound: 0 };
-  }
-  
-  // Simulate finding some leads
-  if (Math.random() > 0.3) {
-    const mockLeads = [
-      {
-        businessName: 'Sample Company',
-        website: url,
-        email: 'contact@sample.com',
-        phone: '+1-555-0123',
-        address: '123 Main St, City, State',
-        category: 'Technology'
-      }
-    ];
-    
-    return { 
-      leadsFound: mockLeads.length, 
-      leads: mockLeads 
-    };
-  }
-  
-  // Simulate random errors
-  const random = Math.random();
-  if (random < 0.1) {
-    throw new Error('ECONNREFUSED: Connection refused');
-  } else if (random < 0.2) {
-    throw new Error('timeout: Request timeout');
-  } else if (random < 0.3) {
-    throw new Error('404: Not Found');
-  } else if (random < 0.4) {
-    throw new Error('403: Forbidden');
-  }
-  
-  return { leadsFound: 0 };
 }

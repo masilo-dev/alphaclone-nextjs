@@ -1,20 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase-server';
+import {
+    createAdminSupabaseClientOrThrow,
+    requireAuthenticatedUser,
+    requireTenantAccess,
+    routeErrorResponse,
+} from '@/lib/apiAuth';
 import { facebookService } from '@/services/facebookService';
 
 export async function POST(req: NextRequest) {
-    const authClient = await createSupabaseServerClient();
-    const { data: { user } } = await authClient.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     try {
+        await requireAuthenticatedUser();
         const { conversationId, text } = await req.json();
 
         if (!conversationId || !text) {
             return NextResponse.json({ error: 'Conversation ID and text are required' }, { status: 400 });
         }
 
-        const supabase = createSupabaseAdminClient();
+        const supabase = createAdminSupabaseClientOrThrow();
 
         // 1. Get conversation details (to get page_id, sender_id, tenant_id)
         const { data: conversation, error: convError } = await supabase
@@ -26,6 +28,8 @@ export async function POST(req: NextRequest) {
         if (convError || !conversation) {
             return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
         }
+
+        await requireTenantAccess(conversation.tenant_id);
 
         // 2. Send the message via Facebook
         const result = await facebookService.sendMessengerMessage(
@@ -54,7 +58,6 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, messageId: result.message_id });
     } catch (err: any) {
-        console.error('Send Messenger message error:', err);
-        return NextResponse.json({ error: err.message || 'Internal error' }, { status: 500 });
+        return routeErrorResponse(err, err?.message || 'Internal error');
     }
 }

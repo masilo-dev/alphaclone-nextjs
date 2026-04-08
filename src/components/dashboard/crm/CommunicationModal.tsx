@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Mail, Send, X, Loader2, CheckCircle2, User, Search, Users, ChevronDown, MailCheck } from 'lucide-react';
 import { Button, Input, Modal } from '../../ui/UIComponents';
 import { BusinessClient, businessClientService } from '../../../services/businessClientService';
 import { supabase } from '../../../lib/supabase';
 import { toast } from 'react-hot-toast';
+import { useTenant } from '@/contexts/TenantContext';
 
 interface CommunicationModalProps {
     client?: BusinessClient;       // Optional – pre-selected client
@@ -17,6 +18,7 @@ interface CommunicationModalProps {
 type EmailProvider = 'gmail' | 'zoho' | null;
  
 export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, user, onClose, onSent }) => {
+    const { currentTenant } = useTenant();
     const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(client || null);
     const [subject, setSubject] = useState('');
     const [body, setBody] = useState('');
@@ -26,8 +28,11 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
     const [searchTerm, setSearchTerm] = useState('');
     const [clients, setClients] = useState<BusinessClient[]>([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [contactSearch, setContactSearch] = useState('');
+    const [showPicker, setShowPicker] = useState(false);
 
     const [signature, setSignature] = useState('');
+    const pickerRef = useRef<HTMLDivElement>(null);
     
     // Define available email providers
     const availableProviders: EmailProvider[] = ['gmail', 'zoho'];
@@ -40,6 +45,33 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
         };
         fetchSignature();
     }, [user.id]);
+
+    useEffect(() => {
+        const loadClients = async () => {
+            if (!currentTenant?.id) return;
+
+            const { clients: loadedClients, error } = await businessClientService.getClients(currentTenant.id, 1, 100);
+            if (error) {
+                toast.error(error);
+                return;
+            }
+
+            setClients(loadedClients.filter(item => !!item.email));
+        };
+
+        loadClients();
+    }, [currentTenant?.id]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+                setShowPicker(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     // Handle AI Auto-drafting and Signature Appending
     useEffect(() => {
@@ -58,6 +90,16 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
             setBody(`Hello ${selectedClient.name.split(' ')[0]},\n\nI would like to follow up on our recent discussion...\n${signature}`);
         }
     }, [selectedClient, signature]);
+
+    const filteredContacts = useMemo(() => {
+        const query = contactSearch.trim().toLowerCase();
+        if (!query) return clients;
+
+        return clients.filter(contact =>
+            contact.name.toLowerCase().includes(query) ||
+            (contact.email || '').toLowerCase().includes(query)
+        );
+    }, [clients, contactSearch]);
 
     const handleSend = async () => {
         if (!selectedClient?.email) {

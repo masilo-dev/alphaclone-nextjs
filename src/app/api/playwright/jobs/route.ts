@@ -1,28 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+import {
+  RouteAuthError,
+  createAdminSupabaseClientOrThrow,
+  requireTenantAccess,
+  routeErrorResponse,
+} from '@/lib/apiAuth';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const tenant_id = searchParams.get('tenant_id');
+    const tenantId = searchParams.get('tenant_id') || searchParams.get('tenantId');
 
-    if (!tenant_id) {
+    if (!tenantId) {
       return NextResponse.json(
-        { error: 'Missing tenant_id' },
+        { error: 'Missing tenantId' },
         { status: 400 }
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    await requireTenantAccess(tenantId);
+    const supabase = createAdminSupabaseClientOrThrow();
     
     // Get recent scraping jobs for this tenant
     const { data: jobs, error } = await supabase
       .from('scraping_jobs')
-      .select('*')
-      .eq('tenant_id', tenant_id)
+      .select('id, url, status, leads_found, error_message, started_at, completed_at')
+      .eq('tenant_id', tenantId)
       .order('started_at', { ascending: false })
       .limit(10);
 
@@ -38,6 +41,10 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
+    if (error instanceof RouteAuthError) {
+      return routeErrorResponse(error);
+    }
+
     console.error('Playwright jobs error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
