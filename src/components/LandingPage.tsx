@@ -451,7 +451,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            icon: Briefcase,
                            title: 'Project Engine',
                            desc: 'Track projects, tasks, and deadlines with intelligent automation and team collaboration.',
-                           color: 'from-purple-500 to-pink-500'
+                           color: 'from-purple-500 to-indigo-500'
                         },
                         {
                            icon: TrendingUp,
@@ -469,7 +469,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            icon: ShieldCheck,
                            title: 'Safe & Secure',
                            desc: 'Bank-level security, SOC 2 compliance, and regular security audits.',
-                           color: 'from-red-500 to-pink-500'
+                           color: 'from-red-500 to-blue-500'
                         },
                         {
                            icon: Smartphone,

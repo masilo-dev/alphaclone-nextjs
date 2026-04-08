@@ -23,7 +23,6 @@ interface GenerationResult {
 
 class AIGenerationService {
     private readonly OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
-    private readonly ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
 
     /**
      * Generate logo using DALL-E 3
@@ -34,19 +33,6 @@ class AIGenerationService {
         prompt: string,
         style: 'modern' | 'minimalist' | 'vintage' | 'abstract' = 'modern'
     ): Promise<GenerationResult> {
-        // Rate limits removed - unlimited logo generation
-        /*
-        // Check rate limit
-        const { allowed, remaining } = await rateLimitService.checkLimit(userId, userRole, 'logo');
-        if (!allowed) {
-            return {
-                success: false,
-                error: `Daily generation limit reached (3/day). Resets at midnight.`,
-                remaining: 0
-            };
-        }
-        */
-
         try {
             const enhancedPrompt = `Professional ${style} logo design: ${prompt}. Clean, vector-style, suitable for business branding. High quality, simple background, modern aesthetic.`;
 
@@ -112,19 +98,6 @@ class AIGenerationService {
         prompt: string,
         size: '1024x1024' | '1792x1024' | '1024x1792' = '1024x1024'
     ): Promise<GenerationResult> {
-        // Rate limits removed - unlimited image generation
-        /*
-        // Check rate limit
-        const { allowed, remaining } = await rateLimitService.checkLimit(userId, userRole, 'image');
-        if (!allowed) {
-            return {
-                success: false,
-                error: `Daily generation limit reached (3/day). Resets at midnight.`,
-                remaining: 0
-            };
-        }
-        */
-
         try {
             const response = await fetch('https://api.openai.com/v1/images/generations', {
                 method: 'POST',
@@ -179,27 +152,15 @@ class AIGenerationService {
     }
 
     /**
-     * Generate content using Claude API
+     * Generate content using Secure Server-side Proxy
      */
     async generateContent(
         userId: string,
         userRole: string,
         prompt: string,
-        type: 'blog' | 'email' | 'social' | 'general' = 'general'
+        type: 'blog' | 'email' | 'social' | 'general' = 'general',
+        model: string = 'claude-3-5-sonnet-20241022'
     ): Promise<GenerationResult> {
-        // Rate limits removed - unlimited content generation
-        /*
-        // Check rate limit
-        const { allowed, remaining } = await rateLimitService.checkLimit(userId, userRole, 'content');
-        if (!allowed) {
-            return {
-                success: false,
-                error: `Daily generation limit reached (3/day). Resets at midnight.`,
-                remaining: 0
-            };
-        }
-        */
-
         try {
             const systemPrompts = {
                 blog: 'You are a professional blog writer. Create engaging, SEO-optimized content with clear structure and compelling narrative.',
@@ -208,31 +169,26 @@ class AIGenerationService {
                 general: 'You are a professional content writer. Create high-quality, engaging content tailored to the request.'
             };
 
-            const response = await fetch('https://api.anthropic.com/v1/messages', {
+            // Call the secure server-side AI proxy
+            const response = await fetch('/api/ai/generate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-api-key': this.ANTHROPIC_API_KEY,
-                    'anthropic-version': '2023-06-01'
                 },
                 body: JSON.stringify({
-                    model: 'claude-sonnet-4-5-20250929',
-                    max_tokens: 4096,
-                    system: systemPrompts[type],
-                    messages: [{
-                        role: 'user',
-                        content: prompt
-                    }]
+                    prompt,
+                    systemPrompt: systemPrompts[type],
+                    model,
                 })
             });
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error?.message || 'Failed to generate content');
+                throw new Error(error.error || 'Failed to generate content');
             }
 
             const data = await response.json();
-            const content = data.content[0].text;
+            const content = data.text;
 
             // Increment usage
             await rateLimitService.incrementCount(userId, 'content');
@@ -242,7 +198,7 @@ class AIGenerationService {
                 user_id: userId,
                 asset_type: 'content',
                 prompt: prompt,
-                metadata: { type, model: 'claude-4.5-sonnet', content },
+                metadata: { type, model, content },
                 tenant_id: tenantService.getCurrentTenantId()
             });
 
@@ -313,3 +269,4 @@ class AIGenerationService {
 }
 
 export const aiGenerationService = new AIGenerationService();
+

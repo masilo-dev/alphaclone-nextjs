@@ -1,10 +1,6 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { ENV } from '@/config/env';
+import { routeAIRequest } from '../aiRouter';
 import { supabase } from '@/lib/supabase';
 import { tenantService } from '@/services/tenancy/TenantService';
-
-const GEMINI_API_KEY = ENV.VITE_GEMINI_API_KEY || '';
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 interface AIContext {
   tenantId: string;
@@ -14,13 +10,11 @@ interface AIContext {
   recentActivity?: any[];
 }
 
+/**
+ * AICore Service
+ * Refactored to use centralized AI Router (Claude/OpenAI) instead of legacy Gemini.
+ */
 export class AICore {
-  private model: any;
-
-  constructor() {
-    this.model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-  }
-
   /**
    * MARKETING: AI generates marketing strategies
    */
@@ -49,8 +43,12 @@ Format as JSON with these exact keys: strategy, tactics (array), timeline, budge
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = result.response.text();
+      const result = await routeAIRequest({ 
+        prompt, 
+        model: 'claude-3-5-sonnet-20241022',
+        temperature: 0.7 
+      });
+      const response = result.content;
 
       // Parse JSON from response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
@@ -103,8 +101,12 @@ Make it professional, legally sound, and clear.
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const contract = result.response.text();
+      const result = await routeAIRequest({ 
+        prompt, 
+        model: 'claude-3-5-sonnet-20241022',
+        temperature: 0.3 
+      });
+      const contract = result.content;
 
       // Save to database
       const tenantId = tenantService.getCurrentTenantId();
@@ -162,8 +164,11 @@ Format as JSON with keys: summary, message, nextSteps (array)
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = result.response.text();
+      const result = await routeAIRequest({ 
+        prompt, 
+        model: 'claude-3-5-sonnet-20241022' 
+      });
+      const response = result.content;
 
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -208,8 +213,11 @@ Keep each reply under 100 words. Format as array of strings.
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = result.response.text();
+      const result = await routeAIRequest({ 
+        prompt, 
+        model: 'claude-3-5-sonnet-20241022' 
+      });
+      const response = result.content;
 
       // Extract array from response
       const arrayMatch = response.match(/\[[\s\S]*\]/);
@@ -258,8 +266,11 @@ Return JSON array with: title, description, priority, estimatedHours
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = result.response.text();
+      const result = await routeAIRequest({ 
+        prompt, 
+        model: 'claude-3-5-sonnet-20241022' 
+      });
+      const response = result.content;
 
       const jsonMatch = response.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
@@ -313,8 +324,11 @@ Format as JSON with keys: summary, strengths, improvements, recommendations (all
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = result.response.text();
+      const result = await routeAIRequest({ 
+        prompt, 
+        model: 'claude-3-5-sonnet-20241022' 
+      });
+      const response = result.content;
 
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -360,8 +374,12 @@ Format as JSON with keys: subject, preview, body, variations (array of {subject,
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = result.response.text();
+      const result = await routeAIRequest({ 
+        prompt, 
+        model: 'claude-3-5-sonnet-20241022',
+        temperature: 0.8 
+      });
+      const response = result.content;
 
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -445,8 +463,11 @@ Format as JSON with: successProbability (number), factors (array of {factor, imp
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = result.response.text();
+      const result = await routeAIRequest({ 
+        prompt, 
+        model: 'claude-3-5-sonnet-20241022' 
+      });
+      const response = result.content;
 
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -481,6 +502,7 @@ Format as JSON with: successProbability (number), factors (array of {factor, imp
 
       return `
 Business Name: ${tenant?.name || 'Unknown'}
+Business Description: ${tenant?.description || 'N/A'}
 Industry: ${tenant?.industry || 'General Business'}
 Active Projects: ${projects?.map((p: any) => p.name).join(', ') || 'None'}
 Recent Deals: ${deals?.map((d: any) => d.title).join(', ') || 'None'}
@@ -509,7 +531,7 @@ Pending Revenue: ${invoices?.reduce((sum: number, inv: any) => sum + (inv.total 
     
     const prompt = `
 You are the AlphaClone Autonomous Business Engine. Analyze the following business context and generate 3-5 PROACTIVE high-stakes actions.
-Your goal is 900% business automation (AI handles the heavy lifing).
+Your goal is 900% business automation (AI handles the heavy lifting).
 
 Context:
 ${contextText}
@@ -527,8 +549,12 @@ Invisible AI Rule: No "Based on the data". No conversation. Just the JSON. Handl
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = result.response.text();
+      const result = await routeAIRequest({ 
+        prompt, 
+        model: 'claude-3-5-sonnet-20241022',
+        temperature: 0.6 
+      });
+      const response = result.content;
       const jsonMatch = response.match(/\[[\s\S]*\]/);
       
       const insights = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
@@ -572,8 +598,12 @@ Rules:
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = result.response.text();
+      const result = await routeAIRequest({ 
+        prompt, 
+        model: 'claude-3-5-sonnet-20241022',
+        temperature: 0.7 
+      });
+      const response = result.content;
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       const data = jsonMatch ? JSON.parse(jsonMatch[0]) : { subject: 'Strategic Partnership Inquiry', body: 'I would like to discuss how we can support your business growth.' };
       

@@ -475,7 +475,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: 0.3 + index * 0.05 }}
                             onClick={action.action}
-                            className="bg-gradient-to-r from-teal-500/20 to-orange-500/20 hover:from-teal-500/30 hover:to-orange-500/30 border border-teal-500/30 hover:border-orange-500/50 p-2 rounded-lg text-white transition-all transform hover:scale-105"
+                            className="bg-gradient-to-r from-teal-500/20 to-blue-500/20 hover:from-teal-500/30 hover:to-blue-500/30 border border-teal-500/30 hover:border-blue-500/50 p-2 rounded-lg text-white transition-all transform"
                         >
                             {action.icon && <action.icon className="w-4 h-4 mb-1 text-teal-400 group-hover:text-orange-400 transition-colors" />}
                             <div className="text-xs font-medium">{action.title || 'Action'}</div>
@@ -610,10 +610,10 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
 
             {/* Motivational Message */}
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 }}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-6 text-white text-center"
+                className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 text-white text-center"
             >
                 <div className="text-4xl mb-2">💪</div>
                 <h3 className="text-xl font-bold mb-2">You're Doing Amazing!</h3>

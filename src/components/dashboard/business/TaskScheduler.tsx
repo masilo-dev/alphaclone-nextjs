@@ -59,7 +59,7 @@ interface TaskSchedulerProps {
 const TASK_TYPES = [
   { value: 'email',             label: 'Email Outreach',    icon: <Mail size={14} />,       color: 'text-blue-400 bg-blue-400/10 border-blue-400/20' },
   { value: 'lead_generation',   label: 'Lead Generation',   icon: <Target size={14} />,     color: 'text-teal-400 bg-teal-400/10 border-teal-400/20' },
-  { value: 'social_post',       label: 'Social Post',       icon: <Share2 size={14} />,     color: 'text-pink-400 bg-pink-400/10 border-pink-400/20' },
+  { value: 'social_post',       label: 'Social Post',       icon: <Share2 size={14} />,     color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20' },
   { value: 'contract_creation', label: 'Contract Creation', icon: <FileText size={14} />,   color: 'text-purple-400 bg-purple-400/10 border-purple-400/20' },
   { value: 'invoice',           label: 'Invoice',           icon: <DollarSign size={14} />, color: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20' },
   { value: 'follow_up',         label: 'Follow Up',         icon: <RefreshCw size={14} />,  color: 'text-orange-400 bg-orange-400/10 border-orange-400/20' },
@@ -735,7 +735,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                   <select
                     value={newTask.target?.criteria || 'facebook'}
                     onChange={e => setNewTask(p => ({ ...p, target: { ...p.target, criteria: e.target.value } }))}
-                    className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-pink-500/50 transition-colors"
+                    className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500/50 transition-colors"
                   >
                     <option value="facebook">Facebook</option>
                     <option value="facebook,instagram">Facebook + Instagram</option>

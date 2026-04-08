@@ -559,7 +559,7 @@ export default function SocialMediaComposer() {
                                         }}
                                         className={`flex items-center gap-1.5 text-xs px-3 py-1.5 border rounded-lg transition-all ${
                                             showAiImagePanel
-                                                ? 'bg-pink-500/20 border-pink-500/40 text-pink-300'
+                                                ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300'
                                                 : 'bg-slate-700 hover:bg-slate-600 border-slate-600 text-slate-300 hover:text-white'
                                         }`}
                                     >
@@ -571,10 +571,10 @@ export default function SocialMediaComposer() {
 
                             {/* AI Image Generator Panel */}
                             {showAiImagePanel && (
-                                <div className="mt-3 p-4 bg-pink-500/5 border border-pink-500/20 rounded-xl space-y-3">
+                                <div className="mt-3 p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-xl space-y-3">
                                     <div className="flex items-center gap-2">
-                                        <Wand2 className="w-4 h-4 text-pink-400" />
-                                        <p className="text-xs font-semibold text-pink-300">AI Image Generator (DALL-E 3)</p>
+                                        <Wand2 className="w-4 h-4 text-indigo-400" />
+                                        <p className="text-xs font-semibold text-indigo-300">AI Image Generator (DALL-E 3)</p>
                                         <span className="ml-auto text-[10px] text-slate-500 italic">Images are temporary unless attached</span>
                                     </div>
 
@@ -583,7 +583,7 @@ export default function SocialMediaComposer() {
                                         onChange={e => setAiImagePrompt(e.target.value)}
                                         placeholder="Describe the image, e.g. 'A professional team meeting in a modern office, warm lighting, photorealistic'"
                                         rows={2}
-                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-pink-500 text-sm resize-none"
+                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-sm resize-none"
                                     />
 
                                     <div className="flex items-center gap-2 flex-wrap">
@@ -594,7 +594,7 @@ export default function SocialMediaComposer() {
                                                 onClick={() => setAiImageSize(val)}
                                                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                                                     aiImageSize === val
-                                                        ? 'bg-pink-500 text-white'
+                                                        ? 'bg-indigo-500 text-white'
                                                         : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
                                                 }`}
                                             >
@@ -604,7 +604,7 @@ export default function SocialMediaComposer() {
                                         <button
                                             onClick={generateAIImage}
                                             disabled={aiImageGenerating || !aiImagePrompt.trim()}
-                                            className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-pink-600 hover:bg-pink-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-colors"
+                                            className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-colors"
                                         >
                                             {aiImageGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
                                             {aiImageGenerating ? 'Generating...' : 'Generate'}
@@ -613,7 +613,7 @@ export default function SocialMediaComposer() {
 
                                     {/* Generated Image Preview */}
                                     {aiGeneratedImageUrl && (
-                                        <div className="relative rounded-xl overflow-hidden border border-pink-500/30 bg-slate-900">
+                                        <div className="relative rounded-xl overflow-hidden border border-indigo-500/30 bg-slate-900">
                                             <img
                                                 src={aiGeneratedImageUrl}
                                                 alt="AI Generated"

@@ -1,11 +1,9 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ENV } from '../config/env';
 import { Lead } from './leadService';
 import { withLanguage, getLanguageInstruction } from '@/lib/languageUtils';
 
 
 // API Keys from validated ENV
-const GEMINI_API_KEY = ENV.VITE_GEMINI_API_KEY || '';
 const ANTHROPIC_API_KEY = ENV.ANTHROPIC_API_KEY || '';
 const OPENAI_API_KEY = ENV.OPENAI_API_KEY || '';
 
@@ -13,14 +11,13 @@ const OPENAI_API_KEY = ENV.OPENAI_API_KEY || '';
 export const getAvailableProviders = () => {
     return {
         claude: !!ANTHROPIC_API_KEY,
-        openai: !!OPENAI_API_KEY,
-        gemini: !!GEMINI_API_KEY
+        openai: !!OPENAI_API_KEY
     };
 };
 
 export const isAnyAIConfigured = () => {
     const providers = getAvailableProviders();
-    return providers.claude || providers.openai || providers.gemini;
+    return providers.claude || providers.openai;
 };
 
 /**

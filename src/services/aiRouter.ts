@@ -10,8 +10,8 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
-import { geminiService, chatWithGemini } from './geminiService';
 import { ENV } from '@/config/env';
+import { CLAUDE_MODELS, DEFAULT_CLAUDE_MODEL } from '@/config/aiModels';
 
 // Initialize clients using validated ENV
 const anthropic = ENV.ANTHROPIC_API_KEY
@@ -47,7 +47,11 @@ export const MODEL_PRICING = {
   'claude-3-5-sonnet-20241022': { input: 3, output: 15 },
   'claude-3-5-haiku-20241022': { input: 0.25, output: 1.25 },
   'claude-3-opus-20240229': { input: 15, output: 75 },
+  'claude-3-sonnet-20240229': { input: 3, output: 15 },
+  'claude-3-haiku-20240307': { input: 0.25, output: 1.25 },
 };
+
+// CLAUDE_MODELS is now imported from @/config/aiModels
 
 export interface AIRequestOptions {
   prompt: string;
@@ -83,9 +87,6 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
     if (requestedModel.startsWith('gpt') && openai) {
       return await completeWithOpenAI(options);
     }
-    if (requestedModel.startsWith('gemini') && ENV.VITE_GEMINI_API_KEY) {
-      return await completeWithGemini(options);
-    }
     if (requestedModel.startsWith('openrouter/') && openRouterClient) {
       return await completeWithOpenRouter(options);
     }
@@ -119,24 +120,10 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
     }
   }
 
-  // Priority 4: Try Gemini (fallback)
-  if (ENV.VITE_GEMINI_API_KEY) {
-    try {
-      console.log('[AI Router] Attempting Gemini (fallback)...');
-      const response = await completeWithGemini(options);
-      console.log('[AI Router] ✓ Gemini succeeded');
-      return response;
-    } catch (error: any) {
-      const errorMsg = `Gemini failed: ${error.message}`;
-      console.error(`[AI Router] ✗ Gemini Error:`, error);
-      errors.push(errorMsg);
-    }
-  }
-
   // All providers failed
   const finalError = errors.length > 0
     ? `All AI providers failed:\n${errors.join('\n')}`
-    : "No AI providers are configured. Please check your .env file for ANTHROPIC_API_KEY, OPENAI_API_KEY, or VITE_GEMINI_API_KEY.";
+    : "No AI providers are configured. Please check your .env file for ANTHROPIC_API_KEY or OPENAI_API_KEY.";
 
   throw new Error(finalError);
 }
@@ -149,7 +136,7 @@ async function completeWithAnthropic(options: AIRequestOptions): Promise<AIRespo
     throw new Error('Anthropic API key not configured');
   }
 
-  const model = options.model || 'claude-sonnet-4-5-20250929';
+  const model = options.model || DEFAULT_CLAUDE_MODEL;
 
   const message = await anthropic.messages.create({
     model: model,
@@ -201,24 +188,6 @@ async function completeWithOpenAI(options: AIRequestOptions): Promise<AIResponse
     content: completion.choices[0]?.message?.content || '',
     provider: 'openai',
     model: model,
-    success: true,
-  };
-}
-
-/**
- * Complete with Gemini (fallback)
- */
-async function completeWithGemini(options: AIRequestOptions): Promise<AIResponse> {
-  const result = await geminiService.generateContent(options.prompt);
-
-  if (result.error || !result.text) {
-    throw new Error((result.error as any)?.message || 'Gemini generation failed');
-  }
-
-  return {
-    content: result.text,
-    provider: 'gemini',
-    model: 'gemini-1.5-flash',
     success: true,
   };
 }
@@ -281,48 +250,9 @@ export async function routeAIChat(
     }
   }
 
-  // Priority 4: Try Gemini (supports vision)
-  if (ENV.VITE_GEMINI_API_KEY) {
-    try {
-      console.log('[AI Router] Attempting Gemini chat...');
-      // Gemini REQUIRED: Roles MUST alternate and history should start with 'user'
-      // Growth Agent greeting is 'model', so we skip if first
-      const validHistory = history.filter((msg, idx) => {
-        if (idx === 0 && msg.role !== 'user') return false;
-        return true;
-      });
-
-      const geminiHistory: any[] = [];
-      for (const msg of validHistory) {
-        const role = msg.role === 'model' ? 'model' : 'user';
-        if (geminiHistory.length > 0 && geminiHistory[geminiHistory.length - 1].role === role) {
-          continue; // Skip consecutive same roles
-        }
-        geminiHistory.push({
-          role,
-          text: msg.content || (msg as any).text || ''
-        });
-      }
-
-      const result = await chatWithGemini(geminiHistory, message, image, systemPrompt);
-      console.log('[AI Router] ✓ Gemini chat succeeded');
-
-      return {
-        content: result.text || '',
-        provider: 'gemini',
-        model: 'gemini-1.5-pro-latest',
-        success: true,
-      };
-    } catch (error: any) {
-      const errorMsg = `Gemini chat failed: ${error.message}`;
-      console.error(`[AI Router] ✗ Gemini Chat Error:`, error);
-      errors.push(errorMsg);
-    }
-  }
-
   const finalError = errors.length > 0
     ? `All AI chat providers failed:\n${errors.join('\n')}`
-    : "No AI chat providers are configured. Please check your .env file for ANTHROPIC_API_KEY, OPENAI_API_KEY, or VITE_GEMINI_API_KEY.";
+    : "No AI chat providers are configured. Please check your .env file for ANTHROPIC_API_KEY or OPENAI_API_KEY.";
 
   throw new Error(finalError);
 }
@@ -340,7 +270,7 @@ async function chatWithAnthropic(
     throw new Error('Anthropic API key not configured');
   }
 
-  const selectedModel = model || 'claude-sonnet-4-5-20250929';
+  const selectedModel = model || DEFAULT_CLAUDE_MODEL;
 
   // Ensure history alternates and starts with 'user'
   const messages: Anthropic.MessageParam[] = [];
@@ -541,7 +471,6 @@ export function getAvailableProviders() {
   return {
     anthropic: !!anthropic,
     openai: !!openai,
-    gemini: !!ENV.VITE_GEMINI_API_KEY,
     openrouter: !!openRouterClient,
   };
 }
@@ -553,10 +482,14 @@ export function getPrimaryProvider(): string {
   if (anthropic) return 'Claude (Anthropic)';
   if (openRouterClient) return 'OpenRouter';
   if (openai) return 'GPT-4 (OpenAI)';
-  if (ENV.VITE_GEMINI_API_KEY) {
-    return 'Gemini (Google)';
-  }
   return 'No AI provider configured';
+}
+
+/**
+ * Get available Claude models
+ */
+export function getClaudeModels() {
+  return CLAUDE_MODELS;
 }
 
 /**

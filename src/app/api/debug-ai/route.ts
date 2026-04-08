@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { geminiService } from '@/services/geminiService';
 import unifiedAIService from '@/services/unifiedAIService';
-import { ENV } from '@/config/env';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function GET() {
@@ -11,39 +9,19 @@ export async function GET() {
 
     const status = {
         config: {
-            hasGeminiKey: !!ENV.VITE_GEMINI_API_KEY,
             providers: unifiedAIService.getAvailableProviders()
         },
         tests: {
-            geminiDirect: null as any,
             unifiedService: null as any
         },
     };
 
-    // Test 1: Direct Gemini Service
-    try {
-        if (ENV.VITE_GEMINI_API_KEY) {
-            const start = Date.now();
-            const res = await geminiService.generateContent("Say 'Gemini OK'");
-            status.tests.geminiDirect = {
-                success: !res.error && res.text?.includes('OK'),
-                result: res.text,
-                error: res.error,
-                latency: Date.now() - start
-            };
-        } else {
-            status.tests.geminiDirect = { skipped: true, reason: 'No API Key' };
-        }
-    } catch (e: any) {
-        status.tests.geminiDirect = { success: false, error: e.message };
-    }
-
-    // Test 2: Unified AI Service
+    // Test: Unified AI Service (Claude/OpenAI)
     try {
         const start = Date.now();
-        const res = await unifiedAIService.generateText("Say 'Unified OK'", 10);
+        const res = await unifiedAIService.generateText("Say 'AlphaClone AI OK'", 10);
         status.tests.unifiedService = {
-            success: !res.error && res.text?.includes('OK'),
+            success: !res.error && (res.text?.toLowerCase().includes('ok') || res.text?.toLowerCase().includes('alphaclone')),
             result: res.text,
             error: res.error,
             latency: Date.now() - start

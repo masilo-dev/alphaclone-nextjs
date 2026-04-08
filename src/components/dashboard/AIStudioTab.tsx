@@ -4,6 +4,7 @@ import { Card, Button, Input, Modal } from '../ui/UIComponents';
 import { User } from '../../types';
 import { aiGenerationService } from '../../services/aiGenerationService';
 import { rateLimitService } from '../../services/rateLimitService';
+import { CLAUDE_MODELS } from '../../config/aiModels';
 import { Sparkles, Image as ImageIcon, FileText, Loader2, Download, Trash2, Eye, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -12,6 +13,7 @@ interface AIStudioTabProps {
 }
 
 type GenerationType = 'logo' | 'image' | 'content';
+// CLAUDE_MODELS is now imported from ../../config/aiModels
 
 interface GeneratedAsset {
     id: string;
@@ -36,6 +38,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
     const [style, setStyle] = useState<'modern' | 'minimalist' | 'vintage' | 'abstract'>('modern');
     const [imageSize, setImageSize] = useState<'1024x1024' | '1792x1024' | '1024x1792'>('1024x1024');
     const [contentType, setContentType] = useState<'blog' | 'email' | 'social' | 'general'>('general');
+    const [selectedModel, setSelectedModel] = useState(CLAUDE_MODELS[0].id);
     const [isGenerating, setIsGenerating] = useState(false);
     const [generatedResult, setGeneratedResult] = useState<string | null>(null);
     const [remainingGenerations, setRemainingGenerations] = useState<Record<GenerationType, number>>({
@@ -145,7 +148,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                     result = await aiGenerationService.generateImage(user.id, user.role, prompt, imageSize);
                     break;
                 case 'content':
-                    result = await aiGenerationService.generateContent(user.id, user.role, prompt, contentType);
+                    result = await aiGenerationService.generateContent(user.id, user.role, prompt, contentType, selectedModel);
                     break;
             }
 
@@ -372,18 +375,37 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                     )}
 
                     {activeTab === 'content' && (
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Content Type</label>
-                            <select
-                                value={contentType}
-                                onChange={(e) => setContentType(e.target.value as any)}
-                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500"
-                            >
-                                <option value="general">General</option>
-                                <option value="blog">Blog Post</option>
-                                <option value="email">Email</option>
-                                <option value="social">Social Media</option>
-                            </select>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Content Type</label>
+                                <select
+                                    value={contentType}
+                                    onChange={(e) => setContentType(e.target.value as any)}
+                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500"
+                                >
+                                    <option value="general">General</option>
+                                    <option value="blog">Blog Post</option>
+                                    <option value="email">Email</option>
+                                    <option value="social">Social Media</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">AI Model</label>
+                                <select
+                                    value={selectedModel}
+                                    onChange={(e) => setSelectedModel(e.target.value)}
+                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500"
+                                >
+                                    {CLAUDE_MODELS.map(model => (
+                                        <option key={model.id} value={model.id}>
+                                            {model.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="text-[10px] text-slate-500 mt-1">
+                                    {CLAUDE_MODELS.find(m => m.id === selectedModel)?.description}
+                                </p>
+                            </div>
                         </div>
                     )}
 

@@ -38,7 +38,7 @@ const NODE_STYLES: Record<string, { border: string; icon: string }> = {
   zoho_mail: { border: 'border-sky-500', icon: '📧' },
   ai: { border: 'border-purple-500', icon: '🤖' },
   document: { border: 'border-amber-500', icon: '📄' },
-  campaign: { border: 'border-pink-500', icon: '📢' },
+  campaign: { border: 'border-indigo-500', icon: '📢' },
   task: { border: 'border-green-500', icon: '✅' },
   finance: { border: 'border-emerald-500', icon: '💰' },
   notify: { border: 'border-orange-500', icon: '🔔' },

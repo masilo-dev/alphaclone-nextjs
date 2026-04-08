@@ -371,9 +371,9 @@ function OverviewTab({ stats }: { stats: any }) {
       label: 'Total Messages',
       value: stats.totalMessages.toLocaleString(),
       icon: MessageSquare,
-      color: 'from-pink-500/20 to-pink-600/20',
-      iconColor: 'text-pink-400',
-      borderColor: 'border-pink-500/20',
+      color: 'from-indigo-500/20 to-indigo-600/20',
+      iconColor: 'text-indigo-400',
+      borderColor: 'border-indigo-500/20',
       change: '+31%',
       trend: 'up'
     }

@@ -18,11 +18,11 @@ interface AnimateInProps {
 
 const variants: Record<AnimationType, Variants> = {
     fadeUp: {
-        hidden: { opacity: 0, y: 32 },
+        hidden: { opacity: 0, y: 4 },
         visible: (delay: number) => ({
             opacity: 1,
             y: 0,
-            transition: { duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] },
+            transition: { duration: 0.5, delay, ease: 'easeOut' },
         }),
     },
     fadeIn: {
@@ -33,35 +33,35 @@ const variants: Record<AnimationType, Variants> = {
         }),
     },
     fadeLeft: {
-        hidden: { opacity: 0, x: -32 },
+        hidden: { opacity: 0, x: -4 },
         visible: (delay: number) => ({
             opacity: 1,
             x: 0,
-            transition: { duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] },
+            transition: { duration: 0.5, delay, ease: 'easeOut' },
         }),
     },
     fadeRight: {
-        hidden: { opacity: 0, x: 32 },
+        hidden: { opacity: 0, x: 4 },
         visible: (delay: number) => ({
             opacity: 1,
             x: 0,
-            transition: { duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] },
+            transition: { duration: 0.5, delay, ease: 'easeOut' },
         }),
     },
     scaleIn: {
-        hidden: { opacity: 0, scale: 0.9 },
+        hidden: { opacity: 0, scale: 0.98 },
         visible: (delay: number) => ({
             opacity: 1,
             scale: 1,
-            transition: { duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] },
+            transition: { duration: 0.4, delay, ease: 'easeOut' },
         }),
     },
     stagger: {
-        hidden: { opacity: 0, y: 20 },
+        hidden: { opacity: 0, y: 4 },
         visible: (delay: number) => ({
             opacity: 1,
             y: 0,
-            transition: { duration: 0.5, delay, ease: 'easeOut' },
+            transition: { duration: 0.4, delay, ease: 'easeOut' },
         }),
     },
 };

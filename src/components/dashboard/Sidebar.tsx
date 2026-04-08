@@ -156,7 +156,7 @@ const Sidebar = React.memo<SidebarProps>(({
                         <div className="mb-3 px-1">
                             <button
                                 onClick={() => navigate('/dashboard/admin/tenants')}
-                                className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-1'} py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all bg-gradient-to-r from-purple-600/20 to-teal-600/20 border border-teal-500/30 text-teal-400 hover:border-teal-400 mb-2`}
+                                className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-1'} py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all bg-gradient-to-r from-indigo-600/20 to-teal-600/20 border border-teal-500/30 text-teal-400 hover:border-teal-400 mb-2`}
                             >
                                 <ShieldAlert className="w-5 h-5 flex-shrink-0" />
                                 <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'}`}>Admin Panel</span>

@@ -705,10 +705,17 @@ export const messageService = {
     ): Promise<{ autoReply: ChatMessage | null; error: string | null }> {
         try {
             // Import dynamically
-            const { generateAutoReply } = await import('./geminiService');
+            const { generateText } = await import('./unifiedAIService');
 
             // 1. Generate text
-            const replyText = await generateAutoReply(message.text, senderName);
+            const prompt = `You are an AI assistant for a professional digital agency.
+            A client named ${senderName} sent this message: "${message.text}".
+            Draft a polite, professional, and concise reply.
+            If the message is a greeting, reply warmly.
+            If it's a specific question, acknowledge it and say the team will review it.
+            Keep it under 3 sentences.`;
+
+            const { text: replyText } = await generateText(prompt, 256, 'claude-3-5-sonnet-20241022');
 
             if (!replyText) return { autoReply: null, error: 'Failed to generate reply' };
 
@@ -740,9 +747,14 @@ export const messageService = {
     ): Promise<{ reply: string | null; error: string | null }> {
         try {
             // Import dynamically to avoid circular dependencies if any
-            const { generateAutoReply } = await import('./geminiService');
+            const { generateText } = await import('./unifiedAIService');
 
-            const reply = await generateAutoReply(incomingText, senderName);
+            const prompt = `You are an AI assistant for a professional digital agency.
+            A client named ${senderName} sent this message: "${incomingText}".
+            Draft a polite, professional, and concise reply. 
+            Keep it under 3 sentences.`;
+
+            const { text: reply } = await generateText(prompt, 256, 'claude-3-5-sonnet-20241022');
             return { reply, error: null };
         } catch (err) {
             return { reply: null, error: err instanceof Error ? err.message : 'Unknown error' };

@@ -215,7 +215,7 @@ const ContactPage: React.FC = () => {
                                         onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                                         required
                                         rows={6}
-                                        className="w-full bg-white/[0.04] backdrop-blur-sm border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                        className="w-full bg-slate-900/90 backdrop-blur-sm border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                         placeholder="Tell us about your project..."
                                     />
                                 </div>

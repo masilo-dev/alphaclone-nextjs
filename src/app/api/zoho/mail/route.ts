@@ -45,6 +45,10 @@ export async function GET(req: NextRequest) {
                 const folders = await zohoMail.getFolders();
                 return NextResponse.json(folders);
             }
+            case 'sender-addresses': {
+                const addresses = await zohoMail.getSenderAddresses();
+                return NextResponse.json(addresses);
+            }
             case 'messages': {
                 const folderId = searchParams.get('folderId') || '1';
                 const limit = parseInt(searchParams.get('limit') || '20');

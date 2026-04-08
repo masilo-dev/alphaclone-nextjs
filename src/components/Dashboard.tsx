@@ -39,7 +39,7 @@ import HomeTab from './dashboard/HomeTab';
 import ProjectSubmitTab from './dashboard/ProjectSubmitTab';
 import ExitIntentModal from './ExitIntentModal';
 import IncomingCallModal from './dashboard/video/IncomingCallModal';
-import { generateContract as generateContractAI, generateArchitectSpecs } from '../services/geminiService';
+import { generateText } from '../services/unifiedAIService';
 interface ArchitectData {
   techStack: string;
   developmentPrompt: string;
@@ -48,7 +48,9 @@ interface ArchitectData {
 
 
 const generateContract = async (clientName: string, projectName: string): Promise<string> => {
-  return await generateContractAI(clientName, projectName, 0);
+  const prompt = `Generate a professional freelance contract for Client: ${clientName}, Project: ${projectName}. Include standard clauses.`;
+  const { text } = await generateText(prompt, 2048, 'claude-3-5-sonnet-20241022');
+  return text || "Contract generation failed.";
 };
 import { useBackgroundTasks } from '../contexts/BackgroundTaskContext';
 // Consolidated notification service
@@ -786,8 +788,24 @@ const Dashboard: React.FC<DashboardProps> = ({
     setSelectedProjectForTool(p);
     setArchitectModalOpen(true);
     setIsArchitecting(true);
-    const data = await generateArchitectSpecs(p.description || "A new custom software project", p.category || "Web Application");
-    setArchitectData(data);
+    
+    const prompt = `Generate technical architecture specs for a ${p.category || "Web Application"} project described as: "${p.description || "A new custom software project"}". Return ONLY a valid JSON object with keys: techStack (string), developmentPrompt (string), architectureDiagram (string description).`;
+    
+    const { text } = await generateText(prompt, 1024, 'claude-3-5-sonnet-20241022');
+    
+    try {
+      const cleanJson = (text || "{}").replace(/```json/g, '').replace(/```/g, '').trim();
+      const data = JSON.parse(cleanJson);
+      setArchitectData(data);
+    } catch (e) {
+      console.error('Failed to parse architecture specs:', e);
+      setArchitectData({
+        techStack: "React, Node.js, Supabase",
+        developmentPrompt: "Build a scalable app...",
+        architectureDiagram: "Client -> CDN -> Server -> DB"
+      });
+    }
+    
     setIsArchitecting(false);
   };
 
