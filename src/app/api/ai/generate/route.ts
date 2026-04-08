@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { routeAIRequest } from '@/services/aiRouter';
+import { routeAIRequest, streamAIRequest } from '@/services/aiRouter';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export const runtime = 'nodejs';
@@ -7,8 +7,7 @@ export const maxDuration = 60; // Maximize serverless timeout for heavy LLM oper
 
 /**
  * AI Content Generation API Route
- * Now uses smart routing: Anthropic (Claude) → OpenAI (GPT-4) → Gemini
- * Automatically falls back if primary provider fails
+ * Now supports both JSON and Streaming responses
  */
 export async function POST(req: Request) {
     const supabase = await createSupabaseServerClient();
@@ -16,13 +15,35 @@ export async function POST(req: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     try {
-        const { prompt, maxTokens, systemPrompt, temperature, model } = await req.json();
+        const body = await req.json();
+        const { prompt, maxTokens, systemPrompt, temperature, model, stream } = body;
 
         if (!prompt) {
             return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
         }
 
-        // Use smart router with fallback chain
+        // Handle Streaming Request
+        if (stream) {
+            const streamResponse = await streamAIRequest({
+                prompt,
+                maxTokens,
+                systemPrompt,
+                temperature,
+                model,
+            });
+
+            return new Response(streamResponse.stream, {
+                headers: {
+                    'Content-Type': 'text/plain; charset=utf-8',
+                    'Cache-Control': 'no-cache',
+                    'Connection': 'keep-alive',
+                    'X-Provider': streamResponse.provider,
+                    'X-Model': streamResponse.model,
+                },
+            });
+        }
+
+        // Standard JSON Request
         const response = await routeAIRequest({
             prompt,
             maxTokens,

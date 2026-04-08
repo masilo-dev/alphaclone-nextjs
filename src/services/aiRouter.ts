@@ -70,6 +70,12 @@ export interface AIResponse {
   error?: string;
 }
 
+export interface AIStreamResponse {
+  stream: ReadableStream;
+  provider: 'anthropic' | 'openai' | 'openrouter';
+  model: string;
+}
+
 /**
  * Main AI routing function with automatic fallback
  */
@@ -126,6 +132,56 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
     : "No AI providers are configured. Please check your .env file for ANTHROPIC_API_KEY or OPENAI_API_KEY.";
 
   throw new Error(finalError);
+}
+
+/**
+ * Streaming version of AI routing
+ */
+export async function streamAIRequest(options: AIRequestOptions): Promise<AIStreamResponse> {
+  const requestedModel = options.model?.toLowerCase();
+
+  // Specific Provider Routing
+  if (requestedModel) {
+    if (requestedModel.startsWith('claude') && anthropic) {
+      return {
+        stream: await streamWithAnthropic(options),
+        provider: 'anthropic',
+        model: options.model || DEFAULT_CLAUDE_MODEL
+      };
+    }
+    if (requestedModel.startsWith('gpt') && openai) {
+      return {
+        stream: await streamWithOpenAI(options),
+        provider: 'openai',
+        model: options.model || 'gpt-4-turbo'
+      };
+    }
+  }
+
+  // Fallback Chain (Priority 1: Anthropic)
+  if (anthropic) {
+    try {
+      console.log('[AI Router] Attempting Anthropic stream...');
+      return {
+        stream: await streamWithAnthropic(options),
+        provider: 'anthropic',
+        model: options.model || DEFAULT_CLAUDE_MODEL
+      };
+    } catch (error) {
+      console.warn('[AI Router] Anthropic stream failed, falling back...');
+    }
+  }
+
+  // Priority 2: Try OpenAI
+  if (openai) {
+    return {
+      stream: await streamWithOpenAI(options),
+      provider: 'openai',
+      model: options.model || 'gpt-4-turbo'
+    };
+  }
+
+  throw new Error('No AI providers available for streaming');
 }
 
 /**
@@ -472,6 +528,7 @@ export function getAvailableProviders() {
     anthropic: !!anthropic,
     openai: !!openai,
     openrouter: !!openRouterClient,
+    gemini: !!ENV.VITE_GEMINI_API_KEY,
   };
 }
 
@@ -520,4 +577,67 @@ export function estimateCost(prompt: string, model: string): number {
 
   const pricing = (MODEL_PRICING as any)[model] || MODEL_PRICING['claude-sonnet-4-5-20250929'];
   return (promptTokens * pricing.input + completionTokens * pricing.output) / 1_000_000;
+}
+
+/**
+ * Stream with Anthropic
+ */
+async function streamWithAnthropic(options: AIRequestOptions): Promise<ReadableStream> {
+  if (!anthropic) throw new Error('Anthropic not configured');
+
+  const model = options.model || DEFAULT_CLAUDE_MODEL;
+  const encoder = new TextEncoder();
+
+  return new ReadableStream({
+    async start(controller) {
+      const stream = await anthropic.messages.create({
+        model: model,
+        max_tokens: options.maxTokens || 8192,
+        temperature: options.temperature || 0.7,
+        system: options.systemPrompt,
+        messages: [{ role: 'user', content: options.prompt }],
+        stream: true,
+      });
+
+      for await (const chunk of stream) {
+        if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+          controller.enqueue(encoder.encode(chunk.delta.text));
+        }
+      }
+      controller.close();
+    },
+  });
+}
+
+/**
+ * Stream with OpenAI
+ */
+async function streamWithOpenAI(options: AIRequestOptions): Promise<ReadableStream> {
+  if (!openai) throw new Error('OpenAI not configured');
+
+  const model = options.model || 'gpt-4-turbo';
+  const encoder = new TextEncoder();
+
+  return new ReadableStream({
+    async start(controller) {
+      const stream = await openai.chat.completions.create({
+        model: model,
+        messages: [
+          ...(options.systemPrompt ? [{ role: 'system' as const, content: options.systemPrompt }] : []),
+          { role: 'user' as const, content: options.prompt },
+        ],
+        max_tokens: options.maxTokens || 4096,
+        temperature: options.temperature || 0.7,
+        stream: true,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || '';
+        if (content) {
+          controller.enqueue(encoder.encode(content));
+        }
+      }
+      controller.close();
+    },
+  });
 }

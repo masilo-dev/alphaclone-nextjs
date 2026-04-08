@@ -156,37 +156,54 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         if (!form.totalAmount.trim()) { toast.error('Contract value is required'); return; }
 
         setIsGenerating(true);
+        setGeneratedContract('');
+        setStep('preview');
+
         try {
-            // Try AI generation first
             const prompt = buildAIPrompt(form);
             const res = await fetch('/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt, maxTokens: 4000 }),
+                body: JSON.stringify({ prompt, maxTokens: 4000, stream: true }),
             });
-            if (res.ok) {
-                const data = await res.json();
-                if (data.content) {
-                    setGeneratedContract(data.content);
-                    setContractId('');
-                    setIsSigned(false);
-                    setSignatureName('');
-                    setSignatureData('');
-                    setStep('preview');
-                    setIsGenerating(false);
-                    return;
-                }
-            }
-        } catch { /* fall through to template */ }
 
-        // Fallback: generate from template
-        setGeneratedContract(buildTemplateContract(form));
-        setContractId('');
-        setIsSigned(false);
-        setSignatureName('');
-        setSignatureData('');
-        setStep('preview');
-        setIsGenerating(false);
+            if (!res.ok) throw new Error('Generation failed');
+
+            const reader = res.body?.getReader();
+            if (!reader) throw new Error('No reader available');
+
+            const decoder = new TextDecoder();
+            let done = false;
+            let accumulated = '';
+
+            while (!done) {
+                const { value, done: doneReading } = await reader.read();
+                done = doneReading;
+                const chunkValue = decoder.decode(value);
+                accumulated += chunkValue;
+                setGeneratedContract(accumulated);
+                
+                // Keep UI feeling responsive
+                if (doneReading) break;
+            }
+
+            setContractId('');
+            setIsSigned(false);
+            setSignatureName('');
+            setSignatureData('');
+            setIsGenerating(false);
+            return;
+        } catch (err) {
+            console.error('Streaming error:', err);
+            toast.error('AI Streaming failed, using template...');
+            // Fallback: generate from template
+            setGeneratedContract(buildTemplateContract(form));
+            setContractId('');
+            setIsSigned(false);
+            setSignatureName('');
+            setSignatureData('');
+            setIsGenerating(false);
+        }
     };
 
     const saveContract = async () => {
